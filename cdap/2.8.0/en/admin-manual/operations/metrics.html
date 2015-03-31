@@ -82,7 +82,7 @@ are processed, how many data operations are performed—and are thus called syst
 metrics.</p>
 <p>Other metrics are user-defined or &#8220;custom&#8221; and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
-details on available system metrics in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Metrics HTTP API.</em></a></p>
+details on available system metrics in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Metrics HTTP API.</span></a></p>
 <p>You embed user-defined metrics in the methods defining the components of your application.
 The Metrics system currently supports two kinds of metrics: count and gauge:</p>
 <ul>
@@ -98,9 +98,9 @@ The Metrics system currently supports two kinds of metrics: count and gauge:</p>
 </li>
 </ul>
 <p>They will then emit their metrics and you can retrieve them (along with system metrics)
-via the <em>Metrics Explorer</em> in the <a class="reference internal" href="cdap-console.html#cdap-console"><em>CDAP Console</em></a> or
-via the CDAP’s <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em>CDAP HTTP RESTful API</em></a>. The names given to the metrics (such as
-<tt class="docutils literal"><span class="pre">names.longnames</span></tt> and <tt class="docutils literal"><span class="pre">names.bytes</span></tt> as in the example below) should be composed only
+via the <em>Metrics Explorer</em> in the <a class="reference internal" href="cdap-console.html#cdap-console"><span>CDAP Console</span></a> or
+via the CDAP’s <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span>CDAP HTTP RESTful API</span></a>. The names given to the metrics (such as
+<code class="docutils literal"><span class="pre">names.longnames</span></code> and <code class="docutils literal"><span class="pre">names.bytes</span></code> as in the example below) should be composed only
 of alphanumeric characters.</p>
 <p>To add a count metric to a Flowlet <em>NameSaver</em>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">NameSaver</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
@@ -142,10 +142,10 @@ of alphanumeric characters.</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>An example of user-defined metrics is in <tt class="docutils literal"><span class="pre">PurchaseStore</span></tt> in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase example.</em></a></p>
+<p>An example of user-defined metrics is in <code class="docutils literal"><span class="pre">PurchaseStore</span></code> in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase example.</span></a></p>
 <div class="section" id="using-metrics-explorer">
 <h2>Using Metrics Explorer<a class="headerlink" href="#using-metrics-explorer" title="Permalink to this headline">¶</a></h2>
-<p>The <em>Metrics Explorer</em> of the <a class="reference internal" href="cdap-console.html#cdap-console"><em>CDAP Console</em></a>
+<p>The <em>Metrics Explorer</em> of the <a class="reference internal" href="cdap-console.html#cdap-console"><span>CDAP Console</span></a>
 can be used to examine and set metrics in a CDAP instance.</p>
 </div>
 </div>

@@ -127,10 +127,10 @@ of the application, the streams and datasets it uses, and all of its programs.</
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application</td>
 </tr>
 </tbody>
@@ -147,7 +147,7 @@ of the application, the streams and datasets it uses, and all of its programs.</
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the body contains the results</td>
 </tr>
 </tbody>
@@ -171,15 +171,15 @@ programs, Services, Workflows, Schedules—submit an HTTP DELETE:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;application-name&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;application-name&gt;</span></code></td>
 <td>Name of the Application to be deleted</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> The <tt class="docutils literal"><span class="pre">&lt;application-name&gt;</span></tt> in this URL is the name of the Application
+<p><strong>Note:</strong> The <code class="docutils literal"><span class="pre">&lt;application-name&gt;</span></code> in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
 This does not delete the Streams and Datasets associated with the Application
@@ -204,21 +204,21 @@ programs, Workflows, Workers, and Custom Services, and query for their status us
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">workers</span></tt>, or <tt class="docutils literal"><span class="pre">services</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">services</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the <em>Flow</em>, <em>MapReduce</em>, <em>Spark</em>, <em>Workflow</em>, or <em>Custom Service</em>
 being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;operation&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">start</span></tt> or <tt class="docutils literal"><span class="pre">stop</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;operation&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">start</span></code> or <code class="docutils literal"><span class="pre">stop</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -239,16 +239,16 @@ using an HTTP POST method:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;appId&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;programType&quot;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;programId&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
 <td>Name of the <em>Flow</em>, <em>MapReduce</em>, <em>Spark</em>, <em>Workflow</em>, or <em>Custom Service</em>
 being called</td>
 </tr>
@@ -266,19 +266,19 @@ being called</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;status&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;status&quot;</span></code></td>
 <td>Maps to the status of an individual JSON object&#8217;s queried program
 if the query is valid and the program was found.</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
 <td>The status code from retrieving the status of an individual JSON object.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;error&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
 <td>If an error, a description of why the status was not retrieved (the specified program was not found, etc.)</td>
 </tr>
 </tbody>
 </table>
-<p>The <tt class="docutils literal"><span class="pre">status</span></tt> and <tt class="docutils literal"><span class="pre">error</span></tt> fields are mutually exclusive meaning if there is an error,
+<p>The <code class="docutils literal"><span class="pre">status</span></code> and <code class="docutils literal"><span class="pre">error</span></code> fields are mutually exclusive meaning if there is an error,
 then there will never be a status and vice versa.</p>
 <p class="rubric">Examples</p>
 <table border="1" class="docutils">
@@ -288,7 +288,7 @@ then there will never be a status and vice versa.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/start</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/start</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Start a Flow <em>WhoFlow</em> in the Application <em>HelloWorld</em> in the namespace <em>default</em></td>
@@ -297,7 +297,7 @@ then there will never be a status and vice versa.</p>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/Count/services/GetCounts/stop</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/Count/services/GetCounts/stop</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Stop the Service <em>GetCounts</em> in the Application <em>Count</em> in the namespace <em>default</em></td>
@@ -306,7 +306,7 @@ then there will never be a status and vice versa.</p>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/status</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/status</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Get the status of the Flow <em>WhoFlow</em> in the Application <em>HelloWorld</em> in the namespace <em>default</em></td>
@@ -315,16 +315,16 @@ then there will never be a status and vice versa.</p>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/status</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/status</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Body</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;appId&quot;:</span> <span class="pre">&quot;MyApp&quot;,</span> <span class="pre">&quot;programType&quot;:</span> <span class="pre">&quot;flow&quot;,</span> <span class="pre">&quot;programId&quot;:</span> <span class="pre">&quot;MyFlow&quot;},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;appId&quot;:</span> <span class="pre">&quot;MyApp2&quot;,</span> <span class="pre">&quot;programType&quot;:</span> <span class="pre">&quot;service&quot;,</span> <span class="pre">&quot;programId&quot;:</span> <span class="pre">&quot;MyService&quot;}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:</span> <span class="pre">&quot;MyApp&quot;,</span> <span class="pre">&quot;programType&quot;:</span> <span class="pre">&quot;flow&quot;,</span> <span class="pre">&quot;programId&quot;:</span> <span class="pre">&quot;MyFlow&quot;},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:</span> <span class="pre">&quot;MyApp2&quot;,</span> <span class="pre">&quot;programType&quot;:</span> <span class="pre">&quot;service&quot;,</span> <span class="pre">&quot;programId&quot;:</span> <span class="pre">&quot;MyService&quot;}]</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp&quot;,</span> <span class="pre">&quot;programType&quot;:&quot;flow&quot;,</span> <span class="pre">&quot;programId&quot;:&quot;MyFlow&quot;,</span> <span class="pre">&quot;status&quot;:&quot;RUNNING&quot;,</span> <span class="pre">&quot;statusCode&quot;:200},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp2&quot;,</span> <span class="pre">&quot;programType&quot;:&quot;service&quot;,</span> <span class="pre">&quot;programId&quot;:&quot;MyService&quot;,</span></tt>
-<tt class="docutils literal"><span class="pre">&quot;error&quot;:&quot;Program</span> <span class="pre">not</span> <span class="pre">found&quot;,</span> <span class="pre">&quot;statusCode&quot;:404}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp&quot;,</span> <span class="pre">&quot;programType&quot;:&quot;flow&quot;,</span> <span class="pre">&quot;programId&quot;:&quot;MyFlow&quot;,</span> <span class="pre">&quot;status&quot;:&quot;RUNNING&quot;,</span> <span class="pre">&quot;statusCode&quot;:200},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp2&quot;,</span> <span class="pre">&quot;programType&quot;:&quot;service&quot;,</span> <span class="pre">&quot;programId&quot;:&quot;MyService&quot;,</span></code>
+<code class="docutils literal"><span class="pre">&quot;error&quot;:&quot;Program</span> <span class="pre">not</span> <span class="pre">found&quot;,</span> <span class="pre">&quot;statusCode&quot;:404}]</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Attempt to get the status of the Flow <em>MyFlow</em> in the Application <em>MyApp</em> and of the Service <em>MyService</em>
@@ -345,12 +345,12 @@ program.</p>
 <div class="topic">
 <p class="topic-title first"><strong>Note: Runtime Arguments RESTful API Deprecated</strong></p>
 <p>As of <em>CDAP v2.8.0</em>, <em>Runtime Arguments RESTful API</em> have been deprecated, pending removal in a later version.
-Replace all use of <em>Runtime Arguments RESTful API</em> with <a class="reference internal" href="preferences.html#http-restful-api-v3-preferences"><em>Preferences RESTful API</em></a>.
+Replace all use of <em>Runtime Arguments RESTful API</em> with <a class="reference internal" href="preferences.html#http-restful-api-v3-preferences"><span>Preferences RESTful API</span></a>.
 <em>Preferences RESTful API</em> will have feature-parity with <em>Runtime Arguments RESTful API</em> as of the version in which
 <em>Runtime Arguments RESTful API</em> are removed.</p>
 </div>
 <p>To save the runtime arguments so that CDAP will use them every time you start the program,
-issue an HTTP PUT with the parameter <tt class="docutils literal"><span class="pre">runtimeargs</span></tt>:</p>
+issue an HTTP PUT with the parameter <code class="docutils literal"><span class="pre">runtimeargs</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs</span>
 </pre></div>
 </div>
@@ -359,7 +359,7 @@ issue an HTTP PUT with the parameter <tt class="docutils literal"><span class="p
 </pre></div>
 </div>
 <p>To retrieve the runtime arguments saved for an Application&#8217;s program, issue an HTTP GET
-request to the program&#8217;s URL using the same parameter <tt class="docutils literal"><span class="pre">runtimeargs</span></tt>:</p>
+request to the program&#8217;s URL using the same parameter <code class="docutils literal"><span class="pre">runtimeargs</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs</span>
 </pre></div>
 </div>
@@ -383,16 +383,16 @@ CDAP for a Flow or Service’s live info via an HTTP GET method:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">workers</span></tt>, or <tt class="docutils literal"><span class="pre">services</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">workers</span></code>, or <code class="docutils literal"><span class="pre">services</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the program (<em>Flow</em> or <em>Custom Service</em>)</td>
 </tr>
 </tbody>
@@ -402,7 +402,7 @@ CDAP for a Flow or Service’s live info via an HTTP GET method:</p>
 </pre></div>
 </div>
 <p>The response is formatted in JSON; an example of this is shown in
-<a class="reference external" href="../../source/../../developers-manual/testing/debugging.html#debugging-distributed" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Testing and Debugging.</em></a></p>
+<a class="reference external" href="../../source/../../developers-manual/testing/debugging.html#debugging-distributed" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Testing and Debugging.</span></a></p>
 </div>
 <div class="section" id="scaling">
 <span id="http-restful-api-lifecycle-scale"></span><h2>Scaling<a class="headerlink" href="#scaling" title="Permalink to this headline">¶</a></h2>
@@ -422,7 +422,7 @@ different program types using an HTTP POST method:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
 </tbody>
@@ -439,16 +439,16 @@ different program types using an HTTP POST method:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;appId&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;appId&quot;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;programType&quot;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;programType&quot;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;programId&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;programId&quot;</span></code></td>
 <td>Name of the program (<em>Flow</em> or <em>Custom Service</em>) being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;runnableId&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;runnableId&quot;</span></code></td>
 <td>Name of the <em>Flowlet</em> or <em>Service</em></td>
 </tr>
 </tbody>
@@ -465,22 +465,22 @@ different program types using an HTTP POST method:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;requested&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;requested&quot;</span></code></td>
 <td>Number of instances the user requested for the program defined by the individual JSON object&#8217;s parameters</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;provisioned&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;provisioned&quot;</span></code></td>
 <td>Number of instances that are actually running for the program defined by the individual JSON object&#8217;s parameters.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&quot;statusCode&quot;</span></code></td>
 <td>The status code from retrieving the instance count of an individual JSON object.</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;error&quot;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&quot;error&quot;</span></code></td>
 <td>If an error, a description of why the status was not retrieved (the specified program was not found,
 the requested JSON object was missing a parameter, etc.)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> The <tt class="docutils literal"><span class="pre">requested</span></tt> and <tt class="docutils literal"><span class="pre">provisioned</span></tt> fields are mutually exclusive of the <tt class="docutils literal"><span class="pre">error</span></tt> field.</p>
+<p><strong>Note:</strong> The <code class="docutils literal"><span class="pre">requested</span></code> and <code class="docutils literal"><span class="pre">provisioned</span></code> fields are mutually exclusive of the <code class="docutils literal"><span class="pre">error</span></code> field.</p>
 <p class="rubric">Example</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -489,17 +489,17 @@ the requested JSON object was missing a parameter, etc.)</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/instances</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/namespaces/default/instances</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Body</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,&quot;runnableId&quot;:&quot;MyFlowlet5&quot;},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,&quot;runnableId&quot;:&quot;MyHandler1&quot;}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,&quot;runnableId&quot;:&quot;MyFlowlet5&quot;},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,&quot;runnableId&quot;:&quot;MyHandler1&quot;}]</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,</span></tt>
-<tt class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyFlowlet5&quot;,&quot;provisioned&quot;:2,&quot;requested&quot;:2,&quot;statusCode&quot;:200},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,</span></tt>
-<tt class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyHandler1&quot;,&quot;statusCode&quot;:404,&quot;error&quot;:&quot;Runnable:</span> <span class="pre">MyHandler1</span> <span class="pre">not</span> <span class="pre">found&quot;}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;appId&quot;:&quot;MyApp1&quot;,&quot;programType&quot;:&quot;Flow&quot;,&quot;programId&quot;:&quot;MyFlow1&quot;,</span></code>
+<code class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyFlowlet5&quot;,&quot;provisioned&quot;:2,&quot;requested&quot;:2,&quot;statusCode&quot;:200},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;appId&quot;:&quot;MyApp3&quot;,&quot;programType&quot;:&quot;Service&quot;,&quot;programId&quot;:&quot;MySvc1,</span></code>
+<code class="docutils literal"><span class="pre">&quot;runnableId&quot;:&quot;MyHandler1&quot;,&quot;statusCode&quot;:404,&quot;error&quot;:&quot;Runnable:</span> <span class="pre">MyHandler1</span> <span class="pre">not</span> <span class="pre">found&quot;}]</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Try to get the instances of the Flowlet <em>MyFlowlet5</em> in the Flow <em>MyFlow1</em> in the
@@ -511,7 +511,7 @@ Application <em>MyApp1</em>, and the Service Handler <em>MyHandler1</em> in the 
 <div class="section" id="scaling-flowlets">
 <span id="rest-scaling-flowlets"></span><h3>Scaling Flowlets<a class="headerlink" href="#scaling-flowlets" title="Permalink to this headline">¶</a></h3>
 <p>You can query and set the number of instances executing a given Flowlet
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET and PUT methods:</p>
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET and PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
 <span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
 </pre></div>
@@ -531,19 +531,19 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;flow-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;flow-id&gt;</span></code></td>
 <td>Name of the Flow</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;flowlet-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;flowlet-id&gt;</span></code></td>
 <td>Name of the Flowlet</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;quantity&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;quantity&gt;</span></code></td>
 <td>Number of instances to be used</td>
 </tr>
 </tbody>
@@ -556,8 +556,8 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/</span></tt>
-<tt class="docutils literal"><span class="pre">instances</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/</span></code>
+<code class="docutils literal"><span class="pre">instances</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Find out the number of instances of the Flowlet <em>saver</em>
@@ -572,8 +572,8 @@ in the Flow <em>WhoFlow</em> of the Application <em>HelloWorld</em> in the names
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><p class="first"><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/</span></tt>
-<tt class="docutils literal"><span class="pre">instances</span></tt></p>
+<td><p class="first"><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/</span></code>
+<code class="docutils literal"><span class="pre">instances</span></code></p>
 <p>with the arguments as a JSON string in the body:</p>
 <div class="last highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : 2 }</span>
 </pre></div>
@@ -590,7 +590,7 @@ Application <em>HelloWorld</em> in the namespace <em>default</em></td>
 <div class="section" id="scaling-services">
 <h3>Scaling Services<a class="headerlink" href="#scaling-services" title="Permalink to this headline">¶</a></h3>
 <p>You can query or change the number of instances of a Service
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET or PUT methods:</p>
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET or PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/instances</span>
 <span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/instances</span>
 </pre></div>
@@ -610,16 +610,16 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;service-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;service-id&gt;</span></code></td>
 <td>Name of the Service</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;quantity&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;quantity&gt;</span></code></td>
 <td>Number of instances to be used</td>
 </tr>
 </tbody>
@@ -632,7 +632,7 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieve the number of instances of the Service <em>CatalogLookup</em> in the application
@@ -643,7 +643,7 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </div>
 <div class="section" id="scaling-workers">
 <h3>Scaling Workers<a class="headerlink" href="#scaling-workers" title="Permalink to this headline">¶</a></h3>
-<p>You can query or change the number of instances of a Worker by using the <tt class="docutils literal"><span class="pre">instances</span></tt>
+<p>You can query or change the number of instances of a Worker by using the <code class="docutils literal"><span class="pre">instances</span></code>
 parameter with HTTP GET or PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/workers/&lt;worker-id&gt;/instances</span>
 <span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/workers/&lt;worker-id&gt;/instances</span>
@@ -664,16 +664,16 @@ parameter with HTTP GET or PUT methods:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;worker-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;worker-id&gt;</span></code></td>
 <td>Name of the Worker</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;quantity&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;quantity&gt;</span></code></td>
 <td>Number of instances to be used</td>
 </tr>
 </tbody>
@@ -688,8 +688,8 @@ parameter with HTTP GET or PUT methods:</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/workers/DataWorker/instances</span></tt>
-<tt class="docutils literal"><span class="pre">instances</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/workers/DataWorker/instances</span></code>
+<code class="docutils literal"><span class="pre">instances</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieve the number of instances of the Worker <em>DataWorker</em>
@@ -702,7 +702,7 @@ in the Application <em>HelloWorld</em> in the namespace <em>default</em></td>
 <div class="section" id="run-records-and-schedules">
 <span id="rest-program-runs"></span><h2>Run Records and Schedules<a class="headerlink" href="#run-records-and-schedules" title="Permalink to this headline">¶</a></h2>
 <p>To see all the runs of a selected program (Flows, MapReduce programs, Spark programs, Workflows, and
-Services), issue an HTTP GET to the program’s URL with the <tt class="docutils literal"><span class="pre">runs</span></tt> parameter.
+Services), issue an HTTP GET to the program’s URL with the <code class="docutils literal"><span class="pre">runs</span></code> parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs</span>
@@ -719,16 +719,16 @@ end time and program status:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt> or <tt class="docutils literal"><span class="pre">services</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code> or <code class="docutils literal"><span class="pre">services</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the program</td>
 </tr>
 </tbody>
@@ -746,16 +746,16 @@ and can limit the number of returned records.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;status&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;status&gt;</span></code></td>
 <td>running/completed/failed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;start&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;start&gt;</span></code></td>
 <td>start timestamp</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;end&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;end&gt;</span></code></td>
 <td>end timestamp</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;limit&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;limit&gt;</span></code></td>
 <td>maximum number of returned records</td>
 </tr>
 </tbody>
@@ -768,15 +768,15 @@ and can limit the number of returned records.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieve the run records of the Flow <em>WhoFlow</em> of the Application <em>HelloWorld</em></td>
 </tr>
 <tr class="row-odd"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567598,&quot;status&quot;:&quot;RUNNING&quot;},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567447,&quot;end&quot;:1382567492,&quot;status&quot;:&quot;STOPPED&quot;},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567383,&quot;end&quot;:1382567397,&quot;status&quot;:&quot;STOPPED&quot;}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567598,&quot;status&quot;:&quot;RUNNING&quot;},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567447,&quot;end&quot;:1382567492,&quot;status&quot;:&quot;STOPPED&quot;},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;runid&quot;:&quot;...&quot;,&quot;start&quot;:1382567383,&quot;end&quot;:1382567397,&quot;status&quot;:&quot;STOPPED&quot;}</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -793,12 +793,12 @@ with the start and end times in seconds since the start of the Epoch (midnight 1
 </pre></div>
 </div>
 </li>
-<li><p class="first">the schedules defined for a workflow (using the parameter <tt class="docutils literal"><span class="pre">schedules</span></tt>):</p>
+<li><p class="first">the schedules defined for a workflow (using the parameter <code class="docutils literal"><span class="pre">schedules</span></code>):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/schedules</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">the next time that the workflow is scheduled to run (using the parameter <tt class="docutils literal"><span class="pre">nextruntime</span></tt>):</p>
+<li><p class="first">the next time that the workflow is scheduled to run (using the parameter <code class="docutils literal"><span class="pre">nextruntime</span></code>):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/workflows/&lt;workflow-id&gt;/nextruntime</span>
 </pre></div>
 </div>
@@ -825,38 +825,38 @@ with the start and end times in seconds since the start of the Epoch (midnight 1
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&amp;limit=1</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&amp;limit=1</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieve the most recent successful completed run of the Service <em>CatalogLookup</em> of the Application <em>PurchaseHistory</em></td>
 </tr>
 <tr class="row-odd"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;runid&quot;:&quot;cad83d45-ecfb-4bf8-8cdb-4928a5601b0e&quot;,&quot;start&quot;:1415051892,&quot;end&quot;:1415057103,&quot;status&quot;:&quot;STOPPED&quot;}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;runid&quot;:&quot;cad83d45-ecfb-4bf8-8cdb-4928a5601b0e&quot;,&quot;start&quot;:1415051892,&quot;end&quot;:1415057103,&quot;status&quot;:&quot;STOPPED&quot;}]</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">&nbsp;</th>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieves the schedules of the Workflow <em>PurchaseHistoryWorkflow</em> of the Application <em>PurchaseHistory</em></td>
 </tr>
 <tr class="row-odd"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;schedule&quot;:{&quot;name&quot;:&quot;DailySchedule&quot;,&quot;description&quot;:&quot;DailySchedule</span> <span class="pre">with</span> <span class="pre">crontab</span> <span class="pre">0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;,&quot;cronEntry&quot;:&quot;0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;},</span></tt>
-<tt class="docutils literal"><span class="pre">&quot;program&quot;:{&quot;programName&quot;:&quot;PurchaseHistoryWorkflow&quot;,&quot;programType&quot;:&quot;WORKFLOW&quot;},&quot;properties&quot;:{}}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;schedule&quot;:{&quot;name&quot;:&quot;DailySchedule&quot;,&quot;description&quot;:&quot;DailySchedule</span> <span class="pre">with</span> <span class="pre">crontab</span> <span class="pre">0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;,&quot;cronEntry&quot;:&quot;0</span> <span class="pre">4</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*&quot;},</span></code>
+<code class="docutils literal"><span class="pre">&quot;program&quot;:{&quot;programName&quot;:&quot;PurchaseHistoryWorkflow&quot;,&quot;programType&quot;:&quot;WORKFLOW&quot;},&quot;properties&quot;:{}}]</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">&nbsp;</th>
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Retrieves the next runtime of the Workflow <em>PurchaseHistoryWorkflow</em> of the Application <em>PurchaseHistory</em></td>
 </tr>
 <tr class="row-odd"><th class="stub">Returns</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;id&quot;:&quot;DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule&quot;,&quot;time&quot;:1415102400000}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;id&quot;:&quot;DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule&quot;,&quot;time&quot;:1415102400000}]</span></code></td>
 </tr>
 </tbody>
 </table>

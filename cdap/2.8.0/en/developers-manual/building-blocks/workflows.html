@@ -76,8 +76,8 @@
             
   <div class="section" id="workflows">
 <span id="id1"></span><h1>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h1>
-<p><strong>Workflows</strong> are used to automate the execution of a series of <a class="reference internal" href="mapreduce-programs.html#mapreduce"><em>MapReduce</em></a>, <a class="reference internal" href="spark-programs.html#spark"><em>Spark</em></a> or <a class="reference internal" href="#workflow-custom-actions"><em>custom actions</em></a>. It
-allows for both sequential and <a class="reference internal" href="#workflow-parallel"><em>parallel execution</em></a> of programs.</p>
+<p><strong>Workflows</strong> are used to automate the execution of a series of <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>, <a class="reference internal" href="spark-programs.html#spark"><span>Spark</span></a> or <a class="reference internal" href="#workflow-custom-actions"><span>custom actions</span></a>. It
+allows for both sequential and <a class="reference internal" href="#workflow-parallel"><span>parallel execution</span></a> of programs.</p>
 <p>The workflow system allows specifying, executing, scheduling, and monitoring complex
 series of jobs and tasks in CDAP. The system can manage thousand of workflows and maintain
 millions of historic workflow logs.</p>
@@ -89,7 +89,7 @@ control is transferred to the next program in the sequence until the last progra
 sequence is executed. Upon failure, the execution is stopped at the failed program and no
 subsequent programs in the sequence are executed.</p>
 <p>To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
-application along with the Workflow. You can optionally add a <a class="reference internal" href="schedules.html#schedules"><em>Schedule</em></a>
+application along with the Workflow. You can optionally add a <a class="reference internal" href="schedules.html#schedules"><span>Schedule</span></a>
 (such as a <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)">crontab schedule</a>)
 to the Workflow:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -106,10 +106,10 @@ to the Workflow:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>You&#8217;ll then extend the <tt class="docutils literal"><span class="pre">AbstractWorkflow</span></tt> class and implement the <tt class="docutils literal"><span class="pre">configure()</span></tt>
-method. Inside <tt class="docutils literal"><span class="pre">configure</span></tt>, you can add multiple MapReduce, Spark programs or custom
+<p>You&#8217;ll then extend the <code class="docutils literal"><span class="pre">AbstractWorkflow</span></code> class and implement the <code class="docutils literal"><span class="pre">configure()</span></code>
+method. Inside <code class="docutils literal"><span class="pre">configure</span></code>, you can add multiple MapReduce, Spark programs or custom
 actions to the Workflow. The programs will be executed in the order they are specified in
-the <tt class="docutils literal"><span class="pre">configure</span></tt> method:</p>
+the <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -124,15 +124,15 @@ the <tt class="docutils literal"><span class="pre">configure</span></tt> method:
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>In this example, the <tt class="docutils literal"><span class="pre">MyWorkflow</span></tt> will be executed every 5 hours. During each execution
-of the Workflow, the <tt class="docutils literal"><span class="pre">MyMapReduce</span></tt>, <tt class="docutils literal"><span class="pre">MySpark</span></tt>, and <tt class="docutils literal"><span class="pre">AnotherMapReduce</span></tt> programs and
-the <tt class="docutils literal"><span class="pre">MyAction</span></tt> custom action will be executed in order.</p>
+<p>In this example, the <code class="docutils literal"><span class="pre">MyWorkflow</span></code> will be executed every 5 hours. During each execution
+of the Workflow, the <code class="docutils literal"><span class="pre">MyMapReduce</span></code>, <code class="docutils literal"><span class="pre">MySpark</span></code>, and <code class="docutils literal"><span class="pre">AnotherMapReduce</span></code> programs and
+the <code class="docutils literal"><span class="pre">MyAction</span></code> custom action will be executed in order.</p>
 <div class="section" id="workflow-custom-action">
 <span id="workflow-custom-actions"></span><h3>Workflow Custom Action<a class="headerlink" href="#workflow-custom-action" title="Permalink to this headline">¶</a></h3>
 <p>In addition to MapReduce and Spark programs, Workflow can also execute custom actions.
 Custom actions are implemented in Java and can perform tasks such as sending an email. To
-define a custom action, you will need to extend the <tt class="docutils literal"><span class="pre">AbstractWorkflowAction</span></tt> and
-implement the <tt class="docutils literal"><span class="pre">run()</span></tt> method:</p>
+define a custom action, you will need to extend the <code class="docutils literal"><span class="pre">AbstractWorkflowAction</span></code> and
+implement the <code class="docutils literal"><span class="pre">run()</span></code> method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyAction</span> <span class="kd">extends</span> <span class="n">AbstractWorkflowAction</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -142,14 +142,14 @@ implement the <tt class="docutils literal"><span class="pre">run()</span></tt> m
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The custom action then can be added to the Workflow using the <tt class="docutils literal"><span class="pre">addAction()</span></tt> method as
+<p>The custom action then can be added to the Workflow using the <code class="docutils literal"><span class="pre">addAction()</span></code> method as
 shown above.</p>
 </div>
 <div class="section" id="concurrent-workflows">
 <h3>Concurrent Workflows<a class="headerlink" href="#concurrent-workflows" title="Permalink to this headline">¶</a></h3>
 <p>By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run
 concurrently. To enable concurrent runs for a Workflow, set its runtime argument
-<tt class="docutils literal"><span class="pre">concurrent.runs.enabled</span></tt> to <tt class="docutils literal"><span class="pre">true</span></tt>.</p>
+<code class="docutils literal"><span class="pre">concurrent.runs.enabled</span></code> to <code class="docutils literal"><span class="pre">true</span></code>.</p>
 </div>
 </div>
 <div class="section" id="parallelizing-workflow-execution">
@@ -172,14 +172,14 @@ terminates:</p>
 <p>To create such a Workflow, you provide a series of <em>forks</em> and <em>joins</em> in your Workflow
 specification, following these rules:</p>
 <ul class="simple">
-<li>Where your control flow initially splits, you place a <tt class="docutils literal"><span class="pre">fork</span></tt> method.</li>
-<li>Every time your control flow splits, you add additional <tt class="docutils literal"><span class="pre">fork</span></tt> methods.</li>
-<li>Every point where you have either a program or an action, you add a <tt class="docutils literal"><span class="pre">addMapReduce</span></tt>,
-<tt class="docutils literal"><span class="pre">addSpark</span></tt>, or <tt class="docutils literal"><span class="pre">addAction</span></tt> method.</li>
-<li>To show each fork, use a <tt class="docutils literal"><span class="pre">also</span></tt> method to separate the different branches of the
+<li>Where your control flow initially splits, you place a <code class="docutils literal"><span class="pre">fork</span></code> method.</li>
+<li>Every time your control flow splits, you add additional <code class="docutils literal"><span class="pre">fork</span></code> methods.</li>
+<li>Every point where you have either a program or an action, you add a <code class="docutils literal"><span class="pre">addMapReduce</span></code>,
+<code class="docutils literal"><span class="pre">addSpark</span></code>, or <code class="docutils literal"><span class="pre">addAction</span></code> method.</li>
+<li>To show each fork, use a <code class="docutils literal"><span class="pre">also</span></code> method to separate the different branches of the
 control flow.</li>
-<li>Where your control flow reconnects, you add a <tt class="docutils literal"><span class="pre">join</span></tt> method to indicate.</li>
-<li>The control flow always concludes with a <tt class="docutils literal"><span class="pre">join</span></tt> method.</li>
+<li>Where your control flow reconnects, you add a <code class="docutils literal"><span class="pre">join</span></code> method to indicate.</li>
+<li>The control flow always concludes with a <code class="docutils literal"><span class="pre">join</span></code> method.</li>
 </ul>
 <p>The application shown above could be coded (assuming the other classes referred to exist) as:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
@@ -205,7 +205,7 @@ control flow.</li>
 <p>Provided that the control flow does not have cycles or the joining of any branches that do
 not originate from the same fork, flows of different complexity can be created using these
 rules and methods.</p>
-<p>More complicated structures can be created using <tt class="docutils literal"><span class="pre">fork</span></tt>. To add another MapReduce
+<p>More complicated structures can be created using <code class="docutils literal"><span class="pre">fork</span></code>. To add another MapReduce
 that runs in parallel to the entire process described above, you could use code such as:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ComplexParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
 
@@ -236,7 +236,7 @@ that runs in parallel to the entire process described above, you could use code 
 <div class="section" id="example-of-using-a-workflow">
 <h2>Example of Using a Workflow<a class="headerlink" href="#example-of-using-a-workflow" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>For an example of the use of <strong>a Workflow,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a> example.</li>
+<li>For an example of the use of <strong>a Workflow,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
 </ul>
 </div>
 </div>

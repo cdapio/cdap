@@ -77,12 +77,12 @@
             
   <div class="section" id="tick-methods">
 <h1>Tick Methods<a class="headerlink" href="#tick-methods" title="Permalink to this headline">¶</a></h1>
-<p>A Flowlet’s method can be annotated with <tt class="docutils literal"><span class="pre">&#64;Tick</span></tt>. Instead of
+<p>A Flowlet’s method can be annotated with <code class="docutils literal"><span class="pre">&#64;Tick</span></code>. Instead of
 processing data objects from a Flowlet input, this method is invoked
 periodically, without arguments. This can be used, for example, to
 generate data, or pull data from an external data source periodically on
 a fixed cadence.</p>
-<p>In this code snippet from the <em>CountRandom</em> example, the <tt class="docutils literal"><span class="pre">&#64;Tick</span></tt>
+<p>In this code snippet from the <em>CountRandom</em> example, the <code class="docutils literal"><span class="pre">&#64;Tick</span></code>
 method in the Flowlet emits random numbers:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RandomSource</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
 
@@ -97,8 +97,8 @@ method in the Flowlet emits random numbers:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Note: <tt class="docutils literal"><span class="pre">&#64;Tick</span></tt> method calls are serial; subsequent calls to the tick
-method will be made only after the previous <tt class="docutils literal"><span class="pre">&#64;Tick</span></tt> method call has returned.</p>
+<p>Note: <code class="docutils literal"><span class="pre">&#64;Tick</span></code> method calls are serial; subsequent calls to the tick
+method will be made only after the previous <code class="docutils literal"><span class="pre">&#64;Tick</span></code> method call has returned.</p>
 </div>
 
 

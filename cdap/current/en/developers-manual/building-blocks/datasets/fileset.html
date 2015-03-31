@@ -92,8 +92,8 @@ these classes are injected into the Hadoop configuration by the CDAP runtime
 system.</li>
 <li>Additional properties of the specified input and output format. Each format has its own
 properties; consult the format&#8217;s documentation for details. For example, the
-<tt class="docutils literal"><span class="pre">TextOutputFormat</span></tt> allows configuring the field separator character by setting the
-property <tt class="docutils literal"><span class="pre">mapreduce.output.textoutputformat.separator</span></tt>. These properties are also set
+<code class="docutils literal"><span class="pre">TextOutputFormat</span></code> allows configuring the field separator character by setting the
+property <code class="docutils literal"><span class="pre">mapreduce.output.textoutputformat.separator</span></code>. These properties are also set
 into the Hadoop configuration by the CDAP runtime system.</li>
 </ul>
 <p>These properties are configured at the time the FileSet is created. They apply to all
@@ -119,7 +119,7 @@ MapReduce programs.</p>
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>This creates a new FileSet named <em>lines</em> that uses <tt class="docutils literal"><span class="pre">TextInputFormat</span></tt> and <tt class="docutils literal"><span class="pre">TextOutputFormat.</span></tt>
+<p>This creates a new FileSet named <em>lines</em> that uses <code class="docutils literal"><span class="pre">TextInputFormat</span></code> and <code class="docutils literal"><span class="pre">TextOutputFormat.</span></code>
 For the output format, we specify an additional property to make it use a colon as the separator
 between the key and the value in each line of output.</p>
 <p>Input and output formats must be implementations of the standard Apache Hadoop
@@ -161,9 +161,9 @@ this is only possible by specifying them as runtime arguments when the MapReduce
 </div>
 <div class="section" id="using-a-fileset-programmatically">
 <h2>Using a FileSet Programmatically<a class="headerlink" href="#using-a-fileset-programmatically" title="Permalink to this headline">¶</a></h2>
-<p>You can interact with the files of a FileSet directly, through the <tt class="docutils literal"><span class="pre">Location</span></tt> abstraction
-of the file system. For example, a Service can use a FileSet by declaring it with a <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt>
-annotation, and then obtaining a <tt class="docutils literal"><span class="pre">Location</span></tt> for a relative path within the FileSet:</p>
+<p>You can interact with the files of a FileSet directly, through the <code class="docutils literal"><span class="pre">Location</span></code> abstraction
+of the file system. For example, a Service can use a FileSet by declaring it with a <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code>
+annotation, and then obtaining a <code class="docutils literal"><span class="pre">Location</span></code> for a relative path within the FileSet:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">)</span>
 <span class="kd">private</span> <span class="n">FileSet</span> <span class="n">lines</span><span class="o">;</span>
 
@@ -184,7 +184,7 @@ annotation, and then obtaining a <tt class="docutils literal"><span class="pre">
 </div>
 <p>See the Apache™ Twill®
 <a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">API documentation</a>
-for additional information about the <tt class="docutils literal"><span class="pre">Location</span></tt> abstraction.</p>
+for additional information about the <code class="docutils literal"><span class="pre">Location</span></code> abstraction.</p>
 </div>
 </div>
 <div class="section" id="partitionedfileset">
@@ -220,14 +220,14 @@ configuration, similar to FileSets. However, the partitioning has to be given as
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>This creates a new PartitionedFileSet named <em>results</em>. Similar to FileSets, it specifies <tt class="docutils literal"><span class="pre">TextInputFormat</span></tt> and
-<tt class="docutils literal"><span class="pre">TextOutputFormat.</span></tt>; for the output format, we specify that the separator between fields is a comma.
+<p>This creates a new PartitionedFileSet named <em>results</em>. Similar to FileSets, it specifies <code class="docutils literal"><span class="pre">TextInputFormat</span></code> and
+<code class="docutils literal"><span class="pre">TextOutputFormat.</span></code>; for the output format, we specify that the separator between fields is a comma.
 The difference to a FileSet is that this Dataset is partitioned by league and season. This means that every file
 added to this Dataset must have a partitioning key with a unique combination of league and season.</p>
 </div>
 <div class="section" id="reading-and-writing-partitionedfilesets">
 <h2>Reading and Writing PartitionedFileSets<a class="headerlink" href="#reading-and-writing-partitionedfilesets" title="Permalink to this headline">¶</a></h2>
-<p>You can interact with the files in a PartitionedFileSet directly through the <tt class="docutils literal"><span class="pre">Location</span></tt> abstraction
+<p>You can interact with the files in a PartitionedFileSet directly through the <code class="docutils literal"><span class="pre">Location</span></code> abstraction
 of the file system. This is similar to a FileSet, but instead of a relative path, you specify a
 partition key to obtain a Partition; you can then get a Location from that Partition.</p>
 <p>For example, to read the content of a partition:</p>
@@ -279,11 +279,11 @@ for the NFL and the &#8216;80s seasons:</p>
 <p>Note that the upper bound for the seasons (1990) is exclusive; that is, the 1990 season is not
 included in the returned partitions. For a range condition, either the lower or the upper bound may
 be null, meaning that the filter in unbounded in that direction.</p>
-<p>Adding a partition is similar; however, instead of a Partition, you receive a <tt class="docutils literal"><span class="pre">PartitionOutput</span></tt>
+<p>Adding a partition is similar; however, instead of a Partition, you receive a <code class="docutils literal"><span class="pre">PartitionOutput</span></code>
 for the partition key. That object has methods to obtain a Location and to add the partition once
 you have written to that Location.
-For example, this code writes to a file named <tt class="docutils literal"><span class="pre">part</span></tt> under the location returned from the
-<tt class="docutils literal"><span class="pre">PartitionOutput</span></tt>:</p>
+For example, this code writes to a file named <code class="docutils literal"><span class="pre">part</span></code> under the location returned from the
+<code class="docutils literal"><span class="pre">PartitionOutput</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionKey</span> <span class="n">key</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">PartitionOutput</span> <span class="n">output</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="na">getPartitionOutput</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
 <span class="k">try</span> <span class="o">{</span>
@@ -326,10 +326,10 @@ a partition with that league as the only key:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Here, the <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method of the MapReduce generates the runtime arguments for the
+<p>Here, the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method of the MapReduce generates the runtime arguments for the
 partitioned file sets that specify the input partition filter and output partition key. This
 is convenient for starting the MapReduce, because only a single argument has to be given for
-the MapReduce run. If that code was not in the <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>, you could still achieve the
+the MapReduce run. If that code was not in the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code>, you could still achieve the
 same result by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
 For example, give these arguments when starting the MapReduce through a RESTful call:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
@@ -359,8 +359,8 @@ For example, give these arguments when starting the MapReduce through a RESTful 
 </pre></div>
 </div>
 <p>This results in the creation of an external table in Hive with the schema given in the
-<tt class="docutils literal"><span class="pre">setExploreSchema()</span></tt>. The supported format are <tt class="docutils literal"><span class="pre">text</span></tt> and <tt class="docutils literal"><span class="pre">csv</span></tt>. Both mean that the
-format is text. For <tt class="docutils literal"><span class="pre">csv</span></tt>, the field delimiter is a comma, whereas for <tt class="docutils literal"><span class="pre">text</span></tt>, you can
+<code class="docutils literal"><span class="pre">setExploreSchema()</span></code>. The supported format are <code class="docutils literal"><span class="pre">text</span></code> and <code class="docutils literal"><span class="pre">csv</span></code>. Both mean that the
+format is text. For <code class="docutils literal"><span class="pre">csv</span></code>, the field delimiter is a comma, whereas for <code class="docutils literal"><span class="pre">text</span></code>, you can
 specify the field delimiter. For example, to use a colon as the field separator:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
 <span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
@@ -378,7 +378,7 @@ format:</p>
 </div>
 <p>You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the <a class="reference external" href="../../source/../../examples-manual/examples/stream-conversion.html#examples-stream-conversion" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">StreamConversion</em></a> example for more details.</p>
+Avro; see the <a class="reference external" href="../../source/../../examples-manual/examples/stream-conversion.html#examples-stream-conversion" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">StreamConversion</span></a> example for more details.</p>
 </div>
 </div>
 <div class="section" id="timepartitionedfileset">
@@ -398,11 +398,11 @@ time instead of by partition key or filter. The time is interpreted as milliseco
 </pre></div>
 </div>
 <p>Essentially, these methods behave the same as if you had converted the time arguments into partition
-keys and then called the corresponding methods of <tt class="docutils literal"><span class="pre">PartitionedFileSet</span></tt> with the resulting partition keys.
+keys and then called the corresponding methods of <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> with the resulting partition keys.
 Additionally:</p>
 <ul class="simple">
 <li>The returned partitions have an extra method to retrieve the partition time as a long.</li>
-<li>The start and end times of <tt class="docutils literal"><span class="pre">getPartitionsByTime()</span></tt> do not correspond directly to a single partition filter,
+<li>The start and end times of <code class="docutils literal"><span class="pre">getPartitionsByTime()</span></code> do not correspond directly to a single partition filter,
 but to a series of partition filters. For example, to retrieve the partitions between November 2014 and
 March 2015, you need two partition filters: one for the months of November through December of 2014, and one
 for January through March of 2015. This method converts a given time range into the corresponding set
@@ -413,7 +413,7 @@ partitions.</li>
 <h2>Using TimePartitionedFileSets in MapReduce<a class="headerlink" href="#using-timepartitionedfilesets-in-mapreduce" title="Permalink to this headline">¶</a></h2>
 <p>Using time partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
 setting an input partition filter and an output partition key, you configure an input time range and an
-output partition time in the <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> of the MapReduce:</p>
+output partition time in the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> of the MapReduce:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputStartTime</span><span class="o">(</span><span class="n">inputArgs</span><span class="o">,</span> <span class="n">startTime</span><span class="o">);</span>
 <span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputEndTime</span><span class="o">(</span><span class="n">inputArgs</span><span class="o">,</span> <span class="n">endTime</span><span class="o">);</span>
 </pre></div>

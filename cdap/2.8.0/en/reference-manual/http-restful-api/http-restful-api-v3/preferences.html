@@ -79,9 +79,9 @@
   <div class="section" id="preferences-http-restful-api">
 <span id="http-restful-api-v3-preferences"></span><span id="http-restful-api-preferences"></span><h1>Preferences HTTP RESTful API<a class="headerlink" href="#preferences-http-restful-api" title="Permalink to this headline">¶</a></h1>
 <p>Use the CDAP Preferences HTTP RESTful API to save, retrieve, and delete preferences in CDAP.</p>
-<p>Preferences, their use and examples of using them, are described in the <a class="reference external" href="../../source/../../admin-manual/operations/preferences.html#preferences" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Administration Manual: Preferences</em></a>.</p>
+<p>Preferences, their use and examples of using them, are described in the <a class="reference external" href="../../source/../../admin-manual/operations/preferences.html#preferences" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Administration Manual: Preferences</span></a>.</p>
 <p>For the remainder of this API, it is assumed that the preferences you are using are defined
-by the <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></tt>, as described under <a class="reference internal" href="introduction.html#http-restful-api-conventions"><em>Conventions</em></a>.</p>
+by the <code class="docutils literal"><span class="pre">&lt;base-url&gt;</span></code>, as described under <a class="reference internal" href="introduction.html#http-restful-api-conventions"><span>Conventions</span></a>.</p>
 <div class="section" id="set-preferences">
 <h2>Set Preferences<a class="headerlink" href="#set-preferences" title="Permalink to this headline">¶</a></h2>
 <p>To set preferences for the CDAP Instance, Namespace, Application, or Program, submit an HTTP PUT request:</p>
@@ -105,16 +105,16 @@ by the <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></t
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Application ID</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code> or <code class="docutils literal"><span class="pre">workers</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Program ID</td>
 </tr>
 </tbody>
@@ -134,13 +134,13 @@ that does not exist or an application that has not yet been deployed.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the preferences were set</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">BAD</span> <span class="pre">REQUEST</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">BAD</span> <span class="pre">REQUEST</span></code></td>
 <td>The JSON body has an invalid format</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
 <td>The entity for which Preferences are being set was not found</td>
 </tr>
 </tbody>
@@ -163,7 +163,7 @@ that does not exist or an application that has not yet been deployed.</p>
 </pre></div>
 </div>
 <p>To retrieve the Resolved Preferences (collapsing Preferences from higher levels into a single level), set the
-<tt class="docutils literal"><span class="pre">resolved</span></tt> query parameter to <tt class="docutils literal"><span class="pre">true</span></tt>:</p>
+<code class="docutils literal"><span class="pre">resolved</span></code> query parameter to <code class="docutils literal"><span class="pre">true</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/preferences?resolved=true</span>
 
 <span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/preferences?resolved=true</span>
@@ -184,16 +184,16 @@ that does not exist or an application that has not yet been deployed.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Application ID</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code> or <code class="docutils literal"><span class="pre">workers</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Program ID</td>
 </tr>
 </tbody>
@@ -210,10 +210,10 @@ that does not exist or an application that has not yet been deployed.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the preferences were retrieved</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
 <td>The entity for which Preferences are being set was not found</td>
 </tr>
 </tbody>
@@ -242,16 +242,16 @@ that does not exist or an application that has not yet been deployed.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Application ID</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">spark</span></tt>, <tt class="docutils literal"><span class="pre">workflows</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt> or <tt class="docutils literal"><span class="pre">workers</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">workflows</span></code>, <code class="docutils literal"><span class="pre">services</span></code> or <code class="docutils literal"><span class="pre">workers</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Program ID</td>
 </tr>
 </tbody>
@@ -268,10 +268,10 @@ that does not exist or an application that has not yet been deployed.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the preferences were retrieved</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">NOT</span> <span class="pre">FOUND</span></code></td>
 <td>The entity for which Preferences are being set was not found</td>
 </tr>
 </tbody>

@@ -76,13 +76,13 @@
             
   <div class="section" id="fileset-exploration">
 <span id="id1"></span><h1>Fileset Exploration<a class="headerlink" href="#fileset-exploration" title="Permalink to this headline">¶</a></h1>
-<p>The <tt class="docutils literal"><span class="pre">FileSet</span></tt> and <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> Datasets can be explored through ad-hoc SQL-like queries.
+<p>The <code class="docutils literal"><span class="pre">FileSet</span></code> and <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> Datasets can be explored through ad-hoc SQL-like queries.
 To enable exploration, you must set several properties when creating the Dataset, and the files in
 your Dataset must meet certain requirements. These properties and requirements are described below.</p>
 <div class="section" id="explore-properties">
 <h2>Explore Properties<a class="headerlink" href="#explore-properties" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">FileSet</span></tt> or <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> is made explorable by setting several properties when
-creating the dataset. The <tt class="docutils literal"><span class="pre">FileSetProperties</span></tt> class should be used to set the following required properties:</p>
+<p>A <code class="docutils literal"><span class="pre">FileSet</span></code> or <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> is made explorable by setting several properties when
+creating the dataset. The <code class="docutils literal"><span class="pre">FileSetProperties</span></code> class should be used to set the following required properties:</p>
 <ul class="simple">
 <li>EnableExploreOnCreate must be set to true to create a Hive table when the Dataset is created</li>
 <li>SerDe class that Hive should use for serialization and deserialization</li>
@@ -135,29 +135,29 @@ for more information about input formats, output format, SerDes, and table prope
 <li>All explorable files must be in Avro format.</li>
 <li>Your version of Hive must include the AvroSerDe.</li>
 <li>Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
-If you are seeing permissions errors, try setting <tt class="docutils literal"><span class="pre">hive.exec.stagingdir</span></tt> in your Hive configuration to <tt class="docutils literal"><span class="pre">/tmp/hive-staging</span></tt>.</li>
+If you are seeing permissions errors, try setting <code class="docutils literal"><span class="pre">hive.exec.stagingdir</span></code> in your Hive configuration to <code class="docutils literal"><span class="pre">/tmp/hive-staging</span></code>.</li>
 </ul>
 <p>There are plans for adding support for additional file formats in upcoming CDAP releases.
-A <tt class="docutils literal"><span class="pre">FileSet</span></tt> has some additional limitations that the <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> does not have:</p>
+A <code class="docutils literal"><span class="pre">FileSet</span></code> has some additional limitations that the <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> does not have:</p>
 <ul class="simple">
-<li>Hive tables created by a <tt class="docutils literal"><span class="pre">FileSet</span></tt> are not partitioned; this means all queries perform a full table scan.</li>
-<li>Only files at the base location of the <tt class="docutils literal"><span class="pre">FileSet</span></tt> are visible to queries. Directories are not read.
+<li>Hive tables created by a <code class="docutils literal"><span class="pre">FileSet</span></code> are not partitioned; this means all queries perform a full table scan.</li>
+<li>Only files at the base location of the <code class="docutils literal"><span class="pre">FileSet</span></code> are visible to queries. Directories are not read.
 Since MapReduce writes output files to a directory, you must move all output files to the base location for
 MapReduce output to be explorable.</li>
 </ul>
-<p>If you wish to use Impala to explore a <tt class="docutils literal"><span class="pre">FileSet</span></tt> or <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>, there are several
+<p>If you wish to use Impala to explore a <code class="docutils literal"><span class="pre">FileSet</span></code> or <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>, there are several
 additional restrictions you must keep in mind:</p>
 <ul class="simple">
 <li>Impala only supports scalar types. See <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/latest/topics/impala_avro.html#avro_data_types_unique_1">Data Type Considerations for Avro Tables</a> for details.</li>
 <li>If your underlying data contains non-scalars, you cannot tell Impala to use a different read schema of just scalars.
 For example, if you have Avro files that contain a map field, you cannot simply leave out the field when specifying the table schema.</li>
 <li>Impala caches table metadata, which clients must invalidate when there are changes.
-You have to issue an <tt class="docutils literal"><span class="pre">INVALIDATE</span> <span class="pre">METADATA</span> <span class="pre">[tablename]</span></tt> command whenever table metadata changes.
+You have to issue an <code class="docutils literal"><span class="pre">INVALIDATE</span> <span class="pre">METADATA</span> <span class="pre">[tablename]</span></code> command whenever table metadata changes.
 You&#8217;ll need to invalidate metadata if a new table or table partition is added. Otherwise, Impala will use the
 cached table metadata, preventing you from seeing the changes. If data is added to a table without changing the
-metadata (such as when adding a partition), then you need to issue a <tt class="docutils literal"><span class="pre">REFRESH</span> <span class="pre">[tablename]</span></tt> command to force
+metadata (such as when adding a partition), then you need to issue a <code class="docutils literal"><span class="pre">REFRESH</span> <span class="pre">[tablename]</span></code> command to force
 Impala to see the changes. Though Impala also caches info on table files and blocks, any calls to the
-<tt class="docutils literal"><span class="pre">REFRESH</span></tt> command will cause it to re-read the information.</li>
+<code class="docutils literal"><span class="pre">REFRESH</span></code> command will cause it to re-read the information.</li>
 </ul>
 </div>
 </div>

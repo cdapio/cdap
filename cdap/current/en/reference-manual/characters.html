@@ -79,25 +79,25 @@
 <h2>Streams<a class="headerlink" href="#streams" title="Permalink to this headline">¶</a></h2>
 <p>Stream names can have these characters:</p>
 <ul class="simple">
-<li>Alphanumeric characters (<tt class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></tt>)</li>
-<li>Hyphens (<tt class="docutils literal"><span class="pre">-</span></tt>)</li>
-<li>Underscores (<tt class="docutils literal"><span class="pre">_</span></tt>)</li>
+<li>Alphanumeric characters (<code class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></code>)</li>
+<li>Hyphens (<code class="docutils literal"><span class="pre">-</span></code>)</li>
+<li>Underscores (<code class="docutils literal"><span class="pre">_</span></code>)</li>
 </ul>
 </div>
 <div class="section" id="datasets">
 <h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h2>
 <p>Dataset names can have these characters:</p>
 <ul class="simple">
-<li>Alphanumeric characters (<tt class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></tt>)</li>
-<li>Hyphens (<tt class="docutils literal"><span class="pre">-</span></tt>)</li>
-<li>Underscores (<tt class="docutils literal"><span class="pre">_</span></tt>)</li>
-<li>Periods (<tt class="docutils literal"><span class="pre">.</span></tt>)</li>
+<li>Alphanumeric characters (<code class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></code>)</li>
+<li>Hyphens (<code class="docutils literal"><span class="pre">-</span></code>)</li>
+<li>Underscores (<code class="docutils literal"><span class="pre">_</span></code>)</li>
+<li>Periods (<code class="docutils literal"><span class="pre">.</span></code>)</li>
 </ul>
 </div>
 <div class="section" id="hive-limitation-and-conversion">
 <h2>Hive Limitation and Conversion<a class="headerlink" href="#hive-limitation-and-conversion" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL">Hive 0.12</a>
-only supports alphanumeric characters (<tt class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></tt>) and underscores (<tt class="docutils literal"><span class="pre">_</span></tt>).</p>
+only supports alphanumeric characters (<code class="docutils literal"><span class="pre">a-z</span> <span class="pre">A-Z</span> <span class="pre">0-9</span></code>) and underscores (<code class="docutils literal"><span class="pre">_</span></code>).</p>
 <p>As a consequence, any hyphens in Stream names and any hyphens or periods in Dataset names
 will be converted to underscores while creating Hive tables.</p>
 <p>Examples:</p>
@@ -105,21 +105,21 @@ will be converted to underscores while creating Hive tables.</p>
 <li><p class="first">The Streams</p>
 <blockquote>
 <div><ul class="simple">
-<li><tt class="docutils literal"><span class="pre">my-ingest</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">my_ingest</span></tt></li>
+<li><code class="docutils literal"><span class="pre">my-ingest</span></code></li>
+<li><code class="docutils literal"><span class="pre">my_ingest</span></code></li>
 </ul>
 </div></blockquote>
-<p>will both be converted to <tt class="docutils literal"><span class="pre">stream_my_ingest</span></tt></p>
+<p>will both be converted to <code class="docutils literal"><span class="pre">stream_my_ingest</span></code></p>
 </li>
 <li><p class="first">The Datasets</p>
 <blockquote>
 <div><ul class="simple">
-<li><tt class="docutils literal"><span class="pre">my-dataset</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">my_dataset</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">my.dataset</span></tt></li>
+<li><code class="docutils literal"><span class="pre">my-dataset</span></code></li>
+<li><code class="docutils literal"><span class="pre">my_dataset</span></code></li>
+<li><code class="docutils literal"><span class="pre">my.dataset</span></code></li>
 </ul>
 </div></blockquote>
-<p>will all be converted to <tt class="docutils literal"><span class="pre">dataset_my_dataset</span></tt></p>
+<p>will all be converted to <code class="docutils literal"><span class="pre">dataset_my_dataset</span></code></p>
 </li>
 </ul>
 <p>Names should be carefully constructed to avoid any collisions as a result of conversion.</p>

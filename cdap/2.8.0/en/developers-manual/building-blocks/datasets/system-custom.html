@@ -83,17 +83,17 @@
 key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded
 Tables, but defines its own interface. Examples include:</p>
 <ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">KeyValueTable</span></tt> implements a key/value store as a Table with a single column.</li>
-<li>The <tt class="docutils literal"><span class="pre">IndexedTable</span></tt> implements a Table with a secondary key using two embedded Tables,
+<li>The <code class="docutils literal"><span class="pre">KeyValueTable</span></code> implements a key/value store as a Table with a single column.</li>
+<li>The <code class="docutils literal"><span class="pre">IndexedTable</span></code> implements a Table with a secondary key using two embedded Tables,
 one for the data and one for the secondary index.</li>
-<li>The <tt class="docutils literal"><span class="pre">TimeseriesTable</span></tt> uses a Table to store keyed data over time
+<li>The <code class="docutils literal"><span class="pre">TimeseriesTable</span></code> uses a Table to store keyed data over time
 and allows querying that data over ranges of time.</li>
-<li>The <tt class="docutils literal"><span class="pre">ObjectMappedTable</span></tt> uses a Table to store Java Objects by mapping object fields to
+<li>The <code class="docutils literal"><span class="pre">ObjectMappedTable</span></code> uses a Table to store Java Objects by mapping object fields to
 table columns. It can be explored through the use of ad-hoc SQL-like queries as described
-in <a class="reference internal" href="../../data-exploration/object-mapped-tables.html#object-mapped-table-exploration"><em>ObjectMappedTable Exploration</em></a>.</li>
+in <a class="reference internal" href="../../data-exploration/object-mapped-tables.html#object-mapped-table-exploration"><span>ObjectMappedTable Exploration</span></a>.</li>
 </ul>
-<p>See the <a class="reference external" href="../../source/../../reference-manual/javadocs/index.html#javadocs" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Javadocs</em></a> for these classes and the <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Examples</em></a>
-to learn more about these Datasets. Any class in the CDAP libraries that implements the <tt class="docutils literal"><span class="pre">Dataset</span></tt> interface is a
+<p>See the <a class="reference external" href="../../source/../../reference-manual/javadocs/index.html#javadocs" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Javadocs</span></a> for these classes and the <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Examples</span></a>
+to learn more about these Datasets. Any class in the CDAP libraries that implements the <code class="docutils literal"><span class="pre">Dataset</span></code> interface is a
 system Dataset.</p>
 </div>
 <div class="section" id="custom-datasets">
@@ -101,14 +101,14 @@ system Dataset.</p>
 <p>You can define your own Dataset classes to implement common data patterns specific to your code.</p>
 <p>Suppose you want to define a counter table that, in addition to counting words,
 counts how many unique words it has seen. The Dataset can be built on top of two underlying Datasets. The first a
-Table (<tt class="docutils literal"><span class="pre">entryCountTable</span></tt>) to count all the words and the second a Table (<tt class="docutils literal"><span class="pre">uniqueCountTable</span></tt>) for the unique count.</p>
+Table (<code class="docutils literal"><span class="pre">entryCountTable</span></code>) to count all the words and the second a Table (<code class="docutils literal"><span class="pre">uniqueCountTable</span></code>) for the unique count.</p>
 <p>When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
 it is to just define the data operations (by implementing the Dataset interface) and delegating all other
 work (such as  administrative operations) to the embedded Dataset.</p>
 <p>To do this, you need to implement the Dataset class and define the embedded Datasets by annotating
 its constructor arguments.</p>
-<p>In this case, our  <tt class="docutils literal"><span class="pre">UniqueCountTableDefinition</span></tt> will have two underlying Datasets:
-an <tt class="docutils literal"><span class="pre">entryCountTable</span></tt> and an <tt class="docutils literal"><span class="pre">uniqueCountTable</span></tt>, both of type <tt class="docutils literal"><span class="pre">Table</span></tt>:</p>
+<p>In this case, our  <code class="docutils literal"><span class="pre">UniqueCountTableDefinition</span></code> will have two underlying Datasets:
+an <code class="docutils literal"><span class="pre">entryCountTable</span></code> and an <code class="docutils literal"><span class="pre">uniqueCountTable</span></code>, both of type <code class="docutils literal"><span class="pre">Table</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UniqueCountTable</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span> <span class="o">{</span>
 
   <span class="kd">private</span> <span class="kd">final</span> <span class="n">Table</span> <span class="n">entryCountTable</span><span class="o">;</span>
@@ -123,10 +123,10 @@ an <tt class="docutils literal"><span class="pre">entryCountTable</span></tt> an
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>In this case, the class must have one constructor that takes a <tt class="docutils literal"><span class="pre">DatasetSpecification</span></tt> as a first
-parameter and any number of <tt class="docutils literal"><span class="pre">Dataset</span></tt>s annotated with the <tt class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></tt> annotation as the
-remaining parameters. <tt class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></tt> takes the embedded Dataset&#8217;s name as a parameter.</p>
-<p>The <tt class="docutils literal"><span class="pre">UniqueCountTable</span></tt> stores a counter for each word in its own row of the entry count table.
+<p>In this case, the class must have one constructor that takes a <code class="docutils literal"><span class="pre">DatasetSpecification</span></code> as a first
+parameter and any number of <code class="docutils literal"><span class="pre">Dataset</span></code>s annotated with the <code class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></code> annotation as the
+remaining parameters. <code class="docutils literal"><span class="pre">&#64;EmbeddedDataset</span></code> takes the embedded Dataset&#8217;s name as a parameter.</p>
+<p>The <code class="docutils literal"><span class="pre">UniqueCountTable</span></code> stores a counter for each word in its own row of the entry count table.
 For each word the counter is incremented. If the result of the increment is 1, then this is the first time
 we&#8217;ve encountered that word, hence we have a new unique word and we then increment the unique counter:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateUniqueCount</span><span class="o">(</span><span class="n">String</span> <span class="n">entry</span><span class="o">)</span> <span class="o">{</span>
@@ -144,9 +144,9 @@ we&#8217;ve encountered that word, hence we have a new unique word and we then i
 </pre></div>
 </div>
 <p>All administrative operations (such as create, drop, truncate) will be delegated to the embedded Datasets
-in the order they are defined in the constructor. <tt class="docutils literal"><span class="pre">DatasetProperties</span></tt> that are passed during creation of
+in the order they are defined in the constructor. <code class="docutils literal"><span class="pre">DatasetProperties</span></code> that are passed during creation of
 the Dataset will be passed as-is to the embedded Datasets.</p>
-<p>To create a Dataset of type <tt class="docutils literal"><span class="pre">UniqueCountTable</span></tt>, add the following into the Application implementation:</p>
+<p>To create a Dataset of type <code class="docutils literal"><span class="pre">UniqueCountTable</span></code>, add the following into the Application implementation:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">Class</span> <span class="n">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
     <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">,</span> <span class="n">UniqueCountTable</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
@@ -155,9 +155,9 @@ the Dataset will be passed as-is to the embedded Datasets.</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>You can also pass <tt class="docutils literal"><span class="pre">DatasetProperties</span></tt> as a third parameter to the <tt class="docutils literal"><span class="pre">createDataset</span></tt> method.
+<p>You can also pass <code class="docutils literal"><span class="pre">DatasetProperties</span></code> as a third parameter to the <code class="docutils literal"><span class="pre">createDataset</span></code> method.
 These properties will be used by embedded Datasets during creation and will be available via the
-<tt class="docutils literal"><span class="pre">DatasetSpecification</span></tt> passed to the Dataset constructor. For example, to create a Dataset with
+<code class="docutils literal"><span class="pre">DatasetSpecification</span></code> passed to the Dataset constructor. For example, to create a Dataset with
 a TTL (time-to-live) property, you can use:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;frequentCustomers&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
   <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
@@ -166,9 +166,9 @@ a TTL (time-to-live) property, you can use:</p>
 </pre></div>
 </div>
 <p>You can pass other properties, such as for
-<a class="reference internal" href="../transaction-system.html#transaction-system-conflict-detection"><em>conflict detection</em></a> and for
-<a class="reference internal" href="table.html#table-datasets-pre-splitting"><em>pre-splitting into multiple regions</em></a>.</p>
-<p>Application components can access a created Dataset via the <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt> annotation:</p>
+<a class="reference internal" href="../transaction-system.html#transaction-system-conflict-detection"><span>conflict detection</span></a> and for
+<a class="reference internal" href="table.html#table-datasets-pre-splitting"><span>pre-splitting into multiple regions</span></a>.</p>
+<p>Application components can access a created Dataset via the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">Class</span> <span class="n">MyFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
   <span class="kd">private</span> <span class="n">UniqueCountTable</span> <span class="n">counters</span><span class="o">;</span>
@@ -177,8 +177,8 @@ a TTL (time-to-live) property, you can use:</p>
 </pre></div>
 </div>
 <p>A complete application demonstrating the use of a custom Dataset is included in our
-<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase Example.</em></a></p>
-<p>You can also create, drop, and truncate Datasets using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><em>Dataset HTTP RESTful API</em></a>.</p>
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase Example.</span></a></p>
+<p>You can also create, drop, and truncate Datasets using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><span>Dataset HTTP RESTful API</span></a>.</p>
 </div>
 </div>
 

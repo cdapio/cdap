@@ -84,8 +84,8 @@ abstraction layer in CDAP.</p>
 data. <a class="reference internal" href="services.html"><em>Services</em></a> are used to serve data.</p>
 <p><strong>Data abstractions</strong> include <a class="reference internal" href="streams.html"><em>Streams</em></a> and <a class="reference internal" href="datasets/index.html"><em>Datasets</em></a>.</p>
 <p class="rubric">Creating an Application with an Application Specification</p>
-<p>To create an Application, implement the <tt class="docutils literal"><span class="pre">Application</span></tt> interface or subclass from
-<tt class="docutils literal"><span class="pre">AbstractApplication</span></tt> class, specifying the Application metadata and declaring and
+<p>To create an Application, implement the <code class="docutils literal"><span class="pre">Application</span></code> interface or subclass from
+<code class="docutils literal"><span class="pre">AbstractApplication</span></code> class, specifying the Application metadata and declaring and
 configuring each of the Application components:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="nd">@Override</span>
@@ -102,8 +102,8 @@ configuring each of the Application components:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Notice that <em>Streams</em> are defined using the provided <tt class="docutils literal"><span class="pre">Stream</span></tt> class, and <em>Datasets</em> are
-defined by passing a <tt class="docutils literal"><span class="pre">Table</span></tt> class; both are referenced by name.</p>
+<p>Notice that <em>Streams</em> are defined using the provided <code class="docutils literal"><span class="pre">Stream</span></code> class, and <em>Datasets</em> are
+defined by passing a <code class="docutils literal"><span class="pre">Table</span></code> class; both are referenced by name.</p>
 <p>Other components are defined using user-written classes that implement correspondent
 interfaces and are referenced by passing an object, in addition to being assigned a unique
 name.</p>

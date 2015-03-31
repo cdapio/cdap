@@ -76,35 +76,35 @@
 <span id="pentaho-integration"></span><h1>Pentaho Data Integration<a class="headerlink" href="#pentaho-data-integration" title="Permalink to this headline">¶</a></h1>
 <p><em>Pentaho Data Integration</em> is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let&#8217;s see how to connect it to
-CDAP Datasets using the <a class="reference internal" href="jdbc.html#cdap-jdbc"><em>CDAP JDBC driver</em></a>.</p>
+CDAP Datasets using the <a class="reference internal" href="jdbc.html#cdap-jdbc"><span>CDAP JDBC driver</span></a>.</p>
 <ol class="arabic">
 <li><p class="first">Before opening the <em>Pentaho Data Integration</em> application, copy the
-<tt class="docutils literal"><span class="pre">co.cask.cdap.cdap-explore-jdbc-</span></tt><tt class="docutils literal"><span class="pre">2.8.0</span></tt><tt class="docutils literal"><span class="pre">.jar</span></tt>
-file to the <tt class="docutils literal"><span class="pre">lib</span></tt> directory of <em>Pentaho Data Integration</em>, located at the root of the application&#8217;s directory.</p>
+<code class="docutils literal"><span class="pre">co.cask.cdap.cdap-explore-jdbc-</span></code><code class="docutils literal"><span class="pre">2.8.0</span></code><code class="docutils literal"><span class="pre">.jar</span></code>
+file to the <code class="docutils literal"><span class="pre">lib</span></code> directory of <em>Pentaho Data Integration</em>, located at the root of the application&#8217;s directory.</p>
 </li>
 <li><p class="first">Open <em>Pentaho Data Integration</em>.</p>
 </li>
-<li><p class="first">In the toolbar, select <tt class="docutils literal"><span class="pre">File</span> <span class="pre">-&gt;</span> <span class="pre">New</span> <span class="pre">-&gt;</span> <span class="pre">Database</span> <span class="pre">Connection...</span></tt>.</p>
+<li><p class="first">In the toolbar, select <code class="docutils literal"><span class="pre">File</span> <span class="pre">-&gt;</span> <span class="pre">New</span> <span class="pre">-&gt;</span> <span class="pre">Database</span> <span class="pre">Connection...</span></code>.</p>
 </li>
-<li><p class="first">In the <tt class="docutils literal"><span class="pre">General</span></tt> section, select a <tt class="docutils literal"><span class="pre">Connection</span> <span class="pre">Name</span></tt>, like <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></tt>. For the <tt class="docutils literal"><span class="pre">Connection</span> <span class="pre">Type</span></tt>, select
-<tt class="docutils literal"><span class="pre">Generic</span> <span class="pre">database</span></tt>. Select <tt class="docutils literal"><span class="pre">Native</span> <span class="pre">(JDBC)</span></tt> for the <tt class="docutils literal"><span class="pre">Access</span></tt> field. In this example, where we connect to
-a standalone instance of CDAP, our <tt class="docutils literal"><span class="pre">Custom</span> <span class="pre">Connection</span> <span class="pre">URL</span></tt> will then be <tt class="docutils literal"><span class="pre">jdbc:cdap://localhost:10000</span></tt>.
-In the field <tt class="docutils literal"><span class="pre">Custom</span> <span class="pre">Driver</span> <span class="pre">Class</span> <span class="pre">Name</span></tt>, enter <tt class="docutils literal"><span class="pre">co.cask.cdap.explore.jdbc.ExploreDriver</span></tt>.</p>
+<li><p class="first">In the <code class="docutils literal"><span class="pre">General</span></code> section, select a <code class="docutils literal"><span class="pre">Connection</span> <span class="pre">Name</span></code>, like <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></code>. For the <code class="docutils literal"><span class="pre">Connection</span> <span class="pre">Type</span></code>, select
+<code class="docutils literal"><span class="pre">Generic</span> <span class="pre">database</span></code>. Select <code class="docutils literal"><span class="pre">Native</span> <span class="pre">(JDBC)</span></code> for the <code class="docutils literal"><span class="pre">Access</span></code> field. In this example, where we connect to
+a standalone instance of CDAP, our <code class="docutils literal"><span class="pre">Custom</span> <span class="pre">Connection</span> <span class="pre">URL</span></code> will then be <code class="docutils literal"><span class="pre">jdbc:cdap://localhost:10000</span></code>.
+In the field <code class="docutils literal"><span class="pre">Custom</span> <span class="pre">Driver</span> <span class="pre">Class</span> <span class="pre">Name</span></code>, enter <code class="docutils literal"><span class="pre">co.cask.cdap.explore.jdbc.ExploreDriver</span></code>.</p>
 <a class="reference internal image-reference" href="_images/pentaho_add_connection.png"><img alt="_images/pentaho_add_connection.png" src="_images/pentaho_add_connection.png" style="width: 6in;" /></a>
 </li>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">OK</span></tt>.</p>
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">OK</span></code>.</p>
 </li>
-<li><p class="first">To use this connection, navigate to the <tt class="docutils literal"><span class="pre">Design</span></tt> tab on the left of the main view. In the <tt class="docutils literal"><span class="pre">Input</span></tt> menu,
-double click on <tt class="docutils literal"><span class="pre">Table</span> <span class="pre">input</span></tt>. It will create a new transformation containing this input.</p>
+<li><p class="first">To use this connection, navigate to the <code class="docutils literal"><span class="pre">Design</span></code> tab on the left of the main view. In the <code class="docutils literal"><span class="pre">Input</span></code> menu,
+double click on <code class="docutils literal"><span class="pre">Table</span> <span class="pre">input</span></code>. It will create a new transformation containing this input.</p>
 <a class="reference internal image-reference" href="_images/pentaho_table_input.png"><img alt="_images/pentaho_table_input.png" src="_images/pentaho_table_input.png" style="width: 6in;" /></a>
 </li>
-<li><p class="first">Right-click on <tt class="docutils literal"><span class="pre">Table</span> <span class="pre">input</span></tt> in your transformation and select <tt class="docutils literal"><span class="pre">Edit</span> <span class="pre">step</span></tt>. You can specify an appropriate name
-for this input such as <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Datasets</span> <span class="pre">query</span></tt>. Under <tt class="docutils literal"><span class="pre">Connection</span></tt>, select the newly created database connection;
-in this example, <tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></tt>. Enter a valid SQL query in the main <tt class="docutils literal"><span class="pre">SQL</span></tt> field. This will define the data
+<li><p class="first">Right-click on <code class="docutils literal"><span class="pre">Table</span> <span class="pre">input</span></code> in your transformation and select <code class="docutils literal"><span class="pre">Edit</span> <span class="pre">step</span></code>. You can specify an appropriate name
+for this input such as <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Datasets</span> <span class="pre">query</span></code>. Under <code class="docutils literal"><span class="pre">Connection</span></code>, select the newly created database connection;
+in this example, <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Standalone</span></code>. Enter a valid SQL query in the main <code class="docutils literal"><span class="pre">SQL</span></code> field. This will define the data
 available to your transformation.</p>
 <a class="reference internal image-reference" href="_images/pentaho_modify_input.png"><img alt="_images/pentaho_modify_input.png" src="_images/pentaho_modify_input.png" style="width: 6in;" /></a>
 </li>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">OK</span></tt>. Your input is now ready to be used in your transformation, and it will contain data coming
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">OK</span></code>. Your input is now ready to be used in your transformation, and it will contain data coming
 from the results of the SQL query on the CDAP Datasets.</p>
 </li>
 <li><p class="first">For more information on how to add components to a transformation and link them together, see the

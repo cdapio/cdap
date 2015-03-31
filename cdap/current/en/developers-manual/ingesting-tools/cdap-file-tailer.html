@@ -123,7 +123,7 @@ instructions</a>.</p>
 </pre></div>
 </div>
 <p>Please note that the target file must be accessible to the File Tailer
-user. To check, you can use the <tt class="docutils literal"><span class="pre">more</span></tt> command with the File Tailer
+user. To check, you can use the <code class="docutils literal"><span class="pre">more</span></code> command with the File Tailer
 user:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">sudo -u file-tailer more path_to_target_file</span>
 </pre></div>
@@ -136,8 +136,8 @@ user:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">sudo service file-tailer stop</span>
 </pre></div>
 </div>
-<p>File Tailer stores log files in the <tt class="docutils literal"><span class="pre">/var/log/file-tailer</span></tt> directory.
-PID, states and statistics are stored in the <tt class="docutils literal"><span class="pre">/var/run/file-tailer</span></tt>
+<p>File Tailer stores log files in the <code class="docutils literal"><span class="pre">/var/log/file-tailer</span></code> directory.
+PID, states and statistics are stored in the <code class="docutils literal"><span class="pre">/var/run/file-tailer</span></code>
 directory.</p>
 </div>
 <div class="section" id="example-configuration">
@@ -188,9 +188,9 @@ editing the properties file:</p>
 </div>
 <p>Authentication Client configuration parameters:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client</span></tt> - classpath of authentication
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client</span></code> - classpath of authentication
 client class</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client_properties</span></tt> - path to
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client_properties</span></code> - path to
 authentication client properties file</li>
 </ul>
 <div class="section" id="authentication-client-example-configuration">
@@ -207,48 +207,48 @@ authentication client properties file</li>
 <h2>Additional Notes<a class="headerlink" href="#additional-notes" title="Permalink to this headline">¶</a></h2>
 <p>Description of configuration parameters:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">daemon_dir</span></tt> : the path to directory for storage of File Tailer
+<li><code class="docutils literal"><span class="pre">daemon_dir</span></code> : the path to directory for storage of File Tailer
 state and metrics</li>
-<li><tt class="docutils literal"><span class="pre">pipes</span></tt> : list of all pipes, comma-separated</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.name</span></tt> : name of the pipe</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.state_file</span></tt> : name of file, used to save state</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.statistics_file</span></tt> : name of file, used to save
+<li><code class="docutils literal"><span class="pre">pipes</span></code> : list of all pipes, comma-separated</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.name</span></code> : name of the pipe</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.state_file</span></code> : name of file, used to save state</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.statistics_file</span></code> : name of file, used to save
 statistics</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.queue_size</span></tt> : size of queue (default 1000), of
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.queue_size</span></code> : size of queue (default 1000), of
 stored log records, before sending them to Stream</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.work_dir</span></tt> : path to directory being
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.work_dir</span></code> : path to directory being
 monitored for target log files</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.file_name</span></tt> : name of target log file</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.rotated_file_name_pattern</span></tt> : log file
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.file_name</span></code> : name of target log file</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.rotated_file_name_pattern</span></code> : log file
 rollover pattern (default &#8220;(.*)&#8221; )</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.charset_name</span></tt> : name of charset used by
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.charset_name</span></code> : name of charset used by
 Stream Client for sending logs (default &#8220;UTF-8&#8221;)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.record_separator</span></tt> : symbol that separates
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.record_separator</span></code> : symbol that separates
 each log record (default &#8220;&#8221;)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.sleep_interval</span></tt> : interval to sleep after
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.sleep_interval</span></code> : interval to sleep after
 reading all log data (default 3000 ms)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_retry_limit</span></tt> : number of attempts
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_retry_limit</span></code> : number of attempts
 to retry reading a log, if an error occurred while reading file data
 (default value is 0 for unlimited attempts)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_sleep_interval</span></tt> : interval to
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_sleep_interval</span></code> : interval to
 sleep if an error occurred while reading the file data (default 60000
 ms)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.stream_name</span></tt> : name of target stream</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.host</span></tt> : server host</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.port</span></tt> : server port</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.ssl</span></tt> : Secure Socket Layer mode
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.stream_name</span></code> : name of target stream</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.host</span></code> : server host</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.port</span></code> : server port</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.ssl</span></code> : Secure Socket Layer mode
 [true|false] (default false)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.apiKey</span></tt> : SSL security key</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.writerPoolSize</span></tt> : number of threads with
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.apiKey</span></code> : SSL security key</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.writerPoolSize</span></code> : number of threads with
 which Stream Client sends events (default 10)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.version</span></tt> : CDAP server version (default
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.version</span></code> : CDAP server version (default
 &#8220;v2&#8221;)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.packSize</span></tt> : number of logs sent at a time
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.packSize</span></code> : number of logs sent at a time
 (default 1)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_retry_limit</span></tt> : number of attempts
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_retry_limit</span></code> : number of attempts
 to retry sending logs, if an error occurred while reading file data
 (default value is 0 for unlimited attempts)</li>
-<li><tt class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_sleep_interval</span></tt> : interval to sleep
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_sleep_interval</span></code> : interval to sleep
 if an error occurred while sending the logs (default 60000 ms)</li>
 </ul>
 </div>

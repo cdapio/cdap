@@ -81,13 +81,13 @@
 <p>There are three ways to initialize instance fields used in Flowlets and Procedures:</p>
 <ol class="arabic simple">
 <li>Using the default constructor;</li>
-<li>Using the <tt class="docutils literal"><span class="pre">initialize()</span></tt> method of the Flowlets and Procedures; and</li>
-<li>Using <tt class="docutils literal"><span class="pre">&#64;Property</span></tt> annotations.</li>
+<li>Using the <code class="docutils literal"><span class="pre">initialize()</span></code> method of the Flowlets and Procedures; and</li>
+<li>Using <code class="docutils literal"><span class="pre">&#64;Property</span></code> annotations.</li>
 </ol>
 <p>To initialize using an Property annotation, simply annotate the field definition with
-<tt class="docutils literal"><span class="pre">&#64;Property</span></tt>.</p>
-<p>The following example demonstrates the convenience of using <tt class="docutils literal"><span class="pre">&#64;Property</span></tt> in a
-<tt class="docutils literal"><span class="pre">WordFilter</span></tt> flowlet
+<code class="docutils literal"><span class="pre">&#64;Property</span></code>.</p>
+<p>The following example demonstrates the convenience of using <code class="docutils literal"><span class="pre">&#64;Property</span></code> in a
+<code class="docutils literal"><span class="pre">WordFilter</span></code> flowlet
 that filters out specific words:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WordFilter</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
 
@@ -127,18 +127,18 @@ that filters out specific words:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>At run-time, when the Flowlet is started, a value is injected into the <tt class="docutils literal"><span class="pre">toFilterOut</span></tt>
+<p>At run-time, when the Flowlet is started, a value is injected into the <code class="docutils literal"><span class="pre">toFilterOut</span></code>
 field.</p>
-<p>Field types that are supported using the <tt class="docutils literal"><span class="pre">&#64;Property</span></tt> annotation are primitives,
-boxed types (e.g. <tt class="docutils literal"><span class="pre">Integer</span></tt>), <tt class="docutils literal"><span class="pre">String</span></tt> and <tt class="docutils literal"><span class="pre">enum</span></tt>.</p>
+<p>Field types that are supported using the <code class="docutils literal"><span class="pre">&#64;Property</span></code> annotation are primitives,
+boxed types (e.g. <code class="docutils literal"><span class="pre">Integer</span></code>), <code class="docutils literal"><span class="pre">String</span></code> and <code class="docutils literal"><span class="pre">enum</span></code>.</p>
 </div>
 <div class="section" id="scanning-over-tables-with-byte-keys">
-<h2>Scanning Over Tables with <tt class="docutils literal"><span class="pre">byte[]</span></tt> Keys<a class="headerlink" href="#scanning-over-tables-with-byte-keys" title="Permalink to this headline">¶</a></h2>
+<h2>Scanning Over Tables with <code class="docutils literal"><span class="pre">byte[]</span></code> Keys<a class="headerlink" href="#scanning-over-tables-with-byte-keys" title="Permalink to this headline">¶</a></h2>
 <p>In the CDAP Java API,
 <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/common/Bytes.html#stopKeyForPrefix(byte[])">Bytes.stopKeyForPrefix()</a>
-is a very handy tool when performing scans over tables with <tt class="docutils literal"><span class="pre">byte[]</span></tt> keys.</p>
+is a very handy tool when performing scans over tables with <code class="docutils literal"><span class="pre">byte[]</span></code> keys.</p>
 <p>The method returns a given prefix, incremented by one, in a form that is suitable for
-prefix matching. Here is an example, showing <tt class="docutils literal"><span class="pre">stopKeyForPrefix</span></tt> being used to generate,
+prefix matching. Here is an example, showing <code class="docutils literal"><span class="pre">stopKeyForPrefix</span></code> being used to generate,
 from a provided index key, an incremented stop key:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Returns first that matches</span>
 <span class="nd">@Nullable</span>
@@ -237,7 +237,7 @@ from a provided index key, an incremented stop key:</p>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html"> Advanced Topics</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href=""> Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#initializing-instance-fields">Initializing Instance Fields</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#scanning-over-tables-with-byte-keys">Scanning Over Tables with <tt class="docutils literal"><span class="pre">byte[]</span></tt> Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scanning-over-tables-with-byte-keys">Scanning Over Tables with <code class="docutils literal"><span class="pre">byte[]</span></code> Keys</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="adapters.html"> Adapters</a></li>

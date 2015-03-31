@@ -99,7 +99,7 @@ written to the Stream)</li>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>To use the Stream Client Java API, include this Maven dependency in your
-project&#8217;s <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file:</p>
+project&#8217;s <code class="docutils literal"><span class="pre">pom.xml</span></code> file:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;dependency&gt;</span>
 <span class="go">  &lt;groupId&gt;co.cask.cdap&lt;/groupId&gt;</span>
 <span class="go">  &lt;artifactId&gt;cdap-stream-client&lt;/artifactId&gt;</span>
@@ -150,7 +150,7 @@ Stream remains in place.</li>
 </div>
 <div class="section" id="create-streamwriter">
 <h3>Create StreamWriter<a class="headerlink" href="#create-streamwriter" title="Permalink to this headline">¶</a></h3>
-<p>Create a <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> instance for writing events to the Stream
+<p>Create a <code class="docutils literal"><span class="pre">StreamWriter</span></code> instance for writing events to the Stream
 <em>streamName</em>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">StreamWriter streamWriter = streamClient.createWriter(&quot;streamName&quot;);</span>
 </pre></div>
@@ -158,7 +158,7 @@ Stream remains in place.</li>
 </div>
 <div class="section" id="write-stream-events">
 <h3>Write Stream Events<a class="headerlink" href="#write-stream-events" title="Permalink to this headline">¶</a></h3>
-<p>To write new events to the Stream, use the <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> interface:</p>
+<p>To write new events to the Stream, use the <code class="docutils literal"><span class="pre">StreamWriter</span></code> interface:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">ListenableFuture&lt;Void&gt; future = streamWriter.write(&quot;New log event&quot;, Charsets.UTF_8);</span>
 </pre></div>
 </div>

@@ -114,24 +114,24 @@ application with these commands:</p>
 <span class="gp">$</span> mvn package -DskipTests
 </pre></div>
 </div>
-<p>In both cases, the packaged application is in the <tt class="docutils literal"><span class="pre">target/</span></tt> directory and the file name is
-<tt class="docutils literal"><span class="pre">cdap-wise-0.2.2.jar</span></tt>.</p>
+<p>In both cases, the packaged application is in the <code class="docutils literal"><span class="pre">target/</span></code> directory and the file name is
+<code class="docutils literal"><span class="pre">cdap-wise-0.2.2.jar</span></code>.</p>
 <p><strong>Learn More:</strong> <em>A detailed description of the application and its implementation is
-available in the</em> <a class="reference external" href="../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Web Analytics Application documentation.</em></a></p>
+available in the</em> <a class="reference external" href="../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Web Analytics Application documentation.</span></a></p>
 </div>
 <div class="section" id="deploying-the-application">
 <h2>Deploying the Application<a class="headerlink" href="#deploying-the-application" title="Permalink to this headline">¶</a></h2>
 <p>You can deploy the application into your running instance of CDAP either by using the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Command Line Interface</em></a>:</p>
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Command Line Interface</span></a>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> &lt;path-to-CDAP-SDK&gt;/bin/cdap-cli.sh deploy app target/cdap-wise-0.2.2.jar
 </pre></div>
 </div>
-<p>or using <tt class="docutils literal"><span class="pre">curl</span></tt> to directly make an HTTP request:</p>
+<p>or using <code class="docutils literal"><span class="pre">curl</span></code> to directly make an HTTP request:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -H <span class="s2">&quot;X-Archive-Name: cdap-wise-0.2.1.jar&quot;</span> localhost:10000/v3/namespaces/default/apps <span class="se">\</span>
 <span class="go">  --data-binary @target/cdap-wise-0.2.2.jar</span>
 </pre></div>
 </div>
-<p><strong>Learn More:</strong> <em>You can also deploy apps</em> <a class="reference external" href="../source/../../admin-manual/operations/cdap-console.html#cdap-console" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">using the CDAP Console.</em></a></p>
+<p><strong>Learn More:</strong> <em>You can also deploy apps</em> <a class="reference external" href="../source/../../admin-manual/operations/cdap-console.html#cdap-console" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">using the CDAP Console.</span></a></p>
 </div>
 <div class="section" id="starting-realtime-processing">
 <h2>Starting Realtime Processing<a class="headerlink" href="#starting-realtime-processing" title="Permalink to this headline">¶</a></h2>
@@ -141,7 +141,7 @@ available in the</em> <a class="reference external" href="../source/../../exampl
 </pre></div>
 </div>
 <p>This starts the Flow named <em>WiseFlow,</em> which listens for log events from web servers to
-analyze them in realtime. Another way to start the flow is using <tt class="docutils literal"><span class="pre">curl</span></tt>:</p>
+analyze them in realtime. Another way to start the flow is using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 </pre></div>
 </div>
@@ -237,7 +237,7 @@ Command Line.</p>
 processing events by retrieving metrics about how many events it has processed. For that,
 we need to know the name of the Flowlet inside the <em>WiseFlow</em> that performs the actual
 processing.</p>
-<p>In this case, it is a Flowlet named <em>parser</em>. Here is a <tt class="docutils literal"><span class="pre">curl</span></tt> command to retreive the
+<p>In this case, it is a Flowlet named <em>parser</em>. Here is a <code class="docutils literal"><span class="pre">curl</span></code> command to retreive the
 number of events it has processed (the number return will vary, depending on how many
 events you have sent):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> localhost:10000/v3/namespaces/default/metrics/system/apps/Wise/flows/WiseFlow/flowlets/parser/<span class="se">\</span>
@@ -370,7 +370,7 @@ bounce counts with SQL. Let&#8217;s take a look at the schema first:</p>
 <span class="go">+===================================+</span>
 </pre></div>
 </div>
-<p>Apparently, the <tt class="docutils literal"><span class="pre">/cdap.html</span></tt> has the highest bounce rate of all the URLs.</p>
+<p>Apparently, the <code class="docutils literal"><span class="pre">/cdap.html</span></code> has the highest bounce rate of all the URLs.</p>
 <p>We can also use the full power of the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual">Hive query language</a> in formulating our
 queries. For example, Hive allows us to explode the page view counts into a table with
 fixed columns:</p>
@@ -434,12 +434,12 @@ pages?</p>
 <h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
 <p>Congratulations! You&#8217;ve just successfully run your first Big Data log analytics application on CDAP.</p>
 <p>You can deploy the same application on a real cluster and experience the power of CDAP.</p>
-<p>Additional <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">examples,</em></a> <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">guides,</em></a> and
-<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">tutorials</em></a> on building CDAP applications are available.</p>
-<p>As a next step, we recommend reviewing all of these <a class="reference external" href="../source/../../examples-manual/index.html#examples-introduction-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">training materials</em></a>
+<p>Additional <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">examples,</span></a> <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">guides,</span></a> and
+<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">tutorials</span></a> on building CDAP applications are available.</p>
+<p>As a next step, we recommend reviewing all of these <a class="reference external" href="../source/../../examples-manual/index.html#examples-introduction-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">training materials</span></a>
 as being the easiest way to become familiar with CDAP.</p>
 <p>If you want to begin writing your own application, continue with the instructions on the
-<a class="reference internal" href="index.html#getting-started-index"><em>Getting Started</em></a> page.</p>
+<a class="reference internal" href="index.html#getting-started-index"><span>Getting Started</span></a> page.</p>
 </div>
 </div>
 

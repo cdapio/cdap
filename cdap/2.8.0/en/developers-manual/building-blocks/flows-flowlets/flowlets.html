@@ -81,7 +81,7 @@
 individual processing node within a Flow. Flowlets consume data objects
 from their inputs and execute custom logic on each data object, allowing
 you to perform data operations as well as emit data objects to the
-Flowlet’s outputs. Flowlets specify an <tt class="docutils literal"><span class="pre">initialize()</span></tt> method, which is
+Flowlet’s outputs. Flowlets specify an <code class="docutils literal"><span class="pre">initialize()</span></code> method, which is
 executed at the startup of each instance of a Flowlet before it receives
 any data.</p>
 <p>The example below shows a Flowlet that reads <em>Double</em> values, rounds
@@ -112,7 +112,7 @@ doesn&#8217;t do anything for initialization or destruction:</p>
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>The most interesting method of this Flowlet is <tt class="docutils literal"><span class="pre">round()</span></tt>, the method
+<p>The most interesting method of this Flowlet is <code class="docutils literal"><span class="pre">round()</span></code>, the method
 that does the actual processing. It uses an output emitter to send data
 to its output. This is the only way that a Flowlet can emit output to
 another connected Flowlet:</p>
@@ -126,7 +126,7 @@ another connected Flowlet:</p>
 <p>Note that the Flowlet declares the output emitter but does not
 initialize it. The Flow system initializes and injects its
 implementation at runtime.</p>
-<p>The method is annotated with <tt class="docutils literal"><span class="pre">&#64;ProcessInput</span></tt> — this tells the Flow
+<p>The method is annotated with <code class="docutils literal"><span class="pre">&#64;ProcessInput</span></code> — this tells the Flow
 system that this method can process input data.</p>
 <p>You can overload the process method of a Flowlet by adding multiple
 methods with different input types. When an input object comes in, the

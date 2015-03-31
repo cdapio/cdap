@@ -83,7 +83,7 @@
 <p>As of <em>CDAP v2.8.0</em>, the <em>HTTP RESTful API v2</em> has been deprecated, pending removal in
 a later version. Replace all use of the <em>HTTP RESTful API v2</em> with <a class="reference external" href="../http-restful-api-v3/index.html"><strong>HTTP RESTful API v3</strong></a>. This
 involves using a namespace and a namespace id in the call, as
-<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><em>described in the documentation</em></a>. The <tt class="docutils literal"><span class="pre">default</span></tt>
+<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><span>described in the documentation</span></a>. The <code class="docutils literal"><span class="pre">default</span></code>
 namespace can be used as a drop-in replacement in existing API v2 code.</p>
 </div>
 <div class="topic">
@@ -93,7 +93,7 @@ version. Replace all use of <em>Procedures</em> with <em>Services</em>. <em>Serv
 feature-parity with <em>Procedures</em> as of the version in which Procedures are removed.</p>
 </div>
 <p>This interface supports sending calls to the methods of an Application’s Procedures.
-See the <a class="reference internal" href="lifecycle.html#http-restful-api-v2-lifecycle"><em>Lifecycle HTTP RESTful API</em></a> for how to control the life cycle of
+See the <a class="reference internal" href="lifecycle.html#http-restful-api-v2-lifecycle"><span>Lifecycle HTTP RESTful API</span></a> for how to control the life cycle of
 Procedures.</p>
 <div class="section" id="executing-procedures">
 <h2>Executing Procedures<a class="headerlink" href="#executing-procedures" title="Permalink to this headline">¶</a></h2>
@@ -114,13 +114,13 @@ and the arguments as a JSON string in the body of the request.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;procedure-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;procedure-id&gt;</span></code></td>
 <td>Name of the Procedure being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;method-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;method-id&gt;</span></code></td>
 <td>Name of the method being called</td>
 </tr>
 </tbody>
@@ -138,16 +138,16 @@ and the arguments as a JSON string in the body of the request.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the body contains the results</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
 <td>The Application, Procedure and method exist, but the arguments are not as expected</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The Application, Procedure, or method does not exist</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">503</span> <span class="pre">Service</span> <span class="pre">Unavailable</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">503</span> <span class="pre">Service</span> <span class="pre">Unavailable</span></code></td>
 <td>The Procedure method is unavailable. For example, the procedure may not have been started yet.</td>
 </tr>
 </tbody>
@@ -162,10 +162,10 @@ and the arguments as a JSON string in the body of the request.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/methods/getCount</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/methods/getCount</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
-<td><p class="first">Call the <tt class="docutils literal"><span class="pre">getCount()</span></tt> method of the <em>RetrieveCounts</em> Procedure in the <em>WordCount</em> Application
+<td><p class="first">Call the <code class="docutils literal"><span class="pre">getCount()</span></code> method of the <em>RetrieveCounts</em> Procedure in the <em>WordCount</em> Application
 with the arguments as a JSON string in the body:</p>
 <div class="last highlight-console"><div class="highlight"><pre><span class="go">{&quot;word&quot;:&quot;a&quot;}</span>
 </pre></div>

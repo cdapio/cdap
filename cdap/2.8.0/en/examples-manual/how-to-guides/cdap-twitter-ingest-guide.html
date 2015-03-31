@@ -147,8 +147,8 @@ contents of these files described below):</p>
 <span class="go">./src/main/resources/twitter4j.properties</span>
 </pre></div>
 </div>
-<p>The application will use the <tt class="docutils literal"><span class="pre">cdap-packs-twitter</span></tt> library which includes an
-implementation of <tt class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></tt>. You&#8217;ll need to add this
+<p>The application will use the <code class="docutils literal"><span class="pre">cdap-packs-twitter</span></code> library which includes an
+implementation of <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code>. You&#8217;ll need to add this
 library as a dependency to your project&#8217;s pom.xml:</p>
 <div class="highlight-xml"><div class="highlight"><pre>...
 <span class="nt">&lt;dependencies&gt;</span>
@@ -161,7 +161,7 @@ library as a dependency to your project&#8217;s pom.xml:</p>
 <span class="nt">&lt;/dependencies&gt;</span>
 </pre></div>
 </div>
-<p>Create the <tt class="docutils literal"><span class="pre">TwitterAnalysisApp</span></tt> class which declares that the application
+<p>Create the <code class="docutils literal"><span class="pre">TwitterAnalysisApp</span></code> class which declares that the application
 has a Flow, a Service, and creates a Dataset:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TwitterAnalysisApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TwitterAnalysis&quot;</span><span class="o">;</span>
@@ -178,8 +178,8 @@ has a Flow, a Service, and creates a Dataset:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">TweetAnalysisFlow</span></tt> makes use of the <tt class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></tt> that is
-available in the <tt class="docutils literal"><span class="pre">cdap-packs-twitter</span></tt> library:</p>
+<p>The <code class="docutils literal"><span class="pre">TweetAnalysisFlow</span></code> makes use of the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code> that is
+available in the <code class="docutils literal"><span class="pre">cdap-packs-twitter</span></code> library:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetAnalysisFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
   <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TweetAnalysisFlow&quot;</span><span class="o">;</span>
   <span class="nd">@Override</span>
@@ -197,8 +197,8 @@ available in the <tt class="docutils literal"><span class="pre">cdap-packs-twitt
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Tweets pulled by the <tt class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></tt> are consumed by the
-<tt class="docutils literal"><span class="pre">StatsRecorderFlowlet</span></tt> that updates the total number of tweets and their
+<p>Tweets pulled by the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code> are consumed by the
+<code class="docutils literal"><span class="pre">StatsRecorderFlowlet</span></code> that updates the total number of tweets and their
 total body size in a Dataset:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StatsRecorderFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">TwitterAnalysisApp</span><span class="o">.</span><span class="na">TABLE_NAME</span><span class="o">)</span>
@@ -214,7 +214,7 @@ total body size in a Dataset:</p>
 </div>
 <p>In a real-world scenario, the Flowlet could perform more sophisticated
 processing on tweets.</p>
-<p>Finally, the <tt class="docutils literal"><span class="pre">TweetStatsHandler</span></tt> uses the <tt class="docutils literal"><span class="pre">tweetStats</span></tt> Dataset to compute the
+<p>Finally, the <code class="docutils literal"><span class="pre">TweetStatsHandler</span></code> uses the <code class="docutils literal"><span class="pre">tweetStats</span></code> Dataset to compute the
 average tweet size and serve it over HTTP:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;/v1&quot;</span><span class="o">)</span>
 <span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetStatsHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
@@ -235,14 +235,14 @@ average tweet size and serve it over HTTP:</p>
 </div>
 <div class="section" id="configuring-tweetcollectorflowlet">
 <h3>Configuring <em>TweetCollectorFlowlet</em><a class="headerlink" href="#configuring-tweetcollectorflowlet" title="Permalink to this headline">¶</a></h3>
-<p>In order to utilize the <tt class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></tt>, a Twitter API key and
+<p>In order to utilize the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code>, a Twitter API key and
 Access token must be obtained and configured. Follow the steps provided
 by Twitter to obtain <a class="reference external" href="https://dev.twitter.com/oauth/overview/application-owner-access-tokens">OAuth access
 tokens</a>.
-You can provide these to the <tt class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></tt> as runtime arguments of
-the Flow or put them in <tt class="docutils literal"><span class="pre">twitter4j.properties</span></tt> in the
-<tt class="docutils literal"><span class="pre">src/main/resources/</span></tt> directory and package it with the application. The
-format of the <tt class="docutils literal"><span class="pre">twitter4j.properties</span></tt> file:</p>
+You can provide these to the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code> as runtime arguments of
+the Flow or put them in <code class="docutils literal"><span class="pre">twitter4j.properties</span></code> in the
+<code class="docutils literal"><span class="pre">src/main/resources/</span></code> directory and package it with the application. The
+format of the <code class="docutils literal"><span class="pre">twitter4j.properties</span></code> file:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">oauth.consumerKey=***************************</span>
 <span class="go">oauth.consumerSecret=***************************</span>
 <span class="go">oauth.accessToken=***************************</span>
@@ -257,7 +257,7 @@ format of the <tt class="docutils literal"><span class="pre">twitter4j.propertie
 <div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
 </pre></div>
 </div>
-<p>Note that the remaining commands assume that the <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt> script is
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
 available on your PATH. If this is not the case, please add it:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">export PATH=$PATH:&lt;CDAP home&gt;/bin</span>
 </pre></div>

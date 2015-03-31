@@ -84,23 +84,23 @@
 store the results and statistics in datasets.</p>
 <blockquote>
 <div><ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">wordStream</span></tt> receives sentences, one event at a time.</li>
-<li>The <tt class="docutils literal"><span class="pre">splitter</span></tt> flowlet reads sentences from stream and splits them into words, writes global statistics of the
+<li>The <code class="docutils literal"><span class="pre">wordStream</span></code> receives sentences, one event at a time.</li>
+<li>The <code class="docutils literal"><span class="pre">splitter</span></code> flowlet reads sentences from stream and splits them into words, writes global statistics of the
 received words like &#8220;total words received&#8221; and &#8220;total length of words received&#8221; and emits each word to the
-<tt class="docutils literal"><span class="pre">counter</span></tt> flowlet  and each sentence (list of words) to the <tt class="docutils literal"><span class="pre">associator</span></tt> flowlet.</li>
-<li>The <tt class="docutils literal"><span class="pre">associator</span></tt> flowlet receives the set of words and writes word associations to the <tt class="docutils literal"><span class="pre">wordAssocs</span></tt> dataset.
+<code class="docutils literal"><span class="pre">counter</span></code> flowlet  and each sentence (list of words) to the <code class="docutils literal"><span class="pre">associator</span></code> flowlet.</li>
+<li>The <code class="docutils literal"><span class="pre">associator</span></code> flowlet receives the set of words and writes word associations to the <code class="docutils literal"><span class="pre">wordAssocs</span></code> dataset.
 For example, if we receive a sentence &#8220;welcome to CDAP&#8221;, the word associations are
 {&#8220;welcome&#8221;,&#8221;to&#8221;} , {&#8220;welcome&#8221;, &#8220;CDAP&#8221;}, and {&#8220;to&#8221;,&#8221;CDAP&#8221;}.</li>
-<li>The <tt class="docutils literal"><span class="pre">counter</span></tt> flowlet receives a word and increments the count for this word, maintained in a key-value table and
-forwards this word to the <tt class="docutils literal"><span class="pre">unique</span></tt> flowlet.</li>
-<li>The <tt class="docutils literal"><span class="pre">unique</span></tt> flowlet receives a word and updates the <tt class="docutils literal"><span class="pre">uniqueCount</span></tt> table, if it sees this word for the first time.</li>
+<li>The <code class="docutils literal"><span class="pre">counter</span></code> flowlet receives a word and increments the count for this word, maintained in a key-value table and
+forwards this word to the <code class="docutils literal"><span class="pre">unique</span></code> flowlet.</li>
+<li>The <code class="docutils literal"><span class="pre">unique</span></code> flowlet receives a word and updates the <code class="docutils literal"><span class="pre">uniqueCount</span></code> table, if it sees this word for the first time.</li>
 </ul>
 </div></blockquote>
 <p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
 <div class="section" id="the-word-count-application">
 <h3>The Word Count Application<a class="headerlink" href="#the-word-count-application" title="Permalink to this headline">¶</a></h3>
-<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples</em></a>, the components
-of the Application are tied together by the class <tt class="docutils literal"><span class="pre">WordCount</span></tt>:</p>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the Application are tied together by the class <code class="docutils literal"><span class="pre">WordCount</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -130,10 +130,10 @@ of the Application are tied together by the class <tt class="docutils literal"><
 <div class="section" id="data-storage">
 <h3>Data Storage<a class="headerlink" href="#data-storage" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">wordStats</span></tt> stores the global statistics of total count of words and the total length of words received.</li>
-<li><tt class="docutils literal"><span class="pre">wordCounts</span></tt> stores the word and the corresponding count in a key value table.</li>
-<li><tt class="docutils literal"><span class="pre">uniqueCount</span></tt> is a custom dataset that stores the total count of unique words received so far.</li>
-<li><tt class="docutils literal"><span class="pre">wordAssocs</span></tt> is a custom dataset that stores the count for word associations.</li>
+<li><code class="docutils literal"><span class="pre">wordStats</span></code> stores the global statistics of total count of words and the total length of words received.</li>
+<li><code class="docutils literal"><span class="pre">wordCounts</span></code> stores the word and the corresponding count in a key value table.</li>
+<li><code class="docutils literal"><span class="pre">uniqueCount</span></code> is a custom dataset that stores the total count of unique words received so far.</li>
+<li><code class="docutils literal"><span class="pre">wordAssocs</span></code> is a custom dataset that stores the count for word associations.</li>
 </ul>
 </div>
 <div class="section" id="retrievecounts-service">
@@ -141,10 +141,10 @@ of the Application are tied together by the class <tt class="docutils literal"><
 <p>The Service serves read requests for calculated statistics, word counts and associations.
 It exposes these endpoints:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">/stats</span></tt> returns the total number of words, the number of unique words, and the average word length;</li>
-<li><tt class="docutils literal"><span class="pre">/count/{word}</span></tt> returns the word count of a specified word and its word associations,
+<li><code class="docutils literal"><span class="pre">/stats</span></code> returns the total number of words, the number of unique words, and the average word length;</li>
+<li><code class="docutils literal"><span class="pre">/count/{word}</span></code> returns the word count of a specified word and its word associations,
 up to the specified limit or a pre-set limit of ten if not specified;</li>
-<li><tt class="docutils literal"><span class="pre">/assoc/{word1}/{word2}</span></tt> returns the top associated words (those with the highest counts).</li>
+<li><code class="docutils literal"><span class="pre">/assoc/{word1}/{word2}</span></code> returns the top associated words (those with the highest counts).</li>
 </ul>
 </div>
 </div>
@@ -162,12 +162,12 @@ Make sure you start the Flow and Service as described below.</li>
 <h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
 <p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
 running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
-the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">namespace</em></a>; if not, you will need to adjust commands
+the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">namespace</span></a>; if not, you will need to adjust commands
 accordingly. For example, in a URL such as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
 </pre></div>
 </div>
-<p>to use the namespace <em>my_namespace</em>, you would replace <tt class="docutils literal"><span class="pre">default</span></tt> with <tt class="docutils literal"><span class="pre">my_namespace</span></tt>:</p>
+<p>to use the namespace <em>my_namespace</em>, you would replace <code class="docutils literal"><span class="pre">default</span></code> with <code class="docutils literal"><span class="pre">my_namespace</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
 </pre></div>
 </div>
@@ -182,7 +182,7 @@ accordingly. For example, in a URL such as:</p>
 <div class="section" id="starting-cdap">
 <h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
 <p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
-follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
 <p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
 </div>
 <div class="section" id="deploying-an-application">
@@ -197,7 +197,7 @@ example/target/WordCount-2.8.0.jar
 </li>
 <li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface (CLI)</em></a>:</p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -205,10 +205,10 @@ example/target/WordCount-2.8.0.jar
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -224,7 +224,7 @@ Application&#8217;s name in the <em>Overview</em> page. (It can be reached by cl
 <em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
 of the Processes or Queries associated with the application; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
 In each CDAP example, the CLI commands for that particular example are provided.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -233,10 +233,10 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -251,13 +251,13 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">procedure</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
 being called</td>
 </tr>
@@ -273,7 +273,7 @@ being called</td>
 <li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
 the Process and Query lists, if the application has either of them; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -281,10 +281,10 @@ the Process and Query lists, if the application has either of them; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -299,9 +299,9 @@ Application&#8217;s detail page in the CDAP Console to delete the Application. A
 confirmation, the application will be deleted.</p>
 <p>Note that any Storage (Datasets) created or used by the Application will remain, as they
 are independent of the Application. Datasets can be deleted with the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Java Client API</em></a>, or the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Java Client API</span></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
 </div>
 </div>
 <div class="section" id="running-the-example">
@@ -311,7 +311,7 @@ are independent of the Application. Datasets can be deleted with the
 <p>Once the application is deployed:</p>
 <ul>
 <li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
-then click <tt class="docutils literal"><span class="pre">WordCounter</span></tt> in the <em>Process</em> page to get to the
+then click <code class="docutils literal"><span class="pre">WordCounter</span></code> in the <em>Process</em> page to get to the
 Flow detail page, then click the <em>Start</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -322,10 +322,10 @@ Flow detail page, then click the <em>Start</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -336,8 +336,8 @@ Flow detail page, then click the <em>Start</em> button; or</p>
 <h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
 <p>Once the application is deployed:</p>
 <ul>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">WordCount</span></tt> in the Overview page of the CDAP Console to get to the
-Application detail page, click <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> in the <em>Service</em> pane to get to the
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">WordCount</span></code> in the Overview page of the CDAP Console to get to the
+Application detail page, click <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> in the <em>Service</em> pane to get to the
 Service detail page, then click the <em>Start</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -348,10 +348,10 @@ Service detail page, then click the <em>Start</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -370,17 +370,17 @@ You can repeat this step to enter additional sentences.</p>
 <div class="section" id="querying-the-results">
 <h3>Querying the Results<a class="headerlink" href="#querying-the-results" title="Permalink to this headline">¶</a></h3>
 <p>If the Service has not already been started, you start it either through the
-CDAP Console or via an HTTP request using the <tt class="docutils literal"><span class="pre">curl</span></tt> command:</p>
+CDAP Console or via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">curl -v -X POST &#39;http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start&#39;</span>
 </pre></div>
 </div>
-<p>To query the <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> service,
-send a query via an HTTP request using the <tt class="docutils literal"><span class="pre">curl</span></tt> command. For example:</p>
+<p>To query the <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> service,
+send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command. For example:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w&#39;\n&#39; -v &#39;http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP&#39;</span>
 </pre></div>
 </div>
-<p><strong>Note:</strong> A version of <tt class="docutils literal"><span class="pre">curl</span></tt> that works with Windows is included in the CDAP Standalone
-SDK in <tt class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></tt></p>
+<p><strong>Note:</strong> A version of <code class="docutils literal"><span class="pre">curl</span></code> that works with Windows is included in the CDAP Standalone
+SDK in <code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code></p>
 <p>The word count and top-10 associations words for that word will be displayed in JSON
 format (example reformatted to fit):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
@@ -402,7 +402,7 @@ format (example reformatted to fit):</p>
 <p><strong>Stopping the Flow</strong></p>
 <ul>
 <li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
-then click <tt class="docutils literal"><span class="pre">WordCounter</span></tt> in the <em>Process</em> page to get to the
+then click <code class="docutils literal"><span class="pre">WordCounter</span></code> in the <em>Process</em> page to get to the
 Flow detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -413,10 +413,10 @@ Flow detail page, then click the <em>Stop</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">WordCount.WordCounter</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -424,8 +424,8 @@ Flow detail page, then click the <em>Stop</em> button; or</p>
 </ul>
 <p><strong>Stopping the Service</strong></p>
 <ul>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">WordCount</span></tt> in the Overview page of the CDAP Console to get to the
-Application detail page, click <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> in the <em>Service</em> pane to get to the
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">WordCount</span></code> in the Overview page of the CDAP Console to get to the
+Application detail page, click <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> in the <em>Service</em> pane to get to the
 Service detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -436,10 +436,10 @@ Service detail page, then click the <em>Stop</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">WordCount.RetrieveCounts</span></code></td>
 </tr>
 </tbody>
 </table>

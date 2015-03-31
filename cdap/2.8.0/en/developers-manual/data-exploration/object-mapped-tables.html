@@ -76,11 +76,11 @@
             
   <div class="section" id="objectmappedtable-exploration">
 <span id="object-mapped-table-exploration"></span><h1>ObjectMappedTable Exploration<a class="headerlink" href="#objectmappedtable-exploration" title="Permalink to this headline">¶</a></h1>
-<p>An <tt class="docutils literal"><span class="pre">ObjectMappedTable</span></tt> is a system Dataset that can write Java objects to a Table
+<p>An <code class="docutils literal"><span class="pre">ObjectMappedTable</span></code> is a system Dataset that can write Java objects to a Table
 by mapping object fields to Table columns. It can also be explored in an ad-hoc manner.</p>
 <div class="section" id="creating-an-objectmappedtable">
 <h2>Creating an ObjectMappedTable<a class="headerlink" href="#creating-an-objectmappedtable" title="Permalink to this headline">¶</a></h2>
-<p>When creating an <tt class="docutils literal"><span class="pre">ObjectMappedTable</span></tt> in your application, you must specify the Java type
+<p>When creating an <code class="docutils literal"><span class="pre">ObjectMappedTable</span></code> in your application, you must specify the Java type
 that will be stored in your table:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -100,7 +100,7 @@ that will be stored in your table:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>CDAP will derive the record schema from the specified type. For example, if the <tt class="docutils literal"><span class="pre">Purchase</span></tt> class is defined as:</p>
+<p>CDAP will derive the record schema from the specified type. For example, if the <code class="docutils literal"><span class="pre">Purchase</span></code> class is defined as:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Purchase</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">customer</span><span class="o">,</span> <span class="n">product</span><span class="o">;</span>
   <span class="kd">private</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">quantity</span><span class="o">,</span> <span class="n">price</span><span class="o">;</span>
@@ -123,10 +123,10 @@ that will be stored in your table:</p>
 </pre></div>
 </div>
 <p>Note that all column names have been changed to lowercase letters. This is because Hive column names are case-insensitive.
-In addition to the object fields, the object key has been inserted into the schema as a binary column <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
+In addition to the object fields, the object key has been inserted into the schema as a binary column <code class="docutils literal"><span class="pre">key</span></code>.</p>
 <p>If you wish to name the key column differently, perhaps because your object already contains a field named &#8220;key&#8221;, you
-can do so by providing an additional property when creating your Dataset. You can also set the key type to <tt class="docutils literal"><span class="pre">STRING</span></tt>
-instead of <tt class="docutils literal"><span class="pre">BINARY</span></tt> if desired:</p>
+can do so by providing an additional property when creating your Dataset. You can also set the key type to <code class="docutils literal"><span class="pre">STRING</span></code>
+instead of <code class="docutils literal"><span class="pre">BINARY</span></code> if desired:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
   <span class="k">try</span> <span class="o">{</span>
@@ -164,9 +164,9 @@ will translate into a binary field.</li>
 methods but not fields; hence, reflection would not be able to derive any fields or types from the interface.</li>
 <li>Fields of a class that are declared static or transient are ignored during schema generation. This means that the
 record type must have at least one non-transient and non-static field. For example,
-the <tt class="docutils literal"><span class="pre">java.util.Date</span></tt> class has only static and transient fields. Therefore a record type of <tt class="docutils literal"><span class="pre">Date</span></tt> is not
+the <code class="docutils literal"><span class="pre">java.util.Date</span></code> class has only static and transient fields. Therefore a record type of <code class="docutils literal"><span class="pre">Date</span></code> is not
 supported and will result in an exception when the Dataset is created.</li>
-<li>You cannot insert data into an <tt class="docutils literal"><span class="pre">ObjectMappedTable</span></tt> using SQL.</li>
+<li>You cannot insert data into an <code class="docutils literal"><span class="pre">ObjectMappedTable</span></code> using SQL.</li>
 </ul>
 </div>
 <div class="section" id="formulating-queries">
@@ -174,10 +174,10 @@ supported and will result in an exception when the Dataset is created.</li>
 <p>When creating your queries, keep these limitations in mind:</p>
 <ul class="simple">
 <li>The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.</li>
-<li>The SQL commands <tt class="docutils literal"><span class="pre">UPDATE</span></tt> and <tt class="docutils literal"><span class="pre">DELETE</span></tt> are not allowed on CDAP Datasets.</li>
+<li>The SQL commands <code class="docutils literal"><span class="pre">UPDATE</span></code> and <code class="docutils literal"><span class="pre">DELETE</span></code> are not allowed on CDAP Datasets.</li>
 <li>When addressing your datasets in queries, you need to prefix the data set name with the CDAP
-namespace <tt class="docutils literal"><span class="pre">dataset_</span></tt>. For example, if your Dataset is named <tt class="docutils literal"><span class="pre">Purchases</span></tt>, then the corresponding table
-name is <tt class="docutils literal"><span class="pre">dataset_purchases</span></tt>. Note that the table name is lower-case.</li>
+namespace <code class="docutils literal"><span class="pre">dataset_</span></code>. For example, if your Dataset is named <code class="docutils literal"><span class="pre">Purchases</span></code>, then the corresponding table
+name is <code class="docutils literal"><span class="pre">dataset_purchases</span></code>. Note that the table name is lower-case.</li>
 </ul>
 <p>For more examples of queries, please refer to the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML">Hive language manual</a>.</p>
 </div>

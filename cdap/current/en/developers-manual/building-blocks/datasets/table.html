@@ -77,7 +77,7 @@
             
   <div class="section" id="table-api">
 <h1>Table API<a class="headerlink" href="#table-api" title="Permalink to this headline">¶</a></h1>
-<p>The <tt class="docutils literal"><span class="pre">Table</span></tt> API provides basic methods to perform read, write and delete operations,
+<p>The <code class="docutils literal"><span class="pre">Table</span></code> API provides basic methods to perform read, write and delete operations,
 plus special scan, atomic increment and compare-and-swap operations:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Read</span>
 <span class="kd">public</span> <span class="n">Row</span> <span class="nf">get</span><span class="o">(</span><span class="n">Get</span> <span class="n">get</span><span class="o">)</span>
@@ -121,7 +121,7 @@ plus handy methods for working directly with byte arrays.
 If your application code already deals with byte arrays, you can use the latter methods to save a conversion.</p>
 <div class="section" id="read">
 <h2>Read<a class="headerlink" href="#read" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">get</span></tt> operation reads all columns or a selection of columns of a single row:</p>
+<p>A <code class="docutils literal"><span class="pre">get</span></code> operation reads all columns or a selection of columns of a single row:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
 <span class="kt">byte</span><span class="o">[]</span> <span class="n">rowKey1</span><span class="o">;</span>
 <span class="kt">byte</span><span class="o">[]</span> <span class="n">columnX</span><span class="o">;</span>
@@ -142,9 +142,9 @@ If your application code already deals with byte arrays, you can use the latter 
 <span class="n">value</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">Row</span></tt> object provides access to the row data including its columns. If only a
-selection of row columns is requested, the returned <tt class="docutils literal"><span class="pre">Row</span></tt> object will contain only these columns.
-The <tt class="docutils literal"><span class="pre">Row</span></tt> object provides an extensive API for accessing returned column values:</p>
+<p>The <code class="docutils literal"><span class="pre">Row</span></code> object provides access to the row data including its columns. If only a
+selection of row columns is requested, the returned <code class="docutils literal"><span class="pre">Row</span></code> object will contain only these columns.
+The <code class="docutils literal"><span class="pre">Row</span></code> object provides an extensive API for accessing returned column values:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Get column value as a byte array</span>
 <span class="kt">byte</span><span class="o">[]</span> <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">);</span>
 
@@ -154,14 +154,14 @@ The <tt class="docutils literal"><span class="pre">Row</span></tt> object provid
 </pre></div>
 </div>
 <p>When requested, the value of a column is converted to a specific type automatically.
-If the column is absent in a row, the returned value is <tt class="docutils literal"><span class="pre">null</span></tt>. To return primitive types,
+If the column is absent in a row, the returned value is <code class="docutils literal"><span class="pre">null</span></code>. To return primitive types,
 the corresponding methods accept a default value to be returned when the column is absent:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Get column value as a primitive type or 0 if column is absent</span>
 <span class="kt">long</span> <span class="n">valueAsLong</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>Multiple rows can be requested together using a variation of the <tt class="docutils literal"><span class="pre">get</span></tt> operation that takes a
-list of <tt class="docutils literal"><span class="pre">Get</span></tt> objects to be retrieved:</p>
+<p>Multiple rows can be requested together using a variation of the <code class="docutils literal"><span class="pre">get</span></code> operation that takes a
+list of <code class="docutils literal"><span class="pre">Get</span></code> objects to be retrieved:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">Table</span> <span class="n">t</span><span class="o">;</span>
 
 <span class="c1">// Define the rows to retrieve</span>
@@ -174,13 +174,13 @@ list of <tt class="docutils literal"><span class="pre">Get</span></tt> objects t
 <span class="n">List</span><span class="o">&lt;</span><span class="n">Row</span><span class="o">&gt;</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">gets</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>Each <tt class="docutils literal"><span class="pre">Row</span></tt> object in the returned list will contain the results for one of the requested row
-keys.  When multiple rows must be retrieved together, this version of the <tt class="docutils literal"><span class="pre">get</span></tt> operation
+<p>Each <code class="docutils literal"><span class="pre">Row</span></code> object in the returned list will contain the results for one of the requested row
+keys.  When multiple rows must be retrieved together, this version of the <code class="docutils literal"><span class="pre">get</span></code> operation
 allows the storage provider to perform more efficient batching of the operations, if supported.</p>
 </div>
 <div class="section" id="scan">
 <h2>Scan<a class="headerlink" href="#scan" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">scan</span></tt> operation fetches a subset of rows or all of the rows of a Table:</p>
+<p>A <code class="docutils literal"><span class="pre">scan</span></code> operation fetches a subset of rows or all of the rows of a Table:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
 <span class="kt">byte</span><span class="o">[]</span> <span class="n">stopRow</span><span class="o">;</span>
 <span class="n">Row</span> <span class="n">row</span><span class="o">;</span>
@@ -197,8 +197,8 @@ allows the storage provider to perform more efficient batching of the operations
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>To scan a set of rows not bounded by <tt class="docutils literal"><span class="pre">startRow</span></tt> and/or <tt class="docutils literal"><span class="pre">stopRow</span></tt>
-you can pass <tt class="docutils literal"><span class="pre">null</span></tt> as their value:</p>
+<p>To scan a set of rows not bounded by <code class="docutils literal"><span class="pre">startRow</span></code> and/or <code class="docutils literal"><span class="pre">stopRow</span></code>
+you can pass <code class="docutils literal"><span class="pre">null</span></code> as their value:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">startRow</span><span class="o">;</span>
 <span class="c1">// Scan all rows of a table</span>
 <span class="n">Scanner</span> <span class="n">allRows</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
@@ -211,7 +211,7 @@ you can pass <tt class="docutils literal"><span class="pre">null</span></tt> as 
 </div>
 <div class="section" id="write">
 <h2>Write<a class="headerlink" href="#write" title="Permalink to this headline">¶</a></h2>
-<p>A <tt class="docutils literal"><span class="pre">put</span></tt> operation writes data into a row:</p>
+<p>A <code class="docutils literal"><span class="pre">put</span></code> operation writes data into a row:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Write a set of columns with their values</span>
 <span class="n">t</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="k">new</span> <span class="n">Put</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="s">&quot;value1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">55L</span><span class="o">));</span>
 </pre></div>
@@ -222,7 +222,7 @@ you can pass <tt class="docutils literal"><span class="pre">null</span></tt> as 
 <h2>Compare and Swap<a class="headerlink" href="#compare-and-swap" title="Permalink to this headline">¶</a></h2>
 <p>A swap operation compares the existing value of a column with an expected value,
 and if it matches, replaces it with a new value.
-The operation returns <tt class="docutils literal"><span class="pre">true</span></tt> if it succeeds and <tt class="docutils literal"><span class="pre">false</span></tt> otherwise:</p>
+The operation returns <code class="docutils literal"><span class="pre">true</span></code> if it succeeds and <code class="docutils literal"><span class="pre">false</span></code> otherwise:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kt">byte</span><span class="o">[]</span> <span class="n">expectedCurrentValue</span><span class="o">;</span>
 <span class="kt">byte</span><span class="o">[]</span> <span class="n">newValue</span><span class="o">;</span>
 <span class="k">if</span> <span class="o">(!</span><span class="n">t</span><span class="o">.</span><span class="na">compareAndSwap</span><span class="o">(</span><span class="n">rowKey1</span><span class="o">,</span> <span class="n">columnX</span><span class="o">,</span>
@@ -235,7 +235,7 @@ The operation returns <tt class="docutils literal"><span class="pre">true</span>
 </div>
 <div class="section" id="increment">
 <h2>Increment<a class="headerlink" href="#increment" title="Permalink to this headline">¶</a></h2>
-<p>An increment operation increments a <tt class="docutils literal"><span class="pre">long</span></tt> value of one or more columns by either <tt class="docutils literal"><span class="pre">1L</span></tt>
+<p>An increment operation increments a <code class="docutils literal"><span class="pre">long</span></code> value of one or more columns by either <code class="docutils literal"><span class="pre">1L</span></code>
 or an integer amount <em>n</em>.  If a column does not exist, it is created with an assumed value of zero
 before the increment is applied:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Write long value to a column of a row</span>
@@ -244,13 +244,13 @@ before the increment is applied:</p>
 <span class="n">t</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="s">&quot;rowKey1&quot;</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column1&quot;</span><span class="o">,</span> <span class="mi">1L</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;column2&quot;</span><span class="o">,</span> <span class="mi">23L</span><span class="o">));</span>
 </pre></div>
 </div>
-<p>If the existing value of the column cannot be converted to a <tt class="docutils literal"><span class="pre">long</span></tt>,
-a <tt class="docutils literal"><span class="pre">NumberFormatException</span></tt> will be thrown.</p>
+<p>If the existing value of the column cannot be converted to a <code class="docutils literal"><span class="pre">long</span></code>,
+a <code class="docutils literal"><span class="pre">NumberFormatException</span></code> will be thrown.</p>
 <p>Two types of increment operations are supported:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">incrementAndGet(...)</span></tt> operations will increment the currently stored value and return the
+<li><code class="docutils literal"><span class="pre">incrementAndGet(...)</span></code> operations will increment the currently stored value and return the
 result; and</li>
-<li><tt class="docutils literal"><span class="pre">increment(...)</span></tt> operations will increment the currently stored value without any return
+<li><code class="docutils literal"><span class="pre">increment(...)</span></code> operations will increment the currently stored value without any return
 value.</li>
 </ul>
 <div class="section" id="read-less-increments">
@@ -266,12 +266,12 @@ increments.  Instead, when reading the value for a column storing data for read-
 all of the stored increment values are read and summed up together with the last stored complete
 sum, in order to compute the final result.  As a result, read operations become more expensive, but
 this trade-off can be very beneficial for workloads dominated by writes.</p>
-<p>Read-less increments can only be used with the <tt class="docutils literal"><span class="pre">increment(...)</span></tt> operation, since it does not
+<p>Read-less increments can only be used with the <code class="docutils literal"><span class="pre">increment(...)</span></code> operation, since it does not
 return a value.  To configure a dataset to support read-less increments:</p>
 <ol class="arabic simple">
-<li>Set the property <tt class="docutils literal"><span class="pre">dataset.table.readless.increment</span></tt> to <tt class="docutils literal"><span class="pre">true</span></tt> in the DatasetSpecification
+<li>Set the property <code class="docutils literal"><span class="pre">dataset.table.readless.increment</span></code> to <code class="docutils literal"><span class="pre">true</span></code> in the DatasetSpecification
 properties.</li>
-<li>Use the <tt class="docutils literal"><span class="pre">increment(...)</span></tt> methods for any operations that do not need the result value of the
+<li>Use the <code class="docutils literal"><span class="pre">increment(...)</span></code> methods for any operations that do not need the result value of the
 increment operation.</li>
 </ol>
 <p><em>Note:</em> the current implementation of read-less increments uses an HBase coprocessor to prefix the
@@ -299,12 +299,12 @@ also delete the entire row, as the underlying implementation of a Table is a
 <div class="section" id="pre-splitting-a-table-into-multiple-regions">
 <span id="table-datasets-pre-splitting"></span><h2>Pre-Splitting a Table into Multiple Regions<a class="headerlink" href="#pre-splitting-a-table-into-multiple-regions" title="Permalink to this headline">¶</a></h2>
 <p>When the underlying storage for a Table Dataset (or any Dataset that uses a Table
-underneath, such as a <tt class="docutils literal"><span class="pre">KeyValueTable</span></tt>) is HBase, CDAP allows you to
+underneath, such as a <code class="docutils literal"><span class="pre">KeyValueTable</span></code>) is HBase, CDAP allows you to
 <a class="reference external" href="http://hbase.apache.org/book.html#manual_region_splitting_decisions">configure pre-splitting</a>
 to gain a better distribution of data operations after the tables are created. This helps
 optimize for better performance, depending on your use case.</p>
-<p>To specify the splits for a Table-based Dataset, you use the <tt class="docutils literal"><span class="pre">hbase.splits</span></tt> dataset property.
-The value must contain a JSON-formatted <tt class="docutils literal"><span class="pre">byte[][]</span></tt> of the split keys, such as:</p>
+<p>To specify the splits for a Table-based Dataset, you use the <code class="docutils literal"><span class="pre">hbase.splits</span></code> dataset property.
+The value must contain a JSON-formatted <code class="docutils literal"><span class="pre">byte[][]</span></code> of the split keys, such as:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">{</span> <span class="s">&quot;hbase.splits&quot;</span><span class="o">:</span> <span class="s">&quot;[[64],[128],[192]]&quot;</span> <span class="o">}</span>
 </pre></div>
 </div>
@@ -314,10 +314,10 @@ receive the range 128…191 and the fourth will receive the range 192…255.</p>
 <p>You set Dataset properties when you create the Dataset, either during application
 deployment or via CDAP&#8217;s HTTP RESTful APIs. The following is an example of the former; for
 an example of the latter, please refer to the
-<a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset-creating" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Dataset section</em></a> of the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">RESTful API
-:Reference</em></a>.</p>
+<a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset-creating" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Dataset section</span></a> of the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">RESTful API
+:Reference</span></a>.</p>
 <p>To configure pre-splitting for a Table created during application deployment, in your
-Application class&#8217; <tt class="docutils literal"><span class="pre">configure()</span></tt> you specify:</p>
+Application class&#8217; <code class="docutils literal"><span class="pre">configure()</span></code> you specify:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>

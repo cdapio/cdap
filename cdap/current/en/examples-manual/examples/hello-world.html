@@ -87,7 +87,7 @@
 <li>A Service, that reads the name from the KeyValueTable and responds with &#8220;Hello [Name]!&#8221;</li>
 </ul>
 <div class="section" id="the-helloworld-application">
-<h3>The <tt class="docutils literal"><span class="pre">HelloWorld</span></tt> Application<a class="headerlink" href="#the-helloworld-application" title="Permalink to this headline">¶</a></h3>
+<h3>The <code class="docutils literal"><span class="pre">HelloWorld</span></code> Application<a class="headerlink" href="#the-helloworld-application" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
 <span class="cm"> * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.</span>
 <span class="cm"> * &lt;uL&gt;</span>
@@ -112,8 +112,8 @@
 <p>The application uses a stream called <em>who</em> to ingest data through a flow <em>WhoFlow</em> to a dataset <em>whom</em>.</p>
 </div>
 <div class="section" id="the-whoflow">
-<h3>The <tt class="docutils literal"><span class="pre">WhoFlow</span></tt><a class="headerlink" href="#the-whoflow" title="Permalink to this headline">¶</a></h3>
-<p>This is a trivial flow with a single flowlet named <em>saver</em> of type <tt class="docutils literal"><span class="pre">NameSaver</span></tt>:</p>
+<h3>The <code class="docutils literal"><span class="pre">WhoFlow</span></code><a class="headerlink" href="#the-whoflow" title="Permalink to this headline">¶</a></h3>
+<p>This is a trivial flow with a single flowlet named <em>saver</em> of type <code class="docutils literal"><span class="pre">NameSaver</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">WhoFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
 
     <span class="nd">@Override</span>
@@ -128,8 +128,8 @@
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>The flowlet uses a dataset of type <tt class="docutils literal"><span class="pre">KeyValueTable</span></tt> to store the names it reads from the stream. Every time a new
-name is received, it is stored in the table under the key <tt class="docutils literal"><span class="pre">name</span></tt>-and it overwrites any name that was previously
+<p>The flowlet uses a dataset of type <code class="docutils literal"><span class="pre">KeyValueTable</span></code> to store the names it reads from the stream. Every time a new
+name is received, it is stored in the table under the key <code class="docutils literal"><span class="pre">name</span></code>-and it overwrites any name that was previously
 stored:</p>
 <div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">NameSaver</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
 
@@ -156,14 +156,14 @@ stored:</p>
 </pre></div>
 </div>
 <p>Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
-the counter <tt class="docutils literal"><span class="pre">names.longnames</span></tt> is incremented by one, and the metric <tt class="docutils literal"><span class="pre">names.bytes</span></tt> is incremented
+the counter <code class="docutils literal"><span class="pre">names.longnames</span></code> is incremented by one, and the metric <code class="docutils literal"><span class="pre">names.bytes</span></code> is incremented
 by the length of the name. We will see below how to retrieve these metrics using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><em>Metrics HTTP RESTful API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><span>Metrics HTTP RESTful API</span></a>.</p>
 </div>
 <div class="section" id="the-greeting-service">
-<h3>The <tt class="docutils literal"><span class="pre">Greeting</span></tt> Service<a class="headerlink" href="#the-greeting-service" title="Permalink to this headline">¶</a></h3>
-<p>This Service has a single endpoint called <tt class="docutils literal"><span class="pre">greet</span></tt> that does not accept arguments. When invoked, it
-reads the name stored by the <tt class="docutils literal"><span class="pre">NameSaver</span></tt> from the key-value table. It return a simple greeting with that name:</p>
+<h3>The <code class="docutils literal"><span class="pre">Greeting</span></code> Service<a class="headerlink" href="#the-greeting-service" title="Permalink to this headline">¶</a></h3>
+<p>This Service has a single endpoint called <code class="docutils literal"><span class="pre">greet</span></code> that does not accept arguments. When invoked, it
+reads the name stored by the <code class="docutils literal"><span class="pre">NameSaver</span></code> from the key-value table. It return a simple greeting with that name:</p>
 <div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">Greeting</span> <span class="kd">extends</span> <span class="n">AbstractService</span> <span class="o">{</span>
 
     <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_NAME</span> <span class="o">=</span> <span class="s">&quot;Greeting&quot;</span><span class="o">;</span>
@@ -200,9 +200,9 @@ reads the name stored by the <tt class="docutils literal"><span class="pre">Name
 </pre></div>
 </div>
 <p>Note that the Service, like the Flowlet, also emits metrics: every time the name <em>Jane Doe</em> is received,
-the counter <tt class="docutils literal"><span class="pre">greetings.count.jane_doe</span></tt> is incremented by one.
+the counter <code class="docutils literal"><span class="pre">greetings.count.jane_doe</span></code> is incremented by one.
 We will see below how to retrieve this metric using the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><em>Metrics HTTP RESTful API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><span>Metrics HTTP RESTful API</span></a>.</p>
 </div>
 </div>
 <div class="section" id="building-and-starting">
@@ -219,12 +219,12 @@ Make sure you start the Flow and Service as described below.</li>
 <h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
 <p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
 running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
-the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">namespace</em></a>; if not, you will need to adjust commands
+the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">namespace</span></a>; if not, you will need to adjust commands
 accordingly. For example, in a URL such as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
 </pre></div>
 </div>
-<p>to use the namespace <em>my_namespace</em>, you would replace <tt class="docutils literal"><span class="pre">default</span></tt> with <tt class="docutils literal"><span class="pre">my_namespace</span></tt>:</p>
+<p>to use the namespace <em>my_namespace</em>, you would replace <code class="docutils literal"><span class="pre">default</span></code> with <code class="docutils literal"><span class="pre">my_namespace</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
 </pre></div>
 </div>
@@ -239,7 +239,7 @@ accordingly. For example, in a URL such as:</p>
 <div class="section" id="starting-cdap">
 <h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
 <p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
-follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
 <p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
 </div>
 <div class="section" id="deploying-an-application">
@@ -254,7 +254,7 @@ example/target/HelloWorld-2.8.0.jar
 </li>
 <li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface (CLI)</em></a>:</p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -262,10 +262,10 @@ example/target/HelloWorld-2.8.0.jar
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -281,7 +281,7 @@ Application&#8217;s name in the <em>Overview</em> page. (It can be reached by cl
 <em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
 of the Processes or Queries associated with the application; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
 In each CDAP example, the CLI commands for that particular example are provided.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -290,10 +290,10 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -308,13 +308,13 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">procedure</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
 being called</td>
 </tr>
@@ -330,7 +330,7 @@ being called</td>
 <li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
 the Process and Query lists, if the application has either of them; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -338,10 +338,10 @@ the Process and Query lists, if the application has either of them; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -356,9 +356,9 @@ Application&#8217;s detail page in the CDAP Console to delete the Application. A
 confirmation, the application will be deleted.</p>
 <p>Note that any Storage (Datasets) created or used by the Application will remain, as they
 are independent of the Application. Datasets can be deleted with the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Java Client API</em></a>, or the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Java Client API</span></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
 </div>
 </div>
 <div class="section" id="running-the-example">
@@ -368,7 +368,7 @@ are independent of the Application. Datasets can be deleted with the
 <p>Once the application is deployed:</p>
 <ul>
 <li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
-then click <tt class="docutils literal"><span class="pre">WhoFlow</span></tt> in the <em>Process</em> page to get to the
+then click <code class="docutils literal"><span class="pre">WhoFlow</span></code> in the <em>Process</em> page to get to the
 Flow detail page, then click the <em>Start</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -379,10 +379,10 @@ Flow detail page, then click the <em>Start</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -393,8 +393,8 @@ Flow detail page, then click the <em>Start</em> button; or</p>
 <h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
 <p>Once the application is deployed:</p>
 <ul>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">HelloWorld</span></tt> in the Overview page of the CDAP Console to get to the
-Application detail page, click <tt class="docutils literal"><span class="pre">Greeting</span></tt> in the <em>Service</em> pane to get to the
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">HelloWorld</span></code> in the Overview page of the CDAP Console to get to the
+Application detail page, click <code class="docutils literal"><span class="pre">Greeting</span></code> in the <em>Service</em> pane to get to the
 Service detail page, then click the <em>Start</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -405,10 +405,10 @@ Service detail page, then click the <em>Start</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -437,25 +437,25 @@ ready to receive events.</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
 </pre></div>
 </div>
-<p>If the last name you entered was <em>Tom</em>, the Service will respond with <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">Tom!</span></tt></p>
-<p><strong>Note:</strong> A version of <tt class="docutils literal"><span class="pre">curl</span></tt> that works with Windows is included in the CDAP Standalone
-SDK in <tt class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></tt></p>
+<p>If the last name you entered was <em>Tom</em>, the Service will respond with <code class="docutils literal"><span class="pre">Hello</span> <span class="pre">Tom!</span></code></p>
+<p><strong>Note:</strong> A version of <code class="docutils literal"><span class="pre">curl</span></code> that works with Windows is included in the CDAP Standalone
+SDK in <code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code></p>
 </div>
 <div class="section" id="retrieving-metrics">
 <h3>Retrieving Metrics<a class="headerlink" href="#retrieving-metrics" title="Permalink to this headline">¶</a></h3>
-<p>You can now query the metrics that are emitted by the flow. To see the value of the <tt class="docutils literal"><span class="pre">names.bytes</span></tt> metric,
-you can make an HTTP request to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><em>Metrics HTTP RESTful API</em></a> using curl:</p>
+<p>You can now query the metrics that are emitted by the flow. To see the value of the <code class="docutils literal"><span class="pre">names.bytes</span></code> metric,
+you can make an HTTP request to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/metrics.html#http-restful-api-metrics" title="(in Cask Data Application Platform v2.8.0)"><span>Metrics HTTP RESTful API</span></a> using curl:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate<span class="o">=</span><span class="nb">true</span>
 <span class="go">{&quot;data&quot;:3}</span>
 </pre></div>
 </div>
-<p>To see the value of the <tt class="docutils literal"><span class="pre">names.longnames</span></tt> metric (the number of names greater than 10 characters),
+<p>To see the value of the <code class="docutils literal"><span class="pre">names.longnames</span></code> metric (the number of names greater than 10 characters),
 you can use:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.longnames?aggregate<span class="o">=</span><span class="nb">true</span>
 <span class="go">{&quot;data&quot;:2}</span>
 </pre></div>
 </div>
-<p>To see the value of the <tt class="docutils literal"><span class="pre">greetings.count.jane_doe</span></tt> metric (the number of times the name <em>Jane Doe</em> has been seen),
+<p>To see the value of the <code class="docutils literal"><span class="pre">greetings.count.jane_doe</span></code> metric (the number of times the name <em>Jane Doe</em> has been seen),
 you can use:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate<span class="o">=</span><span class="nb">true</span>
 <span class="go">{&quot;data&quot;:0}</span>
@@ -468,7 +468,7 @@ you can use:</p>
 <p><strong>Stopping the Flow</strong></p>
 <ul>
 <li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
-then click <tt class="docutils literal"><span class="pre">WhoFlow</span></tt> in the <em>Process</em> page to get to the
+then click <code class="docutils literal"><span class="pre">WhoFlow</span></code> in the <em>Process</em> page to get to the
 Flow detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -479,10 +479,10 @@ Flow detail page, then click the <em>Stop</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">HelloWorld.WhoFlow</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -490,8 +490,8 @@ Flow detail page, then click the <em>Stop</em> button; or</p>
 </ul>
 <p><strong>Stopping the Service</strong></p>
 <ul>
-<li><p class="first">Click on <tt class="docutils literal"><span class="pre">HelloWorld</span></tt> in the Overview page of the CDAP Console to get to the
-Application detail page, click <tt class="docutils literal"><span class="pre">Greeting</span></tt> in the <em>Service</em> pane to get to the
+<li><p class="first">Click on <code class="docutils literal"><span class="pre">HelloWorld</span></code> in the Overview page of the CDAP Console to get to the
+Application detail page, click <code class="docutils literal"><span class="pre">Greeting</span></code> in the <em>Service</em> pane to get to the
 Service detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -502,10 +502,10 @@ Service detail page, then click the <em>Stop</em> button; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">HelloWorld.Greeting</span></code></td>
 </tr>
 </tbody>
 </table>

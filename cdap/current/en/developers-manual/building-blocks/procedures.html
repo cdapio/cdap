@@ -96,8 +96,8 @@ throughput of requests.</p>
 <p>A Procedure implements and exposes a very simple API: a method name
 (String) and arguments (map of Strings). This implementation is then
 bound to a REST endpoint and can be called from any external system.</p>
-<p>To create a Procedure you implement the <tt class="docutils literal"><span class="pre">Procedure</span></tt> interface, or more
-conveniently, extend the <tt class="docutils literal"><span class="pre">AbstractProcedure</span></tt> class.</p>
+<p>To create a Procedure you implement the <code class="docutils literal"><span class="pre">Procedure</span></code> interface, or more
+conveniently, extend the <code class="docutils literal"><span class="pre">AbstractProcedure</span></code> class.</p>
 <p>A Procedure is configured and initialized similarly to a Flowlet, but
 instead of a process method you’ll define a handler method. Upon
 external call, the handler method receives the request and sends a
@@ -105,8 +105,8 @@ response.</p>
 <p>The initialize method is called when the Procedure handler is created.
 It is not created until the first request is received for it.</p>
 <p>The most generic way to send a response is to obtain a
-<tt class="docutils literal"><span class="pre">Writer</span></tt> and stream out the response as bytes. Make sure to close the
-<tt class="docutils literal"><span class="pre">Writer</span></tt> when you are done:</p>
+<code class="docutils literal"><span class="pre">Writer</span></code> and stream out the response as bytes. Make sure to close the
+<code class="docutils literal"><span class="pre">Writer</span></code> when you are done:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">static</span> <span class="n">co</span><span class="o">.</span><span class="na">cask</span><span class="o">.</span><span class="na">cdap</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">procedure</span><span class="o">.</span><span class="na">ProcedureResponse</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SUCCESS</span><span class="o">;</span>
 <span class="o">...</span>
 <span class="kd">class</span> <span class="nc">HelloWorld</span> <span class="kd">extends</span> <span class="n">AbstractProcedure</span> <span class="o">{</span>
@@ -125,7 +125,7 @@ It is not created until the first request is received for it.</p>
 <p>This uses the most generic way to create the response, which allows you
 to send arbitrary byte content as the response body. In many cases, you
 will actually respond with JSON. A CDAP
-<tt class="docutils literal"><span class="pre">ProcedureResponder</span></tt> has convenience methods for returning JSON maps:</p>
+<code class="docutils literal"><span class="pre">ProcedureResponder</span></code> has convenience methods for returning JSON maps:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Return a JSON map</span>
 <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">results</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TreeMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;();</span>
 <span class="n">results</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">,</span> <span class="n">totalWords</span><span class="o">);</span>
@@ -147,15 +147,15 @@ will actually respond with JSON. A CDAP
 </pre></div>
 </div>
 <p class="rubric">Examples of Using Procedures</p>
-<p>Procedures are included in many CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">applications</em></a>,
-<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">tutorials</em></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">guides</em></a> and <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">examples</em></a>.</p>
+<p>Procedures are included in many CDAP <a class="reference external" href="../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">applications</span></a>,
+<a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">tutorials</span></a>, <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">guides</span></a> and <a class="reference external" href="../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">examples</span></a>.</p>
 <ul class="simple">
-<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Hello World</em></a>, demonstrates using a
+<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
 procedure to <strong>retrieve a name from a dataset.</strong></li>
 <li>For <strong>additional procedure examples,</strong> see the
-<a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a>,
-<a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark K-Means</em></a>, and
-<a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark Page Rank</em></a>
+<a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a>,
+<a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark K-Means</span></a>, and
+<a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark Page Rank</span></a>
 examples.</li>
 </ul>
 </div>

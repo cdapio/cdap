@@ -188,9 +188,9 @@ The JSON representation is used by the HTTP RESTful APIs, while the CDAP CLI sup
 </div>
 <div class="section" id="text-format">
 <h2>Text Format<a class="headerlink" href="#text-format" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">text</span></tt> format simply interprets each event body as a string. The format supports a very limited
-schema, namely a record with just one field of type <tt class="docutils literal"><span class="pre">string</span></tt>. The format supports a <tt class="docutils literal"><span class="pre">charset</span></tt> setting
-that allows you to specify the charset of the text. It defaults to <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
+<p>The <code class="docutils literal"><span class="pre">text</span></code> format simply interprets each event body as a string. The format supports a very limited
+schema, namely a record with just one field of type <code class="docutils literal"><span class="pre">string</span></code>. The format supports a <code class="docutils literal"><span class="pre">charset</span></code> setting
+that allows you to specify the charset of the text. It defaults to <code class="docutils literal"><span class="pre">utf-8</span></code>.</p>
 <p>For example:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">text</span> <span class="s">&quot;data string not null&quot;</span> <span class="s">&quot;charset=ISO-8859-1&quot;</span>
 </pre></div>
@@ -198,10 +198,10 @@ that allows you to specify the charset of the text. It defaults to <tt class="do
 </div>
 <div class="section" id="csv-and-tsv-formats">
 <h2>CSV and TSV Formats<a class="headerlink" href="#csv-and-tsv-formats" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">csv</span></tt> (comma separated values) and <tt class="docutils literal"><span class="pre">tsv</span></tt> (tab separated values) formats read event bodies as delimited text.
-They have two settings, <tt class="docutils literal"><span class="pre">charset</span></tt> for the text charset, and <tt class="docutils literal"><span class="pre">delimiter</span></tt> for the delimiter.
-The <tt class="docutils literal"><span class="pre">charset</span></tt> setting defaults to <tt class="docutils literal"><span class="pre">utf-8</span></tt>. The <tt class="docutils literal"><span class="pre">delimiter</span></tt> setting defaults to a comma
-for the <tt class="docutils literal"><span class="pre">csv</span></tt> format and to a tab for the <tt class="docutils literal"><span class="pre">tsv</span></tt> format.</p>
+<p>The <code class="docutils literal"><span class="pre">csv</span></code> (comma separated values) and <code class="docutils literal"><span class="pre">tsv</span></code> (tab separated values) formats read event bodies as delimited text.
+They have two settings, <code class="docutils literal"><span class="pre">charset</span></code> for the text charset, and <code class="docutils literal"><span class="pre">delimiter</span></code> for the delimiter.
+The <code class="docutils literal"><span class="pre">charset</span></code> setting defaults to <code class="docutils literal"><span class="pre">utf-8</span></code>. The <code class="docutils literal"><span class="pre">delimiter</span></code> setting defaults to a comma
+for the <code class="docutils literal"><span class="pre">csv</span></code> format and to a tab for the <code class="docutils literal"><span class="pre">tsv</span></code> format.</p>
 <p>These formats only support scalars as column types, except for the very last column, which can be an array of strings.
 All types can be nullable. If no schema is given, the default schema is an array of strings.</p>
 <p>For example:</p>
@@ -211,7 +211,7 @@ All types can be nullable. If no schema is given, the default schema is an array
 </div>
 <div class="section" id="avro-format">
 <h2>Avro Format<a class="headerlink" href="#avro-format" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">avro</span></tt> format reads event bodies as binary encoded Avro. The format requires a schema to be given,
+<p>The <code class="docutils literal"><span class="pre">avro</span></code> format reads event bodies as binary encoded Avro. The format requires a schema to be given,
 and has no settings.</p>
 <p>For example:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">set</span> <span class="n">stream</span> <span class="n">format</span> <span class="n">mystream</span> <span class="n">avro</span> <span class="s">&quot;col1 string, col2 map&lt;string,int&gt; not null, col3 record&lt;x:double, y:float&gt;&quot;</span>
@@ -263,16 +263,16 @@ complicated queries:</p>
 <ul class="simple">
 <li>The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.</li>
 <li>Writing into a Stream using SQL is not supported.</li>
-<li>The SQL command <tt class="docutils literal"><span class="pre">DELETE</span></tt> is not supported.</li>
+<li>The SQL command <code class="docutils literal"><span class="pre">DELETE</span></code> is not supported.</li>
 <li>When addressing your streams in queries, you need to prefix the stream name with
-<tt class="docutils literal"><span class="pre">stream_</span></tt>. For example, if your Stream is named <tt class="docutils literal"><span class="pre">Purchases</span></tt>, then the corresponding table
-name is <tt class="docutils literal"><span class="pre">stream_purchases</span></tt>. Note that the table name is all lower-case, regardless of how it was defined.</li>
+<code class="docutils literal"><span class="pre">stream_</span></code>. For example, if your Stream is named <code class="docutils literal"><span class="pre">Purchases</span></code>, then the corresponding table
+name is <code class="docutils literal"><span class="pre">stream_purchases</span></code>. Note that the table name is all lower-case, regardless of how it was defined.</li>
 <li>CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
 CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
 Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-create an Adapter that converts Stream data into a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>, as described in <a class="reference internal" href="../advanced/adapters.html#advanced-adapters"><em>Adapters (Beta)</em></a>.</li>
+create an Adapter that converts Stream data into a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>, as described in <a class="reference internal" href="../advanced/adapters.html#advanced-adapters"><span>Adapters (Beta)</span></a>.</li>
 <li>Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
-If you are seeing permission errors, try setting <tt class="docutils literal"><span class="pre">hive.exec.stagingdir</span></tt> in your Hive configuration to <tt class="docutils literal"><span class="pre">/tmp/hive-staging</span></tt>.</li>
+If you are seeing permission errors, try setting <code class="docutils literal"><span class="pre">hive.exec.stagingdir</span></code> in your Hive configuration to <code class="docutils literal"><span class="pre">/tmp/hive-staging</span></code>.</li>
 </ul>
 <p>For more examples of queries, please refer to the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual">Hive language manual</a>.</p>
 </div>

@@ -96,19 +96,19 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt>, or <tt class="docutils literal"><span class="pre">spark</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">spark</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the program (<em>Flow</em>, <em>MapReduce</em>, <em>Service</em>, <em>Spark</em>) being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;ts&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;ts&gt;</span></code></td>
 <td><em>Start</em> and <em>stop</em> times, given as seconds since the start of the Epoch.</td>
 </tr>
 </tbody>
@@ -121,14 +121,14 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request:</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/WordCount/flows/WordCountFlow/</span></tt>
-<tt class="docutils literal"><span class="pre">logs?start=1382576400&amp;stop=1382576700</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/WordCount/flows/WordCountFlow/</span></code>
+<code class="docutils literal"><span class="pre">logs?start=1382576400&amp;stop=1382576700</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Return the logs for all the events from the Flow <em>WordCountFlow</em> of the <em>WordCount</em>
 Application in the namespace <em>default</em>,
-beginning <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:00:00</span> <span class="pre">GMT</span></tt> and
-ending <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:05:00</span> <span class="pre">GMT</span></tt> (five minutes later)</td>
+beginning <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:00:00</span> <span class="pre">GMT</span></code> and
+ending <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:05:00</span> <span class="pre">GMT</span></code> (five minutes later)</td>
 </tr>
 </tbody>
 </table>
@@ -151,16 +151,16 @@ API. To do that, send an HTTP GET request:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;component-id&gt;</span></tt></td>
-<td><tt class="docutils literal"><span class="pre">appfabric</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;component-id&gt;</span></code></td>
+<td><code class="docutils literal"><span class="pre">appfabric</span></code></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;service-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;service-id&gt;</span></code></td>
 <td>[to be completed]</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;ts&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;ts&gt;</span></code></td>
 <td><em>Start</em> and <em>stop</em> times, given as seconds since the start of the Epoch.</td>
 </tr>
 </tbody>
@@ -175,8 +175,8 @@ escaped. A line of a log may look like this:</p>
 </pre></div>
 </div>
 <p><strong>Note:</strong> The context of the log line shows the name of the Flowlet (<em>source</em>), its instance number (0) as
-well as the original line in the Application code. The character <em>&amp;</em> is escaped as <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt>; if you don’t desire
-this escaping, you can turn it off by adding the parameter <tt class="docutils literal"><span class="pre">&amp;escape=false</span></tt> to the request URL.</p>
+well as the original line in the Application code. The character <em>&amp;</em> is escaped as <code class="docutils literal"><span class="pre">&amp;amp;</span></code>; if you don’t desire
+this escaping, you can turn it off by adding the parameter <code class="docutils literal"><span class="pre">&amp;escape=false</span></code> to the request URL.</p>
 </div>
 <div class="section" id="filtering">
 <h2>Filtering<a class="headerlink" href="#filtering" title="Permalink to this headline">¶</a></h2>

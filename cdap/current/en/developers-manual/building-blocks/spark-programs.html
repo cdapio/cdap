@@ -81,18 +81,18 @@ data into memory and query them repeatedly. This makes it suitable for both iter
 interactive programs. Similar to MapReduce, Spark can access <strong>Datasets</strong> as both input
 and output. Spark programs in CDAP can be written in either Java or Scala.</p>
 <p>In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP.</p>
-<p>To process data using Spark, specify <tt class="docutils literal"><span class="pre">addSpark()</span></tt> in your Application specification:</p>
+<p>To process data using Spark, specify <code class="docutils literal"><span class="pre">addSpark()</span></code> in your Application specification:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
   <span class="o">...</span>
     <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountProgram</span><span class="o">());</span>
 </pre></div>
 </div>
-<p>You must implement the <tt class="docutils literal"><span class="pre">Spark</span></tt> interface, which requires the
+<p>You must implement the <code class="docutils literal"><span class="pre">Spark</span></code> interface, which requires the
 implementation of three methods:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">configure()</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">onFinish()</span></tt></li>
+<li><code class="docutils literal"><span class="pre">configure()</span></code></li>
+<li><code class="docutils literal"><span class="pre">beforeSubmit()</span></code></li>
+<li><code class="docutils literal"><span class="pre">onFinish()</span></code></li>
 </ul>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountProgram</span> <span class="kd">implements</span> <span class="n">Spark</span> <span class="o">{</span>
   <span class="nd">@Override</span>
@@ -107,9 +107,9 @@ implementation of three methods:</p>
 </div>
 <p>The configure method is similar to the one found in Flows and
 MapReduce programs. It defines the name, description, and the class containing the main method of a Spark program.</p>
-<p>The <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method is invoked at runtime, before the
+<p>The <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method is invoked at runtime, before the
 Spark program is executed. Because many Spark programs do not
-need this method, the <tt class="docutils literal"><span class="pre">AbstractSpark</span></tt> class provides a default
+need this method, the <code class="docutils literal"><span class="pre">AbstractSpark</span></code> class provides a default
 implementation that does nothing:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
@@ -117,10 +117,10 @@ implementation that does nothing:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">onFinish()</span></tt> method is invoked after the Spark program has
+<p>The <code class="docutils literal"><span class="pre">onFinish()</span></code> method is invoked after the Spark program has
 finished. You could perform cleanup or send a notification of program
-completion, if that was required. Like <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>, since many Spark programs do not
-need this method, the <tt class="docutils literal"><span class="pre">AbstractSpark</span></tt> class also provides a default
+completion, if that was required. Like <code class="docutils literal"><span class="pre">beforeSubmit()</span></code>, since many Spark programs do not
+need this method, the <code class="docutils literal"><span class="pre">AbstractSpark</span></code> class also provides a default
 implementation for this method that does nothing:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">SparkContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
@@ -130,11 +130,11 @@ implementation for this method that does nothing:</p>
 </div>
 <div class="section" id="cdap-sparkcontext">
 <h2>CDAP SparkContext<a class="headerlink" href="#cdap-sparkcontext" title="Permalink to this headline">¶</a></h2>
-<p>CDAP provides its own <tt class="docutils literal"><span class="pre">SparkContext</span></tt> which is needed to access <strong>Datasets</strong>.</p>
-<p>CDAP Spark programs must implement either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt>,
+<p>CDAP provides its own <code class="docutils literal"><span class="pre">SparkContext</span></code> which is needed to access <strong>Datasets</strong>.</p>
+<p>CDAP Spark programs must implement either <code class="docutils literal"><span class="pre">JavaSparkProgram</span></code> or <code class="docutils literal"><span class="pre">ScalaSparkProgram</span></code>,
 depending upon the language (Java or Scala) in which the program is written. You can also access the Spark&#8217;s
-<tt class="docutils literal"><span class="pre">SparkContext</span></tt> (for Scala programs) and <tt class="docutils literal"><span class="pre">JavaSparkContext</span></tt> (for Java programs) in your CDAP Spark program by calling
-<tt class="docutils literal"><span class="pre">getOriginalSparkContext()</span></tt> on CDAP <tt class="docutils literal"><span class="pre">SparkContext</span></tt>.</p>
+<code class="docutils literal"><span class="pre">SparkContext</span></code> (for Scala programs) and <code class="docutils literal"><span class="pre">JavaSparkContext</span></code> (for Java programs) in your CDAP Spark program by calling
+<code class="docutils literal"><span class="pre">getOriginalSparkContext()</span></code> on CDAP <code class="docutils literal"><span class="pre">SparkContext</span></code>.</p>
 <ul>
 <li><p class="first">Java:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyJavaSparkProgram</span> <span class="kd">implements</span> <span class="n">JavaSparkProgram</span> <span class="o">{</span>
@@ -167,7 +167,7 @@ reading a Dataset and can also write RDD to a Dataset.</p>
 <p>In order to access a Dataset in Spark, both the key and value classes have to be serializable.
 Otherwise, Spark will fail to read or write them.
 For example, the Table Dataset has a value type of Row, which is not serializable.
-An <tt class="docutils literal"><span class="pre">ObjectStore</span></tt> dataset can be used, provided its classes are serializable.</p>
+An <code class="docutils literal"><span class="pre">ObjectStore</span></code> dataset can be used, provided its classes are serializable.</p>
 <ul>
 <li><p class="first">Creating an RDD from Dataset</p>
 <ul class="simple">
@@ -290,12 +290,12 @@ You can also emit custom user metrics from the worker nodes of your Spark Progra
 </div>
 <div class="section" id="spark-in-workflows">
 <h2>Spark in Workflows<a class="headerlink" href="#spark-in-workflows" title="Permalink to this headline">¶</a></h2>
-<p>Spark programs in CDAP can also be added to a <a class="reference internal" href="workflows.html#workflows"><em>Workflow</em></a>, similar to a <a class="reference internal" href="mapreduce-programs.html#mapreduce"><em>MapReduce</em></a>.</p>
+<p>Spark programs in CDAP can also be added to a <a class="reference internal" href="workflows.html#workflows"><span>Workflow</span></a>, similar to a <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>.</p>
 <p class="rubric">Examples of Using Spark Programs</p>
 <ul class="simple">
-<li>For an example of <strong>a Spark Program,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark K-Means</em></a>
-and <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark Page Rank</em></a> examples.</li>
-<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-spark-guide.html#cdap-spark-guide" title="(in Cask Data Application Platform v2.8.0)"><em>Iterative Data Processing with Apache Spark</em></a> gives another demonstration.</li>
+<li>For an example of <strong>a Spark Program,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark K-Means</span></a>
+and <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark Page Rank</span></a> examples.</li>
+<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-spark-guide.html#cdap-spark-guide" title="(in Cask Data Application Platform v2.8.0)"><span>Iterative Data Processing with Apache Spark</span></a> gives another demonstration.</li>
 </ul>
 </div>
 </div>
