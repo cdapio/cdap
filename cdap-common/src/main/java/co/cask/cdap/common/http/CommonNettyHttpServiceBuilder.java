@@ -32,7 +32,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
       this.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
-          input.addAfter("decoder", "authenticator", new AuthenticationChannelHandler());
+          input.addBefore("router", "authenticator", new AuthenticationChannelHandler());
           return input;
         }
       });
