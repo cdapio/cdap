@@ -122,7 +122,7 @@ These are the available commands:
    :header: Command,Description
    :widths: 50, 50
 
-     **General**
+   **General**
    ``cli render as <table-renderer>``,"Modifies how table data is rendered. Valid options are ""alt"" (default) and ""csv""."
    ``cli version``,"Prints the CLI version."
    ``connect <cdap-instance-uri>``,"Connects to a CDAP instance."
