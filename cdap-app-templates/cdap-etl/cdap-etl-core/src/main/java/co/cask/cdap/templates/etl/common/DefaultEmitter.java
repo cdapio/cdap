@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Default implementation of {@link Emitter}.
  */
 public class DefaultEmitter implements Emitter, Iterable<Map.Entry> {
   private final List<Map.Entry> entryList;
