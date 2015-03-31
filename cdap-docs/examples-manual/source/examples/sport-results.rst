@@ -16,14 +16,14 @@ Overview
 
 This Application demonstrates the use of the PartitionedFileSet dataset:
 
-   - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
-     and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
-     for example, the 2014 season of the NFL (National Football League).
-   - Results are uploaded into the file set using the ``UploadService``.
-   - The ``ScoreCounter`` MapReduce program reads game results for a given league and
-     aggregates total counts such as games won and lost, or points scored and conceded, across all
-     seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
-   - Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
+- Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
+  and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
+  for example, the 2014 season of the NFL (National Football League).
+- Results are uploaded into the file set using the ``UploadService``.
+- The ``ScoreCounter`` MapReduce program reads game results for a given league and
+  aggregates total counts such as games won and lost, or points scored and conceded, across all
+  seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
+- Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
 
 Let's look at some of these components, and then run the Application and see the results.
 
@@ -65,6 +65,7 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
     :lines: 58-61
+    :dedent: 2
 
 Let's take a closer look at the upload method:
 
@@ -81,6 +82,7 @@ Let's take a closer look at the upload method:
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
     :lines: 88-118
+    :dedent: 4
 
 MapReduce over File Partitions
 ==============================
@@ -97,6 +99,7 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
     :lines: 58-84
+    :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
