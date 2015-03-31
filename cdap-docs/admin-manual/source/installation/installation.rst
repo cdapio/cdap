@@ -608,17 +608,15 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
    - Using Yum (on one line)::
 
-       $ sudo yum install cdap cdap-gateway
-                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                               cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                               cdap-security cdap-web-app
+       $ sudo yum install cdap cdap-gateway \
+             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-kafka cdap-master cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
-       $ sudo apt-get install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+       $ sudo apt-get install cdap cdap-gateway \
+             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-kafka cdap-master cdap-security cdap-web-app
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
