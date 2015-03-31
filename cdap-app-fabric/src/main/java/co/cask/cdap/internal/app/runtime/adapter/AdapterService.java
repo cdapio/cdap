@@ -138,15 +138,17 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Retrieves the {@link AdapterSpecification} specified by the name in a given namespace.
    *
-   * @param namespace namespace to lookup the adapter
+   * @param namespaceId namespace to lookup the adapter
    * @param adapterName name of the adapter
    * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+  public AdapterSpecification getAdapter(String namespaceId, String adapterName) throws AdapterNotFoundException {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Adapter adapter = Id.Adapter.from(namespace, adapterName);
+    AdapterSpecification adapterSpec = store.getAdapter(namespace, adapterName);
     if (adapterSpec == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
     return adapterSpec;
   }
@@ -154,15 +156,17 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Retrieves the status of an Adapter specified by the name in a given namespace.
    *
-   * @param namespace namespace to lookup the adapter
+   * @param namespaceId namespace to lookup the adapter
    * @param adapterName name of the adapter
    * @return requested Adapter's status
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterStatus getAdapterStatus(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterStatus adapterStatus = store.getAdapterStatus(Id.Namespace.from(namespace), adapterName);
+  public AdapterStatus getAdapterStatus(String namespaceId, String adapterName) throws AdapterNotFoundException {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Adapter adapter = Id.Adapter.from(namespace, adapterName);
+    AdapterStatus adapterStatus = store.getAdapterStatus(namespace, adapterName);
     if (adapterStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
     return adapterStatus;
   }
@@ -170,16 +174,18 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Sets the status of an Adapter specified by the name in a given namespace.
    *
-   * @param namespace namespace of the adapter
+   * @param namespaceId namespace of the adapter
    * @param adapterName name of the adapter
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status)
+  public AdapterStatus setAdapterStatus(String namespaceId, String adapterName, AdapterStatus status)
     throws AdapterNotFoundException {
-    AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Adapter adapter = Id.Adapter.from(namespace, adapterName);
+    AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespaceId), adapterName, status);
     if (existingStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(adapter);
     }
     return existingStatus;
   }
@@ -279,8 +285,7 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), programType, entry.getValue().getName());
       scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
                                 constructScheduleName(programId, adapterName));
     }
@@ -304,8 +309,7 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), programType, entry.getValue().getName());
       scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
                                constructScheduleName(programId, adapterName));
     }
@@ -359,8 +363,7 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), programType, entry.getValue().getName());
       addSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec);
     }
   }
@@ -374,8 +377,8 @@ public class AdapterService extends AbstractIdleService {
                                 String.format("Unsupported program type %s for adapter", programType.toString()));
     Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
     for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
+      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(),
+                                             programType, entry.getValue().getName());
       deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
                      constructScheduleName(programId, adapterSpec.getName()));
     }

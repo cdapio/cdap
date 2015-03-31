@@ -77,10 +77,6 @@ public class ClientConfig {
     return ClientConfig.builder().build();
   }
 
-  private URL resolveURL(String apiVersion, String path) throws DisconnectedException, MalformedURLException {
-    return getConnectionConfig().resolveURI(apiVersion, path).toURL();
-  }
-
   /**
    * Resolves a path against the target CDAP server
    *
@@ -90,6 +86,10 @@ public class ClientConfig {
    */
   public URL resolveURL(String path) throws DisconnectedException, MalformedURLException {
     return resolveURL(apiVersion, path);
+  }
+
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
   }
 
   /**
@@ -238,7 +238,6 @@ public class ClientConfig {
   public static final class Builder {
 
     private ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
-
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
     private boolean verifySSLCert = DEFAULT_VERIFY_SSL_CERTIFICATE;

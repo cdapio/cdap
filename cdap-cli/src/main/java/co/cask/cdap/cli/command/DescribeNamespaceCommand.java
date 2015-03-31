@@ -27,7 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -52,10 +52,10 @@ public class DescribeNamespaceCommand extends AbstractCommand {
     NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
     Table table = Table.builder()
       .setHeader("name", "description")
-      .setRows(ImmutableList.of(namespaceMeta), new RowMaker<NamespaceMeta>() {
+      .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
-          return ImmutableList.of(object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class NamespaceClientTestRun extends ClientTestBase {
   private NamespaceClient namespaceClient;
+
   private static final Id.Namespace DOES_NOT_EXIST = Id.Namespace.from("doesnotexist");
   private static final Id.Namespace TEST_NAMESPACE_NAME = Id.Namespace.from("testnamespace");
   private static final String TEST_DESCRIPTION = "testdescription";
