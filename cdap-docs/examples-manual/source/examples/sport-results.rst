@@ -98,15 +98,6 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
     :language: java
     :lines: 60-86
 
-After the MapReduce has completed, the ``onFinish()`` method finalizes the addition of the new partition.
-Note that this is only needed due to a current limitation in the ``PartitionedFileSet`` implementation:
-the partition should be added by the output committer of the dataset's output format (this will be
-addressed in a future CDAP release):
-
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
-    :language: java
-    :lines: 88-94
-
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
 

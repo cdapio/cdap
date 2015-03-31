@@ -88,15 +88,6 @@ The Mapper itself is straight-forward: for each event, it emits an Avro record:
      :language: java
      :lines: 104-111
 
-In the ``afterSubmit`` method of the MapReduce program, if the run succeeds, the output file is
-registered as a new partition in the ``converted`` dataset. Note that this is only needed due to a
-current limitation in the ``TimePartitionedFileSet`` implementation: the partition should be added
-by the output committer of the dataset's output format (this will be addressed in a future CDAP release):
-
-.. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
-     :language: java
-     :lines: 85-95
-
 Building and Starting
 =====================
 
