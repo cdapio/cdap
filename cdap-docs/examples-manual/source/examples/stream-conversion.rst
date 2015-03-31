@@ -86,7 +86,7 @@ The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 104-111
+     :lines: 90-97
 
 Building and Starting
 =====================

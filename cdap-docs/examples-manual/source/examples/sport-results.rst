@@ -64,7 +64,7 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 57-60
+    :lines: 58-61
 
 Let's take a closer look at the upload method:
 
@@ -96,7 +96,7 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 60-86
+    :lines: 58-84
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.

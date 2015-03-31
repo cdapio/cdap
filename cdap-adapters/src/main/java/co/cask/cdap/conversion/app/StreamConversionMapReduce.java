@@ -96,7 +96,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setJobName("adapter.stream-conversion." + adapterArguments.getSourceName()
                      + ".to." + sinkName + "." + partitionTime);
   }
-  
+
   /**
    * Mapper that reads events from a stream and writes them out as Avro.
    */
