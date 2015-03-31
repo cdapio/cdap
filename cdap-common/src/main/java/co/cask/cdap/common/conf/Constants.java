@@ -494,8 +494,6 @@ public final class Constants {
   public static final class Security {
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
-    /** Enables authorization. */
-    public static final String AUTHORIZATION_ENABLED = "security.authorization.enabled";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */
