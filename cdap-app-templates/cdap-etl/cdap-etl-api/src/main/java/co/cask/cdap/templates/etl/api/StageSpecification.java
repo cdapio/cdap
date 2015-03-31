@@ -29,6 +29,10 @@ public class StageSpecification implements ProgramSpecification {
   private final String description;
   private final List<Property> properties;
 
+  public StageSpecification(String name, String description, List<Property> properties) {
+    this(null, name, description, properties);
+  }
+
   public StageSpecification(String className, String name, String description, List<Property> properties) {
     this.className = className;
     this.name = name;
