@@ -314,7 +314,7 @@ public class BaseHiveExploreServiceTest {
     for (Map.Entry<String, String> header : headers.entrySet()) {
       // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
       // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamId.getName() + "." + header.getKey(), header.getValue());
+      urlConn.addRequestProperty(streamId.getId() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
@@ -325,7 +325,7 @@ public class BaseHiveExploreServiceTest {
     int port = streamHttpService.getBindAddress().getPort();
     URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
                                     port, Constants.Gateway.API_VERSION_3,
-                                    streamId.getNamespaceId(), streamId.getName()));
+                                    streamId.getNamespaceId(), streamId.getId()));
     return (HttpURLConnection) url.openConnection();
   }
 

@@ -18,6 +18,7 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -82,7 +83,7 @@ public abstract class AbstractNamespaceClient {
   }
 
   public void create(NamespaceMeta namespaceMeta)
-    throws NamespaceAlreadyExistsException, BadRequestException, IOException, UnauthorizedException {
+    throws NamespaceAlreadyExistsException, BadRequestException, IOException, UnauthorizedException, NamespaceCannotBeCreatedException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
     URL url = resolve(String.format("namespaces/%s", namespace.getId()));

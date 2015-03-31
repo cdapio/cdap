@@ -263,7 +263,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   private static String getTableName(Id.Stream streamId) {
-    return getTableName(streamId.getName());
+    return getTableName(streamId.getId());
   }
 
   private static String getTableName(String streamName) {

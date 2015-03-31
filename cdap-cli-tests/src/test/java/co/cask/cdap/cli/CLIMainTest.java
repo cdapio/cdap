@@ -281,7 +281,6 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testProcedure() throws Exception {
     String originalApiVersion = cliConfig.getClientConfig().getApiVersion();
     try {
-<<<<<<< HEAD
       cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_2_TOKEN);
       testCommandOutputContains(cli, "use namespace " + Constants.DEFAULT_NAMESPACE, "using namespace");
 
@@ -295,11 +294,6 @@ public class CLIMainTest extends StandaloneTestBase {
         testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
         assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
       }
-=======
-      testCommandOutputContains(cli, "call procedure " +
-        qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME +
-        " 'customer bob'", "realbob");
->>>>>>> 8d3682e1e33f94797a127d225b59a9c29cb7b300
     } finally {
       cliConfig.getClientConfig().setApiVersion(originalApiVersion);
     }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -690,30 +689,19 @@ public abstract class Id {
    */
   public static class Schedule extends NamespacedId {
 
-    private final Program program;
-    private final SchedulableProgramType schedulableProgramType;
+    private final Application application;
     private final String id;
 
-    private Schedule(Program program, SchedulableProgramType schedulableProgramType, String id) {
-      Preconditions.checkArgument(program != null, "program cannot be null.");
-      Preconditions.checkArgument(schedulableProgramType != null, "schedulableProgramType cannot be null.");
+    private Schedule(Application application, String id) {
+      Preconditions.checkArgument(application != null, "application cannot be null.");
       Preconditions.checkArgument(id != null && !id.isEmpty(), "id cannot be null or empty.");
-      this.program = program;
-      this.schedulableProgramType = schedulableProgramType;
+      this.application = application;
       this.id = id;
-    }
-
-    public Program getProgram() {
-      return program;
-    }
-
-    public SchedulableProgramType getSchedulableProgramType() {
-      return schedulableProgramType;
     }
 
     @Override
     public Id getParent() {
-      return program;
+      return application;
     }
 
     @Override
@@ -723,19 +711,22 @@ public abstract class Id {
 
     @Override
     public Namespace getNamespace() {
-      return program.getNamespace();
+      return application.getNamespace();
     }
 
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("program", program)
-        .add("schedulableProgramType", schedulableProgramType)
+        .add("application", application)
         .add("id", id).toString();
     }
 
-    public static Schedule from(Program program, SchedulableProgramType schedulableProgramType, String id) {
-      return new Schedule(program, schedulableProgramType, id);
+    public static Schedule from(Application application, String id) {
+      return new Schedule(application, id);
+    }
+
+    public static Schedule from(Namespace namespace, String appId, String id) {
+      return new Schedule(Id.Application.from(namespace, appId), id);
     }
   }
 

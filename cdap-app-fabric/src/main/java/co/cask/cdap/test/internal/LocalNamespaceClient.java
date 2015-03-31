@@ -16,8 +16,10 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.exception.NamespaceNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
@@ -48,18 +50,19 @@ public class LocalNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public NamespaceMeta get(String namespaceId) throws NotFoundException, IOException, UnauthorizedException {
+  public NamespaceMeta get(String namespaceId) throws NamespaceNotFoundException, IOException, UnauthorizedException {
     return namespaceAdmin.getNamespace(Id.Namespace.from(namespaceId));
   }
 
   @Override
-  public void delete(String namespaceId) throws NotFoundException, CannotBeDeletedException, IOException,
-    UnauthorizedException {
+  public void delete(String namespaceId)
+    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException, IOException, UnauthorizedException {
     namespaceAdmin.deleteNamespace(Id.Namespace.from(namespaceId));
   }
 
   @Override
-  public void create(NamespaceMeta namespaceMeta) throws Exception {
+  public void create(NamespaceMeta namespaceMeta)
+    throws NamespaceAlreadyExistsException, NamespaceCannotBeCreatedException {
     namespaceAdmin.createNamespace(namespaceMeta);
   }
 

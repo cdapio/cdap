@@ -77,6 +77,10 @@ public class ClientConfig {
     return ClientConfig.builder().build();
   }
 
+  private URL resolveURL(String apiVersion, String path) throws DisconnectedException, MalformedURLException {
+    return getConnectionConfig().resolveURI(apiVersion, path).toURL();
+  }
+
   /**
    * Resolves a path against the target CDAP server
    *

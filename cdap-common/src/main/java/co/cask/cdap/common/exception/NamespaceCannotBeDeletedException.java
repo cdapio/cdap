@@ -30,6 +30,16 @@ public class NamespaceCannotBeDeletedException extends CannotBeDeletedException 
     this.namespace = id;
   }
 
+  public NamespaceCannotBeDeletedException(Id.Namespace id, String reason) {
+    super(id, reason);
+    this.namespace = id;
+  }
+
+  public NamespaceCannotBeDeletedException(Id.Namespace id, Throwable cause) {
+    super(id, cause);
+    this.namespace = id;
+  }
+
   public Id.Namespace getNamespace() {
     return namespace;
   }
