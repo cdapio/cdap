@@ -32,7 +32,10 @@ angular.module(PKG.name + '.feature.workflows')
       dataSrc.request({
         method: 'POST',
         _cdapNsPath: basePath + '/' + action
-      });
+      })
+        .then(function() {
+          $state.go('workflows.detail.runs', {}, {reload: true});
+        });
     };
 
 });

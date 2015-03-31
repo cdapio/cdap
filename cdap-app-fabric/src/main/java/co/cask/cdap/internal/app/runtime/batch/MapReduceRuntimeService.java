@@ -98,6 +98,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
 
+  /**
+   * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
+   * AM in secure mode.
+   */
+  private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo dummy;
+
   // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
   private static final String PROGRAMMATIC_SOURCE = "programmatically";
 
@@ -148,9 +154,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // If runs in secure cluster, this program runner is running in a yarn container, hence not able
-      // to get authenticated with the history and MR-AM.
+      // to get authenticated with the history.
       mapredConf.unset("mapreduce.jobhistory.address");
-      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, true);
+      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, false);
 
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
