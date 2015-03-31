@@ -129,6 +129,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         condition.await();
       }
     } catch (InterruptedException e) {
+      LOG.warn("Wait on the Condition is interrupted.");
       Thread.currentThread().interrupt();
     } finally {
       lock.unlock();
