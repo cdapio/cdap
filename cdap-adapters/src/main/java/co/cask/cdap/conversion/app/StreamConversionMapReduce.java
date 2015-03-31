@@ -100,10 +100,13 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
-      TimePartitionedFileSet converted = context.getDataset(sinkName);
+      // must use the same arguments for the dataset as when it was instantiated in beforeSubmit()
+      Map<String, String> sinkArgs = Maps.newHashMap();
+      TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, partitionTime);
+      TimePartitionedFileSet sink = context.getDataset(sinkName, sinkArgs);
 
       LOG.info("Adding partition for time {} with path {} to dataset '{}'", partitionTime, outputPath, sinkName);
-      converted.addPartition(partitionTime, outputPath);
+      sink.addPartition(partitionTime, outputPath);
     }
   }
 

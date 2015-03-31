@@ -18,15 +18,11 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -88,17 +84,6 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (succeeded) {
-        TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
-        String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
-        Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());
-        Preconditions.checkNotNull(time, "Output partition time is null.");
-        ds.addPartition(time, outputPath);
-      }
     }
   }
 
