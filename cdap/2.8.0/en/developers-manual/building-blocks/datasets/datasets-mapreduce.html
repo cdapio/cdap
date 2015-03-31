@@ -84,7 +84,7 @@ The Dataset needs to implement specific interfaces to support this.</p>
 source Dataset must implement the <tt class="docutils literal"><span class="pre">BatchReadable</span></tt> interface, which requires two methods:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">BatchReadable</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="o">{</span>
   <span class="n">List</span><span class="o">&lt;</span><span class="n">Split</span><span class="o">&gt;</span> <span class="nf">getSplits</span><span class="o">();</span>
-  <span class="n">SplitReader</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="n">createSplitReader</span><span class="o">(</span><span class="n">Split</span> <span class="n">split</span><span class="o">);</span>
+  <span class="n">SplitReader</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="nf">createSplitReader</span><span class="o">(</span><span class="n">Split</span> <span class="n">split</span><span class="o">);</span>
 <span class="o">}</span>
 </pre></div>
 </div>

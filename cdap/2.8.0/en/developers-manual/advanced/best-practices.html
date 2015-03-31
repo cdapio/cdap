@@ -142,7 +142,7 @@ prefix matching. Here is an example, showing <tt class="docutils literal"><span 
 from a provided index key, an incremented stop key:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Returns first that matches</span>
 <span class="nd">@Nullable</span>
-<span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="n">get</span><span class="o">(</span><span class="n">Key</span> <span class="n">id</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">classOfT</span><span class="o">)</span> <span class="o">{</span>
+<span class="kd">public</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">T</span> <span class="nf">get</span><span class="o">(</span><span class="n">Key</span> <span class="n">id</span><span class="o">,</span> <span class="n">Class</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">classOfT</span><span class="o">)</span> <span class="o">{</span>
   <span class="k">try</span> <span class="o">{</span>
     <span class="n">Scanner</span> <span class="n">scan</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="na">scan</span><span class="o">(</span><span class="n">id</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">stopKeyForPrefix</span><span class="o">(</span><span class="n">id</span><span class="o">.</span><span class="na">getKey</span><span class="o">()));</span>
     <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
@@ -155,7 +155,7 @@ from a provided index key, an incremented stop key:</p>
       <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
     <span class="o">}</span>
 
-    <span class="k">return</span> <span class="nf">deserialize</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">classOfT</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">deserialize</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">classOfT</span><span class="o">);</span>
   <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
     <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
   <span class="o">}</span>

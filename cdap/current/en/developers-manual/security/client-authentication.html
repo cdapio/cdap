@@ -194,8 +194,8 @@ value must be &#8220;Bearer&#8221;.</td>
 </div>
 <p>Sample response:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">HTTP</span><span class="o">/</span><span class="mf">1.1</span> <span class="mi">200</span> <span class="n">OK</span>
-<span class="n">Content</span><span class="o">-</span><span class="nl">Type:</span> <span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="o">;</span><span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
-<span class="n">Cache</span><span class="o">-</span><span class="nl">Control:</span> <span class="n">no</span><span class="o">-</span><span class="n">store</span>
+<span class="n">Content</span><span class="o">-</span><span class="n">Type</span><span class="o">:</span> <span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="o">;</span><span class="n">charset</span><span class="o">=</span><span class="n">UTF</span><span class="o">-</span><span class="mi">8</span>
+<span class="n">Cache</span><span class="o">-</span><span class="n">Control</span><span class="o">:</span> <span class="n">no</span><span class="o">-</span><span class="n">store</span>
 <span class="nl">Pragma:</span> <span class="n">no</span><span class="o">-</span><span class="n">cache</span>
 
 <span class="o">{</span>
@@ -319,7 +319,7 @@ wrapped for display purposes.</p>
 </div>
 <p>Missing token:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">HTTP</span><span class="o">/</span><span class="mf">1.1</span> <span class="mi">401</span> <span class="n">Unauthorized</span>
-<span class="n">WWW</span><span class="o">-</span><span class="nl">Authenticate:</span> <span class="n">Bearer</span> <span class="n">realm</span><span class="o">=</span><span class="s">&quot;example&quot;</span>
+<span class="n">WWW</span><span class="o">-</span><span class="n">Authenticate</span><span class="o">:</span> <span class="n">Bearer</span> <span class="n">realm</span><span class="o">=</span><span class="s">&quot;example&quot;</span>
 
 <span class="o">{</span>
   <span class="s">&quot;auth_uri&quot;</span><span class="o">:</span> <span class="o">[</span><span class="s">&quot;https://server.example.com:10010/token&quot;</span><span class="o">]</span>
@@ -328,7 +328,7 @@ wrapped for display purposes.</p>
 </div>
 <p>Invalid or expired token:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">HTTP</span><span class="o">/</span><span class="mf">1.1</span> <span class="mi">401</span> <span class="n">Unauthorized</span>
-<span class="n">WWW</span><span class="o">-</span><span class="nl">Authenticate:</span> <span class="n">Bearer</span> <span class="n">realm</span><span class="o">=</span><span class="s">&quot;example&quot;</span><span class="o">,</span>
+<span class="n">WWW</span><span class="o">-</span><span class="n">Authenticate</span><span class="o">:</span> <span class="n">Bearer</span> <span class="n">realm</span><span class="o">=</span><span class="s">&quot;example&quot;</span><span class="o">,</span>
                     <span class="n">error</span><span class="o">=</span><span class="s">&quot;invalid_token&quot;</span><span class="o">,</span>
                     <span class="n">error_description</span><span class="o">=</span><span class="s">&quot;The access token expired&quot;</span>
 

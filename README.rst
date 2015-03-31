@@ -6,6 +6,8 @@ Cask Data Application Platform (CDAP) Documentation
 
 `Latest version: 2.8.0 <http://docs.cdap.io/cdap/current>`__
 
+- `Version 2.8.0 <http://docs.cdap.io/cdap/2.8.0>`__
+
 Earlier versions:
 
 - `Version 2.7.1 <http://docs.cdap.io/cdap/2.7.1>`__
