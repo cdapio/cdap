@@ -18,6 +18,7 @@ package co.cask.cdap.logging.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
@@ -64,7 +65,7 @@ public class LogSaverStatusService extends AbstractIdleService {
                                                                        Constants.Service.LOGSAVER));
     httpService.startAndWait();
 
-    cancellable = discoveryService.register(new Discoverable() {
+    cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.LOGSAVER;
@@ -74,7 +75,7 @@ public class LogSaverStatusService extends AbstractIdleService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
   }
 
   @Override

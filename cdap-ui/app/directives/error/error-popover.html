@@ -1,0 +1,14 @@
+<div class="popover" ng-controller="myErrorController">
+  <div class="arrow"></div>
+  <h3 class="popover-title">Errors</h3>
+  <div class="popover-content">
+    <div class="text-right">
+      <button class="btn btn-sm btn-default" ng-click="clear()">Clear All</button>
+    </div>
+    <div class="clearfix">
+      <p ng-repeat="alert in alerts" class="bg-danger">
+        <strong>{{ alert.title }}</strong> {{ alert.content }}
+      </p>
+    </div>
+  </div>
+</div>

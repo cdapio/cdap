@@ -16,7 +16,9 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -53,6 +55,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class StreamConsumerTestBase {
 
+  protected static CConfiguration cConf = CConfiguration.create();
   protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerTestNamespace");
   protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
   private static final Comparator<StreamEvent> STREAM_EVENT_COMPARATOR = new Comparator<StreamEvent>() {
@@ -75,6 +78,11 @@ public abstract class StreamConsumerTestBase {
   protected abstract TransactionSystemClient getTransactionClient();
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
+
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+  }
 
   @Test
   public void testNamespacedStreamConsumers() throws Exception {

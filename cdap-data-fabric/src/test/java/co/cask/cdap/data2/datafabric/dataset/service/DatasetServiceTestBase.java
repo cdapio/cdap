@@ -27,6 +27,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -143,6 +144,7 @@ public abstract class DatasetServiceTestBase {
     };
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                              new LocalDatasetTypeClassLoaderFactory());
 
@@ -163,7 +165,7 @@ public abstract class DatasetServiceTestBase {
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
-                                 locationFactory,
+                                 namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
@@ -175,7 +177,8 @@ public abstract class DatasetServiceTestBase {
                                  mdsDatasetsRegistry,
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, locationFactory, exploreFacade));
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                         exploreFacade));
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -191,7 +194,7 @@ public abstract class DatasetServiceTestBase {
 
     startLatch.await(5, TimeUnit.SECONDS);
     // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(locationFactory.create(Constants.DEFAULT_NAMESPACE));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
   }
 
   @After

@@ -24,11 +24,8 @@ RUN apt-get update && \
     apt-get install -y software-properties-common python-software-properties && \
     add-apt-repository ppa:chris-lea/node.js && \
     apt-get update && \
-    apt-get install -y curl && \
-    apt-get install -y --no-install-recommends openjdk-7-jdk && \
-    apt-get install -y nodejs && \
-    apt-get install -y maven && \
-    apt-get install -y unzip
+    apt-get install -y curl nodejs unzip git maven && \
+    apt-get install -y --no-install-recommends openjdk-7-jdk
 
 # create Software directory
 RUN mkdir /Build /Software
@@ -64,14 +61,13 @@ COPY cdap-notifications /Build/cdap-notifications
 COPY cdap-notifications-api /Build/cdap-notifications-api
 COPY cdap-proto /Build/cdap-proto
 COPY cdap-security /Build/cdap-security
-COPY cdap-security-service /Build/cdap-security-service
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-test /Build/cdap-test
+COPY cdap-ui /Build/cdap-ui
 COPY cdap-unit-test /Build/cdap-unit-test
 COPY cdap-unit-test-standalone /Build/cdap-unit-test-standalone
 COPY cdap-watchdog /Build/cdap-watchdog
 COPY cdap-watchdog-api /Build/cdap-watchdog-api
-COPY cdap-watchdog-tests /Build/cdap-watchdog-tests
 COPY cdap-web-app /Build/cdap-web-app
 
 # build cdap-standalone zip file, copy it to container and extract it

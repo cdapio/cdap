@@ -169,22 +169,22 @@ and send some data to it as comma-delimited text::
 
 If we run a query over the Stream, we can see each event as text::
 
-  > execute "select * from cdap_stream_trades"
-  +==================================================================================================================+
-  | cdap_stream_trades.ts: BIGINT | cdap_stream_trades.headers: map<string,string> | cdap_stream_trades.body: STRING |
-  +==================================================================================================================+
-  | 1422493022983                 | {}                                             | AAPL,50,112.98                  |
-  | 1422493027358                 | {}                                             | AAPL,100,112.87                 |
-  | 1422493031802                 | {}                                             | AAPL,8,113.02                   |
-  | 1422493036080                 | {}                                             | NFLX,10,437.45                  |
-  +==================================================================================================================+
+  > execute "select * from stream_trades"
+  +===================================================================================================+
+  | stream_trades.ts: BIGINT | stream_trades.headers: map<string,string> | stream_trades.body: STRING |
+  +===================================================================================================+
+  | 1422493022983            | {}                                        | AAPL,50,112.98             |
+  | 1422493027358            | {}                                        | AAPL,100,112.87            |
+  | 1422493031802            | {}                                        | AAPL,8,113.02              |
+  | 1422493036080            | {}                                        | NFLX,10,437.45             |
+  +===================================================================================================+
 
 Since we know the body of every event is comma separated text and that each event
 contains three fields, we can set a format and schema on the stream to allow us to run more
 complicated queries::
 
   > set stream format trades csv "ticker string, num_traded int, price double"
-  > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from cdap_stream_trades group by ticker order by volume desc" 
+  > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades group by ticker order by volume desc" 
   +========================================================+
   | ticker: STRING | transactions: BIGINT | volume: BIGINT |
   +========================================================+
@@ -199,9 +199,9 @@ When creating your queries, keep these limitations in mind:
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
 - Writing into a Stream using SQL is not supported.
 - The SQL command ``DELETE`` is not supported.
-- When addressing your streams in queries, you need to prefix the stream name with the CDAP
-  namespace ``cdap_stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
-  name is ``cdap_stream_purchases``. Note that the table name is all lower-case, regardless of how it was defined.
+- When addressing your streams in queries, you need to prefix the stream name with
+  ``stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
+  name is ``stream_purchases``. Note that the table name is all lower-case, regardless of how it was defined.
 - CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can

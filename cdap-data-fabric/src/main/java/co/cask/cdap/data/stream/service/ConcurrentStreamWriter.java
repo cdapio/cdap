@@ -33,7 +33,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import org.apache.twill.common.Cancellable;
@@ -44,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -273,17 +271,14 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final class StreamFileFactory extends StreamPropertyListener {
 
     private final StreamFileWriterFactory writerFactory;
-    private final Map<Id.Stream, Integer> generations;
 
     StreamFileFactory(StreamFileWriterFactory writerFactory) {
       this.writerFactory = writerFactory;
-      this.generations = Collections.synchronizedMap(Maps.<Id.Stream, Integer>newHashMap());
     }
 
     @Override
     public void generationChanged(Id.Stream streamId, int generation) {
       LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamId, generation);
-      generations.put(streamId, generation);
 
       EventQueue eventQueue = eventQueues.remove(streamId);
       if (eventQueue != null) {
@@ -297,10 +292,7 @@ public final class ConcurrentStreamWriter implements Closeable {
 
     @Override
     public void generationDeleted(Id.Stream streamId) {
-      // Generation deleted. Remove the cache.
-      // This makes creation of file writer resort to scanning the stream directory for generation id.
       LOG.debug("Generation for stream '{}' deleted for stream writer", streamId);
-      generations.remove(streamId);
     }
 
     /**
@@ -312,10 +304,7 @@ public final class ConcurrentStreamWriter implements Closeable {
      */
     FileWriter<StreamEvent> create(Id.Stream streamId) throws IOException {
       StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-      Integer generation = generations.get(streamId);
-      if (generation == null) {
-        generation = StreamUtils.getGeneration(streamConfig);
-      }
+      int generation = StreamUtils.getGeneration(streamConfig);
 
       LOG.info("Create stream writer for {} with generation {}", streamId, generation);
       return writerFactory.create(streamConfig, generation);
@@ -335,10 +324,7 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @throws IOException if failed to append the file to the stream
      */
     void appendFile(StreamConfig config, Location eventFile, Location indexFile, long timestamp) throws IOException {
-      Integer generation = generations.get(config.getStreamId());
-      if (generation == null) {
-        generation = StreamUtils.getGeneration(config);
-      }
+      int generation = StreamUtils.getGeneration(config);
 
       // Figure out the partition directory based on generation and timestamp
       Location baseLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);

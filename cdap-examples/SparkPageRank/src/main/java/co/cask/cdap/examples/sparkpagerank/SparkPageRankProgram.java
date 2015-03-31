@@ -59,11 +59,11 @@ public class SparkPageRankProgram implements JavaSparkProgram {
 
   private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
-  public static final String POPULAR_PAGES = "total.popular.pages";
-  public static final String UNPOPULAR_PAGES = "total.unpopular.pages";
-  public static final String REGULAR_PAGES = "total.regular.pages";
-  public static final int POPULAR_PAGE_THRESHOLD = 10;
-  public static final int UNPOPULAR_PAGE_THRESHOLD = 3;
+  private static final String POPULAR_PAGES = "total.popular.pages";
+  private static final String UNPOPULAR_PAGES = "total.unpopular.pages";
+  private static final String REGULAR_PAGES = "total.regular.pages";
+  private static final int POPULAR_PAGE_THRESHOLD = 10;
+  private static final int UNPOPULAR_PAGE_THRESHOLD = 3;
 
   private static class Sum implements Function2<Double, Double, Double> {
     @Override

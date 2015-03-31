@@ -16,17 +16,20 @@
 
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -67,6 +70,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   private static StreamAdmin streamAdmin;
   private static TransactionManager txManager;
   private static StreamFileWriterFactory fileWriterFactory;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -78,7 +82,6 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
 
     Configuration hConf = testHBase.getConfiguration();
 
-    CConfiguration cConf = CConfiguration.create();
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCES, 1);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -89,6 +92,8 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -106,12 +111,16 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     txManager = injector.getInstance(TransactionManager.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
+    streamCoordinatorClient.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
     testHBase.stopHBase();
   }

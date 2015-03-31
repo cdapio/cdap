@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -35,7 +37,6 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -63,17 +64,16 @@ public final class FileSetDataset implements FileSet {
 
   /**
    * Constructor.
-   *
    * @param datasetContext the context for the dataset
    * @param cConf the CDAP configuration
    * @param spec the dataset specification
-   * @param locationFactory the location factory
+   * @param namespacedLocationFactory a factory for namespaced {@link Location}
    * @param runtimeArguments the runtime arguments
    * @param classLoader the class loader to instantiate the input and output format class
    */
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
-                        LocationFactory locationFactory,
+                        NamespacedLocationFactory namespacedLocationFactory,
                         @Nonnull Map<String, String> runtimeArguments,
                         @Nullable ClassLoader classLoader) throws IOException {
 
@@ -83,7 +83,8 @@ public final class FileSetDataset implements FileSet {
     String namespaceId = datasetContext.getNamespaceId();
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
     String basePath = determineBasePath(spec);
-    this.baseLocation = locationFactory.create(namespaceId).append(dataDir).append(basePath);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(Id.Namespace.from(namespaceId));
+    this.baseLocation = namespaceHomeLocation.append(dataDir).append(basePath);
     this.properties = spec.getProperties();
     this.runtimeArguments = runtimeArguments;
     this.classLoader = classLoader;

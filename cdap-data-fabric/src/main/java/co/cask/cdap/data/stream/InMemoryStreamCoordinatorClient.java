@@ -64,4 +64,9 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
   protected void streamCreated(Id.Stream streamId) {
     // Nothing to do
   }
+
+  @Override
+  protected void streamDeleted(Id.Stream streamId) {
+    // Nothing to do
+  }
 }

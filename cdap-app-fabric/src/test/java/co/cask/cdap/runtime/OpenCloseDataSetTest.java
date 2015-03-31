@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -52,7 +53,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -76,6 +76,7 @@ public class OpenCloseDataSetTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  private static Location namespaceHomeLocation;
 
   private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
 
@@ -91,9 +92,10 @@ public class OpenCloseDataSetTest {
 
   @BeforeClass
   public static void setup() throws IOException {
-    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
-      .create(DefaultId.NAMESPACE.getId());
-    Locations.mkdirsIfNotExists(location);
+    NamespacedLocationFactory namespacedLocationFactory =
+      AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
+    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
+    Locations.mkdirsIfNotExists(namespaceHomeLocation);
   }
 
   @Test(timeout = 120000)
@@ -210,8 +212,6 @@ public class OpenCloseDataSetTest {
 
   @AfterClass
   public static void tearDown() throws IOException {
-    Location location = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class)
-      .create(DefaultId.NAMESPACE.getId());
-    Locations.deleteQuietly(location, true);
+    Locations.deleteQuietly(namespaceHomeLocation, true);
   }
 }

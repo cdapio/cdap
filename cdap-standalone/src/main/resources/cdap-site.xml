@@ -49,7 +49,7 @@
 
     <property>
         <name>router.bind.address</name>
-        <value>${router.address}</value>
+        <value>0.0.0.0</value>
         <description>Specifies the address for router server to bind to</description>
     </property>
 
@@ -117,19 +117,6 @@
       <name>app.adapter.dir</name>
       <value>plugins</value>
       <description>Directory where all archives for adapters are stored</description>
-    </property>
-
-    <!--
-        Frontend Configuration
-    -->
-    <property>
-        <name>accounts.server.address</name>
-        <value>accounts.continuuity.com</value>
-    </property>
-
-    <property>
-        <name>accounts.server.port</name>
-        <value>443</value>
     </property>
 
 </configuration>

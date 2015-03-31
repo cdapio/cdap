@@ -31,7 +31,7 @@ function extractConfig(mode, configParam, isSecure) {
     partialConfigRead = lodash.partial(onConfigReadEnd, deferred, isSecure);
     configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
-    this.config = require("../../cdap-config.json");
+    this.config = require("../../conf/generated/cdap-config.json");
     fs.readFile(__dirname + '/../VERSION', "utf-8", function(error, version) {
       if (error) {
         this.logger.info(error);
@@ -41,8 +41,8 @@ function extractConfig(mode, configParam, isSecure) {
       }
       deferred.resolve();
     }.bind(this));
-    
-    this.securityConfig = require("../../cdap-security-config.json");
+
+    this.securityConfig = require("../../conf/generated/cdap-security-config.json");
     this.configSet = true;
   }
   return deferred.promise;

@@ -26,10 +26,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -50,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -62,21 +63,19 @@ public final class FileMetaDataManager {
 
   private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
-  private static final String DEVELOPER_STRING = "developer";
 
   private final TransactionExecutorFactory txExecutorFactory;
-
   private final LocationFactory locationFactory;
-
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final DatasetFramework dsFramework;
-
   private final Transactional<DatasetContext<Table>, Table> mds;
   private final String logBaseDir;
+  private final String metaTableName;
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             LocationFactory locationFactory, DatasetFramework dsFramework,
-                             CConfiguration cConf) {
+                             LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                             DatasetFramework dsFramework, CConfiguration cConf) {
     this.dsFramework = dsFramework;
     this.txExecutorFactory = txExecutorFactory;
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
@@ -91,7 +90,9 @@ public final class FileMetaDataManager {
       }
     });
     this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    this.metaTableName = tableUtil.getMetaTableName();
   }
 
   /**
@@ -165,19 +166,19 @@ public final class FileMetaDataManager {
     return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Integer>() {
       @Override
       public Integer apply(DatasetContext<Table> ctx) throws Exception {
-        byte [] tillTimeBytes = Bytes.toBytes(tillTime);
+        byte[] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;
         Scanner scanner = ctx.get().scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
           Row row;
           while ((row = scanner.next()) != null) {
-            byte [] rowKey = row.getRow();
+            byte[] rowKey = row.getRow();
             String namespacedLogDir = LoggingContextHelper.getNamespacedBaseDir(logBaseDir, getLogPartition(rowKey));
-            byte [] maxCol = getMaxKey(row.getColumns());
+            byte[] maxCol = getMaxKey(row.getColumns());
 
             for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              byte [] colName = entry.getKey();
+              byte[] colName = entry.getKey();
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
                           Bytes.toLong(colName));
@@ -265,7 +266,7 @@ public final class FileMetaDataManager {
     oldLogMDS.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> ctx) throws Exception {
-        Scanner rows = ctx.get().scan(null, null);
+        Scanner rows = ctx.get().scan(ROW_KEY_PREFIX, Bytes.stopKeyForPrefix(ROW_KEY_PREFIX));
         Row row;
         while ((row = rows.next()) != null) {
           String key = Bytes.toString(row.getRow(), ROW_KEY_PREFIX.length,
@@ -276,7 +277,7 @@ public final class FileMetaDataManager {
             String oldPath = Bytes.toString(entry.getValue());
             Location newPath;
             String newKey;
-            if (key.startsWith(Constants.CDAP_NAMESPACE) || key.startsWith(DEVELOPER_STRING)) {
+            if (key.startsWith(Constants.CDAP_NAMESPACE) || key.startsWith(Constants.DEVELOPER_ACCOUNT)) {
               newPath = upgradePath(key, oldPath);
               newKey = upgradeKey(key);
               try {
@@ -304,7 +305,7 @@ public final class FileMetaDataManager {
     if (key.startsWith(Constants.CDAP_NAMESPACE)) {
       return key.replace(Constants.CDAP_NAMESPACE, Constants.SYSTEM_NAMESPACE);
     }
-    return key.replace(DEVELOPER_STRING, Constants.DEFAULT_NAMESPACE);
+    return key.replace(Constants.DEVELOPER_ACCOUNT, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -326,7 +327,7 @@ public final class FileMetaDataManager {
       newLocation = updateLogLocation(location, Constants.SYSTEM_NAMESPACE);
       // newLocation will be: hdfs://blah.blah.net/cdap/system/logs/avro/services/
       // service-appfabric/2015-02-26/1424988452088.avro
-    } else if (key.startsWith(DEVELOPER_STRING)) {
+    } else if (key.startsWith(Constants.DEVELOPER_ACCOUNT)) {
       // Example of this type: hdfs://blah.blah.net/cdap/logs/avro/developer/HelloWorld/
       // flow-WhoFlow/2015-02-26/1424988484082.avro
       newLocation = updateLogLocation(location, Constants.DEFAULT_NAMESPACE);
@@ -352,16 +353,12 @@ public final class FileMetaDataManager {
     String programName = parentLocation != null ? parentLocation.getName() : null;
     parentLocation = Locations.getParent(parentLocation); // strip program name
     String programType = parentLocation != null ? parentLocation.getName() : null;
-    parentLocation = Locations.getParent(parentLocation); // strip program type
 
-    parentLocation = Locations.getParent(parentLocation); // strip old namespace
-    String avro = parentLocation != null ? parentLocation.getName() : null;
+    return namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(logBaseDir).append(programType)
+      .append(programName).append(date).append(logFilename);
+  }
 
-    parentLocation = Locations.getParent(parentLocation); // strip avro
-
-    String logs = parentLocation != null ? parentLocation.getName() : null;
-
-    return locationFactory.create(namespace).append(logs).append(avro).append(programType).append(programName)
-      .append(date).append(logFilename);
+  public TableId getOldLogMetaTableId() {
+    return TableId.from(Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, metaTableName));
   }
 }

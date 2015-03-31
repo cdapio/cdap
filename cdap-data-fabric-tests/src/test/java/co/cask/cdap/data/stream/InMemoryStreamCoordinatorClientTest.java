@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
@@ -45,7 +45,6 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
 
   @BeforeClass
   public static void init() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
@@ -64,6 +63,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
               })
     );
 
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

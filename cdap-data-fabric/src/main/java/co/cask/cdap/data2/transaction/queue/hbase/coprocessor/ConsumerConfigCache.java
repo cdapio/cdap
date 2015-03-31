@@ -19,7 +19,13 @@ package co.cask.cdap.data2.transaction.queue.hbase.coprocessor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionCodec;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.util.TxUtils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableNotFoundException;
@@ -46,16 +52,19 @@ import javax.annotation.Nullable;
 public class ConsumerConfigCache {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
 
-  private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
+  // Number of bytes for consumer state column (groupId + instanceId)
+  private static final int STATE_COLUMN_SIZE = Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
-  private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
+  private static final ConcurrentMap<byte[], ConsumerConfigCache> INSTANCES =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
 
   private final byte[] queueConfigTableName;
   private final Configuration hConf;
   private final CConfigurationReader cConfReader;
+  private final Supplier<TransactionSnapshot> transactionSnapshotSupplier;
+  private final TransactionCodec txCodec;
 
   private Thread refreshThread;
   private long lastUpdated;
@@ -65,10 +74,21 @@ public class ConsumerConfigCache {
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName, CConfigurationReader cConfReader) {
+  /**
+   * Constructs a new instance.
+   *
+   * @param hConf configuration for HBase
+   * @param queueConfigTableName table name that stores queue configuration
+   * @param cConfReader reader to read the latest {@link CConfiguration}
+   * @param transactionSnapshotSupplier A supplier for the latest {@link TransactionSnapshot}
+   */
+  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName,
+                      CConfigurationReader cConfReader, Supplier<TransactionSnapshot> transactionSnapshotSupplier) {
     this.hConf = hConf;
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
+    this.transactionSnapshotSupplier = transactionSnapshotSupplier;
+    this.txCodec = new TransactionCodec();
   }
 
   private void init() {
@@ -116,11 +136,21 @@ public class ConsumerConfigCache {
   public synchronized void updateCache() throws IOException {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
-    HTable table = null;
+    TransactionSnapshot txSnapshot = transactionSnapshotSupplier.get();
+    if (txSnapshot == null) {
+      LOG.debug("No transaction snapshot is available. Not updating the consumer config cache.");
+      return;
+    }
+
+    HTable table = new HTable(hConf, queueConfigTableName);
     try {
-      table = new HTable(hConf, queueConfigTableName);
+      // Scan the table with the transaction snapshot
       Scan scan = new Scan();
       scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
+      scan.setCacheBlocks(false);
+      scan.setCaching(1000);
+      Transaction tx = TxUtils.createDummyTransaction(txSnapshot);
+      scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
@@ -133,8 +163,11 @@ public class ConsumerConfigCache {
             int numGroups = 0;
             Long groupId = null;
             for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
+              if (entry.getKey().length != STATE_COLUMN_SIZE) {
+                continue;
+              }
               long gid = Bytes.toLong(entry.getKey());
-              int instanceId = Bytes.toInt(entry.getKey(), LONG_BYTES);
+              int instanceId = Bytes.toInt(entry.getKey(), Bytes.SIZEOF_LONG);
               consumerInstances.put(new ConsumerInstance(gid, instanceId), entry.getValue());
 
               // Columns are sorted by groupId, hence if it change, then numGroups would get +1
@@ -155,12 +188,10 @@ public class ConsumerConfigCache {
         LOG.debug("Updated consumer config cache with {} entries, took {} msec", configCnt, elapsed);
       }
     } finally {
-      if (table != null) {
-        try {
-          table.close();
-        } catch (IOException ioe) {
-          LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
-        }
+      try {
+        table.close();
+      } catch (IOException ioe) {
+        LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
       }
     }
   }
@@ -194,7 +225,7 @@ public class ConsumerConfigCache {
           }
         }
         LOG.info("Config cache update for {} terminated.", Bytes.toString(queueConfigTableName));
-        instances.remove(queueConfigTableName, this);
+        INSTANCES.remove(queueConfigTableName, this);
       }
     };
     refreshThread.setDaemon(true);
@@ -202,16 +233,17 @@ public class ConsumerConfigCache {
   }
 
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
-                                                CConfigurationReader cConfReader) {
-    ConsumerConfigCache cache = instances.get(tableName);
+                                                CConfigurationReader cConfReader,
+                                                Supplier<TransactionSnapshot> txSnapshotSupplier) {
+    ConsumerConfigCache cache = INSTANCES.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, cConfReader);
-      if (instances.putIfAbsent(tableName, cache) == null) {
+      cache = new ConsumerConfigCache(hConf, tableName, cConfReader, txSnapshotSupplier);
+      if (INSTANCES.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();
       } else {
         // discard our instance and re-retrieve, someone else set it
-        cache = instances.get(tableName);
+        cache = INSTANCES.get(tableName);
       }
     }
     return cache;

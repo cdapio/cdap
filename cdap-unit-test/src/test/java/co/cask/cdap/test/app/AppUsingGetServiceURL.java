@@ -28,11 +28,11 @@ import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.AbstractServiceWorker;
-import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.worker.WorkerContext;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -53,8 +53,8 @@ import javax.ws.rs.Path;
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
   public static final String CENTRAL_SERVICE = "CentralService";
-  public static final String SERVICE_WITH_WORKER = "ServiceWithWorker";
   public static final String LIFECYCLE_WORKER = "LifecycleWorker";
+  public static final String PINGING_WORKER = "PingingWorker";
   public static final String PROCEDURE = "ForwardingProcedure";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
@@ -67,12 +67,15 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     setName(APP_NAME);
     addProcedure(new ForwardingProcedure());
     addService(new CentralService());
-    addService(new ServiceWithWorker());
+    addWorker(new PingingWorker());
+    addWorker(new LifecycleWorker());
     createDataset(DATASET_NAME, KeyValueTable.class);
     createDataset(WORKER_INSTANCES_DATASET, KeyValueTable.class);
   }
 
-
+  /**
+   *
+   */
   public static final class ForwardingProcedure extends AbstractProcedure {
 
     @UseDataSet(DATASET_NAME)
@@ -113,113 +116,102 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     }
   }
 
+  private static void writeToDataSet(final WorkerContext context,
+                                     final String tableName, final String key, final byte[] value) {
+    context.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        KeyValueTable table = context.getDataset(tableName);
+        table.write(key, value);
+      }
+    });
+  }
+
   /**
-   * A service whose sole purpose is to check the ability for its worker to hit another service (via getServiceURL).
+   *
    */
-  private static final class ServiceWithWorker extends AbstractService {
+  public static final class LifecycleWorker extends AbstractWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
+    private volatile boolean isRunning;
 
     @Override
     protected void configure() {
-      setName(SERVICE_WITH_WORKER);
-      addHandler(new NoOpHandler());
-      addWorkers(new PingingWorker());
-      addWorker(LIFECYCLE_WORKER, new LifecycleWorker());
+      setName(LIFECYCLE_WORKER);
+      useDatasets(WORKER_INSTANCES_DATASET);
+      setInstances(3);
     }
 
-    public static final class NoOpHandler extends AbstractHttpServiceHandler {
-      // handles nothing.
+    @Override
+    public void initialize(WorkerContext context) throws Exception {
+      super.initialize(context);
+
+      String key = String.format("init.%d", getContext().getInstanceId());
+      byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+      writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
     }
 
-    private static final class LifecycleWorker extends AbstractServiceWorker {
-      private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
-      private volatile boolean isRunning;
-
-      @Override
-      protected void configure() {
-        useDatasets(WORKER_INSTANCES_DATASET);
-        setInstances(3);
-      }
-
-      @Override
-      public void initialize(ServiceWorkerContext context) throws Exception {
-        super.initialize(context);
-
-        String key = String.format("init.%d", getContext().getInstanceId());
-        byte[] value = Bytes.toBytes(getContext().getInstanceCount());
-        writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
-      }
-
-      @Override
-      public void run() {
-        isRunning = true;
-        while (isRunning) {
-          try {
-            TimeUnit.MILLISECONDS.sleep(50);
-          } catch (InterruptedException e) {
-            LOG.error("Error sleeping in LifecycleWorker", e);
-          }
-        }
-      }
-
-      @Override
-      public void stop() {
-        isRunning = false;
-
-        String key = String.format("stop.%d", getContext().getInstanceId());
-        byte[] value = Bytes.toBytes(getContext().getInstanceCount());
-        writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
-      }
-    }
-
-    private static final class PingingWorker extends AbstractServiceWorker {
-      private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
-
-      @Override
-      protected void configure() {
-        useDatasets(DATASET_NAME);
-        setInstances(5);
-      }
-
-      @Override
-      public void run() {
-        URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
-        if (baseURL == null) {
-          return;
-        }
-
-        URL url;
+    @Override
+    public void run() {
+      isRunning = true;
+      while (isRunning) {
         try {
-          url = new URL(baseURL, "ping");
-        } catch (MalformedURLException e) {
-          return;
-        }
-
-        try {
-          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-          try {
-            if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-              // Write the response to dataset, so that we can verify it from a test.
-              writeToDataSet(getContext(), DATASET_NAME, DATASET_KEY, ByteStreams.toByteArray(conn.getInputStream()));
-            }
-          } finally {
-            conn.disconnect();
-          }
-        } catch (IOException e) {
-          LOG.error("Got exception {}", e);
+          TimeUnit.MILLISECONDS.sleep(50);
+        } catch (InterruptedException e) {
+          LOG.error("Error sleeping in LifecycleWorker", e);
         }
       }
     }
 
+    @Override
+    public void stop() {
+      isRunning = false;
 
-    private static void writeToDataSet(final ServiceWorkerContext context,
-                                       final String tableName, final String key, final byte[] value) {
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable table = context.getDataset(tableName);
-          table.write(key, value);
+      String key = String.format("stop.%d", getContext().getInstanceId());
+      byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+      writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+    }
+  }
+
+  /**
+   *
+   */
+  public static final class PingingWorker extends AbstractWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
+
+    @Override
+    protected void configure() {
+      setName(PINGING_WORKER);
+      useDatasets(DATASET_NAME);
+      setInstances(5);
+    }
+
+    @Override
+    public void run() {
+      URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
+      if (baseURL == null) {
+        return;
+      }
+
+      URL url;
+      try {
+        url = new URL(baseURL, "ping");
+      } catch (MalformedURLException e) {
+        return;
+      }
+
+      try {
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        try {
+          if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+            // Write the response to dataset, so that we can verify it from a test.
+            writeToDataSet(getContext(), DATASET_NAME, DATASET_KEY, ByteStreams.toByteArray(conn.getInputStream()));
+          }
+        } finally {
+          conn.disconnect();
         }
-      });
+      } catch (IOException e) {
+        LOG.error("Got exception {}", e);
+      }
     }
   }
 

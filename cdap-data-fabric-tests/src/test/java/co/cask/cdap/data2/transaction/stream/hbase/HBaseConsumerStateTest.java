@@ -15,15 +15,17 @@
  */
 package co.cask.cdap.data2.transaction.stream.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
@@ -77,7 +79,6 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     Configuration hConf = testHBase.getConfiguration();
-    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
@@ -88,6 +89,8 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataFabricDistributedModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -106,6 +109,8 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
     tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
+
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass

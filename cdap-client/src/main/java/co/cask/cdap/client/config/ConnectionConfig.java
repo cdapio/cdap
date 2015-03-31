@@ -20,8 +20,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import javax.annotation.Nullable;
 
 /**
@@ -29,11 +33,24 @@ import javax.annotation.Nullable;
  */
 public class ConnectionConfig {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ConnectionConfig.class);
   private static final CConfiguration CONF = CConfiguration.create();
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
   private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED, false);
-  private static final String DEFAULT_HOST = CONF.get(Constants.Router.ADDRESS);
+  private static final String DEFAULT_HOST = tryResolveAddress(CONF.get(Constants.Router.ADDRESS));
+
+  private static String tryResolveAddress(String addressString) {
+    try {
+      InetAddress address = InetAddress.getByName(addressString);
+      if (address.isAnyLocalAddress()) {
+        return InetAddress.getLocalHost().getHostName();
+      }
+    } catch (UnknownHostException e) {
+      LOG.warn("Unable to resolve address", e);
+    }
+    return addressString;
+  }
 
   public static final ConnectionConfig DEFAULT = ConnectionConfig.builder().build();
 
@@ -95,7 +112,8 @@ public class ConnectionConfig {
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled);
+      Objects.equal(this.sslEnabled, other.sslEnabled) &&
+      Objects.equal(this.namespace, other.namespace);
   }
 
   @Override
@@ -104,6 +122,7 @@ public class ConnectionConfig {
       .add("hostname", hostname)
       .add("port", port)
       .add("sslEnabled", sslEnabled)
+      .add("namespace", namespace)
       .toString();
   }
 

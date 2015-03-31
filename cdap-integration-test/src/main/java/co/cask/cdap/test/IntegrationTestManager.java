@@ -24,8 +24,11 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import com.google.common.base.Throwables;
@@ -49,6 +52,7 @@ public class IntegrationTestManager implements TestManager {
   private final ClientConfig clientConfig;
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
+  private final NamespaceClient namespaceClient;
 
   public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
@@ -56,10 +60,13 @@ public class IntegrationTestManager implements TestManager {
     this.metaClient = new MetaClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
+    this.namespaceClient = new NamespaceClient(clientConfig);
   }
 
   @Override
-  public ApplicationManager deployApplication(Class<? extends Application> applicationClz, File... bundleEmbeddedJars) {
+  public ApplicationManager deployApplication(Id.Namespace namespace,
+                                              Class<? extends Application> applicationClz,
+                                              File... bundleEmbeddedJars) {
     File appJarFile = null;
     try {
       appJarFile = createAppJarFile(applicationClz, bundleEmbeddedJars);
@@ -69,7 +76,7 @@ public class IntegrationTestManager implements TestManager {
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
       application.configure(configurer, new ApplicationContext());
       String applicationId = configurer.createSpecification().getName();
-      return new RemoteApplicationManager(applicationId, clientConfig);
+      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
@@ -86,30 +93,43 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public void deployDatasetModule(String moduleName, Class<? extends DatasetModule> datasetModule) throws Exception {
+  public void deployDatasetModule(Id.Namespace namespace, String moduleName,
+                                  Class<? extends DatasetModule> datasetModule) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, String datasetInstanceName,
+  public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                       String datasetTypeName, String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+  public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
+                                                       String datasetTypeName,
                                                        String datasetInstanceName) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
+  public <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Connection getQueryClient() throws Exception {
+  public Connection getQueryClient(Id.Namespace namespace) throws Exception {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
+    namespaceClient.create(namespaceMeta);
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespace) throws Exception {
+    namespaceClient.delete(namespace.getId());
   }
 
   private File createAppJarFile(Class<?> cls, File[] bundleEmbeddedJars) throws IOException {

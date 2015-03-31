@@ -17,7 +17,9 @@
 package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -63,20 +65,21 @@ public class UploadService extends AbstractService {
     public void read(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("league") String league, @PathParam("season") int season) {
 
-      String path = results.getPartition(PartitionKey.builder()
-                                           .addStringField("league", league)
-                                           .addIntField("season", season)
-                                           .build());
-      if (path == null) {
+
+      Partition partition = results.getPartition(PartitionKey.builder()
+                                                   .addStringField("league", league)
+                                                   .addIntField("season", season)
+                                                   .build());
+      if (partition == null) {
         responder.sendString(404, "Partition not found.", Charsets.UTF_8);
         return;
       }
       ByteBuffer content;
       try {
-        Location location = results.getEmbeddedFileSet().getLocation(path).append("file");
+        Location location = partition.getLocation().append("file");
         content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to read path '%s'", path));
+        responder.sendError(400, String.format("Unable to read path '%s'", partition.getRelativePath()));
         return;
       }
       responder.send(200, content, "text/plain", ImmutableMultimap.<String, String>of());
@@ -97,9 +100,9 @@ public class UploadService extends AbstractService {
         return;
       }
 
-      String partitionPath = String.format("%s/%d", league, season);
+      PartitionOutput output = results.getPartitionOutput(key);
       try {
-        Location location = results.getEmbeddedFileSet().getLocation(partitionPath).append("file");
+        Location location = output.getLocation().append("file");
         WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
         try {
           channel.write(request.getContent());
@@ -107,10 +110,10 @@ public class UploadService extends AbstractService {
           channel.close();
         }
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to write path '%s'", partitionPath));
+        responder.sendError(400, String.format("Unable to write path '%s'", output.getRelativePath()));
         return;
       }
-      results.addPartition(key, partitionPath);
+      output.addPartition();
       responder.sendStatus(200);
     }
   }

@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
@@ -26,6 +28,7 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -63,27 +66,43 @@ final class TimeScheduler implements Scheduler {
   private final PreferencesStore preferencesStore;
   private final CConfiguration cConf;
   private ListeningExecutorService taskExecutorService;
+  private boolean schedulerStarted;
+  private final Store store;
 
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
                 ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.storeFactory = storeFactory;
+    this.store = storeFactory.create();
     this.programRuntimeService = programRuntimeService;
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
     this.cConf = cConf;
+    this.schedulerStarted = false;
   }
 
-  void start() throws SchedulerException {
+  void init() throws SchedulerException {
     try {
       taskExecutorService = MoreExecutors.listeningDecorator(
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(storeFactory.create()));
-      scheduler.start();
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
+  }
+
+  void lazyStart() throws SchedulerException {
+    try {
+      scheduler.start();
+      schedulerStarted = true;
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+  }
+
+  boolean isStarted() {
+    return schedulerStarted;
   }
 
   void stop() throws SchedulerException {
@@ -240,6 +259,23 @@ final class TimeScheduler implements Scheduler {
       scheduler.deleteJob(jobKeyFor(program, programType));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
+    }
+  }
+
+  @Override
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
+      deleteAllSchedules(namespaceId, appSpec);
+    }
+  }
+
+  private void deleteAllSchedules(Id.Namespace namespaceId, ApplicationSpecification appSpec)
+    throws SchedulerException {
+    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
+      Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
+      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
     }
   }
 

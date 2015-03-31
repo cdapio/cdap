@@ -28,11 +28,14 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -76,7 +79,6 @@ public class LevelDBQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
     LevelDBTableService.getInstance().clearTables();
   }
@@ -96,5 +98,14 @@ public class LevelDBQueueTest extends QueueTest {
     Assert.assertEquals("testNamespace.system.queue.application1.flow1", tableName);
     Assert.assertEquals("application1", LevelDBQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", LevelDBQueueAdmin.getFlowName(tableName));
+  }
+
+  @Override
+  protected void forceEviction(QueueName queueName, int numGroups) throws Exception {
+    QueueEvictor evictor = ((LevelDBQueueClientFactory) queueClientFactory).createEvictor(queueName, numGroups);
+    Transaction tx = txSystemClient.startShort();
+    // There is no change, just to get the latest transaction for eviction
+    txSystemClient.commit(tx);
+    Uninterruptibles.getUninterruptibly(evictor.evict(tx));
   }
 }

@@ -57,7 +57,7 @@ angular.module(PKG.name + '.feature.workflows')
                 controller: 'WorkflowsDetailRunStatusController',
                 ncyBreadcrumb: {
                   parent: 'apps.detail.overview',
-                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                  label: '{{$state.params.programId}} < {{$state.params.runId}}'
                 }
               })
 
@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.workflows')
                 '</div>',
                 ncyBreadcrumb: {
                   parent: 'apps.detail.overview',
-                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                  label: '{{$state.params.programId}} < {{$state.params.runId}}'
                 }
               })
               .state('workflows.detail.runs.tabs.configuration', {
@@ -80,7 +80,7 @@ angular.module(PKG.name + '.feature.workflows')
                 '</div>',
                 ncyBreadcrumb: {
                   parent: 'apps.detail.overview',
-                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                  label: '{{$state.params.programId}} < {{$state.params.runId}}'
                 }
               })
               .state('workflows.detail.runs.tabs.log', {
@@ -91,7 +91,7 @@ angular.module(PKG.name + '.feature.workflows')
                 '</div>',
                 ncyBreadcrumb: {
                   parent: 'apps.detail.overview',
-                  label: '{{$state.params.programId}} / {{$state.params.runId}}'
+                  label: '{{$state.params.programId}} < {{$state.params.runId}}'
                 }
               })
 
@@ -116,7 +116,7 @@ angular.module(PKG.name + '.feature.workflows')
             templateUrl: '/assets/features/workflows/templates/tabs/history.html',
             ncyBreadcrumb: {
               parent: 'apps.detail.overview',
-              label: '{{$state.params.programId}} / History'
+              label: '{{$state.params.programId}} < History'
             }
           })
           .state('workflows.detail.resources', {
