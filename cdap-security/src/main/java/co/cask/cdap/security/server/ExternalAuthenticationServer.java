@@ -111,12 +111,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    */
   public InetSocketAddress getSocketAddress() {
     if (!server.isRunning()) {
-      return new InetSocketAddress(address, port);
-    } else {
-      // assumes we only have one connector
-      final Connector connector = server.getConnectors()[0];
-      return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+      throw new IllegalStateException("Server not started yet");
     }
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
   }
 
   @Override
