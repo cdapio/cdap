@@ -21,6 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProcedureClient;
@@ -76,7 +78,7 @@ public class CallProcedureCommand extends AbstractAuthCommand implements Categor
 
   @Override
   public String getDescription() {
-    return String.format("Calls a %s.", ElementType.PROCEDURE.getPrettyName());
+    return String.format("Calls %s.", Fragment.of(Article.A, ElementType.PROCEDURE.getTitleName()));
   }
 
   @Override
