@@ -96,20 +96,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setJobName("adapter.stream-conversion." + adapterArguments.getSourceName()
                      + ".to." + sinkName + "." + partitionTime);
   }
-
-  @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      // must use the same arguments for the dataset as when it was instantiated in beforeSubmit()
-      Map<String, String> sinkArgs = Maps.newHashMap();
-      TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, partitionTime);
-      TimePartitionedFileSet sink = context.getDataset(sinkName, sinkArgs);
-
-      LOG.info("Adding partition for time {} with path {} to dataset '{}'", partitionTime, outputPath, sinkName);
-      sink.addPartition(partitionTime, outputPath);
-    }
-  }
-
+  
   /**
    * Mapper that reads events from a stream and writes them out as Avro.
    */
