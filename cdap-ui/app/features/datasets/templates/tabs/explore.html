@@ -3,15 +3,15 @@
      ng-model="activePanel"
      bs-collapse>
 
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading" bs-collapse-toggle>
-      <h4 class="panel-title">
+      <h3 class="panel-title">
         <span
-          ng-class="{'fa-chevron-right': activePanel!==0,
-                     'fa-chevron-down': activePanel===0}"
+          ng-class="{'fa-caret-right': activePanel!==0,
+                     'fa-caret-down': activePanel===0}"
           class="fa fa-fw"
         ></span>Choose table
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
@@ -21,15 +21,15 @@
   </div>
 
 
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading">
-      <h4 class="panel-title" bs-collapse-toggle>
+      <h3 class="panel-title" bs-collapse-toggle>
         <span
-          ng-class="{'fa-chevron-right': activePanel!==1,
-                     'fa-chevron-down': activePanel===1}"
+          ng-class="{'fa-caret-right': activePanel!==1,
+                     'fa-caret-down': activePanel===1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
@@ -45,84 +45,84 @@
     </div>
   </div>
 
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading">
-      <h4 class="panel-title" bs-collapse-toggle>
+      <h3 class="panel-title" bs-collapse-toggle>
         <span
-          ng-class="{'fa-chevron-right': activePanel!==2,
-                     'fa-chevron-down': activePanel===2}"
+          ng-class="{'fa-caret-right': activePanel!==2,
+                     'fa-caret-down': activePanel===2}"
           class="fa fa-fw"
         ></span>View Queries
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <!-- Left Panel -->
-        <div class="col-xs-6">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Start</th>
-                <th>Status</th>
-                <th>SQL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="query in queries" ng-click="fetchResult(query)">
-                <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
-                <td>{{ query.status }}</td>
-                <td>{{ query.statement }}</td>
-              </tr>
-            </tbody>
+          <!-- Left Panel -->
+          <div class="col-xs-12 col-md-6">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Start</th>
+                  <th>Status</th>
+                  <th>SQL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="query in queries" ng-click="fetchResult(query)">
+                  <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
+                  <td>{{ query.status }}</td>
+                  <td>{{ query.statement }}</td>
+                </tr>
+              </tbody>
 
-          </table>
-        </div>
+            </table>
+          </div>
 
-        <!-- Right Panel -->
-        <div class="col-xs-6 well">
-          <div ng-show="responses.results.length">
-            <p><strong>{{ responses.request.status }}</strong></p>
-            <div class='sql-statement'>
-              <p>{{ responses.request.statement }}</p>
-            </div>
-
-            <div class="text-right" ng-show="query">
-              <button class="btn btn-primary" disabled>Execute</button>
-              <button class="btn btn-default" disabled>Clone</button>
-            </div>
-
-            <div class="results">
-              <h3>Results</h3>
-              <div class="text-right">
-                <a
-                  class="btn btn-default"
-                  ng-click="download(responses.request)"
-                >
-                  Download All
-                </a>
+          <!-- Right Panel -->
+          <div class="col-xs-12 col-md-6 well">
+            <div ng-show="responses.results.length">
+              <p><strong>{{ responses.request.status }}</strong></p>
+              <div class='sql-statement'>
+                <p>{{ responses.request.statement }}</p>
               </div>
 
-              <div>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th ng-repeat="header in responses.schema">{{ header.name }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr ng-repeat="results in responses.results">
-                      <td ng-repeat="result in results.columns">{{ result }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div class="text-right" ng-show="query">
+                <button class="btn btn-primary" disabled>Execute</button>
+                <button class="btn btn-default" disabled>Clone</button>
+              </div>
+
+              <div class="results">
+                <h3>Results</h3>
+                <div class="text-right">
+                  <a
+                    class="btn btn-default"
+                    ng-click="download(responses.request)"
+                  >
+                    Download All
+                  </a>
+                </div>
+
+                <div>
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th ng-repeat="header in responses.schema">{{ header.name }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr ng-repeat="results in responses.results">
+                        <td ng-repeat="result in results.columns">{{ result }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
+            <div ng-hide="responses.results.length" class="text-center">
+              <p>(Select Query)</p>
+            </div>
           </div>
-          <div ng-hide="responses.results.length" class="text-center">
-            <p>(Select Query)</p>
-          </div>
-        </div>
 
 
       </div>

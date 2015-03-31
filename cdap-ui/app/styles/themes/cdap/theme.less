@@ -96,6 +96,41 @@ body.theme-cdap {
     }
   }
 
+  .panel-explore {
+    background-color: transparent;
+    color: @cdap-header;
+    .box-shadow(none);
+    > .panel-heading {
+      background: white;
+      border: 1px solid lightgray;
+      padding: 20px;
+      .border-radius(8px);
+      .fa {
+        color: white;
+        font-size: 13px;
+        margin-right: 10px;
+        vertical-align: top;
+      }
+      .fa-caret-right { .cdap-caret(); }
+      .fa-caret-down { .cdap-caret(@background: @cdap-gray); }
+    }
+    > .panel-collapse {
+      > .panel-body {
+        border-top: 0;
+        padding-right: 0;
+        padding-left: 0;
+        pre {
+          background-color: #dcdce4;
+          color: @cdap-header;
+          .border-radius(8px);
+        }
+        table {
+          thead { background-color: @cdap-header; color: white; }
+          tbody { background-color: @cdap-gray; color: @cdap-header; }
+        }
+      }
+    }
+  }
   // Mixin for generating new styles
   .panel-heading-styles(@color) {
     #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 5%));
