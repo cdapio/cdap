@@ -21,7 +21,9 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -67,7 +69,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException("workflow", workflowId);
+      throw new NotFoundException(Id.Program.from(config.getNamespace(), appId, ProgramType.WORKFLOW, workflowId));
     }
 
     ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
@@ -81,6 +83,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(Id.Application.Schedule.from(config.getNamespace(), appId, ProgramType.WORKFLOW, workflowId));
       throw new NotFoundException("schedule", scheduleId);
     }
   }

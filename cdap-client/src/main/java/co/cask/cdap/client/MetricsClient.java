@@ -196,7 +196,6 @@ public class MetricsClient {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
->>>>>>> 8d3682e1e33f94797a127d225b59a9c29cb7b300
   }
 
 }
