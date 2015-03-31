@@ -245,8 +245,8 @@ public class AltStyleTableRenderer implements TableRenderer {
 
     // distribute maxInnerTableWidth equally to each column
     int remainingWidth = maxInnerTableWidth;
-    for (int i = 0; i < header.size(); i++) {
-      widths[i] = (int) (maxInnerTableWidth * 1.0 / header.size());
+    for (int i = 0; i < widths.length; i++) {
+      widths[i] = (int) (maxInnerTableWidth * 1.0 / widths.length);
       remainingWidth -= widths[i];
     }
     // fix any rounding issues by resizing the last column width
