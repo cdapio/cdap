@@ -41,6 +41,16 @@
       <artifactId>hadoop-common</artifactId>
       <version>2.3.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.7.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro-mapred</artifactId>
+      <version>1.7.6</version>
+    </dependency>
   </dependencies>
 
 </project>
