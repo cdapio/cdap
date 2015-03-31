@@ -49,10 +49,6 @@ public class ScoreCounter extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ScoreCounter.class);
   private static final Gson GSON = new Gson();
 
-  private PartitionedFileSet outputFileSet;
-  private PartitionKey outputKey;
-  private String outputPath;
-
   @Override
   public void configure() {
     setDescription("reads game results and counts statistics per team");
@@ -78,21 +74,13 @@ public class ScoreCounter extends AbstractMapReduce {
 
     // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();
-    outputKey = PartitionKey.builder().addStringField("league", league).build();
+    PartitionKey outputKey = PartitionKey.builder().addStringField("league", league).build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
-    outputFileSet = context.getDataset("totals", outputArgs);
-    outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
+    PartitionedFileSet outputFileSet = context.getDataset("totals", outputArgs);
+    String outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
     context.setOutput("totals", outputFileSet);
 
     LOG.info("input: {}, output: {}", input.getEmbeddedFileSet().getInputLocations(), outputPath);
-  }
-
-  @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      // TODO: This should be done by the output committer of the partitioned file set's output format (CDAP-1227)
-      outputFileSet.addPartition(outputKey, outputPath);
-    }
   }
 
   /**

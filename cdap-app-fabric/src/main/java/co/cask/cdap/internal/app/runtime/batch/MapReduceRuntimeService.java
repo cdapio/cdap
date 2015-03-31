@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
@@ -389,7 +390,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public void apply() throws Exception {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.onFinish(succeeded, context);
+          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          boolean success = succeeded;
+          Dataset outputDataset = context.getOutputDataset();
+          if (outputDataset != null && outputDataset instanceof DatasetOutputCommitter) {
+            try {
+              if (succeeded) {
+                ((DatasetOutputCommitter) outputDataset).onSuccess();
+              } else {
+                ((DatasetOutputCommitter) outputDataset).onFailure();
+              }
+            } catch (Throwable t) {
+              LOG.error(String.format("Error from %s method of output dataset %s.",
+                        succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
+              success = false;
+            }
+          }
+          mapReduce.onFinish(success, context);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
