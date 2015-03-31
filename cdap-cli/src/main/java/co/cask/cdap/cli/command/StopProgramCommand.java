@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
@@ -50,7 +52,7 @@ public class StopProgramCommand extends AbstractAuthCommand {
     String programId = programIdParts[1];
 
     programClient.stop(appId, elementType.getProgramType(), programId);
-    output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getPrettyName(), programId, appId);
+    output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getTitleName(), programId, appId);
   }
 
   @Override
@@ -60,6 +62,6 @@ public class StopProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Stops a %s.", elementType.getPrettyName());
+    return String.format("Stops %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }
