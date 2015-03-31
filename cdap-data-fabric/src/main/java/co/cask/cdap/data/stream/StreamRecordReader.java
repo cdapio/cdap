@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.file.ReadFilter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -42,6 +43,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
   private StreamEventDecoder.DecodeResult<K, V> currentEntry;
+  private ReadFilter readFilter;
 
   /**
    * Construct a {@link StreamRecordReader} with a given {@link StreamEventDecoder}.
@@ -59,6 +61,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
     inputSplit = (StreamInputSplit) split;
     reader = createReader(FileSystem.get(context.getConfiguration()), inputSplit);
     reader.initialize();
+    readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
   }
 
   @Override
@@ -70,7 +73,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
       }
 
       events.clear();
-      if (reader.read(events, 1, 0, TimeUnit.SECONDS) <= 0) {
+      if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
         return false;
       }
       streamEvent = events.get(0);

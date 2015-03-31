@@ -18,7 +18,9 @@ package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamDataFileReader;
+import co.cask.cdap.data.stream.TimeRangeReadFilter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.ObjectWritable;
@@ -42,12 +44,14 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
   private final List<StreamEvent> events;
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
+  private ReadFilter readFilter;
 
   StreamRecordReader(InputSplit split, JobConf conf) throws IOException {
     this.inputSplit = (StreamInputSplit) split;
     this.events = Lists.newArrayListWithCapacity(1);
     this.reader = createReader(FileSystem.get(conf), inputSplit);
     reader.initialize();
+    readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
   }
 
   @Override
@@ -70,7 +74,7 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
 
       events.clear();
       try {
-        if (reader.read(events, 1, 0, TimeUnit.SECONDS) <= 0) {
+        if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
           return false;
         }
       } catch (InterruptedException e) {
