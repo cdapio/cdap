@@ -79,7 +79,7 @@
   <div class="section" id="service-http-restful-api">
 <span id="http-restful-api-service"></span><h1>Service HTTP RESTful API<a class="headerlink" href="#service-http-restful-api" title="Permalink to this headline">¶</a></h1>
 <p>This interface supports listing all Services and making requests to the methods of an Application’s Services.
-See the <a class="reference internal" href="lifecycle.html#http-restful-api-lifecycle"><em>Lifecycle HTTP RESTful API</em></a> for how to control the lifecycle of Services.</p>
+See the <a class="reference internal" href="lifecycle.html#http-restful-api-lifecycle"><span>Lifecycle HTTP RESTful API</span></a> for how to control the lifecycle of Services.</p>
 <div class="section" id="listing-all-services">
 <h2>Listing all Services<a class="headerlink" href="#listing-all-services" title="Permalink to this headline">¶</a></h2>
 <p>You can list all Services in CDAP by issuing an HTTP GET request to the URL:</p>
@@ -97,7 +97,7 @@ See the <a class="reference internal" href="lifecycle.html#http-restful-api-life
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
 </tbody>
@@ -118,15 +118,15 @@ See the <a class="reference internal" href="lifecycle.html#http-restful-api-life
 </div>
 <div class="section" id="requesting-service-methods">
 <h2>Requesting Service Methods<a class="headerlink" href="#requesting-service-methods" title="Permalink to this headline">¶</a></h2>
-<p>To make a request to a Service&#8217;s method, send the value of the method&#8217;s <tt class="docutils literal"><span class="pre">&#64;Path</span></tt> annotation
+<p>To make a request to a Service&#8217;s method, send the value of the method&#8217;s <code class="docutils literal"><span class="pre">&#64;Path</span></code> annotation
 as part of the request URL along with any additional headers, body and query parameters.</p>
 <p>The request type is defined by the Service&#8217;s method:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;request-type&gt; &lt;base-url&gt;/namespaces/&lt;namespace&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/methods/&lt;endpoint-path&gt;</span>
 </pre></div>
 </div>
 <p><strong>Note:</strong> Any reserved or unsafe characters in the path parameters should be encoded using
-<a class="reference internal" href="introduction.html#http-restful-api-conventions-reserved-unsafe-characters"><em>percent-encoding</em></a>. See the
-section on <a class="reference external" href="../../source/../../developers-manual/building-blocks/services.html#services-path-parameters" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Path Parameters</em></a> for suggested approaches to
+<a class="reference internal" href="introduction.html#http-restful-api-conventions-reserved-unsafe-characters"><span>percent-encoding</span></a>. See the
+section on <a class="reference external" href="../../source/../../developers-manual/building-blocks/services.html#services-path-parameters" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Path Parameters</span></a> for suggested approaches to
 encoding parameters.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -139,19 +139,19 @@ encoding parameters.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;request-type&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;request-type&gt;</span></code></td>
 <td>One of GET, POST, PUT and DELETE. This is defined by the handler method.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;service-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;service-id&gt;</span></code></td>
 <td>Name of the Service being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;endpoint-path&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;endpoint-path&gt;</span></code></td>
 <td>Endpoint path of the method being called</td>
 </tr>
 </tbody>
@@ -168,7 +168,7 @@ encoding parameters.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">503</span> <span class="pre">Service</span> <span class="pre">Unavailable</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">503</span> <span class="pre">Service</span> <span class="pre">Unavailable</span></code></td>
 <td>The Service is unavailable. For example, it may not yet have been started.</td>
 </tr>
 </tbody>
@@ -182,18 +182,18 @@ encoding parameters.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
-<td>Make a request to the <tt class="docutils literal"><span class="pre">count/{word}</span></tt> endpoint of the <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> Service
-in the application <tt class="docutils literal"><span class="pre">WordCount</span></tt> in the namespace <em>default</em> to get a count of the
+<td>Make a request to the <code class="docutils literal"><span class="pre">count/{word}</span></code> endpoint of the <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> Service
+in the application <code class="docutils literal"><span class="pre">WordCount</span></code> in the namespace <em>default</em> to get a count of the
 word &#8220;Cask&#8221; and its associated words with a limit of 2.</td>
 </tr>
 <tr class="row-odd"><th class="stub">Response Status Code</th>
-<td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Response Body</th>
-<td><tt class="docutils literal"><span class="pre">{</span> <span class="pre">&quot;assocs&quot;:</span> <span class="pre">{</span> <span class="pre">&quot;CaskData&quot;:</span> <span class="pre">1,</span> <span class="pre">&quot;CaskInc&quot;:</span> <span class="pre">1</span> <span class="pre">},</span> <span class="pre">&quot;count&quot;:</span> <span class="pre">5,</span> <span class="pre">&quot;word&quot;:</span> <span class="pre">&quot;Cask&quot;}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{</span> <span class="pre">&quot;assocs&quot;:</span> <span class="pre">{</span> <span class="pre">&quot;CaskData&quot;:</span> <span class="pre">1,</span> <span class="pre">&quot;CaskInc&quot;:</span> <span class="pre">1</span> <span class="pre">},</span> <span class="pre">&quot;count&quot;:</span> <span class="pre">5,</span> <span class="pre">&quot;word&quot;:</span> <span class="pre">&quot;Cask&quot;}</span></code></td>
 </tr>
 </tbody>
 </table>

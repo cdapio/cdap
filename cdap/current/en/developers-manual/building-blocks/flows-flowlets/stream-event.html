@@ -80,7 +80,7 @@
 <p>A Stream event is a special type of object that comes in via Streams. It
 consists of a set of headers represented by a map from String to String,
 and a byte array as the body of the event. To consume a Stream with a
-Flow, define a Flowlet that processes data of type <tt class="docutils literal"><span class="pre">StreamEvent</span></tt>:</p>
+Flow, define a Flowlet that processes data of type <code class="docutils literal"><span class="pre">StreamEvent</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">StreamReader</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="o">...</span>
   <span class="nd">@ProcessInput</span>

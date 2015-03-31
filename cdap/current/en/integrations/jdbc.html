@@ -78,7 +78,7 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>CDAP provides a JDBC driver to make integrations with external programs and third-party BI
 (business intelligence) tools easier.</p>
-<p>The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the <tt class="docutils literal"><span class="pre">lib</span></tt>
+<p>The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the <code class="docutils literal"><span class="pre">lib</span></code>
 directory of your SDK installation at:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">lib</span><span class="o">/</span><span class="n">co</span><span class="o">.</span><span class="na">cask</span><span class="o">.</span><span class="na">cdap</span><span class="o">.</span><span class="na">cdap</span><span class="o">-</span><span class="n">explore</span><span class="o">-</span><span class="n">jdbc</span><span class="o">-&lt;</span><span class="n">version</span><span class="o">&gt;.</span><span class="na">jar</span>
 </pre></div>
@@ -93,8 +93,8 @@ with the matching version number:</p>
 </div>
 <div class="section" id="using-the-cdap-jdbc-driver-in-your-java-code">
 <h2>Using the CDAP JDBC Driver in your Java Code<a class="headerlink" href="#using-the-cdap-jdbc-driver-in-your-java-code" title="Permalink to this headline">¶</a></h2>
-<p>To use CDAP JDBC driver in your code, place <tt class="docutils literal"><span class="pre">cdap-jdbc-driver.jar</span></tt> in the classpath of your application.
-If you are using Maven, you can simply add a dependency in your file <tt class="docutils literal"><span class="pre">pom.xml</span></tt>:</p>
+<p>To use CDAP JDBC driver in your code, place <code class="docutils literal"><span class="pre">cdap-jdbc-driver.jar</span></code> in the classpath of your application.
+If you are using Maven, you can simply add a dependency in your file <code class="docutils literal"><span class="pre">pom.xml</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">&lt;</span><span class="n">dependencies</span><span class="o">&gt;</span>
   <span class="o">...</span>
   <span class="o">&lt;</span><span class="n">dependency</span><span class="o">&gt;</span>
@@ -107,7 +107,7 @@ If you are using Maven, you can simply add a dependency in your file <tt class="
 </pre></div>
 </div>
 <p>Here is a snippet of Java code that uses the CDAP JDBC driver to connect to a running instance of CDAP,
-and executes a query over a CDAP dataset <tt class="docutils literal"><span class="pre">mydataset</span></tt>:</p>
+and executes a query over a CDAP dataset <code class="docutils literal"><span class="pre">mydataset</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// First, register the driver once in your application</span>
 <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="s">&quot;co.cask.cdap.explore.jdbc.ExploreDriver&quot;</span><span class="o">);</span>
 

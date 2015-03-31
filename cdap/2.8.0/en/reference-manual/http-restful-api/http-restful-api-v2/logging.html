@@ -83,7 +83,7 @@
 <p>As of <em>CDAP v2.8.0</em>, the <em>HTTP RESTful API v2</em> has been deprecated, pending removal in
 a later version. Replace all use of the <em>HTTP RESTful API v2</em> with <a class="reference external" href="../http-restful-api-v3/index.html"><strong>HTTP RESTful API v3</strong></a>. This
 involves using a namespace and a namespace id in the call, as
-<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><em>described in the documentation</em></a>. The <tt class="docutils literal"><span class="pre">default</span></tt>
+<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><span>described in the documentation</span></a>. The <code class="docutils literal"><span class="pre">default</span></code>
 namespace can be used as a drop-in replacement in existing API v2 code.</p>
 </div>
 <div class="section" id="downloading-logs">
@@ -104,16 +104,16 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flows</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">procedures</span></tt>, <tt class="docutils literal"><span class="pre">services</span></tt>, or <tt class="docutils literal"><span class="pre">spark</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flows</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">procedures</span></code>, <code class="docutils literal"><span class="pre">services</span></code>, or <code class="docutils literal"><span class="pre">spark</span></code></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the program (<em>Flow</em>, <em>MapReduce</em>, <em>Procedure</em>, <em>Service</em>, <em>Spark</em>) being called</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;ts&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;ts&gt;</span></code></td>
 <td><em>Start</em> and <em>stop</em> times, given as seconds since the start of the Epoch.</td>
 </tr>
 </tbody>
@@ -127,14 +127,14 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request:</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/apps/WordCount/flows/WordCountFlow/</span></tt>
-<tt class="docutils literal"><span class="pre">logs?start=1382576400&amp;stop=1382576700</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/apps/WordCount/flows/WordCountFlow/</span></code>
+<code class="docutils literal"><span class="pre">logs?start=1382576400&amp;stop=1382576700</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Return the logs for all the events from the Flow <em>WordCountFlow</em> of the <em>WordCount</em>
 Application,
-beginning <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:00:00</span> <span class="pre">GMT</span></tt> and
-ending <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:05:00</span> <span class="pre">GMT</span></tt> (five minutes later)</td>
+beginning <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:00:00</span> <span class="pre">GMT</span></code> and
+ending <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">24</span> <span class="pre">Oct</span> <span class="pre">2013</span> <span class="pre">01:05:00</span> <span class="pre">GMT</span></code> (five minutes later)</td>
 </tr>
 </tbody>
 </table>
@@ -148,8 +148,8 @@ escaped. A line of the log may look like this:</p>
 </pre></div>
 </div>
 <p><strong>Note:</strong> The context of the log line shows the name of the Flowlet (<em>source</em>), its instance number (0) as
-well as the original line in the Application code. The character <em>&amp;</em> is escaped as <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt>; if you don’t desire
-this escaping, you can turn it off by adding the parameter <tt class="docutils literal"><span class="pre">&amp;escape=false</span></tt> to the request URL.</p>
+well as the original line in the Application code. The character <em>&amp;</em> is escaped as <code class="docutils literal"><span class="pre">&amp;amp;</span></code>; if you don’t desire
+this escaping, you can turn it off by adding the parameter <code class="docutils literal"><span class="pre">&amp;escape=false</span></code> to the request URL.</p>
 </div>
 </div>
 </div>

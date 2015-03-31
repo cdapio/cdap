@@ -85,22 +85,22 @@ are persisted across a restart of either Programs or CDAP itself.</p>
 <h2>Order of Preferences<a class="headerlink" href="#order-of-preferences" title="Permalink to this headline">¶</a></h2>
 <p>The overriding order of Preferences is (from lowest to highest precedence):</p>
 <p>CDAP Instance &lt; Namespace &lt; Application &lt; Program &lt; Runtime Arguments (passed in during start of the Program)</p>
-<p>Example: A configuration preference <tt class="docutils literal"><span class="pre">SAMPLE_KEY</span></tt> is set to 20 at the Namespace level and is set to 10 at the
+<p>Example: A configuration preference <code class="docutils literal"><span class="pre">SAMPLE_KEY</span></code> is set to 20 at the Namespace level and is set to 10 at the
 Program level. When the Program is started, the value set at the Program level overrides the value set at
-the Namespace level and thus the value for the preference <tt class="docutils literal"><span class="pre">SAMPLE_KEY</span></tt> will be 10.</p>
+the Namespace level and thus the value for the preference <code class="docutils literal"><span class="pre">SAMPLE_KEY</span></code> will be 10.</p>
 <p>Programs such as Flows, MapReduce programs, Services, Workflows and Workers will receive the resolved preferences
-and can be accessed through the <tt class="docutils literal"><span class="pre">getRuntimeArguments</span></tt> method of the context:</p>
+and can be accessed through the <code class="docutils literal"><span class="pre">getRuntimeArguments</span></code> method of the context:</p>
 <ul class="simple">
-<li>For Flows, Services, and Workers: preferences are available to the <tt class="docutils literal"><span class="pre">initialize</span></tt> method in the context.</li>
-<li>For MapReduce and Spark: preferences are available to the <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> and <tt class="docutils literal"><span class="pre">onFinish</span></tt> methods in the context.
-The <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> method can pass them to the Mappers and Reducers through the job configuration.</li>
+<li>For Flows, Services, and Workers: preferences are available to the <code class="docutils literal"><span class="pre">initialize</span></code> method in the context.</li>
+<li>For MapReduce and Spark: preferences are available to the <code class="docutils literal"><span class="pre">beforeSubmit</span></code> and <code class="docutils literal"><span class="pre">onFinish</span></code> methods in the context.
+The <code class="docutils literal"><span class="pre">beforeSubmit</span></code> method can pass them to the Mappers and Reducers through the job configuration.</li>
 <li>When a Workflow receives preferences, it passes them to each MapReduce in the Workflow.</li>
 </ul>
 </div>
 <div class="section" id="preferences-example">
 <h2>Preferences Example<a class="headerlink" href="#preferences-example" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">initialize()</span></tt> method in this example accepts a configuration key <tt class="docutils literal"><span class="pre">disable.public</span></tt> for the
-<tt class="docutils literal"><span class="pre">TweetCollector</span></tt> Flowlet. For example, we can disable using the Public Twitter Source
+<p>The <code class="docutils literal"><span class="pre">initialize()</span></code> method in this example accepts a configuration key <code class="docutils literal"><span class="pre">disable.public</span></code> for the
+<code class="docutils literal"><span class="pre">TweetCollector</span></code> Flowlet. For example, we can disable using the Public Twitter Source
 or provide Twitter API credentials:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetCollector</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">TweetCollector</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
@@ -141,26 +141,26 @@ or provide Twitter API credentials:</p>
 <div class="section" id="scoped-runtime-arguments-for-workflow">
 <h2>Scoped Runtime Arguments for Workflow<a class="headerlink" href="#scoped-runtime-arguments-for-workflow" title="Permalink to this headline">¶</a></h2>
 <p>When a Workflow is configured, you may want to pass specific runtime arguments to the different programs
-and datasets used inside the Workflow. To achieve this, you can prefix the runtime arguments with a <tt class="docutils literal"><span class="pre">&lt;scope&gt;</span></tt>.
-Currently supported scopes are <tt class="docutils literal"><span class="pre">dataset</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, and <tt class="docutils literal"><span class="pre">spark</span></tt>.</p>
-<p>Example: To set a runtime argument of <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt> for the MapReduce program <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> in a Workflow,
-the argument can be provided with a scope of <tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>. In this case, <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt>
-and the datasets used in <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> will receive two arguments: one with a scope of
-<tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>, and another with the scope extracted as <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt>.
-Programs other than <tt class="docutils literal"><span class="pre">oneMapReduce</span></tt> and datasets used in them will receive only the single argument
-<tt class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></tt>.</p>
-<p>An argument can also be prefixed with <tt class="docutils literal"><span class="pre">&lt;scope&gt;.*</span></tt> to apply it to all programs or datasets in the Workflow as
+and datasets used inside the Workflow. To achieve this, you can prefix the runtime arguments with a <code class="docutils literal"><span class="pre">&lt;scope&gt;</span></code>.
+Currently supported scopes are <code class="docutils literal"><span class="pre">dataset</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, and <code class="docutils literal"><span class="pre">spark</span></code>.</p>
+<p>Example: To set a runtime argument of <code class="docutils literal"><span class="pre">read.timeout=30</span></code> for the MapReduce program <code class="docutils literal"><span class="pre">oneMapReduce</span></code> in a Workflow,
+the argument can be provided with a scope of <code class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></code>. In this case, <code class="docutils literal"><span class="pre">oneMapReduce</span></code>
+and the datasets used in <code class="docutils literal"><span class="pre">oneMapReduce</span></code> will receive two arguments: one with a scope of
+<code class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></code>, and another with the scope extracted as <code class="docutils literal"><span class="pre">read.timeout=30</span></code>.
+Programs other than <code class="docutils literal"><span class="pre">oneMapReduce</span></code> and datasets used in them will receive only the single argument
+<code class="docutils literal"><span class="pre">mapreduce.oneMapReduce.read.timeout=30</span></code>.</p>
+<p>An argument can also be prefixed with <code class="docutils literal"><span class="pre">&lt;scope&gt;.*</span></code> to apply it to all programs or datasets in the Workflow as
 represented by the scope.</p>
-<p>Example: If the runtime argument is specified as <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt>, all MapReduce programs and
-datasets used in them will receive two arguments: one with the scope <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt> and another
-with the scope extracted as <tt class="docutils literal"><span class="pre">read.timeout=30</span></tt>. Programs other than the MapReduce and the datasets used by them
-will receive only the single argument <tt class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></tt>.</p>
+<p>Example: If the runtime argument is specified as <code class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></code>, all MapReduce programs and
+datasets used in them will receive two arguments: one with the scope <code class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></code> and another
+with the scope extracted as <code class="docutils literal"><span class="pre">read.timeout=30</span></code>. Programs other than the MapReduce and the datasets used by them
+will receive only the single argument <code class="docutils literal"><span class="pre">mapreduce.*.read.timeout=30</span></code>.</p>
 <p>Since the datasets can be used by programs running inside a Workflow, a scope for them can be nested inside a
 corresponding program scope.</p>
-<p>Example: Consider the dataset <tt class="docutils literal"><span class="pre">myTable</span></tt> used by multiple programs in a Workflow. The runtime argument
-<tt class="docutils literal"><span class="pre">cache.seconds=30</span></tt> for <tt class="docutils literal"><span class="pre">myTable</span></tt> can be provided as <tt class="docutils literal"><span class="pre">dataset.myTable.cache.seconds=30</span></tt>. In this case,
-the argument will be set for all programs that use <tt class="docutils literal"><span class="pre">myTable</span></tt>. In order to set the argument only for the MapReduce
-program <tt class="docutils literal"><span class="pre">myMR</span></tt>, the dataset argument can be nested inside the program scope as <tt class="docutils literal"><span class="pre">mapreduce.myMR.dataset.myTable.cache.seconds=30</span></tt>.</p>
+<p>Example: Consider the dataset <code class="docutils literal"><span class="pre">myTable</span></code> used by multiple programs in a Workflow. The runtime argument
+<code class="docutils literal"><span class="pre">cache.seconds=30</span></code> for <code class="docutils literal"><span class="pre">myTable</span></code> can be provided as <code class="docutils literal"><span class="pre">dataset.myTable.cache.seconds=30</span></code>. In this case,
+the argument will be set for all programs that use <code class="docutils literal"><span class="pre">myTable</span></code>. In order to set the argument only for the MapReduce
+program <code class="docutils literal"><span class="pre">myMR</span></code>, the dataset argument can be nested inside the program scope as <code class="docutils literal"><span class="pre">mapreduce.myMR.dataset.myTable.cache.seconds=30</span></code>.</p>
 </div>
 </div>
 

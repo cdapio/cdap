@@ -73,15 +73,15 @@
   <div class="section" id="application-logbacks">
 <span id="application-logback"></span><h1>Application Logbacks<a class="headerlink" href="#application-logbacks" title="Permalink to this headline">¶</a></h1>
 <p>YARN containers launched by a CDAP application use the default container logback file
-present in :ref:Configuration &lt;install-configuration&gt; directory - <tt class="docutils literal"><span class="pre">logback-container.xml</span></tt>,
+present in :ref:Configuration &lt;install-configuration&gt; directory - <code class="docutils literal"><span class="pre">logback-container.xml</span></code>,
 packaged with CDAP. This logback does log rotation once every day at midnight and
 deletes logs older than 14 days. Depending on the use case, the default configuration may be sufficient.
-However, it is also possible to specify a custom <tt class="docutils literal"><span class="pre">logback.xml</span></tt> for a CDAP application by packaging
-it with the application in the application&#8217;s <tt class="docutils literal"><span class="pre">src/main/resources</span></tt> directory.
-The packaged <tt class="docutils literal"><span class="pre">logback.xml</span></tt> is then used for each container launched by the application.</p>
+However, it is also possible to specify a custom <code class="docutils literal"><span class="pre">logback.xml</span></code> for a CDAP application by packaging
+it with the application in the application&#8217;s <code class="docutils literal"><span class="pre">src/main/resources</span></code> directory.
+The packaged <code class="docutils literal"><span class="pre">logback.xml</span></code> is then used for each container launched by the application.</p>
 <p>To write a custom logback, you may refer to <a class="reference external" href="http://logback.qos.ch/">Logback</a>.</p>
-<p><strong>Note:</strong> When a custom <tt class="docutils literal"><span class="pre">logback.xml</span></tt> is specified for an application, the custom <tt class="docutils literal"><span class="pre">logback.xml</span></tt>
-will be used in place of <tt class="docutils literal"><span class="pre">logback-container.xml</span></tt>. The custom <tt class="docutils literal"><span class="pre">logback.xml</span></tt> needs to be configured
+<p><strong>Note:</strong> When a custom <code class="docutils literal"><span class="pre">logback.xml</span></code> is specified for an application, the custom <code class="docutils literal"><span class="pre">logback.xml</span></code>
+will be used in place of <code class="docutils literal"><span class="pre">logback-container.xml</span></code>. The custom <code class="docutils literal"><span class="pre">logback.xml</span></code> needs to be configured
 for log rotation and log clean-up to ensure that long-running containers don&#8217;t fill up the disk.</p>
 </div>
 

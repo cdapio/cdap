@@ -76,8 +76,8 @@
             
   <div class="section" id="schedules">
 <span id="id1"></span><h1>Schedules<a class="headerlink" href="#schedules" title="Permalink to this headline">¶</a></h1>
-<p><strong>Schedules</strong> are used to execute <a class="reference internal" href="workflows.html#workflows"><em>Workflows</em></a> on a recurring basis. You can add a Schedule
-to a Workflow using the <tt class="docutils literal"><span class="pre">scheduleWorkflow</span></tt> method of the
+<p><strong>Schedules</strong> are used to execute <a class="reference internal" href="workflows.html#workflows"><span>Workflows</span></a> on a recurring basis. You can add a Schedule
+to a Workflow using the <code class="docutils literal"><span class="pre">scheduleWorkflow</span></code> method of the
 <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)">AbstractApplication class</a></p>
 <p>The <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html">Schedules</a>
 class contains static methods to create schedules based on time, or schedules based on data availability.</p>
@@ -90,7 +90,7 @@ You can add such a Schedule to a Workflow:</p>
                  <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">MyWorkflow</span></tt> will then be executed every 5 hours.</p>
+<p>The <code class="docutils literal"><span class="pre">MyWorkflow</span></code> will then be executed every 5 hours.</p>
 <p>Optionally, you can specify the properties for the Schedule:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">...</span>
 <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">scheduleProperties</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
@@ -102,21 +102,21 @@ You can add such a Schedule to a Workflow:</p>
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>Every time the <tt class="docutils literal"><span class="pre">FiveHourSchedule</span></tt> triggers, it passes the <tt class="docutils literal"><span class="pre">scheduleProperties</span></tt> as runtime arguments to the <tt class="docutils literal"><span class="pre">MyWorkflow</span></tt>.</p>
+<p>Every time the <code class="docutils literal"><span class="pre">FiveHourSchedule</span></code> triggers, it passes the <code class="docutils literal"><span class="pre">scheduleProperties</span></code> as runtime arguments to the <code class="docutils literal"><span class="pre">MyWorkflow</span></code>.</p>
 </div>
 <div class="section" id="stream-size-schedules">
 <span id="id2"></span><h2>Stream Size Schedules<a class="headerlink" href="#stream-size-schedules" title="Permalink to this headline">¶</a></h2>
 <p class="rubric">Definition and Usage</p>
-<p><strong>Stream Size Schedules</strong> will execute based on data ingested in <a class="reference internal" href="streams.html#streams"><em>Streams</em></a>, using the
+<p><strong>Stream Size Schedules</strong> will execute based on data ingested in <a class="reference internal" href="streams.html#streams"><span>Streams</span></a>, using the
 <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createDataSchedule(java.lang.String,%20java.lang.String,%20co.cask.cdap.api.schedule.Source,%20java.lang.String,%20int)">createDataSchedule API</a>.
-Here is an example to add a <strong>Stream Size Schedule</strong> based on a Stream named <tt class="docutils literal"><span class="pre">purchaseStream</span></tt> that triggers
+Here is an example to add a <strong>Stream Size Schedule</strong> based on a Stream named <code class="docutils literal"><span class="pre">purchaseStream</span></code> that triggers
 every time the Stream has ingested 1MB of data:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">createDataSchedule</span><span class="o">(</span><span class="s">&quot;1MBStreamSchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Schedule triggered every 1MB of ingested data&quot;</span><span class="o">,</span>
                                               <span class="n">Schedules</span><span class="o">.</span><span class="na">Source</span><span class="o">.</span><span class="na">STREAM</span><span class="o">,</span> <span class="s">&quot;purchaseStream&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">),</span>
                  <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">purchaseStream</span></tt> will either have to already exist in CDAP when deploying your application, or you will have to
+<p>The <code class="docutils literal"><span class="pre">purchaseStream</span></code> will either have to already exist in CDAP when deploying your application, or you will have to
 <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#addStream(co.cask.cdap.api.data.stream.Stream)">add it</a>
 when configuring your application. If you try to create a <strong>Stream Size Schedule</strong> on a Stream which does not exist,
 your application will fail to deploy.</p>
@@ -132,9 +132,9 @@ your application will fail to deploy.</p>
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>Every time the <tt class="docutils literal"><span class="pre">1MBStreamSchedule</span></tt> triggers, it passes the <tt class="docutils literal"><span class="pre">scheduleProperties</span></tt> as runtime arguments to the <tt class="docutils literal"><span class="pre">MyWorkflow</span></tt>.</p>
+<p>Every time the <code class="docutils literal"><span class="pre">1MBStreamSchedule</span></code> triggers, it passes the <code class="docutils literal"><span class="pre">scheduleProperties</span></code> as runtime arguments to the <code class="docutils literal"><span class="pre">MyWorkflow</span></code>.</p>
 <p>The <strong>Stream Size Schedule</strong> uses two sources of information to know how much data has been ingested by a Stream.
-One is <a class="reference internal" href="streams.html#streams-notifications"><em>Stream size notifications</em></a>; the other is the aggregated metric that
+One is <a class="reference internal" href="streams.html#streams-notifications"><span>Stream size notifications</span></a>; the other is the aggregated metric that
 records the total size of events ingested by a Stream.
 Notifications are only used as an indication that data is available. Stream Size Schedules always confirm the
 information by querying the Metric system, which is the canonical source of information.</p>
@@ -162,21 +162,21 @@ update.</li>
 <p class="rubric">Special Runtime Arguments</p>
 <p>When a <strong>Stream Size Schedule</strong> executes a Workflow, it passes in its these runtime arguments:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">logicalStartTime</span></tt>: the timestamp, in milliseconds, at which the Schedule received the information that the Stream
+<li><code class="docutils literal"><span class="pre">logicalStartTime</span></code>: the timestamp, in milliseconds, at which the Schedule received the information that the Stream
 had ingested enough data for the Workflow to be executed;</li>
-<li><tt class="docutils literal"><span class="pre">runDataSize</span></tt>: the size of the Stream, in bytes, seen by the Schedule when it triggered the current execution of
+<li><code class="docutils literal"><span class="pre">runDataSize</span></code>: the size of the Stream, in bytes, seen by the Schedule when it triggered the current execution of
 the Workflow;</li>
-<li><tt class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></tt>: the <tt class="docutils literal"><span class="pre">logicalStartTime</span></tt> of the previous execution of the Workflow by this Schedule.
+<li><code class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></code>: the <code class="docutils literal"><span class="pre">logicalStartTime</span></code> of the previous execution of the Workflow by this Schedule.
 This argument is not present if the Workflow has never been executed by the Schedule;</li>
-<li><tt class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></tt>: the <tt class="docutils literal"><span class="pre">runDataSize</span></tt> of the previous execution of the Workflow by this Schedule.
+<li><code class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></code>: the <code class="docutils literal"><span class="pre">runDataSize</span></code> of the previous execution of the Workflow by this Schedule.
 This argument is not present if the Workflow has never been executed by the Schedule;</li>
-<li><tt class="docutils literal"><span class="pre">runBaseCountTime</span></tt>: the timestamp, in milliseconds, at which the Schedule started to wait for an increment of data
+<li><code class="docutils literal"><span class="pre">runBaseCountTime</span></code>: the timestamp, in milliseconds, at which the Schedule started to wait for an increment of data
 being ingested by the Stream, before executing the Workflow. Most of the time, this argument and
-<tt class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></tt> will be identical, either ing the first execution of the Workflow by the
+<code class="docutils literal"><span class="pre">lastScheduledRunLogicalStartTime</span></code> will be identical, either ing the first execution of the Workflow by the
 Schedule, or if the counting logic in the Schedule is disrupted—for example, by the deletion of Stream metrics;</li>
-<li><tt class="docutils literal"><span class="pre">runBaseCountSize</span></tt>: the size of the Stream, in bytes, recorded when the Schedule started to wait for an increment of data
+<li><code class="docutils literal"><span class="pre">runBaseCountSize</span></code>: the size of the Stream, in bytes, recorded when the Schedule started to wait for an increment of data
 to be ingested by the Stream, before executing the Workflow. Most of the time, this argument and
-<tt class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></tt> will be identical, except either during the first execution of the Workflow by the
+<code class="docutils literal"><span class="pre">lastScheduledRunDataSize</span></code> will be identical, except either during the first execution of the Workflow by the
 Schedule, or if the counting logic in the Schedule is disrupted—for example, by the deletion of Stream metrics.</li>
 </ul>
 </div>

@@ -79,9 +79,9 @@
   <div class="section" id="namespace-http-restful-api">
 <span id="http-restful-api-v3-namespace"></span><span id="http-restful-api-namespace"></span><h1>Namespace HTTP RESTful API<a class="headerlink" href="#namespace-http-restful-api" title="Permalink to this headline">¶</a></h1>
 <p>Use the CDAP Namespace HTTP API to create, list or delete namespaces in the CDAP instance.</p>
-<p>Namespaces, their use and examples, are described in the <a class="reference external" href="../../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Developers&#8217; Manual: Namespaces</em></a>.</p>
+<p>Namespaces, their use and examples, are described in the <a class="reference external" href="../../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Developers&#8217; Manual: Namespaces</span></a>.</p>
 <p>For the remainder of this API, it is assumed that the namespace you are using is defined
-by the <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></tt>, as descibed under <a class="reference internal" href="introduction.html#http-restful-api-conventions"><em>Conventions</em></a>.</p>
+by the <code class="docutils literal"><span class="pre">&lt;base-url&gt;</span></code>, as descibed under <a class="reference internal" href="introduction.html#http-restful-api-conventions"><span>Conventions</span></a>.</p>
 <div class="section" id="create-a-namespace">
 <h2>Create a Namespace<a class="headerlink" href="#create-a-namespace" title="Permalink to this headline">¶</a></h2>
 <p>To create a namespace, submit an HTTP PUT request:</p>
@@ -99,13 +99,13 @@ by the <tt class="docutils literal"><span class="pre">&lt;base-url&gt;</span></t
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace</td>
 </tr>
 </tbody>
 </table>
-<p>The <tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt> must be of the limited character set for namespaces, as
-described in the <a class="reference internal" href="introduction.html#http-restful-api-namespace-characters"><em>Introduction</em></a>.
+<p>The <code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code> must be of the limited character set for namespaces, as
+described in the <a class="reference internal" href="introduction.html#http-restful-api-namespace-characters"><span>Introduction</span></a>.
 Properties for the namespace are passed in the JSON request body:</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -120,18 +120,18 @@ Properties for the namespace are passed in the JSON request body:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">description</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">description</span></code></td>
 <td>Display description of the namespace</td>
 <td>An empty string (&#8220;&#8221;)</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">config</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">config</span></code></td>
 <td>Configuration preferences for the namespace</td>
 <td>A JSON string of configuration key-value pairs</td>
 </tr>
 </tbody>
 </table>
-<p>If a namespace with the same name already exists, the method will still return <tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt>,
-but with a message that the <tt class="docutils literal"><span class="pre">Namespace</span> <span class="pre">'&lt;namespace&gt;'</span> <span class="pre">already</span> <span class="pre">exists</span></tt>.</p>
+<p>If a namespace with the same name already exists, the method will still return <code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code>,
+but with a message that the <code class="docutils literal"><span class="pre">Namespace</span> <span class="pre">'&lt;namespace&gt;'</span> <span class="pre">already</span> <span class="pre">exists</span></code>.</p>
 <p class="rubric">HTTP Responses</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -144,7 +144,7 @@ but with a message that the <tt class="docutils literal"><span class="pre">Names
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the namespace was created</td>
 </tr>
 </tbody>
@@ -185,7 +185,7 @@ response, such as:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace</td>
 </tr>
 </tbody>
@@ -202,7 +202,7 @@ response, such as:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event successfully called the method, and the body contains the results</td>
 </tr>
 </tbody>
@@ -225,12 +225,12 @@ response, such as:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace</td>
 </tr>
 </tbody>
 </table>
-<p>The <tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt> must be the name of an existing namespace.
+<p>The <code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code> must be the name of an existing namespace.
 Properties for the namespace are passed in the JSON request body, as described
 for when you <a class="reference internal" href="#create-a-namespace">Create a Namespace</a>.</p>
 <table border="1" class="docutils">
@@ -244,13 +244,13 @@ for when you <a class="reference internal" href="#create-a-namespace">Create a N
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">description</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">description</span></code></td>
 <td>Display description of the namespace</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">config</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">config</span></code></td>
 <td>Configuration properties, with a JSON map of name-value pairs. Currently, the only
-supported configuration property is <tt class="docutils literal"><span class="pre">scheduler.queue.name</span></tt>:
-<a class="reference external" href="../../source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Scheduler queue</em></a> for CDAP Programs and Explore Queries in the namespace.</td>
+supported configuration property is <code class="docutils literal"><span class="pre">scheduler.queue.name</span></code>:
+<a class="reference external" href="../../source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Scheduler queue</span></a> for CDAP Programs and Explore Queries in the namespace.</td>
 </tr>
 </tbody>
 </table>
@@ -266,13 +266,13 @@ supported configuration property is <tt class="docutils literal"><span class="pr
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Namespace properties were changed successfully</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
 <td>The request was not created correctly</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The Namespace does not exist</td>
 </tr>
 </tbody>
@@ -285,7 +285,7 @@ supported configuration property is <tt class="docutils literal"><span class="pr
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><p class="first"><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/dev/properties</span></tt>:</p>
+<td><p class="first"><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/dev/properties</span></code>:</p>
 <div class="last highlight-console"><div class="highlight"><pre><span class="go">{</span>
 <span class="go">  &quot;description&quot; : &quot;Namespace for development of applications&quot;,</span>
 <span class="go">  &quot;config&quot;: {</span>

@@ -83,7 +83,7 @@ Schedulers. CDAP provides capabilities to submit CDAP programs and Explore Queri
 non-default YARN queues.</p>
 <p>Configurations for submitting to non-default YARN queues can be specified in two levels.</p>
 <ol class="arabic">
-<li><p class="first">Using the CDAP site configuration <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>:</p>
+<li><p class="first">Using the CDAP site configuration <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>:</p>
 <p>The configuration parameter of the queue name for Master Services, CDAP Programs and
 Explore Queries can be specified at the CDAP instance level. This is then applied for
 all programs and Hive queries:</p>
@@ -103,11 +103,11 @@ all programs and Hive queries:</p>
 </li>
 <li><p class="first">Using a Namespace-level property:</p>
 <p>The queue name to submit programs and Hive queries in YARN can be specified at a
-Namespace-level by using the v3 <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/namespace.html#http-restful-api-namespace-editing" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">RESTful API</em></a> to
-configure the property <tt class="docutils literal"><span class="pre">scheduler.queue.name</span></tt>.</p>
+Namespace-level by using the v3 <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/namespace.html#http-restful-api-namespace-editing" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">RESTful API</span></a> to
+configure the property <code class="docutils literal"><span class="pre">scheduler.queue.name</span></code>.</p>
 <p>The configuration specified at the Namespace-level will override the configuration
-specified in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>.</p>
-<p>For example, to set <tt class="docutils literal"><span class="pre">A</span></tt> as the queue name to be used for the namespace
+specified in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>.</p>
+<p>For example, to set <code class="docutils literal"><span class="pre">A</span></code> as the queue name to be used for the namespace
 <em>&lt;namespace-id&gt;</em>, you use this HTTP PUT method:</p>
 <div class="highlight-xml"><div class="highlight"><pre>PUT <span class="nt">&lt;base-url&gt;</span>/namespaces/<span class="nt">&lt;namespace-id&gt;</span>/properties
 </pre></div>
@@ -120,7 +120,7 @@ specified in <tt class="docutils literal"><span class="pre">cdap-site.xml</span>
 Explore queries. This configuration cannot be applied for Master Services, since
 Master Services are not tied to a namespace level.</p>
 <p><strong>Note:</strong> If the configuration is not specified at either the Namespace or
-<tt class="docutils literal"><span class="pre">cdap-site</span></tt> levels, then all the Master Services, CDAP programs and Explore queries
+<code class="docutils literal"><span class="pre">cdap-site</span></code> levels, then all the Master Services, CDAP programs and Explore queries
 will be submitted to default YARN queues.</p>
 </li>
 </ol>

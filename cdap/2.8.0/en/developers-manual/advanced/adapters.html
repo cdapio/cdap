@@ -80,7 +80,7 @@
 write to one or more data sinks. They may be used for ETL (extract, transform, and load)
 purposes, or any situation where you want to pipe data from one data source to another.</p>
 <p>CDAP currently provides a stream-conversion adapter that regularly reads data from
-a Stream and then writes the data to a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> in
+a Stream and then writes the data to a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> in
 <a class="reference external" href="http://avro.apache.org">Avro format</a>. The output
 can then be explored through Hive or Impala, assuming a compatible schema is used.</p>
 <p>Each Adapter type is implemented as a CDAP Application, with an Adapter as
@@ -92,37 +92,37 @@ likely change and improve in future releases.</p>
 <div class="section" id="stream-conversion-adapter">
 <h2>Stream-conversion Adapter<a class="headerlink" href="#stream-conversion-adapter" title="Permalink to this headline">¶</a></h2>
 <p>A stream-conversion Adapter regularly reads data from a source Stream and writes
-it to a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> as Avro files. You may want to use this Adapter if you
+it to a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> as Avro files. You may want to use this Adapter if you
 want to run partitioned Hive or Impala queries on data in a Stream. You may also want
 to use the Adapter if you have set a TTL on a Stream for real-time processing,
 but want to keep all Stream data around in another format for archiving purposes.
 Each Stream event is translated as a line in the output fileset.
 Stream format and schema must be given as adapter properties.
-The output schema will add a required <tt class="docutils literal"><span class="pre">ts</span></tt> field of type long for the timestamp of the
+The output schema will add a required <code class="docutils literal"><span class="pre">ts</span></code> field of type long for the timestamp of the
 event, as well as nullable string fields for any headers given in the adapter properties.</p>
 <p>Stream conversion Adapters require these properties:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">frequency</span></tt>: Defines how often the Adapter should run, as a number followed by a letter.
+<li><code class="docutils literal"><span class="pre">frequency</span></code>: Defines how often the Adapter should run, as a number followed by a letter.
 For example, 5m means the Adapter will run every five minutes, and 2h means the Adapter
 will run every two hours. For minutes, the number given must be an even divisor of an hour.
 For example, 30m is valid, but 13m is not because an hour does not evenly divide into 13 minute chunks.
 Similarly, for hours, the number given must be an even divisor of a day.
 For example, 3h is valid, but 7h is not.</li>
-<li><tt class="docutils literal"><span class="pre">source.name</span></tt>: The name of the Stream to read from.</li>
-<li><tt class="docutils literal"><span class="pre">source.format.name</span></tt>: The name of the format of the Stream body.</li>
-<li><tt class="docutils literal"><span class="pre">source.format.settings</span></tt>: Settings of the format as a JSON Object of string to string.</li>
-<li><tt class="docutils literal"><span class="pre">source.schema</span></tt>: The schema of the Stream body.</li>
-<li><tt class="docutils literal"><span class="pre">sink.name</span></tt>: The name of the <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> to write to.</li>
+<li><code class="docutils literal"><span class="pre">source.name</span></code>: The name of the Stream to read from.</li>
+<li><code class="docutils literal"><span class="pre">source.format.name</span></code>: The name of the format of the Stream body.</li>
+<li><code class="docutils literal"><span class="pre">source.format.settings</span></code>: Settings of the format as a JSON Object of string to string.</li>
+<li><code class="docutils literal"><span class="pre">source.schema</span></code>: The schema of the Stream body.</li>
+<li><code class="docutils literal"><span class="pre">sink.name</span></code>: The name of the <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> to write to.</li>
 </ul>
 <p>These Adapter properties are optional:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">mapper.resources.memory.mb</span></tt>: Amount of memory each mapper of the Mapreduce program should use.</li>
-<li><tt class="docutils literal"><span class="pre">mapper.resources.vcores</span></tt>: Number of virtual cores each mapper of the Mapreduce program should use.</li>
-<li><tt class="docutils literal"><span class="pre">headers</span></tt>: Any stream headers that should be included in the output.</li>
+<li><code class="docutils literal"><span class="pre">mapper.resources.memory.mb</span></code>: Amount of memory each mapper of the Mapreduce program should use.</li>
+<li><code class="docutils literal"><span class="pre">mapper.resources.vcores</span></code>: Number of virtual cores each mapper of the Mapreduce program should use.</li>
+<li><code class="docutils literal"><span class="pre">headers</span></code>: Any stream headers that should be included in the output.</li>
 </ul>
 <p>This sink property is required:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">explore.table.property.avro.schema.literal</span></tt>: The output schema including timestamp and headers.</li>
+<li><code class="docutils literal"><span class="pre">explore.table.property.avro.schema.literal</span></code>: The output schema including timestamp and headers.</li>
 </ul>
 <p>Each time the Adapter is run, it will read stream events from a time range, write to the fileset, and add those
 files as a partition. The time range is calculated based on the frequency of the Adapter and the logical
@@ -137,11 +137,11 @@ For example:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">cdap</span> <span class="o">(</span><span class="n">http</span><span class="o">:</span><span class="c1">//127.0.0.1:10000)&gt; create stream-conversion adapter convert_tickers on tickers frequency 10m format csv schema &quot;ticker string, trades int, price double&quot;</span>
 </pre></div>
 </div>
-<p>The command above will create a stream-conversion Adapter named <tt class="docutils literal"><span class="pre">convert_tickers</span></tt> that runs every ten minutes.
-It will read from the <em>tickers</em> Stream and write to the <em>tickers_converted</em> <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>.
+<p>The command above will create a stream-conversion Adapter named <code class="docutils literal"><span class="pre">convert_tickers</span></code> that runs every ten minutes.
+It will read from the <em>tickers</em> Stream and write to the <em>tickers_converted</em> <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>.
 It will require stream events to be comma-separated values of ticker, trades, and price, and will write
 events as partitioned Avro files. With this adapter running, you will be able to run Hive or Impala queries
-over the output fileset, which will contain the <tt class="docutils literal"><span class="pre">ts</span></tt>, <tt class="docutils literal"><span class="pre">ticker</span></tt>, <tt class="docutils literal"><span class="pre">trades</span></tt>, and <tt class="docutils literal"><span class="pre">price</span></tt> fields as well
+over the output fileset, which will contain the <code class="docutils literal"><span class="pre">ts</span></code>, <code class="docutils literal"><span class="pre">ticker</span></code>, <code class="docutils literal"><span class="pre">trades</span></code>, and <code class="docutils literal"><span class="pre">price</span></code> fields as well
 as the partition fields:</p>
 <div class="highlight-java"><div class="highlight"><pre>cdap (http://127.0.0.1:10000)&gt; execute &#39;describe dataset_tickers_converted&#39;
 +=======================================================================+
@@ -175,16 +175,16 @@ as the partition fields:</p>
 in an adapter plugins directory. If you wish to write a custom Adapter type, make sure
 your manifest file contains these properties:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Type</span></tt>: Name by which your adapter type will be referenced.</li>
-<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Program-Type</span></tt>: Schedulable program type of your adapter.
-Currently, only <tt class="docutils literal"><span class="pre">WORKFLOW</span></tt> is supported.</li>
-<li><tt class="docutils literal"><span class="pre">CDAP-Adapter-Properties</span></tt>: Default properties to use for your adapter, formatted
+<li><code class="docutils literal"><span class="pre">CDAP-Adapter-Type</span></code>: Name by which your adapter type will be referenced.</li>
+<li><code class="docutils literal"><span class="pre">CDAP-Adapter-Program-Type</span></code>: Schedulable program type of your adapter.
+Currently, only <code class="docutils literal"><span class="pre">WORKFLOW</span></code> is supported.</li>
+<li><code class="docutils literal"><span class="pre">CDAP-Adapter-Properties</span></code>: Default properties to use for your adapter, formatted
 as a JSON Object of strings to strings. Properties set when creating an Adapter
 will be applied on top of the default properties.
 Adapter properties are passed to the Adapter program as runtime arguments.</li>
-<li><tt class="docutils literal"><span class="pre">CDAP-Source-Type</span></tt>: The source type. Currently only <tt class="docutils literal"><span class="pre">STREAM</span></tt> is supported.</li>
-<li><tt class="docutils literal"><span class="pre">CDAP-Sink-Type</span></tt>: The sink type. Currently only <tt class="docutils literal"><span class="pre">DATASET</span></tt> is supported.</li>
-<li><tt class="docutils literal"><span class="pre">CDAP-Sink-Properties</span></tt>: Default properties to use for sinks created when an
+<li><code class="docutils literal"><span class="pre">CDAP-Source-Type</span></code>: The source type. Currently only <code class="docutils literal"><span class="pre">STREAM</span></code> is supported.</li>
+<li><code class="docutils literal"><span class="pre">CDAP-Sink-Type</span></code>: The sink type. Currently only <code class="docutils literal"><span class="pre">DATASET</span></code> is supported.</li>
+<li><code class="docutils literal"><span class="pre">CDAP-Sink-Properties</span></code>: Default properties to use for sinks created when an
 Adapter is created, formatted as a JSON Object of strings to strings. Sink properties
 set when creating an Adapter will be applied on top of the default properties.
 When an Adapter is created, if the sink given does not already exist it will be
@@ -193,8 +193,8 @@ for dataset sinks.</li>
 </ul>
 <p>You can look at the cdap-adapters module in the CDAP project as an example.
 Once you have built your application jar, you must place it in the directory specified
-by the <tt class="docutils literal"><span class="pre">app.adapter.dir</span></tt> configuration setting.
-This setting defaults to <tt class="docutils literal"><span class="pre">/opt/cdap/master/plugins</span></tt> for distributed CDAP, and <tt class="docutils literal"><span class="pre">plugins</span></tt>
+by the <code class="docutils literal"><span class="pre">app.adapter.dir</span></code> configuration setting.
+This setting defaults to <code class="docutils literal"><span class="pre">/opt/cdap/master/plugins</span></code> for distributed CDAP, and <code class="docutils literal"><span class="pre">plugins</span></code>
 for CDAP Standalone. Note that the jar must be present on all CDAP masters.</p>
 <p>Adapters are an experimental feature in CDAP. As such, they are subject to change
 and improvement in future releases. For example, much of the information placed

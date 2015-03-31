@@ -83,7 +83,7 @@
 <p>As of <em>CDAP v2.8.0</em>, the <em>HTTP RESTful API v2</em> has been deprecated, pending removal in
 a later version. Replace all use of the <em>HTTP RESTful API v2</em> with <a class="reference external" href="../http-restful-api-v3/index.html"><strong>HTTP RESTful API v3</strong></a>. This
 involves using a namespace and a namespace id in the call, as
-<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><em>described in the documentation</em></a>. The <tt class="docutils literal"><span class="pre">default</span></tt>
+<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><span>described in the documentation</span></a>. The <code class="docutils literal"><span class="pre">default</span></code>
 namespace can be used as a drop-in replacement in existing API v2 code.</p>
 </div>
 <p>This interface supports submitting SQL queries over Datasets. Queries are
@@ -96,7 +96,7 @@ processed asynchronously; to obtain query results, perform these steps:</p>
 </ul>
 <div class="section" id="submitting-a-query">
 <h2>Submitting a Query<a class="headerlink" href="#submitting-a-query" title="Permalink to this headline">¶</a></h2>
-<p>To submit a SQL query, post the query string to the <tt class="docutils literal"><span class="pre">queries</span></tt> URL:</p>
+<p>To submit a SQL query, post the query string to the <code class="docutils literal"><span class="pre">queries</span></code> URL:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/data/explore/queries</span>
 </pre></div>
 </div>
@@ -106,7 +106,7 @@ processed asynchronously; to obtain query results, perform these steps:</p>
 <span class="go">}</span>
 </pre></div>
 </div>
-<p>where <tt class="docutils literal"><span class="pre">&lt;SQL-query-string&gt;</span></tt> is the actual SQL query.</p>
+<p>where <code class="docutils literal"><span class="pre">&lt;SQL-query-string&gt;</span></code> is the actual SQL query.</p>
 <div class="section" id="http-responses">
 <h3>HTTP Responses<a class="headerlink" href="#http-responses" title="Permalink to this headline">¶</a></h3>
 <table border="1" class="docutils">
@@ -120,11 +120,11 @@ processed asynchronously; to obtain query results, perform these steps:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The query execution was successfully initiated, and the body will contain the query-handle
 used to identify the query in subsequent requests</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
 <td>The query is not well-formed or contains an error, such as a nonexistent table name</td>
 </tr>
 </tbody>
@@ -147,13 +147,13 @@ used to identify the query in subsequent requests:</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/data/explore/queries</span></tt></td>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/data/explore/queries</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Body</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;query&quot;:&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_mydataset</span> <span class="pre">LIMIT</span> <span class="pre">5&quot;}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;query&quot;:&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_mydataset</span> <span class="pre">LIMIT</span> <span class="pre">5&quot;}</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;handle&quot;:&quot;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&quot;}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;handle&quot;:&quot;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&quot;}</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Submit a query to get the first 5 entries from the Dataset, <em>mydataset</em></td>
@@ -179,7 +179,7 @@ used to identify the query in subsequent requests:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></code></td>
 <td>Handle obtained when the query was submitted</td>
 </tr>
 </tbody>
@@ -197,10 +197,10 @@ used to identify the query in subsequent requests:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The query exists and the body contains its status</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The query handle does not match any current query</td>
 </tr>
 </tbody>
@@ -216,8 +216,8 @@ and whether the query has a results set:</p>
 <span class="go"> }</span>
 </pre></div>
 </div>
-<p>Status can be one of the following: <tt class="docutils literal"><span class="pre">INITIALIZED</span></tt>, <tt class="docutils literal"><span class="pre">RUNNING</span></tt>, <tt class="docutils literal"><span class="pre">FINISHED</span></tt>, <tt class="docutils literal"><span class="pre">CANCELED</span></tt>, <tt class="docutils literal"><span class="pre">CLOSED</span></tt>,
-<tt class="docutils literal"><span class="pre">ERROR</span></tt>, <tt class="docutils literal"><span class="pre">UNKNOWN</span></tt>, and <tt class="docutils literal"><span class="pre">PENDING</span></tt>.</p>
+<p>Status can be one of the following: <code class="docutils literal"><span class="pre">INITIALIZED</span></code>, <code class="docutils literal"><span class="pre">RUNNING</span></code>, <code class="docutils literal"><span class="pre">FINISHED</span></code>, <code class="docutils literal"><span class="pre">CANCELED</span></code>, <code class="docutils literal"><span class="pre">CLOSED</span></code>,
+<code class="docutils literal"><span class="pre">ERROR</span></code>, <code class="docutils literal"><span class="pre">UNKNOWN</span></code>, and <code class="docutils literal"><span class="pre">PENDING</span></code>.</p>
 </div>
 <div class="section" id="id3">
 <h3>Example<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
@@ -228,13 +228,13 @@ and whether the query has a results set:</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;status&quot;:&quot;FINISHED&quot;,&quot;hasResults&quot;:true}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;status&quot;:&quot;FINISHED&quot;,&quot;hasResults&quot;:true}</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
-<td>Retrieve the status of the query which has the handle <tt class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></tt></td>
+<td>Retrieve the status of the query which has the handle <code class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -242,7 +242,7 @@ and whether the query has a results set:</p>
 </div>
 <div class="section" id="obtaining-the-result-schema">
 <h2>Obtaining the Result Schema<a class="headerlink" href="#obtaining-the-result-schema" title="Permalink to this headline">¶</a></h2>
-<p>If the query&#8217;s status is <tt class="docutils literal"><span class="pre">FINISHED</span></tt> and it has results, you can obtain the schema of the results:</p>
+<p>If the query&#8217;s status is <code class="docutils literal"><span class="pre">FINISHED</span></code> and it has results, you can obtain the schema of the results:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/data/explore/queries/&lt;query-handle&gt;/schema</span>
 </pre></div>
 </div>
@@ -257,7 +257,7 @@ and whether the query has a results set:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></code></td>
 <td>Handle obtained when the query was submitted</td>
 </tr>
 </tbody>
@@ -275,13 +275,13 @@ and whether the query has a results set:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The query was successfully received and the query schema was returned in the body</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
-<td>The query is not well-formed or contains an error, or the query status is not <tt class="docutils literal"><span class="pre">FINISHED</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
+<td>The query is not well-formed or contains an error, or the query status is not <code class="docutils literal"><span class="pre">FINISHED</span></code></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The query handle does not match any current query</td>
 </tr>
 </tbody>
@@ -308,11 +308,11 @@ each given by its name, type and position; if the query has no result set, this 
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;dataset_mydataset.key&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:1},</span></tt>
-<tt class="docutils literal"><span class="pre">{&quot;name&quot;:&quot;dataset_mydataset.value&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:2}]</span></tt></td>
+<td><code class="docutils literal"><span class="pre">[{&quot;name&quot;:&quot;dataset_mydataset.key&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:1},</span></code>
+<code class="docutils literal"><span class="pre">{&quot;name&quot;:&quot;dataset_mydataset.value&quot;,&quot;type&quot;:&quot;array&lt;tinyint&gt;&quot;,&quot;position&quot;:2}]</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Retrieve the schema of the result of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2</td>
@@ -346,7 +346,7 @@ size in the body of the request:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></code></td>
 <td>Handle obtained when the query was submitted</td>
 </tr>
 </tbody>
@@ -364,10 +364,10 @@ size in the body of the request:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The event was successfully received and the result of the query was returned in the body</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The query handle does not match any current query</td>
 </tr>
 </tbody>
@@ -384,8 +384,8 @@ each given as a structure containing a list of column values:</p>
 </pre></div>
 </div>
 <p>The value at each position has the type that was returned in the result schema for that position.
-For example, if the returned type was <tt class="docutils literal"><span class="pre">INT</span></tt>, then the value will be an integer literal,
-whereas for <tt class="docutils literal"><span class="pre">STRING</span></tt> or <tt class="docutils literal"><span class="pre">VARCHAR</span></tt> the value will be a string literal.</p>
+For example, if the returned type was <code class="docutils literal"><span class="pre">INT</span></code>, then the value will be an integer literal,
+whereas for <code class="docutils literal"><span class="pre">STRING</span></code> or <code class="docutils literal"><span class="pre">VARCHAR</span></code> the value will be a string literal.</p>
 <p>Repeat the query to retrieve subsequent results. If all results of the query have already
 been retrieved, then the returned list is empty.</p>
 </div>
@@ -398,10 +398,10 @@ been retrieved, then the returned list is empty.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next</span></tt></td>
+<td><code class="docutils literal"><span class="pre">POST</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">[{&quot;columns&quot;:</span> <span class="pre">[</span> <span class="pre">10,</span> <span class="pre">5]},</span></tt>
+<td><code class="docutils literal"><span class="pre">[{&quot;columns&quot;:</span> <span class="pre">[</span> <span class="pre">10,</span> <span class="pre">5]},</span></code>
 `` {&#8220;columns&#8221;: [ 20, 27]},``
 `` {&#8220;columns&#8221;: [ 50, 6]},``
 `` {&#8220;columns&#8221;: [ 90, 30]},``
@@ -432,7 +432,7 @@ been retrieved, then the returned list is empty.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></code></td>
 <td>Handle obtained when the query was submitted</td>
 </tr>
 </tbody>
@@ -450,13 +450,13 @@ been retrieved, then the returned list is empty.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The query was closed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code></td>
 <td>The query was not in a state that could be closed; either wait until it is finished, or cancel it</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The query handle does not match any current query</td>
 </tr>
 </tbody>
@@ -471,10 +471,10 @@ been retrieved, then the returned list is empty.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">DELETE</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></tt></td>
+<td><code class="docutils literal"><span class="pre">DELETE</span> <span class="pre">&lt;base-url&gt;/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
-<td>Close the query which has the handle <tt class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></tt></td>
+<td>Close the query which has the handle <code class="docutils literal"><span class="pre">57cf1b01-8dba-423a-a8b4-66cd29dd75e2</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -497,16 +497,16 @@ been retrieved, then the returned list is empty.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;limit&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;limit&gt;</span></code></td>
 <td>Optional number indicating how many results to return in the response; by default, 50 results are returned</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;cursor&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;cursor&gt;</span></code></td>
 <td>Optional string specifying if the results returned should be in the forward or reverse direction;
-should be one of <tt class="docutils literal"><span class="pre">next</span></tt> or <tt class="docutils literal"><span class="pre">prev</span></tt></td>
+should be one of <code class="docutils literal"><span class="pre">next</span></code> or <code class="docutils literal"><span class="pre">prev</span></code></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;offset&gt;</span></tt></td>
-<td>Optional offset for pagination; returns the results that are greater than offset if the cursor is <tt class="docutils literal"><span class="pre">next</span></tt> or
-results that are less than offset if cursor is <tt class="docutils literal"><span class="pre">prev</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;offset&gt;</span></code></td>
+<td>Optional offset for pagination; returns the results that are greater than offset if the cursor is <code class="docutils literal"><span class="pre">next</span></code> or
+results that are less than offset if cursor is <code class="docutils literal"><span class="pre">prev</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -536,17 +536,17 @@ results that are less than offset if cursor is <tt class="docutils literal"><spa
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/queries</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Response</th>
-<td><tt class="docutils literal"><span class="pre">[{</span></tt>
+<td><code class="docutils literal"><span class="pre">[{</span></code>
 ``   &#8220;timestamp&#8221;: 1411266478717,``
 ``   &#8220;statement&#8221;: &#8220;SELECT * FROM dataset_mydataset&#8221;,``
 ``   &#8220;status&#8221;: &#8220;FINISHED&#8221;,``
 ``   &#8220;query_handle&#8221;: &#8220;57cf1b01-8dba-423a-a8b4-66cd29dd75e2&#8221;,
 ``   &#8220;has_results&#8221;: true,
 ``   &#8220;is_active&#8221;: false``
-<tt class="docutils literal"><span class="pre">}]</span></tt></td>
+<code class="docutils literal"><span class="pre">}]</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Retrieves all queries</td>
@@ -573,15 +573,15 @@ results that are less than offset if cursor is <tt class="docutils literal"><spa
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;query-handle&gt;</span></code></td>
 <td>Handle obtained when the query was submitted or via a list of queries</td>
 </tr>
 </tbody>
 </table>
 <div class="section" id="id14">
 <h3>Comments<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
-<p>The query results can be downloaded only once. The RESTful API will return a Status Code <tt class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></tt>
-if results for the <tt class="docutils literal"><span class="pre">query-handle</span></tt> are attempted to be downloaded again.</p>
+<p>The query results can be downloaded only once. The RESTful API will return a Status Code <code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code>
+if results for the <code class="docutils literal"><span class="pre">query-handle</span></code> are attempted to be downloaded again.</p>
 </div>
 <div class="section" id="id15">
 <h3>HTTP Responses<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
@@ -596,13 +596,13 @@ if results for the <tt class="docutils literal"><span class="pre">query-handle</
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>The HTTP call was successful</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>The query handle does not match any current query</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
 <td>The query results were already downloaded</td>
 </tr>
 </tbody>

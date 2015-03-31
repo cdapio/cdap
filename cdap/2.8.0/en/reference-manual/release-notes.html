@@ -121,18 +121,18 @@
 <div class="section" id="general">
 <h3>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>The <a class="reference internal" href="http-restful-api/http-restful-api-v2/index.html#http-restful-api-v2"><em>HTTP RESTful API v2</em></a> is deprecated, replaced with the
-<a class="reference internal" href="http-restful-api/http-restful-api-v3/index.html#http-restful-api-v3"><em>namespaced HTTP RESTful API v3</em></a>.</li>
+<li>The <a class="reference internal" href="http-restful-api/http-restful-api-v2/index.html#http-restful-api-v2"><span>HTTP RESTful API v2</span></a> is deprecated, replaced with the
+<a class="reference internal" href="http-restful-api/http-restful-api-v3/index.html#http-restful-api-v3"><span>namespaced HTTP RESTful API v3</span></a>.</li>
 <li>Added log rotation for CDAP programs running in YARN containers
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1295">CDAP-1295</a>).</li>
 <li>Added the ability to submit to non-default YARN queues to provide
-<a class="reference external" href="source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">resource guarantees</em></a>
+<a class="reference external" href="source/../../admin-manual/operations/resource-guarantees.html#resource-guarantees" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">resource guarantees</span></a>
 for CDAP Master Services, CDAP Programs, and Explore Queries
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1417">CDAP-1417</a>).</li>
-<li>Added the ability to <a class="reference external" href="source/../../admin-manual/operations/tx-maintenance.html#tx-maintenance" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">prune invalid transactions</em></a>
+<li>Added the ability to <a class="reference external" href="source/../../admin-manual/operations/tx-maintenance.html#tx-maintenance" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">prune invalid transactions</span></a>
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1540">CDAP-1540</a>).</li>
 <li>Added the ability to specify
-<a class="reference external" href="source/../../developers-manual/advanced/application-logback.html#application-logback" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">custom logback file for CDAP programs</em></a>
+<a class="reference external" href="source/../../developers-manual/advanced/application-logback.html#application-logback" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">custom logback file for CDAP programs</span></a>
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1100">CDAP-1100</a>).</li>
 <li>System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.</li>
 </ul>
@@ -142,11 +142,11 @@ for CDAP Master Services, CDAP Programs, and Explore Queries
 <ul class="simple">
 <li><strong>Command Line Interface (CLI)</strong><ul>
 <li>CLI can now directly connect to a CDAP instance of your choice at startup by using
-<tt class="docutils literal"><span class="pre">cdap-cli.sh</span> <span class="pre">--uri</span> <span class="pre">&lt;uri&gt;</span></tt>.</li>
-<li>Support for runtime arguments, which can be listed by running <tt class="docutils literal"><span class="pre">&quot;cdap-cli.sh</span> <span class="pre">--help&quot;</span></tt>.</li>
-<li>Table rendering can be configured using <tt class="docutils literal"><span class="pre">&quot;cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">&lt;alt|csv&gt;&quot;</span></tt>.
-The option <tt class="docutils literal"><span class="pre">&quot;alt&quot;</span></tt> is the default, with <tt class="docutils literal"><span class="pre">&quot;csv&quot;</span></tt> available for copy &amp; pasting.</li>
-<li>Stream statistics can be computed using <tt class="docutils literal"><span class="pre">&quot;get</span> <span class="pre">stream-stats</span> <span class="pre">&lt;stream-id&gt;&quot;</span></tt>.</li>
+<code class="docutils literal"><span class="pre">cdap-cli.sh</span> <span class="pre">--uri</span> <span class="pre">&lt;uri&gt;</span></code>.</li>
+<li>Support for runtime arguments, which can be listed by running <code class="docutils literal"><span class="pre">&quot;cdap-cli.sh</span> <span class="pre">--help&quot;</span></code>.</li>
+<li>Table rendering can be configured using <code class="docutils literal"><span class="pre">&quot;cli</span> <span class="pre">render</span> <span class="pre">as</span> <span class="pre">&lt;alt|csv&gt;&quot;</span></code>.
+The option <code class="docutils literal"><span class="pre">&quot;alt&quot;</span></code> is the default, with <code class="docutils literal"><span class="pre">&quot;csv&quot;</span></code> available for copy &amp; pasting.</li>
+<li>Stream statistics can be computed using <code class="docutils literal"><span class="pre">&quot;get</span> <span class="pre">stream-stats</span> <span class="pre">&lt;stream-id&gt;&quot;</span></code>.</li>
 </ul>
 </li>
 <li><strong>Datasets</strong><ul>
@@ -191,13 +191,13 @@ or program level.</li>
 </ul>
 </li>
 <li><strong>Workers</strong><ul>
-<li>Added <a class="reference external" href="source/../../developers-manual/building-blocks/workers.html#workers" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Worker</em></a>, a new Program type that can be added to CDAP Applications,
+<li>Added <a class="reference external" href="source/../../developers-manual/building-blocks/workers.html#workers" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Worker</span></a>, a new Program type that can be added to CDAP Applications,
 used to run background processes and (beta feature) can write to Streams through the
 WorkerContext.</li>
 </ul>
 </li>
 <li><strong>Upgrade and Data Migration Tool</strong><ul>
-<li>Added an <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-upgrade" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">automated upgrade tool</em></a> which supports upgrading from
+<li>Added an <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-upgrade" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">automated upgrade tool</span></a> which supports upgrading from
 2.6.x to 2.8.0. (<strong>Note:</strong> Apps need to be both recompiled and re-deployed.)
 Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it,
 please reach out to us at <a class="reference external" href="https://groups.google.com/d/forum/cdap-user">cdap-user&#64;googlegroups.com</a>.</li>
@@ -215,11 +215,11 @@ please reach out to us at <a class="reference external" href="https://groups.goo
 <div class="section" id="api-changes">
 <h3>API Changes<a class="headerlink" href="#api-changes" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>The endpoint (<tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/datasets/&lt;dataset-name&gt;/schema</span></tt>) that
+<li>The endpoint (<code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/datasets/&lt;dataset-name&gt;/schema</span></code>) that
 retrieved the schema of a Dataset&#8217;s underlying Hive table has been removed
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1603">CDAP-1603</a>).</li>
 <li>Endpoints have been added to retrieve the CDAP version and the current configurations of
-CDAP and HBase (<a class="reference internal" href="http-restful-api/http-restful-api-v3/configuration.html#http-restful-api-configuration"><em>Configuration HTTP RESTful API</em></a>).</li>
+CDAP and HBase (<a class="reference internal" href="http-restful-api/http-restful-api-v3/configuration.html#http-restful-api-configuration"><span>Configuration HTTP RESTful API</span></a>).</li>
 </ul>
 </div>
 <div class="section" id="known-issues">
@@ -228,10 +228,10 @@ CDAP and HBase (<a class="reference internal" href="http-restful-api/http-restfu
 <li><p class="first">See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-271">version 2.7.1</a>.</p>
 </li>
 <li><p class="first">If the Hive Metastore is restarted while the CDAP Explore Service is running, the
-Explore Service remains alive, but becomes unusable. To correct, <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-starting-services" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">restart the CDAP Master</em></a>, which will restart all services
+Explore Service remains alive, but becomes unusable. To correct, <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-starting-services" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">restart the CDAP Master</span></a>, which will restart all services
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1007">CDAP-1007</a>).</p>
 </li>
-<li><p class="first">User datasets with names starting with <tt class="docutils literal"><span class="pre">&quot;system&quot;</span></tt> can potentially cause conflicts
+<li><p class="first">User datasets with names starting with <code class="docutils literal"><span class="pre">&quot;system&quot;</span></code> can potentially cause conflicts
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1587">CDAP-1587</a>).</p>
 </li>
 <li><p class="first">Scaling the number of metrics processor instances doesn&#8217;t automatically distribute the
@@ -245,7 +245,7 @@ incorrect error message (<a class="reference external" href="https://issues.cask
 <li><p class="first">Retrieving multiple metrics—by issuing an HTTP POST request with a JSON list as
 the request body that enumerates the name and attributes for each metric—is currently not
 supported in the <a class="reference external" href="http-restful-api-v3-metrics-multiple">Metrics HTTP RESTful API v3</a>.
-Instead, use the <a class="reference internal" href="http-restful-api/http-restful-api-v2/metrics.html#http-restful-api-v2-metrics-multiple"><em>v2 API</em></a>. It will be
+Instead, use the <a class="reference internal" href="http-restful-api/http-restful-api-v2/metrics.html#http-restful-api-v2-metrics-multiple"><span>v2 API</span></a>. It will be
 supported in a future release.</p>
 </li>
 <li><p class="first">Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
@@ -254,12 +254,12 @@ and an incompatible schema change can break other applications that are using th
 A workaround (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1253">CDAP-1253</a>) is to allow <em>unchecked Dataset upgrades</em>.
 Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
 runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.</p>
-<p>You can allow <em>unchecked Dataset upgrades</em> by setting the configuration property <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>
-to <tt class="docutils literal"><span class="pre">true</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>. This will ensure that Datasets are upgraded when the Application is redeployed.
+<p>You can allow <em>unchecked Dataset upgrades</em> by setting the configuration property <code class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></code>
+to <code class="docutils literal"><span class="pre">true</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>. This will ensure that Datasets are upgraded when the Application is redeployed.
 When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
 all Applications that are using the Dataset before deploying the new version of the Application.
 This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
-When Datasets are upgraded using <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>, no schema compatibility checks are performed by the
+When Datasets are upgraded using <code class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></code>, no schema compatibility checks are performed by the
 system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
 other Applications that are using the Dataset can work with the new changes.</p>
 </li>
@@ -271,8 +271,8 @@ other Applications that are using the Dataset can work with the new changes.</p>
 <div class="section" id="id1">
 <h3>API Changes<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>The property <tt class="docutils literal"><span class="pre">security.auth.server.address</span></tt> has been deprecated and replaced with
-<tt class="docutils literal"><span class="pre">security.auth.server.bind.address</span></tt> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-639">CDAP-639</a>,
+<li>The property <code class="docutils literal"><span class="pre">security.auth.server.address</span></code> has been deprecated and replaced with
+<code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-639">CDAP-639</a>,
 <a class="reference external" href="https://issues.cask.co/browse/CDAP-1078">CDAP-1078</a>).</li>
 </ul>
 </div>
@@ -293,8 +293,8 @@ other Applications that are using the Dataset can work with the new changes.</p>
 <li>Time-partitioned File sets can be queried with Impala on CDH distributions (<a class="reference external" href="https://issues.cask.co/browse/CDAP-926">CDAP-926</a>).</li>
 <li>Streams can be made queryable with Impala by deploying an adapter that periodically
 converts it into partitions of a time-partitioned File set (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1129">CDAP-1129</a>).</li>
-<li>Support for different levels of conflict detection: <tt class="docutils literal"><span class="pre">ROW</span></tt>, <tt class="docutils literal"><span class="pre">COLUMN</span></tt>, or <tt class="docutils literal"><span class="pre">NONE</span></tt> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1016">CDAP-1016</a>).</li>
-<li>Removed support for <tt class="docutils literal"><span class="pre">&#64;DisableTransaction</span></tt> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1279">CDAP-1279</a>).</li>
+<li>Support for different levels of conflict detection: <code class="docutils literal"><span class="pre">ROW</span></code>, <code class="docutils literal"><span class="pre">COLUMN</span></code>, or <code class="docutils literal"><span class="pre">NONE</span></code> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1016">CDAP-1016</a>).</li>
+<li>Removed support for <code class="docutils literal"><span class="pre">&#64;DisableTransaction</span></code> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1279">CDAP-1279</a>).</li>
 <li>Support for annotating a Stream with a schema (<a class="reference external" href="https://issues.cask.co/browse/CDAP-606">CDAP-606</a>).</li>
 <li>A new API for uploading entire files to a Stream has been added (<a class="reference external" href="https://issues.cask.co/browse/CDAP-411">CDAP-411</a>).</li>
 </ul>
@@ -343,12 +343,12 @@ and an incompatible schema change can break other applications that are using th
 A workaround (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1253">CDAP-1253</a>) is to allow <em>unchecked Dataset upgrades</em>.
 Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
 runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.</p>
-<p>You can allow <em>unchecked Dataset upgrades</em> by setting the configuration property <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>
-to <tt class="docutils literal"><span class="pre">true</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>. This will ensure that Datasets are upgraded when the Application is redeployed.
+<p>You can allow <em>unchecked Dataset upgrades</em> by setting the configuration property <code class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></code>
+to <code class="docutils literal"><span class="pre">true</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>. This will ensure that Datasets are upgraded when the Application is redeployed.
 When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
 all Applications that are using the Dataset before deploying the new version of the Application.
 This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
-When Datasets are upgraded using <tt class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></tt>, no schema compatibility checks are performed by the
+When Datasets are upgraded using <code class="docutils literal"><span class="pre">dataset.unchecked.upgrade</span></code>, no schema compatibility checks are performed by the
 system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
 other Applications that are using the Dataset can work with the new changes.</p>
 </li>
@@ -384,7 +384,7 @@ or Service as the interfaces have changed (<a class="reference external" href="h
 </ul>
 </li>
 <li><strong>Datasets</strong><ul>
-<li>Added <a class="reference external" href="source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">FileSet</em></a>, a new core dataset type for working with sets of files
+<li>Added <a class="reference external" href="source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">FileSet</span></a>, a new core dataset type for working with sets of files
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1">CDAP-1</a>).</li>
 </ul>
 </li>
@@ -415,7 +415,7 @@ or Service as the interfaces have changed (<a class="reference external" href="h
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-469">CDAP-469</a>).</li>
 <li>Default metrics for Services have been added to the CDAP Console
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-512">CDAP-512</a>).</li>
-<li>The annotations <tt class="docutils literal"><span class="pre">&#64;QueryParam</span></tt> and <tt class="docutils literal"><span class="pre">&#64;DefaultValue</span></tt> are now supported in custom Service handlers
+<li>The annotations <code class="docutils literal"><span class="pre">&#64;QueryParam</span></code> and <code class="docutils literal"><span class="pre">&#64;DefaultValue</span></code> are now supported in custom Service handlers
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-664">CDAP-664</a>).</li>
 </ul>
 </li>
@@ -427,8 +427,8 @@ or Service as the interfaces have changed (<a class="reference external" href="h
 </ul>
 </li>
 <li><strong>Documentation</strong><ul>
-<li>A <a class="reference external" href="source/../../admin-manual/installation/quick-start.html#installation-quick-start" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Quick Start Guide</em></a> has been added to the
-<a class="reference external" href="source/../../admin-manual/index.html#admin-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Administration Manual</em></a>
+<li>A <a class="reference external" href="source/../../admin-manual/installation/quick-start.html#installation-quick-start" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Quick Start Guide</span></a> has been added to the
+<a class="reference external" href="source/../../admin-manual/index.html#admin-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Administration Manual</span></a>
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-695">CDAP-695</a>).</li>
 </ul>
 </li>
@@ -440,9 +440,9 @@ or Service as the interfaces have changed (<a class="reference external" href="h
 <li>Fixed a problem with readless increments not being used when they were enabled in a Dataset
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-383">CDAP-383</a>).</li>
 <li>Fixed a problem with applications, whose Spark or Scala user classes were not extended
-from either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt>, failing with a class loading error
+from either <code class="docutils literal"><span class="pre">JavaSparkProgram</span></code> or <code class="docutils literal"><span class="pre">ScalaSparkProgram</span></code>, failing with a class loading error
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-599">CDAP-599</a>).</li>
-<li>Fixed a problem with the <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-upgrade" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP upgrade tool</em></a> not preserving—for
+<li>Fixed a problem with the <a class="reference external" href="source/../../admin-manual/installation/installation.html#install-upgrade" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP upgrade tool</span></a> not preserving—for
 tables with readless increments enabled—the coprocessor configuration during an upgrade
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1044">CDAP-1044</a>).</li>
 <li>Fixed a problem with the readless increment implementation dropping increment cells when
@@ -467,9 +467,9 @@ amount of metrics data points being lost (<a class="reference external" href="ht
 <li><p class="first">A race condition resulting in a deadlock can occur when a TwillRunnable container
 shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
 running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
-<tt class="docutils literal"><span class="pre">ThreadPoolExecutor</span></tt> implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
+<code class="docutils literal"><span class="pre">ThreadPoolExecutor</span></code> implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
 updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
-command to list all running applications and their <tt class="docutils literal"><span class="pre">app-id</span></tt>s is:</p>
+command to list all running applications and their <code class="docutils literal"><span class="pre">app-id</span></code>s is:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">yarn</span> <span class="n">application</span> <span class="o">-</span><span class="n">list</span> <span class="o">-</span><span class="n">appStates</span> <span class="n">RUNNING</span>
 </pre></div>
 </div>
@@ -500,7 +500,7 @@ instance over SSL (<a class="reference external" href="https://issues.cask.co/br
 version of a library than the one that the CDAP platform uses; for example, a different
 Kafka library (<a class="reference external" href="https://issues.cask.co/browse/CDAP-559">CDAP-559</a>).</li>
 <li>Fixed a problem with CDAP master not obtaining new delegation tokens after running for
-<tt class="docutils literal"><span class="pre">hbase.auth.key.update.interval</span></tt> milliseconds (<a class="reference external" href="https://issues.cask.co/browse/CDAP-562">CDAP-562</a>).</li>
+<code class="docutils literal"><span class="pre">hbase.auth.key.update.interval</span></code> milliseconds (<a class="reference external" href="https://issues.cask.co/browse/CDAP-562">CDAP-562</a>).</li>
 <li>Fixed a problem with the transaction not being rolled back when a user service handler throws an exception
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-607">CDAP-607</a>).</li>
 </ul>
@@ -526,7 +526,7 @@ Manual, Reference Manual—and a set of examples, how-to guides and tutorials;</
 <h3>Known Issues<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li>Currently, applications that include Spark or Scala classes in user classes not extended
-from either <tt class="docutils literal"><span class="pre">JavaSparkProgram</span></tt> or <tt class="docutils literal"><span class="pre">ScalaSparkProgram</span></tt> (depending upon the language)
+from either <code class="docutils literal"><span class="pre">JavaSparkProgram</span></code> or <code class="docutils literal"><span class="pre">ScalaSparkProgram</span></code> (depending upon the language)
 fail with a class loading error. Spark or Scala classes should not be used outside of the
 Spark program. (<a class="reference external" href="https://issues.cask.co/browse/CDAP-599">CDAP-599</a>)</li>
 <li>See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-250">version 2.5.0.</a></li>
@@ -548,7 +548,7 @@ Spark program. (<a class="reference external" href="https://issues.cask.co/brows
 </ul>
 </li>
 <li>Removed dependencies on SNAPSHOT artifacts for <em>netty-http</em> and <em>auth-clients</em>.</li>
-<li>Corrected an error in the message printed by the startup script <tt class="docutils literal"><span class="pre">cdap.sh</span></tt>.</li>
+<li>Corrected an error in the message printed by the startup script <code class="docutils literal"><span class="pre">cdap.sh</span></code>.</li>
 <li>Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
 without first checking if authentication was enabled.</li>
 </ul>
@@ -556,11 +556,11 @@ without first checking if authentication was enabled.</li>
 <div class="section" id="id13">
 <h3>Other Changes<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>The scripts <tt class="docutils literal"><span class="pre">send-query.sh</span></tt>, <tt class="docutils literal"><span class="pre">access-token.sh</span></tt> and <tt class="docutils literal"><span class="pre">access-token.bat</span></tt> has been replaced by the
-<a class="reference internal" href="cli-api.html#cli"><em>CDAP Command Line Interface,</em></a> <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt>.</li>
+<li>The scripts <code class="docutils literal"><span class="pre">send-query.sh</span></code>, <code class="docutils literal"><span class="pre">access-token.sh</span></code> and <code class="docutils literal"><span class="pre">access-token.bat</span></code> has been replaced by the
+<a class="reference internal" href="cli-api.html#cli"><span>CDAP Command Line Interface,</span></a> <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code>.</li>
 <li>The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.</li>
 <li>The CDAP Java Stream Client now allows empty String events to be sent.</li>
-<li>The CDAP Python Authentication Client&#8217;s <tt class="docutils literal"><span class="pre">configure()</span></tt> method now takes a dictionary rather than a filepath.</li>
+<li>The CDAP Python Authentication Client&#8217;s <code class="docutils literal"><span class="pre">configure()</span></code> method now takes a dictionary rather than a filepath.</li>
 </ul>
 </div>
 <div class="section" id="id14">

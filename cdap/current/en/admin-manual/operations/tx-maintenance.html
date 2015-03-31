@@ -80,12 +80,12 @@
 Over time, this <em>invalid</em> list can grow and lead to performance degradation. To avoid that, you can prune the <em>invalid</em>
 list after the data of invalid transactions has been removed—which happens during major HBase compactions of the
 transactional tables.</p>
-<p>After a major compaction that started at time <tt class="docutils literal"><span class="pre">t</span></tt> completes, the invalid transaction list can be safely pruned
-until <tt class="docutils literal"><span class="pre">t</span> <span class="pre">-</span> <span class="pre">1</span> <span class="pre">day</span></tt> using <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-truncate" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">a call</em></a>
-from the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-truncate" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Transaction Service HTTP RESTful API</em></a>.</p>
+<p>After a major compaction that started at time <code class="docutils literal"><span class="pre">t</span></code> completes, the invalid transaction list can be safely pruned
+until <code class="docutils literal"><span class="pre">t</span> <span class="pre">-</span> <span class="pre">1</span> <span class="pre">day</span></code> using <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-truncate" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">a call</span></a>
+from the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-truncate" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Transaction Service HTTP RESTful API</span></a>.</p>
 <p>The current length of the invalid transaction list can be obtained using
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-number" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">a call</em></a>
-from the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-number" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Transaction Service HTTP RESTful API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-number" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">a call</span></a>
+from the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/transactions.html#http-restful-api-transactions-number" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Transaction Service HTTP RESTful API</span></a>.</p>
 </div>
 
 

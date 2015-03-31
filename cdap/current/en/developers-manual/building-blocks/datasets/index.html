@@ -112,8 +112,8 @@ included with CDAP, including key/value tables, indexed tables and
 time series. You can implement your own data patterns as custom
 Datasets, on top of any combination of core and system Datasets.</p>
 <p class="rubric">Creating a Dataset</p>
-<p>You can create a Dataset in CDAP using either the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><em>Dataset HTTP RESTful API</em></a>, the
-<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>, or in an <a class="reference internal" href="../applications.html#applications"><em>Application specification.</em></a></p>
+<p>You can create a Dataset in CDAP using either the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><span>Dataset HTTP RESTful API</span></a>, the
+<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>, or in an <a class="reference internal" href="../applications.html#applications"><span>Application specification.</span></a></p>
 <p>You tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named <em>myCounters</em> of type
@@ -124,7 +124,7 @@ For example, to create a DataSet named <em>myCounters</em> of type
 </pre></div>
 </div>
 <p>To use the Dataset in a Program, instruct the runtime
-system to inject an instance of the Dataset with the <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt>
+system to inject an instance of the Dataset with the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code>
 annotation:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">MyFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;myCounters&quot;</span><span class="o">)</span>
@@ -138,12 +138,12 @@ annotation:</p>
 <p>The runtime system reads the Dataset specification for the key/value
 table <em>myCounters</em> from the metadata store and injects an
 instance of the Dataset class into the Application.</p>
-<p>You can also implement custom Datasets by implementing the <tt class="docutils literal"><span class="pre">Dataset</span></tt>
+<p>You can also implement custom Datasets by implementing the <code class="docutils literal"><span class="pre">Dataset</span></code>
 interface or by extending existing Dataset types. See the
-<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase Example</em></a> for an implementation of a Custom Dataset.
-For more details, refer to <a class="reference internal" href="system-custom.html#custom-datasets"><em>Custom Datasets.</em></a></p>
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase Example</span></a> for an implementation of a Custom Dataset.
+For more details, refer to <a class="reference internal" href="system-custom.html#custom-datasets"><span>Custom Datasets.</span></a></p>
 <p class="rubric">Dataset Time-To-Live (TTL)</p>
-<p>Datasets, like <a class="reference internal" href="../streams.html#streams"><em>Streams</em></a>, can have a Time-To-Live (TTL) property that
+<p>Datasets, like <a class="reference internal" href="../streams.html#streams"><span>Streams</span></a>, can have a Time-To-Live (TTL) property that
 governs how long data will be persisted in a specific Dataset. TTL is configured as the
 maximum age (in milliseconds) that data should be retained.</p>
 <p>When you create a Dataset, you can configure its TTL as part of the creation:</p>
@@ -156,11 +156,11 @@ maximum age (in milliseconds) that data should be retained.</p>
 </pre></div>
 </div>
 <p>The default TTL for all Datasets is infinite, meaning that data will never expire. The TTL
-property of an existing Dataset can be changed using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><em>Dataset HTTP RESTful API</em></a>.</p>
+property of an existing Dataset can be changed using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/http-restful-api-v3/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v2.8.0)"><span>Dataset HTTP RESTful API</span></a>.</p>
 <p class="rubric">Types of Datasets</p>
-<p>A Dataset abstraction is defined by a Java class that implements the <tt class="docutils literal"><span class="pre">DatasetDefinition</span></tt> interface.
+<p>A Dataset abstraction is defined by a Java class that implements the <code class="docutils literal"><span class="pre">DatasetDefinition</span></code> interface.
 The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
-For example, the <tt class="docutils literal"><span class="pre">IndexedTable</span></tt> Dataset can be implemented by two underlying Table Datasets –
+For example, the <code class="docutils literal"><span class="pre">IndexedTable</span></code> Dataset can be implemented by two underlying Table Datasets –
 one holding the data and one holding the index.</p>
 <p>We distinguish three categories of Datasets: <em>core</em>, <em>system</em>, and <em>custom</em> Datasets:</p>
 <ul class="simple">
@@ -174,7 +174,7 @@ to implement a specific data pattern.</li>
 </ul>
 <p>Each Dataset is associated with exactly one Dataset implementation to
 manipulate it. Every Dataset has a unique name and metadata that defines its behavior.
-For example, every <tt class="docutils literal"><span class="pre">IndexedTable</span></tt> has a name and indexes a particular column of its primary table:
+For example, every <code class="docutils literal"><span class="pre">IndexedTable</span></code> has a name and indexes a particular column of its primary table:
 the name of that column is a metadata property of each Dataset of this type.</p>
 <p class="rubric" id="core-datasets">Core Datasets</p>
 <p><strong>Tables</strong> and <strong>FileSets</strong> are the core Datasets,
@@ -198,36 +198,36 @@ in byte-lexicographic order. They are also known as <em>Ordered Columnar Tables<
 such as the format and schema, while abstracting from the actual underlying file system interfaces.</p>
 <ul class="simple">
 <li>Every file in a FileSet is in a location relative to the FileSet&#8217;s base directory.</li>
-<li>Knowing a file&#8217;s relative path, any program can obtain a <tt class="docutils literal"><span class="pre">Location</span></tt> for that file through a method
+<li>Knowing a file&#8217;s relative path, any program can obtain a <code class="docutils literal"><span class="pre">Location</span></code> for that file through a method
 of the FileSet dataset. It can then interact directly with the file&#8217;s Location; for example, to write
 data to the Location, or to read data from it.</li>
 <li>A FileSet can be used as the input or output to MapReduce. The MapReduce program need not specify
 the input and output format to use, or configuration for these—the FileSet dataset provides this
 information to the MapReduce runtime system.</li>
-<li>An extension of FileSets, <tt class="docutils literal"><span class="pre">PartitionedFileSets</span></tt> allow the associating of meta data (partitioning keys)
+<li>An extension of FileSets, <code class="docutils literal"><span class="pre">PartitionedFileSets</span></code> allow the associating of meta data (partitioning keys)
 with each file. The file can then be addressed through its meta data, removing the need for programs to
 be aware of actual file paths.</li>
 </ul>
 <p class="rubric">Examples of Using Datasets</p>
-<p>Datasets are included in just about every CDAP <a class="reference external" href="../../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">application</em></a>,
-<a class="reference external" href="../../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">tutorial</em></a>, <a class="reference external" href="../../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">guide</em></a> or <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">example</em></a>.</p>
+<p>Datasets are included in just about every CDAP <a class="reference external" href="../../source/../../examples-manual/apps-packs.html#apps-and-packs" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">application</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">tutorial</span></a>, <a class="reference external" href="../../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">guide</span></a> or <a class="reference external" href="../../source/../../examples-manual/examples/index.html#examples-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">example</span></a>.</p>
 <ul class="simple">
-<li>The simplest example, <a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Hello World</em></a>, demonstrates using a
+<li>The simplest example, <a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
 stream to <strong>ingest a name into a dataset.</strong></li>
-<li>For examples of <strong>custom datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Word Count</em></a>
-and <a class="reference external" href="../../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Web Analytics</em></a> examples.</li>
-<li>For an example of <strong>a dataset and a Map Reduce Job,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a> example.</li>
-<li>For an example of a <strong>Table dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Word Count</em></a> example.</li>
-<li>For an example of a <strong>FileSet dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset.html#examples-fileset" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">FileSet</em></a> example.</li>
+<li>For examples of <strong>custom datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Word Count</span></a>
+and <a class="reference external" href="../../source/../../examples-manual/examples/web-analytics.html#examples-web-analytics" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Web Analytics</span></a> examples.</li>
+<li>For an example of <strong>a dataset and a Map Reduce Job,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>For an example of a <strong>Table dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Word Count</span></a> example.</li>
+<li>For an example of a <strong>FileSet dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/fileset.html#examples-fileset" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">FileSet</span></a> example.</li>
 <li>For examples of <strong>key-value Table datasets,</strong> see the
-<a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Hello World</em></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Count Random</em></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Word Count</em></a>, and
-<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a> examples.</li>
-<li>For an example of an <strong>ObjectMappedTable dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a> example.</li>
-<li>For examples of <strong>ObjectStore datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a>,
-<a class="reference external" href="../../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark K-Means</em></a>, and <a class="reference external" href="../../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark Page Rank</em></a> examples.</li>
-<li>For an example of a <strong>Timeseries Table dataset,</strong> see the how-to guide <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v2.8.0)"><em>Storing Timeseries Data</em></a>.</li>
+<a class="reference external" href="../../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Hello World</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/count-random.html#examples-count-random" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Count Random</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Word Count</span></a>, and
+<a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a> examples.</li>
+<li>For an example of an <strong>ObjectMappedTable dataset,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>For examples of <strong>ObjectStore datasets,</strong> see the <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a>,
+<a class="reference external" href="../../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark K-Means</span></a>, and <a class="reference external" href="../../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark Page Rank</span></a> examples.</li>
+<li>For an example of a <strong>Timeseries Table dataset,</strong> see the how-to guide <a class="reference external" href="../../source/../../examples-manual/how-to-guides/cdap-timeseries-guide.html#cdap-timeseries-guide" title="(in Cask Data Application Platform v2.8.0)"><span>Storing Timeseries Data</span></a>.</li>
 </ul>
 </div>
 

@@ -81,8 +81,8 @@ CDAP on a Hadoop cluster, through the running of a verification application in C
 <div class="section" id="deployment">
 <h2>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Determine your deployment architecture, following the <a class="reference internal" href="installation.html#deployment-architectures"><em>suggested setups</em></a>.</li>
-<li>Check that you have the <a class="reference internal" href="installation.html#install-hardware-requirements"><em>required hardware</em></a>.</li>
+<li>Determine your deployment architecture, following the <a class="reference internal" href="installation.html#deployment-architectures"><span>suggested setups</span></a>.</li>
+<li>Check that you have the <a class="reference internal" href="installation.html#install-hardware-requirements"><span>required hardware</span></a>.</li>
 </ul>
 </div>
 <div class="section" id="software-prerequisites">
@@ -91,9 +91,9 @@ CDAP on a Hadoop cluster, through the running of a verification application in C
 <ul class="simple">
 <li>Java runtime (<a class="reference external" href="http://www.java.com/en/download/manual.jsp">JDK or JRE version 1.6.xx or 1.7.xx</a>)
 on CDAP and Hadoop nodes; we recommend the Oracle JDK.</li>
-<li>Set the JAVA_HOME environment variable (<a class="reference internal" href="installation.html#install-java-runtime"><em>details</em></a>).</li>
-<li><a class="reference external" href="http://nodejs.org">Node.js</a> on CDAP nodes (<a class="reference internal" href="installation.html#install-node-js"><em>details</em></a>).</li>
-<li>Hadoop and HBase (and possibly Hive) environment to run against (<a class="reference internal" href="installation.html#install-hadoop-hbase"><em>details</em></a>).</li>
+<li>Set the JAVA_HOME environment variable (<a class="reference internal" href="installation.html#install-java-runtime"><span>details</span></a>).</li>
+<li><a class="reference external" href="http://nodejs.org">Node.js</a> on CDAP nodes (<a class="reference internal" href="installation.html#install-node-js"><span>details</span></a>).</li>
+<li>Hadoop and HBase (and possibly Hive) environment to run against (<a class="reference internal" href="installation.html#install-hadoop-hbase"><span>details</span></a>).</li>
 <li>CDAP nodes require Hadoop and HBase client installation and configuration.
 <strong>Note:</strong> No Hadoop services need to be running.</li>
 </ul>
@@ -101,22 +101,22 @@ on CDAP and Hadoop nodes; we recommend the Oracle JDK.</li>
 <div class="section" id="preparing-the-cluster">
 <h2>Preparing the Cluster<a class="headerlink" href="#preparing-the-cluster" title="Permalink to this headline">¶</a></h2>
 <p>To prepare your cluster so that CDAP can write to its default namespace,
-create a top-level <tt class="docutils literal"><span class="pre">/cdap</span></tt> directory in HDFS, owned by an HDFS user <tt class="docutils literal"><span class="pre">yarn</span></tt>:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo -u hdfs hadoop fs -mkdir /cdap &amp;&amp; hadoop fs -chown yarn /cdap</span>
+create a top-level <code class="docutils literal"><span class="pre">/cdap</span></code> directory in HDFS, owned by an HDFS user <code class="docutils literal"><span class="pre">yarn</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u hdfs hadoop fs -mkdir /cdap <span class="o">&amp;&amp;</span> hadoop fs -chown yarn /cdap
 </pre></div>
 </div>
-<p>In the CDAP packages, the default HDFS namespace is <tt class="docutils literal"><span class="pre">/cdap</span></tt> and the default HDFS user is
-<tt class="docutils literal"><span class="pre">yarn</span></tt>. If you set up your cluster as above, no further changes are required.</p>
+<p>In the CDAP packages, the default HDFS namespace is <code class="docutils literal"><span class="pre">/cdap</span></code> and the default HDFS user is
+<code class="docutils literal"><span class="pre">yarn</span></code>. If you set up your cluster as above, no further changes are required.</p>
 <p>If your cluster is not setup with these defaults, you&#8217;ll need to
-<a class="reference internal" href="#quick-start-configuration"><em>edit your CDAP configuration</em></a> once you have downloaded and installed
+<a class="reference internal" href="#quick-start-configuration"><span>edit your CDAP configuration</span></a> once you have downloaded and installed
 the packages, and prior to starting services.</p>
 <ul class="simple">
-<li>For a <em>Secure Hadoop</em> installation, see the discussion in <a class="reference internal" href="installation.html#install-secure-hadoop"><em>the installation guide</em></a>.</li>
-<li>The <tt class="docutils literal"><span class="pre">ulimit</span></tt> for the cluster should already be configured correctly for HBase; if not,
-details are covered in <a class="reference internal" href="installation.html#install-ulimit"><em>the installation guide</em></a>.</li>
+<li>For a <em>Secure Hadoop</em> installation, see the discussion in <a class="reference internal" href="installation.html#install-secure-hadoop"><span>the installation guide</span></a>.</li>
+<li>The <code class="docutils literal"><span class="pre">ulimit</span></code> for the cluster should already be configured correctly for HBase; if not,
+details are covered in <a class="reference internal" href="installation.html#install-ulimit"><span>the installation guide</span></a>.</li>
 <li>The CDAP user should be able to write temp files; if not, see the instructions in
-<a class="reference internal" href="installation.html#install-tmp-files"><em>the installation guide</em></a>.</li>
-<li><strong>Note:</strong> Zookeeper&#8217;s <tt class="docutils literal"><span class="pre">maxClientCnxns</span></tt> must be raised from its default.  We suggest setting it to zero
+<a class="reference internal" href="installation.html#install-tmp-files"><span>the installation guide</span></a>.</li>
+<li><strong>Note:</strong> Zookeeper&#8217;s <code class="docutils literal"><span class="pre">maxClientCnxns</span></code> must be raised from its default.  We suggest setting it to zero
 (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper,
 the number of connections required is a function of usage.</li>
 </ul>
@@ -131,7 +131,7 @@ the number of connections required is a function of usage.</li>
 <span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/2.8/cask.repo
 </pre>
 </div>
-<p>This will create the file <tt class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></tt> with:</p>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
 <pre class="literal-block">
 [cask]
 name=Cask Packages
@@ -145,6 +145,10 @@ gpgcheck=1
 <span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/2.8/pubkey.gpg
 </pre>
 </div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
 </div>
 <div class="section" id="debian-using-apt">
 <h3>Debian using APT<a class="headerlink" href="#debian-using-apt" title="Permalink to this headline">¶</a></h3>
@@ -154,7 +158,7 @@ gpgcheck=1
 <span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/2.8/cask.list
 </pre>
 </div>
-<p>This will create the file <tt class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></tt> with:</p>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
 <pre class="literal-block">
 deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/2.8 precise cdap
 </pre>
@@ -163,6 +167,10 @@ deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/2.8 preci
 <pre class="literal-block">
 <span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/2.8/pubkey.gpg | sudo apt-key add -
 </pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
 </div>
 </div>
 </div>
@@ -178,8 +186,7 @@ cookbook is available</a>.</div></blockquote>
 </pre></div>
 </div>
 <p>Using APT:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
-<span class="gp">$</span> sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 </pre></div>
 </div>
 <p>Do this on each of the boxes that are being used for the CDAP components; our
@@ -188,20 +195,20 @@ recommended installation is a minimum of two boxes.</p>
 <span class="target" id="quick-start-configuration"></span></div>
 <div class="section" id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
-<p>CDAP packages utilize a central configuration, stored by default in <tt class="docutils literal"><span class="pre">/etc/cdap</span></tt>.</p>
+<p>CDAP packages utilize a central configuration, stored by default in <code class="docutils literal"><span class="pre">/etc/cdap</span></code>.</p>
 <p>When you install the CDAP base package, a default configuration is placed in
-<tt class="docutils literal"><span class="pre">/etc/cdap/conf.dist</span></tt>. The <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> file is a placeholder
+<code class="docutils literal"><span class="pre">/etc/cdap/conf.dist</span></code>. The <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file is a placeholder
 where you can define your specific configuration for all CDAP components.
-The <tt class="docutils literal"><span class="pre">cdap-site.xml.example</span></tt> file shows the properties that usually require customization
+The <code class="docutils literal"><span class="pre">cdap-site.xml.example</span></code> file shows the properties that usually require customization
 for all installations.</p>
 <p>To configure your particular installation, follow one of these two approaches:</p>
 <ol class="arabic">
-<li><p class="first">Modify <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>, using <tt class="docutils literal"><span class="pre">cdap-site.example</span></tt> as a model to follow.</p>
+<li><p class="first">Modify <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>, using <code class="docutils literal"><span class="pre">cdap-site.example</span></code> as a model to follow.</p>
 <p>To make alterations to your configuration, create (or edit if existing) an <cite>.xml</cite> file
-<tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt> (see the <a class="reference internal" href="cdap-site.html#appendix-cdap-site-xml"><em>Appendix: cdap-site.xml</em></a>) and set appropriate
+<code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> (see the <a class="reference internal" href="cdap-site.html#appendix-cdap-site-xml"><span>Appendix: cdap-site.xml</span></a>) and set appropriate
 properties.</p>
 </li>
-<li><p class="first">Add these properties to <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>; they are the minimal required configuration:</p>
+<li><p class="first">Add these properties to <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>; they are the minimal required configuration:</p>
 </li>
 </ol>
 <blockquote>
@@ -327,11 +334,11 @@ properties.</p>
 </div></blockquote>
 <p>Depending on your installation, you may want to set these properties:</p>
 <ul>
-<li><p class="first">If you want to use <strong>an HDFS directory with a name</strong> other than <tt class="docutils literal"><span class="pre">/cdap</span></tt>:</p>
+<li><p class="first">If you want to use <strong>an HDFS directory with a name</strong> other than <code class="docutils literal"><span class="pre">/cdap</span></code>:</p>
 <ol class="arabic">
-<li><p class="first">Create the HDFS directory you want to use, such as <tt class="docutils literal"><span class="pre">/myhadoop/myspace</span></tt>.</p>
+<li><p class="first">Create the HDFS directory you want to use, such as <code class="docutils literal"><span class="pre">/myhadoop/myspace</span></code>.</p>
 </li>
-<li><p class="first">Create an <tt class="docutils literal"><span class="pre">hdfs.namespace</span></tt> property for the HDFS directory in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt>:</p>
+<li><p class="first">Create an <code class="docutils literal"><span class="pre">hdfs.namespace</span></code> property for the HDFS directory in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code>:</p>
 <div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
   <span class="nt">&lt;name&gt;</span>hdfs.namespace<span class="nt">&lt;/name&gt;</span>
   <span class="nt">&lt;value&gt;</span>/myhadoop/myspace<span class="nt">&lt;/value&gt;</span>
@@ -340,16 +347,16 @@ properties.</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Ensure that the default HDFS user <tt class="docutils literal"><span class="pre">yarn</span></tt> owns that HDFS directory.</p>
+<li><p class="first">Ensure that the default HDFS user <code class="docutils literal"><span class="pre">yarn</span></code> owns that HDFS directory.</p>
 </li>
 </ol>
 </li>
-<li><p class="first">If you want to use <strong>a different HDFS user</strong> than <tt class="docutils literal"><span class="pre">yarn</span></tt>:</p>
+<li><p class="first">If you want to use <strong>a different HDFS user</strong> than <code class="docutils literal"><span class="pre">yarn</span></code>:</p>
 <ol class="arabic">
 <li><p class="first">Check that there is—and create if necessary—a corresponding user on all machines
 in the cluster on which YARN is running (typically, all of the machines).</p>
 </li>
-<li><p class="first">Create an <tt class="docutils literal"><span class="pre">hdfs.user</span></tt> property for that user in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt>:</p>
+<li><p class="first">Create an <code class="docutils literal"><span class="pre">hdfs.user</span></code> property for that user in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code>:</p>
 <div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
   <span class="nt">&lt;name&gt;</span>hdfs.user<span class="nt">&lt;/name&gt;</span>
   <span class="nt">&lt;value&gt;</span>my_username<span class="nt">&lt;/value&gt;</span>
@@ -358,11 +365,11 @@ in the cluster on which YARN is running (typically, all of the machines).</p>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Check that the HDFS user owns the HDFS directory described by <tt class="docutils literal"><span class="pre">hdfs.namespace</span></tt> on all machines.</p>
+<li><p class="first">Check that the HDFS user owns the HDFS directory described by <code class="docutils literal"><span class="pre">hdfs.namespace</span></code> on all machines.</p>
 </li>
 </ol>
 </li>
-<li><p class="first">Set the <tt class="docutils literal"><span class="pre">router.server.address</span></tt> property in <tt class="docutils literal"><span class="pre">conf/cdap-site.xml</span></tt> to the <strong>hostname of the CDAP Router</strong>.
+<li><p class="first">Set the <code class="docutils literal"><span class="pre">router.server.address</span></code> property in <code class="docutils literal"><span class="pre">conf/cdap-site.xml</span></code> to the <strong>hostname of the CDAP Router</strong>.
 The CDAP Console uses this property to connect to the Router:</p>
 <div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;property&gt;</span>
   <span class="nt">&lt;name&gt;</span>router.server.address<span class="nt">&lt;/name&gt;</span>
@@ -378,35 +385,35 @@ The CDAP Console uses this property to connect to the Router:</p>
 <p>When all the packages and dependencies have been installed, and the configuration
 parameters set, you can start the services on each of the CDAP boxes by running the
 command:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="k">for</span> i in <span class="sb">`</span>ls /etc/init.d/ <span class="p">|</span> grep cdap<span class="sb">`</span> <span class="p">;</span> <span class="k">do</span> sudo service <span class="nv">$i</span> restart <span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
 <p>When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port <tt class="docutils literal"><span class="pre">9999</span></tt>.</p>
-<p>The URL will be <tt class="docutils literal"><span class="pre">http://&lt;host&gt;:9999</span></tt> where <tt class="docutils literal"><span class="pre">&lt;host&gt;</span></tt> is the IP address of
+accessible through a browser at port <code class="docutils literal"><span class="pre">9999</span></code>.</p>
+<p>The URL will be <code class="docutils literal"><span class="pre">http://&lt;host&gt;:9999</span></code> where <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> is the IP address of
 one of the machines where you installed the packages and started the services.</p>
 </div>
 <div class="section" id="verification">
 <h2>Verification<a class="headerlink" href="#verification" title="Permalink to this headline">¶</a></h2>
 <p>To verify that the CDAP software is successfully installed and you are able to use your
 Hadoop cluster, run an example application.
-We provide in our SDK pre-built <tt class="docutils literal"><span class="pre">.JAR</span></tt> files for convenience.</p>
+We provide in our SDK pre-built <code class="docutils literal"><span class="pre">.JAR</span></code> files for convenience.</p>
 <ol class="arabic simple">
 <li>Download and install the latest <a class="reference external" href="http://cask.co/downloads/#cdap">CDAP Software Development Kit (SDK)</a>.</li>
-<li>Extract to a folder (<tt class="docutils literal"><span class="pre">CDAP_HOME</span></tt>).</li>
-<li>Open a command prompt and navigate to <tt class="docutils literal"><span class="pre">CDAP_HOME/examples</span></tt>.</li>
-<li>Each example folder has a <tt class="docutils literal"><span class="pre">.jar</span></tt> file in its <tt class="docutils literal"><span class="pre">target</span></tt> directory.
-For verification, we will use the <tt class="docutils literal"><span class="pre">WordCount</span></tt> example.</li>
+<li>Extract to a folder (<code class="docutils literal"><span class="pre">CDAP_HOME</span></code>).</li>
+<li>Open a command prompt and navigate to <code class="docutils literal"><span class="pre">CDAP_HOME/examples</span></code>.</li>
+<li>Each example folder has a <code class="docutils literal"><span class="pre">.jar</span></code> file in its <code class="docutils literal"><span class="pre">target</span></code> directory.
+For verification, we will use the <code class="docutils literal"><span class="pre">WordCount</span></code> example.</li>
 <li>Open a web browser to the CDAP Console.
-It is located on port <tt class="docutils literal"><span class="pre">9999</span></tt> of the box where you installed CDAP.</li>
+It is located on port <code class="docutils literal"><span class="pre">9999</span></code> of the box where you installed CDAP.</li>
 <li>On the Console, click the button <em>Load an App</em>.</li>
-<li>Find the pre-built <tt class="docutils literal"><span class="pre">WordCount-</span></tt><tt class="docutils literal"><span class="pre">2.8.0</span></tt><tt class="docutils literal"><span class="pre">.jar</span></tt> using the dialog box to navigate to
-<tt class="docutils literal"><span class="pre">CDAP_HOME/examples/WordCount/target/</span></tt>.</li>
+<li>Find the pre-built <code class="docutils literal"><span class="pre">WordCount-</span></code><code class="docutils literal"><span class="pre">2.8.0</span></code><code class="docutils literal"><span class="pre">.jar</span></code> using the dialog box to navigate to
+<code class="docutils literal"><span class="pre">CDAP_HOME/examples/WordCount/target/</span></code>.</li>
 <li>Once the application is deployed, instructions on running the example can be found at the
-<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">WordCount example.</em></a></li>
+<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">WordCount example.</span></a></li>
 <li>You should be able to start the application, inject sentences, and retrieve results.</li>
 <li>When finished, you can stop and remove the application as described in the section on
-<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running" title="(in Cask Data Application Platform v2.8.0)"><em>Building and Running CDAP Applications</em></a>.</li>
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running" title="(in Cask Data Application Platform v2.8.0)"><span>Building and Running CDAP Applications</span></a>.</li>
 </ol>
 </div>
 </div>

@@ -80,27 +80,27 @@
 written as in a conventional Hadoop system. Additionally, CDAP
 <strong>Datasets</strong> can be accessed from MapReduce as both input and
 output.</p>
-<p>To process data using MapReduce, either specify <tt class="docutils literal"><span class="pre">addMapReduce()</span></tt> in your
+<p>To process data using MapReduce, either specify <code class="docutils literal"><span class="pre">addMapReduce()</span></code> in your
 Application specification:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
   <span class="o">...</span>
   <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WordCountJob</span><span class="o">());</span>
 </pre></div>
 </div>
-<p>or specify <tt class="docutils literal"><span class="pre">addWorkflow()</span></tt> in your Application and specify your MapReduce in the
-<a class="reference internal" href="workflows.html#workflows"><em>Workflow</em></a> definition:</p>
+<p>or specify <code class="docutils literal"><span class="pre">addWorkflow()</span></code> in your Application and specify your MapReduce in the
+<a class="reference internal" href="workflows.html#workflows"><span>Workflow</span></a> definition:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
   <span class="o">...</span>
   <span class="c1">// Run a MapReduce on the acquired data using a Workflow</span>
   <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryWorkflow</span><span class="o">());</span>
 </pre></div>
 </div>
-<p>You must implement the <tt class="docutils literal"><span class="pre">MapReduce</span></tt> interface, which requires the
+<p>You must implement the <code class="docutils literal"><span class="pre">MapReduce</span></code> interface, which requires the
 implementation of three methods:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">configure()</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">onFinish()</span></tt></li>
+<li><code class="docutils literal"><span class="pre">configure()</span></code></li>
+<li><code class="docutils literal"><span class="pre">beforeSubmit()</span></code></li>
+<li><code class="docutils literal"><span class="pre">onFinish()</span></code></li>
 </ul>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseHistoryBuilder</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
   <span class="nd">@Override</span>
@@ -117,9 +117,9 @@ implementation of three methods:</p>
 Applications. It defines the name and description of the MapReduce.
 You can also specify Datasets to be used as input or output and
 resources (memory and virtual cores) used by the Mappers and Reducers.</p>
-<p>The <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method is invoked at runtime, before the
+<p>The <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method is invoked at runtime, before the
 MapReduce is executed. Through a passed instance of the
-<tt class="docutils literal"><span class="pre">MapReduceContext</span></tt> you have access to the actual Hadoop job
+<code class="docutils literal"><span class="pre">MapReduceContext</span></code> you have access to the actual Hadoop job
 configuration, as though you were running the MapReduce directly on
 Hadoop. For example, you can specify the Mapper and Reducer classes as
 well as the intermediate data format:</p>
@@ -133,10 +133,10 @@ well as the intermediate data format:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">onFinish()</span></tt> method is invoked after the MapReduce has
+<p>The <code class="docutils literal"><span class="pre">onFinish()</span></code> method is invoked after the MapReduce has
 finished. You could perform cleanup or send a notification of job
 completion, if that was required. Because many MapReduce programs do not
-need this method, the <tt class="docutils literal"><span class="pre">AbstractMapReduce</span></tt> class provides a default
+need this method, the <code class="docutils literal"><span class="pre">AbstractMapReduce</span></code> class provides a default
 implementation that does nothing:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
@@ -144,7 +144,7 @@ implementation that does nothing:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>CDAP <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> implement <a class="reference external" href="http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html">the standard Hadoop APIs</a>:</p>
+<p>CDAP <code class="docutils literal"><span class="pre">Mapper</span></code> and <code class="docutils literal"><span class="pre">Reducer</span></code> implement <a class="reference external" href="http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html">the standard Hadoop APIs</a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PurchaseMapper</span>
     <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="n">Purchase</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
 
@@ -189,7 +189,7 @@ implementation that does nothing:</p>
 </div>
 <div class="section" id="mapreduce-and-datasets">
 <span id="mapreduce-datasets"></span><h2>MapReduce and Datasets<a class="headerlink" href="#mapreduce-and-datasets" title="Permalink to this headline">¶</a></h2>
-<p>Both CDAP <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> can directly read
+<p>Both CDAP <code class="docutils literal"><span class="pre">Mapper</span></code> and <code class="docutils literal"><span class="pre">Reducer</span></code> can directly read
 or write to a Dataset, similar to the way a Flowlet or Service can.</p>
 <p>To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:</p>
@@ -222,13 +222,13 @@ For example, to have access to a Dataset named <em>catalog</em>:</p>
 </li>
 </ol>
 <p>Additionally, a MapReduce program can interact with a Dataset by using it as an input or an
-output, as described in <a class="reference internal" href="datasets/datasets-mapreduce.html#datasets-mapreduce-programs"><em>Datasets and MapReduce Programs</em></a>.</p>
+output, as described in <a class="reference internal" href="datasets/datasets-mapreduce.html#datasets-mapreduce-programs"><span>Datasets and MapReduce Programs</span></a>.</p>
 <p class="rubric">Examples of Using MapReduce Programs</p>
 <ul class="simple">
-<li>For an example of <strong>a MapReduce program,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase</em></a> example.</li>
-<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-mapreduce-guide.html#cdap-mapreduce-guide" title="(in Cask Data Application Platform v2.8.0)"><em>Batch Data Processing with CDAP</em></a> also
+<li>For an example of <strong>a MapReduce program,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+<li>For a longer example, the how-to guide <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-mapreduce-guide.html#cdap-mapreduce-guide" title="(in Cask Data Application Platform v2.8.0)"><span>Batch Data Processing with CDAP</span></a> also
 demonstrates the use of MapReduce.</li>
-<li>The <a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Tutorial</em></a>
+<li>The <a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Tutorial</span></a>
 <a class="reference external" href="http://docs.cask.co/tutorial/current/en/tutorial2.html">WISE: Web Analytics</a>
 uses MapReduce.</li>
 </ul>

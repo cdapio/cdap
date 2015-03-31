@@ -116,12 +116,12 @@ client should restart authorization from step #1.</li>
 <h2>Supported Authentication Mechanisms<a class="headerlink" href="#supported-authentication-mechanisms" title="Permalink to this headline">¶</a></h2>
 <p>CDAP provides several ways to authenticate a client&#8217;s identity:</p>
 <ul class="simple">
-<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-basic-authentication" title="(in Cask Data Application Platform v2.8.0)"><em>Basic Authentication</em></a></li>
-<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-ldap-authentication" title="(in Cask Data Application Platform v2.8.0)"><em>LDAP Authentication</em></a></li>
-<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-jaspi-authentication" title="(in Cask Data Application Platform v2.8.0)"><em>JASPI Authentication</em></a></li>
-<li><a class="reference internal" href="custom-authentication.html#developers-custom-authentication"><em>Custom Authentication</em></a></li>
+<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-basic-authentication" title="(in Cask Data Application Platform v2.8.0)"><span>Basic Authentication</span></a></li>
+<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-ldap-authentication" title="(in Cask Data Application Platform v2.8.0)"><span>LDAP Authentication</span></a></li>
+<li><a class="reference external" href="../source/../../admin-manual/installation/security.html#installation-jaspi-authentication" title="(in Cask Data Application Platform v2.8.0)"><span>JASPI Authentication</span></a></li>
+<li><a class="reference internal" href="custom-authentication.html#developers-custom-authentication"><span>Custom Authentication</span></a></li>
 </ul>
-<p>To configure security, see the Administration Manual&#8217;s <a class="reference external" href="../source/../../admin-manual/installation/security.html#configuration-security" title="(in Cask Data Application Platform v2.8.0)"><em>CDAP Security</em></a>.</p>
+<p>To configure security, see the Administration Manual&#8217;s <a class="reference external" href="../source/../../admin-manual/installation/security.html#configuration-security" title="(in Cask Data Application Platform v2.8.0)"><span>CDAP Security</span></a>.</p>
 </div>
 <div class="section" id="obtaining-an-access-token">
 <h2>Obtaining an Access Token<a class="headerlink" href="#obtaining-an-access-token" title="Permalink to this headline">¶</a></h2>
@@ -131,7 +131,7 @@ client should restart authorization from step #1.</li>
 </div>
 <p>The required header and request parameters may vary according to the
 external authentication mechanism that has been configured.  For username and password based mechanisms, the
-<tt class="docutils literal"><span class="pre">Authorization</span></tt> header may be used:</p>
+<code class="docutils literal"><span class="pre">Authorization</span></code> header may be used:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nl">Authorization:</span> <span class="n">Basic</span> <span class="n">czZCaGRSa3F0MzpnWDFmQmF0M2JW</span>
 </pre></div>
 </div>
@@ -148,10 +148,10 @@ external authentication mechanism that has been configured.  For username and pa
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Authentication was successful and an access token will be returned</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></code></td>
 <td>Authentication failed</td>
 </tr>
 </tbody>
@@ -170,15 +170,15 @@ external authentication mechanism that has been configured.  For username and pa
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">access_token</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">access_token</span></code></td>
 <td>The Access Token issued for the client.  The serialized token contents are base-64 encoded
 for safe transport over HTTP.</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">token_type</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">token_type</span></code></td>
 <td>In order to conform with the OAuth 2.0 Bearer Token Usage specification (<a class="reference external" href="http://tools.ietf.org/html/rfc6750">RFC 6750</a>), this
 value must be &#8220;Bearer&#8221;.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">expires_in</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">expires_in</span></code></td>
 <td>Token validity lifetime in seconds.</td>
 </tr>
 </tbody>
@@ -209,7 +209,7 @@ value must be &#8220;Bearer&#8221;.</td>
 <div class="section" id="comments">
 <h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>Only <tt class="docutils literal"><span class="pre">Bearer</span></tt> tokens (<a class="reference external" href="http://tools.ietf.org/html/rfc6750">RFC 6750</a>) are currently supported</li>
+<li>Only <code class="docutils literal"><span class="pre">Bearer</span></code> tokens (<a class="reference external" href="http://tools.ietf.org/html/rfc6750">RFC 6750</a>) are currently supported</li>
 </ul>
 </div>
 </div>
@@ -223,11 +223,11 @@ subsequent HTTP requests.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/&lt;</span><span class="n">resource</span><span class="o">&gt;</span> <span class="n">HTTP</span><span class="o">/</span><span class="mf">1.1</span>
 </pre></div>
 </div>
-<p>In order to authenticate, all client requests must supply the <tt class="docutils literal"><span class="pre">Authorization</span></tt> header:</p>
+<p>In order to authenticate, all client requests must supply the <code class="docutils literal"><span class="pre">Authorization</span></code> header:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nl">Authorization:</span> <span class="n">Bearer</span> <span class="n">wohng8Xae7thahfohshahphaeNeeM5ie</span>
 </pre></div>
 </div>
-<p>For CDAP issued access tokens, the authentication scheme must always be <tt class="docutils literal"><span class="pre">Bearer</span></tt>.</p>
+<p>For CDAP issued access tokens, the authentication scheme must always be <code class="docutils literal"><span class="pre">Bearer</span></code>.</p>
 <div class="section" id="id2">
 <h3>HTTP Responses<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <table border="1" class="docutils">
@@ -241,13 +241,13 @@ subsequent HTTP requests.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Authentication was successful and an access token will be returned</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></code></td>
 <td>Authentication failed</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></code></td>
 <td>Authentication succeeded, but access to the requested resource was denied</td>
 </tr>
 </tbody>
@@ -266,15 +266,15 @@ subsequent HTTP requests.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">error</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">error</span></code></td>
 <td>An error code describing the type of failure (see <a class="reference internal" href="#error-code-values">Error Code Values</a>)</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">error_description</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">error_description</span></code></td>
 <td>A human readable description of the error that occurred</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">auth_uri</span></tt></td>
-<td>List of URIs for running authentication servers.  If a client receives a <tt class="docutils literal"><span class="pre">401</span>
-<span class="pre">Unauthorized</span></tt> response, it can use one of the values from this list to request a new
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">auth_uri</span></code></td>
+<td>List of URIs for running authentication servers.  If a client receives a <code class="docutils literal"><span class="pre">401</span>
+<span class="pre">Unauthorized</span></code> response, it can use one of the values from this list to request a new
 access token.</td>
 </tr>
 </tbody>
@@ -293,14 +293,14 @@ access token.</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">invalid_request</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">invalid_request</span></code></td>
 <td>The request is missing a required parameter or is otherwise malformed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">invalid_token</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">invalid_token</span></code></td>
 <td>The supplied access token is expired, malformed, or otherwise invalid.  The client may
 request a new access token from the authorization server and try the call again.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">insufficient_scope</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">insufficient_scope</span></code></td>
 <td>The supplied access token was valid, but the authenticated identity failed authorization
 for the requested resource</td>
 </tr>
@@ -343,7 +343,7 @@ wrapped for display purposes.</p>
 <div class="section" id="id4">
 <h3>Comments<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">auth_uri</span></tt> value in the error responses indicates where the authentication server(s) are
+<li>The <code class="docutils literal"><span class="pre">auth_uri</span></code> value in the error responses indicates where the authentication server(s) are
 running, allowing clients to discover instances from which they can obtain access tokens.</li>
 </ul>
 </div>

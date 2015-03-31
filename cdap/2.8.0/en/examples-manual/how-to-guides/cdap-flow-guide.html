@@ -111,8 +111,8 @@ In that case, feel free to skip the following two sections and jump directly to 
 <div class="section" id="application-design">
 <h3>Application Design<a class="headerlink" href="#application-design" title="Permalink to this headline">¶</a></h3>
 <p>In CDAP, you process data in realtime by implementing a Flow. In this example the Flow consists of two Flowlets.
-The <tt class="docutils literal"><span class="pre">Detector</span></tt> Flowlet consumes data from a <tt class="docutils literal"><span class="pre">diskReads</span></tt> Stream, parses the event, and outputs the disk ID if the event was a slow disk read.
-The <tt class="docutils literal"><span class="pre">Tracker</span></tt> Flowlet reads the disk ID emitted by the <tt class="docutils literal"><span class="pre">Detector</span></tt>, and updates a count of how often that disk has recorded a slow read.
+The <code class="docutils literal"><span class="pre">Detector</span></code> Flowlet consumes data from a <code class="docutils literal"><span class="pre">diskReads</span></code> Stream, parses the event, and outputs the disk ID if the event was a slow disk read.
+The <code class="docutils literal"><span class="pre">Tracker</span></code> Flowlet reads the disk ID emitted by the <code class="docutils literal"><span class="pre">Detector</span></code>, and updates a count of how often that disk has recorded a slow read.
 If a disk has recorded too many slow reads, the disk ID is written to a separate dataset that tracks all disks that should soon be replaced.</p>
 <a class="reference internal image-reference" href="../_images/app-design1.png"><img alt="../_images/app-design1.png" class="align-center" src="../_images/app-design1.png" style="width: 8in;" /></a>
 </div>
@@ -145,7 +145,7 @@ Use the following directory structure (you’ll find contents of the files below
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Next, we create a Flow, which is composed of two Flowlets, the <tt class="docutils literal"><span class="pre">Detector</span></tt> and the <tt class="docutils literal"><span class="pre">Tracker</span></tt>.
+<p>Next, we create a Flow, which is composed of two Flowlets, the <code class="docutils literal"><span class="pre">Detector</span></code> and the <code class="docutils literal"><span class="pre">Tracker</span></code>.
 The Detector Flowlet parses disk I/O events from the Stream and emits the disk ID if the
 operation is slower than a threshold. The Tracker consumes the output of the Detector Flowlet
 and performs an analysis to detect a slow disk. Since a Tracker Flowlet performs dataset operations,
@@ -154,9 +154,9 @@ to have multiple Tracker Flowlet instances.</p>
 <p>In the Flow specification below, we&#8217;ll start with a single
 Detector and two Tracker Flowlets.
 The parser reads from the stream, and the tracker then reads from the parser.
-We will set the number of <tt class="docutils literal"><span class="pre">Tracker</span></tt> instances to two.
-This means that there will be two separate <tt class="docutils literal"><span class="pre">Trackers</span></tt> running, each taking turns reading what the Detector outputs.
-You want to do this if a single <tt class="docutils literal"><span class="pre">Detector</span></tt> can output more quickly than a single <tt class="docutils literal"><span class="pre">Tracker</span></tt> can process.</p>
+We will set the number of <code class="docutils literal"><span class="pre">Tracker</span></code> instances to two.
+This means that there will be two separate <code class="docutils literal"><span class="pre">Trackers</span></code> running, each taking turns reading what the Detector outputs.
+You want to do this if a single <code class="docutils literal"><span class="pre">Detector</span></code> can output more quickly than a single <code class="docutils literal"><span class="pre">Tracker</span></code> can process.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DiskPerformanceFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
   <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;DiskPerformanceFlow&quot;</span><span class="o">;</span>
 
@@ -177,7 +177,7 @@ You want to do this if a single <tt class="docutils literal"><span class="pre">D
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Next we create the <tt class="docutils literal"><span class="pre">Detector</span></tt> Flowlet, which reads from the Stream and outputs the disk ID if the event was a slow read.</p>
+<p>Next we create the <code class="docutils literal"><span class="pre">Detector</span></code> Flowlet, which reads from the Stream and outputs the disk ID if the event was a slow read.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DetectorFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">SLOW_THRESHOLD</span> <span class="o">=</span> <span class="mi">1000</span><span class="o">;</span>
   <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;slowReadDetector&quot;</span><span class="o">;</span>
@@ -199,9 +199,9 @@ You want to do this if a single <tt class="docutils literal"><span class="pre">D
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Next we create the <tt class="docutils literal"><span class="pre">Tracker</span></tt> Flowlet, which reads the output of the <tt class="docutils literal"><span class="pre">Detector</span></tt>
+<p>Next we create the <code class="docutils literal"><span class="pre">Tracker</span></code> Flowlet, which reads the output of the <code class="docutils literal"><span class="pre">Detector</span></code>
 Flowlet, and updates how many times each disk reported a slow read. If a disk records too
-many slow reads, the <tt class="docutils literal"><span class="pre">Tracker</span></tt> places it in a separate dataset used to track slow disks
+many slow reads, the <code class="docutils literal"><span class="pre">Tracker</span></code> places it in a separate dataset used to track slow disks
 that may need to be replaced soon.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TrackerFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="c1">// intentionally set very low for illustrative purposes</span>
@@ -397,7 +397,7 @@ With batching and hash partitioning, our Detector and Tracker classes have chang
 <div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
 </pre></div>
 </div>
-<p>Note that the remaining commands assume that the <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt> script is available on your PATH.
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is available on your PATH.
 If this is not the case, please add it:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">export PATH=$PATH:&lt;CDAP home&gt;/bin</span>
 </pre></div>
@@ -414,7 +414,7 @@ If this is not the case, please add it:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh start flow DiskPerformanceApp.DiskPerformanceFlow</span>
 </pre></div>
 </div>
-<p>Note that there is one instance of the <tt class="docutils literal"><span class="pre">Detector</span></tt> Flowlet running and two instances of the <tt class="docutils literal"><span class="pre">Tracker</span></tt> Flowlet running:</p>
+<p>Note that there is one instance of the <code class="docutils literal"><span class="pre">Detector</span></code> Flowlet running and two instances of the <code class="docutils literal"><span class="pre">Tracker</span></code> Flowlet running:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh get instances flowlet DiskPerformanceApp.DiskPerformanceFlow.slowReadDetector</span>
 <span class="go">1</span>
 
@@ -422,7 +422,7 @@ If this is not the case, please add it:</p>
 <span class="go">2</span>
 </pre></div>
 </div>
-<p>We can scale out our application and increase the number of <tt class="docutils literal"><span class="pre">Tracker</span></tt> Flowlets to four:</p>
+<p>We can scale out our application and increase the number of <code class="docutils literal"><span class="pre">Tracker</span></code> Flowlets to four:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh set instances flowlet DiskPerformanceApp.DiskPerformanceFlow.slowDiskTracker 4</span>
 
 <span class="go">cdap-cli.sh get instances flowlet DiskPerformanceApp.DiskPerformanceFlow.slowDiskTracker</span>
@@ -458,10 +458,10 @@ Make the request to query slow disks:</p>
 <ul class="simple">
 <li>Including the disk type in the Stream event and categorize a slow read based on the type of disk.</li>
 <li>Passing your own custom Java object through the Flowlets instead of a String.</li>
-<li>Adding an endpoint to the Service that can remove a disk from the <tt class="docutils literal"><span class="pre">slowDisks</span></tt> Dataset.</li>
+<li>Adding an endpoint to the Service that can remove a disk from the <code class="docutils literal"><span class="pre">slowDisks</span></code> Dataset.</li>
 <li>Changing the logic so that 1000 normal disk read times counteract a slow disk read.</li>
 <li>Tracking additional disk metrics, such as write times, and use a combination of factors
-to determine whether or not a disk belongs in the <tt class="docutils literal"><span class="pre">slowDisks</span></tt> table.</li>
+to determine whether or not a disk belongs in the <code class="docutils literal"><span class="pre">slowDisks</span></code> table.</li>
 </ul>
 </div>
 <div class="section" id="share-and-discuss">

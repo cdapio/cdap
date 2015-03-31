@@ -91,8 +91,8 @@ namespaces include partitioning a single Hadoop Cluster into multiple namespaces
 <li>to support multiple customers; and</li>
 <li>to support multiple sub-organizations within an organization.</li>
 </ul>
-<p>The first version of namespaces was introduced in <a class="reference external" href="../source/../../reference-manual/release-notes.html#release-notes" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP v2.8.0</em></a>, and
-is part of the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/index.html#http-restful-api-v3" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP RESTful API v3</em></a>.</p>
+<p>The first version of namespaces was introduced in <a class="reference external" href="../source/../../reference-manual/release-notes.html#release-notes" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP v2.8.0</span></a>, and
+is part of the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/index.html#http-restful-api-v3" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">HTTP RESTful API v3</span></a>.</p>
 </div>
 <div class="section" id="namespace-components">
 <h2>Namespace Components<a class="headerlink" href="#namespace-components" title="Permalink to this headline">¶</a></h2>
@@ -100,7 +100,7 @@ is part of the <a class="reference external" href="../source/../../reference-man
 <p>Namespace IDs are composed from a limited set of characters; they are restricted to
 letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
 on the length of a namespace ID nor on the number of namespaces.</p>
-<p>The namespace IDs <tt class="docutils literal"><span class="pre">cdap</span></tt>, <tt class="docutils literal"><span class="pre">default</span></tt>, and <tt class="docutils literal"><span class="pre">system</span></tt> are reserved. The <tt class="docutils literal"><span class="pre">default</span></tt>
+<p>The namespace IDs <code class="docutils literal"><span class="pre">cdap</span></code>, <code class="docutils literal"><span class="pre">default</span></code>, and <code class="docutils literal"><span class="pre">system</span></code> are reserved. The <code class="docutils literal"><span class="pre">default</span></code>
 namespace, however, can be used by anyone, though like all reserved namespaces, it cannot
 be deleted.</p>
 </div>
@@ -122,12 +122,12 @@ the entity ID, since an entity cannot exist independently of a namespace.</p>
 <div class="section" id="using-namespaces">
 <h2>Using Namespaces<a class="headerlink" href="#using-namespaces" title="Permalink to this headline">¶</a></h2>
 <p>The best practices with using namespaces would be to create desired namespaces and use
-them for all operations. Otherwise, CDAP will use the <tt class="docutils literal"><span class="pre">default</span></tt> namespace for any operations
+them for all operations. Otherwise, CDAP will use the <code class="docutils literal"><span class="pre">default</span></code> namespace for any operations
 undertaken.</p>
 <p>Once a namespace has been created, you can edit its description and configuration
-preferences, either by using a <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/namespace.html#http-restful-api-namespace" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">RESTful API</em></a> or the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.</p>
-<p>CDAP includes the <tt class="docutils literal"><span class="pre">default</span></tt> namespace out-of-the-box. It is guaranteed to always be
+preferences, either by using a <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/namespace.html#http-restful-api-namespace" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">RESTful API</span></a> or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>.</p>
+<p>CDAP includes the <code class="docutils literal"><span class="pre">default</span></code> namespace out-of-the-box. It is guaranteed to always be
 present, and is recommended for:</p>
 <ol class="arabic simple">
 <li>Proof-of-concept or sandbox applications for trying out CDAP; and</li>
@@ -138,9 +138,9 @@ beyond the proof-of-concept stage, we recommend that you create appropriate name
 operate CDAP within them.</p>
 <p class="rubric">Examples of Using Namespaces</p>
 <ul class="simple">
-<li>All examples, starting with <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Hello World</em></a>, demonstrate using
+<li>All examples, starting with <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Hello World</span></a>, demonstrate using
 namespaces when using the CDAP HTTP RESTful API.</li>
-<li>The CDAP <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a> is namespace-aware. You set the
+<li>The CDAP <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a> is namespace-aware. You set the
 namespace you are currently using; the command prompt displays it as a visual reminder.</li>
 </ul>
 </div>

@@ -79,16 +79,16 @@
 <div class="section" id="strategies-in-testing-applications-test-framework">
 <span id="test-framework"></span><h2>Strategies in Testing Applications: Test Framework<a class="headerlink" href="#strategies-in-testing-applications-test-framework" title="Permalink to this headline">¶</a></h2>
 <p>CDAP comes with a convenient way to unit test your Applications with CDAP’s Test Framework.
-The base for these tests is <tt class="docutils literal"><span class="pre">TestBase</span></tt>, which is packaged
+The base for these tests is <code class="docutils literal"><span class="pre">TestBase</span></code>, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:</p>
 <ul>
-<li><p class="first">include all JAR files in the <tt class="docutils literal"><span class="pre">lib</span></tt> directory of the CDAP SDK installation,
+<li><p class="first">include all JAR files in the <code class="docutils literal"><span class="pre">lib</span></code> directory of the CDAP SDK installation,
 or</p>
 </li>
-<li><p class="first">include the <tt class="docutils literal"><span class="pre">cdap-unit-test</span></tt> artifact in your Maven test dependencies
-(as shown in the <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file of the <a class="reference internal" href="../getting-started/standalone/index.html#standalone-index"><em>CDAP SDK examples</em></a>):</p>
+<li><p class="first">include the <code class="docutils literal"><span class="pre">cdap-unit-test</span></code> artifact in your Maven test dependencies
+(as shown in the <code class="docutils literal"><span class="pre">pom.xml</span></code> file of the <a class="reference internal" href="../getting-started/standalone/index.html#standalone-index"><span>CDAP SDK examples</span></a>):</p>
 <div class="highlight-xml"><div class="highlight"><pre>. . .
 <span class="nt">&lt;dependency&gt;</span>
   <span class="nt">&lt;groupId&gt;</span>co.cask.cdap<span class="nt">&lt;/groupId&gt;</span>
@@ -103,11 +103,11 @@ or</p>
 </ul>
 <p>Note that for building an application, you only need to include the CDAP API in your
 dependencies. For testing, however, you need the CDAP run-time. To build your test case,
-extend the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class.</p>
+extend the <code class="docutils literal"><span class="pre">TestBase</span></code> class.</p>
 <div class="section" id="running-tests-from-an-ide">
 <h3>Running Tests from an IDE<a class="headerlink" href="#running-tests-from-an-ide" title="Permalink to this headline">¶</a></h3>
 <p>When running tests from an IDE such IntelliJ or Eclipse, set the memory setting for the
-<tt class="docutils literal"><span class="pre">JUnit</span></tt> tests that are run from the IDE to an increased amount of memory. We suggest
+<code class="docutils literal"><span class="pre">JUnit</span></code> tests that are run from the IDE to an increased amount of memory. We suggest
 starting with:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">-Xmx1024m -XX:MaxPermSize=128m</span>
 </pre></div>
@@ -190,23 +190,23 @@ as a response, and the value types in the top-level map are not uniform:</p>
 <p>In a fashion similar to <a class="reference internal" href="#strategies-in-testing-flows">Strategies in Testing Flows</a>, we can write
 unit testing for MapReduce programs. Let&#8217;s write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase Example</em></a> included in the CDAP SDK.</p>
-<p>The <tt class="docutils literal"><span class="pre">PurchaseTest</span></tt> class should extend from
-<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+found in the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase Example</span></a> included in the CDAP SDK.</p>
+<p>The <code class="docutils literal"><span class="pre">PurchaseTest</span></code> class should extend from
+<code class="docutils literal"><span class="pre">TestBase</span></code> similar to <cite>Strategies in Testing Flows</cite>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
   <span class="nd">@Test</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">PurchaseApp</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
-method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<p>The <code class="docutils literal"><span class="pre">PurchaseApp</span></code> application can be deployed using the <code class="docutils literal"><span class="pre">deployApplication</span></code>
+method from the <code class="docutils literal"><span class="pre">TestBase</span></code> class:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
 <span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">PurchaseApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>The MapReduce reads from the <tt class="docutils literal"><span class="pre">purchases</span></tt> Dataset. As a first
-step, the data to the <tt class="docutils literal"><span class="pre">purchases</span></tt> should be populated by running
-the <tt class="docutils literal"><span class="pre">PurchaseFlow</span></tt> and sending the data to the <tt class="docutils literal"><span class="pre">purchaseStream</span></tt>
+<p>The MapReduce reads from the <code class="docutils literal"><span class="pre">purchases</span></code> Dataset. As a first
+step, the data to the <code class="docutils literal"><span class="pre">purchases</span></code> should be populated by running
+the <code class="docutils literal"><span class="pre">PurchaseFlow</span></code> and sending the data to the <code class="docutils literal"><span class="pre">purchaseStream</span></code>
 Stream:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;PurchaseFlow&quot;</span><span class="o">);</span>
 <span class="c1">// Send data to the Stream</span>
@@ -242,23 +242,23 @@ the counts:</p>
 <div class="section" id="strategies-in-testing-spark-programs">
 <h2>Strategies in Testing Spark Programs<a class="headerlink" href="#strategies-in-testing-spark-programs" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark PageRank</em></a>.</p>
-<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> class should extend from
-<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+Complete source code for this test can be found at <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark PageRank</span></a>.</p>
+<p>The <code class="docutils literal"><span class="pre">SparkPageRankTest</span></code> class should extend from
+<code class="docutils literal"><span class="pre">TestBase</span></code> similar to <cite>Strategies in Testing Flows</cite>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkPageRankTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
   <span class="nd">@Test</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
-method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<p>The <code class="docutils literal"><span class="pre">SparkPageRankTest</span></code> application can be deployed using the <code class="docutils literal"><span class="pre">deployApplication</span></code>
+method from the <code class="docutils literal"><span class="pre">TestBase</span></code> class:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
 <span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>The Spark program reads from the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> Dataset. As a first
-step, data in the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> should be populated by running
-the <tt class="docutils literal"><span class="pre">BackLinkFlow</span></tt> and sending the data to the Stream <tt class="docutils literal"><span class="pre">backlinkURLStream</span></tt>:</p>
+<p>The Spark program reads from the <code class="docutils literal"><span class="pre">backlinkURLs</span></code> Dataset. As a first
+step, data in the <code class="docutils literal"><span class="pre">backlinkURLs</span></code> should be populated by running
+the <code class="docutils literal"><span class="pre">BackLinkFlow</span></code> and sending the data to the Stream <code class="docutils literal"><span class="pre">backlinkURLStream</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;BackLinkFlow&quot;</span><span class="o">);</span>
 <span class="c1">// Send data to the Stream</span>
 <span class="n">sendData</span><span class="o">(</span><span class="n">appManager</span><span class="o">);</span>
@@ -290,7 +290,7 @@ the ranks:</p>
 <div class="section" id="validating-test-data-with-sql">
 <h2>Validating Test Data with SQL<a class="headerlink" href="#validating-test-data-with-sql" title="Permalink to this headline">¶</a></h2>
 <p>Often the easiest way to verify that a test produced the right data is to run a SQL query—if the data sets involved
-in the test case are record-scannable as described in <a class="reference internal" href="../data-exploration/index.html#data-exploration"><em>Data Exploration</em></a>.
+in the test case are record-scannable as described in <a class="reference internal" href="../data-exploration/index.html#data-exploration"><span>Data Exploration</span></a>.
 This can be done using a JDBC connection obtained from the test base:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Obtain a JDBC connection</span>
 <span class="n">Connection</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">getQueryClient</span><span class="o">();</span>

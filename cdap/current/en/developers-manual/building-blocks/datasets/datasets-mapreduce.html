@@ -81,22 +81,22 @@
 The Dataset needs to implement specific interfaces to support this.</p>
 <p class="rubric">A Dataset as the Input Source of a MapReduce Program</p>
 <p>When you run a MapReduce program, you can configure it to read its input from a Dataset. The
-source Dataset must implement the <tt class="docutils literal"><span class="pre">BatchReadable</span></tt> interface, which requires two methods:</p>
+source Dataset must implement the <code class="docutils literal"><span class="pre">BatchReadable</span></code> interface, which requires two methods:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">BatchReadable</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="o">{</span>
   <span class="n">List</span><span class="o">&lt;</span><span class="n">Split</span><span class="o">&gt;</span> <span class="nf">getSplits</span><span class="o">();</span>
   <span class="n">SplitReader</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="nf">createSplitReader</span><span class="o">(</span><span class="n">Split</span> <span class="n">split</span><span class="o">);</span>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>These two methods complement each other: <tt class="docutils literal"><span class="pre">getSplits()</span></tt> must return all splits of the Dataset
-that the MapReduce program will read; <tt class="docutils literal"><span class="pre">createSplitReader()</span></tt> is then called in every Mapper to
-read one of the splits. Note that the <tt class="docutils literal"><span class="pre">KEY</span></tt> and <tt class="docutils literal"><span class="pre">VALUE</span></tt> type parameters of the split reader
+<p>These two methods complement each other: <code class="docutils literal"><span class="pre">getSplits()</span></code> must return all splits of the Dataset
+that the MapReduce program will read; <code class="docutils literal"><span class="pre">createSplitReader()</span></code> is then called in every Mapper to
+read one of the splits. Note that the <code class="docutils literal"><span class="pre">KEY</span></code> and <code class="docutils literal"><span class="pre">VALUE</span></code> type parameters of the split reader
 must match the input key and value type parameters of the Mapper.</p>
-<p>Because <tt class="docutils literal"><span class="pre">getSplits()</span></tt> has no arguments, it will typically create splits that cover the
+<p>Because <code class="docutils literal"><span class="pre">getSplits()</span></code> has no arguments, it will typically create splits that cover the
 entire Dataset. If you want to use a custom selection of the input data, define another
 method in your Dataset with additional parameters and explicitly set the input in the
-<tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt> method.</p>
-<p>For example, the system Dataset <tt class="docutils literal"><span class="pre">KeyValueTable</span></tt> implements <tt class="docutils literal"><span class="pre">BatchReadable&lt;byte[],</span> <span class="pre">byte[]&gt;</span></tt>
+<code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method.</p>
+<p>For example, the system Dataset <code class="docutils literal"><span class="pre">KeyValueTable</span></code> implements <code class="docutils literal"><span class="pre">BatchReadable&lt;byte[],</span> <span class="pre">byte[]&gt;</span></code>
 with an extra method that allows specification of the number of splits and a range of keys:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">KeyValueTable</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
                            <span class="kd">implements</span> <span class="n">BatchReadable</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[],</span> <span class="kt">byte</span><span class="o">[]&gt;</span> <span class="o">{</span>
@@ -118,18 +118,18 @@ with an extra method that allows specification of the number of splits and a ran
 </div>
 <p class="rubric">A Dataset as the Output Destination of a MapReduce Program</p>
 <p>Just as you have the option to read input from a Dataset, you have the option to write to a Dataset as
-the output destination of a MapReduce program if that Dataset implements the <tt class="docutils literal"><span class="pre">BatchWritable</span></tt>
+the output destination of a MapReduce program if that Dataset implements the <code class="docutils literal"><span class="pre">BatchWritable</span></code>
 interface:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">BatchWritable</span><span class="o">&lt;</span><span class="n">KEY</span><span class="o">,</span> <span class="n">VALUE</span><span class="o">&gt;</span> <span class="o">{</span>
   <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">KEY</span> <span class="n">key</span><span class="o">,</span> <span class="n">VALUE</span> <span class="n">value</span><span class="o">);</span>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">write()</span></tt> method is used to redirect all writes performed by a Reducer to the Dataset.
-Again, the <tt class="docutils literal"><span class="pre">KEY</span></tt> and <tt class="docutils literal"><span class="pre">VALUE</span></tt> type parameters must match the output key and value type
+<p>The <code class="docutils literal"><span class="pre">write()</span></code> method is used to redirect all writes performed by a Reducer to the Dataset.
+Again, the <code class="docutils literal"><span class="pre">KEY</span></code> and <code class="docutils literal"><span class="pre">VALUE</span></code> type parameters must match the output key and value type
 parameters of the Reducer.</p>
 <p class="rubric">Directly Reading and Writing Datasets</p>
-<p>Both CDAP <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> can <a class="reference internal" href="../mapreduce-programs.html#mapreduce-datasets"><em>directly read or write to a Dataset</em></a>, similar to the way a Flowlet or Service can.</p>
+<p>Both CDAP <code class="docutils literal"><span class="pre">Mapper</span></code> and <code class="docutils literal"><span class="pre">Reducer</span></code> can <a class="reference internal" href="../mapreduce-programs.html#mapreduce-datasets"><span>directly read or write to a Dataset</span></a>, similar to the way a Flowlet or Service can.</p>
 </div>
 
 

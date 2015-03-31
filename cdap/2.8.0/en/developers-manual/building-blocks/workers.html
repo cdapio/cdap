@@ -78,8 +78,8 @@
 <span id="id1"></span><h1>Workers<a class="headerlink" href="#workers" title="Permalink to this headline">¶</a></h1>
 <p>Workers can be used to run background processes. Workers provide the ability to write data processing logic
 that doesn&#8217;t fit into the other paradigms such as Flows and MapReduce or realtime and batch.</p>
-<p>You can add workers to your application by calling the <tt class="docutils literal"><span class="pre">addWorker</span></tt> method in the Application&#8217;s
-<tt class="docutils literal"><span class="pre">configure</span></tt> method:</p>
+<p>You can add workers to your application by calling the <code class="docutils literal"><span class="pre">addWorker</span></code> method in the Application&#8217;s
+<code class="docutils literal"><span class="pre">configure</span></code> method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AnalyticsApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="nd">@Override</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -93,7 +93,7 @@ that doesn&#8217;t fit into the other paradigms such as Flows and MapReduce or r
 </div>
 <p>Workers have semantics similar to a Java thread and are run in a thread when CDAP is run in either In-Memory
 or Standalone Modes. In distributed mode, each instance of a worker runs in its own YARN container.
-Their instances may be updated via the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a> or a <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">RESTful API</em></a>:</p>
+Their instances may be updated via the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a> or a <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">RESTful API</span></a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProcessWorker</span> <span class="kd">extends</span> <span class="n">AbstractWorker</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -119,12 +119,12 @@ Their instances may be updated via the <a class="reference external" href="../so
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Workers can access and use <tt class="docutils literal"><span class="pre">Dataset</span></tt>s via a <tt class="docutils literal"><span class="pre">DatasetContext</span></tt> inside the <tt class="docutils literal"><span class="pre">run</span></tt> method of a <tt class="docutils literal"><span class="pre">TxRunnable</span></tt>.
-A <tt class="docutils literal"><span class="pre">TxRunnable</span></tt> can be executed using the <tt class="docutils literal"><span class="pre">execute</span></tt> method of a <tt class="docutils literal"><span class="pre">WorkerContext</span></tt>. Note that <tt class="docutils literal"><span class="pre">WorkerContext</span></tt>
-is thread-safe and that each thread will receive its own instance of the <tt class="docutils literal"><span class="pre">Dataset</span></tt> being accessed. Though it is
-necessary to use the <tt class="docutils literal"><span class="pre">getDataset</span></tt> method of <tt class="docutils literal"><span class="pre">DatasetContext</span></tt> to access a <tt class="docutils literal"><span class="pre">Dataset</span></tt> instance inside a
-<tt class="docutils literal"><span class="pre">TxRunnable</span></tt>, this operation is performance-optimized with the help of internal caching logic. In this
-example, the Dataset <em>tableName</em> is accessed from within a <tt class="docutils literal"><span class="pre">TxRunnable</span></tt>:</p>
+<p>Workers can access and use <code class="docutils literal"><span class="pre">Dataset</span></code>s via a <code class="docutils literal"><span class="pre">DatasetContext</span></code> inside the <code class="docutils literal"><span class="pre">run</span></code> method of a <code class="docutils literal"><span class="pre">TxRunnable</span></code>.
+A <code class="docutils literal"><span class="pre">TxRunnable</span></code> can be executed using the <code class="docutils literal"><span class="pre">execute</span></code> method of a <code class="docutils literal"><span class="pre">WorkerContext</span></code>. Note that <code class="docutils literal"><span class="pre">WorkerContext</span></code>
+is thread-safe and that each thread will receive its own instance of the <code class="docutils literal"><span class="pre">Dataset</span></code> being accessed. Though it is
+necessary to use the <code class="docutils literal"><span class="pre">getDataset</span></code> method of <code class="docutils literal"><span class="pre">DatasetContext</span></code> to access a <code class="docutils literal"><span class="pre">Dataset</span></code> instance inside a
+<code class="docutils literal"><span class="pre">TxRunnable</span></code>, this operation is performance-optimized with the help of internal caching logic. In this
+example, the Dataset <em>tableName</em> is accessed from within a <code class="docutils literal"><span class="pre">TxRunnable</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
   <span class="n">getContext</span><span class="o">().</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="n">TxRunnable</span><span class="o">()</span> <span class="o">{</span>
@@ -137,11 +137,11 @@ example, the Dataset <em>tableName</em> is accessed from within a <tt class="doc
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Operations executed on <tt class="docutils literal"><span class="pre">Dataset</span></tt>s within a <tt class="docutils literal"><span class="pre">run</span></tt> are committed as part of a single transaction.
-The transaction is started before <tt class="docutils literal"><span class="pre">run</span></tt> is invoked and is committed upon successful execution. Exceptions
+<p>Operations executed on <code class="docutils literal"><span class="pre">Dataset</span></code>s within a <code class="docutils literal"><span class="pre">run</span></code> are committed as part of a single transaction.
+The transaction is started before <code class="docutils literal"><span class="pre">run</span></code> is invoked and is committed upon successful execution. Exceptions
 thrown while committing the transaction or thrown by user-code result in a rollback of the transaction.
-It is recommended that <tt class="docutils literal"><span class="pre">TransactionConflictException</span></tt> be caught and handled appropriately; for example,
-you can retry a <tt class="docutils literal"><span class="pre">Dataset</span></tt> operation.</p>
+It is recommended that <code class="docutils literal"><span class="pre">TransactionConflictException</span></code> be caught and handled appropriately; for example,
+you can retry a <code class="docutils literal"><span class="pre">Dataset</span></code> operation.</p>
 <p>Services can be discovered from inside of Workers. Services can either belong to the same application or to another
 application in the same namespace. WorkerContext can be used to discover the URL of the Service of interest:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
@@ -155,16 +155,16 @@ application in the same namespace. WorkerContext can be used to discover the URL
 </div>
 <div class="section" id="writing-to-streams-beta">
 <h2>Writing to Streams (Beta)<a class="headerlink" href="#writing-to-streams-beta" title="Permalink to this headline">¶</a></h2>
-<p>Workers have the ability to write to <tt class="docutils literal"><span class="pre">Streams</span></tt> through the <tt class="docutils literal"><span class="pre">WorkerContext</span></tt>. The implementation internally
+<p>Workers have the ability to write to <code class="docutils literal"><span class="pre">Streams</span></code> through the <code class="docutils literal"><span class="pre">WorkerContext</span></code>. The implementation internally
 issues an HTTP request to the Stream Service to persist the data. Because of that, a write to a Stream
-cannot be rolled back, and thus the write differs in semantics compared to writing to <tt class="docutils literal"><span class="pre">Datasets</span></tt> from inside the
-<tt class="docutils literal"><span class="pre">run</span></tt> method of a <tt class="docutils literal"><span class="pre">TxRunnable</span></tt>.</p>
-<p>The write operation throws an <tt class="docutils literal"><span class="pre">IOException</span></tt> if it could not write to a <tt class="docutils literal"><span class="pre">Stream</span></tt>. Writing to streams can be
+cannot be rolled back, and thus the write differs in semantics compared to writing to <code class="docutils literal"><span class="pre">Datasets</span></code> from inside the
+<code class="docutils literal"><span class="pre">run</span></code> method of a <code class="docutils literal"><span class="pre">TxRunnable</span></code>.</p>
+<p>The write operation throws an <code class="docutils literal"><span class="pre">IOException</span></code> if it could not write to a <code class="docutils literal"><span class="pre">Stream</span></code>. Writing to streams can be
 performed as either single event writes or in batch.</p>
-<p>When uploading events in batch, there are two options: either uploading a <tt class="docutils literal"><span class="pre">File</span></tt> or writing multiple events
-through a <tt class="docutils literal"><span class="pre">StreamBatchWriter</span></tt>. In batch mode, the content type of the data must be specified. Refer
-to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Stream RESTful API</em></a> for information on the content type specification.</p>
-<p>With a <tt class="docutils literal"><span class="pre">StreamBatchWriter</span></tt>, the <tt class="docutils literal"><span class="pre">close</span></tt> method` needs to be called after all the writes have been performed:</p>
+<p>When uploading events in batch, there are two options: either uploading a <code class="docutils literal"><span class="pre">File</span></code> or writing multiple events
+through a <code class="docutils literal"><span class="pre">StreamBatchWriter</span></code>. In batch mode, the content type of the data must be specified. Refer
+to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Stream RESTful API</span></a> for information on the content type specification.</p>
+<p>With a <code class="docutils literal"><span class="pre">StreamBatchWriter</span></code>, the <code class="docutils literal"><span class="pre">close</span></code> method` needs to be called after all the writes have been performed:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
   <span class="k">try</span> <span class="o">{</span>

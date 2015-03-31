@@ -78,18 +78,18 @@
 <h1>Scaling Instances<a class="headerlink" href="#scaling-instances" title="Permalink to this headline">¶</a></h1>
 <p>You can scale CDAP components using:</p>
 <ul class="simple">
-<li>the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle-scale" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Scaling</em></a> methods of the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Lifecycle HTTP RESTful API</em></a>;</li>
-<li>the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#program-client" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">ProgramClient API</em></a> of the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Java Client API</em></a>; or</li>
-<li>the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Get/Set Commands</em></a> of the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.</li>
+<li>the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle-scale" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Scaling</span></a> methods of the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Lifecycle HTTP RESTful API</span></a>;</li>
+<li>the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#program-client" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">ProgramClient API</span></a> of the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Java Client API</span></a>; or</li>
+<li>the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Get/Set Commands</span></a> of the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>.</li>
 </ul>
-<p>The examples given below use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle-scale" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP RESTful API</em></a>.</p>
+<p>The examples given below use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle-scale" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">HTTP RESTful API</span></a>.</p>
 <div class="section" id="scaling-flowlets">
 <h2>Scaling Flowlets<a class="headerlink" href="#scaling-flowlets" title="Permalink to this headline">¶</a></h2>
 <p>You can query and set the number of instances executing a given Flowlet
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET and PUT methods:</p>
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET and PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
 <span class="go">PUT /v3/namespaces/default/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;/instances</span>
 </pre></div>
@@ -140,7 +140,7 @@ version. Replace all use of <em>Procedures</em> with <em>Services</em>. <em>Serv
 feature-parity with <em>Procedures</em> as of the version in which Procedures are removed.</p>
 </div>
 <p>In a similar way to <a class="reference internal" href="#scaling-flowlets">Scaling Flowlets</a>, you can query or change the number of instances of a Procedure
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET and PUT methods:</p>
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET and PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/&lt;app-id&gt;/procedures/&lt;procedure-id&gt;/instances</span>
 <span class="go">PUT /v3/namespaces/default/apps/&lt;app-id&gt;/procedures/&lt;procedure-id&gt;/instances</span>
 </pre></div>
@@ -183,7 +183,7 @@ in the Flow <em>WhoFlow</em> of the application <em>HelloWorld</em>:</p>
 <div class="section" id="scaling-services">
 <h2>Scaling Services<a class="headerlink" href="#scaling-services" title="Permalink to this headline">¶</a></h2>
 <p>In a similar way to <a class="reference internal" href="#scaling-flowlets">Scaling Flowlets</a>, you can query or change the number of handler instances of a Service
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET and PUT methods:</p>
+by using the <code class="docutils literal"><span class="pre">instances</span></code> parameter with HTTP GET and PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/runnables/&lt;runnable-id&gt;/instances</span>
 <span class="go">PUT /v3/namespaces/default/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/runnables/&lt;runnable-id&gt;/instances</span>
 </pre></div>
@@ -210,7 +210,7 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </table>
 </dd>
 </dl>
-<p><strong>Note:</strong> In this release, the <tt class="docutils literal"><span class="pre">runnable-id</span></tt> is the same as the <tt class="docutils literal"><span class="pre">service-id</span></tt>.</p>
+<p><strong>Note:</strong> In this release, the <code class="docutils literal"><span class="pre">runnable-id</span></code> is the same as the <code class="docutils literal"><span class="pre">service-id</span></code>.</p>
 <p>Example: Find out the number of handler instances of the Service <em>RetrieveCounts</em>
 of the application <em>WordCount</em>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances</span>
@@ -225,7 +225,7 @@ of the application <em>WordCount</em>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">{ &quot;instances&quot; : 2 }</span>
 </pre></div>
 </div>
-<p>Example using the <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Standalone SDK</em></a> and <tt class="docutils literal"><span class="pre">curl</span></tt> (reformatted to fit):</p>
+<p>Example using the <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Standalone SDK</span></a> and <code class="docutils literal"><span class="pre">curl</span></code> (reformatted to fit):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">curl -vw&#39;\n&#39; -XPUT &#39;http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances&#39; \</span>
 <span class="go">  -d &#39;{ &quot;instances&quot; : 2 }&#39;</span>
 </pre></div>

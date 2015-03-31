@@ -80,7 +80,7 @@
 <span id="http-restful-api-dataset"></span><h1>Dataset HTTP RESTful API<a class="headerlink" href="#dataset-http-restful-api" title="Permalink to this headline">¶</a></h1>
 <p>The Dataset API allows you to interact with Datasets through HTTP. You can list, create,
 delete, and truncate Datasets. For details, see the
-<a class="reference external" href="../../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Components, Datasets section</em></a></p>
+<a class="reference external" href="../../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Components, Datasets section</span></a></p>
 <div class="section" id="listing-all-datasets">
 <h2>Listing all Datasets<a class="headerlink" href="#listing-all-datasets" title="Permalink to this headline">¶</a></h2>
 <p>You can list all Datasets in CDAP by issuing an HTTP GET request to the URL:</p>
@@ -98,7 +98,7 @@ delete, and truncate Datasets. For details, see the
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
 </tbody>
@@ -142,16 +142,16 @@ delete, and truncate Datasets. For details, see the
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Name of the new Dataset</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;type-name&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;type-name&gt;</span></code></td>
 <td>Type of the new Dataset</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;properties&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;properties&gt;</span></code></td>
 <td>Dataset properties, map of String to String.</td>
 </tr>
 </tbody>
@@ -168,13 +168,13 @@ delete, and truncate Datasets. For details, see the
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Requested Dataset was successfully created</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>Requested Dataset type was not found</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
 <td>Dataset with the same name already exists</td>
 </tr>
 </tbody>
@@ -187,13 +187,13 @@ delete, and truncate Datasets. For details, see the
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset</span></tt></td>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Body</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;typeName&quot;:&quot;co.cask.cdap.api.dataset.table.Table&quot;,</span></tt> <tt class="docutils literal"><span class="pre">&quot;properties&quot;:{&quot;dataset.table.ttl&quot;:&quot;3600&quot;}}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;typeName&quot;:&quot;co.cask.cdap.api.dataset.table.Table&quot;,</span></code> <code class="docutils literal"><span class="pre">&quot;properties&quot;:{&quot;dataset.table.ttl&quot;:&quot;3600&quot;}}</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
-<td>Creates a Dataset named <em>mydataset</em> of the type <tt class="docutils literal"><span class="pre">Table</span></tt> in the namespace <em>default</em>
+<td>Creates a Dataset named <em>mydataset</em> of the type <code class="docutils literal"><span class="pre">Table</span></code> in the namespace <em>default</em>
 with the time-to-live property set to 1 hour</td>
 </tr>
 </tbody>
@@ -224,16 +224,16 @@ with the time-to-live property set to 1 hour</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Name of the existing Dataset</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;type-name&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;type-name&gt;</span></code></td>
 <td>Type of the existing Dataset</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;properties&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;properties&gt;</span></code></td>
 <td>Dataset properties as a map of String to String</td>
 </tr>
 </tbody>
@@ -250,13 +250,13 @@ with the time-to-live property set to 1 hour</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Requested Dataset was successfully updated</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>Requested Dataset instance was not found</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></code></td>
 <td>Dataset Type provided for update is different from the existing Dataset Type</td>
 </tr>
 </tbody>
@@ -269,13 +269,13 @@ with the time-to-live property set to 1 hour</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset/properties</span></tt></td>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset/properties</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Body</th>
-<td><tt class="docutils literal"><span class="pre">{&quot;typeName&quot;:&quot;co.cask.cdap.api.dataset.table.Table&quot;,</span></tt> <tt class="docutils literal"><span class="pre">&quot;properties&quot;:{&quot;dataset.table.ttl&quot;:&quot;7200&quot;}}</span></tt></td>
+<td><code class="docutils literal"><span class="pre">{&quot;typeName&quot;:&quot;co.cask.cdap.api.dataset.table.Table&quot;,</span></code> <code class="docutils literal"><span class="pre">&quot;properties&quot;:{&quot;dataset.table.ttl&quot;:&quot;7200&quot;}}</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
-<td>For the <em>mydataset</em> of type <tt class="docutils literal"><span class="pre">Table</span></tt> of the namespace <em>default</em>, update the Dataset
+<td>For the <em>mydataset</em> of type <code class="docutils literal"><span class="pre">Table</span></code> of the namespace <em>default</em>, update the Dataset
 and its time-to-live property to 2 hours</td>
 </tr>
 </tbody>
@@ -298,10 +298,10 @@ and its time-to-live property to 2 hours</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Dataset name</td>
 </tr>
 </tbody>
@@ -318,10 +318,10 @@ and its time-to-live property to 2 hours</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Dataset was successfully deleted</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></code></td>
 <td>Dataset named <em>dataset-name</em> could not be found</td>
 </tr>
 </tbody>
@@ -334,7 +334,7 @@ and its time-to-live property to 2 hours</td>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Request</th>
-<td><tt class="docutils literal"><span class="pre">DELETE</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset</span></tt></td>
+<td><code class="docutils literal"><span class="pre">DELETE</span> <span class="pre">&lt;base-url&gt;/namespaces/default/data/datasets/mydataset</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Deletes the Dataset <em>mydataset</em> in the namespace <em>default</em></td>
@@ -344,7 +344,7 @@ and its time-to-live property to 2 hours</td>
 </div>
 <div class="section" id="deleting-all-datasets">
 <h2>Deleting all Datasets<a class="headerlink" href="#deleting-all-datasets" title="Permalink to this headline">¶</a></h2>
-<p>If the property <tt class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> is set to <tt class="docutils literal"><span class="pre">true</span></tt>, you can delete all Datasets
+<p>If the property <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is set to <code class="docutils literal"><span class="pre">true</span></code>, you can delete all Datasets
 by issuing an HTTP DELETE request to the URL:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace&gt;/unrecoverable/data/datasets</span>
 </pre></div>
@@ -360,7 +360,7 @@ by issuing an HTTP DELETE request to the URL:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
 </tbody>
@@ -377,15 +377,15 @@ by issuing an HTTP DELETE request to the URL:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>All Datasets were successfully deleted</td>
 </tr>
 </tbody>
 </table>
-<p>If the property <tt class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> is not set to
-<tt class="docutils literal"><span class="pre">true</span></tt>, this operation will return a Status Code <tt class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></tt>. Note that this
+<p>If the property <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> is not set to
+<code class="docutils literal"><span class="pre">true</span></code>, this operation will return a Status Code <code class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></code>. Note that this
 operation can only be performed if all programs are stopped. If there&#8217;s at least one
-program that is running, this operation will return a Status Code <tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt>.</p>
+program that is running, this operation will return a Status Code <code class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></code>.</p>
 </div>
 <div class="section" id="truncating-a-dataset">
 <h2>Truncating a Dataset<a class="headerlink" href="#truncating-a-dataset" title="Permalink to this headline">¶</a></h2>
@@ -405,10 +405,10 @@ program that is running, this operation will return a Status Code <tt class="doc
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;namespace&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
 <td>Namespace ID</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Dataset name</td>
 </tr>
 </tbody>
@@ -425,7 +425,7 @@ program that is running, this operation will return a Status Code <tt class="doc
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
 <td>Dataset was successfully truncated</td>
 </tr>
 </tbody>

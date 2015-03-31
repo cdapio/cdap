@@ -84,18 +84,18 @@
 partitions of a time-partitioned file set. These partitions can be queried with SQL. These are the
 components of the application:</p>
 <ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">events</span></tt> stream receives simple events, where each event body is a number.</li>
-<li>The <tt class="docutils literal"><span class="pre">converted</span></tt> dataset is a time-partitioned file set in Avro format.</li>
-<li>The <tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt> reads the last five minutes of events from the
-stream and writes them to a new partition in the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset.</li>
-<li>The <tt class="docutils literal"><span class="pre">StreamConversionWorkflow</span></tt> is scheduled every five minutes and only runs the
-<tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt>.</li>
+<li>The <code class="docutils literal"><span class="pre">events</span></code> stream receives simple events, where each event body is a number.</li>
+<li>The <code class="docutils literal"><span class="pre">converted</span></code> dataset is a time-partitioned file set in Avro format.</li>
+<li>The <code class="docutils literal"><span class="pre">StreamConversionMapReduce</span></code> reads the last five minutes of events from the
+stream and writes them to a new partition in the <code class="docutils literal"><span class="pre">converted</span></code> dataset.</li>
+<li>The <code class="docutils literal"><span class="pre">StreamConversionWorkflow</span></code> is scheduled every five minutes and only runs the
+<code class="docutils literal"><span class="pre">StreamConversionMapReduce</span></code>.</li>
 </ul>
 <p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
 <div class="section" id="the-stream-conversion-application">
 <h3>The Stream Conversion Application<a class="headerlink" href="#the-stream-conversion-application" title="Permalink to this headline">¶</a></h3>
-<p>As in the other <a class="reference internal" href="index.html#examples-index"><em>examples</em></a>, the components
-of the Application are tied together by the class <tt class="docutils literal"><span class="pre">StreamConversionApp</span></tt>:</p>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the Application are tied together by the class <code class="docutils literal"><span class="pre">StreamConversionApp</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre>  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SCHEMA_STRING</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span>
     <span class="s">&quot;streamEvent&quot;</span><span class="o">,</span>
     <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
@@ -127,13 +127,13 @@ of the Application are tied together by the class <tt class="docutils literal"><
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The interesting part is the creation of the dataset <tt class="docutils literal"><span class="pre">converted</span></tt>:</p>
+<p>The interesting part is the creation of the dataset <code class="docutils literal"><span class="pre">converted</span></code>:</p>
 <ul class="simple">
-<li>It is a <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt>. This is an experimental new dataset type, introduced in CDAP 2.7.1. This
-dataset manages the files in a <tt class="docutils literal"><span class="pre">FileSet</span></tt> by associating each file with a time stamp.</li>
+<li>It is a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>. This is an experimental new dataset type, introduced in CDAP 2.7.1. This
+dataset manages the files in a <code class="docutils literal"><span class="pre">FileSet</span></code> by associating each file with a time stamp.</li>
 <li>The properties are divided in two sections:<ul>
 <li>The first set of properties configures the underlying FileSet, as documented in the
-<a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">FileSet</em></a> section.</li>
+<a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/fileset.html#datasets-fileset" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">FileSet</span></a> section.</li>
 <li>The second set of properties configures how the dataset is queryable with SQL. Here we can enable the
 dataset for querying, and if so, we must specify Hive-specific properties for the Avro format: The Avro
 SerDe, an input and an output format, and an additional table property, namely the schema for the Avro SerDe.</li>
@@ -143,8 +143,8 @@ SerDe, an input and an output format, and an additional table property, namely t
 </div>
 <div class="section" id="the-mapreduce-program">
 <h3>The MapReduce Program<a class="headerlink" href="#the-mapreduce-program" title="Permalink to this headline">¶</a></h3>
-<p>In its <tt class="docutils literal"><span class="pre">beforeSubmit</span></tt> method, the <tt class="docutils literal"><span class="pre">StreamConversionMapReduce</span></tt> determines its logical start time,
-and it configures the <tt class="docutils literal"><span class="pre">events</span></tt> stream as its input and the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset as its output:</p>
+<p>In its <code class="docutils literal"><span class="pre">beforeSubmit</span></code> method, the <code class="docutils literal"><span class="pre">StreamConversionMapReduce</span></code> determines its logical start time,
+and it configures the <code class="docutils literal"><span class="pre">events</span></code> stream as its input and the <code class="docutils literal"><span class="pre">converted</span></code> dataset as its output:</p>
 <ul>
 <li><p class="first">This is a map-only MapReduce program; in other words, it has no reducers,
 and the mappers write directly to the output in Avro format:</p>
@@ -189,9 +189,9 @@ and the mappers write directly to the output in Avro format:</p>
     <span class="o">}</span>
 </pre></div>
 </div>
-<p>In the <tt class="docutils literal"><span class="pre">afterSubmit</span></tt> method of the MapReduce program, if the run succeeds, the output file is
-registered as a new partition in the <tt class="docutils literal"><span class="pre">converted</span></tt> dataset. Note that this is only needed due to a
-current limitation in the <tt class="docutils literal"><span class="pre">TimePartitionedFileSet</span></tt> implementation: the partition should be added
+<p>In the <code class="docutils literal"><span class="pre">afterSubmit</span></code> method of the MapReduce program, if the run succeeds, the output file is
+registered as a new partition in the <code class="docutils literal"><span class="pre">converted</span></code> dataset. Note that this is only needed due to a
+current limitation in the <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> implementation: the partition should be added
 by the output committer of the dataset&#8217;s output format (this will be addressed in a future CDAP release):</p>
 <div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinish</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">succeeded</span><span class="o">,</span> <span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
     <span class="k">if</span> <span class="o">(</span><span class="n">succeeded</span><span class="o">)</span> <span class="o">{</span>
@@ -220,12 +220,12 @@ by the output committer of the dataset&#8217;s output format (this will be addre
 <h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
 <p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
 running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
-the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">namespace</em></a>; if not, you will need to adjust commands
+the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">namespace</span></a>; if not, you will need to adjust commands
 accordingly. For example, in a URL such as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
 </pre></div>
 </div>
-<p>to use the namespace <em>my_namespace</em>, you would replace <tt class="docutils literal"><span class="pre">default</span></tt> with <tt class="docutils literal"><span class="pre">my_namespace</span></tt>:</p>
+<p>to use the namespace <em>my_namespace</em>, you would replace <code class="docutils literal"><span class="pre">default</span></code> with <code class="docutils literal"><span class="pre">my_namespace</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
 </pre></div>
 </div>
@@ -240,7 +240,7 @@ accordingly. For example, in a URL such as:</p>
 <div class="section" id="starting-cdap">
 <h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
 <p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
-follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Starting and Stopping Standalone CDAP.</em></a></p>
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
 <p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
 </div>
 <div class="section" id="deploying-an-application">
@@ -255,7 +255,7 @@ example/target/StreamConversion-2.8.0.jar
 </li>
 <li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface (CLI)</em></a>:</p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -263,10 +263,10 @@ example/target/StreamConversion-2.8.0.jar
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -282,7 +282,7 @@ Application&#8217;s name in the <em>Overview</em> page. (It can be reached by cl
 <em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
 of the Processes or Queries associated with the application; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface</em></a>.
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
 In each CDAP example, the CLI commands for that particular example are provided.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -291,10 +291,10 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -309,13 +309,13 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-type&gt;</span></tt></td>
-<td>One of <tt class="docutils literal"><span class="pre">flow</span></tt>, <tt class="docutils literal"><span class="pre">procedure</span></tt>, <tt class="docutils literal"><span class="pre">mapreduce</span></tt>, <tt class="docutils literal"><span class="pre">workflow</span></tt> or <tt class="docutils literal"><span class="pre">service</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">procedure</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;app-id&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Name of the Application being called</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;program-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
 <td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
 being called</td>
 </tr>
@@ -331,7 +331,7 @@ being called</td>
 <li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
 the Process and Query lists, if the application has either of them; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface:</em></a></p>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -339,10 +339,10 @@ the Process and Query lists, if the application has either of them; or</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">On Linux:</th>
-<td><tt class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">On Windows:</th>
-<td><tt class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -357,21 +357,21 @@ Application&#8217;s detail page in the CDAP Console to delete the Application. A
 confirmation, the application will be deleted.</p>
 <p>Note that any Storage (Datasets) created or used by the Application will remain, as they
 are independent of the Application. Datasets can be deleted with the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">HTTP Restful API</em></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Java Client API</em></a>, or the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Command Line Interface API</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Java Client API</span></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
 </div>
 </div>
 <div class="section" id="running-the-example">
 <h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">StreamConversionWorkflow</span></tt> will run automatically every five minutes based on its schedule.
+<p>The <code class="docutils literal"><span class="pre">StreamConversionWorkflow</span></code> will run automatically every five minutes based on its schedule.
 To give it some data, you can use a provided script to send events to the stream, for example,
 to send 10000 events at a rate of roughly two per second:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">bin/send-events.sh --events 10000 --delay 0.5</span>
 </pre></div>
 </div>
 <p>You can now wait for the Workflow to run, after which you can query the partitions in the
-<tt class="docutils literal"><span class="pre">converted</span></tt> dataset:</p>
+<code class="docutils literal"><span class="pre">converted</span></code> dataset:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh execute <span class="se">\&quot;</span>show partitions dataset_converted<span class="se">\&quot;</span>
 <span class="go">+============================================+</span>
 <span class="go">| partition: STRING                          |</span>
@@ -405,7 +405,7 @@ of the query. For example, to run the same query for only the month of January, 
 <div class="section" id="stopping-the-application">
 <h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
 <p>The only thing you need to do to stop the application is suspend the schedule. This is not possible
-with the CLI; instead you can use <tt class="docutils literal"><span class="pre">curl</span></tt> to make a RESTful request:</p>
+with the CLI; instead you can use <code class="docutils literal"><span class="pre">curl</span></code> to make a RESTful request:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">curl -X POST http://localhost:10000/v3/namespaces/default/apps/StreamConversionApp/schedules/every5min/suspend</span>
 </pre></div>
 </div>

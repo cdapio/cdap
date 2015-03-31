@@ -151,7 +151,7 @@ Stream remains in place.</li>
 </div>
 <div class="section" id="create-streamwriter">
 <h3>Create StreamWriter<a class="headerlink" href="#create-streamwriter" title="Permalink to this headline">¶</a></h3>
-<p>Create a <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> instance for writing events to the Stream
+<p>Create a <code class="docutils literal"><span class="pre">StreamWriter</span></code> instance for writing events to the Stream
 &#8220;streamName&#8221;:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">stream_writer = stream_client.create_writer(&quot;streamName&quot;)</span>
 </pre></div>
@@ -159,8 +159,8 @@ Stream remains in place.</li>
 </div>
 <div class="section" id="write-stream-events">
 <h3>Write Stream Events<a class="headerlink" href="#write-stream-events" title="Permalink to this headline">¶</a></h3>
-<p>To write new events to the Stream, use the <tt class="docutils literal"><span class="pre">write</span></tt> method of the
-<tt class="docutils literal"><span class="pre">StreamWriter</span></tt> class:</p>
+<p>To write new events to the Stream, use the <code class="docutils literal"><span class="pre">write</span></code> method of the
+<code class="docutils literal"><span class="pre">StreamWriter</span></code> class:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">def write(self, message, charset=None, headers=None)</span>
 </pre></div>
 </div>
@@ -194,7 +194,7 @@ Stream remains in place.</li>
 <h3>StreamPromise<a class="headerlink" href="#streampromise" title="Permalink to this headline">¶</a></h3>
 <p>StreamPromise&#8217;s goal is to implement deferred code execution.</p>
 <p>For error handling, create a handler for each case and set it using the
-<tt class="docutils literal"><span class="pre">onResponse</span></tt> method. The error handling callback function is optional.</p>
+<code class="docutils literal"><span class="pre">onResponse</span></code> method. The error handling callback function is optional.</p>
 <p>Example:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">def on_ok_response(response):</span>
 <span class="go">    ...</span>

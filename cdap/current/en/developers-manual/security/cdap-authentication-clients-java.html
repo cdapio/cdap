@@ -87,7 +87,7 @@ cluster.</p>
 supported by the active authentication mechanism.</li>
 </ul>
 <p>The default implementation of the authentication
-client—<tt class="docutils literal"><span class="pre">BasicAuthenticationClient</span></tt>—supports the default
+client—<code class="docutils literal"><span class="pre">BasicAuthenticationClient</span></code>—supports the default
 authentication mechanisms supported by CDAP:</p>
 <ul class="simple">
 <li>Basic Authentication</li>
@@ -100,7 +100,7 @@ authentication mechanisms supported by CDAP:</p>
 <p>If CDAP is configured to use a custom authentication mechanism, a custom
 authentication client will have to be written to fetch the access token.
 The custom authentication clients needs to implement the
-<tt class="docutils literal"><span class="pre">AuthenticationClient</span></tt> interface. The <tt class="docutils literal"><span class="pre">AbstractAuthenticationClient</span></tt>
+<code class="docutils literal"><span class="pre">AuthenticationClient</span></code> interface. The <code class="docutils literal"><span class="pre">AbstractAuthenticationClient</span></code>
 class contains common functionality required by authentication clients,
 and can be extended by the custom authentication client. The custom
 authentication client has to be placed into the classpath of the
@@ -116,7 +116,7 @@ application that needs to use it.</p>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>To use the Authentication Client API, include this Maven dependency in
-your project&#8217;s <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file:</p>
+your project&#8217;s <code class="docutils literal"><span class="pre">pom.xml</span></code> file:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;dependency&gt;</span>
 <span class="go">  &lt;groupId&gt;co.cask.cdap&lt;/groupId&gt;</span>
 <span class="go">  &lt;artifactId&gt;cdap-authentication-client&lt;/artifactId&gt;</span>
@@ -153,7 +153,7 @@ Client.</p>
 </pre></div>
 </div>
 <p>This method should be called only once for every
-<tt class="docutils literal"><span class="pre">AuthenticationClient</span></tt> object.</p>
+<code class="docutils literal"><span class="pre">AuthenticationClient</span></code> object.</p>
 </div>
 <div class="section" id="check-if-authentication-is-enabled-in-the-cdap-cluster">
 <h3>Check if authentication is enabled in the CDAP cluster<a class="headerlink" href="#check-if-authentication-is-enabled-in-the-cdap-cluster" title="Permalink to this headline">¶</a></h3>
@@ -165,20 +165,20 @@ Client.</p>
 <h3>Configure Authentication Client<a class="headerlink" href="#configure-authentication-client" title="Permalink to this headline">¶</a></h3>
 <p>If authentication is enabled, configure the Authentication Client with
 user credentials and other properties (this method should be called only
-once for every <tt class="docutils literal"><span class="pre">AuthenticationClient</span></tt> object).</p>
+once for every <code class="docutils literal"><span class="pre">AuthenticationClient</span></code> object).</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">authenticationClient.configure(properties);</span>
 </pre></div>
 </div>
 <p><strong>Note:</strong></p>
 <ul class="simple">
-<li>The <tt class="docutils literal"><span class="pre">BasicAuthenticationClient</span></tt> requires these user credentials:<ul>
-<li><tt class="docutils literal"><span class="pre">security.auth.client.username=username</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">security.auth.client.password=password</span></tt></li>
+<li>The <code class="docutils literal"><span class="pre">BasicAuthenticationClient</span></code> requires these user credentials:<ul>
+<li><code class="docutils literal"><span class="pre">security.auth.client.username=username</span></code></li>
+<li><code class="docutils literal"><span class="pre">security.auth.client.password=password</span></code></li>
 </ul>
 </li>
 <li>When SSL is enabled, to suspend certificate checks and allow
 self-signed certificates, set
-<tt class="docutils literal"><span class="pre">security.auth.client.verify.ssl.cert=false</span></tt>.</li>
+<code class="docutils literal"><span class="pre">security.auth.client.verify.ssl.cert=false</span></code>.</li>
 <li>For non-interactive applications, user credentials will come from a
 configuration file.</li>
 <li>For interactive applications, see the section <a class="reference external" href="#interactive-applications">Interactive
@@ -196,7 +196,7 @@ using user credentials.</li>
 <span class="go">conn.connect();</span>
 </pre></div>
 </div>
-<p>If there is an error while fetching the access token, an <tt class="docutils literal"><span class="pre">IOException</span></tt>
+<p>If there is an error while fetching the access token, an <code class="docutils literal"><span class="pre">IOException</span></code>
 will be thrown. The Authentication Client caches the access token until
 the token expires. It automatically re-fetches a new token upon expiry.</p>
 </div>

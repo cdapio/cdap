@@ -87,9 +87,9 @@ allows you to write a single process method that can accept multiple
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>and you send data of type <tt class="docutils literal"><span class="pre">Long</span></tt> to this Flowlet, then that type does
+<p>and you send data of type <code class="docutils literal"><span class="pre">Long</span></code> to this Flowlet, then that type does
 not exactly match what the process method expects. You could now write
-another process method for <tt class="docutils literal"><span class="pre">Long</span></tt> numbers:</p>
+another process method for <code class="docutils literal"><span class="pre">Long</span></code> numbers:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@ProcessInput</span> <span class="n">count</span><span class="o">(</span><span class="n">Long</span> <span class="n">number</span><span class="o">)</span> <span class="o">{</span>
   <span class="n">count</span><span class="o">(</span><span class="n">number</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
 <span class="o">}</span>
@@ -104,31 +104,31 @@ object.</p>
 compatible with the original process method. Other compatible
 conversions are:</p>
 <ul>
-<li><p class="first">Every primitive type that can be converted to a <tt class="docutils literal"><span class="pre">String</span></tt> is compatible with
-<tt class="docutils literal"><span class="pre">String</span></tt>.</p>
+<li><p class="first">Every primitive type that can be converted to a <code class="docutils literal"><span class="pre">String</span></code> is compatible with
+<code class="docutils literal"><span class="pre">String</span></code>.</p>
 </li>
 <li><p class="first">Any numeric type is compatible with numeric types that can represent it.
-For example, <tt class="docutils literal"><span class="pre">int</span></tt> is compatible with <tt class="docutils literal"><span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">float</span></tt> and <tt class="docutils literal"><span class="pre">double</span></tt>,
-and <tt class="docutils literal"><span class="pre">long</span></tt> is compatible with <tt class="docutils literal"><span class="pre">float</span></tt> and <tt class="docutils literal"><span class="pre">double</span></tt>, but <tt class="docutils literal"><span class="pre">long</span></tt> is not
-compatible with <tt class="docutils literal"><span class="pre">int</span></tt> because <tt class="docutils literal"><span class="pre">int</span></tt> cannot represent every <tt class="docutils literal"><span class="pre">long</span></tt> value.</p>
+For example, <code class="docutils literal"><span class="pre">int</span></code> is compatible with <code class="docutils literal"><span class="pre">long</span></code>, <code class="docutils literal"><span class="pre">float</span></code> and <code class="docutils literal"><span class="pre">double</span></code>,
+and <code class="docutils literal"><span class="pre">long</span></code> is compatible with <code class="docutils literal"><span class="pre">float</span></code> and <code class="docutils literal"><span class="pre">double</span></code>, but <code class="docutils literal"><span class="pre">long</span></code> is not
+compatible with <code class="docutils literal"><span class="pre">int</span></code> because <code class="docutils literal"><span class="pre">int</span></code> cannot represent every <code class="docutils literal"><span class="pre">long</span></code> value.</p>
 </li>
-<li><p class="first">A byte array is compatible with a <tt class="docutils literal"><span class="pre">ByteBuffer</span></tt> and vice versa.</p>
+<li><p class="first">A byte array is compatible with a <code class="docutils literal"><span class="pre">ByteBuffer</span></code> and vice versa.</p>
 </li>
 <li><p class="first">A collection of type A is compatible with a collection of type B,
 if type A is compatible with type B.
-Here, a collection can be an array or any Java <tt class="docutils literal"><span class="pre">Collection</span></tt>.
-Hence, a <tt class="docutils literal"><span class="pre">List&lt;Integer&gt;</span></tt> is compatible with a <tt class="docutils literal"><span class="pre">String[]</span></tt> array.</p>
+Here, a collection can be an array or any Java <code class="docutils literal"><span class="pre">Collection</span></code>.
+Hence, a <code class="docutils literal"><span class="pre">List&lt;Integer&gt;</span></code> is compatible with a <code class="docutils literal"><span class="pre">String[]</span></code> array.</p>
 </li>
 <li><p class="first">Two maps are compatible if their underlying types are compatible.
-For example, a <tt class="docutils literal"><span class="pre">TreeMap&lt;Integer,</span> <span class="pre">Boolean&gt;</span></tt> is compatible with a
-<tt class="docutils literal"><span class="pre">HashMap&lt;String,</span> <span class="pre">String&gt;</span></tt>.</p>
+For example, a <code class="docutils literal"><span class="pre">TreeMap&lt;Integer,</span> <span class="pre">Boolean&gt;</span></code> is compatible with a
+<code class="docutils literal"><span class="pre">HashMap&lt;String,</span> <span class="pre">String&gt;</span></code>.</p>
 </li>
 <li><p class="first">Other Java objects can be compatible if their fields are compatible.
-For example, in the following class <tt class="docutils literal"><span class="pre">Point</span></tt> is compatible with <tt class="docutils literal"><span class="pre">Coordinate</span></tt>,
+For example, in the following class <code class="docutils literal"><span class="pre">Point</span></code> is compatible with <code class="docutils literal"><span class="pre">Coordinate</span></code>,
 because all common fields between the two classes are compatible.
-When projecting from <tt class="docutils literal"><span class="pre">Point</span></tt> to <tt class="docutils literal"><span class="pre">Coordinate</span></tt>, the color field is dropped,
-whereas the projection from <tt class="docutils literal"><span class="pre">Coordinate</span></tt> to <tt class="docutils literal"><span class="pre">Point</span></tt> will leave the <tt class="docutils literal"><span class="pre">color</span></tt> field
-as <tt class="docutils literal"><span class="pre">null</span></tt>:</p>
+When projecting from <code class="docutils literal"><span class="pre">Point</span></code> to <code class="docutils literal"><span class="pre">Coordinate</span></code>, the color field is dropped,
+whereas the projection from <code class="docutils literal"><span class="pre">Coordinate</span></code> to <code class="docutils literal"><span class="pre">Point</span></code> will leave the <code class="docutils literal"><span class="pre">color</span></code> field
+as <code class="docutils literal"><span class="pre">null</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">class</span> <span class="nc">Point</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
   <span class="kd">private</span> <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>

@@ -82,12 +82,12 @@
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:</p>
 <ol class="arabic">
-<li><p class="first">Start the Standalone CDAP with <tt class="docutils literal"><span class="pre">--enable-debug</span></tt>, optionally specifying a port (default is <tt class="docutils literal"><span class="pre">5005</span></tt>).</p>
+<li><p class="first">Start the Standalone CDAP with <code class="docutils literal"><span class="pre">--enable-debug</span></code>, optionally specifying a port (default is <code class="docutils literal"><span class="pre">5005</span></code>).</p>
 <p>The CDAP should confirm that the debugger port is open with a message such as
-<tt class="docutils literal"><span class="pre">Remote</span> <span class="pre">debugger</span> <span class="pre">agent</span> <span class="pre">started</span> <span class="pre">on</span> <span class="pre">port</span> <span class="pre">5005</span></tt>.</p>
+<code class="docutils literal"><span class="pre">Remote</span> <span class="pre">debugger</span> <span class="pre">agent</span> <span class="pre">started</span> <span class="pre">on</span> <span class="pre">port</span> <span class="pre">5005</span></code>.</p>
 </li>
 <li><p class="first">Deploy (for example) the <em>HelloWorld</em> Application to the CDAP by dragging and dropping the
-<tt class="docutils literal"><span class="pre">HelloWorld.jar</span></tt> file from the <tt class="docutils literal"><span class="pre">/examples/HelloWorld</span></tt> directory onto the CDAP Console.</p>
+<code class="docutils literal"><span class="pre">HelloWorld.jar</span></code> file from the <code class="docutils literal"><span class="pre">/examples/HelloWorld</span></code> directory onto the CDAP Console.</p>
 </li>
 <li><p class="first">Open the <em>HelloWorld</em> Application in an IDE and connect to the remote debugger.</p>
 </li>
@@ -108,8 +108,8 @@ an HTTP request to the component’s URL. For example, the following will start 
 </pre></div>
 </div>
 <p>Note that this URL differs from the URL for starting the Flow only by the last path
-component (<tt class="docutils literal"><span class="pre">debug</span></tt> instead of <tt class="docutils literal"><span class="pre">start</span></tt>; see
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><em>Lifecycle HTTP RESTful API</em></a>). You can pass in
+component (<code class="docutils literal"><span class="pre">debug</span></code> instead of <code class="docutils literal"><span class="pre">start</span></code>; see
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v2.8.0)"><span>Lifecycle HTTP RESTful API</span></a>). You can pass in
 runtime arguments in the exact same way as you normally would start a Flow.</p>
 <p>Once the Flow is running, each Flowlet will detect an available port in its container
 and open that port for attaching a debugger.
@@ -153,9 +153,9 @@ the CDAP for a Procedure or Flow’s live info via HTTP:</p>
 </div>
 <p>You see the YARN application id and the YARN container IDs of each Flowlet. More importantly, you
 can see the host name and debugging port for each Flowlet. For example, the only instance of the
-splitter Flowlet is running on <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt> and the debugging port is 37205. You can now
+splitter Flowlet is running on <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code> and the debugging port is 37205. You can now
 attach your debugger to the container’s JVM (see <a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a>).</p>
-<p>The corresponding HTTP requests for the <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> Procedure of this application would be:</p>
+<p>The corresponding HTTP requests for the <code class="docutils literal"><span class="pre">RetrieveCounts</span></code> Procedure of this application would be:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/debug</span>
 <span class="go">GET &lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/live-info</span>
 </pre></div>
@@ -169,20 +169,20 @@ attach your debugger to the container’s JVM (see <a class="reference internal"
 <p><em>Note:</em> These instructions were developed with <em>IntelliJ v13.1.2.</em>
 You may need to adjust them for your installation or version.</p>
 <ol class="arabic">
-<li><p class="first">From the <em>IntelliJ</em> toolbar, select <tt class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Edit</span> <span class="pre">Configurations</span></tt>.</p>
+<li><p class="first">From the <em>IntelliJ</em> toolbar, select <code class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Edit</span> <span class="pre">Configurations</span></code>.</p>
 </li>
-<li><p class="first">Click <tt class="docutils literal"><span class="pre">+</span></tt> and choose <tt class="docutils literal"><span class="pre">Remote</span></tt>:</p>
+<li><p class="first">Click <code class="docutils literal"><span class="pre">+</span></code> and choose <code class="docutils literal"><span class="pre">Remote</span></code>:</p>
 <img alt="../_images/intellij_1.png" src="../_images/intellij_1.png" />
 </li>
-<li><p class="first">Create a debug configuration by entering a name, for example, <tt class="docutils literal"><span class="pre">CDAP</span></tt>.</p>
+<li><p class="first">Create a debug configuration by entering a name, for example, <code class="docutils literal"><span class="pre">CDAP</span></code>.</p>
 </li>
-<li><p class="first">Enter the host name, for example, <tt class="docutils literal"><span class="pre">localhost</span></tt> or <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt>
+<li><p class="first">Enter the host name, for example, <code class="docutils literal"><span class="pre">localhost</span></code> or <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code>
 in the Host field.</p>
 </li>
-<li><p class="first">Enter the debugging port, for example, <tt class="docutils literal"><span class="pre">5005</span></tt> in the Port field:</p>
+<li><p class="first">Enter the debugging port, for example, <code class="docutils literal"><span class="pre">5005</span></code> in the Port field:</p>
 <img alt="../_images/intellij_2.png" src="../_images/intellij_2.png" />
 </li>
-<li><p class="first">To start the debugger, select <tt class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Debug</span> <span class="pre">-&gt;</span> <span class="pre">CDAP</span></tt>.</p>
+<li><p class="first">To start the debugger, select <code class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Debug</span> <span class="pre">-&gt;</span> <span class="pre">CDAP</span></code>.</p>
 </li>
 <li><p class="first">Set a breakpoint in any code block, for example, a Flowlet method:</p>
 <img alt="../_images/intellij_3.png" src="../_images/intellij_3.png" />
@@ -199,21 +199,21 @@ and you can proceed with debugging.</p>
 <p><em>Note:</em> These instructions were developed with <em>Eclipse IDE for Java Developers v4.4.0.</em>
 You may need to adjust them for your installation or version.</p>
 <ol class="arabic">
-<li><p class="first">In Eclipse, select <tt class="docutils literal"><span class="pre">Run-&gt;</span> <span class="pre">Debug</span></tt> configurations.</p>
+<li><p class="first">In Eclipse, select <code class="docutils literal"><span class="pre">Run-&gt;</span> <span class="pre">Debug</span></code> configurations.</p>
 </li>
-<li><p class="first">In the list on the left of the window, double-click <tt class="docutils literal"><span class="pre">Remote</span> <span class="pre">Java</span> <span class="pre">Application</span></tt> to create
+<li><p class="first">In the list on the left of the window, double-click <code class="docutils literal"><span class="pre">Remote</span> <span class="pre">Java</span> <span class="pre">Application</span></code> to create
 a new launch configuration.</p>
 <img alt="../_images/eclipse_1.png" src="../_images/eclipse_1.png" />
 </li>
-<li><p class="first">Enter a name and project, for example, <tt class="docutils literal"><span class="pre">CDAP</span></tt>.</p>
+<li><p class="first">Enter a name and project, for example, <code class="docutils literal"><span class="pre">CDAP</span></code>.</p>
 <img alt="../_images/eclipse_2.png" src="../_images/eclipse_2.png" />
 </li>
-<li><p class="first">Enter the host name, for example, <tt class="docutils literal"><span class="pre">localhost</span></tt> or <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt>
+<li><p class="first">Enter the host name, for example, <code class="docutils literal"><span class="pre">localhost</span></code> or <code class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></code>
 in the Port field:</p>
 </li>
-<li><p class="first">Enter the debugging port, for example, <tt class="docutils literal"><span class="pre">5005</span></tt> in the Port field:</p>
+<li><p class="first">Enter the debugging port, for example, <code class="docutils literal"><span class="pre">5005</span></code> in the Port field:</p>
 </li>
-<li><p class="first">In your project, click <tt class="docutils literal"><span class="pre">Debug</span></tt> to start the debugger.</p>
+<li><p class="first">In your project, click <code class="docutils literal"><span class="pre">Debug</span></code> to start the debugger.</p>
 </li>
 <li><p class="first">Set a breakpoint in any code block, for example, a Flowlet method:</p>
 <img alt="../_images/eclipse_3.png" src="../_images/eclipse_3.png" />
@@ -230,7 +230,7 @@ in the Port field:</p>
 <div class="section" id="debugging-the-transaction-manager-advanced-use">
 <span id="tx-debugger"></span><h2>Debugging the Transaction Manager (Advanced Use)<a class="headerlink" href="#debugging-the-transaction-manager-advanced-use" title="Permalink to this headline">¶</a></h2>
 <p>In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the <a class="reference internal" href="../building-blocks/transaction-system.html#transaction-system"><em>Transaction System.</em></a></p>
+Transactions are introduced in the <a class="reference internal" href="../building-blocks/transaction-system.html#transaction-system"><span>Transaction System.</span></a></p>
 <p>A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the <cite>write pointer</cite>—represents the version
 that this transaction will use for all of its writes. It is also used to determine
@@ -325,7 +325,7 @@ system can become slow if such a situation occurs.</p>
 <p>CDAP comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your CDAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
-This script is called <tt class="docutils literal"><span class="pre">tx-debugger</span></tt> (on Windows, it is <tt class="docutils literal"><span class="pre">tx-debugger.bat</span></tt>).</p>
+This script is called <code class="docutils literal"><span class="pre">tx-debugger</span></code> (on Windows, it is <code class="docutils literal"><span class="pre">tx-debugger.bat</span></code>).</p>
 <p>To download a snapshot of the state of the TM of the CDAP, use the command:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> tx-debugger view --host &lt;name&gt; <span class="o">[</span>--save &lt;filename&gt;<span class="o">]</span>
 </pre></div>
@@ -339,11 +339,11 @@ with the command:</p>
 </pre></div>
 </div>
 <p>where <cite>filename</cite> specifies the location where the snapshot has been saved.</p>
-<p>Here are options that you can use with the <tt class="docutils literal"><span class="pre">tx-debugger</span> <span class="pre">view</span></tt> commands:</p>
+<p>Here are options that you can use with the <code class="docutils literal"><span class="pre">tx-debugger</span> <span class="pre">view</span></code> commands:</p>
 <ul class="simple">
-<li>Use the <tt class="docutils literal"><span class="pre">--ids</span></tt> option to print all the transaction write pointers
+<li>Use the <code class="docutils literal"><span class="pre">--ids</span></code> option to print all the transaction write pointers
 that are stored in the different structures.</li>
-<li>Use the <tt class="docutils literal"><span class="pre">--transaction</span> <span class="pre">&lt;writePtr&gt;</span></tt> option to specify the write pointer
+<li>Use the <code class="docutils literal"><span class="pre">--transaction</span> <span class="pre">&lt;writePtr&gt;</span></code> option to specify the write pointer
 of a transaction you would like information on. If the transaction is found
 in the committing change sets or the committed change sets
 structures, this will print the keys where the transaction has

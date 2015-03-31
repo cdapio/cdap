@@ -143,9 +143,9 @@ standard Maven project structure for all of the source code files:</p>
 <span class="go">./src/main/scala/co/cask/cdap/guides/PageRankProgram.scala</span>
 </pre></div>
 </div>
-<p>The application is identified by the <tt class="docutils literal"><span class="pre">PageRankApp</span></tt> class. This class
+<p>The application is identified by the <code class="docutils literal"><span class="pre">PageRankApp</span></code> class. This class
 extends <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html">AbstractApplication</a>,
-and overrides the <tt class="docutils literal"><span class="pre">configure()</span></tt> method to define all of the application components:</p>
+and overrides the <code class="docutils literal"><span class="pre">configure()</span></code> method to define all of the application components:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PageRankApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -165,18 +165,18 @@ and overrides the <tt class="docutils literal"><span class="pre">configure()</sp
 </div>
 <p>In this example, we use a Stream to supply backlinks data;
 the Spark program that computes the PageRank of the web pages reads directly from the Stream.
-<tt class="docutils literal"><span class="pre">backlinkURLStream</span></tt> receives backlinks information in the form of two URLs separated by whitespace:</p>
+<code class="docutils literal"><span class="pre">backlinkURLStream</span></code> receives backlinks information in the form of two URLs separated by whitespace:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://example.com/page1 http://example.com/page10</span>
 </pre></div>
 </div>
 <p>We’ll use Scala to write the Spark program (for an example of using Java, refer to the <a class="reference external" href="http://docs.cask.co/cdap/current/en/developers-manual/examples/spark-page-rank.html">CDAP SparkPageRank
 example</a>).
-You’ll need to add <tt class="docutils literal"><span class="pre">scala</span></tt> and <tt class="docutils literal"><span class="pre">maven-scala-plugin</span></tt> as dependencies in
+You’ll need to add <code class="docutils literal"><span class="pre">scala</span></code> and <code class="docutils literal"><span class="pre">maven-scala-plugin</span></code> as dependencies in
 your Maven <a class="reference external" href="https://github.com/cdap-guides/cdap-spark-guide/blob/develop/pom.xml">pom.xml</a>.</p>
 <p>The code below configures Spark in CDAP. This class extends
 <a class="reference external" href="http://docs.cdap.io/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/spark/AbstractSpark.html">AbstractSpark</a>
-and overrides the <tt class="docutils literal"><span class="pre">configure()</span></tt> method to define all of the components. The
-<tt class="docutils literal"><span class="pre">setMainClassName</span></tt> method sets the Spark Program class which CDAP will run:</p>
+and overrides the <code class="docutils literal"><span class="pre">configure()</span></code> method to define all of the components. The
+<code class="docutils literal"><span class="pre">setMainClassName</span></code> method sets the Spark Program class which CDAP will run:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PageRankSpark</span> <span class="kd">extends</span> <span class="n">AbstractSpark</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -188,7 +188,7 @@ and overrides the <tt class="docutils literal"><span class="pre">configure()</sp
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">PageRankProgram</span></tt> Spark program does the actual page rank
+<p>The <code class="docutils literal"><span class="pre">PageRankProgram</span></code> Spark program does the actual page rank
 computation. This code is taken from the <a class="reference external" href="https://github.com/apache/spark/blob/master/examples/src/main/scala/org/apache/spark/examples/SparkPageRank.scala">Apache Spark&#8217;s PageRank example</a>;
 the Spark program stores the computed PageRank in an ObjectStore
 Dataset where the key is the URL and the value is the computed PageRank:</p>
@@ -221,8 +221,8 @@ Dataset where the key is the URL and the value is the computed PageRank:</p>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>To serve results out via HTTP, add a <tt class="docutils literal"><span class="pre">PageRankHandler</span></tt>, which
-reads the PageRank for a given URL from the <tt class="docutils literal"><span class="pre">pageRanks</span></tt> dataset:</p>
+<p>To serve results out via HTTP, add a <code class="docutils literal"><span class="pre">PageRankHandler</span></code>, which
+reads the PageRank for a given URL from the <code class="docutils literal"><span class="pre">pageRanks</span></code> dataset:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PageRankHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
 
   <span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;pageRanks&quot;</span><span class="o">)</span>
@@ -255,11 +255,11 @@ reads the PageRank for a given URL from the <tt class="docutils literal"><span c
 </div>
 <div class="section" id="build-and-run-application">
 <h2>Build and Run Application<a class="headerlink" href="#build-and-run-application" title="Permalink to this headline">¶</a></h2>
-<p>The <tt class="docutils literal"><span class="pre">PageRankApp</span></tt> application can be built and packaged using the Apache Maven command:</p>
+<p>The <code class="docutils literal"><span class="pre">PageRankApp</span></code> application can be built and packaged using the Apache Maven command:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
 </pre></div>
 </div>
-<p>Note that the remaining commands assume that the <tt class="docutils literal"><span class="pre">cdap-cli.sh</span></tt> script is
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script is
 available on your PATH. If this is not the case, please add it:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">export PATH=$PATH:&lt;CDAP home&gt;/bin</span>
 </pre></div>

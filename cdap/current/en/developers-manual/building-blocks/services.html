@@ -81,9 +81,9 @@ Similar to Flows, Services run in containers and the number of running service i
 Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.</p>
 <p>The lifecycle of a Custom Service can be controlled via the CDAP Console, by using the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Java Client API</em></a>, or with the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP RESTful HTTP API</em></a>.</p>
-<p>You can add Services to your application by calling the <tt class="docutils literal"><span class="pre">addService</span></tt> method in the
-Application&#8217;s <tt class="docutils literal"><span class="pre">configure</span></tt> method:</p>
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Java Client API</span></a>, or with the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP RESTful HTTP API</span></a>.</p>
+<p>You can add Services to your application by calling the <code class="docutils literal"><span class="pre">addService</span></code> method in the
+Application&#8217;s <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AnalyticsApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="nd">@Override</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -99,8 +99,8 @@ Application&#8217;s <tt class="docutils literal"><span class="pre">configure</sp
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Services are implemented by extending <tt class="docutils literal"><span class="pre">AbstractService</span></tt>, which consists of
-<tt class="docutils literal"><span class="pre">HttpServiceHandler</span></tt>s to serve requests:</p>
+<p>Services are implemented by extending <code class="docutils literal"><span class="pre">AbstractService</span></code>, which consists of
+<code class="docutils literal"><span class="pre">HttpServiceHandler</span></code>s to serve requests:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IPGeoLookupService</span> <span class="kd">extends</span> <span class="n">AbstractService</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -115,12 +115,12 @@ Application&#8217;s <tt class="docutils literal"><span class="pre">configure</sp
 </div>
 <div class="section" id="service-handlers">
 <h2>Service Handlers<a class="headerlink" href="#service-handlers" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">ServiceHandler</span></tt>s are used to handle and serve HTTP requests.</p>
-<p>You add handlers to your Service by calling the <tt class="docutils literal"><span class="pre">addHandler</span></tt> method in the Service&#8217;s
-<tt class="docutils literal"><span class="pre">configure</span></tt> method, as shown above. Only handler classes that are declared public,
+<p><code class="docutils literal"><span class="pre">ServiceHandler</span></code>s are used to handle and serve HTTP requests.</p>
+<p>You add handlers to your Service by calling the <code class="docutils literal"><span class="pre">addHandler</span></code> method in the Service&#8217;s
+<code class="docutils literal"><span class="pre">configure</span></code> method, as shown above. Only handler classes that are declared public,
 with public methods for endpoints, will be exposed by the Service.</p>
-<p>To use a Dataset within a handler, specify the Dataset by calling the <tt class="docutils literal"><span class="pre">useDataset</span></tt>
-method in the Service&#8217;s <tt class="docutils literal"><span class="pre">configure</span></tt> method and include the <tt class="docutils literal"><span class="pre">&#64;UseDataSet</span></tt> annotation in
+<p>To use a Dataset within a handler, specify the Dataset by calling the <code class="docutils literal"><span class="pre">useDataset</span></code>
+method in the Service&#8217;s <code class="docutils literal"><span class="pre">configure</span></code> method and include the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation in
 the handler to obtain an instance of the Dataset. Each request to a method is committed as
 a single transaction.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IPGeoLookupHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
@@ -141,10 +141,10 @@ a single transaction.</p>
 <h3>Path and Query Parameters<a class="headerlink" href="#path-and-query-parameters" title="Permalink to this headline">¶</a></h3>
 <p>Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
 while Query parameters are used to easily parse the query string of a request.</p>
-<p>For example, the <tt class="docutils literal"><span class="pre">WordCount</span></tt> application has a <tt class="docutils literal"><span class="pre">Service</span></tt> that exposes an endpoint to retrieve the count of a word
-and its word associations. In the <tt class="docutils literal"><span class="pre">&#64;Path</span></tt> annotation, <tt class="docutils literal"><span class="pre">{word}</span></tt> is a path parameter that is mapped
-to a Java String using <tt class="docutils literal"><span class="pre">&#64;PathParam(&quot;word&quot;)</span> <span class="pre">String</span> <span class="pre">word</span></tt>. Similarly, the endpoint also allows
-the query parameter <tt class="docutils literal"><span class="pre">limit</span></tt> with a default value of 10.</p>
+<p>For example, the <code class="docutils literal"><span class="pre">WordCount</span></code> application has a <code class="docutils literal"><span class="pre">Service</span></code> that exposes an endpoint to retrieve the count of a word
+and its word associations. In the <code class="docutils literal"><span class="pre">&#64;Path</span></code> annotation, <code class="docutils literal"><span class="pre">{word}</span></code> is a path parameter that is mapped
+to a Java String using <code class="docutils literal"><span class="pre">&#64;PathParam(&quot;word&quot;)</span> <span class="pre">String</span> <span class="pre">word</span></code>. Similarly, the endpoint also allows
+the query parameter <code class="docutils literal"><span class="pre">limit</span></code> with a default value of 10.</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;count/{word}&quot;</span><span class="o">)</span>
 <span class="nd">@GET</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">getCount</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
@@ -155,27 +155,27 @@ the query parameter <tt class="docutils literal"><span class="pre">limit</span><
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>An example of calling this endpoint with the HTTP RESTful API is shown in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/service.html#http-restful-api-service" title="(in Cask Data Application Platform v2.8.0)"><em>Service HTTP RESTful API</em></a>.</p>
+<p>An example of calling this endpoint with the HTTP RESTful API is shown in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/service.html#http-restful-api-service" title="(in Cask Data Application Platform v2.8.0)"><span>Service HTTP RESTful API</span></a>.</p>
 <p><strong>Note:</strong> Any reserved or unsafe characters in the path parameters should be encoded using
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/introduction.html#http-restful-api-conventions-reserved-unsafe-characters" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">percent-encoding</em></a>.
-See the next section, <a class="reference internal" href="#services-path-parameters"><em>About Path Parameters</em></a>.</p>
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/http-restful-api-v3/introduction.html#http-restful-api-conventions-reserved-unsafe-characters" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">percent-encoding</span></a>.
+See the next section, <a class="reference internal" href="#services-path-parameters"><span>About Path Parameters</span></a>.</p>
 </div>
 </div>
 <div class="section" id="about-path-parameters">
 <span id="services-path-parameters"></span><h2>About Path Parameters<a class="headerlink" href="#about-path-parameters" title="Permalink to this headline">¶</a></h2>
 <p>The value of a path parameter cannot contain any <a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.2">characters that have a special meaning</a> in URI syntax. If a request has a path
-parameter that contains such a character, it must be <a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.1">URL-encoded</a> using the &#8220;<tt class="docutils literal"><span class="pre">%hh</span></tt>&#8221; notation, a
+parameter that contains such a character, it must be <a class="reference external" href="http://tools.ietf.org/html/rfc3986#section-2.1">URL-encoded</a> using the &#8220;<code class="docutils literal"><span class="pre">%hh</span></code>&#8221; notation, a
 percent-symbol followed by two hex characters.</p>
-<p>In general, any character that is not a letter, a digit, or one of <tt class="docutils literal"><span class="pre">$-_.+!*'()</span></tt> should be encoded.</p>
-<p>However, if the special character is a forward-slash (<tt class="docutils literal"><span class="pre">/</span></tt>), then it will appear to the
-path matcher as a &#8220;<tt class="docutils literal"><span class="pre">/</span></tt>&#8221;, even if it is escaped as &#8220;<tt class="docutils literal"><span class="pre">%2f</span></tt>&#8221;. This occurs because the path is
+<p>In general, any character that is not a letter, a digit, or one of <code class="docutils literal"><span class="pre">$-_.+!*'()</span></code> should be encoded.</p>
+<p>However, if the special character is a forward-slash (<code class="docutils literal"><span class="pre">/</span></code>), then it will appear to the
+path matcher as a &#8220;<code class="docutils literal"><span class="pre">/</span></code>&#8221;, even if it is escaped as &#8220;<code class="docutils literal"><span class="pre">%2f</span></code>&#8221;. This occurs because the path is
 decoded prior to matching.</p>
 <p>There are two ways to work around this:</p>
 <ul class="simple">
-<li>Double-escape any forward-slashes (<tt class="docutils literal"><span class="pre">/</span></tt>) as &#8220;<tt class="docutils literal"><span class="pre">%252f</span></tt>&#8221;. This will prevent the decoding before the path is matched.
-However, the path parameter&#8217;s value will contain the &#8220;<tt class="docutils literal"><span class="pre">%2f</span></tt>&#8221; instead of a &#8220;<tt class="docutils literal"><span class="pre">/</span></tt>&#8221;, and the
+<li>Double-escape any forward-slashes (<code class="docutils literal"><span class="pre">/</span></code>) as &#8220;<code class="docutils literal"><span class="pre">%252f</span></code>&#8221;. This will prevent the decoding before the path is matched.
+However, the path parameter&#8217;s value will contain the &#8220;<code class="docutils literal"><span class="pre">%2f</span></code>&#8221; instead of a &#8220;<code class="docutils literal"><span class="pre">/</span></code>&#8221;, and the
 application code must decode the parameter itself to obtain the actual value.</li>
-<li>Use a query parameter instead. This is a better solution because the &#8220;<tt class="docutils literal"><span class="pre">/</span></tt>&#8221; is not a reserved
+<li>Use a query parameter instead. This is a better solution because the &#8220;<code class="docutils literal"><span class="pre">/</span></code>&#8221; is not a reserved
 character in the query of a URI.</li>
 </ul>
 </div>
@@ -183,11 +183,11 @@ character in the query of a URI.</li>
 <h2>Service Discovery<a class="headerlink" href="#service-discovery" title="Permalink to this headline">¶</a></h2>
 <p>Services announce the host and port they are running on so that they can be discovered—and
 accessed—by other programs.</p>
-<p>Service are announced using the name passed in the <tt class="docutils literal"><span class="pre">configure</span></tt> method. The <em>application name</em>, <em>service id</em>, and
+<p>Service are announced using the name passed in the <code class="docutils literal"><span class="pre">configure</span></code> method. The <em>application name</em>, <em>service id</em>, and
 <em>hostname</em> required for registering the Service are automatically obtained.</p>
 <p>The Service can then be discovered in a Flow, Procedure, MapReduce, Spark, or other Service using
 the appropriate program context. You may also access a Service in a different Application
-by specifying the Application name in the <tt class="docutils literal"><span class="pre">getServiceURL</span></tt> call.</p>
+by specifying the Application name in the <code class="docutils literal"><span class="pre">getServiceURL</span></code> call.</p>
 <p>For example, in Flows:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GeoFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
 
@@ -221,21 +221,21 @@ by specifying the Application name in the <tt class="docutils literal"><span cla
 </div>
 <p class="rubric">Examples of Using Services</p>
 <ul class="simple">
-<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Hello World</em></a>, demonstrates using a
+<li>The simplest example, <a class="reference external" href="../source/../../examples-manual/examples/hello-world.html#examples-hello-world" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Hello World</span></a>, demonstrates using a
 service to <strong>retrieve a name from a dataset.</strong></li>
-<li>The <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Purchase example</em></a> includes two services, <tt class="docutils literal"><span class="pre">CatalogLookupService</span></tt>
-and <tt class="docutils literal"><span class="pre">PurchaseHistoryService</span></tt>; the latter <strong>retrieves a specified customer&#8217;s purchase
+<li>The <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Purchase example</span></a> includes two services, <code class="docutils literal"><span class="pre">CatalogLookupService</span></code>
+and <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code>; the latter <strong>retrieves a specified customer&#8217;s purchase
 history in a JSON format from a dataset.</strong></li>
-<li>The <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark example</em></a> includes a service that <strong>responds with
+<li>The <a class="reference external" href="../source/../../examples-manual/examples/spark-k-means.html#examples-spark-k-means" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark example</span></a> includes a service that <strong>responds with
 a calculated center from a dataset based on an index parameter.</strong></li>
-<li>For another example of <strong>a service reading from a dataset,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">Spark PageRank
-example</em></a>.</li>
+<li>For another example of <strong>a service reading from a dataset,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/spark-page-rank.html#examples-spark-page-rank" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">Spark PageRank
+example</span></a>.</li>
 <li>For an example of <strong>using path and query parameters,</strong> see the
-<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">WordCount example</em></a>, where the class <tt class="docutils literal"><span class="pre">RetrieveCountsHandler</span></tt>
+<a class="reference external" href="../source/../../examples-manual/examples/word-count.html#examples-word-count" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">WordCount example</span></a>, where the class <code class="docutils literal"><span class="pre">RetrieveCountsHandler</span></code>
 retrieves a variety of statistics from datasets depending on the path supplied.</li>
-<li>Almost all of the <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">how-to guides</em></a> demonstrate the use of services.
-(The exception is the <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-bi-guide.html#cdap-bi-guide" title="(in Cask Data Application Platform v2.8.0)"><em>Analyzing CDAP Data from BI Tools</em></a>.)</li>
-<li>From the <a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><em>Tutorials</em></a>, the <em>WISE: Web Analytics</em> and the
+<li>Almost all of the <a class="reference external" href="../source/../../examples-manual/how-to-guides/index.html#guides-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">how-to guides</span></a> demonstrate the use of services.
+(The exception is the <a class="reference external" href="../source/../../examples-manual/how-to-guides/cdap-bi-guide.html#cdap-bi-guide" title="(in Cask Data Application Platform v2.8.0)"><span>Analyzing CDAP Data from BI Tools</span></a>.)</li>
+<li>From the <a class="reference external" href="../source/../../examples-manual/tutorials.html#tutorials" title="(in Cask Data Application Platform v2.8.0)"><span>Tutorials</span></a>, the <em>WISE: Web Analytics</em> and the
 <em>MovieRecommender: Recommender System</em> both demonstrate the use of services.</li>
 </ul>
 </div>

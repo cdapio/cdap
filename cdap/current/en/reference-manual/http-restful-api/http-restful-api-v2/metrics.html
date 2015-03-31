@@ -83,7 +83,7 @@
 <p>As of <em>CDAP v2.8.0</em>, the <em>HTTP RESTful API v2</em> has been deprecated, pending removal in
 a later version. Replace all use of the <em>HTTP RESTful API v2</em> with <a class="reference external" href="../http-restful-api-v3/index.html"><strong>HTTP RESTful API v3</strong></a>. This
 involves using a namespace and a namespace id in the call, as
-<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><em>described in the documentation</em></a>. The <tt class="docutils literal"><span class="pre">default</span></tt>
+<a class="reference internal" href="../http-restful-api-v3/namespace.html#http-restful-api-v3-namespace"><span>described in the documentation</span></a>. The <code class="docutils literal"><span class="pre">default</span></code>
 namespace can be used as a drop-in replacement in existing API v2 code.</p>
 </div>
 <p>As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these
@@ -91,8 +91,8 @@ metrics are the same for every Application—how many events are processed, how 
 etc.—and are thus called system or CDAP metrics.</p>
 <p>Other metrics are user-defined and differ from Application to Application.
 For details on how to add metrics to your Application, see the section on
-<a class="reference external" href="../../source/../../admin-manual/operations/metrics.html#operations-metrics" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">User-Defined Metrics</em></a> in
-the <a class="reference external" href="../../source/../../admin-manual/index.html#admin-index" title="(in Cask Data Application Platform v2.8.0)"><em class="xref std std-ref">CDAP Administration Manual.</em></a></p>
+<a class="reference external" href="../../source/../../admin-manual/operations/metrics.html#operations-metrics" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">User-Defined Metrics</span></a> in
+the <a class="reference external" href="../../source/../../admin-manual/index.html#admin-index" title="(in Cask Data Application Platform v2.8.0)"><span class="xref std std-ref">CDAP Administration Manual.</span></a></p>
 <div class="section" id="metrics-requests">
 <h2>Metrics Requests<a class="headerlink" href="#metrics-requests" title="Permalink to this headline">¶</a></h2>
 <p>The general form of a metrics request is:</p>
@@ -110,20 +110,20 @@ the <a class="reference external" href="../../source/../../admin-manual/index.ht
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;scope&gt;</span></tt></td>
-<td>Either <tt class="docutils literal"><span class="pre">system</span></tt> (system metrics) or <tt class="docutils literal"><span class="pre">user</span></tt> (user-defined metrics)</td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;scope&gt;</span></code></td>
+<td>Either <code class="docutils literal"><span class="pre">system</span></code> (system metrics) or <code class="docutils literal"><span class="pre">user</span></code> (user-defined metrics)</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;context&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;context&gt;</span></code></td>
 <td>Hierarchy of context; see <a class="reference internal" href="#available-contexts">Available Contexts</a></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;run-id&gt;</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;run-id&gt;</span></code></td>
 <td>Run-ID of the program; see <a class="reference internal" href="#querying-by-run-id">Querying by Run-ID</a></td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;metric&gt;</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;metric&gt;</span></code></td>
 <td>Metric being queried; see <a class="reference internal" href="#available-metrics">Available Metrics</a></td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;time-range&gt;</span></tt></td>
-<td>A <a class="reference internal" href="#time-range">Time Range</a> or <tt class="docutils literal"><span class="pre">aggregate=true</span></tt> for all since the Application was deployed</td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;time-range&gt;</span></code></td>
+<td>A <a class="reference internal" href="#time-range">Time Range</a> or <code class="docutils literal"><span class="pre">aggregate=true</span></code> for all since the Application was deployed</td>
 </tr>
 </tbody>
 </table>
@@ -136,8 +136,8 @@ the <a class="reference external" href="../../source/../../admin-manual/index.ht
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/system/apps/HelloWorld/flows/</span></tt>
-<tt class="docutils literal"><span class="pre">WhoFlow/flowlets/saver/process.busyness?aggregate=true</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/system/apps/HelloWorld/flows/</span></code>
+<code class="docutils literal"><span class="pre">WhoFlow/flowlets/saver/process.busyness?aggregate=true</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Using a <em>System</em> metric, <em>process.busyness</em></td>
@@ -146,8 +146,8 @@ the <a class="reference external" href="../../source/../../admin-manual/index.ht
 <td>&nbsp;</td>
 </tr>
 <tr class="row-even"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/user/apps/HelloWorld/flows/</span></tt>
-<tt class="docutils literal"><span class="pre">WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/user/apps/HelloWorld/flows/</span></code>
+<code class="docutils literal"><span class="pre">WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">Description</th>
 <td>Querying the <em>User-Defined</em> metric <em>names.bytes</em>, of the Flow <em>saver</em>, by its run-ID</td>
@@ -156,8 +156,8 @@ the <a class="reference external" href="../../source/../../admin-manual/index.ht
 <td>&nbsp;</td>
 </tr>
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/user/apps/HelloWorld/services/</span></tt>
-<tt class="docutils literal"><span class="pre">WhoService/runnables/WhoRun/names.bytes?aggregate=true</span></tt></td>
+<td><code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/metrics/user/apps/HelloWorld/services/</span></code>
+<code class="docutils literal"><span class="pre">WhoService/runnables/WhoRun/names.bytes?aggregate=true</span></code></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
 <td>Using a <em>User-Defined</em> metric, <em>names.bytes</em> in a Service&#8217;s Handler</td>
@@ -167,7 +167,7 @@ the <a class="reference external" href="../../source/../../admin-manual/index.ht
 </div>
 <div class="section" id="comments">
 <h3>Comments<a class="headerlink" href="#comments" title="Permalink to this headline">¶</a></h3>
-<p>The scope must be either <tt class="docutils literal"><span class="pre">system</span></tt> for system metrics or <tt class="docutils literal"><span class="pre">user</span></tt> for user-defined metrics.</p>
+<p>The scope must be either <code class="docutils literal"><span class="pre">system</span></code> for system metrics or <code class="docutils literal"><span class="pre">user</span></code> for user-defined metrics.</p>
 <p>System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).</p>
 <p>User metrics are always in the Application context.</p>
 <p>For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named <em>splitter</em>,
@@ -210,7 +210,7 @@ API at the Flow context:</p>
 <span class="go">GET &lt;base-url&gt;/metrics/system/process.events?start=now-5s&amp;count=5</span>
 </pre></div>
 </div>
-<p>To request user-defined metrics instead of system metrics, specify <tt class="docutils literal"><span class="pre">user</span></tt> instead of <tt class="docutils literal"><span class="pre">cdap</span></tt> in the URL
+<p>To request user-defined metrics instead of system metrics, specify <code class="docutils literal"><span class="pre">user</span></code> instead of <code class="docutils literal"><span class="pre">cdap</span></code> in the URL
 and specify the user-defined metric at the end of the request.</p>
 <p>For example, to request a user-defined metric for the <em>HelloWorld</em> Application&#8217;s <em>WhoFlow</em> Flow:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/metrics/user/apps/HelloWorld/flows/</span>
@@ -244,38 +244,38 @@ and specify the user-defined metric at the end of the request.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">start=now-30s&amp;end=now</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=now-30s&amp;end=now</span></code></td>
 <td>The last 30 seconds. The start time is given in seconds relative to the current time.
-You can apply simple math, using <tt class="docutils literal"><span class="pre">now</span></tt> for the current time,
-<tt class="docutils literal"><span class="pre">s</span></tt> for seconds, <tt class="docutils literal"><span class="pre">m</span></tt> for minutes, <tt class="docutils literal"><span class="pre">h</span></tt> for hours and <tt class="docutils literal"><span class="pre">d</span></tt> for days.
-For example: <tt class="docutils literal"><span class="pre">now-5d-12h</span></tt> is 5 days and 12 hours ago.</td>
+You can apply simple math, using <code class="docutils literal"><span class="pre">now</span></code> for the current time,
+<code class="docutils literal"><span class="pre">s</span></code> for seconds, <code class="docutils literal"><span class="pre">m</span></code> for minutes, <code class="docutils literal"><span class="pre">h</span></code> for hours and <code class="docutils literal"><span class="pre">d</span></code> for days.
+For example: <code class="docutils literal"><span class="pre">now-5d-12h</span></code> is 5 days and 12 hours ago.</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">start=1385625600&amp;</span></tt> <tt class="docutils literal"><span class="pre">end=1385629200</span></tt></td>
-<td>From <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></tt> to <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></tt>,
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385629200</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></code>,
 both given as since the start of the Epoch</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">start=1385625600&amp;</span></tt> <tt class="docutils literal"><span class="pre">count=3600&amp;</span></tt> <tt class="docutils literal"><span class="pre">resolution=1s</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">count=3600&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1s</span></code></td>
 <td>The same as before, the count given as a number of seconds</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">start=1385625600&amp;</span></tt> <tt class="docutils literal"><span class="pre">end=1385629200&amp;</span></tt> <tt class="docutils literal"><span class="pre">resolution=1m</span></tt></td>
-<td>From <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></tt> to <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></tt>,
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385629200&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1m</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">09:00:00</span> <span class="pre">GMT</span></code>,
 with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">start=1385625600&amp;</span></tt> <tt class="docutils literal"><span class="pre">end=1385632800&amp;</span></tt> <tt class="docutils literal"><span class="pre">resolution=1h</span></tt></td>
-<td>From <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></tt> to <tt class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">10:00:00</span> <span class="pre">GMT</span></tt>,
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">start=1385625600&amp;</span></code> <code class="docutils literal"><span class="pre">end=1385632800&amp;</span></code> <code class="docutils literal"><span class="pre">resolution=1h</span></code></td>
+<td>From <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">08:00:00</span> <span class="pre">GMT</span></code> to <code class="docutils literal"><span class="pre">Thu,</span> <span class="pre">28</span> <span class="pre">Nov</span> <span class="pre">2013</span> <span class="pre">10:00:00</span> <span class="pre">GMT</span></code>,
 with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Note:</strong>
-<tt class="docutils literal"><span class="pre">resolution=auto</span></tt> will automatically determine the resolution based on a time difference calculated between the start and end times. If <tt class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;=</span> <span class="pre">3610</span></tt>, resolution will be in hours; else if <tt class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;=</span> <span class="pre">610</span></tt>, resolution will be in minutes; otherwise, resolution will be in seconds.</p>
+<code class="docutils literal"><span class="pre">resolution=auto</span></code> will automatically determine the resolution based on a time difference calculated between the start and end times. If <code class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;=</span> <span class="pre">3610</span></code>, resolution will be in hours; else if <code class="docutils literal"><span class="pre">(endTime</span> <span class="pre">-</span> <span class="pre">startTime)</span> <span class="pre">&gt;=</span> <span class="pre">610</span></code>, resolution will be in minutes; otherwise, resolution will be in seconds.</p>
 <p>Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application <em>CountRandom</em> was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/metrics/system/apps/CountRandom/process.events.processed?aggregate=true</span>
 </pre></div>
 </div>
 <p>If the metric is a gauge type, the aggregate will return the latest value set for the metric.</p>
-<p>This request will retrieve the completion percentage for the map-stage of the MapReduce <tt class="docutils literal"><span class="pre">PurchaseHistoryWorkflow_PurchaseHistoryBuilder</span></tt>:</p>
+<p>This request will retrieve the completion percentage for the map-stage of the MapReduce <code class="docutils literal"><span class="pre">PurchaseHistoryWorkflow_PurchaseHistoryBuilder</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-ur&gt;/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true</span>
 </pre></div>
 </div>
@@ -295,46 +295,46 @@ aggregate of a metric over time. The following request will return the total num
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>One Flowlet of a Flow</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;</span></code></td>
 </tr>
 <tr class="row-odd"><td>All Flowlets of a Flow</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>All Flowlets of all Flows of an Application</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/flows</span></code></td>
 </tr>
 <tr class="row-odd"><td>One Procedure</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/procedures/&lt;procedure-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/procedures/&lt;procedure-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>All Procedures of an Application</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/procedures</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/procedures</span></code></td>
 </tr>
 <tr class="row-odd"><td>All Mappers of a MapReduce</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;/mappers</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;/mappers</span></code></td>
 </tr>
 <tr class="row-even"><td>All Reducers of a MapReduce</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;/reducers</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;/reducers</span></code></td>
 </tr>
 <tr class="row-odd"><td>One MapReduce</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce/&lt;mapreduce-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>All MapReduce of an Application</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/mapreduce</span></code></td>
 </tr>
 <tr class="row-odd"><td>One Spark Program</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/spark/&lt;spark-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/spark/&lt;spark-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>One Service</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/services/&lt;service-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/services/&lt;service-id&gt;</span></code></td>
 </tr>
 <tr class="row-odd"><td>All Services of an Application</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/services</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;/services</span></code></td>
 </tr>
 <tr class="row-even"><td>All components of an Application</td>
-<td><tt class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/apps/&lt;app-id&gt;</span></code></td>
 </tr>
 <tr class="row-odd"><td>All components of all Applications</td>
-<td><tt class="docutils literal"><span class="pre">/</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -351,7 +351,7 @@ aggregate of a metric over time. The following request will return the total num
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>A single Stream</td>
-<td><tt class="docutils literal"><span class="pre">/streams/&lt;stream-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/streams/&lt;stream-id&gt;</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -369,20 +369,20 @@ Flowlet, Procedure, Mapper, or Reducer level:</p>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>A single Dataset in the context of a single Flowlet</td>
-<td><tt class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/apps/&lt;app-id&gt;/flows/</span></tt>
-<tt class="docutils literal"><span class="pre">&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/apps/&lt;app-id&gt;/flows/</span></code>
+<code class="docutils literal"><span class="pre">&lt;flow-id&gt;/flowlets/&lt;flowlet-id&gt;</span></code></td>
 </tr>
 <tr class="row-odd"><td>A single Dataset in the context of a single Flow</td>
-<td><tt class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/apps/&lt;app-id&gt;/flows/&lt;flow-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>A single Dataset in the context of a specific Application</td>
-<td><tt class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/&lt;any</span> <span class="pre">application</span> <span class="pre">context&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;/&lt;any</span> <span class="pre">application</span> <span class="pre">context&gt;</span></code></td>
 </tr>
 <tr class="row-odd"><td>A single Dataset across all Applications</td>
-<td><tt class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/datasets/&lt;dataset-id&gt;</span></code></td>
 </tr>
 <tr class="row-even"><td>All Datasets across all Applications</td>
-<td><tt class="docutils literal"><span class="pre">/</span></tt></td>
+<td><code class="docutils literal"><span class="pre">/</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -391,8 +391,8 @@ Flowlet, Procedure, Mapper, or Reducer level:</p>
 <h2>Querying by Run-ID<a class="headerlink" href="#querying-by-run-id" title="Permalink to this headline">¶</a></h2>
 <p>Each execution of an program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that program&#8217;s run.
 We can query metrics for an program by its run-ID to see the metrics for a particular run.
-Please see the <a class="reference internal" href="lifecycle.html#rest-program-runs-v2"><em>Run Records and Schedule</em></a> on retrieving active and historical program runs.</p>
-<p>When querying by run-ID, it is specified after the <tt class="docutils literal"><span class="pre">program-id</span></tt> in the path:</p>
+Please see the <a class="reference internal" href="lifecycle.html#rest-program-runs-v2"><span>Run Records and Schedule</span></a> on retrieving active and historical program runs.</p>
+<p>When querying by run-ID, it is specified after the <code class="docutils literal"><span class="pre">program-id</span></code> in the path:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">/apps/&lt;app-id&gt;/&lt;program-type&gt;/&lt;program-id&gt;/runs/&lt;run-id&gt;/</span>
 </pre></div>
 </div>
@@ -418,32 +418,32 @@ User-defined metrics will be available at whatever context that they are emitted
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">process.busyness</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">process.busyness</span></code></td>
 <td>A number from 0 to 100 indicating how “busy” the Flowlet is;
 note that you cannot aggregate over this metric</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">process.errors</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">process.errors</span></code></td>
 <td>Number of errors while processing</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">process.events.processed</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">process.events.processed</span></code></td>
 <td>Number of events/data objects processed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">process.events.in</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">process.events.in</span></code></td>
 <td>Number of events read in by the Flowlet</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">process.events.out</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">process.events.out</span></code></td>
 <td>Number of events emitted by the Flowlet</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">store.bytes</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">store.bytes</span></code></td>
 <td>Number of bytes written to Datasets</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">store.ops</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">store.ops</span></code></td>
 <td>Operations (writes and read) performed on Datasets</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">store.reads</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">store.reads</span></code></td>
 <td>Read operations performed on Datasets</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">store.writes</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">store.writes</span></code></td>
 <td>Write operations performed on Datasets</td>
 </tr>
 </tbody>
@@ -460,13 +460,13 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">process.completion</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">process.completion</span></code></td>
 <td>A number from 0 to 100 indicating the progress of the Map or Reduce phase</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">process.entries.in</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">process.entries.in</span></code></td>
 <td>Number of entries read in by the Map or Reduce phase</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">process.entries.out</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">process.entries.out</span></code></td>
 <td>Number of entries written out by the Map or Reduce phase</td>
 </tr>
 </tbody>
@@ -483,31 +483,31 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.disk.diskSpaceUsed_MB</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.disk.diskSpaceUsed_MB</span></code></td>
 <td>Disk space used by the Block Manager</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.maxMem_MB</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.maxMem_MB</span></code></td>
 <td>Maximum memory given to the Block Manager</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.memUsed_MB</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.memUsed_MB</span></code></td>
 <td>Memory used by the Block Manager</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.remainingMem_MB</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.BlockManager.memory.remainingMem_MB</span></code></td>
 <td>Memory remaining to the Block Manager</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.job.activeJobs</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.job.activeJobs</span></code></td>
 <td>Number of active jobs</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.job.allJobs</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.job.allJobs</span></code></td>
 <td>Total number of jobs</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.failedStages</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.failedStages</span></code></td>
 <td>Number of failed stages</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.runningStages</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.runningStages</span></code></td>
 <td>Number of running stages</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.waitingStages</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;spark-id&gt;.DAGScheduler.stage.waitingStages</span></code></td>
 <td>Number of waiting stages</td>
 </tr>
 </tbody>
@@ -524,10 +524,10 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">query.requests</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">query.requests</span></code></td>
 <td>Number of requests made to the Procedure</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">query.failures</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">query.failures</span></code></td>
 <td>Number of failures seen by the Procedure</td>
 </tr>
 </tbody>
@@ -544,10 +544,10 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">collect.events</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">collect.events</span></code></td>
 <td>Number of events collected by the Stream</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">collect.bytes</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">collect.bytes</span></code></td>
 <td>Number of bytes collected by the Stream</td>
 </tr>
 </tbody>
@@ -564,16 +564,16 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">store.bytes</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">store.bytes</span></code></td>
 <td>Number of bytes written</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">store.ops</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">store.ops</span></code></td>
 <td>Operations (reads and writes) performed</td>
 </tr>
-<tr class="row-even"><td><tt class="docutils literal"><span class="pre">store.reads</span></tt></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">store.reads</span></code></td>
 <td>Read operations performed</td>
 </tr>
-<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">store.writes</span></tt></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">store.writes</span></code></td>
 <td>Write operations performed</td>
 </tr>
 </tbody>
