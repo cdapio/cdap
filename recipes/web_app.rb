@@ -31,6 +31,26 @@ package 'cdap-web-app' do
   version node['cdap']['version']
 end
 
+if node['cdap'].key?('web_app')
+  my_vars = { :options => node['cdap']['web_app'] }
+
+  directory '/etc/default' do
+    owner 'root'
+    group 'root'
+    mode '0755'
+    action :create
+  end
+
+  template '/etc/default/cdap-web-app' do
+    source 'generic-env.sh.erb'
+    mode '0755'
+    owner 'root'
+    group 'root'
+    action :create
+    variables my_vars
+  end # End /etc/default/cdap-web-app
+end
+
 service 'cdap-web-app' do
   status_command 'service cdap-web-app status'
   action :nothing
