@@ -46,6 +46,7 @@ final class MetricQueryParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String RESOLUTION = "resolution";
+  private static final String LIMIT = "limit";
   private static final String END_TIME = "end";
   private static final String RUN_ID = "runs";
   private static final String INTERPOLATE = "interpolate";
@@ -499,10 +500,11 @@ final class MetricQueryParser {
       // max int means aggregate "all time totals"
       resolution = Integer.MAX_VALUE;
     }
+    int limit = queryParams.containsKey(LIMIT) ? Integer.parseInt(queryParams.get(LIMIT).get(0)) : count;
 
     builder.setStartTs(startTime);
     builder.setEndTs(endTime);
-    builder.setLimit(count);
+    builder.setLimit(limit);
     builder.setResolution(resolution);
 
     setInterpolator(queryParams, builder);

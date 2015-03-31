@@ -16,6 +16,8 @@
 
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -368,6 +370,38 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                ".flow.*.dataset.*.run.run1",
                              ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
                                                       "system.writes", "system.zz", "user.reads", "user.writes"));
+  }
+
+  @Test
+  public void testResultLimit() throws Exception {
+    long start = 1;
+    Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
+
+    // 1 second
+    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    // 30 second
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    // 1 minute
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    // 10 minutes
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    // 1 hour
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+
+    // just one record
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&limit=1&start=" + start + "&end="
+        + (start + 600), 1, 1);
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&limit=4&start=" + start + "&end="
+        + (start + 600), 4, 4);
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&limit=2&start=" + (start - 1) + "&end="
+        + (start + 3600), 2, 3);
   }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
