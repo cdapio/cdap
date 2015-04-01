@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -57,21 +56,9 @@ public class DatasetWithMRApp extends AbstractApplication {
       hadoopJob.setNumReduceTasks(0);
     }
 
-    public static class IdentityMapper extends Mapper<byte[], byte[], byte[], byte[]>
-      implements ProgramLifecycle<MapReduceContext> {
-
-      @Override
-      public void initialize(MapReduceContext context) throws Exception {
-        // no-op
-      }
-
+    public static class IdentityMapper extends Mapper<byte[], byte[], byte[], byte[]> {
       public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
         context.write(key, value);
-      }
-
-      @Override
-      public void destroy() {
-        // no-op
       }
     }
   }
