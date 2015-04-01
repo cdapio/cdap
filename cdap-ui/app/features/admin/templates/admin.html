@@ -13,7 +13,7 @@
         <a href=""
            class="abstract"
            ng-click="submenu.system=!submenu.system"
-           ng-class="{ current: $state.includes('admin.system.services.**') }">
+           ng-class="{ current: $state.includes('admin.system.**') }">
           System Configuration
         </a>
         <ul class="list-unstyled"
@@ -27,6 +27,12 @@
             <a ui-sref="admin.system.services"
                ng-class="{ current: $state.includes('admin.system.services.**') }">
               Services
+            </a>
+          </li>
+          <li>
+            <a ui-sref="admin.system.preferences"
+               ng-class="{ current: $state.includes('admin.system.preferences.**') }">
+              Preferences
             </a>
           </li>
 <!--           <li>

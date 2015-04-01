@@ -60,6 +60,11 @@ angular.module(PKG.name + '.feature.admin')
             url: '/notifications',
             templateUrl: '/assets/features/admin/templates/system/notifications.html'
           })
+          .state('admin.system.preferences', {
+            url: '/preferences',
+            templateUrl: '/assets/features/admin/templates/system/preferences.html',
+            controller: 'SystemPreferenceController'
+          })
 
         .state('admin.security', {
           abstract: true,
