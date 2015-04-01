@@ -1,24 +1,14 @@
-<div class="row h2">
-  <div class="col-sm-4">
-    <button type="button"
-            class="btn btn-default"
-            ng-model="currentRun"
-            placeholder="Please Select a Run"
-            bs-options="run.runid as run.runid for run in runs" bs-select>
-      <span class="caret"></span>
-    </button>
-  </div>
-  <div class="col-sm-8 text-right">
-    <div class="btn-group" ng-model="runTabs.activeTab" bs-radio-group>
-      <label class="btn btn-default" ng-repeat="tab in runTabs">
-        <input type="radio" class="btn btn-default" value="{{ $index }}" />
-        {{tab}}
-      </label>
-    </div>
-  </div>
-</div>
-<div class="row">
-  <div class="col-sm-12">
-    <ui-view/>
-  </div>
-</div>
+<accordion close-others="oneAtATime">
+   <accordion-group is-open="run.isOpen" id="c{{run.runid}}" ng-repeat="run in runs" ui-sref="flows.detail.runs.run({runid: run.runid})">
+     <accordion-heading>
+        <div class="clearfix">
+          <span class="pull-left"> {{run.runid}} </span>
+          <span class="pull-right">
+            {{run.status}}
+            <i class="fa fa-fw" ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}"></i>
+          </span>
+        </div>
+     </accordion-heading>
+     <div ui-view></div>
+ </accordion-group>
+</accordion>
