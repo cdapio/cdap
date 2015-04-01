@@ -1,18 +1,22 @@
 angular.module(PKG.name + '.feature.flows')
-  .factory('FlowDiagramData', function(MyDataSource, $state, $q) {
-    var flowdata = {};
-    var dataSrc = new MyDataSource(),
-        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+  .service('FlowDiagramData', function(MyDataSource, $state, $q) {
+    this.data = {};
+    // Need to figure out a way to destroy the cache when scope gets destroyed.
+    var dataSrc = new MyDataSource();
 
-    flowdata.fetchData = function() {
+    this.fetchData = function(appId, flowId) {
+      var registeredFlows = Object.keys(this.data);
+      if (registeredFlows.indexOf(flowId) > -1) {
+        return $q.when(this.data[flowId]);
+      }
+
       var defer = $q.defer();
 
       dataSrc.request({
-        _cdapNsPath: basePath
+        _cdapNsPath: '/apps/' + appId + '/flows/' + flowId
       })
         .then(function(res) {
-          var nodes = [],
-              metrics = {}, data;
+          var nodes = [];
           angular.forEach(res.connections, function(conn) {
             if (conn.sourceType === 'STREAM') {
               nodes.push({
@@ -28,15 +32,14 @@ angular.module(PKG.name + '.feature.flows')
             nodes.push(val);
           });
 
-          data = {
+          this.data[flowId] = {
             nodes: nodes,
             edges: res.connections,
             metrics: {}
           };
-          defer.resolve(data);
-        });
+          defer.resolve(this.data[flowId]);
+        }.bind(this));
       return defer.promise;
     }
-    return flowdata;
 
   });
