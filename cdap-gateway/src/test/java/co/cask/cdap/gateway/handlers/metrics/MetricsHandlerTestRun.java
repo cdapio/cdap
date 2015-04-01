@@ -22,18 +22,24 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
+import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +223,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     } while (i < parts.length);
   }
 
-
   @Test
   public void testQueryMetrics() throws Exception {
 
@@ -331,22 +336,22 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                              ImmutableList.<String>of("system.dot.reads"));
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
-                         ".flow.WordCounter.dataset.*.run.run1.flowlet.splitter",
-                       ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
+                               ".flow.WordCounter.dataset.*.run.run1.flowlet.splitter",
+                             ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
-                         ".flow.WordCounter.dataset.*.run.run1.flowlet.collector",
-                       ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+                               ".flow.WordCounter.dataset.*.run.run1.flowlet.collector",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
-                         ".flow.WordCounter.dataset.*.run.run1",
-                       ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                "system.writes", "system.zz", "user.reads", "user.writes"));
+                               ".flow.WordCounter.dataset.*.run.run1",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
+                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WordCount1." +
-                         "f.WordCounter.dataset.*.run.run1.flowlet.splitter",
-                       ImmutableList.<String>of());
+                               "f.WordCounter.dataset.*.run.run1.flowlet.splitter",
+                             ImmutableList.<String>of());
 
 
     // metrics in yourspace
@@ -370,13 +375,64 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                       "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
+
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
-    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    // todo : can refactor this to test only the new tag name queries once we deprecate queryParam using context.
+    URI sourceUrl = new URI(url);
+    MetricQueryResult queryResult;
+    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
+    if (!queryParams.containsKey("tag") || queryParams.get("groupBy").size() < 1) {
+      queryResult = post(url, MetricQueryResult.class);
+      Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
+    }
+
+    // get new url replacing context with tags and groupBy (comma separated) into multiple query params
+    url = getTagQueryUrl(url);
+    queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
+  }
+
+  // NOTE : this is for tests with queryParam `context`, translate those test with queryParam `tag`,
+  // new tests should only use `tag` queryParam
+  private String getTagQueryUrl(String url) throws Exception {
+    URI sourceUrl = new URI(url);
+    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
+    Map<String, String> tags = Maps.newHashMap();
+    List<String> groupByTags = Lists.newArrayList();
+    if (queryParams.containsKey("context")) {
+      String[] context = queryParams.get("context").get(0).split("\\.");
+      for (int i = 0; i < context.length; i += 2) {
+        tags.put(context[i], context[i + 1].replace("~", "."));
+      }
+      queryParams.remove("context");
+    }
+    if (queryParams.containsKey("groupBy")) {
+      groupByTags = Lists.newArrayList(Splitter.on(",").split(queryParams.get("groupBy").get(0)).iterator());
+      queryParams.remove("groupBy");
+    }
+    String targetUrl = sourceUrl.getPath() + "?";
+    for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
+      targetUrl += entry.getKey() + "=" + URLEncoder.encode(entry.getValue().get(0), Charsets.UTF_8.name()) + "&";
+    }
+
+    for (Map.Entry<String, String> entry : tags.entrySet()) {
+      targetUrl += "tag=" + entry.getKey() + ":" + entry.getValue() + "&";
+    }
+    for (String gtag : groupByTags) {
+      targetUrl += "groupBy=" + gtag.replace("~", ".") + "&";
+    }
+    targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
+    return targetUrl;
   }
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    verifyTimeSeries(queryResult, nonZeroPointsCount, expectedSum);
+    queryResult = post(getTagQueryUrl(url), MetricQueryResult.class);
+    verifyTimeSeries(queryResult, nonZeroPointsCount, expectedSum);
+  }
+
+  private void verifyTimeSeries(MetricQueryResult queryResult, long nonZeroPointsCount, long expectedSum) {
     MetricQueryResult.TimeValue[] data = queryResult.getSeries()[0].getData();
 
     for (MetricQueryResult.TimeValue point : data) {
@@ -406,6 +462,33 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     for (String returned: reply) {
       Assert.assertTrue(expectedValues.contains(returned) || returned.endsWith(".*"));
     }
+    verifySearchResultWithTagNames(url, expectedValues);
+  }
+
+
+  private void verifySearchResultWithTagNames(String url, List<String> expectedValues) throws Exception {
+    URI sourceUrl = new URI(url);
+    String result = sourceUrl.getPath() + "?target=tag";
+    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
+    String context = queryParams.get("context").get(0);
+    String[] contextSplit = context.split("\\.");
+    for (int i = 0; i < contextSplit.length; i += 2) {
+       result += "&tag=" + contextSplit[i] + ":" + contextSplit[i + 1].replace("~", ".");
+    }
+    List<Map<String, String>> expectedValuesMap = Lists.newArrayList();
+    for (String expect : expectedValues) {
+      String[] tagValue = expect.substring(context.length() + 1).split("\\.", 2);
+      expectedValuesMap.add(ImmutableMap.of("name", tagValue[0], "value", tagValue[1].replace("~", ".")));
+    }
+
+    HttpResponse response = doPost(result, null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String resultContent = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> reply = new Gson().fromJson(resultContent,
+                                                          new TypeToken<List<Map<String, String>>>() { }.getType());
+    // We want to make sure expectedValues are in the response. Response may also have other things that denote
+    // null values for tags - we'll ignore them.
+    Assert.assertTrue(reply.containsAll(expectedValuesMap));
   }
 
   private void verifySearchMetricResult(String url, List<String> expectedValues) throws Exception {
