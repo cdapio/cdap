@@ -21,12 +21,12 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 /**
  * Workflow for scheduling Batch ETL MapReduce Driver.
  */
-public class BatchWorkflow extends AbstractWorkflow {
+public class ETLWorkflow extends AbstractWorkflow {
 
   @Override
   protected void configure() {
-    setName("BatchWorkflow");
+    setName("ETLWorkflow");
     setDescription("Workflow for Batch ETL MapReduce Driver");
-    addMapReduce("BatchDriver");
+    addMapReduce("ETLMapReduce");
   }
 }

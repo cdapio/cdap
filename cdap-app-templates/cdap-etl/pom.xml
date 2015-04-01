@@ -54,6 +54,7 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>
         <version>${hadoop.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -125,6 +126,7 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-mapreduce-client-core</artifactId>
         <version>${hadoop.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>

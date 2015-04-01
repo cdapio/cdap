@@ -30,10 +30,12 @@ public class DefaultStageConfigurer implements StageConfigurer {
   private final List<Property> properties = Lists.newArrayList();
 
   private String name;
+  private String className;
   private String description;
 
   public DefaultStageConfigurer(Class klass) {
     this.name = klass.getSimpleName();
+    this.className = klass.getName();
     this.description = "";
   }
 
@@ -58,6 +60,6 @@ public class DefaultStageConfigurer implements StageConfigurer {
   }
 
   public StageSpecification createSpecification() {
-    return new StageSpecification(name, description, properties);
+    return new StageSpecification(className, name, description, properties);
   }
 }

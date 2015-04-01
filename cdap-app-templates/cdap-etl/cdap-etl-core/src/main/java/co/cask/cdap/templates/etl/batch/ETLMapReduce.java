@@ -49,17 +49,14 @@ import java.util.Map;
 /**
  * MapReduce driver for Batch ETL Adapters.
  */
-public class BatchDriver extends AbstractMapReduce {
-  private static final Logger LOG = LoggerFactory.getLogger(BatchDriver.class);
+public class ETLMapReduce extends AbstractMapReduce {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
   private static final JsonParser JSON_PARSER = new JsonParser();
 
-  private BatchSource source;
-  private BatchSink sink;
-
   @Override
   public void configure() {
-    setName("BatchDriver");
+    setName("ETLMapReduce");
     setDescription("MapReduce driver for Batch ETL Adapters");
   }
 
@@ -74,32 +71,33 @@ public class BatchDriver extends AbstractMapReduce {
     String sourceClass = context.getRuntimeArguments().get(Constants.Source.CLASS_NAME);
     String sinkClass = context.getRuntimeArguments().get(Constants.Sink.CLASS_NAME);
 
-    source = (BatchSource) Class.forName(sourceClass).newInstance();
-    sink = (BatchSink) Class.forName(sinkClass).newInstance();
+    BatchSource source = (BatchSource) Class.forName(sourceClass).newInstance();
+    BatchSink sink = (BatchSink) Class.forName(sinkClass).newInstance();
 
-    prepareSourceJob(context);
-    prepareSinkJob(context);
-    prepareTransform(context);
+    prepareSource(source, context);
+    prepareSink(sink, context);
+    prepareTransforms(context);
 
-    job.setMapperClass(MapperDriver.class);
+    job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }
 
-  private void prepareSourceJob(MapReduceContext context) {
+  private void prepareSource(BatchSource source, MapReduceContext context) {
     DefaultStageConfigurer sourceConfigurer = new DefaultStageConfigurer(source.getClass());
     source.configure(sourceConfigurer);
+    context.getDataset("table1");
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceConfigurer.createSpecification());
     source.prepareJob(sourceContext);
   }
 
-  private void prepareSinkJob(MapReduceContext context) {
+  private void prepareSink(BatchSink sink, MapReduceContext context) {
     DefaultStageConfigurer sinkConfigurer = new DefaultStageConfigurer(sink.getClass());
     sink.configure(sinkConfigurer);
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkConfigurer.createSpecification());
     sink.prepareJob(sinkContext);
   }
 
-  private void prepareTransform(MapReduceContext context) {
+  private void prepareTransforms(MapReduceContext context) {
     Job job = context.getHadoopJob();
     JsonObject config = JSON_PARSER.parse(context.getRuntimeArguments().get(Constants.CONFIG_KEY)).getAsJsonObject();
     JsonArray transformArray = config.get(Constants.TRANSFORM_KEY).getAsJsonArray();
@@ -121,12 +119,13 @@ public class BatchDriver extends AbstractMapReduce {
   /**
    * Mapper Driver for ETL Transforms.
    */
-  public static class MapperDriver extends Mapper implements ProgramLifecycle<MapReduceContext> {
+  public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceContext> {
     private static final Gson GSON = new Gson();
     private static final JsonParser JSON_PARSER = new JsonParser();
     private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
     private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
     private TransformExecutor transformExecutor;
+    private DefaultEmitter data;
 
     private MapReduceContext mapReduceContext;
     private List<Transform> transforms = Lists.newArrayList();
@@ -134,6 +133,7 @@ public class BatchDriver extends AbstractMapReduce {
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       this.mapReduceContext = context;
+      this.data = new DefaultEmitter();
     }
 
     @Override
@@ -147,12 +147,12 @@ public class BatchDriver extends AbstractMapReduce {
       LOG.info("Transform Classes to be used : {}", classList);
       LOG.info("Properties for Transform Classes : {}", transformArray);
       Preconditions.checkArgument(classList.size() == transformArray.size());
-      instatiateTransforms(classList);
+      instantiateTransforms(classList);
       initializeTransforms(transforms, transformArray);
       transformExecutor = new TransformExecutor(transforms);
     }
 
-    private void instatiateTransforms(List<String> classList) {
+    private void instantiateTransforms(List<String> classList) {
       for (String transformClass : classList) {
         try {
           Transform transform = (Transform) Class.forName(transformClass).newInstance();
@@ -161,7 +161,7 @@ public class BatchDriver extends AbstractMapReduce {
           LOG.error("Unable to load Transform : {}; {}", transformClass, e.getMessage(), e);
           Throwables.propagate(e);
         } catch (InstantiationException e) {
-          LOG.error("Unable to instatiate Transform : {}; {}", transformClass, e.getMessage(), e);
+          LOG.error("Unable to instantiate Transform : {}; {}", transformClass, e.getMessage(), e);
           Throwables.propagate(e);
         } catch (IllegalAccessException e) {
           LOG.error("Error while creating instance of Transform : {}; {}", transformClass, e.getMessage(), e);
@@ -187,13 +187,14 @@ public class BatchDriver extends AbstractMapReduce {
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        DefaultEmitter defaultEmitter = transformExecutor.runOneIteration(key, value);
-        for (Map.Entry entry : defaultEmitter) {
+        data.emit(key, value);
+        transformExecutor.runOneIteration(data);
+        for (Map.Entry entry : data) {
           context.write(entry.getKey(), entry.getValue());
         }
-        defaultEmitter.reset();
+        data.reset();
       } catch (Exception e) {
-        LOG.error("Exception thrown in BatchDriver Mapper : {}", e.getMessage(), e);
+        LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
         Throwables.propagate(e);
       }
     }

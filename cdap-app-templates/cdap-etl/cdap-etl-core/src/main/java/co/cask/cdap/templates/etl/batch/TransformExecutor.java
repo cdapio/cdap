@@ -34,13 +34,17 @@ public final class TransformExecutor {
     this.transformList = transforms;
     this.previousEmitter = new DefaultEmitter();
     this.currentEmitter = new DefaultEmitter();
+
   }
 
-  public DefaultEmitter runOneIteration(Object key, Object value) throws Exception {
-    previousEmitter.emit(key, value);
-    for (int i = 0; i < transformList.size(); i++) {
-      Transform transform = transformList.get(i);
+  public void runOneIteration(DefaultEmitter data) throws Exception {
+    //Copy Data into previousEmitter and reset 'data'.
+    for (Map.Entry entry : data) {
+      previousEmitter.emit(entry.getKey(), entry.getValue());
+    }
+    data.reset();
 
+    for (Transform transform : transformList) {
       for (Map.Entry entry : previousEmitter) {
         transform.transform(entry.getKey(), entry.getValue(), currentEmitter);
       }
@@ -49,6 +53,11 @@ public final class TransformExecutor {
       previousEmitter = currentEmitter;
       currentEmitter = temp;
     }
-    return previousEmitter;
+
+    //Copy result into 'data'
+    for (Map.Entry entry : previousEmitter) {
+      data.emit(entry.getKey(), entry.getValue());
+    }
+    previousEmitter.reset();
   }
 }
