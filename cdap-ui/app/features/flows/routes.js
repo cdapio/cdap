@@ -43,12 +43,18 @@ angular.module(PKG.name + '.feature.flows')
       .state('flows.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/flows/templates/tabs/runs.html',
-        controller: 'FlowsRunsController'
+        controller: 'FlowsRunsController',
+        ncyBreadcrumb: {
+          label: 'Runs'
+        }
       })
         .state('flows.detail.runs.run', {
           url: '/:runid',
           templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
-          controller: 'FlowsRunDetailController'
+          controller: 'FlowsRunDetailController',
+          ncyBreadcrumb: {
+            label: '{{$state.params.runid}}'
+          }
         })
 
       .state('flows.detail.history', {
