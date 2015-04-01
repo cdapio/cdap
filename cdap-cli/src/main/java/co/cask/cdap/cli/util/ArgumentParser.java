@@ -18,7 +18,6 @@ package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.common.cli.util.Parser;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -47,7 +46,29 @@ public class ArgumentParser {
     if (mapString == null || mapString.isEmpty()) {
       return ImmutableMap.of();
     }
-    return Splitter.on(" ").omitEmptyStrings().trimResults().withKeyValueSeparator("=").split(mapString);
+
+
+    ImmutableMap.Builder<String, String> result = ImmutableMap.builder();
+    List<String> tokens = Parser.parseInput(mapString);
+    for (String token : tokens) {
+      int firstEquals = token.indexOf('=');
+      String key = token.substring(0, firstEquals);
+      String value = token.substring(firstEquals + 1, token.length());
+      result.put(extractValue(key), extractValue(value));
+    }
+    return result.build();
+  }
+
+  /**
+   * @param value string that may be surrounded by quotes
+   * @return unquoted string if quoted, otherwise the original string
+   */
+  private static String extractValue(String value) {
+    if ((value.startsWith("'") && value.endsWith("'")) ||
+      (value.startsWith("\"") && value.endsWith("\""))) {
+      return value.substring(1, value.length() - 1);
+    }
+    return value;
   }
 
   /**
