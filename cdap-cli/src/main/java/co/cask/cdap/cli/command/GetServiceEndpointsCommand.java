@@ -23,11 +23,12 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -42,13 +43,11 @@ import java.util.List;
 public class GetServiceEndpointsCommand extends AbstractAuthCommand implements Categorized {
 
   private final ServiceClient serviceClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public GetServiceEndpointsCommand(ServiceClient serviceClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public GetServiceEndpointsCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.serviceClient = serviceClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -70,7 +69,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
           return Lists.newArrayList(endpoint.getMethod(), endpoint.getPath());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -80,7 +79,8 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
   @Override
   public String getDescription() {
-    return String.format("List the endpoints that a %s exposes.", ElementType.SERVICE.getPrettyName());
+    return String.format("List the endpoints that %s exposes.",
+                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()));
   }
 
   @Override

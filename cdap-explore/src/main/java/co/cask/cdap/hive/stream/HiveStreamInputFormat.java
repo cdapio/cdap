@@ -25,7 +25,20 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
+import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
+import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
+import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
+import org.apache.hadoop.hive.ql.plan.TableScanDesc;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqual;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrGreaterThan;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrLessThan;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPGreaterThan;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPLessThan;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
@@ -33,9 +46,10 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -43,7 +57,8 @@ import javax.annotation.Nullable;
  * Stream input format for use in hive queries and only hive queries. Will not work outside of hive.
  */
 public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> {
-  private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
+  private static final Logger LOG = LoggerFactory.getLogger(HiveStreamInputFormat.class);
+  private static final StreamInputSplitFactory<InputSplit> SPLIT_FACTORY = new StreamInputSplitFactory<InputSplit>() {
     @Override
     public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
                                   long start, long length, @Nullable String[] locations) {
@@ -94,12 +109,113 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
 
-    // TODO: examine query where clause to get a better start and end time based on timestamp filters.
+    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(streamPath.toURI());
+    return setupBuilder(conf, streamConfig, builder).build(SPLIT_FACTORY);
+  }
+
+  /**
+   * Setups the given {@link StreamInputSplitFinder.Builder} by analyzing the query.
+   */
+  private StreamInputSplitFinder.Builder setupBuilder(Configuration conf, StreamConfig streamConfig,
+                                                      StreamInputSplitFinder.Builder builder) {
     // the conf contains a 'hive.io.filter.expr.serialized' key which contains the serialized form of ExprNodeDesc
-    URI path = streamPath.toURI();
     long startTime = Math.max(0L, System.currentTimeMillis() - streamConfig.getTTL());
-    return StreamInputSplitFinder.builder(path)
-      .setStartTime(startTime)
-      .build(splitFactory);
+    long endTime = System.currentTimeMillis();
+
+    String serializedExpr = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
+    if (serializedExpr == null) {
+      return builder.setStartTime(startTime).setEndTime(endTime);
+    }
+
+    try {
+      ExprNodeGenericFuncDesc expr;
+      // Hack to deal with the fact that older versions of Hive use
+      // Utilities.deserializeExpression(String, Configuration),
+      // whereas newer versions use Utilities.deserializeExpression(String).
+      try {
+        expr = Utilities.deserializeExpression(serializedExpr);
+      } catch (NoSuchMethodError e) {
+        expr = (ExprNodeGenericFuncDesc) Utilities.class.getMethod(
+          "deserializeExpression", String.class, Configuration.class).invoke(null, serializedExpr, conf);
+      }
+
+      // Analyze the query to extract predicates that can be used for indexing (i.e. setting start/end time)
+      IndexPredicateAnalyzer analyzer = new IndexPredicateAnalyzer();
+      for (CompareOp op : CompareOp.values()) {
+        analyzer.addComparisonOp(op.getOpClassName());
+      }
+
+      // Stream can only be indexed by timestamp
+      analyzer.clearAllowedColumnNames();
+      analyzer.allowColumnName("ts");
+
+      List<IndexSearchCondition> conditions = Lists.newArrayList();
+      analyzer.analyzePredicate(expr, conditions);
+
+      for (IndexSearchCondition condition : conditions) {
+        CompareOp op = CompareOp.from(condition.getComparisonOp());
+        if (op == null) {
+          // Not a supported operation
+          continue;
+        }
+        ExprNodeConstantDesc value = condition.getConstantDesc();
+        if (value == null || !(value.getValue() instanceof Long)) {
+          // Not a supported value
+          continue;
+        }
+
+        long timestamp = (Long) value.getValue();
+        // If there is a equal, set both start and endtime and no need to inspect further
+        if (op == CompareOp.EQUAL) {
+          startTime = timestamp;
+          endTime = (timestamp < Long.MAX_VALUE) ? timestamp + 1L : timestamp;
+          break;
+        }
+        if (op == CompareOp.GREATER || op == CompareOp.EQUAL_OR_GREATER) {
+          // Plus 1 for the start time if it is greater since start time is inclusive in stream
+          startTime = Math.max(startTime,
+                               timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.GREATER ? 1L : 0L));
+        } else {
+          // Plus 1 for end time if it is equal or less since end time is exclusive in stream
+          endTime = Math.min(endTime,
+                             timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.EQUAL_OR_LESS ? 1L : 0L));
+        }
+      }
+    } catch (Throwable t) {
+      LOG.warn("Exception analyzing query predicate. A full table scan will be performed.", t);
+    }
+
+    return builder.setStartTime(startTime).setEndTime(endTime);
+  }
+
+  private enum CompareOp {
+    EQUAL(GenericUDFOPEqual.class.getName()),
+    EQUAL_OR_GREATER(GenericUDFOPEqualOrGreaterThan.class.getName()),
+    EQUAL_OR_LESS(GenericUDFOPEqualOrLessThan.class.getName()),
+    GREATER(GenericUDFOPGreaterThan.class.getName()),
+    LESS(GenericUDFOPLessThan.class.getName());
+
+    private final String opClassName;
+
+    private CompareOp(String opClassName) {
+      this.opClassName = opClassName;
+    }
+
+    public String getOpClassName() {
+      return opClassName;
+    }
+
+    /**
+     * Returns a {@link CompareOp} by matching the given class name or {@code null} if there is none matching.
+     */
+    @Nullable
+    public static CompareOp from(String opClassName) {
+      for (CompareOp op : values()) {
+        if (op.getOpClassName().equals(opClassName)) {
+          return op;
+        }
+      }
+      return null;
+    }
   }
 }

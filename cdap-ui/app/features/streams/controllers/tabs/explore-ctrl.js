@@ -4,7 +4,7 @@ angular.module(PKG.name + '.feature.streams')
 
       var dataSrc = new MyDataSource($scope);
 
-      $scope.activePanel = 2;
+      $scope.activePanel = 0;
 
 
       var now = Date.now();
@@ -64,10 +64,10 @@ angular.module(PKG.name + '.feature.streams')
 
       $scope.getQueries();
 
-      $scope.results = {};
+      $scope.responses = {};
 
       $scope.fetchResult = function(query) {
-        $scope.results.request = query;
+        $scope.responses.request = query;
 
         // request schema
         dataSrc
@@ -76,7 +76,7 @@ angular.module(PKG.name + '.feature.streams')
                           query.query_handle + '/schema'
           })
           .then(function (result) {
-            $scope.results.schema = result;
+            $scope.responses.schema = result;
           });
 
         // request preview
@@ -87,7 +87,7 @@ angular.module(PKG.name + '.feature.streams')
             method: 'POST'
           })
           .then(function (result) {
-            $scope.results.results = result;
+            $scope.responses.results = result;
           });
       };
 

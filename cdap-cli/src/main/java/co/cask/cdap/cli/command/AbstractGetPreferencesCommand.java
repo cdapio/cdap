@@ -86,7 +86,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       case PROCEDURE:
@@ -95,7 +95,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       case MAPREDUCE:
@@ -104,7 +104,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       case WORKFLOW:
@@ -113,7 +113,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       case SERVICE:
@@ -122,7 +122,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       case SPARK:
@@ -131,11 +131,11 @@ public abstract class AbstractGetPreferencesCommand extends AbstractAuthCommand 
         }
         printStream.print(joinMapEntries(client.getProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1], resolved)));
+          type.getNamePlural().toString(), programIdParts[1], resolved)));
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getPrettyName());
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getTitleName());
     }
   }
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -46,10 +47,7 @@ import java.util.Map;
 public class ScoreCounter extends AbstractMapReduce {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScoreCounter.class);
-
-  private PartitionedFileSet outputFileSet;
-  private PartitionKey outputKey;
-  private String outputPath;
+  private static final Gson GSON = new Gson();
 
   @Override
   public void configure() {
@@ -76,27 +74,19 @@ public class ScoreCounter extends AbstractMapReduce {
 
     // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();
-    outputKey = PartitionKey.builder().addStringField("league", league).build();
+    PartitionKey outputKey = PartitionKey.builder().addStringField("league", league).build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
-    outputFileSet = context.getDataset("totals", outputArgs);
-    outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
+    PartitionedFileSet outputFileSet = context.getDataset("totals", outputArgs);
+    String outputPath = FileSetArguments.getOutputPath(outputFileSet.getEmbeddedFileSet().getRuntimeArguments());
     context.setOutput("totals", outputFileSet);
 
     LOG.info("input: {}, output: {}", input.getEmbeddedFileSet().getInputLocations(), outputPath);
   }
 
-  @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      // TODO: This should be done by the output committer of the partitioned file set's output format (CDAP-1227)
-      outputFileSet.addPartition(outputKey, outputPath);
-    }
-  }
-
   /**
    * The Mapper emits a record with the team name, points scored, and points conceded, for both teams.
    */
-  public static class ResultsMapper extends Mapper<LongWritable, Text, Text, GameStat> {
+  public static class ResultsMapper extends Mapper<LongWritable, Text, Text, Text> {
     @Override
     protected void map(LongWritable position, Text value, Context context)
       throws IOException, InterruptedException {
@@ -109,8 +99,8 @@ public class ScoreCounter extends AbstractMapReduce {
       try {
         int winnerPoints = Integer.parseInt(fields[3]);
         int loserPoints = Integer.parseInt(fields[4]);
-        context.write(new Text(winner), new GameStat(winnerPoints, loserPoints));
-        context.write(new Text(loser), new GameStat(loserPoints, winnerPoints));
+        context.write(new Text(winner), new Text(GSON.toJson(new GameStat(winnerPoints, loserPoints))));
+        context.write(new Text(loser), new Text(GSON.toJson(new GameStat(loserPoints, winnerPoints))));
       } catch (NumberFormatException e) {
         LOG.debug("Exception parsing input position {}: {}", position, value.toString());
       }
@@ -120,12 +110,13 @@ public class ScoreCounter extends AbstractMapReduce {
   /**
    *  The reducer counts all the different statistics.
    */
-  public static class TeamCounter extends Reducer<Text, GameStat, Text, String> {
+  public static class TeamCounter extends Reducer<Text, Text, Text, String> {
     @Override
-    protected void reduce(Text key, Iterable<GameStat> values, Context context)
+    protected void reduce(Text key, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
       int losses = 0, wins = 0, ties = 0, scored = 0, conceded = 0;
-      for (GameStat stat : values) {
+      for (Text statText : values) {
+        GameStat stat = GSON.fromJson(statText.toString(), GameStat.class);
         if (stat.getScored() > stat.getConceded()) {
           wins++;
         } else if (stat.getScored() < stat.getConceded()) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.context;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -36,6 +37,9 @@ import java.util.Map;
  * Helper class for LoggingContext objects.
  */
 public final class LoggingContextHelper {
+
+  private static final String ACCOUNT_ID = ".accountId";
+
   private LoggingContextHelper() {}
 
   public static String getNamespacedBaseDir(String logBaseDir, String logPartition) {
@@ -164,9 +168,14 @@ public final class LoggingContextHelper {
         throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
       }
 
+      // For backward compatibility: The old logs before namespace have .accountId and developer as value so we don't
+      // want them to get filtered out if they belong to this application and entity
+      OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
+                                                                 FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
+                                                               new MdcExpression(ACCOUNT_ID,
+                                                                                 Constants.DEVELOPER_ACCOUNT)));
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
-                         new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
+        ImmutableList.of(namespaceFilter, new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
                          new MdcExpression(tagName, entityId)
         )
       );

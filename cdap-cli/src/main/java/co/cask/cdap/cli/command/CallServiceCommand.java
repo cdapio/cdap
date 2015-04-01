@@ -22,12 +22,13 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -44,7 +45,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -62,18 +62,16 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
   private final ServiceClient serviceClient;
-  private final TableRenderer tableRenderer;
   private final FilePathResolver filePathResolver;
 
   @Inject
   public CallServiceCommand(ClientConfig clientConfig, RESTClient restClient,
                             ServiceClient serviceClient, CLIConfig cliConfig,
-                            TableRenderer tableRenderer, FilePathResolver filePathResolver) {
+                            FilePathResolver filePathResolver) {
     super(cliConfig);
     this.clientConfig = clientConfig;
     this.restClient = restClient;
     this.serviceClient = serviceClient;
-    this.tableRenderer = tableRenderer;
     this.filePathResolver = filePathResolver;
   }
 
@@ -128,7 +126,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
                                     bodySize, getBody(byteBuffer));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -141,11 +139,11 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getDescription() {
-    return String.format("Calls a %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"." +
+    return String.format("Calls %s endpoint. The <%s> are formatted as \"{'key':'value', ...}\"." +
                          " The request body may be provided either as a string or a file." +
                          " To provide the body as a string, use \"body <%s>\"." +
                          " To provide the body as a file, use \"body:file <%s>\".",
-                         ElementType.SERVICE.getPrettyName(),
+                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()),
                          ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }
 

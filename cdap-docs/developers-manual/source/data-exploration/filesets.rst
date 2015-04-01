@@ -46,7 +46,7 @@ For example, in the configure method of your application::
 These Dataset properties map directly to table properties in Hive. 
 For example, the Dataset above would result in the following "create table" statement being generated::
 
-  CREATE EXTERNAL TABLE cdap_user_myfiles(
+  CREATE EXTERNAL TABLE dataset_myfiles(
     user string,
     item_id int,
     price double)

@@ -18,11 +18,12 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
@@ -40,14 +41,11 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
-  private final TableRenderer tableRenderer;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig,
-                                      TableRenderer tableRenderer) {
+  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -75,7 +73,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
                                     object.getRuntime(), object.getYarnAppId());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     if (liveInfo.getContainers() != null) {
       Table containersTable = Table.builder()
@@ -87,7 +85,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
               object.getMemory(), object.getVirtualCores(), object.getDebugPort());
           }
         }).build();
-      tableRenderer.render(output, containersTable);
+      cliConfig.getTableRenderer().render(cliConfig, output, containersTable);
     }
   }
 
@@ -98,6 +96,6 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the live info of a %s.", elementType.getPrettyName());
+    return String.format("Gets the live info of %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }

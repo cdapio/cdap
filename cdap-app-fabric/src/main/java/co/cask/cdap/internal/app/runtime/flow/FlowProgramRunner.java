@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -68,12 +69,15 @@ public final class FlowProgramRunner implements ProgramRunner {
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin, QueueAdmin queueAdmin) {
+  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin,
+                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
     this.programRunnerFactory = programRunnerFactory;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
@@ -93,7 +97,8 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Launch flowlet program runners
       RunId runId = RunIds.generate();
       programOptions.put(runId, options);
-      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
+      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
+                                                                            streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
       return new FlowProgramController(flowlets, runId, program, flowSpec, consumerQueues);
     } catch (Exception e) {
@@ -290,7 +295,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
                             FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
-                            streamAdmin, queueAdmin);
+                            streamAdmin, queueAdmin, txExecutorFactory);
 
       // Then change instance count of current flowlets
       Futures.successfulAsList(Iterables.transform(
@@ -345,7 +350,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
                             FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
-                            streamAdmin, queueAdmin);
+                            streamAdmin, queueAdmin, txExecutorFactory);
 
       // Next updates instance count for each flowlets
       Futures.successfulAsList(Iterables.transform(

@@ -18,7 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
@@ -703,7 +703,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
-        SessionState.get().setCurrentDatabase(database);
+        setCurrentDatabase(database);
 
         OperationHandle operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf,
@@ -764,13 +764,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
-    Lock nextLock = getOperationInfo(handle).getNextLock();
-    nextLock.lock();
     try {
-      // Fetch results from Hive
-      LOG.trace("Getting results for handle {}", handle);
-      OperationHandle opHandle = getOperationHandle(handle);
-      List<QueryResult> results = fetchNextResults(opHandle, size);
+      List<QueryResult> results = fetchNextResults(handle, size);
       QueryStatus status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
@@ -779,16 +774,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
-    } finally {
-      nextLock.unlock();
     }
   }
 
-  protected List<QueryResult> fetchNextResults(OperationHandle operationHandle, int size)
+  @SuppressWarnings("unchecked")
+  protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     startAndWait();
 
+    Lock nextLock = getOperationInfo(handle).getNextLock();
+    nextLock.lock();
     try {
+      // Fetch results from Hive
+      LOG.trace("Getting results for handle {}", handle);
+      OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
         // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
         // so that the compiler does not make assumption on the return type of fetchResults
@@ -829,6 +828,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw Throwables.propagate(e);
     } catch (IllegalAccessException e) {
       throw Throwables.propagate(e);
+    } finally {
+      nextLock.unlock();
     }
   }
 
@@ -865,7 +866,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         previewFile = new File(previewsDir, handle.getHandle());
         FileWriter fileWriter = new FileWriter(previewFile);
         try {
-          List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
+          List<QueryResult> results = fetchNextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
           operationInfo.setPreviewFile(previewFile);
           return results;
@@ -914,6 +915,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       }
     }
     return listBuilder.build();
+  }
+
+  protected void setCurrentDatabase(String dbName) throws Exception {
+    SessionState.get().setCurrentDatabase(dbName);
   }
 
   /**
@@ -1001,6 +1006,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         continue;
       }
 
+      // wait for dataset service to come up. it will be needed when creating tables
+      waitForDatasetService(600);
+
       String storageHandler = tableInfo.getParameters().get("storage_handler");
       if (StreamStorageHandler.class.getName().equals(storageHandler)) {
         LOG.info("Upgrading stream table {}", tableName);
@@ -1014,6 +1022,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         upgradeFilesetTable(tableInfo);
       }
     }
+  }
+
+  private void waitForDatasetService(int secondsToWait) throws InterruptedException {
+    int count = 0;
+    LOG.info("Waiting for dataset service to come up before upgrading Explore.");
+    while (count < secondsToWait) {
+      try {
+        datasetFramework.getInstances(Constants.DEFAULT_NAMESPACE_ID);
+        LOG.info("Dataset service is up and running, proceding with explore upgrade.");
+        return;
+      } catch (Exception e) {
+        count++;
+        TimeUnit.SECONDS.sleep(1);
+      }
+    }
+    LOG.error("Timed out waiting for dataset service to come up. Restart CDAP Master to upgrade old Hive tables.");
   }
 
   private void upgradeFilesetTable(TableInfo tableInfo) throws Exception {
@@ -1031,9 +1055,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // if this is a time partitioned file set, we need to add all partitions
     if (dataset instanceof TimePartitionedFileSet) {
       TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
-      Map<PartitionKey, String> partitions = tpfs.getPartitions(null);
+      Set<Partition> partitions = tpfs.getPartitions(null);
       if (!partitions.isEmpty()) {
-        QueryHandle handle = exploreTableManager.addPartitions(datasetID, tpfs.getPartitions(null));
+        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitions);
         QueryStatus status = waitForCompletion(handle);
         // if add partitions failed, stop
         if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {

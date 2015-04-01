@@ -17,6 +17,7 @@
 package co.cask.cdap.common.conf;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 
 import java.util.concurrent.TimeUnit;
 
@@ -137,6 +138,7 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+    public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
   }
 
   /**
@@ -719,6 +721,13 @@ public final class Constants {
    */
   public static final String DEFAULT_NAMESPACE = "default";
   public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
+    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
+
+  /**
+   * Used for upgrade and backwards compatability
+   */
+  public static final String DEVELOPER_ACCOUNT = "developer";
 
   /**
    * 'system' reserved namespace name
@@ -779,5 +788,12 @@ public final class Constants {
     * Status endpoint
     */
     public static final String STATUS = "/status";
+  }
+
+  /**
+   * Constants for namespaces
+   */
+  public static final class Namespace {
+    public static final String NAMESPACES_DIR = "namespaces.dir";
   }
 }

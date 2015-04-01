@@ -14,10 +14,8 @@ body.theme-cdap {
   .btn-info,
   .btn-warning,
   .btn-danger {
-    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
-    @shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 1px 1px rgba(0,0,0,.075);
-    .box-shadow(@shadow);
-
+    //text-shadow: 0 -1px 0 rgba(0,0,0,.2);
+    background-image:none;
     // Reset the shadow
     &:active,
     &.active {
@@ -58,6 +56,7 @@ body.theme-cdap {
   // Common styles
   .btn {
     // Remove the gradient for the pressed/active state
+
     &:active,
     &.active {
       background-image: none;
@@ -65,11 +64,15 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the buttons
-  .btn-default { .btn-styles(@btn-default-bg); text-shadow: 0 1px 0 #fff; border-color: #ccc; }
-  .btn-primary { .btn-styles(@btn-primary-bg); }
-  .btn-success { .btn-styles(@btn-success-bg); }
-  .btn-info    { .btn-styles(@btn-info-bg); }
-  .btn-warning { .btn-styles(@btn-warning-bg); }
-  .btn-danger  { .btn-styles(@btn-danger-bg); }
+  .btn-default {
+    //.btn-styles(@btn-default-bg);
+    //text-shadow: 0 1px 0 #fff;
+    border-color: #dfe2e9;
+  }
+  .btn-primary { .btn-styles(@btn-primary-bg); background-image:none; border:none;}
+  .btn-success { .btn-styles(@btn-success-bg); background-image:none; border:none;}
+  .btn-info    { .btn-styles(@btn-info-bg);background-image:none; border:none;}
+  .btn-warning { .btn-styles(@btn-warning-bg); background-image:none; border:none;}
+  .btn-danger  { .btn-styles(@btn-danger-bg); background-image:none; border:none;}
 
 }

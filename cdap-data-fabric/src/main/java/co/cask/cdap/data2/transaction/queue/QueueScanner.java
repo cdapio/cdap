@@ -26,7 +26,19 @@ import java.util.Map;
  */
 public interface QueueScanner {
 
-  public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException;
+  ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException;
 
-  public void close() throws IOException;
+  void close() throws IOException;
+
+  QueueScanner EMPTY = new QueueScanner() {
+    @Override
+    public ImmutablePair<byte[], Map<byte[], byte[]>> next() throws IOException {
+      return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+      // no-op
+    }
+  };
 }

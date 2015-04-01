@@ -74,12 +74,12 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Override
   public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
-    configureInstances(QueueName.fromStream(streamId), groupId, instances);
+    // No-op
   }
 
   @Override
   public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
-    configureGroups(QueueName.fromStream(streamId), groupInfo);
+    // No-op
   }
 
   @Override
@@ -90,11 +90,6 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   @Override
   public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
-  }
-
-  @Override
-  public long fetchStreamSize(StreamConfig streamConfig) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
   }
 
   @Override

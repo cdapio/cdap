@@ -28,11 +28,12 @@ import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,28 +56,41 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
+    metricStore.deleteAll();
   }
 
-  public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.FLOW, flowId);
+  public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
+                                                 String flowId, String flowletId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.FLOW, flowId);
     return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
                       MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
                       MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.PROCEDURE, procedureId);
+  public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
+    return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
+  }
+
+  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
     return getMetrics(MetricsContexts.forProcedure(id),
                       MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
                       MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
-  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, applicationId, ProgramType.SERVICE, serviceId);
+  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
+    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
+  }
+
+  public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
     return getMetrics(MetricsContexts.forService(id),
                       MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
                       MetricsConstants.SERVICE_EXCEPTIONS);
+  }
+
+  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
+    return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
   }
 
   @Deprecated
@@ -151,7 +165,7 @@ public final class RuntimeStats {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached.");
+          throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
         }
       }
 

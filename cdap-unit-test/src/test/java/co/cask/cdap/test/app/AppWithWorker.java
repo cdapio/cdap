@@ -49,11 +49,6 @@ public class AppWithWorker extends AbstractApplication {
     private volatile boolean running;
 
     @Override
-    public void configure() {
-      useDatasets(DATASET);
-    }
-
-    @Override
     public void initialize(WorkerContext context) throws Exception {
       super.initialize(context);
       writeToTable(INITIALIZE, INITIALIZE);

@@ -20,10 +20,11 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -38,13 +39,11 @@ import java.util.List;
 public class GetStreamEventsCommand extends AbstractCommand {
 
   private final StreamClient streamClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -70,7 +69,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
                                     bodySize, getBody(event.getBody()));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     output.printf("Fetched %d events from stream %s", events.size(), streamId);
     output.println();
@@ -84,7 +83,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets events from a " + ElementType.STREAM.getPrettyName() + ". " +
+    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +

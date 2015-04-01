@@ -62,6 +62,8 @@ public class StandaloneTestBase {
           configuration = CConfiguration.create();
         }
         configuration.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+        configuration.set(Constants.Router.ADDRESS, StandaloneContainer.HOSTNAME);
+        configuration.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
 
         // Start without UI
         standaloneMain = StandaloneMain.create(null, configuration, new Configuration());

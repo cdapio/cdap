@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.common.cli.Arguments;
@@ -26,8 +28,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.ConversionException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -52,7 +52,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getPrettyName());
+    printStream.printf(SUCCESS + "\n", type.getTitleName());
   }
 
   @SuppressWarnings("unchecked")
@@ -71,19 +71,12 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
     try {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-      } else if (contentType.equals("xml")) {
-        XStream xStream = new XStream();
-        xStream.alias("map", Map.class);
-        args = (Map<String, String>) xStream.fromXML(reader);
       } else {
-        throw new IllegalArgumentException("Unsupported file format. Only json and xml formats are supported");
+        throw new IllegalArgumentException("Unsupported file format. Only json format is supported");
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
         String.format("Json Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
-    } catch (ConversionException e) {
-      throw new BadRequestException(
-        String.format("XML Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
     } finally {
       reader.close();
     }
@@ -96,13 +89,13 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("load %s preferences <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
+    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
                          ArgumentName.CONTENT_TYPE, type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Set Preferences of a %s from a local Config File (supported formats = JSON).", 
-                         type.getPluralPrettyName());
+    return String.format("Set Preferences of %s from a local Config File (supported formats = JSON).",
+                         Fragment.of(Article.A, type.getTitleName()));
   }
 }

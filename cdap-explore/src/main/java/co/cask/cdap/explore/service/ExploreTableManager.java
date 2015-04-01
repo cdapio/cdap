@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
@@ -54,6 +55,7 @@ import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Executes disabling and enabling of datasets and streams and adding and dropping of partitions.
@@ -194,7 +196,12 @@ public class ExploreTableManager {
       }
     }
 
-    return exploreService.execute(datasetID.getNamespace(), createStatement);
+    if (createStatement != null) {
+      return exploreService.execute(datasetID.getNamespace(), createStatement);
+    } else {
+      // if the dataset is not explorable, this is a no op.
+      return QueryHandle.NO_OP;
+    }
   }
 
   /**
@@ -281,7 +288,7 @@ public class ExploreTableManager {
    * @throws SQLException if there was a problem with the add partition statement
    */
   public QueryHandle addPartitions(Id.DatasetInstance datasetID,
-                                   Map<PartitionKey, String> partitions) throws ExploreException, SQLException {
+                                   Set<Partition> partitions) throws ExploreException, SQLException {
     if (partitions.isEmpty()) {
       return QueryHandle.NO_OP;
     }
@@ -289,11 +296,11 @@ public class ExploreTableManager {
       .append("ALTER TABLE ")
       .append(getDatasetTableName(datasetID))
       .append(" ADD");
-    for (Map.Entry<PartitionKey, String> partitionEntry : partitions.entrySet()) {
+    for (Partition partition : partitions) {
       statement.append(" PARTITION")
-        .append(generateHivePartitionKey(partitionEntry.getKey()))
+        .append(generateHivePartitionKey(partition.getPartitionKey()))
         .append(" LOCATION '")
-        .append(partitionEntry.getValue())
+        .append(partition.getRelativePath())
         .append("'");
     }
 

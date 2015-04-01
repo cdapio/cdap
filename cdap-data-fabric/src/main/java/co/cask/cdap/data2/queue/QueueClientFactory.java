@@ -27,7 +27,7 @@ public interface QueueClientFactory {
 
   QueueProducer createProducer(QueueName queueName) throws IOException;
 
-  QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups) throws IOException;
-
   QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException;
+
+  QueueConsumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups) throws IOException;
 }

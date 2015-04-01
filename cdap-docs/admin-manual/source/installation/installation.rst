@@ -111,11 +111,11 @@ You'll need this software installed:
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment.
+for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
-  java -version
+  $ java -version
   
 CDAP is tested with the Oracle JDKs; it may work with other JDKs such as 
 `Open JDK <http://openjdk.java.net>`__, but it has not been tested with them.
@@ -127,11 +127,11 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from v0.8.16 through v0.10.37) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be v0.8.16 or greater.
+#. The version of Node.js must be from v0.8.16 through v0.10.37.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
-   `nodejs.org/download/ <http://nodejs.org/download/>`__.
+   `nodejs.org/download/ <http://nodejs.org/dist/>`__.
  #. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
@@ -204,7 +204,7 @@ Preparing the Cluster
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
-  sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
+  $ sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``. If you set up your cluster as above, no further changes are required.
@@ -265,6 +265,10 @@ Add the Cask Public GPG Key to your repository:
   .. parsed-literal::
     |$| sudo rpm --import |http:|//repository.cask.co/centos/6/x86_64/cdap/|short-version|/pubkey.gpg
 
+Update your Yum cache::
+
+  $ sudo yum makecache
+
 Debian using APT
 ................
 Download the Cask Apt repo definition file:
@@ -286,6 +290,10 @@ Add the Cask Public GPG Key to your repository:
   .. parsed-literal::
     |$| curl -s |http:|//repository.cask.co/ubuntu/precise/amd64/cdap/|short-version|/pubkey.gpg | sudo apt-key add -
 
+Update your APT-cache::
+
+  $ sudo apt-get update
+
 Installation
 ------------
 Install the CDAP packages by using one of these methods:
@@ -301,7 +309,6 @@ Using Yum::
 
 Using APT::
 
-  $ sudo apt-get update
   $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
@@ -402,9 +409,19 @@ Depending on your installation, you may want to set these properties:
       <description>Enable Explore functionality</description>
     </property>
 
-  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. This feature is currently 
-  not supported on secure Hadoop clusters.
+  This feature cannot be used unless the cluster has a correct version of Hive installed.
+  See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
+  This feature is currently not supported on secure Hadoop clusters.
+
+  **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
+  up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
+  If the CDAP Explore Service fails to start and you see a ``javax.jdo.JDODataStoreException: Communications link failure``
+  in the log, try adding this property to the Hive ``hive-site.xml`` file::
+
+    <property>
+      <name>datanucleus.connectionPoolingType</name>
+      <value>DBCP</value>
+    </property>
 
 .. highlight:: console
 
@@ -427,6 +444,11 @@ In order to configure CDAP Master for Kerberos authentication:
 - Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
   ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
+- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+
+    CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+    CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
+
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
   ``<cdap-principal>`` when adding these two properties::
 
@@ -449,13 +471,15 @@ In order to configure CDAP Master for Kerberos authentication:
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
   that by running the following command as the ``hdfs`` user::
   
-    hadoop fs -mkdir /cdap && hadoop fs -chown cdap /cdap
+    $ hadoop fs -mkdir /cdap && hadoop fs -chown cdap /cdap
     
 - When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
-    echo "grant 'cdap', 'ACRW'" | hbase shell
+    $ echo "grant 'cdap', 'ACRW'" | hbase shell
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
+
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher.
 
 .. _install-ulimit:
 
@@ -496,7 +520,7 @@ When all the packages and dependencies have been installed, and the configuratio
 parameters set, you can start the services on each of the CDAP boxes by running the
 command::
 
-  for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
+  $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
 accessible through a browser at port ``9999``. 
@@ -567,38 +591,64 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
+These steps will upgrade from CDAP 2.6.x to 2.8.0. (**Note:** Apps need to be both
+recompiled and re-deployed.) An upgrade from 2.7.x to 2.8.0 is not currently supported. If
+you have a use case for it, please reach out to us at `cdap-user@googlegroups.com
+<https://groups.google.com/d/forum/cdap-user>`__.
+
 .. highlight:: console
 
-1. Stop all CDAP processes::
+1. Stop all Flows, Services, and other Programs in all your applications.
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+#. Stop all CDAP processes::
+
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP packages by running either of these methods:
 
    - Using Yum (on one line)::
 
-       sudo yum install cdap cdap-gateway
-                             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                             cdap-security cdap-web-app
+       $ sudo yum install cdap cdap-gateway \
+             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-kafka cdap-master cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
-       sudo apt-get install cdap cdap-gateway
-                            cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                            cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                            cdap-security cdap-web-app
+       $ sudo apt-get install cdap cdap-gateway \
+             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-kafka cdap-master cdap-security cdap-web-app
+
+#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
+   Please see :ref:`Configuration <install-configuration>`.
+
+#. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
+   before the next step (upgrade tool)::
+
+     $ kinit -kt <keytab> <principle>
 
 #. Run the upgrade tool::
 
-     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+
+#. Run the Data Migration Tool for metrics::
+
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics [--keep-old-metrics-data]
+
+   This will migrate aggregate metrics data from the CDAP 2.6.x tables to the CDAP 2.8 metrics system. 
+   The old metrics tables are deleted by default unless the optional argument ``--keep-old-metrics-data`` is specified.
 
 #. Restart the CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-If you are upgrading a secure Hadoop cluster, see the notes above about
-:ref:`configuring secure Hadoop <install-secure-hadoop>`. 
+#. This will allow you to see your old run history, logs, and |---| if you migrated your 
+   old metrics with the *Data Migration Tool* |---| metrics.
+
+   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
+   To access your previous logs, please see the section on downloading logs in the
+   :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
+
+#. You must recompile and then redeploy your applications. 
 
 .. _install-troubleshooting:
 

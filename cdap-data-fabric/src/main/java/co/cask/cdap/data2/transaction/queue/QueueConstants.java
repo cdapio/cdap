@@ -46,7 +46,8 @@ public final class QueueConstants {
   public enum QueueType {
 
     QUEUE("queue"),
-    STREAM("stream");
+    STREAM("stream"),
+    SHARDED_QUEUE("sharded.queue");
 
     private final String string;
 

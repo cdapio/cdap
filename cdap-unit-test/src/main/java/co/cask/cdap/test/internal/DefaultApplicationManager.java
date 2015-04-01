@@ -22,8 +22,6 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -53,7 +51,6 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -70,8 +67,7 @@ import java.util.concurrent.TimeoutException;
 public class DefaultApplicationManager implements ApplicationManager {
 
   private final ConcurrentMap<String, ProgramId> runningProcesses = Maps.newConcurrentMap();
-  private final String accountId;
-  private final String applicationId;
+  private final Id.Application applicationId;
   private final TransactionSystemClient txSystemClient;
   private final DatasetInstantiator datasetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
@@ -80,31 +76,27 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  public DefaultApplicationManager(LocationFactory locationFactory,
-                                   DatasetFramework datasetFramework,
+  public DefaultApplicationManager(DatasetFramework datasetFramework,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    ProcedureClientFactory procedureClientFactory,
                                    DiscoveryServiceClient discoveryServiceClient,
-                                   AppFabricHttpHandler httpHandler,
-                                   ServiceHttpHandler serviceHttpHandler,
                                    TemporaryFolder tempFolder,
-                                   @Assisted("accountId") String accountId,
-                                   @Assisted("applicationId") String applicationId,
+                                   AppFabricClient appFabricClient,
+                                   @Assisted("applicationId") Id.Application applicationId,
                                    @Assisted Location deployedJar) {
-    this.accountId = accountId;
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
     this.procedureClientFactory = procedureClientFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
-    this.appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
+    this.appFabricClient = appFabricClient;
 
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.datasetInstantiator = new DatasetInstantiator(Id.Namespace.from(accountId), datasetFramework,
+      this.datasetInstantiator = new DatasetInstantiator(applicationId.getNamespace(), datasetFramework,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null);
@@ -159,7 +151,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
-    return new DefaultFlowManager(flowName, flowId, applicationId, appFabricClient, this);
+    return new DefaultFlowManager(applicationId.getNamespaceId(), flowName, flowId, applicationId.getId(),
+                                  appFabricClient, this);
   }
 
   @Override
@@ -224,7 +217,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   private ProgramId startProgram(String jobName, Map<String, String> arguments, ProgramType programType) {
-    final ProgramId jobId = new ProgramId(applicationId, jobName, programType);
+    final ProgramId jobId = new ProgramId(applicationId.getId(), jobName, programType);
     // program can stop by itself, so refreshing info about its state
     if (!isRunning(jobId)) {
       runningProcesses.remove(jobName);
@@ -233,7 +226,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
                              programType + " program %s is already running", jobName);
     try {
-      appFabricClient.startProgram(applicationId, jobName, programType, arguments);
+      appFabricClient.startProgram(applicationId.getNamespaceId(), applicationId.getId(),
+                                   jobName, programType, arguments);
     } catch (Exception e) {
       runningProcesses.remove(jobName);
       throw Throwables.propagate(e);
@@ -271,30 +265,30 @@ public class DefaultApplicationManager implements ApplicationManager {
 
       @Override
       public RuntimeMetrics getMetrics() {
-        return RuntimeStats.getProcedureMetrics(applicationId, procedureId.getRunnableId());
+        return RuntimeStats.getProcedureMetrics(applicationId.getNamespaceId(), applicationId.getId(), procedureName);
       }
 
       @Override
       public ProcedureClient getClient() {
-        return procedureClientFactory.create(accountId, applicationId, procedureName);
+        return procedureClientFactory.create(applicationId.getNamespaceId(), applicationId.getId(), procedureName);
       }
     };
   }
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    final ProgramId workflowId = new ProgramId(applicationId, workflowName, ProgramType.WORKFLOW);
+    final ProgramId workflowId = new ProgramId(applicationId.getId(), workflowName, ProgramType.WORKFLOW);
     // currently we are using it for schedule, so not starting the workflow
 
     return new WorkflowManager() {
       @Override
       public List<ScheduleSpecification> getSchedules() {
-        return appFabricClient.getSchedules(applicationId, workflowName);
+        return appFabricClient.getSchedules(applicationId.getNamespaceId(), applicationId.getId(), workflowName);
       }
 
       @Override
       public List<RunRecord> getHistory() {
-        return appFabricClient.getHistory(applicationId, workflowName);
+        return appFabricClient.getHistory(applicationId.getNamespaceId(), applicationId.getId(), workflowName);
       }
 
       public ScheduleManager getSchedule(final String schedName) {
@@ -302,17 +296,18 @@ public class DefaultApplicationManager implements ApplicationManager {
         return new ScheduleManager() {
           @Override
           public void suspend() {
-            appFabricClient.suspend(applicationId, schedName);
+            appFabricClient.suspend(applicationId.getNamespaceId(), applicationId.getId(), schedName);
           }
 
           @Override
           public void resume() {
-            appFabricClient.resume(applicationId, schedName);
+            appFabricClient.resume(applicationId.getNamespaceId(), applicationId.getId(), schedName);
           }
 
           @Override
           public String status(int expectedCode) {
-            return appFabricClient.scheduleStatus(applicationId, schedName, expectedCode);
+            return appFabricClient.scheduleStatus(applicationId.getNamespaceId(), applicationId.getId(),
+                                                  schedName, expectedCode);
           }
         };
       }
@@ -328,7 +323,8 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new DefaultServiceManager(accountId, serviceId, appFabricClient, discoveryServiceClient, this);
+    return new DefaultServiceManager(applicationId.getNamespaceId(), serviceId, appFabricClient,
+                                     discoveryServiceClient, this);
   }
 
   @Override
@@ -339,12 +335,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
     final ProgramId workerId = startProgram(workerName, arguments, ProgramType.WORKER);
-    return new DefaultWorkerManager(accountId, workerId, appFabricClient, discoveryServiceClient, this);
+    return new DefaultWorkerManager(applicationId.getNamespaceId(), workerId, appFabricClient, this);
   }
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    Id.Stream streamId = Id.Stream.from(accountId, streamName);
+    Id.Stream streamId = Id.Stream.from(applicationId.getNamespace(), streamName);
     return streamWriterFactory.create(streamId);
   }
 
@@ -386,7 +382,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         // throw error when you stop something that is not running.
         if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
-          appFabricClient.stopProgram(id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
+          appFabricClient.stopProgram(applicationId.getNamespaceId(), id.getApplicationId(),
+                                      id.getRunnableId(), id.getRunnableType());
         }
       }
     } catch (Exception e) {
@@ -398,7 +395,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     String programName = programId.getRunnableId();
     try {
       if (runningProcesses.remove(programName, programId)) {
-        appFabricClient.stopProgram(applicationId, programName, programId.getRunnableType());
+        appFabricClient.stopProgram(applicationId.getNamespaceId(), applicationId.getId(),
+                                    programName, programId.getRunnableType());
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -408,7 +406,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   boolean isRunning(ProgramId programId) {
     try {
 
-      String status = appFabricClient.getStatus(programId.getApplicationId(),
+      String status = appFabricClient.getStatus(applicationId.getNamespaceId(), programId.getApplicationId(),
                                                 programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);

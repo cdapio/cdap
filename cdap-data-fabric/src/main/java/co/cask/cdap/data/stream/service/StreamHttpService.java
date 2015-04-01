@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -76,7 +77,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    discoverable = new Discoverable() {
+    discoverable = ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.STREAMS;
@@ -86,7 +87,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    };
+    });
     cancellable = discoveryService.register(discoverable);
 }
 

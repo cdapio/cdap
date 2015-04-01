@@ -81,7 +81,7 @@ events as partitioned Avro files. With this adapter running, you will be able to
 over the output fileset, which will contain the ``ts``, ``ticker``, ``trades``, and ``price`` fields as well
 as the partition fields::
 
-  cdap (http://127.0.0.1:10000)> execute 'describe cdap_user_tickers_converted'
+  cdap (http://127.0.0.1:10000)> execute 'describe dataset_tickers_converted'
   +=======================================================================+
   | col_name: STRING        | data_type: STRING    | comment: STRING      |
   +=======================================================================+
