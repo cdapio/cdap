@@ -21,12 +21,12 @@ angular.module(PKG.name + '.feature.flows')
     $scope.duration = null;
     $scope.startTime = null;
 
-    FlowDiagramData.fetchData()
+    FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
       .then(function(data) {
         $scope.data = data;
       })
 
-    // This controller is shared between the accordions.
+    // This controller is NOT shared between the accordions.
     // We need to share it and cache it in a service so that
     // all the controllers don't make the poll but one guy does.
     // This will bring down performance. Fix it ASAP.
