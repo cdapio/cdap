@@ -1,0 +1,6 @@
+<tabset>
+  <tab ng-repeat="tab in tabs">
+    <tab-heading> {{tab.title}} </tab-heading>
+    <div ng-include="tab.template"></div>
+  </tab>
+</tabset>

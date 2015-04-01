@@ -14,15 +14,8 @@
   <div class="col-sm-3 text-right">
     <div ng-show="status == 'RUNNING'"
          class="btn btn-default btn-md"
-         ng-click="toggleFlow('stop')">
+         ng-click="stopFlow('stop')">
       <span class="fa fa-stop"> </span>
-    </div>
-
-    <div ng-show="status == 'STOPPED' || status == 'COMPLETED'"
-          ng-disabled="true"
-         class="btn btn-default btn-md"
-         ng-click="toggleFlow('start')">
-      <span class="fa fa-play"> </span>
     </div>
     <div ng-show="status == 'start' || status == 'stop'"
          class="btn btn-default btn-md">
@@ -30,4 +23,4 @@
     </div>
   </div>
 </div>
-<my-flow-graph data-model="data"></my-flow-graph>
+<my-flow-graph data-model="data" parent="#c{{$state.params.runid}}"></my-flow-graph>
