@@ -47,7 +47,6 @@ public class ArgumentParser {
       return ImmutableMap.of();
     }
 
-
     ImmutableMap.Builder<String, String> result = ImmutableMap.builder();
     List<String> tokens = Parser.parseInput(mapString);
     for (String token : tokens) {
