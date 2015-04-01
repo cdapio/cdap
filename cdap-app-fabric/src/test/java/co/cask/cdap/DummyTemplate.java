@@ -17,19 +17,49 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import com.google.common.base.Objects;
 
 /**
- *  App to test adapter lifecycle.
+ * App Template to test adapter lifecycle.
+ * TODO: make this an ApplicationTemplate once that is merged.
  */
-public class AdapterApp extends AbstractApplication {
+public class DummyTemplate extends AbstractApplication {
+  public static final String NAME = "DummyTemplate";
+
+  public static class Config {
+    private final String field1;
+    private final String field2;
+
+    public Config(String field1, String field2) {
+      this.field1 = field1;
+      this.field2 = field2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Config that = (Config) o;
+
+      return Objects.equal(field1, that.field1) && Objects.equal(field2, that.field2);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(field1, field2);
+    }
+  }
 
   @Override
   public void configure() {
-    setName("AdapterApp");
-    addStream(new Stream("mySource"));
+    setName(NAME);
     setDescription("Application for to test Adapter lifecycle");
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());

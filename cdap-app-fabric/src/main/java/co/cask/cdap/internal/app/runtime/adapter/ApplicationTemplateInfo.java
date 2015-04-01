@@ -14,31 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.ProgramType;
+
+import java.io.File;
 
 /**
- * Holds adapter metadata
- *
- * @param <T> the type of config used by the adapter
+ * Holds information about an ApplicationTemplate.
  */
-public class AdapterMeta<T> {
-  private final AdapterSpecification<T> spec;
-  private final AdapterStatus status;
+public final class ApplicationTemplateInfo {
+  private final File file;
+  private final String name;
+  private final ProgramType programType;
 
-  public AdapterMeta(AdapterSpecification<T> spec, AdapterStatus status) {
-    this.spec = spec;
-    this.status = status;
+  public ApplicationTemplateInfo(File file, String name, ProgramType programType) {
+    this.file = file;
+    this.name = name;
+    this.programType = programType;
   }
 
-  public AdapterSpecification<T> getSpec() {
-    return spec;
+  public File getFile() {
+    return file;
   }
 
-  public AdapterStatus getStatus() {
-    return status;
+  public String getName() {
+    return name;
   }
 
+  public ProgramType getProgramType() {
+    return programType;
+  }
 }
