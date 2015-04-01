@@ -235,7 +235,7 @@ public class PreferencesClient {
     String res = Boolean.toString(resolved);
     URL url = config.resolveURLV3(String.format("namespaces/%s/apps/%s/%s/%s/preferences?resolved=%s",
                                                 program.getNamespaceId(), program.getApplicationId(),
-                                                program.getType(), program.getId(), res));
+                                                program.getType().getCategoryName(), program.getId(), res));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
