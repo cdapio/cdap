@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
@@ -49,22 +51,24 @@ public class DeletePreferencesCommand extends AbstractCommand {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
 
+    String programType = type.getNamePlural().toString();
+
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
         client.deleteInstancePreferences();
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
         client.deleteNamespacePreferences(cliConfig.getCurrentNamespace());
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case APP:
         client.deleteApplicationPreferences(parseAppId(programIdParts));
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case FLOW:
@@ -75,11 +79,11 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SPARK:
         checkInputLength(programIdParts, 2);
         client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()));
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getPrettyName());
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
     }
   }
 
@@ -90,6 +94,6 @@ public class DeletePreferencesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of a %s.", type.getPrettyName());
+    return String.format("Deletes the preferences of %s.", Fragment.of(Article.A, type.getTitleName()));
   }
 }

@@ -79,7 +79,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case SPARK:
         return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getPrettyName());
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences "  + type.getTitleName());
     }
   }
 }
