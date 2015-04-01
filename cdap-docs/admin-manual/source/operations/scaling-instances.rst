@@ -93,8 +93,8 @@ Scaling Services
 In a similar way to `Scaling Flowlets`_, you can query or change the number of handler instances of a Service
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-  GET /v3/namespaces/default/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
-  PUT /v3/namespaces/default/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
+  GET /v3/namespaces/default/apps/<app-id>/services/<service-id>/instances
+  PUT /v3/namespaces/default/apps/<app-id>/services/<service-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -105,18 +105,16 @@ Where:
   :<service-id>: Name of the Service
   :<runnable-id>: Name of the Service
   :<quantity>: Number of handler instances requested
-  
-**Note:** In this release, the ``runnable-id`` is the same as the ``service-id``.
 
 Example: Find out the number of handler instances of the Service *RetrieveCounts*
 of the application *WordCount*::
 
-  GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
+  GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances
 
 Example: Change the number of handler instances of the Service *RetrieveCounts*
 of the application *WordCount*::
 
-  PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances
+  PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances
 
 with the arguments as a JSON string in the body::
 
@@ -124,6 +122,6 @@ with the arguments as a JSON string in the body::
   
 Example using the :ref:`CDAP Standalone SDK<standalone-index>` and ``curl`` (reformatted to fit)::
 
-  curl -vw'\n' -XPUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
+  curl -vw'\n' -XPUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances' \
     -d '{ "instances" : 2 }'
 

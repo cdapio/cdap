@@ -76,14 +76,6 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String service = programIdParts[1];
         instances = programClient.getServiceInstances(appId, service);
         break;
-      case RUNNABLE:
-        if (programIdParts.length < 3) {
-          throw new CommandInputError(this);
-        }
-        String serviceId = programIdParts[1];
-        String runnableId = programIdParts[2];
-        instances = programClient.getServiceRunnableInstances(appId, serviceId, runnableId);
-        break;
       default:
         // TODO: remove this
         throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);

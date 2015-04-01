@@ -90,11 +90,6 @@ public enum ElementType {
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
           Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
 
-  RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
-           null, ProgramType.SERVICE,
-           ArgumentName.RUNNABLE,
-           Capability.SCALE, Capability.LOGS),
-
   MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,

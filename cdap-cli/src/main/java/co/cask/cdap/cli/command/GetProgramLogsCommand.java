@@ -48,14 +48,7 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
     long stop = arguments.getLong(ArgumentName.START_TIME.toString(), Long.MAX_VALUE);
 
     String logs;
-    if (elementType == ElementType.RUNNABLE) {
-      if (programIdParts.length < 3) {
-        throw new CommandInputError(this);
-      }
-      String serviceId = programIdParts[1];
-      String runnableId = programIdParts[2];
-      logs = programClient.getServiceRunnableLogs(appId, serviceId, runnableId, start, stop);
-    } else if (elementType.getProgramType() != null) {
+    if (elementType.getProgramType() != null) {
       if (programIdParts.length < 2) {
         throw new CommandInputError(this);
       }

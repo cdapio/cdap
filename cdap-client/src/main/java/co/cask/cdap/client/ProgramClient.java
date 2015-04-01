@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
@@ -425,32 +424,6 @@ public class ProgramClient {
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
 
-  /**
-   * Gets the number of instances that a service runnable is running on.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @return number of instances that the service runnable is running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @deprecated As of version 2.8.0, separated into {@link Service} and {@link Worker}
-   */
-  @Deprecated
-  public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                                          appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
-    }
-
-    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
-  }
 
   /**
    * Sets the number of instances of a service.
@@ -469,32 +442,6 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service", appId + "/" + serviceId);
-    }
-  }
-
-  /**
-   * Sets the number of instances that a service runnable is running on.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @param instances number of instances for the service runnable to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @deprecated As of version 2.8.0, separated into {@link Service} and {@link Worker}
-   */
-  @Deprecated
-  public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/instances",
-                                                          appId, serviceId, runnableId));
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
-
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
   }
 
@@ -615,33 +562,6 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
-    }
-
-    return new String(response.getResponseBody(), Charsets.UTF_8);
-  }
-
-  /**
-   * Gets the logs of a service runnable.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @param start start time of the time range of desired logs
-   * @param stop end time of the time range of desired logs
-   * @return the logs of the program
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   */
-  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
-                                                          appId, serviceId, runnableId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);

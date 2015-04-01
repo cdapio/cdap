@@ -1001,7 +1001,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
       int instances = specification.getInstances();
       responder.sendJson(HttpResponseStatus.OK,
                          new ServiceInstances(instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE,
