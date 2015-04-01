@@ -187,5 +187,11 @@ angular.module(PKG.name + '.feature.admin')
                 url: '/:appId',
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
                 controller: 'AdminNamespaceAppMetadataController'
-              });
+              })
+
+            .state('admin.namespace.detail.preferences', {
+              url: '/preferences',
+              templateUrl: '/assets/features/admin/templates/namespace/preferences.html',
+              controller: 'NamespacePreferencesController'
+            });
   });
