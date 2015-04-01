@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.ReadFilter;
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   private final StreamEventDecoder<K, V> decoder;
-  private final List<StreamEvent> events;
+  private final List<PositionStreamEvent> events;
 
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
@@ -66,23 +65,14 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    StreamEvent streamEvent;
-    do {
-      if (reader.getPosition() - inputSplit.getStart() >= inputSplit.getLength()) {
-        return false;
-      }
-
-      events.clear();
-      if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
-        return false;
-      }
-      streamEvent = events.get(0);
-    } while (streamEvent.getTimestamp() < inputSplit.getStartTime());
-
-    if (streamEvent.getTimestamp() >= inputSplit.getEndTime()) {
+    events.clear();
+    if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
       return false;
     }
-
+    PositionStreamEvent streamEvent = events.get(0);
+    if (streamEvent.getStart() - inputSplit.getStart() >= inputSplit.getLength()) {
+      return false;
+    }
     currentEntry = decoder.decode(streamEvent, currentEntry);
     return true;
   }

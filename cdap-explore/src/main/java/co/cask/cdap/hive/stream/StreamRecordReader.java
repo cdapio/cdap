@@ -16,9 +16,9 @@
 
 package co.cask.cdap.hive.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.ReadFilter;
+import co.cask.cdap.data.stream.PositionStreamEvent;
 import co.cask.cdap.data.stream.StreamDataFileReader;
 import co.cask.cdap.data.stream.TimeRangeReadFilter;
 import com.google.common.collect.Lists;
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamRecordReader.class);
 
-  private final List<StreamEvent> events;
+  private final List<PositionStreamEvent> events;
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
   private ReadFilter readFilter;
@@ -66,30 +66,21 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
 
   @Override
   public boolean next(Void key, ObjectWritable value) throws IOException {
-    StreamEvent streamEvent;
-    do {
-      if (reader.getPosition() - inputSplit.getStart() >= inputSplit.getLength()) {
+    events.clear();
+    try {
+      if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
         return false;
       }
-
-      events.clear();
-      try {
-        if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
-          return false;
-        }
-      } catch (InterruptedException e) {
-        LOG.error("interrupted while reading stream events.", e);
+      PositionStreamEvent streamEvent = events.get(0);
+      if (streamEvent.getStart() - inputSplit.getStart() >= inputSplit.getLength()) {
         return false;
       }
-      streamEvent = events.get(0);
-    } while (streamEvent.getTimestamp() < inputSplit.getStartTime());
-
-    if (streamEvent.getTimestamp() >= inputSplit.getEndTime()) {
+      value.set(streamEvent);
+      return true;
+    } catch (InterruptedException e) {
+      LOG.error("interrupted while reading stream events.", e);
       return false;
     }
-
-    value.set(streamEvent);
-    return true;
   }
 
   @Override
