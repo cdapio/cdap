@@ -60,7 +60,7 @@ body.theme-cdap {
   // --------------------------------------------------
 
   .list-group {
-    border-radius: @border-radius-base;
+    .border-radius(@border-radius-base);
     .box-shadow(0 0px 0px rgba(0,0,0,.075));
   }
   .list-group-item.active,
@@ -69,39 +69,15 @@ body.theme-cdap {
     text-shadow: 0 -1px 0 darken(@list-group-active-bg, 10%);
     #gradient > .vertical(@start-color: @list-group-active-bg; @end-color: darken(@list-group-active-bg, 7.5%));
     border-color: darken(@list-group-active-border, 7.5%);
-
-    .badge {
-      text-shadow: none;
-    }
-  }
-
-  .pre-scrollable {
-    margin-top: 20px;
-    a.list-group-item {
-      background-color: #EFF0F4;
-      padding: 20px 25px;
-      &:first-child {
-        border-top-right-radius: 8px;
-        border-top-left-radius: 8px;
-      }
-      &:last-child {
-        border-bottom-right-radius: 8px;
-        border-bottom-left-radius: 8px;
-      }
-      strong {
-        color: @cdap-bluegray;
-        font-size: 18px;
-        font-weight: 500;
-      }
-    }
+    .badge { text-shadow: none; }
   }
 
   //
   // Panels
   // --------------------------------------------------
 
-  // Common styles
-  .panel {
+// Message panel (appears on Dev + Management start screens)
+  .panel-message {
     background: transparent;
     border: 0;
     .box-shadow(0 8px 6px -6px @cdap-darkness);
@@ -140,7 +116,7 @@ body.theme-cdap {
   }
 
   // Apply the mixin to the panel headings only
-  .panel-default > .panel-heading   { background: transparent; border: 0; }
+  .panel-default > .panel-heading   { background: @cdap-lightgray; border: 0; }
   .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
   .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
   .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }

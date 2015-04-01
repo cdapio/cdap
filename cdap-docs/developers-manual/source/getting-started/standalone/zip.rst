@@ -9,6 +9,8 @@
 Binary Zip File
 ============================================
 
+.. _standalone-zip-file:
+
 The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads/#cdap>`__.
 Click the link marked "SDK" of the *Software Development Kit (SDK).* 
 

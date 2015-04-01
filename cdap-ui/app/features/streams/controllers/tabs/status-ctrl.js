@@ -27,11 +27,10 @@ angular.module(PKG.name + '.feature.streams')
                   '.stream.' +
                   $state.params.streamId;
 
-      dataSrc.request({
+      dataSrc.poll({
         _cdapPath : path ,
         method: 'POST'
-      })
-        .then(function(metricData) {
+      }, function(metricData) {
           var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
           $scope[metric.scopeProperty] = data;
         });

@@ -20,6 +20,7 @@ com.google.code.gson.gson-2.2.4.jar
 com.google.guava.guava-13.0.1.jar
 com.google.inject.extensions.guice-assistedinject-3.0.jar
 com.google.inject.extensions.guice-multibindings-3.0.jar
+com.google.inject.extensions.guice-servlet-3.0.jar
 com.google.inject.guice-3.0.jar
 com.jamesmurty.utils.java-xmlbuilder-0.4.jar
 com.jcraft.jsch-0.1.42.jar
@@ -41,8 +42,12 @@ commons-logging.commons-logging-1.1.1.jar
 commons-net.commons-net-3.1.jar
 com.ning.async-http-client-1.7.18.jar
 com.ning.compress-lzf-1.0.0.jar
+com.sun.jersey.contribs.jersey-guice-1.9.jar
+com.sun.jersey.jersey-client-1.9.jar
 com.sun.jersey.jersey-core-1.9.jar
+com.sun.jersey.jersey-json-1.9.jar
 com.sun.jersey.jersey-server-1.9.jar
+com.sun.xml.bind.jaxb-impl-2.2.3-1.jar
 com.thoughtworks.paranamer.paranamer-2.3.jar
 com.twitter.chill_2.10-0.5.0.jar
 com.twitter.chill-java-0.5.0.jar
@@ -66,7 +71,6 @@ javax.ws.rs.javax.ws.rs-api-2.0.jar
 javax.xml.bind.jaxb-api-2.1.jar
 javax.xml.bind.jaxb-api-2.2.2.jar
 javax.xml.stream.stax-api-1.0-2.jar
-jdk.tools.jdk.tools-1.7.jar
 jline.jline-2.12.jar
 joda-time.joda-time-2.1.jar
 log4j.log4j-1.2.15.jar
@@ -84,9 +88,7 @@ org.apache.ant.ant-1.9.1.jar
 org.apache.ant.ant-launcher-1.9.1.jar
 org.apache.avro.avro-1.6.2.jar
 org.apache.avro.avro-ipc-1.6.2.jar
-org.apache.avro.avro-ipc-1.7.7-tests.jar
 org.apache.avro.avro-mapred-1.6.2.jar
-org.apache.avro.avro-mapred-1.7.7-hadoop2.jar
 org.apache.commons.commons-compress-1.4.1.jar
 org.apache.commons.commons-lang3-3.3.2.jar
 org.apache.commons.commons-math3-3.1.1.jar
@@ -108,13 +110,13 @@ org.apache.kafka.kafka_2.10-0.8.0.jar
 org.apache.mesos.mesos-0.18.1-shaded-protobuf.jar
 org.apache.thrift.libfb303-0.9.0.jar
 org.apache.thrift.libthrift-0.9.0.jar
-org.apache.twill.twill-api-0.4.0-incubating.jar
-org.apache.twill.twill-common-0.4.0-incubating.jar
-org.apache.twill.twill-core-0.4.0-incubating.jar
-org.apache.twill.twill-discovery-api-0.4.0-incubating.jar
-org.apache.twill.twill-discovery-core-0.4.0-incubating.jar
-org.apache.twill.twill-yarn-0.4.0-incubating.jar
-org.apache.twill.twill-zookeeper-0.4.0-incubating.jar
+org.apache.twill.twill-api-0.5.0-incubating.jar
+org.apache.twill.twill-common-0.5.0-incubating.jar
+org.apache.twill.twill-core-0.5.0-incubating.jar
+org.apache.twill.twill-discovery-api-0.5.0-incubating.jar
+org.apache.twill.twill-discovery-core-0.5.0-incubating.jar
+org.apache.twill.twill-yarn-0.5.0-incubating.jar
+org.apache.twill.twill-zookeeper-0.5.0-incubating.jar
 org.apache.velocity.velocity-1.5.jar
 org.apache.xbean.xbean-reflect-3.6.jar
 org.apache.zookeeper.zookeeper-3.4.5.jar
@@ -122,6 +124,7 @@ org.codehaus.jackson.jackson-core-asl-1.8.8.jar
 org.codehaus.jackson.jackson-jaxrs-1.8.8.jar
 org.codehaus.jackson.jackson-mapper-asl-1.8.8.jar
 org.codehaus.jackson.jackson-xc-1.8.8.jar
+org.codehaus.jettison.jettison-1.1.jar
 org.eclipse.jetty.aggregate.jetty-all-7.6.0.v20120127.jar
 org.eclipse.jetty.jetty-continuation-8.1.15.v20140411.jar
 org.eclipse.jetty.jetty-http-8.1.15.v20140411.jar

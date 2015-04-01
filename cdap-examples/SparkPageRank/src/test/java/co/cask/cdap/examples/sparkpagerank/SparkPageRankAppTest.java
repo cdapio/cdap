@@ -54,16 +54,17 @@ public class SparkPageRankAppTest extends TestBase {
 
     // Start GoogleTypePR
     ServiceManager transformServiceManager = appManager.startService(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
-    // Wait service startup
+    // Start CentersService
+    ServiceManager serviceManager = appManager.startService(SparkPageRankApp.RANKS_SERVICE_NAME);
+
+    // Wait for GoogleTypePR service to start since the Spark program needs it
     transformServiceManager.waitForStatus(true);
 
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
-    // Start CentersService
-    ServiceManager serviceManager = appManager.startService(SparkPageRankApp.RANKS_SERVICE_NAME);
-    // Wait service startup
+    // Wait for ranks service to start
     serviceManager.waitForStatus(true);
 
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),

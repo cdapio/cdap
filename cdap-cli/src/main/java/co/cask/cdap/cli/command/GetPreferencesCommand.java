@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 
 /**
@@ -38,6 +40,6 @@ public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the preferences of a %s.", type.getPrettyName());
+    return String.format("Gets the preferences of %s.", Fragment.of(Article.A, type.getTitleName()));
   }
 }

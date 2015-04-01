@@ -12,6 +12,13 @@ angular.module(PKG.name+'.commons')
     myAlert.clear();
     $scope.alerts = myAlert.getAlerts();
   };
+
+  $scope.remove = function (item) {
+    myAlert.remove(item);
+    if (myAlert.count() === 0) {
+      $scope.$hide();
+    }
+  };
 })
 
 .directive('myError',

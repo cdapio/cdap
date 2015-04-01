@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
@@ -41,7 +43,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getPrettyName());
+    printStream.printf(SUCCESS + "\n", type.getTitleName());
   }
 
   @Override
@@ -64,7 +66,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the preferences of a " + type.getPluralPrettyName() + "." +
+    return "Sets the preferences of " + Fragment.of(Article.A, type.getTitleName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1 key2=v2\".";
   }
 }

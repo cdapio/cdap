@@ -1,17 +1,49 @@
-
 //
 // Mixins
 // --------------------------------------------------
-.cask-btn(@color: @btn-default-color, @background: white, @border: 1px solid #CCC, @border-radius: 8px, @padding: 6px 24px) {
-      background-color: @background;
-      border: @border;
-      border-radius: @border-radius;
-      color: @color;
-      outline: none;
-      padding: @padding;
-      white-space: normal;
+
+.border-radius (@radius) {
+  -webkit-border-radius: @radius;
+  -moz-border-radius:    @radius;
+  border-radius:         @radius;
+
+  -moz-background-clip:    padding;
+  -webkit-background-clip: padding-box;
+  background-clip:         padding-box;
+}
+
+.cask-btn(@background: white, @border: 1px solid #CCC, @border-radius: 8px, @color: @btn-default-color, @font-size: 14px, @padding: 6px 24px) {
+  background-color: @background;
+  border: @border;
+  .border-radius(@border-radius);
+  color: @color;
+  font-size: @font-size;
+  outline: none;
+  padding: @padding;
+  white-space: normal;
+  &:hover, &:focus { text-decoration: none; }
+}
+
+.dropdown() {
+  border: 0;
+  border-radius: 0 8px 8px 8px;
+  background-color: @cdap-header;
+  margin: 0;
+  padding: 0;
+  > li {
+    margin: 0;
+    &:not(.divider) {
+      .border-radius(0 8px 8px 8px);
+      padding: 10px 0;
+      &:hover, &:focus { background-color: @cdap-lightgray; }
+    }
+    > a {
+      color: white;
+      padding: 3px 10px 3px 15px;
       &:hover, &:focus {
-          text-decoration: none;
-          outline: none;
+        background-color: transparent;
+        outline: none;
       }
+    }
   }
+}
