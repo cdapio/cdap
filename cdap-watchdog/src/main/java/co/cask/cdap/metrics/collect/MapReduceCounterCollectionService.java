@@ -46,26 +46,35 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics, MetaMetricsComputer metaMetricsComputer) throws Exception {
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
+      metaMetricsComputer.visitMetric(record);
+      publishMetric(record);
+    }
 
-      // The format of the counters:
-      // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
-      // * counter name: metric name
+    Iterator<MetricValue> metaMetricsIterator = metaMetricsComputer.computeMetaMetrics();
+    while (metaMetricsIterator.hasNext()) {
+      publishMetric(metaMetricsIterator.next());
+    }
+  }
 
-      StringBuilder counterGroup = new StringBuilder("cdap");
-      // flatten tags
-      for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
-        counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
-      }
+  private void publishMetric(MetricValue record) {
+    // The format of the counters:
+    // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
+    // * counter name: metric name
 
-      String counterName = getCounterName(record.getName());
-      if (record.getType() == MetricType.COUNTER) {
-        taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
-      } else {
-        taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
-      }
+    StringBuilder counterGroup = new StringBuilder("cdap");
+    // flatten tags
+    for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
+      counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
+    }
+
+    String counterName = getCounterName(record.getName());
+    if (record.getType() == MetricType.COUNTER) {
+      taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
+    } else {
+      taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
     }
   }
 

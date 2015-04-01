@@ -194,9 +194,8 @@ public class KafkaMetricsCollectionServiceTest {
       }
     });
 
-    Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
+    Assert.assertTrue(semaphore.tryAcquire(expected.size(), 15, TimeUnit.SECONDS));
 
-    Assert.assertEquals(expected.size(), metrics.size());
     for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
       Assert.assertEquals(expectedEntry.getValue().intValue(), metrics.get(expectedEntry.getKey()).getValue());
     }
