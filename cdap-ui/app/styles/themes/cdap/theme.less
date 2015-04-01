@@ -78,20 +78,20 @@ body.theme-cdap {
 
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
-    background: transparent;
+    background: white;
     border: 0;
+    padding: 10px;
+    .border-radius(8px);
     .box-shadow(0 8px 6px -6px @cdap-darkness);
-    .fa-close {
-      color: white;
-      font-size: 32px;
-      padding: 12px 15px;
-      vertical-align: text-top;
-    }
-    .panel-body {
-      .col-sm-4 {
-        &:not(:first-child) {
-          border-left: 1px dashed @cdap-gray;
-        }
+    .btn-close {
+      .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
+      cursor: pointer;
+      line-height: 0;
+      .fa-close {
+        color: white;
+        font-size: 16px;
+        padding: 8px 10px;
+        vertical-align: text-top;
       }
     }
   }
