@@ -1,14 +1,16 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespacePreferencesController', function ($scope, $filter, MyDataSource, $alert) {
+  .controller('NamespacePreferencesController', function ($scope, $filter, MyDataSource, $alert, $state) {
     var dataSrc = new MyDataSource($scope);
     var filterFilter = $filter('filter');
+
+    var path = '/namespaces/' + $state.params.nsadmin + '/preferences';
 
     $scope.preferences = [];
 
     $scope.loadProperties = function () {
       dataSrc
         .request({
-          _cdapPath: '/preferences'
+          _cdapPath: path
         }).then(function (res) {
           var arr = [];
 
@@ -49,7 +51,7 @@ angular.module(PKG.name + '.feature.admin')
 
       dataSrc
         .request({
-          _cdapPath: '/preferences',
+          _cdapPath: path,
           method: 'PUT',
           body: obj
         })
@@ -64,7 +66,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.deletePreferences = function() {
       dataSrc
         .request({
-          _cdapPath: '/preferences',
+          _cdapPath: path,
           method: 'DELETE'
         })
         .then(function() {
