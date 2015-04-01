@@ -27,9 +27,6 @@ angular.module(PKG.name + '.feature.flows')
       })
 
     // This controller is NOT shared between the accordions.
-    // We need to share it and cache it in a service so that
-    // all the controllers don't make the poll but one guy does.
-    // This will bring down performance. Fix it ASAP.
     console.info("Polling on Runs");
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
