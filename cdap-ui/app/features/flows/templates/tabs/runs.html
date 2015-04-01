@@ -5,7 +5,7 @@
           <span class="pull-left"> {{run.runid}} </span>
           <span class="pull-right">
             {{run.status}}
-            <i class="fa fa-fw" ng-class="{'fa-chevron-down': status.open, 'fa-chevron-right': !status.open}"></i>
+            <i class="fa fa-fw" ng-class="{'fa-chevron-down': run.isOpen, 'fa-chevron-right': !run.isOpen}"></i>
           </span>
         </div>
      </accordion-heading>
