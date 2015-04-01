@@ -124,7 +124,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private void suspendWorkflow(Id.Program program, String runId, int expectedStatusCode) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/%s/suspend", program.getApplicationId(), program.getId(), runId);
+    String path = String.format("apps/%s/workflows/%s/runs/%s/suspend", program.getApplicationId(), program.getId(),
+                                runId);
     HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                        program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
@@ -152,7 +153,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
    * Tries to resume a Workflow and expect the call completed with the status.
    */
   private void resumeWorkflow(Id.Program program, String runId, int expectedStatusCode) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/%s/resume", program.getApplicationId(), program.getId(), runId);
+    String path = String.format("apps/%s/workflows/%s/runs/%s/resume", program.getApplicationId(), program.getId(),
+                                runId);
     HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                        program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());

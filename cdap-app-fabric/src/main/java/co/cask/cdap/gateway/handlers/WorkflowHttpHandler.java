@@ -77,7 +77,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   }
 
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/suspend")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/suspend")
   public void suspendWorkflowRun(HttpRequest request, final HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                  @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
@@ -105,7 +105,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   }
 
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/resume")
+  @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/resume")
   public void resumeWorkflowRun(HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
