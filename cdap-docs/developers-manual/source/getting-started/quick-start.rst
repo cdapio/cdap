@@ -34,6 +34,13 @@ in real-time, and computes the bounce ratio of each web page encountered in batc
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
+Convention
+----------
+In the examples that follow, for brevity we will simply use ``./bin/cdap-cli.sh`` for the
+CDAP Command Line Interface. Substitute the actual path of
+``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``, or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows,
+as appropriate. If you run all the commands from the Standalone CDAP SDK directory (where
+you installed CDAP), you can cut and paste the commands as given.
 
 .. highlight:: console
 
@@ -41,11 +48,14 @@ Downloading the Application
 ===========================
 You can either download the application zip archive that we have built for you, or
 you can pull the source code from GitHub. If you download the zip file, then the application
-is already built and packaged::
+is already built and packaged:
 
-  $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.2/cdap-wise-0.2.2.zip
-  $ unzip cdap-wise-0.2.2.zip
-  $ cd cdap-wise-0.2.2
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| cd <CDAP-SDK-HOME>
+    |$| curl -w'\\n' -O |http:|//repository.cask.co/downloads/co/cask/cdap/apps/|wise-version|/cdap-wise-|wise-version|.zip
+    |$| unzip cdap-wise-|wise-version|.zip
 
 If you clone the source code from GitHub, you will need to build and package the
 application with these commands::
@@ -53,9 +63,14 @@ application with these commands::
   $ git clone https://github.com/caskdata/cdap-apps
   $ cd cdap-apps/Wise
   $ mvn package -DskipTests
+  $ cd <CDAP-SDK-HOME>
 
-In both cases, the packaged application is in the ``target/`` directory and the file name is
-``cdap-wise-0.2.2.jar``.
+In both cases, the packaged application is in the ``target/`` directory with the file name:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    cdap-wise-|wise-version|.jar
 
 **Learn More:** *A detailed description of the application and its implementation is
 available in the* :ref:`Web Analytics Application documentation. <examples-web-analytics>`
@@ -64,14 +79,24 @@ available in the* :ref:`Web Analytics Application documentation. <examples-web-a
 Deploying the Application
 =========================
 You can deploy the application into your running instance of CDAP either by using the 
-:ref:`CDAP Command Line Interface <reference:cli>`::
+:ref:`CDAP Command Line Interface <reference:cli>`:
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh deploy app target/cdap-wise-0.2.2.jar
+.. container:: highlight
 
-or using ``curl`` to directly make an HTTP request::
+  .. parsed-literal::
+    |$| cdap-cli.sh deploy app cdap-wise-|wise-version|/target/cdap-wise-|wise-version|.jar
+    Deploy Complete
 
-  $ curl -H "X-Archive-Name: cdap-wise-0.2.1.jar" localhost:10000/v3/namespaces/default/apps \
-    --data-binary @target/cdap-wise-0.2.2.jar
+or using ``curl`` to directly make an HTTP request:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| curl -w'\\n' -H "X-Archive-Name: cdap-wise-|wise-version|.jar" localhost:10000/v3/namespaces/default/apps \
+      --data-binary @cdap-wise-|wise-version|/target/cdap-wise-|wise-version|.jar
+
+(If you cloned the source code and built the app, you'll need to adjust the above paths to
+include the ``cdap-apps/Wise`` directory.)
 
 **Learn More:** *You can also deploy apps* :ref:`using the CDAP Console. <cdap-console>`
 
@@ -80,8 +105,8 @@ Starting Realtime Processing
 ============================
 Now that the application is deployed, we can start the real-time processing::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh start flow Wise.WiseFlow
-  Successfully started Flow 'WiseFlow' of application 'Wise'
+  $ ./bin/cdap-cli.sh start flow Wise.WiseFlow
+  Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
 This starts the Flow named *WiseFlow,* which listens for log events from web servers to
 analyze them in realtime. Another way to start the flow is using ``curl``::
@@ -90,7 +115,7 @@ analyze them in realtime. Another way to start the flow is using ``curl``::
 
 At any time, you can find out whether the Flow is running::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh get status flow Wise.WiseFlow
+  $ ./bin/cdap-cli.sh get flow status Wise.WiseFlow
   RUNNING
   
   $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status
@@ -103,13 +128,13 @@ The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream 
 endpoint used to ingest data with HTTP requests, and you can do that using the
 Command Line Interface::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh send stream logEventStream \
+  $ ./bin/cdap-cli.sh send stream logEventStream \
     '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \
     "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 
 Or, you can use an HTTP request::
 
-  $ curl localhost:10000/v3/namespaces/default/streams/logEventStream \
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logEventStream \
     -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" \ 
     401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 
@@ -133,7 +158,7 @@ You can retrieve events from a Stream by specifying a time range and a limit on 
 of events you want to see. For example, using the Command Line Interface, this shows up to 5 events
 in a time range of 3 minutes duration, starting 5 minutes ago::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh get stream logEventStream -5m +3m 5
+  $ ./bin/cdap-cli.sh get stream logEventStream -5m +3m 5
   +========================================================================================================+
   | timestamp     | headers | body size | body                                                             |
   +========================================================================================================+
@@ -224,12 +249,12 @@ The Flow counts URL requests by the origin IP address, using a Dataset called
 *WiseService*. Before we can use this service, we need to make sure that it is running. We
 can start the service using the Command Line Interface::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh start service Wise.WiseService
+  $ ./bin/cdap-cli.sh start service Wise.WiseService
   Successfully started Service 'WiseService' of application 'Wise'
   
 Or, using a REST call::
 
-  $ curl -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start
+  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start
   
   $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status
   {"status":"RUNNING"}
@@ -259,7 +284,7 @@ convenient to send it as the body of a POST request.
 We can also use SQL to bypass the service and query the raw contents of the underlying
 table (reformatted to fit)::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
+  $ ./bin/cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
   +===========================================================================================+
   | dataset_pageviewstore.key: STRING | dataset_pageviewstore.value: map<string,bigint>       |
   +===========================================================================================+
@@ -289,12 +314,12 @@ MapReduce that computes the total number of bounces for each URL. It is part of 
 that is scheduled to run every 10 minutes; we can also start the job immediately using the
 CLI::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh start mapreduce Wise.WiseWorkflow_BounceCountsMapReduce
-  Successfully started MapReduce 'WiseWorkflow_BounceCountsMapReduce' of application 'Wise'
+  $ ./bin/cdap-cli.sh start mapreduce Wise.BounceCountsMapReduce
+  Successfully started MapReduce Program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
   
 or using a REST call::
 
-  $ curl -X POST localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
+  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
 
 Note that this MapReduce program processes the exact same data that is consumed by the
 WiseFlow, namely, the log event stream, and both programs can run at the same time without
@@ -308,7 +333,7 @@ We can inquire as to the status of the MapReduce::
 When the job has finished, the returned status will be *STOPPED*. Now we can query the
 bounce counts with SQL. Let's take a look at the schema first::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
+  $ ./bin/cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
   Successfully connected CDAP instance at 127.0.0.1:10000
   +==========================================================+
   | col_name: STRING | data_type: STRING | comment: STRING   |
@@ -320,7 +345,7 @@ bounce counts with SQL. Let's take a look at the schema first::
 
 For example, to get the five URLs with the highest bounce-to-visit ratio (or bounce rate)::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
+  $ ./bin/cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
     FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
   +===================================+
   | uri: STRING | ratio: DOUBLE       |
@@ -339,7 +364,7 @@ We can also use the full power of the `Hive query language
 queries. For example, Hive allows us to explode the page view counts into a table with
 fixed columns::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
+  $ ./bin/cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
     LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
   +====================================================+
   | ip: STRING      | uri: STRING      | count: BIGINT |
@@ -364,7 +389,7 @@ pages?
 
 ::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT views.uri, ratio, ip, count FROM \
+  $ ./bin/cdap-cli.sh execute "\"SELECT views.uri, ratio, ip, count FROM \
        (SELECT uri, totalvisits/bounces AS ratio \
           FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
        (SELECT key AS ip, uri, count \
