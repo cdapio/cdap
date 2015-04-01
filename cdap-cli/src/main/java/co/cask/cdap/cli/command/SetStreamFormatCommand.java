@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamClient;
@@ -96,13 +98,13 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return new StringBuilder()
-      .append("Sets the format of a ")
-      .append(ElementType.STREAM.getPrettyName())
+      .append("Sets the format of ")
+      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
       .append(". <")
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or avro-like json schema and <")
       .append(ArgumentName.SETTINGS)
-      .append("> is specified in the format \"key1=v1, key2=v2\".")
+      .append("> is specified in the format \"key1=v1 key2=v2\".")
       .toString();
   }
 }

@@ -66,6 +66,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
         }
         else {
           setTimeout(pingAttempt, attempts<PING_MAX_RETRIES ? PING_INTERVAL : PING_INTERVAL*60);
+          deferred.resolve(self);
         }
       }
     );

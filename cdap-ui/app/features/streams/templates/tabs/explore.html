@@ -126,10 +126,10 @@
 
         <!-- Right Panel -->
         <div class="col-xs-6 well">
-          <div ng-show="results.results.length">
-            <p><strong>{{ results.request.status }}</strong></p>
+          <div ng-show="responses.results.length">
+            <p><strong>{{ responses.request.status }}</strong></p>
             <div class='sql-statement'>
-              <p>{{ results.request.statement }}</p>
+              <p>{{ responses.request.statement }}</p>
             </div>
 
             <div class="text-right" ng-show="query">
@@ -142,7 +142,7 @@
               <div class="text-right">
                 <a
                   class="btn btn-default"
-                  ng-click="download(results.request)"
+                  ng-click="download(responses.request)"
                 >
                   Download All
                 </a>
@@ -152,11 +152,11 @@
                 <table class="table">
                   <thead>
                     <tr>
-                      <th ng-repeat="header in results.schema">{{ header.name }}</th>
+                      <th ng-repeat="header in responses.schema">{{ header.name }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr ng-repeat="results in results.results">
+                    <tr ng-repeat="results in responses.results">
                       <td ng-repeat="result in results.columns">{{ result }}</td>
                     </tr>
                   </tbody>
@@ -164,7 +164,7 @@
               </div>
             </div>
           </div>
-          <div ng-hide="results.results.length" class="text-center">
+          <div ng-hide="responses.results.length" class="text-center">
             <p>(Select Query)</p>
           </div>
         </div>

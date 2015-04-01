@@ -29,15 +29,15 @@ function extractConfig(param) {
     return deferred.promise;
   }
 
-  if (process.env.CDAP_MODE === 'enterprise') {
+  if (process.env.NODE_ENV === 'production') {
     buffer = '';
-    tool = spawn(__dirname + '/../../bin/config-tool', ['--'+param]);
+    tool = spawn(__dirname + '/../../../bin/config-tool', ['--'+param]);
     tool.stderr.on('data', configReadFail.bind(this));
     tool.stdout.on('data', configRead.bind(this));
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
   } else {
     try {
-      cache[param] = require('../../cdap-config.json');
+      cache[param] = require('../../../conf/generated/cdap-config.json');
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
@@ -69,4 +69,3 @@ function configReadFail (data) {
     console.log(textChunk);
   }
 }
-

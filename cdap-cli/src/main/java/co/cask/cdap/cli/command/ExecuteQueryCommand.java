@@ -21,10 +21,11 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -52,13 +53,11 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   private static final long DEFAULT_TIMEOUT_MIN = Long.MAX_VALUE;
   private final QueryClient queryClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.queryClient = queryClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -94,7 +93,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
             return object.getColumns();
           }
         }).build();
-      tableRenderer.render(output, table);
+      cliConfig.getTableRenderer().render(cliConfig, output, table);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
@@ -122,8 +121,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).",
-                         ElementType.QUERY.getPrettyName(), ArgumentName.TIMEOUT);
+    return String.format("Executes %s with optional <%s> in minutes (default is no timeout).",
+                         Fragment.of(Article.A, ElementType.QUERY.getTitleName()), ArgumentName.TIMEOUT);
   }
 
   @Override

@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterConfig;
@@ -126,24 +128,24 @@ public class CreateStreamConversionAdapterCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return new StringBuilder()
-      .append("Creates a ")
-      .append(ElementType.STREAM.getPrettyName())
+      .append("Creates ")
+      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
       .append(" conversion ")
-      .append(ElementType.ADAPTER.getPrettyName())
-      .append(" that periodically reads from a ")
-      .append(ElementType.STREAM.getPrettyName())
+      .append(ElementType.ADAPTER.getTitleName())
+      .append(" that periodically reads from ")
+      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
       .append(" and writes to a time-partitioned fileset. <")
       .append(ArgumentName.FREQUENCY)
       .append("> is a number followed by a 'm', 'h', or 'd' for minute, hour, or day. <")
       .append(ArgumentName.FORMAT)
       .append("> is the name of the ")
-      .append(ElementType.STREAM.getPrettyName())
+      .append(ElementType.STREAM.getTitleName())
       .append(" format, such as 'text', 'avro', 'csv', or 'tsv'. <")
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema of comma separated column name followed by column type. <")
       .append(ArgumentName.HEADERS)
       .append("> is a comma separated list of ")
-      .append(ElementType.STREAM.getPrettyName())
+      .append(ElementType.STREAM.getTitleName())
       .append(" headers to include in the output schema. <")
       .append(ArgumentName.DATASET)
       .append("> is the name of the time-partitioned fileset to write to.")

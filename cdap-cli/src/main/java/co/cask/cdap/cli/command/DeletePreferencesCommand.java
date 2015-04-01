@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.PreferencesClient;
@@ -51,13 +53,15 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
 
+    String programType = type.getNamePlural().toString();
+
     switch (type) {
       case INSTANCE:
         if (programIdParts.length != 0) {
           throw new CommandInputError(this);
         }
         client.deleteInstancePreferences();
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case NAMESPACE:
@@ -65,7 +69,7 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteNamespacePreferences(cliConfig.getCurrentNamespace());
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case APP:
@@ -73,7 +77,7 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteApplicationPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]));
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case FLOW:
@@ -81,9 +85,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), programType, programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case PROCEDURE:
@@ -91,9 +94,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), programType, programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case MAPREDUCE:
@@ -101,9 +103,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), programType, programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case WORKFLOW:
@@ -111,9 +112,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         client.deleteProgramPreferences(
-          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]), programType, programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case SERVICE:
@@ -122,8 +122,8 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         }
         client.deleteProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          type.getNamePlural().toString(), programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       case SPARK:
@@ -132,22 +132,22 @@ public class DeletePreferencesCommand extends AbstractAuthCommand {
         }
         client.deleteProgramPreferences(
           Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-          type.getPluralName(), programIdParts[1]);
-        printStream.printf(SUCCESS + "\n", type.getPrettyName());
+          type.getNamePlural().toString(), programIdParts[1]);
+        printStream.printf(SUCCESS + "\n", type.getTitleName());
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getPrettyName());
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
     }
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete %s preferences [<%s>]", type.getName(), type.getArgumentName());
+    return String.format("delete preferences %s [<%s>]", type.getName(), type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of a %s.", type.getPrettyName());
+    return String.format("Deletes the preferences of %s.", Fragment.of(Article.A, type.getTitleName()));
   }
 }

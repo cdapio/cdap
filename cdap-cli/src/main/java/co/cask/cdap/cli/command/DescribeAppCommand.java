@@ -19,10 +19,11 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.common.cli.Arguments;
@@ -38,13 +39,11 @@ import java.util.List;
 public class DescribeAppCommand extends AbstractAuthCommand {
 
   private final ApplicationClient applicationClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -53,15 +52,14 @@ public class DescribeAppCommand extends AbstractAuthCommand {
     List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
     Table table = Table.builder()
-      .setHeader("app", "type", "id", "description")
+      .setHeader("type", "id", "description")
       .setRows(programsList, new RowMaker<ProgramRecord>() {
         @Override
         public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(appId, object.getType().getCategoryName(),
-                                    object.getName(), object.getDescription());
+          return Lists.newArrayList(object.getType().getPrettyName(), object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -71,6 +69,6 @@ public class DescribeAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about an %s.", ElementType.APP.getPrettyName());
+    return String.format("Shows information about %s.", Fragment.of(Article.A, ElementType.APP.getTitleName()));
   }
 }

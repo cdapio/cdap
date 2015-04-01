@@ -16,13 +16,11 @@
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.common.cli.Arguments;
@@ -38,13 +36,11 @@ import java.util.List;
 public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   private final DatasetClient datasetClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -59,7 +55,7 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getType());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -69,6 +65,6 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.DATASET.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.DATASET.getTitleNamePlural());
   }
 }

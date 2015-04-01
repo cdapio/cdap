@@ -38,6 +38,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -91,6 +92,7 @@ public class DefaultStore implements Store {
     Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, APP_META_TABLE);
 
   private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
 
@@ -99,11 +101,12 @@ public class DefaultStore implements Store {
   @Inject
   public DefaultStore(CConfiguration conf,
                       LocationFactory locationFactory,
+                      NamespacedLocationFactory namespacedLocationFactory,
                       TransactionExecutorFactory txExecutorFactory,
                       DatasetFramework framework) {
-
-    this.locationFactory = locationFactory;
     this.configuration = conf;
+    this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.dsFramework = framework;
 
     txnl = Transactional.of(txExecutorFactory, new Supplier<AppMds>() {
@@ -289,26 +292,27 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
+  public FlowSpecification setFlowletInstances(final Id.Program id, final String flowletId, final int count) {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
 
     LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
                 "new instances count: {}", id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
 
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+    FlowSpecification flowSpec = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, FlowSpecification>() {
       @Override
-      public Void apply(AppMds mds) throws Exception {
+      public FlowSpecification apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
-        return null;
+        return appSpec.getFlows().get(id.getId());
       }
     });
 
     LOG.trace("Set flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), flowletId, count);
+    return flowSpec;
   }
 
   @Override
@@ -932,7 +936,7 @@ public class DefaultStore implements Store {
   private Location getProgramLocation(Id.Program id, ProgramType type) throws IOException {
     String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                   System.getProperty("java.io.tmpdir"));
-    return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
+    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id, type);
   }
 
   private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) {

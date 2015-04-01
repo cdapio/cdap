@@ -26,21 +26,33 @@
       <div class="container"></div>
     </div>
 
+    <loading-icon></loading-icon>
+
     <footer>
       <div class="container">
-        <div class="text-muted text-center text-uppercase" ng-cloak>
-          <p>&copy; 2015 Cask Data, Inc. All Rights Reserved.</p>
-          <ul class="list-inline">
-            <li>
-              <a href="http://cask.co/terms" target="_blank">Terms</a>
-            </li>
-            <li>
-              <a href="http://cask.co/privacy" target="_blank">Privacy</a>
-            </li>
-            <li>
-              <a href="http://cask.co/company/#company-contact" target="_blank">Contact</a>
-            </li>
-          </ul>
+        <div class="row text-muted" ng-cloak>
+          <div class="col-xs-12 col-md-6 text-uppercase">
+            <p>
+              <img src="/assets/img/cask.png" alt="" />
+              <span>&copy; 2015 Cask Data, Inc. All Rights Reserved.</span>
+            </p>
+          </div>
+          <div class="col-xs-12 col-md-6">
+            <ul class="list-inline">
+              <li>
+                CDAP Ver 3.0
+              </li>
+              <li>
+                <a href="http://cask.co/terms" target="_blank">Terms</a>
+              </li>
+              <li>
+                <a href="http://cask.co/privacy" target="_blank">Privacy</a>
+              </li>
+              <li>
+                <a href="http://cask.co/company/#company-contact" target="_blank">Contact</a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </footer>
@@ -51,10 +63,11 @@
     <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
 
     <script type="text/javascript">
-      if(location.host==='localhost:8080') {
+      if(location.host==='localhost:9999') {
         document.write('<script src="http://localhost'
           + ':35729/livereload.js"></' + 'script>');
       }
     </script>
+
 </body>
 </html>

@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -165,7 +165,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time);
+          Partition partition = tpfs.getPartitionByTime(time);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
         }
@@ -184,6 +186,8 @@ public class MapReduceWithPartitionedTest {
     // now run the m/r again with a new partition time, say 5 minutes later
     TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time5);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
+    // make the mapreduce add the partition in onFinish, to validate that this does not fail the job
+    runtimeArguments.put(AppWithTimePartitionedFileSet.COMPAT_ADD_PARTITION, "true");
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
@@ -191,7 +195,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = tpfs.getPartition(time5);
+          Partition partition = tpfs.getPartitionByTime(time5);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-20"));
         }
@@ -272,8 +278,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = dataset.getPartition(keyX);
-          Assert.assertNotNull(path);
+          Partition partition = dataset.getPartition(keyX);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertTrue(path.contains("x"));
           Assert.assertTrue(path.contains("150000"));
         }
@@ -305,7 +312,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          String path = dataset.getPartition(keyY);
+          Partition partition = dataset.getPartition(keyY);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("y"));
           Assert.assertTrue(path.contains("200000"));

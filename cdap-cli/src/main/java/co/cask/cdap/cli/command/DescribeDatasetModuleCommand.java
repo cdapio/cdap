@@ -19,10 +19,11 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
@@ -40,14 +41,11 @@ import java.util.List;
 public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   private final DatasetModuleClient datasetModuleClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig,
-                                      TableRenderer tableRenderer) {
+  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -66,7 +64,7 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
                                     Joiner.on(", ").join(object.getUsedByModules()));
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -76,6 +74,7 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about a %s.", ElementType.DATASET_MODULE.getPrettyName());
+    return String.format("Shows information about %s.",
+                         Fragment.of(Article.A, ElementType.DATASET_MODULE.getTitleName()));
   }
 }

@@ -19,7 +19,6 @@ package co.cask.cdap.examples.streamconversion;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -79,19 +78,6 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
 
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getEmbeddedFileSet().getOutputLocation().toURI().toString());
-  }
-
-  @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      // TODO this should be done by the output committer (CDAP-1227)
-      TimePartitionedFileSet converted = context.getDataset("converted", dsArguments);
-      String outputPath = FileSetArguments.getOutputPath(converted.getEmbeddedFileSet().getRuntimeArguments());
-      Long partitionTime = context.getLogicalStartTime();
-
-      LOG.info("Adding partition for time {} with path {} to dataset '{}'", partitionTime, outputPath, "converted");
-      converted.addPartition(partitionTime, outputPath);
-    }
   }
 
   /**

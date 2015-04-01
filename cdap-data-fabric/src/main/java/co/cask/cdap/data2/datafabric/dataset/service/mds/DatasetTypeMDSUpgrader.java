@@ -18,15 +18,16 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -39,8 +40,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -63,23 +62,22 @@ public final class DatasetTypeMDSUpgrader {
     "co.cask.cdap.data2.dataset2.lib.table.ACLTableModule");
   private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework dsFramework;
-  private Transactional<UpgradeMDSStores<DatasetTypeMDS>, DatasetTypeMDS> datasetTypeMDS;
   private final LocationFactory locationFactory;
-  private final Configuration hConf;
-  private final HBaseTableUtil tableUtil;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final String dataFabricDir;
+  private Transactional<UpgradeMDSStores<DatasetTypeMDS>, DatasetTypeMDS> datasetTypeMDS;
   private Id.DatasetInstance oldDatasetId;
 
 
   @Inject
-  private DatasetTypeMDSUpgrader(final TransactionExecutorFactory executorFactory,
-                                 @Named("dsFramework") final DatasetFramework dsFramework,
-                                 LocationFactory locationFactory, Configuration hConf,
-                                 HBaseTableUtil tableUtil) {
+  private DatasetTypeMDSUpgrader(CConfiguration cConf, TransactionExecutorFactory executorFactory,
+                                 DatasetFramework dsFramework, LocationFactory locationFactory,
+                                 NamespacedLocationFactory namespacedLocationFactory) {
     this.executorFactory = executorFactory;
     this.dsFramework = dsFramework;
     this.locationFactory = locationFactory;
-    this.hConf = hConf;
-    this.tableUtil = tableUtil;
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.dataFabricDir = cConf.get(Constants.Dataset.Manager.OUTPUT_DIR);
   }
 
   private void setupDatasetTypeMDS(final DatasetTypeMDS oldMds) {
@@ -149,10 +147,6 @@ public final class DatasetTypeMDSUpgrader {
       } catch (Exception e) {
         throw e;
       }
-
-      // delete the old meta table
-      tableUtil.dropTable(new HBaseAdmin(hConf),
-                          TableId.from(oldDatasetId.getNamespaceId(), oldDatasetId.getId()));
     } else {
       LOG.info("Unable to find old meta table {}. It might have already been upgraded.", oldDatasetId.getId());
     }
@@ -176,7 +170,7 @@ public final class DatasetTypeMDSUpgrader {
     } else {
       Location oldJarLocation = locationFactory.create(olddatasetModuleMeta.getJarLocation());
       Location newJarLocation = updateUserDatasetModuleJarLocation(oldJarLocation, olddatasetModuleMeta.getClassName(),
-                                                                   Constants.DEFAULT_NAMESPACE);
+                                                                   Constants.DEFAULT_NAMESPACE_ID);
 
       newDatasetModuleMeta = new DatasetModuleMeta(olddatasetModuleMeta.getName(), olddatasetModuleMeta.getClassName(),
                                                    newJarLocation.toURI(), olddatasetModuleMeta.getTypes(),
@@ -186,7 +180,6 @@ public final class DatasetTypeMDSUpgrader {
       for (String moduleName : usedByModules) {
         newDatasetModuleMeta.addUsedByModule(moduleName);
       }
-      newDatasetModuleMeta = olddatasetModuleMeta;
       renameLocation(oldJarLocation, newJarLocation);
     }
     newDatasetTypeMDS.writeModule(Constants.DEFAULT_NAMESPACE_ID, newDatasetModuleMeta);
@@ -202,18 +195,10 @@ public final class DatasetTypeMDSUpgrader {
    * @throws IOException
    */
   private Location updateUserDatasetModuleJarLocation(Location location, String datasetClassname,
-                                                      String namespace) throws IOException {
+                                                      Id.Namespace namespace) throws IOException {
     String jarFilename = location.getName();
-    Location parentLocation = Locations.getParent(location);  // strip jarFilename
-    parentLocation = Locations.getParent(parentLocation); // strip account_placeholder
-    Preconditions.checkNotNull(parentLocation, "failed to get parent on {}", location);
-    String archive = parentLocation.getName();
-    parentLocation = Locations.getParent(parentLocation); // strip archive
-    Preconditions.checkNotNull(parentLocation, "failed to get parent on {}", location);
-    String datasets = parentLocation.getName();
-
-    return locationFactory.create(namespace).append(datasets).append(datasetClassname).append(archive)
-      .append(jarFilename);
+    return namespacedLocationFactory.get(namespace).append(dataFabricDir).append(datasetClassname)
+      .append(Constants.ARCHIVE_DIR).append(jarFilename);
   }
 
 
@@ -243,5 +228,9 @@ public final class DatasetTypeMDSUpgrader {
                   "updated.", newLocation, oldLocation);
       return null;
     }
+  }
+
+  public TableId getOldDatasetTypeTableId() {
+    return TableId.from(oldDatasetId.getNamespaceId(), oldDatasetId.getId());
   }
 }

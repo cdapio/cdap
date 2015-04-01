@@ -20,10 +20,11 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
@@ -40,13 +41,11 @@ import java.util.List;
 public class DescribeStreamCommand extends AbstractAuthCommand {
 
   private final StreamClient streamClient;
-  private final TableRenderer tableRenderer;
 
   @Inject
-  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig, TableRenderer tableRenderer) {
+  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -64,7 +63,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
                                     object.getNotificationThresholdMB());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -74,6 +73,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows detailed information about a %s.", ElementType.STREAM.getPrettyName());
+    return String.format("Shows detailed information about %s.",
+                         Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
   }
 }

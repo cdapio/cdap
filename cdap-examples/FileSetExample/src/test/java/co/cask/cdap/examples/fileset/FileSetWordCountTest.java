@@ -57,7 +57,7 @@ public class FileSetWordCountTest extends TestBase {
 
     // discover the file set service
     ServiceManager serviceManager = applicationManager.startService("FileSetService");
-    serviceManager.waitForStatus(true, 3, 60); // should be much faster, but justin case... wait 3x60sec
+    serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 
     // write a file to the file set using the service

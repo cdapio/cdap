@@ -21,7 +21,6 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -38,14 +37,11 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   private final ApplicationClient appClient;
   private final ProgramType programType;
-  private final TableRenderer tableRenderer;
 
-  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig,
-                             TableRenderer tableRenderer) {
+  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.programType = programType;
     this.appClient = appClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -60,7 +56,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getApp(), object.getName(), object.getDescription());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -70,7 +66,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", getElementType().getPluralPrettyName());
+    return String.format("Lists all %s.", getElementType().getTitleNamePlural());
   }
 
   private ElementType getElementType() {

@@ -19,11 +19,12 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
@@ -39,14 +40,11 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
-  private final TableRenderer tableRenderer;
 
-  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig,
-                                  TableRenderer tableRenderer) {
+  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
-    this.tableRenderer = tableRenderer;
   }
 
   @Override
@@ -83,10 +81,11 @@ public class GetProgramRunsCommand extends AbstractCommand {
       .setRows(records, new RowMaker<RunRecord>() {
         @Override
         public List<?> makeRow(RunRecord object) {
-          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs());
+          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(),
+                                    object.getStatus().name().equals("RUNNING") ? "" : object.getStopTs());
         }
       }).build();
-    tableRenderer.render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -98,6 +97,6 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the run history of a %s.", elementType.getPrettyName());
+    return String.format("Gets the run history of %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }

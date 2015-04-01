@@ -116,6 +116,7 @@ public final class FactTable {
     NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
       Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
+    // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(convertedGaugesTable);
     timeSeriesTable.increment(convertedIncrementsTable);
   }

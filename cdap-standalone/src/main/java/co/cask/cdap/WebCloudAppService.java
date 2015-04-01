@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
  * All output is sent to our Logging service.
  */
 final class WebCloudAppService extends AbstractExecutionThreadService {
+
   private static final String JSON_PATH = "cdap-config.json";
   private static final String JSON_SECURITY_PATH = "cdap-security-config.json";
 
@@ -90,8 +91,12 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    generateConfigFile(new File(webAppBase, JSON_PATH), cConf);
-    generateConfigFile(new File(webAppBase, JSON_SECURITY_PATH), sConf);
+    File confDir = new File(new File(webAppBase, "conf"), "generated");
+    if (!confDir.exists()) {
+      Preconditions.checkState(confDir.mkdirs(), "Couldn't create directory for generated conf files for the UI");
+    }
+    generateConfigFile(new File(confDir, JSON_PATH), cConf);
+    generateConfigFile(new File(confDir, JSON_SECURITY_PATH), sConf);
 
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath.getAbsolutePath());
     builder.redirectErrorStream(true);

@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -109,19 +110,21 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private final Store store;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramResourceReporter resourceReporter;
-
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
                                    StoreFactory storeFactory, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
-                                   Configuration hConf, CConfiguration cConf) {
+                                   Configuration hConf, CConfiguration cConf,
+                                   TransactionExecutorFactory txExecutorFactory) {
     super(programRunnerFactory);
     this.twillRunner = twillRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
+    this.txExecutorFactory = txExecutorFactory;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
   }
 
@@ -233,7 +236,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case FLOW: {
         FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
-          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
+          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
         );
         programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
         break;

@@ -19,6 +19,7 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -109,12 +110,22 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @return InetSocketAddress of server.
    */
   public InetSocketAddress getSocketAddress() {
-    return new InetSocketAddress(address, port);
+    if (!server.isRunning()) {
+      throw new IllegalStateException("Server not started yet");
+    }
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
   }
 
   @Override
   protected void run() throws Exception {
-    serviceCancellable = discoveryService.register(new Discoverable() {
+    server.start();
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.EXTERNAL_AUTHENTICATION;
@@ -122,10 +133,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
-        return new InetSocketAddress(address, port);
+        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
-    });
-    server.start();
+    }));
   }
 
   @Override

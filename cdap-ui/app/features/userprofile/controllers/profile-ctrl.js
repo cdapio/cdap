@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.userprofile')
-  .controller('UserProfileController', function($scope, $http, $alert, myAuth) {
+  .controller('UserProfileController', function($scope, $http, myAlert, myAuth) {
     $scope.reAuthenticated = false;
     $scope.credentials = {
       username: myAuth.currentUser.username
@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.userprofile')
           $scope.reAuthenticated = true;
         })
         .error(function(res) {
-          $alert({
+          myAlert({
             title: 'User Authentication Error!',
             content: 'Either Username or Password is wrong. Please try again',
             type: 'danger'

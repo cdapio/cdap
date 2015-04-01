@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.dashboard')
       if(!this.metric) {
         return;
       }
-      dataSrc.request(
+      dataSrc.poll(
         {
           _cdapPath: '/metrics/query' +
             '?context=' + encodeURIComponent(this.metric.context) +
@@ -28,11 +28,22 @@ angular.module(PKG.name+'.feature.dashboard')
           method: 'POST'
         },
         (function (result) {
+          var data, tempMap = {};
           if(result.series && result.series.length) {
-            var data = result.series[0];
-            data.splice(data.length-1, 1);
-            this.data = data;
+            data = result.series[0].data;
+            for (var k =0 ; k<data.length; k++) {
+              tempMap[data[k].time] = data[k].value;
+            }
           }
+          // interpolating the data since backend returns only
+          // metrics at specific timeperiods instead of for the
+          // whole range. We have to interpolate the rest with 0s to draw the graph.
+          for(var i = result.startTime; i<result.endTime; i++) {
+            if (!tempMap[i]) {
+              tempMap[i] = 0;
+            }
+          }
+          this.data = tempMap;
         }).bind(this)
       );
     };
@@ -50,22 +61,36 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
+  .controller('WidgetColCtrl', function ($scope) {
+    $scope.colWidth = {
+      fullWidth: false,
+      oneThird: true
+    };
+  })
+
   .controller('WidgetTimeseriesCtrl', function ($scope) {
 
     $scope.wdgt.fetchData();
-
+    $scope.chartHistory = null;
+    $scope.stream = null;
     $scope.$watch('wdgt.data', function (newVal) {
-      if(angular.isArray(newVal)) {
+      var v;
+      if(angular.isObject(newVal)) {
+        v = Object.keys(newVal).map(function(key) {
+          return {
+            time: key,
+            y: newVal[key]
+          };
+        });
+
+        if ($scope.chartHistory) {
+          $scope.stream = v.slice(-1);
+        }
 
         $scope.chartHistory = [
           {
             label: $scope.wdgt.metric.name,
-            values: newVal.map(function (o) {
-              return {
-                time: o.time,
-                y: o.value
-              };
-            })
+            values: v
           }
         ];
 

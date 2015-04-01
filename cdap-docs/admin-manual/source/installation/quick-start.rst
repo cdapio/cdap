@@ -25,9 +25,10 @@ Software Prerequisites
 Install:
 
 - Java runtime (`JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__)
-  on CDAP and Hadoop nodes. Set the JAVA_HOME environment variable. (:ref:`details <install-java-runtime>`)
-- `Node.js <http://nodejs.org>`__ on CDAP nodes. (:ref:`details <install-node.js>`)
-- Hadoop and HBase (and possibly Hive) environment to run against. (:ref:`details <install-hadoop-hbase>`)
+  on CDAP and Hadoop nodes; we recommend the Oracle JDK. 
+- Set the JAVA_HOME environment variable (:ref:`details <install-java-runtime>`).
+- `Node.js <http://nodejs.org>`__ on CDAP nodes (:ref:`details <install-node.js>`).
+- Hadoop and HBase (and possibly Hive) environment to run against (:ref:`details <install-hadoop-hbase>`).
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
   **Note:** No Hadoop services need to be running.
 

@@ -21,8 +21,13 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Joiner;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -30,32 +35,31 @@ import java.io.IOException;
  */
 public class FileSetAdmin implements DatasetAdmin {
 
-  private final LocationFactory locationFactory;
-
-  private final String basePath;
+  private final Location baseLocation;
 
   public FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
-                      LocationFactory locationFactory, DatasetSpecification spec) {
+                      NamespacedLocationFactory namespacedLocationFactory,
+                      DatasetSpecification spec) throws IOException {
     String namespace = datasetContext.getNamespaceId();
-    this.locationFactory = locationFactory;
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String basePath = FileSetDataset.determineBasePath(spec);
-    this.basePath = String.format("%s/%s/%s", namespace, dataDir, basePath);
+    String fileSetBasePath = FileSetDataset.determineBasePath(spec);
+    this.baseLocation = namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(dataDir)
+      .append(fileSetBasePath);
   }
 
   @Override
   public boolean exists() throws IOException {
-    return locationFactory.create(basePath).isDirectory();
+    return baseLocation.isDirectory();
   }
 
   @Override
   public void create() throws IOException {
-    locationFactory.create(basePath).mkdirs();
+    baseLocation.mkdirs();
   }
 
   @Override
   public void drop() throws IOException {
-    locationFactory.create(basePath).delete(true);
+    baseLocation.delete(true);
   }
 
   @Override

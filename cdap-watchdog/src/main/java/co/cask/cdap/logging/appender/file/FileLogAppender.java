@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.appender.file;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -61,6 +63,7 @@ public class FileLogAppender extends LogAppender {
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
+  private final NamespacedLocationFactory namespacedLocationFactory;
   private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
@@ -80,12 +83,14 @@ public class FileLogAppender extends LogAppender {
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
                          TransactionExecutorFactory txExecutorFactory,
-                         LocationFactory locationFactory) {
+                         LocationFactory locationFactory,
+                         NamespacedLocationFactory namespacedLocationFactory) {
     setName(APPENDER_NAME);
     this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
     this.dsFramework = dsFramework;
 
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -130,14 +135,17 @@ public class FileLogAppender extends LogAppender {
     try {
       logSchema = new LogSchema().getAvroSchema();
       FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
-                                                                        locationFactory, dsFramework, cConf);
+                                                                        locationFactory, namespacedLocationFactory,
+                                                                        dsFramework, cConf);
 
-      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, locationFactory.create(""),
+      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
                                                          logBaseDir, logSchema, maxLogFileSizeBytes, syncIntervalBytes,
                                                          inactiveIntervalMs);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), retentionDurationMs);
+      String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
+                                             retentionDurationMs);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
                                             logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {
