@@ -17,7 +17,7 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3) {
+module.controller('myFlowController', function($scope, d3, dagreD3, $timeout) {
   function update(newVal, oldVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
@@ -38,10 +38,11 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
   $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function ($filter, $state) {
+module.directive('myFlowGraph', function ($filter, $state, $alert) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = genericRender.bind(null, scope, $filter);
+      scope.parentSelector = attr.parent;
       var metricCircleRadius = 25;
       var instanceCircleRadius = 10;
       var flowletCircleRadius = 60;
@@ -160,9 +161,19 @@ module.directive('myFlowGraph', function ($filter, $state) {
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         if (instance.type === 'STREAM') {
-          $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
+          $alert({
+            type: 'info',
+            title: 'Temporary Problem',
+            content: 'Injecting into streams in flow temporarily disabled. Will be fixed ASAP'
+          });
+          // $state.go('flows.detail.status.runs.status.streamsDetail', {streamId: nodeId});
         } else {
-          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+          $alert({
+            type: 'info',
+            title: 'Temporary Problem',
+            content: 'Navigating to a flowlet is not available temporarily. Will be fixed ASAP'
+          });
+          // $state.go('flows.detail.status.runs.status.flowletsDetail', {flowletId: nodeId});
         }
       };
 
@@ -340,10 +351,14 @@ function genericRender(scope, $filter) {
   });
 
   angular.extend(renderer.shapes(), scope.getShapes());
-
+  var selector = '';
+  if (scope.parentSelector) {
+    selector += scope.parentSelector;
+  }
+  selector += ' svg';
   // Set up an SVG group so that we can translate the final graph and tooltip.
-  var svg = d3.select('svg').attr('fill', 'white');
-  var svgGroup = d3.select('svg g');
+  var svg = d3.select(selector).attr('fill', 'white');
+  var svgGroup = d3.select(selector + ' g');
   var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0]);
@@ -357,7 +372,7 @@ function genericRender(scope, $filter) {
   // svg.call(zoom);
 
   // Run the renderer. This is what draws the final graph.
-  renderer(d3.select('svg g'), g);
+  renderer(d3.select(selector + ' g'), g);
 
   // Set up onclick after rendering.
   svg
