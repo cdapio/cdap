@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
@@ -95,6 +97,6 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the run history of a %s.", elementType.getPrettyName());
+    return String.format("Gets the run history of %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }

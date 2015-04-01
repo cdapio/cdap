@@ -192,7 +192,7 @@ public class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+    return deployApplication(getClientConfig().getNamespace(), applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Id.Namespace namespace,
@@ -201,7 +201,7 @@ public class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, new File[0]);
+    return deployApplication(getClientConfig().getNamespace(), applicationClz, new File[0]);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {

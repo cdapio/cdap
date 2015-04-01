@@ -70,10 +70,6 @@ New Features
   - Allow an unchecked Dataset upgrade upon application deployment
     (`CDAP-1574 <https://issues.cask.co/browse/CDAP-1574>`__).
 
-- **Explore**
-
-  - Explore now works on secure Hadoop clusters.
-  
 - **Metrics**
 
   - Added new APIs for exploring available metrics, including drilling down into the context of emitted metrics
