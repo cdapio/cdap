@@ -30,6 +30,7 @@ public class SourceState {
 
   /**
    * Construct a SourceState using a Map of String keys and byte[] values.
+   *
    * @param stateMap {@link Map} of string keys and byte[] values
    */
   public SourceState(Map<String, byte[]> stateMap) {
@@ -45,6 +46,7 @@ public class SourceState {
 
   /**
    * Get the byte[] associated with a key.
+   *
    * @param state state
    * @return byte array
    */
@@ -54,6 +56,7 @@ public class SourceState {
 
   /**
    * Set a single key state given the key and value.
+   *
    * @param state key
    * @param value value
    */
@@ -63,6 +66,7 @@ public class SourceState {
 
   /**
    * Get the full state of the Source.
+   *
    * @return {@link Map} of string keys and byte[] values
    */
   public Map<String, byte[]> getState() {
@@ -71,6 +75,7 @@ public class SourceState {
 
   /**
    * Add a Map to the state of the source.
+   *
    * @param map {@link Map} of string keys and byte[] values
    */
   public void setState(Map<String, byte[]> map) {

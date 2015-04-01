@@ -16,12 +16,30 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamWriter;
-
 /**
- * Context passed to the Sink stages.
+ * Properties that are required by a Stage. Specified while configuring a Stage through {@link StageConfigurer}.
  */
-public interface SinkContext extends SourceContext, StreamWriter, DatasetContext {
+public class Property {
 
+  private final String name;
+  private final String description;
+  private final boolean required;
+
+  public Property(String name, String description, boolean required) {
+    this.name = name;
+    this.description = description;
+    this.required = required;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public boolean isRequired() {
+    return required;
+  }
+
+  public String getDescription() {
+    return description;
+  }
 }

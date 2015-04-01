@@ -14,19 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.stream.StreamWriter;
 
 /**
- * Context passed to the Transform stages.
+ * Context passed to the Sink stages.
  */
-public interface TransformContext extends RuntimeContext {
+public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
 
   /**
-   * Return the specification of this state.
+   * Get the specification of this stage, set during the configuration.
    *
-   * @return {@link StageSpecification}
+   * @return {@link RealtimeSpecification}
    */
-  StageSpecification getSpecification();
+  RealtimeSpecification getSpecification();
+
+  /**
+   * Get Instance Id.
+   *
+   * @return instance id
+   */
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   *
+   * @return instance count
+   */
+  int getInstanceCount();
 }

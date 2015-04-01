@@ -14,15 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.realtime;
+
+import co.cask.cdap.api.RuntimeContext;
 
 /**
- * Provides lifecycle methods for ETL Pipeline Stages.
+ * Context passed to the Source stages.
  */
-public interface StageLifecycle {
+public interface SourceContext extends RuntimeContext {
 
   /**
-   * Destroy the Pipeline Stage.
+   * Get the specification of the source stage, set during the configuration.
+   *
+   * @return {@link RealtimeSpecification}
    */
-  void destroy();
+  RealtimeSpecification getSpecification();
+
+  /**
+   * Get Instance Id.
+   *
+   * @return instance id
+   */
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   *
+   * @return instance count
+   */
+  int getInstanceCount();
 }

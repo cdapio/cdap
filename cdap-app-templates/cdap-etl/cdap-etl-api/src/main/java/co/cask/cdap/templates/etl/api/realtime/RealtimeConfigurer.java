@@ -14,11 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.realtime;
+
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 
 /**
- * Context passed to the Source stages.
+ * Configurer for the Source/Sink stage of the Realtime Pipeline.
  */
-public interface SourceContext extends TransformContext {
+public interface RealtimeConfigurer extends StageConfigurer {
 
+  /**
+   * Overrides the resources, such as memory and virtual cores, to use for the execution.
+   *
+   * @param resources Resources to be used for execution
+   */
+  void setResources(Resources resources);
 }

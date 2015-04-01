@@ -14,48 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.realtime;
+package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.templates.etl.api.SinkContext;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
 
 /**
- * Realtime Sink.
- * @param <I> Object sink operates on
+ * Batch Sink forms the last stage of a Batch ETL Pipeline.
+ *
+ * @param <KEY> Batch Output Key class
+ * @param <VALUE> Batch Output Value class
  */
-public abstract class AbstractRealtimeSink<I> implements StageLifecycle {
-
-  private SinkContext context;
+public abstract class BatchSink<KEY, VALUE> {
 
   /**
    * Configure the Sink.
+   *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
+    // no-op
   }
 
   /**
-   * Initialize the Sink.
-   * @param context {@link SinkContext}
+   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
+   *
+   * @param context {@link BatchSinkContext}
    */
-  public void initialize(SinkContext context) {
-    this.context = context;
-  }
-
-  /**
-   * Write the given object.
-   * @param object object to be written
-   */
-  public abstract void write(I object);
-
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected SinkContext getContext() {
-    return context;
-  }
+  public abstract void prepareJob(BatchSinkContext context);
 }

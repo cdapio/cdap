@@ -16,32 +16,33 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.SourceConfigurer;
-import co.cask.cdap.templates.etl.api.SourceContext;
-import co.cask.cdap.templates.etl.api.StageLifecycle;
+import co.cask.cdap.templates.etl.api.ValueEmitter;
 
 import javax.annotation.Nullable;
 
 /**
  * Realtime Source.
+ *
  * @param <O> Object that source emits
  */
-public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
+public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContext> {
 
   private SourceContext context;
 
   /**
    * Configure the Source.
-   * @param configurer {@link SourceConfigurer}
+   *
+   * @param configurer {@link RealtimeConfigurer}
    */
-  public void configure(SourceConfigurer configurer) {
-    configurer.setName(this.getClass().getSimpleName());
-    configurer.setDescription("");
+  public void configure(RealtimeConfigurer configurer) {
+    // no-op
   }
 
   /**
    * Initialize the Source.
+   *
    * @param context {@link SourceContext}
    */
   public void initialize(SourceContext context) {
@@ -50,28 +51,31 @@ public abstract class AbstractRealtimeSource<O> implements StageLifecycle {
 
   /**
    * Poll for new data.
+   *
    * @param writer {@link Emitter}
    * @param currentState {@link SourceState} current state of the source
    * @return {@link SourceState} state of the source after poll, will be persisted when all data from poll are processed
    */
   @Nullable
-  public abstract SourceState poll(Emitter<O> writer, @Nullable SourceState currentState);
+  public abstract SourceState poll(ValueEmitter<O> writer, SourceState currentState);
 
   /**
    * Invoked when source is suspended.
    */
-  public abstract void onSuspend();
+  public void onSuspend() {
+    // no-op
+  }
 
   /**
    * Resume/reconfigure from the state of suspension.
-   * @param oldInstance old instance count
-   * @param newInstance new instance count
    */
-  public abstract void onResume(int oldInstance, int newInstance);
+  public void onResume() {
+    // no-op
+  }
 
   @Override
   public void destroy() {
-    //no-op
+    // no-op
   }
 
   protected SourceContext getContext() {

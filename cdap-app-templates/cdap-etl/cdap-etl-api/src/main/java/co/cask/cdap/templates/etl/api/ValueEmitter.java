@@ -17,13 +17,16 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Configurer for the Source stage of the Pipeline.
+ * Used to emit data to next stage.
+ *
+ * @param <V> Type of the data object emitted
  */
-public interface SourceConfigurer extends StageConfigurer {
+public interface ValueEmitter<V> extends Emitter<Void, V> {
 
   /**
-   * Source can limit the scaling of ETL Pipeline instances and thus has the ability to limit the max instances.
-   * @param count max instance count
+   * Emit objects to the next stage.
+   *
+   * @param value data object.
    */
-  void setMaxInstances(int count);
+  void emit(V value);
 }
