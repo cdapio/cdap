@@ -83,7 +83,8 @@ public abstract class AbstractNamespaceClient {
   }
 
   public void create(NamespaceMeta namespaceMeta)
-    throws NamespaceAlreadyExistsException, BadRequestException, IOException, UnauthorizedException, NamespaceCannotBeCreatedException {
+    throws NamespaceAlreadyExistsException, BadRequestException, IOException, UnauthorizedException,
+    NamespaceCannotBeCreatedException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
     URL url = resolve(String.format("namespaces/%s", namespace.getId()));
