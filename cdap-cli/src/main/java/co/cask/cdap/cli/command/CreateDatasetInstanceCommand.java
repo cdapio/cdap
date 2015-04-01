@@ -19,12 +19,13 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
@@ -67,6 +68,6 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates a %s.", ElementType.DATASET.getPrettyName());
+    return String.format("Creates %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
   }
 }

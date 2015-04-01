@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterConfig;
@@ -80,6 +82,6 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates an %s.", ElementType.ADAPTER.getPrettyName());
+    return String.format("Creates %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
   }
 }

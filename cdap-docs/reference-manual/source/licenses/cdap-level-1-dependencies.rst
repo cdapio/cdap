@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 2.7.0
+    :version: 2.8.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -31,6 +31,7 @@ Cask Data Application Platform Level 1 Dependencies
    "com.google.inject","guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.googlecode.concurrent-trees","concurrent-trees","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning","async-http-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "commons-cli","commons-cli","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -50,6 +51,7 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.hadoop","hadoop-hdfs","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hadoop","hadoop-mapreduce-client-jobclient","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-minicluster","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
@@ -61,13 +63,13 @@ public class StartProgramCommand extends AbstractAuthCommand {
       programClient.start(appId, elementType.getProgramType(), programId);
       runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
-                    elementType.getPrettyName(), programId, appId, runtimeArgsString);
+                    elementType.getTitleName(), programId, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
       programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
-                    elementType.getPrettyName(), programId, appId, runtimeArgsString);
+                    elementType.getTitleName(), programId, appId, runtimeArgsString);
     }
 
   }
@@ -80,7 +82,7 @@ public class StartProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Starts a " + elementType.getPrettyName() + "." +
+    return "Starts " + Fragment.of(Article.A, elementType.getTitleName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

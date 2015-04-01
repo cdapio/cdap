@@ -1,13 +1,13 @@
 <div ng-hide="welcomeIsHidden">
-  <div class="panel panel-default">
+  <div class="panel panel-message">
     <div class="panel-heading clearfix">
       <a class="btn-close pull-right" ng-click="hideWelcome()">
         <span class="fa fa-close"></span>
         <span class="sr-only"> Hide Welcome Message </span>
       </a>
       <p>
-        <big class="text-uppercase"> Welcome! </big>
-        <small> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </small>
+        <span class="text-uppercase"> Welcome! </span>
+        <span> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </span>
       </p>
     </div>
     <div class="panel-body text-center">
@@ -47,12 +47,5 @@
 </div>
 
 <section class="data-apps">
-  <div class="row">
-    <div class="col-xs-6">
-      <div ng-include="appsTemplate"> </div>
-    </div>
-    <div class="col-xs-6">
-      <div ng-include="dataTemplate"> </div>
-    </div>
-  </div>
+  <div ng-include="'/assets/features/overview/templates/data-apps.html'"> </div>
 </section>

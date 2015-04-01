@@ -46,6 +46,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +57,7 @@ import javax.annotation.Nullable;
  * Stream input format for use in hive queries and only hive queries. Will not work outside of hive.
  */
 public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> {
+  private static final Logger LOG = LoggerFactory.getLogger(HiveStreamInputFormat.class);
   private static final StreamInputSplitFactory<InputSplit> SPLIT_FACTORY = new StreamInputSplitFactory<InputSplit>() {
     @Override
     public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
@@ -124,50 +127,64 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
       return builder.setStartTime(startTime).setEndTime(endTime);
     }
 
-    // Analyze the query to extract predicates that can be used for indexing (i.e. setting start/end time)
-    IndexPredicateAnalyzer analyzer = new IndexPredicateAnalyzer();
-    for (CompareOp op : CompareOp.values()) {
-      analyzer.addComparisonOp(op.getOpClassName());
+    try {
+      ExprNodeGenericFuncDesc expr;
+      // Hack to deal with the fact that older versions of Hive use
+      // Utilities.deserializeExpression(String, Configuration),
+      // whereas newer versions use Utilities.deserializeExpression(String).
+      try {
+        expr = Utilities.deserializeExpression(serializedExpr);
+      } catch (NoSuchMethodError e) {
+        expr = (ExprNodeGenericFuncDesc) Utilities.class.getMethod(
+          "deserializeExpression", String.class, Configuration.class).invoke(null, serializedExpr, conf);
+      }
+
+      // Analyze the query to extract predicates that can be used for indexing (i.e. setting start/end time)
+      IndexPredicateAnalyzer analyzer = new IndexPredicateAnalyzer();
+      for (CompareOp op : CompareOp.values()) {
+        analyzer.addComparisonOp(op.getOpClassName());
+      }
+
+      // Stream can only be indexed by timestamp
+      analyzer.clearAllowedColumnNames();
+      analyzer.allowColumnName("ts");
+
+      List<IndexSearchCondition> conditions = Lists.newArrayList();
+      analyzer.analyzePredicate(expr, conditions);
+
+      for (IndexSearchCondition condition : conditions) {
+        CompareOp op = CompareOp.from(condition.getComparisonOp());
+        if (op == null) {
+          // Not a supported operation
+          continue;
+        }
+        ExprNodeConstantDesc value = condition.getConstantDesc();
+        if (value == null || !(value.getValue() instanceof Long)) {
+          // Not a supported value
+          continue;
+        }
+
+        long timestamp = (Long) value.getValue();
+        // If there is a equal, set both start and endtime and no need to inspect further
+        if (op == CompareOp.EQUAL) {
+          startTime = timestamp;
+          endTime = (timestamp < Long.MAX_VALUE) ? timestamp + 1L : timestamp;
+          break;
+        }
+        if (op == CompareOp.GREATER || op == CompareOp.EQUAL_OR_GREATER) {
+          // Plus 1 for the start time if it is greater since start time is inclusive in stream
+          startTime = Math.max(startTime,
+                               timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.GREATER ? 1L : 0L));
+        } else {
+          // Plus 1 for end time if it is equal or less since end time is exclusive in stream
+          endTime = Math.min(endTime,
+                             timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.EQUAL_OR_LESS ? 1L : 0L));
+        }
+      }
+    } catch (Throwable t) {
+      LOG.warn("Exception analyzing query predicate. A full table scan will be performed.", t);
     }
 
-    // Stream can only be indexed by timestamp
-    analyzer.clearAllowedColumnNames();
-    analyzer.allowColumnName("ts");
-
-    ExprNodeGenericFuncDesc expr = Utilities.deserializeExpression(serializedExpr);
-
-    List<IndexSearchCondition> conditions = Lists.newArrayList();
-    analyzer.analyzePredicate(expr, conditions);
-
-    for (IndexSearchCondition condition : conditions) {
-      CompareOp op = CompareOp.from(condition.getComparisonOp());
-      if (op == null) {
-        // Not a supported operation
-        continue;
-      }
-      ExprNodeConstantDesc value = condition.getConstantDesc();
-      if (value == null || !(value.getValue() instanceof Long)) {
-        // Not a supported value
-        continue;
-      }
-
-      long timestamp = (Long) value.getValue();
-      // If there is a equal, set both start and endtime and no need to inspect further
-      if (op == CompareOp.EQUAL) {
-        startTime = timestamp;
-        endTime = (timestamp < Long.MAX_VALUE) ? timestamp + 1L : timestamp;
-        break;
-      }
-      if (op == CompareOp.GREATER || op == CompareOp.EQUAL_OR_GREATER) {
-        // Plus 1 for the start time if it is greater since start time is inclusive in stream
-        startTime = Math.max(startTime,
-                             timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.GREATER ? 1L : 0L));
-      } else {
-        // Plus 1 for end time if it is equal or less since end time is exclusive in stream
-        endTime = Math.min(endTime,
-                           timestamp + (timestamp < Long.MAX_VALUE && op == CompareOp.EQUAL_OR_LESS ? 1L : 0L));
-      }
-    }
     return builder.setStartTime(startTime).setEndTime(endTime);
   }
 

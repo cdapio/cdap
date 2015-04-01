@@ -1,13 +1,25 @@
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
 
 body.state-dashboard {
-
   .widget {
-
+    .panel-heading {
+      padding: 15px;
+      .btn-group {
+        top: -5px;
+        right: -5px;
+      }
+      > span {
+        max-width: 60%;
+        display: inline-block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        vertical-align: middle;
+      }
+    }
     .panel-body {
       overflow-x: scroll;
     }
-
     .panel-footer dl {
       margin: 0;
       white-space: nowrap;

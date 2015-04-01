@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -68,6 +70,6 @@ public class DescribeNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Describes a %s.", ElementType.NAMESPACE.getPrettyName());
+    return String.format("Describes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getTitleName()));
   }
 }

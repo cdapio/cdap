@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
@@ -62,7 +64,7 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
       String programId = programIdParts[1];
       logs = programClient.getProgramLogs(appId, elementType.getProgramType(), programId, start, stop);
     } else {
-      throw new IllegalArgumentException("Cannot get logs for " + elementType.getPluralName());
+      throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
     }
 
     output.println(logs);
@@ -76,6 +78,6 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the logs of a %s.", elementType.getPrettyName());
+    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }
