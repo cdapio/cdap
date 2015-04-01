@@ -57,6 +57,7 @@ public class DatasetWithMRApp extends AbstractApplication {
     }
 
     public static class IdentityMapper extends Mapper<byte[], byte[], byte[], byte[]> {
+
       public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
         context.write(key, value);
       }
