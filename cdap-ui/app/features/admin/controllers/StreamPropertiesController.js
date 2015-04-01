@@ -16,9 +16,6 @@ angular.module(PKG.name + '.feature.admin')
         .then(function(res) {
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
-          $scope.type = myHelpers.objectQuery(res, 'format', 'schema', 'type');
-          $scope.schemaName = myHelpers.objectQuery(res, 'format', 'schema', 'name');
-          $scope.delimiter = myHelpers.objectQuery(res, 'format', 'settings', 'delimiter');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
           $scope.properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
         });
@@ -31,13 +28,15 @@ angular.module(PKG.name + '.feature.admin')
       var fields = JSON.parse(angular.toJson($scope.properties));
 
       var obj = {
-        name: $scope.format,
-        schema: {
-          type: $scope.type,
-          name: $scope.schemaName,
-          fields: fields
-        }
+        name: $scope.format
       };
+
+      // do not include schema on the request when schema field is em
+      if (fields.length !== 0) {
+        obj.schema = {
+          fields: fields
+        };
+      }
 
       var params = {
         ttl: $scope.ttl,
