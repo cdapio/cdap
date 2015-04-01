@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('RunsDetailStatus', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData) {
+  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.flows')
     // We need to share it and cache it in a service so that
     // all the controllers don't make the poll but one guy does.
     // This will bring down performance. Fix it ASAP.
-    console.info("Polling on Runs");  
+    console.info("Polling on Runs");
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {

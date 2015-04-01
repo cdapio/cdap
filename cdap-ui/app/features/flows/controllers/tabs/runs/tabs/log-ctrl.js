@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('RunDetailLog', function($scope, MyDataSource, $state) {
+  .controller('FlowsRunDetailLogController', function($scope, MyDataSource, $state) {
 
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;

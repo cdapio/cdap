@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.flows')
           skip: true
         },
         templateUrl: '/assets/features/flows/templates/detail.html',
-        controller: 'FlowsDetail'
+        controller: 'FlowsDetailController'
       })
 
       .state('flows.detail.status', {
@@ -37,18 +37,18 @@ angular.module(PKG.name + '.feature.flows')
           label: '{{$state.params.programId}}'
         },
         templateUrl: '/assets/features/flows/templates/tabs/status.html',
-        controller: 'FlowsDetail'
+        controller: 'FlowsDetailController'
       })
 
       .state('flows.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/flows/templates/tabs/runs.html',
-        controller: 'Runs'
+        controller: 'FlowsRunsController'
       })
         .state('flows.detail.runs.run', {
           url: '/:runid',
           templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
-          controller: 'RunDetail'
+          controller: 'FlowsRunDetailController'
         })
 
       .state('flows.detail.history', {
@@ -57,6 +57,7 @@ angular.module(PKG.name + '.feature.flows')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
         },
-        templateUrl: '/assets/features/flows/templates/tabs/history.html'
+        templateUrl: '/assets/features/flows/templates/tabs/history.html',
+        controller: 'FlowsRunsController'
       })
   });
