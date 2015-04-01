@@ -26,6 +26,11 @@ angular.module(PKG.name + '.feature.flows')
         $scope.data = data;
       })
 
+    // This controller is shared between the accordions.
+    // We need to share it and cache it in a service so that
+    // all the controllers don't make the poll but one guy does.
+    // This will bring down performance. Fix it ASAP.
+    console.info("Polling on Runs");  
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
@@ -42,6 +47,7 @@ angular.module(PKG.name + '.feature.flows')
       var nodes = $scope.data.nodes;
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
+        console.info("Polling on Metrics");
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
           method: 'POST'

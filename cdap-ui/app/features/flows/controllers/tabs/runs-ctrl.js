@@ -16,7 +16,6 @@ angular.module(PKG.name + '.feature.flows')
 
     // This is for toggling (opening/closing) accordions if state changes.
     $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
-      debugger;
       if (fromState.name !== 'flows.detail.runs.run' && toState.name !== 'flows.detail.runs.run') {
         return;
       }

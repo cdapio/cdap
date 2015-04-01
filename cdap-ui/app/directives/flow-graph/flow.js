@@ -17,7 +17,7 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3, $timeout) {
+module.controller('myFlowController', function($scope, d3, dagreD3) {
   function update(newVal, oldVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
@@ -352,6 +352,9 @@ function genericRender(scope, $filter) {
 
   angular.extend(renderer.shapes(), scope.getShapes());
   var selector = '';
+  // Making the query to be more specific instead of doing
+  // it under the entire DOM. This allows us to draw the diagram
+  // in multiple places.
   if (scope.parentSelector) {
     selector += scope.parentSelector;
   }
