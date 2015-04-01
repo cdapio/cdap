@@ -20,6 +20,9 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -49,6 +52,8 @@ public class MapReduceMetricsWriter {
   private final BasicMapReduceContext context;
   private final MetricsCollector mapperMetrics;
   private final MetricsCollector reducerMetrics;
+  private final LoadingCache<String, MetricsCollector> mapTaskMetricsCollectors;
+  private final LoadingCache<String, MetricsCollector> reduceTaskMetricsCollectors;
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
@@ -57,6 +62,20 @@ public class MapReduceMetricsWriter {
                                                                     MapReduceMetrics.TaskType.Mapper.getId());
     this.reducerMetrics = context.getProgramMetrics().childCollector(Constants.Metrics.Tag.MR_TASK_TYPE,
                                                                     MapReduceMetrics.TaskType.Reducer.getId());
+    this.mapTaskMetricsCollectors = CacheBuilder.newBuilder()
+      .build(new CacheLoader<String, MetricsCollector>() {
+        @Override
+        public MetricsCollector load(String taskId) {
+          return mapperMetrics.childCollector(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+        }
+      });
+    this.reduceTaskMetricsCollectors = CacheBuilder.newBuilder()
+      .build(new CacheLoader<String, MetricsCollector>() {
+        @Override
+        public MetricsCollector load(String taskId) {
+          return reducerMetrics.childCollector(Constants.Metrics.Tag.INSTANCE_ID, taskId);
+        }
+      });
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -73,9 +92,11 @@ public class MapReduceMetricsWriter {
     int runningMappers = 0;
     int runningReducers = 0;
     for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
+      reportMapTaskMetrics(tr);
       runningMappers += tr.getRunningTaskAttemptIds().size();
     }
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
+      reportReduceTaskMetrics(tr);
       runningReducers += tr.getRunningTaskAttemptIds().size();
     }
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
@@ -112,8 +133,25 @@ public class MapReduceMetricsWriter {
               runningReducers * memoryPerReducer);
   }
 
+  private void reportMapTaskMetrics(TaskReport taskReport) {
+    Counters counters = taskReport.getTaskCounters();
+    MetricsCollector metricsCollector = mapTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
+    metricsCollector.gauge(METRIC_INPUT_RECORDS, getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS));
+    metricsCollector.gauge(METRIC_OUTPUT_RECORDS, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS));
+    metricsCollector.gauge(METRIC_BYTES, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES));
+    metricsCollector.gauge(METRIC_COMPLETION, (long) (taskReport.getProgress() * 100));
+  }
+
+  private void reportReduceTaskMetrics(TaskReport taskReport) {
+    Counters counters = taskReport.getTaskCounters();
+    MetricsCollector metricsCollector = reduceTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
+    metricsCollector.gauge(METRIC_INPUT_RECORDS, getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS));
+    metricsCollector.gauge(METRIC_OUTPUT_RECORDS, getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS));
+    metricsCollector.gauge(METRIC_COMPLETION, (long) (taskReport.getProgress() * 100));
+  }
+
   // report system stats coming from user metrics or dataset operations
-  private void reportSystemStats(Counters jobCounters) throws IOException, InterruptedException {
+  private void reportSystemStats(Counters jobCounters) {
     for (String group : jobCounters.getGroupNames()) {
       if (group.startsWith("cdap.")) {
 
@@ -130,7 +168,7 @@ public class MapReduceMetricsWriter {
     }
   }
 
-  private long getTaskCounter(Counters jobCounters, TaskCounter taskCounter) throws IOException, InterruptedException {
+  private long getTaskCounter(Counters jobCounters, TaskCounter taskCounter) {
     return jobCounters.findCounter(TaskCounter.class.getName(), taskCounter.name()).getValue();
   }
 
