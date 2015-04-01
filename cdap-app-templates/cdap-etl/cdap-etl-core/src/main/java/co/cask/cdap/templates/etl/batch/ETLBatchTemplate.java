@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.batch;
 
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.ManifestConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -126,7 +125,5 @@ public class ETLBatchTemplate extends ApplicationTemplate<JsonObject> {
     setDescription("Batch Extract-Transform-Load (ETL) Adapter");
     addMapReduce(new ETLMapReduce());
     addWorkflow(new ETLWorkflow());
-    createDataset("table1", KeyValueTable.class);
-    createDataset("table2", KeyValueTable.class);
   }
 }

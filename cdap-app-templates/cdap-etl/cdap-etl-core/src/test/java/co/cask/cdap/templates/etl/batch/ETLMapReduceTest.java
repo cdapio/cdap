@@ -42,8 +42,8 @@ public class ETLMapReduceTest extends TestBase {
 
   @Test
   public void testConfig() throws Exception {
-//    addDatasetInstance("keyValueTable", "table1").create();
-//    addDatasetInstance("keyValueTable", "table2").create();
+    addDatasetInstance("keyValueTable", "table1").create();
+    addDatasetInstance("keyValueTable", "table2").create();
 
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
     DataSetManager<KeyValueTable> table1 = getDataset("table1");
