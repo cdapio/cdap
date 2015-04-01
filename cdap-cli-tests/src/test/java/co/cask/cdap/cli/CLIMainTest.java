@@ -124,7 +124,8 @@ public class CLIMainTest extends StandaloneTestBase {
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
-    cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
+    LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
+    cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
@@ -227,13 +228,13 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for Stream '%s'", streamId));
-    testCommandOutputContains(cli, "set stream format " + streamId + " csv",
+    testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
                               String.format("Successfully set format of stream '%s'", streamId));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              "Analyzing 100 Stream events in the time range [0, 9223372036854775807]");
-    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 50 start 50 end 500",
-                              "Analyzing 50 Stream events in the time range [50, 500]");
+                              "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
+    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 5 start 5 end 10",
+                              "Analyzed 0 Stream events in the time range [5, 10]");
   }
 
   @Test
