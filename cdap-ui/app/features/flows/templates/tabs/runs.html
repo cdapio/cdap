@@ -1,4 +1,4 @@
-<accordion close-others="oneAtATime">
+<accordion close-others="oneAtATime" ng-if="runs.length > 0">
    <accordion-group is-open="run.isOpen" id="c{{run.runid}}" ng-repeat="run in runs" ui-sref="flows.detail.runs.run({runid: run.runid})">
      <accordion-heading>
         <div class="clearfix">
@@ -12,3 +12,8 @@
      <div ui-view ng-if="run.isOpen"></div>
  </accordion-group>
 </accordion>
+<div ng-if="runs.length === 0">
+  <div class="well well-lg text-center h2">
+    <div> The Flow {{State.params.programId}} hasn't run so far. Start a new Run!</div>
+  </div>
+</div>

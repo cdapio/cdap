@@ -64,6 +64,9 @@ angular.module(PKG.name + '.feature.flows')
           highlightTab: 'development'
         },
         templateUrl: '/assets/features/flows/templates/tabs/history.html',
-        controller: 'FlowsRunsController'
+        controller: 'FlowsRunsController',
+        ncyBreadcrumb: {
+          label: 'History'
+        }
       })
   });
