@@ -145,6 +145,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     final Job job = Job.getInstance(new Configuration(hConf));
+    job.setJobName(getJobName(context));
     Configuration mapredConf = job.getConfiguration();
 
     // Prefer our job jar in the classpath
@@ -606,6 +607,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } catch (IllegalArgumentException e) {
       throw new IOException("Type not support for consuming StreamEvent from " + type, e);
     }
+  }
+
+  private String getJobName(BasicMapReduceContext context) {
+    Id.Program programId = context.getProgram().getId();
+    return String.format("%s.%s.%s.%s.%s",
+                         context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
+                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   /**

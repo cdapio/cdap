@@ -50,6 +50,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
@@ -72,6 +73,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -116,12 +118,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-  
+  private final CConfiguration cConf;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final Configuration hConf;
+  private MRJobClient mrJobClient;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -187,21 +191,62 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
+                                     Configuration hConf, CConfiguration cConf,
                                      ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.hConf = hConf;
+    this.cConf = cConf;
+    this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
+    this.mrJobClient = mrJobClient;
+  }
+
+  /**
+   * Relays job-level and task-level information about a particular MapReduce program run.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/runs/{run-id}/info")
+  public void mapReduceInfo(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId,
+                            @PathParam("mapreduce-id") String mapreduceId,
+                            @PathParam("run-id") String runId) {
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+      ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application not found: %s",
+                                                                         programId.getApplication()));
+        return;
+      }
+      if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Program not found: %s", programId));
+        return;
+      }
+
+      MRJobInfo mrJobInfo = mrJobClient.getMRJobInfo(runId);
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+    } catch (NotFoundException e) {
+      LOG.debug("RunId not found: {}", runId, e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (IOException ioe) {
+      LOG.warn("Failed to get run history for runId: {}", runId, ioe);
+      responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
+    } catch (Exception e) {
+      LOG.error("Failed to get run history for runId: {}", runId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
