@@ -32,6 +32,7 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
+import co.cask.common.cli.util.Parser;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +54,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -216,7 +218,8 @@ public class CLIMain {
     Options options = getOptions();
     CommandLineParser parser = new BasicParser();
     try {
-      CommandLine command = parser.parse(options, args);
+      List<String> processedArgs = Parser.parseInput(Joiner.on(" ").join(args));
+      CommandLine command = parser.parse(options, processedArgs.toArray(new String[processedArgs.size()]));
       if (command.hasOption(HELP_OPTION.getOpt())) {
         usage();
         System.exit(0);
