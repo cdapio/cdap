@@ -723,7 +723,7 @@ public class StreamSizeScheduler implements Scheduler {
 
       Id.Schedule scheduleId = Id.Schedule.from(program.getApplication(), schedule.getName());
       String scheduleIdString = AbstractSchedulerService.scheduleIdFor(program, programType, schedule.getName());
-      final StreamSizeScheduleTask scheduleTask = scheduleTasks.get(schedule.getName());
+      final StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleIdString);
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(scheduleId);
       }
@@ -744,8 +744,9 @@ public class StreamSizeScheduler implements Scheduler {
     public synchronized void deleteSchedule(Id.Program programId, SchedulableProgramType programType,
                                             String scheduleName) throws ScheduleNotFoundException, SchedulerException {
 
+      String scheduleIdString = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
       Id.Schedule scheduleId = Id.Schedule.from(programId.getApplication(), scheduleName);
-      StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleName);
+      StreamSizeScheduleTask scheduleTask = scheduleTasks.get(scheduleIdString);
       if (scheduleTask == null) {
         throw new ScheduleNotFoundException(scheduleId);
       }
@@ -753,7 +754,7 @@ public class StreamSizeScheduler implements Scheduler {
 
       // The task is only removed from the map of scheduleTasks if deleting it from the persistent
       // store succeeded in the previous call
-      scheduleTasks.remove(scheduleId);
+      scheduleTasks.remove(scheduleIdString);
 
       if (scheduleTask.isActive()) {
         activeTasks.decrementAndGet();
@@ -766,8 +767,9 @@ public class StreamSizeScheduler implements Scheduler {
      */
     public ScheduleState scheduleTaskState(Id.Program programId, SchedulableProgramType programType,
                                            String scheduleName) {
-      StreamSizeScheduleTask task = scheduleTasks.get(AbstractSchedulerService.scheduleIdFor(programId, programType,
-                                                                                             scheduleName));
+
+      String scheduleIdString = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
+      StreamSizeScheduleTask task = scheduleTasks.get(scheduleIdString);
       if (task == null) {
         return ScheduleState.NOT_FOUND;
       }
