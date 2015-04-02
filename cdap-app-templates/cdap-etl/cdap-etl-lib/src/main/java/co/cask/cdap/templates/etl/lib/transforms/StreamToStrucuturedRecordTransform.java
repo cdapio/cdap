@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 /**
  * Transforms {@link StreamEvent} to Avro format
  */
-public class StreamConversionTransform extends Transform<LongWritable, StreamEvent, LongWritable, StructuredRecord> {
+public class StreamToStrucuturedRecordTransform extends Transform<LongWritable, StreamEvent, LongWritable, StructuredRecord> {
   /**
    * Configure the Transform stage. Used to provide information about the Transform.
    *
@@ -43,7 +43,7 @@ public class StreamConversionTransform extends Transform<LongWritable, StreamEve
    */
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName(StreamConversionTransform.class.getName());
+    configurer.setName(StreamToStrucuturedRecordTransform.class.getName());
     configurer.setDescription("Transforms a StreamEvent from the specified stream to Avro format which can be " +
                                 "written to a TimePartitionedFileset");
     configurer.addProperty(new Property("schemaType", "Type of the Schema", true));
