@@ -56,7 +56,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -762,27 +762,27 @@ public class DefaultStoreTest {
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    AdapterSpecification<Map<String, String>> spec1 =
-      new AdapterSpecification<Map<String, String>>("spec1", "",
+    AdapterConfig<Map<String, String>> spec1 =
+      new AdapterConfig<Map<String, String>>("spec1", "",
                                                     "template1", ImmutableMap.of("k1", "v1"));
 
     TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterSpecification<TemplateConf> spec2 =
-      new AdapterSpecification<TemplateConf>("spec2", "", "template2", templateConf);
+    AdapterConfig<TemplateConf> spec2 =
+      new AdapterConfig<TemplateConf>("spec2", "", "template2", templateConf);
 
     Type mapType = new TypeToken<Map<String, String>>() { }.getType();
     store.addAdapter(namespaceId, spec1);
     store.addAdapter(namespaceId, spec2);
 
     // check get all adapters
-    Collection<AdapterSpecification<JsonObject>> adapters = store.getAllAdapters(namespaceId, JsonObject.class);
+    Collection<AdapterConfig<JsonObject>> adapters = store.getAllAdapters(namespaceId, JsonObject.class);
     // JsonObject can be equals(), but have different hashCode(), so have to compare this way...
-    AdapterSpecification<JsonObject> expected1 = convert(spec1);
-    AdapterSpecification<JsonObject> expected2 = convert(spec2);
+    AdapterConfig<JsonObject> expected1 = convert(spec1);
+    AdapterConfig<JsonObject> expected2 = convert(spec2);
     Assert.assertEquals(2, adapters.size());
-    Iterator<AdapterSpecification<JsonObject>> iter = adapters.iterator();
-    AdapterSpecification<JsonObject> actual1 = iter.next();
-    AdapterSpecification<JsonObject> actual2 = iter.next();
+    Iterator<AdapterConfig<JsonObject>> iter = adapters.iterator();
+    AdapterConfig<JsonObject> actual1 = iter.next();
+    AdapterConfig<JsonObject> actual2 = iter.next();
     // since order is not guaranteed...
     if (actual1.getName().equals(expected1.getName())) {
       Assert.assertEquals(actual1, expected1);
@@ -793,11 +793,11 @@ public class DefaultStoreTest {
     }
 
     // Get non existing spec
-    AdapterSpecification<Object> retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter", Object.class);
+    AdapterConfig<Object> retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter", Object.class);
     Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    AdapterSpecification<Map<String, String>> retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName(), mapType);
+    AdapterConfig<Map<String, String>> retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName(), mapType);
     Assert.assertEquals(spec1, retrievedSpec1);
     // Remove spec
     store.removeAdapter(namespaceId, spec1.getName());
@@ -807,7 +807,7 @@ public class DefaultStoreTest {
     Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
-    AdapterSpecification<Map<String, Integer>> retrievedSpec2 =
+    AdapterConfig<Map<String, Integer>> retrievedSpec2 =
       store.getAdapter(namespaceId, spec2.getName(), TemplateConf.class);
     Assert.assertEquals(spec2, retrievedSpec2);
 
@@ -819,9 +819,9 @@ public class DefaultStoreTest {
     Assert.assertNull(retrievedAdapter);
   }
 
-  private AdapterSpecification<JsonObject> convert(AdapterSpecification spec) {
+  private AdapterConfig<JsonObject> convert(AdapterConfig spec) {
     JsonObject specConfig = new Gson().toJsonTree(spec.getConfig()).getAsJsonObject();
-    return new AdapterSpecification<JsonObject>(spec.getName(), spec.getDescription(), spec.getTemplate(), specConfig);
+    return new AdapterConfig<JsonObject>(spec.getName(), spec.getDescription(), spec.getTemplate(), specConfig);
   }
 
   private static class TemplateConf {

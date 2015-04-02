@@ -34,8 +34,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
@@ -51,14 +49,10 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
-import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
@@ -76,12 +70,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -119,11 +110,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
 
-  /**
-   * Factory for handling the location - can do both in either Distributed or Local mode.
-   */
-  private final LocationFactory locationFactory;
-
   private final Scheduler scheduler;
 
   /**
@@ -147,17 +133,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                 LocationFactory locationFactory, Scheduler scheduler,
-                                 ProgramRuntimeService runtimeService, StoreFactory storeFactory,
+                                 Scheduler scheduler, ProgramRuntimeService runtimeService, StoreFactory storeFactory,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  PreferencesStore preferencesStore, AdapterService adapterService,
-                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore, NamespacedLocationFactory
-    namespacedLocationFactory) {
+                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore,
+                                 NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
-    this.locationFactory = locationFactory;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -275,166 +259,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Retrieves all adapters in a given namespace.
-   */
-  @GET
-  @Path("/adapters")
-  public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Namespace '%s' does not exist.", namespaceId));
-      return;
-    }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
-  }
-
-  /**
-   * Retrieves an adapter
-   */
-  @GET
-  @Path("/adapters/{adapter-id}")
-  public void getAdapter(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-id") String adapterName) {
-    try {
-      AdapterSpecification<JsonObject> adapterSpec =
-        adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName, JsonObject.class);
-      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
-  }
-
-  /**
-   * Starts/stops an adapter
-   */
-  @POST
-  @Path("/adapters/{adapter-id}/{action}")
-  public void startStopAdapter(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId,
-                               @PathParam("action") String action) {
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    try {
-      if ("start".equals(action)) {
-        adapterService.startAdapter(namespace, adapterId);
-      } else if ("stop".equals(action)) {
-        adapterService.stopAdapter(namespace, adapterId);
-      } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
-        return;
-      }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (InvalidAdapterOperationException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (SchedulerException e) {
-      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterId, action, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Retrieves the status of an adapter
-   */
-  @GET
-  @Path("/adapters/{adapter-id}/status")
-  public void getAdapterStatus(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId) {
-    try {
-      responder.sendString(HttpResponseStatus.OK,
-                           adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId).toString());
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
-  }
-
-  /**
-   * Deletes an adapter
-   */
-  @DELETE
-  @Path("/adapters/{adapter-id}")
-  public void deleteAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
-    try {
-      adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (SchedulerException e) {
-      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Create an adapter.
-   */
-  @PUT
-  @Path("/adapters/{adapter-id}")
-  public void createAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
-
-    AdapterSpecification<JsonObject> spec;
-    try {
-      spec = parseBody(request, new TypeToken<AdapterSpecification<JsonObject>>() { }.getType());
-      if (spec == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter specification");
-        return;
-      }
-      if (spec.getTemplate() == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "A template must be given in the adapter specification");
-        return;
-      }
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter specification: " + e.getMessage());
-      return;
-    }
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-
-    try {
-      if (!namespaceAdmin.hasNamespace(namespace)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
-        return;
-      }
-
-      // Validate the adapter
-      String templateName = spec.getTemplate();
-      ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(templateName);
-      if (applicationTemplateInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("App template %s not found", templateName));
-        return;
-      }
-
-      adapterService.createAdapter(namespace, spec);
-      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (AdapterAlreadyExistsException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (Throwable th) {
-      LOG.error("Failed to deploy adapter", th);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
   }
 

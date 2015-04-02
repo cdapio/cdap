@@ -24,7 +24,7 @@ import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
@@ -68,36 +68,36 @@ public class AdapterServiceTests extends AppFabricTestBase {
     String adapterName = "myAdapter";
     DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
 
-    AdapterSpecification<DummyTemplate.Config> adapterSpecification =
-      new AdapterSpecification<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
+    AdapterConfig<DummyTemplate.Config> adapterConfig =
+      new AdapterConfig<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
 
     Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
     // Create Adapter
-    adapterService.createAdapter(namespace, adapterSpecification);
+    adapterService.createAdapter(namespace, adapterConfig);
     PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
     Map<String, String> prop = preferencesStore.getResolvedProperties(
-      TEST_NAMESPACE1, adapterSpecification.getTemplate());
+      TEST_NAMESPACE1, adapterConfig.getTemplate());
     Assert.assertTrue(Boolean.parseBoolean(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED)));
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
-      adapterService.createAdapter(namespace, adapterSpecification);
+      adapterService.createAdapter(namespace, adapterConfig);
       Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
     } catch (AdapterAlreadyExistsException expected) {
       // expected
     }
 
-    AdapterSpecification<DummyTemplate.Config> actualAdapterSpec =
+    AdapterConfig<DummyTemplate.Config> actualAdapterSpec =
       adapterService.getAdapter(namespace, adapterName, DummyTemplate.Config.class);
     Assert.assertNotNull(actualAdapterSpec);
-    Assert.assertEquals(adapterSpecification, actualAdapterSpec);
+    Assert.assertEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification<Object>> adapters = adapterService.getAdapters(namespace, DummyTemplate.NAME);
+    Collection<AdapterConfig<Object>> adapters = adapterService.getAdapters(namespace, DummyTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
-    AdapterSpecification<Object> actualRaw = adapters.iterator().next();
-    AdapterSpecification<DummyTemplate.Config> actual = GSON.fromJson(
-      GSON.toJson(actualRaw), new TypeToken<AdapterSpecification<DummyTemplate.Config>>() { }.getType());
-    Assert.assertEquals(actual, adapterSpecification);
+    AdapterConfig<Object> actualRaw = adapters.iterator().next();
+    AdapterConfig<DummyTemplate.Config> actual = GSON.fromJson(
+      GSON.toJson(actualRaw), new TypeToken<AdapterConfig<DummyTemplate.Config>>() { }.getType());
+    Assert.assertEquals(actual, adapterConfig);
 
     // Delete Adapter
     adapterService.removeAdapter(namespace, "myAdapter");
@@ -117,21 +117,21 @@ public class AdapterServiceTests extends AppFabricTestBase {
   public void testGetAllAdapters() throws Exception {
     Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
 
-    AdapterSpecification<int[]> spec1 =
-      new AdapterSpecification<int[]>("adapter1", "desc1", "template1", new int[] { 1, 2, 3 });
-    AdapterSpecification<Map<String, String>> spec2 =
-      new AdapterSpecification<Map<String, String>>("adapter2", "desc2", "template2", ImmutableMap.of("k1", "v1"));
+    AdapterConfig<int[]> spec1 =
+      new AdapterConfig<int[]>("adapter1", "desc1", "template1", new int[] { 1, 2, 3 });
+    AdapterConfig<Map<String, String>> spec2 =
+      new AdapterConfig<Map<String, String>>("adapter2", "desc2", "template2", ImmutableMap.of("k1", "v1"));
 
     // Create Adapters
     adapterService.createAdapter(namespace, spec1);
     adapterService.createAdapter(namespace, spec2);
 
     // check get all
-    Collection<AdapterSpecification<Object>> adapters = adapterService.getAdapters(namespace);
+    Collection<AdapterConfig<Object>> adapters = adapterService.getAdapters(namespace);
     Assert.assertEquals(2, adapters.size());
-    Iterator<AdapterSpecification<Object>> iter = adapters.iterator();
-    AdapterSpecification<Object> actual1 = iter.next();
-    AdapterSpecification<Object> actual2 = iter.next();
+    Iterator<AdapterConfig<Object>> iter = adapters.iterator();
+    AdapterConfig<Object> actual1 = iter.next();
+    AdapterConfig<Object> actual2 = iter.next();
     if (actual1.getName().equals(spec1.getName())) {
       assertArrayConfigEquals(spec1, actual1);
       assertMapConfigEquals(spec2, actual2);
@@ -141,28 +141,28 @@ public class AdapterServiceTests extends AppFabricTestBase {
     }
 
     // check get all for a specific template
-    Collection<AdapterSpecification<Object>> template1Adapters =
+    Collection<AdapterConfig<Object>> template1Adapters =
       adapterService.getAdapters(namespace, spec1.getTemplate());
     Assert.assertEquals(1, template1Adapters.size());
     assertArrayConfigEquals(spec1, template1Adapters.iterator().next());
 
-    Collection<AdapterSpecification<Object>> template2Adapters =
+    Collection<AdapterConfig<Object>> template2Adapters =
       adapterService.getAdapters(namespace, spec2.getTemplate());
     Assert.assertEquals(1, template2Adapters.size());
     assertMapConfigEquals(spec2, template2Adapters.iterator().next());
   }
 
-  private void assertArrayConfigEquals(AdapterSpecification<int[]> expected, AdapterSpecification<Object> actual) {
+  private void assertArrayConfigEquals(AdapterConfig<int[]> expected, AdapterConfig<Object> actual) {
     Assert.assertEquals(expected.getName(), actual.getName());
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
     Assert.assertArrayEquals(expected.getConfig(), GSON.fromJson(GSON.toJson(actual.getConfig()), int[].class));
   }
 
-  private void assertMapConfigEquals(AdapterSpecification<Map<String, String>> expected,
-                                     AdapterSpecification<Object> actual) {
-    Type type = new TypeToken<AdapterSpecification<Map<String, String>>>() { }.getType();
-    AdapterSpecification<Map<String, String>> actualAsMap = GSON.fromJson(GSON.toJson(actual), type);
+  private void assertMapConfigEquals(AdapterConfig<Map<String, String>> expected,
+                                     AdapterConfig<Object> actual) {
+    Type type = new TypeToken<AdapterConfig<Map<String, String>>>() { }.getType();
+    AdapterConfig<Map<String, String>> actualAsMap = GSON.fromJson(GSON.toJson(actual), type);
     Assert.assertEquals(expected, actualAsMap);
   }
 

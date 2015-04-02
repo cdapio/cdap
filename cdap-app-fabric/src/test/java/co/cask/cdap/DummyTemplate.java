@@ -16,16 +16,15 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Objects;
 
 /**
  * App Template to test adapter lifecycle.
- * TODO: make this an ApplicationTemplate once that is merged.
  */
-public class DummyTemplate extends AbstractApplication {
+public class DummyTemplate extends ApplicationTemplate<DummyTemplate.Config> {
   public static final String NAME = "DummyTemplate";
 
   public static class Config {

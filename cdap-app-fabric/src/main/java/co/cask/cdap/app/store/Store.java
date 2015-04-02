@@ -26,7 +26,7 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -363,7 +363,7 @@ public interface Store {
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
-  <T> void addAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec);
+  <T> void addAdapter(Id.Namespace id, AdapterConfig<T> adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
@@ -371,10 +371,10 @@ public interface Store {
    * @param id  Namespace id.
    * @param name Adapter name
    * @param type Type of the config object used by the AdapterSpecification
-   * @return an instance of {@link AdapterSpecification}.
+   * @return an instance of {@link AdapterConfig}.
    */
   @Nullable
-  <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type);
+  <T> AdapterConfig<T> getAdapter(Id.Namespace id, String name, Type type);
 
   /**
    * Fetch the status for an adapter identified by the name in a give namespace.
@@ -403,7 +403,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
-  <T> Collection<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type);
+  <T> Collection<AdapterConfig<T>> getAllAdapters(Id.Namespace id, Type type);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

@@ -18,14 +18,12 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 
-import java.util.Map;
-
 /**
  * Specification of an adapter.
  *
  * @param <T> the type for the configuration of the adapter.
  */
-public final class AdapterSpecification<T> {
+public final class AdapterConfig<T> {
 
   private final String name;
   private final String description;
@@ -34,14 +32,14 @@ public final class AdapterSpecification<T> {
   private final T config;
 
   /**
-   * Construct an AdapterSpecification with the given parameters.
+   * Construct an AdapterConfig with the given parameters.
    *
    * @param name the name of the adapter
    * @param description the description of the adapter
    * @param template the template to base the adapter off of
    * @param config the config for the adapter
    */
-  public AdapterSpecification(String name, String description, String template, T config) {
+  public AdapterConfig(String name, String description, String template, T config) {
     this.name = name;
     this.description = description;
     this.template = template;
@@ -73,7 +71,7 @@ public final class AdapterSpecification<T> {
       return false;
     }
 
-    AdapterSpecification that = (AdapterSpecification) o;
+    AdapterConfig that = (AdapterConfig) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&

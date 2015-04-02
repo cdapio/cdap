@@ -48,7 +48,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -844,7 +844,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public <T> void addAdapter(final Id.Namespace id, final AdapterSpecification<T> adapterSpec) {
+  public <T> void addAdapter(final Id.Namespace id, final AdapterConfig<T> adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -856,10 +856,10 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public <T> AdapterSpecification<T> getAdapter(final Id.Namespace id, final String name, final Type type) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification<T>>() {
+  public <T> AdapterConfig<T> getAdapter(final Id.Namespace id, final String name, final Type type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterConfig<T>>() {
       @Override
-      public AdapterSpecification<T> apply(AppMds mds) throws Exception {
+      public AdapterConfig<T> apply(AppMds mds) throws Exception {
         return mds.apps.getAdapter(id, name, type);
       }
     });
@@ -888,10 +888,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public <T> Collection<AdapterSpecification<T>> getAllAdapters(final Id.Namespace id, final Type type) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification<T>>>() {
+  public <T> Collection<AdapterConfig<T>> getAllAdapters(final Id.Namespace id, final Type type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterConfig<T>>>() {
       @Override
-      public Collection<AdapterSpecification<T>> apply(AppMds mds) throws Exception {
+      public Collection<AdapterConfig<T>> apply(AppMds mds) throws Exception {
         return mds.apps.getAllAdapters(id, type);
       }
     });
