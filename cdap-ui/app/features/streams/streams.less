@@ -40,6 +40,19 @@ body.state-streams-detail {
     }
 
     .panel-body {
+      .queries {
+        font-size: 14px;
+
+        tr {
+          cursor: pointer;
+
+          &.current {
+            background-color: #666E83;
+            color: white;
+          }
+        }
+      }
+
       .sql-statement {
         min-height: 150px;
         padding: 10px 10px;
@@ -49,6 +62,7 @@ body.state-streams-detail {
       }
 
       .results {
+        margin-top: 25px;
         div {
           overflow: scroll;
         }

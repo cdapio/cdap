@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetExploreController',
     function($scope, MyDataSource, QueryModel, $state, myHelpers, $log) {
-      
+
 
       var dataSrc = new MyDataSource($scope);
       var dataModel = new QueryModel(dataSrc, 'exploreQueries');
@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.datasets')
 
 
       // EXECUTE QUERY
-      $scope.query = 'SELECT * FROM history LIMIT 5';
+      $scope.query = 'SELECT * FROM dataset_' + $state.params.datasetId;
 
       $scope.execute = function() {
         dataSrc
