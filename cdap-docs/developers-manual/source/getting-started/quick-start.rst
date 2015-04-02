@@ -129,8 +129,8 @@ endpoint used to ingest data with HTTP requests, and you can do that using the
 Command Line Interface::
 
   $ ./bin/cdap-cli.sh send stream logEventStream \
-    '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \
-    "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
+    \''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \
+    "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'\'
 
 Or, you can use an HTTP request::
 
