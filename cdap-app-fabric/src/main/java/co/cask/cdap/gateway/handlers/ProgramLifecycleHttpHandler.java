@@ -1443,48 +1443,60 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
-      controller.addListener(new AbstractListener() {
-
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          if (id.getType() != ProgramType.MAPREDUCE) {
-            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-            if (state == ProgramController.State.COMPLETED) {
-              completed();
-            }
-            if (state == ProgramController.State.ERROR) {
-              error(controller.getFailureCause());
-            }
-          }
-        }
-
-        @Override
-        public void completed () {
-          if (id.getType() != ProgramType.MAPREDUCE) {
-            // MapReduce completions will be recorded by the MapReduceRunTimeService
+      if (type == ProgramType.MAPREDUCE) {
+        controller.addListener(new AbstractListener() {
+          @Override
+          public void killed() {
             store.setStop(id, runId,
                           TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.COMPLETED.getRunStatus());
+                          ProgramController.State.KILLED.getRunStatus());
           }
-        }
 
-        @Override
-        public void killed() {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.KILLED.getRunStatus());
-        }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      } else {
+        controller.addListener(new AbstractListener() {
 
-        @Override
-        public void error(Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", id, runId, cause);
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR.getRunStatus());
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
+          @Override
+          public void init(ProgramController.State state, @Nullable Throwable cause) {
+            if (id.getType() != ProgramType.MAPREDUCE) {
+              store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+              if (state == ProgramController.State.COMPLETED) {
+                completed();
+              }
+              if (state == ProgramController.State.ERROR) {
+                error(controller.getFailureCause());
+              }
+            }
+          }
 
+          @Override
+          public void completed() {
+            if (id.getType() != ProgramType.MAPREDUCE) {
+              // MapReduce completions will be recorded by the MapReduceRunTimeService
+              store.setStop(id, runId,
+                            TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                            ProgramController.State.COMPLETED.getRunStatus());
+            }
+          }
 
+          @Override
+          public void killed() {
+            store.setStop(id, runId,
+                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.KILLED.getRunStatus());
+          }
+
+          @Override
+          public void error(Throwable cause) {
+            if (id.getType() != ProgramType.MAPREDUCE) {
+              LOG.info("Program stopped with error {}, {}", id, runId, cause);
+              store.setStop(id, runId,
+                            TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                            ProgramController.State.ERROR.getRunStatus());
+            }
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      }
       return AppFabricServiceStatus.OK;
     } catch (DatasetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());

@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
 import com.google.common.base.Preconditions;
@@ -39,9 +38,9 @@ import java.util.concurrent.Callable;
 final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                             Program workflowProgram, RunId runId, Arguments userArguments, long logicalStartTime,
-                             Store store) {
-    super(userArguments, runId, workflowProgram, logicalStartTime, programRunnerFactory, workflowSpec, store);
+                             Program workflowProgram, RunId runId,
+                             Arguments userArguments, long logicalStartTime) {
+    super(userArguments, runId, workflowProgram, logicalStartTime, programRunnerFactory, workflowSpec);
   }
 
   /**
@@ -76,7 +75,7 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
     if (controller instanceof SparkProgramController) {
       final RuntimeContext context = ((SparkProgramController) controller).getContext();
-      return executeProgram(program.getId(), controller, context);
+      return executeProgram(controller, context);
     } else {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "SparkProgramController");

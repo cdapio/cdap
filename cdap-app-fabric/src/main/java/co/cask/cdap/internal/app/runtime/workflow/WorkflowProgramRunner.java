@@ -21,7 +21,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -44,18 +43,16 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
-  private final Store store;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                               MetricsCollectionService metricsCollectionService, Store store) {
+                               MetricsCollectionService metricsCollectionService) {
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
-    this.store = store;
   }
 
   @Override
@@ -72,8 +69,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     RunId runId = RunIds.generate();
-    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, programRunnerFactory,
-                                               store);
+    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, programRunnerFactory);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

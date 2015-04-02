@@ -23,7 +23,6 @@ import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import org.apache.twill.api.RunId;
@@ -46,18 +45,16 @@ public class ProgramWorkflowRunnerFactory {
   private final RunId runId;
   private final Arguments userArguments;
   private final long logicalStartTime;
-  private final Store store;
 
   public ProgramWorkflowRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                       Program workflowProgram, RunId runId, Arguments runtimeArguments,
-                                      long logicalStartTime, Store store) {
+                                      long logicalStartTime) {
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
     this.runId = runId;
     this.userArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
-    this.store = store;
   }
 
   /**
@@ -74,10 +71,10 @@ public class ProgramWorkflowRunnerFactory {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
           return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
-                                                    userArguments, logicalStartTime, store);
+                                                    userArguments, logicalStartTime);
         case SPARK:
           return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
-                                                userArguments, logicalStartTime, store);
+                                                userArguments, logicalStartTime);
         default:
           LOG.debug("No workflow program runner found for this program");
       }

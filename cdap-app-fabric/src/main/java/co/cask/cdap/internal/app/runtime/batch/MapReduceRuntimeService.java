@@ -148,83 +148,82 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Logging start of the MR Program: {} {}", context.getProgram().getId(), context.getRunId().getId());
-    store.setStart(context.getProgram().getId(), context.getRunId().getId(),
-                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-    final Job job = Job.getInstance(new Configuration(hConf));
-    Configuration mapredConf = job.getConfiguration();
-
-    // Prefer our job jar in the classpath
-    // Set both old and new keys
-    mapredConf.setBoolean("mapreduce.user.classpath.first", true);
-    mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
-
-    if (UserGroupInformation.isSecurityEnabled()) {
-      // If runs in secure cluster, this program runner is running in a yarn container, hence not able
-      // to get authenticated with the history.
-      mapredConf.unset("mapreduce.jobhistory.address");
-      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, false);
-
-      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
-      LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
-      job.getCredentials().addAll(credentials);
-    }
-
-    // Create a classloader that have the context/system classloader as parent and the program classloader as child
-    ClassLoader classLoader = new CombineClassLoader(
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
-      ImmutableList.of(context.getProgram().getClassLoader())
-    );
-
-    job.getConfiguration().setClassLoader(classLoader);
-    context.setJob(job);
-
-    // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
-    runUserCodeInTx(new TransactionExecutor.Subroutine() {
-      // Call the user MapReduce for initialization
-      @Override
-      public void apply() throws Exception {
-        beforeSubmit();
-
-        // set input/output datasets info
-        setInputDatasetIfNeeded(job);
-        setOutputDatasetIfNeeded(job);
-      }
-    }, "startUp()");
-
-    setOutputClassesIfNeeded(job);
-    setMapOutputClassesIfNeeded(job);
-
-    // set resources for the job
-    Resources mapperResources = context.getMapperResources();
-    Resources reducerResources = context.getReducerResources();
-
-    // this will determine how much memory and virtual cores the yarn container will run with
-    if (mapperResources != null) {
-      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
-    }
-    if (reducerResources != null) {
-      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
-    }
-
-    // replace user's Mapper & Reducer's with our wrappers in job config
-    MapperWrapper.wrap(job);
-    ReducerWrapper.wrap(job);
-
-    // packaging job jar which includes cdap classes with dependencies
-    // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
-    //       classloader when executing user code. We need to submit a copy of the program jar because
-    //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
-    //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
-
-    Location jobJar = buildJobJar(context);
     try {
+      recordProgramStart();
+      final Job job = Job.getInstance(new Configuration(hConf));
+      Configuration mapredConf = job.getConfiguration();
+
+      // Prefer our job jar in the classpath
+      // Set both old and new keys
+      mapredConf.setBoolean("mapreduce.user.classpath.first", true);
+      mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+
+      if (UserGroupInformation.isSecurityEnabled()) {
+        // If runs in secure cluster, this program runner is running in a yarn container, hence not able
+        // to get authenticated with the history.
+        mapredConf.unset("mapreduce.jobhistory.address");
+        mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, false);
+
+        Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+        LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
+        job.getCredentials().addAll(credentials);
+      }
+
+      // Create a classloader that have the context/system classloader as parent and the program classloader as child
+      ClassLoader classLoader = new CombineClassLoader(
+        Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
+        ImmutableList.of(context.getProgram().getClassLoader())
+      );
+
+      job.getConfiguration().setClassLoader(classLoader);
+      context.setJob(job);
+
+      // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
+      runUserCodeInTx(new TransactionExecutor.Subroutine() {
+        // Call the user MapReduce for initialization
+        @Override
+        public void apply() throws Exception {
+          beforeSubmit();
+
+          // set input/output datasets info
+          setInputDatasetIfNeeded(job);
+          setOutputDatasetIfNeeded(job);
+        }
+      }, "startUp()");
+
+      setOutputClassesIfNeeded(job);
+      setMapOutputClassesIfNeeded(job);
+
+      // set resources for the job
+      Resources mapperResources = context.getMapperResources();
+      Resources reducerResources = context.getReducerResources();
+
+      // this will determine how much memory and virtual cores the yarn container will run with
+      if (mapperResources != null) {
+        mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
+        // Also set the Xmx to be smaller than the container memory.
+        mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
+        setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
+      }
+      if (reducerResources != null) {
+        mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
+        // Also set the Xmx to be smaller than the container memory.
+        mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
+        setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
+      }
+
+      // replace user's Mapper & Reducer's with our wrappers in job config
+      MapperWrapper.wrap(job);
+      ReducerWrapper.wrap(job);
+
+      // packaging job jar which includes cdap classes with dependencies
+      // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
+      //       classloader when executing user code. We need to submit a copy of the program jar because
+      //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
+      //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
+
+      Location jobJar = buildJobJar(context);
+
       try {
         Location programJarCopy = copyProgramJar();
         try {
@@ -258,6 +257,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         throw Throwables.propagate(t);
       }
     } catch (Throwable t) {
+      recordProgramStop(ProgramController.State.ERROR);
       LOG.error("Exception when submitting MapReduce Job: {}", context, t);
       throw Throwables.propagate(t);
     }
@@ -296,11 +296,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     try {
       if (success) {
-        LOG.info("Recording COMPLETE state for the MapReduce Program {}", context.getProgram().getId());
-        store.setStop(context.getProgram().getId(), context.getRunId().getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.COMPLETED.getRunStatus());
-
+        recordProgramStop(ProgramController.State.COMPLETED);
         LOG.info("Committing MapReduce Job transaction: {}", context);
         // committing long running tx: no need to commit datasets, as they were committed in external processes
         // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
@@ -310,11 +306,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           throw new TransactionFailureException("Failed to commit transaction for MapReduce " + context.toString());
         }
       } else {
-        LOG.info("Recording ERROR state for the MapReduce Program {}", context.getProgram().getId());
-        store.setStop(context.getProgram().getId(), context.getRunId().getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.ERROR.getRunStatus());
-
+        recordProgramStop(ProgramController.State.ERROR);
         // invalids long running tx. All writes done by MR cannot be undone at this point.
         txClient.invalidate(transaction.getWritePointer());
       }
@@ -365,6 +357,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         t.start();
       }
     };
+  }
+
+  private void recordProgramStart() {
+    LOG.info("Recording RUNNING state for the MapReduce Program: {} {}", context.getProgram().getId(), context.getRunId().getId());
+    store.setStart(context.getProgram().getId(), context.getRunId().getId(),
+                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+  }
+
+  private void recordProgramStop(ProgramController.State state) {
+    if (!stopRequested) {
+      // Record the status if not stopped
+      LOG.info("Recording {} state for the MapReduce Program {}", state.getRunStatus(), context.getProgram().getId());
+      store.setStop(context.getProgram().getId(), context.getRunId().getId(),
+                    TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS), state.getRunStatus());
+    }
   }
 
   /**
