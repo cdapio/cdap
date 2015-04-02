@@ -233,7 +233,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     }
     HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
-                        QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                        cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
   }
 
@@ -428,9 +428,10 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                         QueueConstants.QueueType.QUEUE);
     oldQueueAdmin.create(queueName);
 
+    int buckets = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
     final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
       oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
-      QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(), ImmutableList.<ConsumerGroupConfig>of());
+      QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), ImmutableList.<ConsumerGroupConfig>of());
     try {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)

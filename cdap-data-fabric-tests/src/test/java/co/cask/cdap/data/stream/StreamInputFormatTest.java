@@ -115,13 +115,13 @@ public class StreamInputFormatTest {
     });
 
     // Run MR with TTL = 1500, currentTime = CURRENT_TIME
-    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, 1500);
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, ttl);
 
     // Verify the result. It should have 1500 "nonExpiredEvent {timestamp}" for timestamp 500..1999 by 1.
     Map<String, Integer> output = loadMRResult(outputDir);
-    Assert.assertEquals(1501, output.size());
+    Assert.assertEquals(ttl + 1, output.size());
     Assert.assertEquals(null, output.get("expiredEvent"));
-    Assert.assertEquals(1500, output.get("nonExpiredEvent").intValue());
+    Assert.assertEquals(ttl, output.get("nonExpiredEvent").intValue());
     for (long i = (currentTime - ttl); i < currentTime; i++) {
       Assert.assertEquals(1, output.get(Long.toString(i)).intValue());
     }
@@ -291,6 +291,7 @@ public class StreamInputFormatTest {
                                                            Files.newOutputStreamSupplier(indexFile),
                                                            100L);
     writer.append(StreamFileTestUtils.createEvent(1000, "test"));
+    writer.flush();
 
     // get splits from the input format. Expect to get 2 splits,
     // one from 0 - some offset and one from offset - Long.MAX_VALUE.
@@ -423,7 +424,7 @@ public class StreamInputFormatTest {
   }
 
   private Map<String, Integer> loadMRResult(File outputDir) throws IOException {
-    Map<String, Integer> output = Maps.newHashMap();
+    Map<String, Integer> output = Maps.newTreeMap();
     BufferedReader reader = Files.newReader(new File(outputDir, "part-r-00000"), Charsets.UTF_8);
     try {
       String line = reader.readLine();

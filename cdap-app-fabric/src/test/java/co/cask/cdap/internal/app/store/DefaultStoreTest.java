@@ -61,14 +61,16 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -76,6 +78,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -752,49 +757,101 @@ public class DefaultStoreTest {
     Assert.assertNotNull(application);
     return application.getSchedules();
   }
+
   @Test
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    Set<Source> sources = Sets.newHashSet(new Source("eventStream", Source.Type.STREAM,
-                                                         ImmutableMap.of("prop1", "val1")));
+    AdapterSpecification<Map<String, String>> spec1 =
+      new AdapterSpecification<Map<String, String>>("spec1", "",
+                                                    "template1", ImmutableMap.of("k1", "v1"));
 
-    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
-                                                   ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
+    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
+    AdapterSpecification<TemplateConf> spec2 =
+      new AdapterSpecification<TemplateConf>("spec2", "", "template2", templateConf);
 
-    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
+    Type mapType = new TypeToken<Map<String, String>>() { }.getType();
+    store.addAdapter(namespaceId, spec1);
+    store.addAdapter(namespaceId, spec2);
 
-    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
-
-    store.addAdapter(namespaceId, specStreamToAvro1);
-    store.addAdapter(namespaceId, specStreamToAvro2);
+    // check get all adapters
+    Collection<AdapterSpecification<JsonObject>> adapters = store.getAllAdapters(namespaceId, JsonObject.class);
+    // JsonObject can be equals(), but have different hashCode(), so have to compare this way...
+    AdapterSpecification<JsonObject> expected1 = convert(spec1);
+    AdapterSpecification<JsonObject> expected2 = convert(spec2);
+    Assert.assertEquals(2, adapters.size());
+    Iterator<AdapterSpecification<JsonObject>> iter = adapters.iterator();
+    AdapterSpecification<JsonObject> actual1 = iter.next();
+    AdapterSpecification<JsonObject> actual2 = iter.next();
+    // since order is not guaranteed...
+    if (actual1.getName().equals(expected1.getName())) {
+      Assert.assertEquals(actual1, expected1);
+      Assert.assertEquals(actual2, expected2);
+    } else {
+      Assert.assertEquals(actual1, expected2);
+      Assert.assertEquals(actual2, expected1);
+    }
 
     // Get non existing spec
-    AdapterSpecification retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
+    AdapterSpecification<Object> retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter", Object.class);
     Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
-    Assert.assertEquals(specStreamToAvro1, retrievedSpec);
+    AdapterSpecification<Map<String, String>> retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName(), mapType);
+    Assert.assertEquals(spec1, retrievedSpec1);
     // Remove spec
-    store.removeAdapter(namespaceId, "streamToAvro1");
+    store.removeAdapter(namespaceId, spec1.getName());
 
     // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro1");
+    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName(), mapType);
     Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
-    Assert.assertEquals(specStreamToAvro2, retrievedSpec);
+    AdapterSpecification<Map<String, Integer>> retrievedSpec2 =
+      store.getAdapter(namespaceId, spec2.getName(), TemplateConf.class);
+    Assert.assertEquals(spec2, retrievedSpec2);
 
     // remove all
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro2");
+    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName(), TemplateConf.class);
     Assert.assertNull(retrievedAdapter);
+  }
+
+  private AdapterSpecification<JsonObject> convert(AdapterSpecification spec) {
+    JsonObject specConfig = new Gson().toJsonTree(spec.getConfig()).getAsJsonObject();
+    return new AdapterSpecification<JsonObject>(spec.getName(), spec.getDescription(), spec.getTemplate(), specConfig);
+  }
+
+  private static class TemplateConf {
+    private final int x;
+    private final String y;
+    private final Map<String, String> z;
+
+    public TemplateConf(int x, String y, Map<String, String> z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TemplateConf that = (TemplateConf) o;
+
+      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(x, y, z);
+    }
   }
 }
