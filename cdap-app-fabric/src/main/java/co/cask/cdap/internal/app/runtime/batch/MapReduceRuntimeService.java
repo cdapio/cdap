@@ -29,6 +29,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -120,12 +122,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Transaction transaction;
   private Runnable cleanupTask;
   private volatile boolean stopRequested;
+  private final Store store;
 
   MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient, Store store) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -135,6 +138,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
+    this.store = store;
   }
 
   @Override
@@ -144,6 +148,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("Logging start of the MR Program: {} {}", context.getProgram().getId(), context.getRunId().getId());
+    store.setStart(context.getProgram().getId(), context.getRunId().getId(),
+                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final Job job = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = job.getConfiguration();
 
@@ -289,6 +296,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     try {
       if (success) {
+        LOG.info("Recording COMPLETE state for the MapReduce Program {}", context.getProgram().getId());
+        store.setStop(context.getProgram().getId(), context.getRunId().getId(),
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.COMPLETED.getRunStatus());
+
         LOG.info("Committing MapReduce Job transaction: {}", context);
         // committing long running tx: no need to commit datasets, as they were committed in external processes
         // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
@@ -298,6 +310,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           throw new TransactionFailureException("Failed to commit transaction for MapReduce " + context.toString());
         }
       } else {
+        LOG.info("Recording ERROR state for the MapReduce Program {}", context.getProgram().getId());
+        store.setStop(context.getProgram().getId(), context.getRunId().getId(),
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.ERROR.getRunStatus());
+
         // invalids long running tx. All writes done by MR cannot be undone at this point.
         txClient.invalidate(transaction.getWritePointer());
       }

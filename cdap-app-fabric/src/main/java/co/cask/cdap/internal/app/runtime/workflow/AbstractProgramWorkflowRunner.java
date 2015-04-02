@@ -25,11 +25,14 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -39,6 +42,8 @@ import org.apache.twill.common.Threads;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An Abstract class implementing {@link ProgramWorkflowRunner}, providing a {@link Callable} of
@@ -58,16 +63,18 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   private final RunId runId;
   private final Arguments userArguments;
   private final long logicalStartTime;
+  private final Store store;
 
   public AbstractProgramWorkflowRunner(Arguments runtimeArguments, RunId runId, Program workflowProgram,
                                        long logicalStartTime, ProgramRunnerFactory programRunnerFactory,
-                                       WorkflowSpecification workflowSpec) {
+                                       WorkflowSpecification workflowSpec, Store store) {
     this.userArguments = runtimeArguments;
     this.runId = runId;
     this.workflowProgram = workflowProgram;
     this.logicalStartTime = logicalStartTime;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowSpec = workflowSpec;
+    this.store = store;
   }
 
   @Override
@@ -112,23 +119,48 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
    * @return {@link RuntimeContext} of the completed program
    * @throws Exception if the execution failed
    */
-  protected RuntimeContext executeProgram(final ProgramController controller,
+  protected RuntimeContext executeProgram(final Id.Program programId, final ProgramController controller,
                                           final RuntimeContext context) throws Exception {
     // Execute the program.
     final SettableFuture<RuntimeContext> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        store.setStart(programId, runId.getId(), TimeUnit.SECONDS.convert(System.currentTimeMillis(),
+                                                                          TimeUnit.MILLISECONDS));
+        if (currentState == ProgramController.State.COMPLETED) {
+          completed();
+        }
+        if (currentState == ProgramController.State.ERROR) {
+          error(controller.getFailureCause());
+        }
+      }
+
       @Override
       public void completed() {
+        // MapReduce completion is recorded by the MapReduceRuntimeService
+        if (programId.getType() != ProgramType.MAPREDUCE) {
+          store.setStop(programId, runId.getId(),
+                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                        ProgramController.State.COMPLETED.getRunStatus());
+        }
         completion.set(context);
       }
 
       @Override
       public void killed() {
+        store.setStop(programId, runId.getId(),
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.KILLED.getRunStatus());
         completion.set(context);
       }
 
       @Override
       public void error(Throwable cause) {
+        store.setStop(programId, runId.getId(),
+                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                      ProgramController.State.ERROR.getRunStatus());
         completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

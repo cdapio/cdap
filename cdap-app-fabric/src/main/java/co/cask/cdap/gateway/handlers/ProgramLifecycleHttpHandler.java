@@ -1418,7 +1418,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      Program program = store.loadProgram(id, type);
+      final Program program = store.loadProgram(id, type);
       if (program == null) {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
@@ -1447,20 +1447,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         @Override
         public void init(ProgramController.State state, @Nullable Throwable cause) {
-          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
+          if (id.getType() != ProgramType.MAPREDUCE) {
+            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+            if (state == ProgramController.State.COMPLETED) {
+              completed();
+            }
+            if (state == ProgramController.State.ERROR) {
+              error(controller.getFailureCause());
+            }
           }
         }
 
         @Override
         public void completed () {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.COMPLETED.getRunStatus());
+          if (id.getType() != ProgramType.MAPREDUCE) {
+            // MapReduce completions will be recorded by the MapReduceRunTimeService
+            store.setStop(id, runId,
+                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.COMPLETED.getRunStatus());
+          }
         }
 
         @Override
