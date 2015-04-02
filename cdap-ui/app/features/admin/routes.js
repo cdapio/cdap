@@ -62,8 +62,13 @@ angular.module(PKG.name + '.feature.admin')
           })
           .state('admin.system.preferences', {
             url: '/preferences',
-            templateUrl: '/assets/features/admin/templates/system/preferences.html',
-            controller: 'SystemPreferenceController'
+            templateUrl: '/assets/features/admin/templates/preferences.html',
+            controller: 'PreferencesController',
+            resolve: {
+              source: function() {
+                return 'SYSTEM';
+              }
+            }
           })
 
         .state('admin.security', {
@@ -122,8 +127,13 @@ angular.module(PKG.name + '.feature.admin')
           })
             .state('admin.namespace.detail.preferences', {
               url: '/preferences',
-              templateUrl: '/assets/features/admin/templates/namespace/preferences.html',
-              controller: 'NamespacePreferencesController'
+              templateUrl: '/assets/features/admin/templates/preferences.html',
+              controller: 'PreferencesController',
+              resolve: {
+                source: function () {
+                  return 'NAMESPACE';
+                }
+              }
             })
 
             .state('admin.namespace.detail.metadata', {

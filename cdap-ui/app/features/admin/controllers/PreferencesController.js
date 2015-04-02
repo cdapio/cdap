@@ -1,9 +1,21 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespacePreferencesController', function ($scope, $filter, MyDataSource, $alert, $state) {
+  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, source) {
     var dataSrc = new MyDataSource($scope);
     var filterFilter = $filter('filter');
 
-    var path = '/namespaces/' + $state.params.nsadmin + '/preferences';
+    var path = '';
+
+    if (source === 'SYSTEM') {
+      path = '/preferences';
+
+      $scope.heading = 'System';
+    } else {
+      path = '/namespaces/' + $state.params.nsadmin + '/preferences';
+
+      $scope.heading = $state.params.nsadmin + ': ';
+    }
+
+    console.log('path', path);
 
     $scope.preferences = [];
 
