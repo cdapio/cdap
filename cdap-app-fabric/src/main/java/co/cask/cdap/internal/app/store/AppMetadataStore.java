@@ -26,7 +26,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -313,7 +313,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public <T> void writeAdapter(Id.Namespace id, AdapterConfig<T> adapterSpec,
+  public <T> void writeAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec,
                                AdapterStatus adapterStatus) {
     write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
           new AdapterMeta<T>(adapterSpec, adapterStatus), new TypeToken<AdapterMeta<T>>() { }.getType());
@@ -340,7 +340,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
-  public <T> AdapterConfig<T> getAdapter(Id.Namespace id, String name, Type type) {
+  public <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type) {
     AdapterMeta<T> adapterMeta = getAdapterMeta(id, name, type);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
@@ -368,8 +368,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                getAdapterMetaType(type));
   }
 
-  public <T> List<AdapterConfig<T>> getAllAdapters(Id.Namespace id, Type type) {
-    List<AdapterConfig<T>> adapterSpecs = Lists.newArrayList();
+  public <T> List<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type) {
+    List<AdapterSpecification<T>> adapterSpecs = Lists.newArrayList();
     List<AdapterMeta<T>> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
                                              getAdapterMetaType(type));
     for (AdapterMeta adapterMeta : adapterMetas) {

@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
@@ -77,11 +77,11 @@ public class AdapterClientTest extends ClientTestBase {
 
   @Test
   public void testAdapters() throws Exception {
-    List<AdapterConfig> initialList = adapterClient.list();
+    List<AdapterSpecification> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
-    AdapterConfig<Object> adapterSpec =
-      new AdapterConfig<Object>("someAdapter", "description", "dummyAdapter", null);
+    AdapterSpecification<Object> adapterSpec =
+      new AdapterSpecification<Object>("someAdapter", "description", "dummyAdapter", null);
 
     // Create Adapter
     adapterClient.create("someAdapter", adapterSpec);
@@ -89,12 +89,12 @@ public class AdapterClientTest extends ClientTestBase {
     // Check that the created adapter is present
     adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
     Assert.assertTrue(adapterClient.exists("someAdapter"));
-    AdapterConfig someAdapter = adapterClient.get("someAdapter");
+    AdapterSpecification someAdapter = adapterClient.get("someAdapter");
     Assert.assertNotNull(someAdapter);
 
     // list all adapters
-    List<AdapterConfig> list = adapterClient.list();
-    Assert.assertArrayEquals(new AdapterConfig[] {someAdapter}, list.toArray());
+    List<AdapterSpecification> list = adapterClient.list();
+    Assert.assertArrayEquals(new AdapterSpecification[] {someAdapter}, list.toArray());
 
     // Delete Adapter
     adapterClient.delete("someAdapter");
@@ -108,7 +108,7 @@ public class AdapterClientTest extends ClientTestBase {
       // Expected
     }
 
-    List<AdapterConfig> finalList = adapterClient.list();
+    List<AdapterSpecification> finalList = adapterClient.list();
     Assert.assertEquals(0, finalList.size());
 
     applicationClient.deleteAll();

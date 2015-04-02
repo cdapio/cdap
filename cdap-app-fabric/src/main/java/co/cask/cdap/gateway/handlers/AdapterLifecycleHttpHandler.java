@@ -27,7 +27,7 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
@@ -87,7 +87,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
     try {
-      AdapterConfig<JsonObject> adapterSpec =
+      AdapterSpecification<JsonObject> adapterSpec =
         adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName, JsonObject.class);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
     } catch (AdapterNotFoundException e) {
@@ -179,9 +179,9 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {
 
-    AdapterConfig<JsonObject> spec;
+    AdapterSpecification<JsonObject> spec;
     try {
-      spec = parseBody(request, new TypeToken<AdapterConfig<JsonObject>>() { }.getType());
+      spec = parseBody(request, new TypeToken<AdapterSpecification<JsonObject>>() { }.getType());
       if (spec == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter specification");
         return;

@@ -22,7 +22,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.io.Files;
@@ -49,7 +49,7 @@ import java.util.jar.Manifest;
 public class AdapterLifecycleTests extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
-    new TypeToken<List<AdapterConfig<DummyTemplate.Config>>>() { }.getType();
+    new TypeToken<List<AdapterSpecification<DummyTemplate.Config>>>() { }.getType();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
@@ -76,8 +76,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     String adapterName = "myStreamConverter";
     DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
 
-    AdapterConfig<DummyTemplate.Config> specification =
-      new AdapterConfig<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
+    AdapterSpecification<DummyTemplate.Config> specification =
+      new AdapterSpecification<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
 
     HttpResponse response = createAdapter(namespaceId, specification);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -88,15 +88,15 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterConfig<DummyTemplate.Config>> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    List<AdapterSpecification<DummyTemplate.Config>> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(specification, list.get(0));
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    AdapterConfig<DummyTemplate.Config> receivedAdapterConfig =
-      readResponse(response, new TypeToken<AdapterConfig<DummyTemplate.Config>>() { }.getType());
-    Assert.assertEquals(specification, receivedAdapterConfig);
+    AdapterSpecification<DummyTemplate.Config> receivedAdapterSpecification =
+      readResponse(response, new TypeToken<AdapterSpecification<DummyTemplate.Config>>() { }.getType());
+    Assert.assertEquals(specification, receivedAdapterSpecification);
 
     List<JsonObject> deployedApps = getAppList(namespaceId);
     Assert.assertEquals(1, deployedApps.size());
@@ -157,8 +157,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testMissingTemplateReturns404() throws Exception {
     DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
-    AdapterConfig<DummyTemplate.Config> badSpec =
-      new AdapterConfig<DummyTemplate.Config>("somename", "", "badtemplate", config);
+    AdapterSpecification<DummyTemplate.Config> badSpec =
+      new AdapterSpecification<DummyTemplate.Config>("somename", "", "badtemplate", config);
     HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, badSpec);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
@@ -199,7 +199,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Files.copy(adapterJar, destination);
   }
 
-  private <T> HttpResponse createAdapter(String namespaceId, AdapterConfig<T> spec) throws Exception {
+  private <T> HttpResponse createAdapter(String namespaceId, AdapterSpecification<T> spec) throws Exception {
     return doPut(String.format("%s/namespaces/%s/adapters/%s",
                                Constants.Gateway.API_VERSION_3, namespaceId, spec.getName()), GSON.toJson(spec));
   }

@@ -22,7 +22,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -48,13 +48,13 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<AdapterConfig> list = adapterClient.list();
+    List<AdapterSpecification> list = adapterClient.list();
 
     Table table = Table.builder()
       .setHeader("name", "description", "template", "config")
-      .setRows(list, new RowMaker<AdapterConfig>() {
+      .setRows(list, new RowMaker<AdapterSpecification>() {
         @Override
-        public List<?> makeRow(AdapterConfig object) {
+        public List<?> makeRow(AdapterSpecification object) {
           return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
                                     GSON.toJson(object.getConfig()));
         }

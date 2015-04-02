@@ -40,7 +40,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
@@ -119,16 +119,16 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Retrieves the {@link AdapterConfig} specified by the name in a given namespace.
+   * Retrieves the {@link AdapterSpecification} specified by the name in a given namespace.
    *
    * @param namespace namespace to lookup the adapter
    * @param adapterName name of the adapter
-   * @return requested {@link AdapterConfig} or null if no such AdapterInfo exists
+   * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public <T> AdapterConfig<T> getAdapter(Id.Namespace namespace, String adapterName,
+  public <T> AdapterSpecification<T> getAdapter(Id.Namespace namespace, String adapterName,
                                                 Type type) throws AdapterNotFoundException {
-    AdapterConfig<T> adapterSpec = store.getAdapter(namespace, adapterName, type);
+    AdapterSpecification<T> adapterSpec = store.getAdapter(namespace, adapterName, type);
     if (adapterSpec == null) {
       throw new AdapterNotFoundException(adapterName);
     }
@@ -172,25 +172,25 @@ public class AdapterService extends AbstractIdleService {
    * Get all adapters in a given namespace.
    *
    * @param namespace the namespace to look up the adapters
-   * @return {@link Collection} of {@link AdapterConfig}
+   * @return {@link Collection} of {@link AdapterSpecification}
    */
-  public Collection<AdapterConfig<Object>> getAdapters(Id.Namespace namespace) {
+  public Collection<AdapterSpecification<Object>> getAdapters(Id.Namespace namespace) {
     return store.getAllAdapters(namespace, Object.class);
   }
 
   /**
-   * Retrieves an Collection of {@link AdapterConfig} in a given namespace that use the given template.
+   * Retrieves an Collection of {@link AdapterSpecification} in a given namespace that use the given template.
    *
    * @param namespace namespace to lookup the adapter
    * @param template the template of requested adapters
-   * @return Collection of requested {@link AdapterConfig}
+   * @return Collection of requested {@link AdapterSpecification}
    */
-  public Collection<AdapterConfig<Object>> getAdapters(Id.Namespace namespace, final String template) {
+  public Collection<AdapterSpecification<Object>> getAdapters(Id.Namespace namespace, final String template) {
     // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
     // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
-    List<AdapterConfig<Object>> adaptersByType = Lists.newArrayList();
-    Collection<AdapterConfig<Object>> adapters = store.getAllAdapters(namespace, Object.class);
-    for (AdapterConfig<Object> adapterSpec : adapters) {
+    List<AdapterSpecification<Object>> adaptersByType = Lists.newArrayList();
+    Collection<AdapterSpecification<Object>> adapters = store.getAllAdapters(namespace, Object.class);
+    for (AdapterSpecification<Object> adapterSpec : adapters) {
       if (adapterSpec.getTemplate().equals(template)) {
         adaptersByType.add(adapterSpec);
       }
@@ -207,7 +207,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws IllegalArgumentException on other input errors.
    * @throws SchedulerException on errors related to scheduling.
    */
-  public <T> void createAdapter(Id.Namespace namespace, AdapterConfig<T> adapterSpec)
+  public <T> void createAdapter(Id.Namespace namespace, AdapterSpecification<T> adapterSpec)
     throws IllegalArgumentException, AdapterAlreadyExistsException, SchedulerException {
 
     ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterSpec.getTemplate());
@@ -235,7 +235,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws SchedulerException on errors related to scheduling.
    */
   public void removeAdapter(Id.Namespace namespace, String adapterName) throws NotFoundException, SchedulerException {
-    AdapterConfig adapterSpec = getAdapter(namespace, adapterName, Object.class);
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName, Object.class);
     ApplicationSpecification appSpec =
       store.getApplication(Id.Application.from(namespace, adapterSpec.getTemplate()));
     unschedule(namespace, appSpec, appTemplateInfos.get(adapterSpec.getTemplate()), adapterSpec);
@@ -252,7 +252,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
-    AdapterConfig adapterSpec = getAdapter(namespace, adapterName, Object.class);
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName, Object.class);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getTemplate()));
 
     ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
@@ -277,7 +277,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already started.");
     }
 
-    AdapterConfig adapterSpec = getAdapter(namespace, adapterName, Object.class);
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName, Object.class);
     ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getTemplate()));
 
     ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
@@ -336,7 +336,7 @@ public class AdapterService extends AbstractIdleService {
   // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
   private <T> void schedule(Id.Namespace namespace, ApplicationSpecification spec,
                             ApplicationTemplateInfo applicationTemplateInfo,
-                            AdapterConfig<T> adapterSpec) throws SchedulerException {
+                            AdapterSpecification<T> adapterSpec) throws SchedulerException {
     ProgramType programType = applicationTemplateInfo.getProgramType();
     // Only Workflows are supported to be scheduled in the current implementation
     Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
@@ -352,7 +352,7 @@ public class AdapterService extends AbstractIdleService {
   // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
   private <T> void unschedule(Id.Namespace namespace, ApplicationSpecification spec,
                               ApplicationTemplateInfo applicationTemplateInfo,
-                              AdapterConfig<T> adapterSpec) throws NotFoundException, SchedulerException {
+                              AdapterSpecification<T> adapterSpec) throws NotFoundException, SchedulerException {
     // Only Workflows are supported to be scheduled in the current implementation
     ProgramType programType = applicationTemplateInfo.getProgramType();
     Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
@@ -367,7 +367,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   // Adds a schedule to the scheduler as well as to the appspec
-  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterConfig adapterSpec)
+  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterSpecification adapterSpec)
     throws SchedulerException {
     String cronExpr = "*/10 * * * *";
     String adapterName = adapterSpec.getName();

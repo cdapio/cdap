@@ -23,7 +23,7 @@ import com.google.common.base.Objects;
  *
  * @param <T> the type for the configuration of the adapter.
  */
-public final class AdapterConfig<T> {
+public final class AdapterSpecification<T> {
 
   private final String name;
   private final String description;
@@ -32,14 +32,14 @@ public final class AdapterConfig<T> {
   private final T config;
 
   /**
-   * Construct an AdapterConfig with the given parameters.
+   * Construct an AdapterSpecification with the given parameters.
    *
    * @param name the name of the adapter
    * @param description the description of the adapter
    * @param template the template to base the adapter off of
    * @param config the config for the adapter
    */
-  public AdapterConfig(String name, String description, String template, T config) {
+  public AdapterSpecification(String name, String description, String template, T config) {
     this.name = name;
     this.description = description;
     this.template = template;
@@ -71,7 +71,7 @@ public final class AdapterConfig<T> {
       return false;
     }
 
-    AdapterConfig that = (AdapterConfig) o;
+    AdapterSpecification that = (AdapterSpecification) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&
