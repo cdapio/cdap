@@ -85,14 +85,8 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <p>
-          <textarea class="form-control" ng-model="query"></textarea>
-        </p>
-        <div class="text-right">
-          <button class="btn btn-primary" type="button" ng-click="execute()">
-            Execute
-          </button>
-        </div>
+        <!-- INSERT DIRECTIVE HERE -->
+        <my-sql-query data-panel="activePanel"></my-sql-query>
       </div>
     </div>
   </div>
@@ -111,68 +105,7 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <!-- Left Panel -->
-        <div class="col-xs-4 queries">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Start</th>
-                <th>Status</th>
-                <th>SQL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="query in queries" ng-click="fetchResult(query)" ng-class="{ current: responses.request === query }">
-                <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
-                <td>{{ query.status }}</td>
-                <td>{{ query.statement }}</td>
-              </tr>
-            </tbody>
-
-          </table>
-        </div>
-
-        <!-- Right Panel -->
-        <div class="col-xs-8 well">
-          <div ng-show="responses.request.status === 'FINISHED'">
-            <div class='sql-statement'>
-              <p>{{ responses.request.statement }}</p>
-            </div>
-
-            <div class="results">
-              <h3>Results</h3>
-              <div class="text-right">
-                <a
-                  class="btn btn-default"
-                  ng-click="download(responses.request)"
-                >
-                  Download All
-                </a>
-              </div>
-
-              <div>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th ng-repeat="header in responses.schema">{{ header.name }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr ng-repeat="results in responses.results">
-                      <td ng-repeat="result in results.columns">{{ result }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div class="text-center" ng-show="responses.results.length === 0">
-                  No Result
-                </div>
-              </div>
-            </div>
-          </div>
-          <div ng-hide="responses.request.status === 'FINISHED'" class="text-center">
-            <p>(Select Query)</p>
-          </div>
-        </div>
+        <my-view-queries ng-if="activePanel === 2"></my-view-queries>
 
 
       </div>
