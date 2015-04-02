@@ -8,6 +8,7 @@
     <div class="clearfix">
       <p ng-repeat="alert in alerts" class="bg-danger">
         <strong>{{ alert.title }}</strong> {{ alert.content }}
+        <span class="pull-right" ng-click="remove(alert)"><i class="fa fa-times"></i></span>
       </p>
     </div>
   </div>

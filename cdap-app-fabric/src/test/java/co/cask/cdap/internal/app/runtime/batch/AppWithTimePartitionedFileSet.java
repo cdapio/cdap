@@ -48,6 +48,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   public static final String OUTPUT = "output";
   public static final byte[] ONLY_COLUMN = { 'x' };
   public static final String ROW_TO_WRITE = "row.to.write";
+  public static final String COMPAT_ADD_PARTITION = "compat.add.partition";
   private static final String SEPARATOR = ":";
 
   @Override
@@ -92,7 +93,9 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (succeeded) {
+      // here we also test backward compatibility for existing apps that add the partition in the onFinish
+      // (this was necessary up to 2.8.0 and fixed in CDAP-1227).
+      if (succeeded && context.getRuntimeArguments().get(COMPAT_ADD_PARTITION) != null) {
         TimePartitionedFileSet ds = context.getDataset(TIME_PARTITIONED);
         String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
         Long time = TimePartitionedFileSetArguments.getOutputPartitionTime(ds.getRuntimeArguments());

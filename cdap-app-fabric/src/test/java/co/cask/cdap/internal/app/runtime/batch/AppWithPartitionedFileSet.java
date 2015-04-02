@@ -18,17 +18,12 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -94,18 +89,6 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (succeeded) {
-        PartitionedFileSet ds = context.getDataset(PARTITIONED);
-        String outputPath = FileSetArguments.getOutputPath(ds.getEmbeddedFileSet().getRuntimeArguments());
-        PartitionKey key = PartitionedFileSetArguments.
-          getOutputPartitionKey(ds.getRuntimeArguments(), ds.getPartitioning());
-        Preconditions.checkNotNull(key, "Output partition key is null.");
-        ds.addPartition(key, outputPath);
-      }
     }
   }
 

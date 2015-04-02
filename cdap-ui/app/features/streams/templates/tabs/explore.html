@@ -47,16 +47,24 @@
           </div>
         </form>
 
-
-        <ul class="list-unstyled">
-          <li ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
-            <div>
-              <small class="text-muted pull-right">{{event.timestamp | amTimeAgo}}</small>
-              <em>{{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}</em>
-            </div>
-            <pre>{{event.body | json}}</pre>
-          </li>
-        </ul>
+        <table class="table" ng-if="eventSearch.results.length">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Body</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
+              <td>
+                {{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}
+                <br />
+                <small class="timestamp text-muted">{{event.timestamp | amTimeAgo}}</small>
+              </td>
+              <td>{{event.body | json}}</td>
+            </tr>
+          </tbody>
+        </table>
         <p ng-hide="eventSearch.results.length">
           (no events)
         </p>

@@ -23,6 +23,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
@@ -77,7 +79,8 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
   @Override
   public String getDescription() {
-    return String.format("List the endpoints that a %s exposes.", ElementType.SERVICE.getPrettyName());
+    return String.format("List the endpoints that %s exposes.",
+                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()));
   }
 
   @Override
