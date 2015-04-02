@@ -46,16 +46,10 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics, MetaMetricsComputer metaMetricsComputer) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
-      metaMetricsComputer.visitMetric(record);
       publishMetric(record);
-    }
-
-    Iterator<MetricValue> metaMetricsIterator = metaMetricsComputer.computeMetaMetrics();
-    while (metaMetricsIterator.hasNext()) {
-      publishMetric(metaMetricsIterator.next());
     }
   }
 

@@ -53,8 +53,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(Iterator<MetricValue> metrics,
-                             MetaMetricsComputer metaMetricsComputer) throws Exception {
+      protected void publish(Iterator<MetricValue> metrics) throws Exception {
         Iterators.addAll(published, metrics);
       }
 

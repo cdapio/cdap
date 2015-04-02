@@ -51,16 +51,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics, MetaMetricsComputer metaMetricsComputer) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue metric = metrics.next();
-      metaMetricsComputer.visitMetric(metric);
       metricStore.add(metric);
-    }
-
-    Iterator<MetricValue> metaMetricsIterator = metaMetricsComputer.computeMetaMetrics();
-    while (metaMetricsIterator.hasNext()) {
-      metricStore.add(metaMetricsIterator.next());
     }
   }
 

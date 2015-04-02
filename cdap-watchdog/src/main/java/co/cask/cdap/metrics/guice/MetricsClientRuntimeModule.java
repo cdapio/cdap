@@ -22,7 +22,6 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
-import co.cask.cdap.metrics.collect.MetaMetricsComputer;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -92,9 +91,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
           @Override
-          protected void publish(Iterator<MetricValue> metrics,
-                                 MetaMetricsComputer metaMetricsComputer) throws Exception {
-
+          protected void publish(Iterator<MetricValue> metrics) throws Exception {
           }
         });
       }

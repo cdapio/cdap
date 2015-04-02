@@ -26,7 +26,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
@@ -34,8 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +49,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
+  private static final long SAMPLING_DELAY_SEC = 1;
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
 
   private ScheduledExecutorService executorService;
+  private long timestampLastSampled;
 
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
@@ -78,46 +80,74 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * This method is guaranteed not to get concurrent calls.
    *
    * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValue} to publish.
-   * @param metaMetricsComputer computes metrics about metrics
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(Iterator<MetricValue> metrics,
-                                  MetaMetricsComputer metaMetricsComputer) throws Exception;
+  protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
 
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
-    Iterator<MetricValue> metricsItor = getMetrics(timestamp);
+
+    final Iterator<MetricValue> metricsItor = getMetrics(timestamp);
+
+    // wrap the raw metrics iterator with an iterator that will publish meta metrics
+    Iterator<MetricValue> wrappedMetricsItor = new AbstractIterator<MetricValue>() {
+      private Queue<MetricValue> pendingMetrics = new LinkedList<MetricValue>();
+      private boolean queuedAggregateMetrics = false;
+      private int numMetrics = 0;
+      @Override
+      protected MetricValue computeNext() {
+
+
+        if (metricsItor.hasNext()) {
+
+          if (pendingMetrics.isEmpty()) {
+            // publish raw metric
+            MetricValue raw = metricsItor.next();
+            numMetrics++;
+
+            // sample processing delay - assumes we mostly receive metrics in time order
+            if (raw.getTimestamp() - timestampLastSampled >= SAMPLING_DELAY_SEC) {
+              timestampLastSampled = raw.getTimestamp();
+
+              long timestampMs = TimeUnit.SECONDS.toMillis(raw.getTimestamp());
+              long nowMs = System.currentTimeMillis();
+              long delayMs = nowMs - timestampMs;
+              MetricValue processDelayMetric = new MetricValue(
+                ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
+                "metrics.global.processed.delay.ms", timestamp, delayMs, MetricType.GAUGE);
+              pendingMetrics.add(processDelayMetric);
+            }
+
+            return raw;
+          } else {
+            // publish pending metric
+            return pendingMetrics.poll();
+          }
+        } else {
+          if (!queuedAggregateMetrics) {
+            // looking at last value - queue aggregate metrics
+            MetricValue processedCountMetric = new MetricValue(
+              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
+              "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
+            pendingMetrics.add(processedCountMetric);
+            queuedAggregateMetrics = true;
+          }
+
+          if (!pendingMetrics.isEmpty()) {
+            // publish an aggregate metric
+            return pendingMetrics.poll();
+          } else {
+            // done publishing aggregate metrics
+            return endOfData();
+          }
+        }
+      }
+    };
 
     try {
-      publish(metricsItor, new MetaMetricsComputer() {
-        private List<MetricValue> metaMetrics = Lists.newArrayList();
-        private int numMetrics = 0;
-
-        @Override
-        public void visitMetric(MetricValue metricValue) {
-          numMetrics++;
-
-          long timestampMs = TimeUnit.MILLISECONDS.convert(metricValue.getTimestamp(), TimeUnit.SECONDS);
-          long nowMs = System.currentTimeMillis();
-          long delayMs = nowMs - timestampMs;
-
-          MetricValue processDelayMetric = new MetricValue(
-            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-            "metrics.global.processed.delay.ms", timestamp, delayMs, MetricType.GAUGE);
-          metaMetrics.add(processDelayMetric);
-        }
-
-        @Override
-        public Iterator<MetricValue> computeMetaMetrics() {
-          MetricValue metricsCount = new MetricValue(
-            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-            "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
-          metaMetrics.add(metricsCount);
-          return metaMetrics.iterator();
-        }
-      });
+      publish(wrappedMetricsItor);
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
@@ -176,8 +206,6 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         return endOfData();
       }
     };
-
-
   }
 
   private CacheLoader<Map<String, String>, MetricsCollector> createCollectorLoader() {

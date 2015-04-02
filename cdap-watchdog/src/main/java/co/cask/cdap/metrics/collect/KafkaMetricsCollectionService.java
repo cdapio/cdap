@@ -76,7 +76,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics, MetaMetricsComputer metaMetricsComputer) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     KafkaPublisher publisher = getPublisher();
     if (publisher == null) {
       LOG.warn("Unable to get kafka publisher, will not be able to publish metrics.");
@@ -88,13 +88,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
       MetricValue value = metrics.next();
-      metaMetricsComputer.visitMetric(value);
       publishMetric(preparer, value);
-    }
-
-    Iterator<MetricValue> metaMetricsIterator = metaMetricsComputer.computeMetaMetrics();
-    while (metaMetricsIterator.hasNext()) {
-      publishMetric(preparer, metaMetricsIterator.next());
     }
 
     preparer.send();
