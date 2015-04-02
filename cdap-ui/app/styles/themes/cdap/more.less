@@ -157,9 +157,21 @@ body.theme-cdap {
   // Modals
   // --------------------------------------------------
   .modal {
-    background-color: fade(@cdap-darkblue, 80%);
+    background-color: fade(#343841, 85%);
     .modal-dialog {
-      &.modal-lg { width: 90%; }
+      &.modal-sm {
+        background-color: fade(#343841, 85%);
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        .modal-footer { text-align: center; }
+      }
+      &.modal-lg {
+        width: 90%;
+        .modal-footer {
+          text-align: right;
+        }
+      }
       .modal-content {
         background-color: transparent;
         border: 0;
@@ -170,18 +182,19 @@ body.theme-cdap {
             color: white;
             font-weight: bold;
           }
-          .fa-times { .cask-btn(@color: @cdap-orange, @background: white, @border: 0, @border-radius: 28px, @padding: 15px); }
+          .fa-times, .close { .cask-btn(@color: #343841, @background: white, @border: 0, @border-radius: 28px, @padding: 15px); }
         }
         .fa {
           cursor: pointer;
           &:before { font-size: 24px; }
         }
         .fa-plus { .cask-btn(@color: white, @background: @brand-primary, @border: 0, @padding: 15px 35px); }
-        a.fa-times { .cask-btn(@color: #923C49, @background: #D15668, @border: 0, @padding: 15px 15px); }
+        a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
         .form-group {
           label {
             color: white;
             font-size: 21px;
+            text-align: left;
           }
           .form-control {
             border: 0;

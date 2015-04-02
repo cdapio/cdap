@@ -28,6 +28,7 @@
             class="btn btn-danger btn-xs"
             cask-confirmable="deleteApp(app.id)"
             data-confirmable-content="Are you sure you want to delete the App?"
+            data-target="#modal-sm"
           >
           <span class="fa fa-trash"> </span>
         </a>
@@ -35,3 +36,14 @@
     </tr>
   <tbody>
 </table>
+
+<!-- Button trigger modal -->
+<button class="btn btn-primary" data-toggle="modal" data-target="#modal-sm">
+  Launch modal-sm
+</button>
+<button class="btn btn-primary" data-toggle="modal" data-target="#modal-md">
+  Launch modal-md
+</button>
+<button class="btn btn-primary" data-toggle="modal" data-target="#modal-lg">
+  Launch modal-lg
+</button>
