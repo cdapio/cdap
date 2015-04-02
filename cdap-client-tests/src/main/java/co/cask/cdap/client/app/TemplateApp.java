@@ -16,15 +16,19 @@
 
 package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+
+import java.util.Map;
 
 /**
  *  App to test adapter lifecycle.
  */
-public class AdapterApp extends AbstractApplication {
+public class TemplateApp extends ApplicationTemplate<Map<String, String>> {
 
   @Override
   public void configure() {
@@ -33,6 +37,12 @@ public class AdapterApp extends AbstractApplication {
     setDescription("Application for to test Adapter lifecycle");
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());
+  }
+
+  @Override
+  public void configureAdapter(String adapterName, Map<String, String> configuration,
+                               AdapterConfigurer configurer) throws Exception {
+    configurer.setSchedule(Schedules.createTimeSchedule("schedule", "description", "0 0 1 1 *"));
   }
 
   /**

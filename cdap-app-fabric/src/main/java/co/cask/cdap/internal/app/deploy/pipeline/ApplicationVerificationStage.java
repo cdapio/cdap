@@ -35,6 +35,7 @@ import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
@@ -59,19 +60,20 @@ import java.util.Map;
  * component of specification is achieved by the {@link Verifier}
  * concrete implementations.
  */
-public class VerificationStage extends AbstractStage<ApplicationDeployable> {
+public class ApplicationVerificationStage extends AbstractStage<ApplicationDeployable> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final AdapterService adapterService;
   private final Store store;
 
-  public VerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
     this.adapterService = adapterService;
   }
+
 
   /**
    * Receives an input containing application specification and location
@@ -89,18 +91,31 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
       ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(appId.getId());
       if (applicationTemplateInfo != null) {
-        throw new RuntimeException
-          (String.format("Cannot deploy Application %s. An AdapterType exists with a conflicting name.", appId));
+        throw new RuntimeException(String.format(
+          "Cannot deploy Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
       }
     }
 
+    verifySpec(appId, specification);
+    verifyData(appId, specification);
+    verifyPrograms(appId, specification);
+
+    // Emit the input to next stage.
+    emit(input);
+  }
+
+  protected void verifySpec(Id.Application appId,
+                            ApplicationSpecification specification) {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
     }
+  }
 
+  protected void verifyData(Id.Application appId,
+                            ApplicationSpecification specification) throws DatasetManagementException {
     // NOTE: no special restrictions on dataset module names, etc
-
+    VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
       result = getVerifier(DatasetCreationSpec.class).verify(appId, dataSetCreateSpec);
       if (!result.isSuccess()) {
@@ -110,11 +125,11 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(appId.getNamespace(), dsName);
       DatasetSpecification existingSpec = dsFramework.getDatasetSpec(datasetInstanceId);
       if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
-          // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
-          throw new DataSetException
-            (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
-                           dsName, dataSetCreateSpec.getTypeName()));
-        }
+        // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
+        throw new DataSetException
+          (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
+                         dsName, dataSetCreateSpec.getTypeName()));
+      }
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
@@ -123,12 +138,14 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         throw new RuntimeException(result.getMessage());
       }
     }
+  }
 
+  protected void verifyPrograms(Id.Application appId, ApplicationSpecification specification) {
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
                                                                    specification.getMapReduce().values(),
                                                                    specification.getProcedures().values(),
                                                                    specification.getWorkflows().values());
-
+    VerifyResult result;
     for (ProgramSpecification programSpec : programSpecs) {
       result = getVerifier(programSpec.getClass()).verify(appId, programSpec);
       if (!result.isSuccess()) {
@@ -160,15 +177,12 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
         StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
         String streamName = streamSizeSchedule.getStreamName();
         if (!specification.getStreams().containsKey(streamName) &&
-          store.getStream(Id.Namespace.from(input.getId().getNamespaceId()), streamName) == null) {
+          store.getStream(appId.getNamespace(), streamName) == null) {
           throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
                                                    streamSizeSchedule.getName(), streamName));
         }
       }
     }
-
-    // Emit the input to next stage.
-    emit(input);
   }
 
   private void verifyWorkflowSpecifications(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec) {

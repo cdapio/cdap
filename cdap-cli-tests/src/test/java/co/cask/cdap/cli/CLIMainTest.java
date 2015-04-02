@@ -17,7 +17,6 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneContainer;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
@@ -27,7 +26,6 @@ import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.app.AdapterApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
@@ -35,6 +33,7 @@ import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
+import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -488,7 +487,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, AdapterApp.class, "dummyAdapter");
+    setupAdapter(adapterDir, TemplateApp.class, "dummyAdapter");
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {

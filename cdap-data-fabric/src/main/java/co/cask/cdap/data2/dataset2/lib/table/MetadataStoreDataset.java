@@ -52,10 +52,6 @@ public class MetadataStoreDataset extends AbstractDataset {
     this.table = table;
   }
 
-  protected <T> byte[] serialize(T value, Type type) {
-    return Bytes.toBytes(GSON.toJson(value, type));
-  }
-
   protected <T> byte[] serialize(T value) {
     return Bytes.toBytes(GSON.toJson(value));
   }
@@ -161,14 +157,6 @@ public class MetadataStoreDataset extends AbstractDataset {
   public <T> void write(MDSKey id, T value) {
     try {
       table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public <T> void write(MDSKey id, T value, Type type) {
-    try {
-      table.put(new Put(id.getKey()).add(COLUMN, serialize(value, type)));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

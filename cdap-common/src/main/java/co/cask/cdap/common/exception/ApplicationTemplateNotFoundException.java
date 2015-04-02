@@ -17,21 +17,21 @@
 package co.cask.cdap.common.exception;
 
 /**
- * Thrown when an adapter type is not found
+ * Thrown when an ApplicationTemplate is not found
  */
-public class AdapterTypeNotFoundException extends NotFoundException {
+public class ApplicationTemplateNotFoundException extends NotFoundException {
 
-  private final String adapterType;
+  private final String template;
 
-  public AdapterTypeNotFoundException(String adapterType) {
-    super("adapter type", adapterType);
-    this.adapterType = adapterType;
+  public ApplicationTemplateNotFoundException(String template) {
+    super("ApplicationTemplate", template);
+    this.template = template;
   }
 
   /**
-   * @return the adapter type that was not found
+   * @return the template that was not found
    */
-  public String getAdapterType() {
-    return adapterType;
+  public String getTemplate() {
+    return template;
   }
 }
