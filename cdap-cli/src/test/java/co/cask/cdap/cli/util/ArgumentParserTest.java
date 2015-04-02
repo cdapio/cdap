@@ -70,6 +70,16 @@ public class ArgumentParserTest {
     String input = "test command input1 and 'input 2' and with \"input 3\" ";
 
     Map<String, String> actual = ArgumentParser.getArguments(input, pattern);
-    Assert.assertEquals(Collections.<String, String>emptyMap(), actual);
+    Assert.assertEquals(0, actual.size());
+  }
+
+  @Test
+  public void testParseMap() {
+    String argValue = "^\\[(?<timestamp>%{DAY} \\s+ %{MONTHDAY} %{TIME} %{YEAR})\\]";
+    String mapString = "\"test\"='OXF' arg='" + argValue + "'";
+
+    Map<String, String> actual = ArgumentParser.parseMap(mapString);
+    Assert.assertEquals("OXF", actual.get("test"));
+    Assert.assertEquals(argValue, actual.get("arg"));
   }
 }
