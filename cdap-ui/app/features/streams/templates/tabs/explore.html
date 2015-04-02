@@ -166,10 +166,13 @@
                     </tr>
                   </tbody>
                 </table>
+                <div class="text-center" ng-show="responses.results.length === 0">
+                  No Result
+                </div>
               </div>
             </div>
           </div>
-          <div ng-hide="responses.results.length" class="text-center">
+          <div ng-hide="responses.request.status === 'FINISHED'" class="text-center">
             <p>(Select Query)</p>
           </div>
         </div>
