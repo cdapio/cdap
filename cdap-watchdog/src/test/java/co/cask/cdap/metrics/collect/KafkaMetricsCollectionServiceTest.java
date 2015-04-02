@@ -143,7 +143,7 @@ public class KafkaMetricsCollectionServiceTest {
     collectionService.getCollector(ImmutableMap.of("tag", "test")).increment("metric", 5);
 
     // Sleep to make sure metrics get published
-    TimeUnit.SECONDS.sleep(2);
+    TimeUnit.SECONDS.sleep(5);
 
     collectionService.stopAndWait();
 
@@ -197,7 +197,9 @@ public class KafkaMetricsCollectionServiceTest {
     Assert.assertTrue(semaphore.tryAcquire(expected.size(), 15, TimeUnit.SECONDS));
 
     for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
-      Assert.assertEquals(expectedEntry.getValue().intValue(), metrics.get(expectedEntry.getKey()).getValue());
+      MetricValue metric = metrics.get(expectedEntry.getKey());
+      Assert.assertNotNull("Missing expected value for " + expectedEntry.getKey(), metric);
+      Assert.assertEquals(expectedEntry.getValue().intValue(), metric.getValue());
     }
 
     kafkaClient.stopAndWait();
