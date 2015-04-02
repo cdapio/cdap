@@ -116,7 +116,6 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   private void configureTransform(List<ETLStage> transforms, AdapterConfigurer configurer) throws Exception {
-    List<String> transformClasses = Lists.newArrayList();
     List<StageSpecification> transformSpecs = Lists.newArrayList();
     for (ETLStage transform : transforms) {
       String transformName = transform.getName();
@@ -125,7 +124,6 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
       StageSpecification specification = stageConfigurer.createSpecification();
       transformSpecs.add(specification);
-      transformClasses.add(className);
     }
     configurer.addRuntimeArgument(Constants.Transform.SPECIFICATION, GSON.toJson(transformSpecs));
   }
