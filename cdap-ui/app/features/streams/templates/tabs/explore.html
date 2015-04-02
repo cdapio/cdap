@@ -58,10 +58,8 @@
             <tr ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
               <td>
                 {{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}
-                <br />
-                <small class="timestamp text-muted">{{event.timestamp | amTimeAgo}}</small>
               </td>
-              <td>{{event.body | json}}</td>
+              <td>{{event.body | json | myEllipsis: 80 }}</td>
             </tr>
           </tbody>
         </table>
