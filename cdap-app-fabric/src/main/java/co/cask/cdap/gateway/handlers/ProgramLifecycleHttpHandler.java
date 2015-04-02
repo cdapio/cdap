@@ -1444,6 +1444,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       final String runId = controller.getRunId().getId();
 
       if (type == ProgramType.MAPREDUCE) {
+        // For MapReduce programs recording of the states in the MDS is done by MapReduceRuntimeService
+        // We only need listener here to record explicit stopping of the MapReduce program
         controller.addListener(new AbstractListener() {
           @Override
           public void killed() {

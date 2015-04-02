@@ -360,14 +360,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   private void recordProgramStart() {
-    LOG.info("Recording RUNNING state for the MapReduce Program: {} {}", context.getProgram().getId(), context.getRunId().getId());
+    LOG.info("Recording RUNNING state for the MapReduce Program: {} {}", context.getProgram().getId(),
+             context.getRunId().getId());
     store.setStart(context.getProgram().getId(), context.getRunId().getId(),
                    TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
   }
 
   private void recordProgramStop(ProgramController.State state) {
     if (!stopRequested) {
-      // Record the status if not stopped
+      // Record the completion if not STOPPED explicitly
       LOG.info("Recording {} state for the MapReduce Program {}", state.getRunStatus(), context.getProgram().getId());
       store.setStop(context.getProgram().getId(), context.getRunId().getId(),
                     TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS), state.getRunStatus());
