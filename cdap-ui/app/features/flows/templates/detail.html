@@ -14,7 +14,7 @@
   <div class="col-sm-6 text-right">
 
     <div ng-show="status != 'start' && status != 'stop'"
-         ng-disabled = "status == 'RUNNING'"
+         ng-disabled = "activeRuns > 0"
          class="btn btn-default btn-md"
          ng-click="do('start')">
       <span class="fa fa-play"> Start a new run</span>
