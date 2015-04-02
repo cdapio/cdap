@@ -1,8 +1,7 @@
 <div ncy-breadcrumb></div>
-<h2>
-  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
-  <small> <em>Type: Tigon </em></small>
-</h2>
+<h1><span ng-bind="$state.params.programId | caskCapitalizeFilter"></span></h1>
+<p> Type: Tigon </p>
+
 
 <div class="row">
   <div class="col-sm-6">
@@ -13,12 +12,12 @@
   </div>
   <div class="col-sm-6 text-right h4">
 
-    <div ng-show="status != 'start' && status != 'stop'"
+    <a ng-show="status != 'start' && status != 'stop'"
          ng-disabled = "status == 'RUNNING'"
-         class="btn btn-default btn-md"
+         class="btn btn-success"
          ng-click="toggleFlow('start')">
-      <span class="fa fa-play"> Start a new run</span>
-    </div>
+      Start a new run
+    </a>
     <div ng-show="status == 'start' || status == 'stop'"
          class="btn btn-default btn-md">
       <span class="fa fa-refresh fa-spin"></span>
