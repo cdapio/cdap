@@ -76,7 +76,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -85,7 +85,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -94,7 +94,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -103,7 +103,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -112,7 +112,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -121,12 +121,12 @@ public abstract class AbstractSetPreferencesCommand extends AbstractAuthCommand 
           throw new CommandInputError(this);
         }
         client.setProgramPreferences(Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]),
-                                     type.getPluralName(), programIdParts[1], args);
+                                     type.getNamePlural().toString(), programIdParts[1], args);
         printSuccessMessage(printStream, type);
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getPrettyName());
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
     }
   }
 }

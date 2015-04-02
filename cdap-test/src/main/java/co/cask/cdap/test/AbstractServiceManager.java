@@ -25,18 +25,39 @@ public abstract class AbstractServiceManager implements ServiceManager {
 
   @Override
   public void waitForStatus(boolean status) throws InterruptedException {
-    waitForStatus(status, 5, 1);
+    waitForStatus(status, 50, 5000, TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < retries) {
-      if (isRunning() == status) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(timeout);
+    // The API is not good. The "timeout" parameter is actually sleep time
+    // We calculate the actual timeout by multiplying retries with sleep time
+    long sleepTimeMillis = TimeUnit.SECONDS.toMillis(timeout);
+    long timeoutMillis = sleepTimeMillis * retries;
+    waitForStatus(status, sleepTimeMillis, timeoutMillis, TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * Waits for the program status.
+   *
+   * @param status true to wait for start, false for stop
+   * @param sleepTime time to sleep in between polling
+   * @param timeout timeout for the polling if the status doesn't match
+   * @param timeoutUnit unit for both sleepTime and timeout
+   */
+  private void waitForStatus(boolean status, long sleepTime,
+                             long timeout, TimeUnit timeoutUnit) throws InterruptedException {
+    long timeoutMillis = timeoutUnit.toMillis(timeout);
+    boolean statusMatched = status == isRunning();
+    long startTime = System.currentTimeMillis();
+    while (!statusMatched && (System.currentTimeMillis() - startTime) < timeoutMillis) {
+      timeoutUnit.sleep(sleepTime);
+      statusMatched = status == isRunning();
     }
-    throw new IllegalStateException("Service state not executed. Expected " + status);
+
+    if (!statusMatched) {
+      throw new IllegalStateException("Service state not executed. Expected " + status);
+    }
+
   }
 }

@@ -45,7 +45,7 @@ public class StreamInputSplitFinder<T> {
   private final StreamInputSplitFactory<T> splitFactory;
 
   private StreamInputSplitFinder(URI path, long startTime, long endTime, long maxSplitSize,
-                                long minSplitSize, StreamInputSplitFactory<T> splitFactory) {
+                                 long minSplitSize, StreamInputSplitFactory<T> splitFactory) {
     Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
     Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
     this.path = new Path(path);
@@ -161,9 +161,9 @@ public class StreamInputSplitFinder<T> {
     /**
      * Build the input split finder given a factory for creating splits.
      *
-     * @param splitFactory
+     * @param splitFactory Factory for creating input splits
      * @param <T> Type of split to find. Expected to be either mapred.InputSplit or mapreduce.InputSplit.
-     * @return
+     * @return a new instance of {@link StreamInputSplitFinder}
      */
     public <T> StreamInputSplitFinder<T> build(StreamInputSplitFactory<T> splitFactory) {
       return new StreamInputSplitFinder<T>(path, startTime, endTime, maxSplitSize, minSplitSize, splitFactory);

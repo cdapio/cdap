@@ -1,34 +1,28 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsCreateController', function($scope, $filter) {
-    var i = 0,
-        filterFilter = $filter('filter');
-    $scope.type = 'Time Series';
-    $scope.id = 'Some Long string that is supposed to be ID';
-    $scope.displayName = 'Stream1DisplayName';
-    $scope.description = '';
-    $scope.properties = [
-      {
-        key: 'key1',
-        value: 'value1'
-      },
-      {
-        key: 'key2',
-        value: 'value2'
-      }
-    ];
+  .controller('StreamsCreateController', function($scope, MyDataSource, $modalInstance, caskFocusManager) {
 
-    $scope.addProperties = function() {
-      $scope.properties.push({
-        key: 'Property ' + i,
-        value: ''
-      });
-      i+=1;
+    caskFocusManager.focus('streamId');
+
+    var dataSrc = new MyDataSource($scope);
+
+    $scope.streamId = '';
+
+    $scope.createStream = function() {
+      dataSrc
+        .request({
+          _cdapNsPath: '/streams/' + $scope.streamId,
+          method: 'PUT'
+        })
+        .then(function(res) {
+          $modalInstance.close(res);
+        }, function(err) {
+          $scope.error = err;
+        });
     };
 
-    $scope.removeProperty = function(property) {
-      var match = filterFilter($scope.properties, property);
-      if (match.length) {
-        $scope.properties.splice($scope.properties.indexOf(match[0]), 1);
-      }
+    $scope.closeModal = function() {
+      $modalInstance.close();
+
     };
+
   });

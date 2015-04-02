@@ -119,7 +119,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.10.0</netty.http.version>
+    <netty.http.version>0.11.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -1314,6 +1314,8 @@
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>cdap-examples/**</exclude>
+                  <!-- Excludes app-templates by default, include it in the templates profile -->
+                  <exclude>cdap-app-templates/**</exclude>
                   <exclude>**/*.json</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
@@ -1423,6 +1425,14 @@
       <id>examples</id>
       <modules>
         <module>cdap-examples</module>
+      </modules>
+    </profile>
+
+    <!-- Profile to turn on inclusion of all cdap-app-templates -->
+    <profile>
+      <id>templates</id>
+      <modules>
+        <module>cdap-app-templates</module>
       </modules>
     </profile>
 

@@ -73,12 +73,8 @@ enclosing context. These are the available Application contexts of CDAP:
      - ``namespace.<namespace>.app.<app-id>.flow.<flow-id>``
    * - All Flowlets of all app of an Application
      - ``namespace.<namespace>.app.<app-id>.flow.*``
-   * - One Procedure
-     - ``namespace.<namespace>.app.<app-id>.procedure.<procedure-id>``
    * - One Worker
      - ``namespace.<namespace>.app.<app-id>.worker.<worker-id>``
-   * - All Procedures of an Application
-     - ``namespace.<namespace>.app.<app-id>.procedure.*``
    * - All Workers of an Application
      - ``namespace.<namespace>.app.<app-id>.workers.*``
    * - All Mappers of a MapReduce
@@ -112,7 +108,7 @@ Stream metrics are only available at the Stream level and the only available con
      - ``namespace.<namespace>.stream.<stream-id>``
 
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
-Flowlet, Worker, Procedure, Mapper, or Reducer level:
+Flowlet, Worker, Service, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
@@ -135,23 +131,34 @@ Flowlet, Worker, Procedure, Mapper, or Reducer level:
 
 Available System Metrics
 ------------------------
-For CDAP metrics (system metrics), the available metrics depend on the context.
-User-defined metrics are available in the context that they are emitted from.
-
 Note that a user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
+
+These metrics are available in a Datasets context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Datasets Metric
+     - Description
+   * - ``system.store.bytes``
+     - Number of bytes written
+   * - ``system.store.ops``
+     - Operations (reads and writes) performed
+   * - ``system.store.reads``
+     - Read operations performed
+   * - ``system.store.writes``
+     - Write operations performed
 
 These metrics are available in a Flowlet context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Flowlet Metric
      - Description
-   * - ``system.process.busyness``
-     - A number from 0 to 100 indicating how “busy” the Flowlet is;
-       note that you cannot aggregate over this metric
    * - ``system.process.errors``
      - Number of errors while processing
    * - ``system.process.events.processed``
@@ -160,6 +167,8 @@ These metrics are available in a Flowlet context:
      - Number of events read in by the Flowlet
    * - ``system.process.events.out``
      - Number of events emitted by the Flowlet
+   * - ``system.process.tuples.read``
+     - Number of tuples read by the Flowlet
    * - ``system.store.bytes``
      - Number of bytes written to Datasets
    * - ``system.store.ops``
@@ -173,7 +182,7 @@ These metrics are available in a Mappers and Reducers context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Mappers and Reducers Metric
      - Description
@@ -184,12 +193,27 @@ These metrics are available in a Mappers and Reducers context:
    * - ``system.process.entries.out``
      - Number of entries written out by the Map or Reduce phase
 
+These metrics are available in a Services context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Services Metric
+     - Description
+   * - ``system.requests.count``
+     - Number of requests made to the Service
+   * - ``system.response.successful.count``
+     - Number of successful requests completed by the Service
+   * - ``system.response.server.error.count``
+     - Number of failures seen by the Service
+
 These metrics are available in a Spark context, where ``<spark-id>``
 depends on the Spark program being queried:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Spark Metric
      - Description
@@ -212,24 +236,11 @@ depends on the Spark program being queried:
    * - ``system.<spark-id>.DAGScheduler.stage.waitingStages``
      - Number of waiting stages
 
-These metrics are available in a Procedures context:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 60
-
-   * - Procedures Metric
-     - Description
-   * - ``system.query.requests``
-     - Number of requests made to the Procedure
-   * - ``system.query.failures``
-     - Number of failures seen by the Procedure
-
 These metrics are available in a Streams context:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 60 40
 
    * - Streams Metric
      - Description
@@ -238,23 +249,6 @@ These metrics are available in a Streams context:
    * - ``system.collect.bytes``
      - Number of bytes collected by the Stream
 
-These metrics are available in a Datasets context:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 60
-
-   * - Datasets Metric
-     - Description
-   * - ``system.store.bytes``
-     - Number of bytes written
-   * - ``system.store.ops``
-     - Operations (reads and writes) performed
-   * - ``system.store.reads``
-     - Read operations performed
-   * - ``system.store.writes``
-     - Write operations performed
-
 
 Searches and Queries
 ====================
@@ -262,7 +256,7 @@ Searches and Queries
 The process of retrieving a metric involves these steps:
 
 1. Obtain (usually through a search) the correct context for a metric;
-#. Obtain (usually through a search of the context) the available metrics;
+#. Obtain (usually through a search within the context) the available metrics;
 #. Querying for a specific metric, supplying the context and any parameters.
 
 
@@ -271,7 +265,7 @@ Search for Contexts
 
 To search for the available contexts, perform an HTTP request::
 
-  POST <base-url>/metrics/search?target=childContext[&context=<context>]
+  POST '<base-url>/metrics/search?target=childContext[&context=<context>]'
 
 The optional ``<context>`` defines a metrics context to search within. If it is not
 provided, the search is performed across all data. The available contexts that are returned
@@ -287,7 +281,7 @@ examples below for its use.
 
    * - Parameter
      - Description
-   * - ``<context>`` (Optional)
+   * - ``<context>`` *[Optional]*
      - Metrics context to search within. If not provided, the search is provided across
        all contexts.
        
@@ -298,29 +292,30 @@ examples below for its use.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext``
+     - ``POST '<base-url>/metrics/search?target=childContext'``
    * - Returns
-     - ``[ "namespace.default", "namespace.system" ]``
+     - ``["namespace.default", "namespace.system"]``
    * - Description
      - Returns all first-level contexts; in this case, two namespaces.
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext&context=namespace.default``
+     - ``POST '<base-url>/metrics/search?target=childContext&context=namespace.default'``
    * - Returns
-     - ``[ "namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
-       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", "namespace.default.stream.who" ]``
+     - ``["namespace.default.app.HelloWorld", "namespace.default.app.PurchaseHistory", "namespace.default.dataset.purchases", 
+       "namespace.default.dataset.whom", "namespace.default.stream.purchaseStream", ..., "namespace.default.stream.who"]``
    * - Description
      - Returns all child contexts of the given parent context; in this case, all entities in the default namespace.
    * - 
      - 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=childContext&context=namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*``
+     - ``POST '<base-url>/metrics/search?target=childContext&context=``
+       ``namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*'``
    * - Returns
-     - ``[ "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.collector", 
-       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.dataset.*.run.*.flowlet.reader" ]``
+     - ``["namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.collector", 
+       "namespace.default.app.PurchaseHistory.flow.PurchaseFlow.run.*.flowlet.reader"]``
    * - Description
-     - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any dataset and any run; 
+     - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any run; 
        in this case, it returns all available Flowlets.
 
 
@@ -329,7 +324,7 @@ Search for Metrics
 
 To search for the available metrics within a given context, perform an HTTP POST request::
 
-  POST <base-url>/metrics/search?target=metric&context=<context>
+  POST '<base-url>/metrics/search?target=metric&context=<context>'
 
 
 .. list-table::
@@ -348,12 +343,14 @@ To search for the available metrics within a given context, perform an HTTP POST
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/metrics/search?target=metric&context=namespace.default.app.PurchaseHistory``
+     - ``POST '<base-url>/metrics/search?target=metric&``
+       ``context=namespace.default.app.PurchaseHistory'``
    * - Returns
-     - ``[ "user.customers.count”, “system.events.processed” ]``
+     - ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.reads",``
+       ``"system.dataset.store.writes","system.process.bytes",...,"user.customers.count"]``
    * - Description
      - Returns all metrics in the context of the application *PurchaseHistory* of the
-       *default* namespace; in this case, returns a user-defined metric and a system metric.
+       *default* namespace; in this case, returns a list of system and user-defined metrics.
 
 
 Querying A Metric
@@ -364,7 +361,7 @@ metrics data.
 
 To query a metric within a given context, perform an HTTP GET request::
 
-  POST <base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>
+  POST '<base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'
 
 
 .. list-table::
@@ -391,22 +388,22 @@ To query a metric within a given context, perform an HTTP GET request::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.flowlet.saver&metric=system.process.busyness?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.flowlet.saver&metric=system.process.events.processed?aggregate=true'``
    * - Description
-     - Using a *System* metric, *system.process.busyness*
+     - Using a *System* metric, *system.process.events.processed*
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
-       ``WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.``
+       ``WhoFlow.run.13ac3a50-a435-49c8-a752-83b3c1e1b9a8.flowlet.saver&metric=user.names.bytes?aggregate=true'``
    * - Description
      - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
-     - ``GET <base-url>/metrics/query?context=namespace.default.app.HelloWorld.services``
-       ``WhoService.runnables.WhoRun&metric=user.names.bytes?aggregate=true``
+     - ``POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.services``
+       ``WhoService.runnables.WhoRun&metric=user.names.bytes'``
    * - Description
      - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
@@ -417,20 +414,47 @@ Query Tips
   in the Flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
   POST method::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.
-      flowlet.splitter&metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.
+      flowlet.splitter&metric=system.process.events.processed&start=now-5s&count=5'
 
   This returns a JSON response that has one entry for every second in the requested time interval. It will have
   values only for the times where the metric was actually emitted (shown here "pretty-printed")::
 
-    {"start":1382637108,"end":1382637112,"series":[
-      {"time":1382637108,"value":6868},
-      {"time":1382637109,"value":6895},
-      {"time":1382637110,"value":6856},
-      {"time":1382637111,"value":6816},
-      {"time":1382637112,"value":6765}]
+    {
+      "startTime": 1427225350,
+      "endTime": 1427225354,
+      "series": [
+        {
+          "metricName": "system.process.events.processed",
+          "grouping": {
+        
+          },
+          "data": [
+            {
+              "time": 1427225350,
+              "value": 760
+            },
+            {
+              "time": 1427225351,
+              "value": 774
+            },
+            {
+              "time": 1427225352,
+              "value": 792
+            },
+            {
+              "time": 1427225353,
+              "value": 756
+            },
+            {
+              "time": 1427225354,
+              "value": 766
+            }
+          ]
+        }
+      ]
     }
-
+    
 - You can retrieve :ref:`results based on a run-id <http-restful-api-metrics-querying-by-run-id>`.
 
 - If a run-ID is not specified, we aggregate the events processed for all the runs of this flow.
@@ -444,28 +468,28 @@ Query Tips
 - If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
   API at the Flow context::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.flowlet.*
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
 - Similarly, you can address the context of all Flows of an Application, an entire Application, or the entire 
   namespace of a CDAP instance::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.*
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.*
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
-    POST <base-url>/metrics/query?context=namespace.default.app.CountRandom
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
-    POST <base-url>/metrics/query?context=namespace.default
-      &metric=system.process.events.processed&start=now-5s&count=5
+    POST '<base-url>/metrics/query?context=namespace.default
+      &metric=system.process.events.processed&start=now-5s&count=5'
 
 - To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
   and specify the user-defined metric at the end of the request.
 
   For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
 
-    POST <base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver
-      &metric=user.names.bytes&aggregate=true
+    POST '<base-url>/metrics/query?context=namespace.default.app.HelloWorld.flow.WhoFlow.flowlet.saver
+      &metric=user.names.bytes&aggregate=true'
 
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
@@ -473,7 +497,7 @@ Query Tips
 - Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
   the request body that enumerates the name and attributes for each metric, is currently not
   supported in this API. Instead, use the :ref:`v2 API
-  <http-restful-api-v2-metrics-multiple>`. It will be supported in a future release.
+  <http-restful-api-v2-metrics-multiple>` until it is supported in a future release.
 
 
 .. _http-restful-api-metrics-groupby:
@@ -493,9 +517,42 @@ multiple tags for grouping by providing a comma-separated list.
      - Description
    * - ``groupBy=app``
      - Retrieves the time series for each application. 
-       For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``groupBy=app,flow``
      - Retrieves a time series for each app and flow combination
+
+.. rubric:: Example
+
+The method::
+
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory&
+    groupBy=flow&metric=user.customers.count&start=now-2s&end=now'
+
+returns the *user.customers.count* metric in the context of the application
+*PurchaseHistory* of the *default* namespace, for the specified time range, and grouped by
+``flow`` (results reformatted to fit)::
+
+  {
+    "startTime": 1421188775,
+    "endTime": 1421188777,
+    "series": [
+      {
+        "metricName": "user.customers.count",
+        "grouping": { "flow": "PurchaseHistoryFlow" },
+        "data": [
+          { "time": 1421188776, "value": 3 },
+          { "time": 1421188777, "value": 2 }
+        ]
+      },
+      {
+        "metricName": "user.customers.count",
+        "grouping": { "flow": "PurchaseAnalysisFlow" },
+        "data": [
+          { "time": 1421188775, "value": 1 },
+          { "time": 1421188777, "value": 2 }
+        ]
+      }
+    ]
+  }
 
 .. _http-restful-api-metrics-time-range:
 
@@ -509,7 +566,7 @@ or as a ``start`` and ``end`` to define a specific range and return a series of 
 By default, queries without a time range retrieve a value based on ``aggregate=true``.
 
 .. list-table::
-   :widths: 20 80
+   :widths: 30 70
    :header-rows: 1
 
    * - Parameter
@@ -521,18 +578,21 @@ By default, queries without a time range retrieve a value based on ``aggregate=t
    * - ``start=<time>&end=<time>``
      - Time range defined by start and end times, where the times are either in seconds
        since the start of the Epoch, or a relative time, using ``now`` and times added to it.
-   * - ``resolution=[1 | 60 | 3600 | auto]``
-     - Time resolution in seconds; or if "auto", one of ``{1, 60, 3600}`` is used based on
-       the time difference.
+   * - ``count=<count>``
+     - Number of time intervals since start with length of time interval defined by *resolution*. 
+       If ``count=60`` and ``resolution=1s``, the time range would be 60 seconds in length.
+   * - ``resolution=[1s|1m|1h|auto]``
+     - Time resolution in seconds, minutes or hours; or if "auto", one of ``{1s, 1m, 1h}``
+       is used based on the time difference.
 
 With a specific time range, a ``resolution`` can be included to retrieve a series of data
 points for a metric. By default, 1 second resolution is used. Acceptable values are noted
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) >= 3610``, resolution will be 3600 seconds (effectively in hours); 
-- ``(endTime - startTime) >= 610``, resolution will be 60 seconds (effectively in minutes); 
-- otherwise, resolution will be in seconds.
+- ``(endTime - startTime) >= 3610 seconds``, resolution will be 1 hour; 
+- ``(endTime - startTime) >= 610 seconds``, resolution will be 1 minute; 
+- otherwise, resolution will be 1 second.
 
 
 .. list-table::
@@ -548,9 +608,9 @@ difference calculated between the start and end times:
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``start=1385625600&`` ``end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
-       both given as since the start of the Epoch
+       both given as since the start of the Epoch.
    * - ``start=1385625600&`` ``count=3600&`` ``resolution=1s``
-     - The same as before, the count given as a number of seconds
+     - The same as before, the count given as a number of time intervals, each 1 second.
    * - ``start=1385625600&`` ``end=1385629200&`` ``resolution=1m``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
        with 1 minute resolution, will return 61 data points with metrics aggregated for each minute.
@@ -558,20 +618,27 @@ difference calculated between the start and end times:
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 10:00:00 GMT``,
        with 1 hour resolution, will return 3 data points with metrics aggregated for each hour.
 
+Example::
 
-As an example, to return the total number of input objects processed since the
-Application *CountRandom* was deployed, assuming that CDAP has not been stopped or
-restarted (you cannot specify a time range for aggregates)::
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom&
+    metric=system.process.events.processed&start=now-1h&end=now&resolution=1m'
 
-  POST <base-url>/metrics/query?context=namespace.default.app.
-      CountRandom.system.process.events.processed?aggregate=true
+This will return the value of the metric *system.process.events.processed* for the last
+hour at one-second intervals.
+
+For aggregates, you cannot specify a time range. As an example, to return the total number
+of input objects processed since the Application *CountRandom* was deployed, assuming that
+CDAP has not been stopped or restarted::
+
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom
+    &metric=system.process.events.processed?aggregate=true'
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
 ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder`` (reformatted to fit)::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true'
   
 .. _http-restful-api-metrics-querying-by-run-id:
 
@@ -590,16 +657,16 @@ When querying by ``run-ID``, it is specified in the context after the ``program-
 
 Examples of using a run-ID (reformatted to fit)::
 
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
-      MyFlow.run.364-789-1636765&metric=system.process.completion
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.flow.
+      MyFlow.run.364-789-1636765&metric=system.process.completion'
   
-  POST <base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion
+  POST '<base-url>/metrics/query?context=namespace.default.app.PurchaseHistory.mapreduce.
+      PurchaseHistoryBuilder.run.453-454-447683&metric=system.process.completion'
 
-  POST <base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
-    bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true
+  POST '<base-url>/metrics/query?context=namespace.default.app.CountRandom.flow.CountRandom.run.
+    bca50436-9650-448e-9ab1-f1d186eb2285.flowlet.splitter&metric=system.process.events.processed&aggregate=true'
 
-The last example will return something similar to::
+The last example will return something similar to (where ``"time"=0`` means aggregated total number)::
 
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}

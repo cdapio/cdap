@@ -46,7 +46,7 @@ General
 
 - Added the ability to specify 
   :ref:`custom logback file for CDAP programs <application-logback>`
-  (`CDAP-1741 <https://issues.cask.co/browse/CDAP-1741>`__).
+  (`CDAP-1100 <https://issues.cask.co/browse/CDAP-1100>`__).
 
 - System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.
 
@@ -70,10 +70,6 @@ New Features
   - Allow an unchecked Dataset upgrade upon application deployment
     (`CDAP-1574 <https://issues.cask.co/browse/CDAP-1574>`__).
 
-- **Explore**
-
-  - Explore now works on secure Hadoop clusters.
-  
 - **Metrics**
 
   - Added new APIs for exploring available metrics, including drilling down into the context of emitted metrics
@@ -117,6 +113,8 @@ New Features
 
   - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
     2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+    Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
+    please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
   - Added a metric migration tool which migrates old metrics to the new 2.8 format.
 
 

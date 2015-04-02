@@ -309,7 +309,7 @@ publishing a notification.
 
 Stream properties can be changed with an HTTP PUT method to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/streams/<stream-id>/config
+  PUT <base-url>/namespaces/<namespace>/streams/<stream-id>/properties
 
 .. list-table::
    :widths: 20 80
@@ -364,7 +364,7 @@ the Stream and re-create it with the new schema.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/namespaces/default/streams/mystream/config``::
+     - ``PUT <base-url>/namespaces/default/streams/mystream/properties``::
 
          { 
            "ttl" : 86400,

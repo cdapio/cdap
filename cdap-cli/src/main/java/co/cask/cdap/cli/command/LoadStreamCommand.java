@@ -21,6 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
@@ -86,12 +88,12 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public String getDescription() {
-    return String.format("Loads a file to a %s. The contents of the file will " +
+    return String.format("Loads a file to %s. The contents of the file will " +
                          "become multiple events in the %s, " +
                          "based on the content type. If <%s> is not provided, " +
                          "it will be detected by the file extension.",
-                         ElementType.STREAM.getPrettyName(), 
-                         ElementType.STREAM.getPrettyName(), 
+                         Fragment.of(Article.A, ElementType.STREAM.getTitleName()),
+                         ElementType.STREAM.getTitleName(),
                          ArgumentName.CONTENT_TYPE);
   }
 

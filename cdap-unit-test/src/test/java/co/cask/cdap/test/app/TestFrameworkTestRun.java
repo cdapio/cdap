@@ -112,6 +112,28 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                         gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
   }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testMapperDatasetAccess() throws Exception {
+    addDatasetInstance("keyValueTable", "table1").create();
+    addDatasetInstance("keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset("table1");
+    KeyValueTable inputTable = tableManager.get();
+    inputTable.write("hello", "world");
+    tableManager.flush();
+
+    ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
+    Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
+                                                    DatasetWithMRApp.OUTPUT_KEY, "table2");
+    MapReduceManager mrManager = appManager.startMapReduce(DatasetWithMRApp.MAPREDUCE_PROGRAM, argsForMR);
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    appManager.stopAll();
+
+    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+    KeyValueTable outputTable = outTableManager.get();
+    Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+  }
+
   @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {

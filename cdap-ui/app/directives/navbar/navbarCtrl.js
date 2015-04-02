@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function ($alert, MYAUTH_EVENT, myNamespace, $scope, $state) {
+  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, $state) {
 
     $scope.namespaces = [];
 
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.commons')
     });
 
     $scope.doSearch = function () {
-      $alert({
+      myAlert({
         title: 'Sorry!',
         content: 'Search is not yet implemented.',
         type: 'danger'

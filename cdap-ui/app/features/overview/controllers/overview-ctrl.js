@@ -14,7 +14,31 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
 
   $scope.apps = [];
   $scope.datasets = [];
+  $scope.streams = [];
   $scope.hideWelcomeMessage = false;
+  //$scope.mockData = [];
+  $scope.chartHistory = [
+    {
+      label: 'mockData',
+      values: loopGraph()
+    }
+  ];
+  $scope.appHistory = [
+    {
+      label: 'mockData',
+      values: loopGraph()
+    }
+  ];
+  function loopGraph() {
+    var arr = [];
+    for (var i = 0; i < 100; i++) {
+      arr.push({
+        time: i, y: Math.floor(Math.random() * 500 + 1)
+      });
+    }
+
+    return arr;
+  }
 
   var dataSrc = new MyDataSource($scope),
       partialPath = '/assets/features/overview/templates/',
@@ -37,9 +61,6 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   })
     .then(function(res) {
       $scope.apps = res;
-      var isValidArray = angular.isArray($scope.apps) && $scope.apps.length;
-      $scope.appsTemplate = partialPath +
-        (isValidArray ? 'apps-section.html': 'apps-empty-section.html');
     });
 
   dataSrc.request({
@@ -47,9 +68,6 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   })
     .then(function(res) {
       $scope.datasets = res;
-      var isValidArray = angular.isArray($scope.datasets) && $scope.datasets.length;
-      $scope.dataTemplate = partialPath +
-        (isValidArray ? 'data-section.html': 'data-empty-section.html');
     });
 
   dataSrc.request({

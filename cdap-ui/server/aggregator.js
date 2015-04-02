@@ -71,16 +71,20 @@ function doPoll () {
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;
     request(resource, function(error, response, body){
-
-      if(error || _.isEqual(that.bodyCache[one.hash], body)) {
+      if(_.isEqual(that.bodyCache[one.hash], body)) {
         // that.log('not emitting', resource.url);
         return; // we do not send down identical bodies
+      } else if (error) {
+        that.bodyCache[one.hash] = body;
+        emitResponse.call(that, resource, error);
+        return;
       }
 
       that.bodyCache[one.hash] = body;
       emitResponse.call(that, resource, false, response, body);
 
-    }).on('response', pollAgain);
+    }).on('response', pollAgain)
+    .on('error', pollAgain);
   });
 }
 
@@ -99,22 +103,23 @@ function doPoll () {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
-
   if(error) { // still emit a warning
     this.log(resource.url, error);
     this.connection.write(JSON.stringify({
       resource: resource,
+      error: error,
       warning: error.toString()
     }));
-    return;
-  }
 
-  // this.log('emit', resource.url);
-  this.connection.write(JSON.stringify({
-    resource: resource,
-    statusCode: response.statusCode,
-    response: body
-  }));
+  } else {
+
+    // this.log('emit', resource.url);
+    this.connection.write(JSON.stringify({
+      resource: resource,
+      statusCode: response.statusCode,
+      response: body
+    }));
+  }
 }
 
 /**
@@ -157,7 +162,7 @@ function onSocketData (message) {
  * @private onSocketClose
  */
 function onSocketClose () {
-  // this.log('closed');
+  this.log('closed');
   this.stopPolling();
   this.polledResources.reset();
 }
