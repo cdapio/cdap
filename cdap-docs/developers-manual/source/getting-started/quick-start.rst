@@ -140,10 +140,13 @@ Or, you can use an HTTP request::
 
 Because it is tedious to send events manually, a file with sample web log events is
 included in the Wise application source, along with a script that reads it line-by-line
-and submits the events to the Stream using REST. Use this script to send events to the
-stream::
+and submits the events to the Stream using REST. Use this script in the application directory
+to send events to the stream:
 
-  $ bin/inject-data.sh
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| ./cdap-wise-|wise-version|/bin/inject-data.sh
 
 This will run for a number of seconds until all events are inserted.
 
@@ -182,7 +185,8 @@ in a time range of 3 minutes duration, starting 5 minutes ago::
   |               |         |           | l HTTP/1.0" 401 3939 " " "Googlebot/2.1 ( http://www.googlebot.c |
   |               |         |           | om/bot.html)"                                                    |
   +========================================================================================================+
-
+  Fetched 5 events from stream logEventStream
+  
 Note: you may have to adjust the time range according to when you injected the
 events into the Stream. 
 
