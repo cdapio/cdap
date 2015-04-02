@@ -36,6 +36,7 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
   @Inject
   MapReduceCounterCollectionService(TaskAttemptContext taskContext) {
+    super(true);
     this.taskContext = taskContext;
   }
 

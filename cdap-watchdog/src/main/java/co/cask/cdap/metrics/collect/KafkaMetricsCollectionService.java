@@ -55,11 +55,13 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   public KafkaMetricsCollectionService(KafkaClient kafkaClient,
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                        DatumWriter<MetricValue> recordWriter) {
-    this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
+    this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter, true);
   }
 
   public KafkaMetricsCollectionService(KafkaClient kafkaClient, String topicPrefix,
-                                       KafkaPublisher.Ack ack, DatumWriter<MetricValue> recordWriter) {
+                                       KafkaPublisher.Ack ack, DatumWriter<MetricValue> recordWriter,
+                                       boolean recordMetaMetrics) {
+    super(recordMetaMetrics);
     this.kafkaClient = kafkaClient;
     this.topicPrefix = topicPrefix;
     this.ack = ack;

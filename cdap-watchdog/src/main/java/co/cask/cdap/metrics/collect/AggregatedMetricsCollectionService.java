@@ -53,11 +53,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
+  private final boolean recordMetaMetrics;
 
   private ScheduledExecutorService executorService;
   private long timestampLastSampled;
 
-  public AggregatedMetricsCollectionService() {
+  public AggregatedMetricsCollectionService(boolean recordMetaMetrics) {
+    this.recordMetaMetrics = recordMetaMetrics;
     this.collectors = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
       .build(createCollectorLoader());
@@ -89,65 +91,68 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
-    final Iterator<MetricValue> metricsItor = getMetrics(timestamp);
+    final Iterator<MetricValue> rawMetricsItor = getMetrics(timestamp);
+    Iterator<MetricValue> metricsItor;
+    if (!recordMetaMetrics) {
+      metricsItor = rawMetricsItor;
+    } else {
+      // wrap the raw metrics iterator with an iterator that will publish meta metrics
+      metricsItor = new AbstractIterator<MetricValue>() {
+        private Queue<MetricValue> pendingMetrics = new LinkedList<MetricValue>();
+        private boolean queuedAggregateMetrics = false;
+        private int numMetrics = 0;
 
-    // wrap the raw metrics iterator with an iterator that will publish meta metrics
-    Iterator<MetricValue> wrappedMetricsItor = new AbstractIterator<MetricValue>() {
-      private Queue<MetricValue> pendingMetrics = new LinkedList<MetricValue>();
-      private boolean queuedAggregateMetrics = false;
-      private int numMetrics = 0;
-      @Override
-      protected MetricValue computeNext() {
+        @Override
+        protected MetricValue computeNext() {
+          if (rawMetricsItor.hasNext()) {
 
+            if (pendingMetrics.isEmpty()) {
+              // publish raw metric
+              MetricValue raw = rawMetricsItor.next();
+              numMetrics++;
 
-        if (metricsItor.hasNext()) {
+              // sample processing delay - assumes we mostly receive metrics in time order
+              if (raw.getTimestamp() - timestampLastSampled >= SAMPLING_DELAY_SEC) {
+                timestampLastSampled = raw.getTimestamp();
 
-          if (pendingMetrics.isEmpty()) {
-            // publish raw metric
-            MetricValue raw = metricsItor.next();
-            numMetrics++;
+                long timestampMs = TimeUnit.SECONDS.toMillis(raw.getTimestamp());
+                long nowMs = System.currentTimeMillis();
+                long delayMs = nowMs - timestampMs;
+                MetricValue processDelayMetric = new MetricValue(
+                  ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
+                  "metrics.global.processed.delay.ms", timestamp, delayMs, MetricType.GAUGE);
+                pendingMetrics.add(processDelayMetric);
+              }
 
-            // sample processing delay - assumes we mostly receive metrics in time order
-            if (raw.getTimestamp() - timestampLastSampled >= SAMPLING_DELAY_SEC) {
-              timestampLastSampled = raw.getTimestamp();
-
-              long timestampMs = TimeUnit.SECONDS.toMillis(raw.getTimestamp());
-              long nowMs = System.currentTimeMillis();
-              long delayMs = nowMs - timestampMs;
-              MetricValue processDelayMetric = new MetricValue(
+              return raw;
+            } else {
+              // publish pending metric
+              return pendingMetrics.poll();
+            }
+          } else {
+            if (!queuedAggregateMetrics) {
+              // looking at last value - queue aggregate metrics
+              MetricValue processedCountMetric = new MetricValue(
                 ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-                "metrics.global.processed.delay.ms", timestamp, delayMs, MetricType.GAUGE);
-              pendingMetrics.add(processDelayMetric);
+                "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
+              pendingMetrics.add(processedCountMetric);
+              queuedAggregateMetrics = true;
             }
 
-            return raw;
-          } else {
-            // publish pending metric
-            return pendingMetrics.poll();
-          }
-        } else {
-          if (!queuedAggregateMetrics) {
-            // looking at last value - queue aggregate metrics
-            MetricValue processedCountMetric = new MetricValue(
-              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-              "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
-            pendingMetrics.add(processedCountMetric);
-            queuedAggregateMetrics = true;
-          }
-
-          if (!pendingMetrics.isEmpty()) {
-            // publish an aggregate metric
-            return pendingMetrics.poll();
-          } else {
-            // done publishing aggregate metrics
-            return endOfData();
+            if (!pendingMetrics.isEmpty()) {
+              // publish an aggregate metric
+              return pendingMetrics.poll();
+            } else {
+              // done publishing aggregate metrics
+              return endOfData();
+            }
           }
         }
-      }
-    };
+      };
+    }
 
     try {
-      publish(wrappedMetricsItor);
+      publish(metricsItor);
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }

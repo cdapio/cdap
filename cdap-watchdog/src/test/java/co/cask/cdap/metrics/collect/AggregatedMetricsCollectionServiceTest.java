@@ -51,7 +51,7 @@ public class AggregatedMetricsCollectionServiceTest {
   public void testPublish() throws InterruptedException {
     final BlockingQueue<MetricValue> published = new LinkedBlockingQueue<MetricValue>();
 
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(false) {
       @Override
       protected void publish(Iterator<MetricValue> metrics) throws Exception {
         Iterators.addAll(published, metrics);

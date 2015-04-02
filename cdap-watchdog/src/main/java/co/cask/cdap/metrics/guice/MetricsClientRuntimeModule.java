@@ -89,7 +89,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
+        bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService(false) {
           @Override
           protected void publish(Iterator<MetricValue> metrics) throws Exception {
           }

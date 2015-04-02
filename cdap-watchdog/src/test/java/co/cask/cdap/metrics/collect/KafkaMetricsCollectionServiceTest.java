@@ -38,6 +38,7 @@ import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.After;
 import org.junit.Assert;
@@ -92,7 +93,9 @@ public class KafkaMetricsCollectionServiceTest {
       .create(metricValueType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter,
+                                                                                   false);
     collectionService.startAndWait();
 
     // publish metrics for different context
@@ -128,7 +131,9 @@ public class KafkaMetricsCollectionServiceTest {
       .create(metricRecordType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter,
+                                                                                   false);
     collectionService.startAndWait();
 
     // start the kafka server
@@ -143,7 +148,7 @@ public class KafkaMetricsCollectionServiceTest {
     collectionService.getCollector(ImmutableMap.of("tag", "test")).increment("metric", 5);
 
     // Sleep to make sure metrics get published
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(2);
 
     collectionService.stopAndWait();
 
@@ -194,7 +199,8 @@ public class KafkaMetricsCollectionServiceTest {
       }
     });
 
-    Assert.assertTrue(semaphore.tryAcquire(expected.size(), 15, TimeUnit.SECONDS));
+    Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
+    Assert.assertEquals(expected.size(), metrics.size());
 
     for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
       MetricValue metric = metrics.get(expectedEntry.getKey());
