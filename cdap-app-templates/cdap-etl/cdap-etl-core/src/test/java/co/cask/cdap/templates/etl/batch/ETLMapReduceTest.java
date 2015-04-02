@@ -19,22 +19,25 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.common.config.ETLStage;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.TestBase;
+import com.clearspring.analytics.util.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests for {@link ETLBatchTemplate}.
  */
 public class ETLMapReduceTest extends TestBase {
 
@@ -51,15 +54,15 @@ public class ETLMapReduceTest extends TestBase {
     inputTable.write("hello", "world");
     table1.flush();
 
-    ApplicationTemplate<JsonObject> appTemplate = new ETLBatchTemplate();
-    DefaultManifestConfigurer manifestConfigurer = new DefaultManifestConfigurer();
-    JsonObject adapterConfig = constructJson();
-    appTemplate.configureManifest(adapterConfig, manifestConfigurer);
+    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
+    ETLBatchConfig adapterConfig = constructETLBatchConfig();
+    DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
+    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     Map<String, String> workflowArgs = Maps.newHashMap();
-    for (Map.Entry<String, String> entry : manifestConfigurer.getArguments().entrySet()) {
+    for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
       workflowArgs.put(entry.getKey(), entry.getValue());
     }
-    workflowArgs.put("config", GSON.toJson(adapterConfig.get("config")));
+    workflowArgs.put("config", GSON.toJson(adapterConfig));
     MapReduceManager mrManager = batchManager.startMapReduce("ETLMapReduce", workflowArgs);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     batchManager.stopAll();
@@ -68,31 +71,12 @@ public class ETLMapReduceTest extends TestBase {
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
   }
 
-  private JsonObject constructJson() {
-    JsonObject adapter = new JsonObject();
-    JsonObject config = new JsonObject();
-    adapter.addProperty("name", "Table2TableAdapter");
-    adapter.addProperty("template", "etlbatch");
-    adapter.addProperty("description", "Table To Table Dataset Adapter");
-    adapter.add("config", config);
-    config.addProperty("schedule", "cron entry");
-    JsonObject source = new JsonObject();
-    JsonArray transform = new JsonArray();
-    JsonObject sink = new JsonObject();
-
-    JsonObject sourceProperties = new JsonObject();
-    JsonObject sinkProperties = new JsonObject();
-
-    config.add("source", source);
-    config.add("sink", sink);
-    config.add("transforms", transform);
-    source.addProperty("name", "KVTableSource");
-    sink.addProperty("name", "KVTableSink");
-    source.add("properties", sourceProperties);
-    sink.add("properties", sinkProperties);
-
-    sourceProperties.addProperty("name", "table1");
-    sinkProperties.addProperty("name", "table2");
-    return adapter;
+  private ETLBatchConfig constructETLBatchConfig() {
+    ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
+    ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
+    ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
+    List<ETLStage> transformList = Lists.newArrayList();
+    transformList.add(transform);
+    return new ETLBatchConfig("", source, sink, transformList);
   }
 }

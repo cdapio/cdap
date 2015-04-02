@@ -19,23 +19,22 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultEmitter;
-import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
+import co.cask.cdap.templates.etl.common.config.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
@@ -52,7 +51,6 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
-  private static final JsonParser JSON_PARSER = new JsonParser();
 
   @Override
   public void configure() {
@@ -64,56 +62,60 @@ public class ETLMapReduce extends AbstractMapReduce {
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
 
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Source.CLASS_NAME));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Sink.CLASS_NAME));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Transform.TRANSFORM_CLASS_LIST));
+    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.ADAPTER_NAME));
+    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.CONFIG_KEY));
+    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Source.SPECIFICATION));
+    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Sink.SPECIFICATION));
+    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Transform.SPECIFICATION));
 
-    String sourceClass = context.getRuntimeArguments().get(Constants.Source.CLASS_NAME);
-    String sinkClass = context.getRuntimeArguments().get(Constants.Sink.CLASS_NAME);
+    ETLBatchConfig config = GSON.fromJson(context.getRuntimeArguments().get(Constants.CONFIG_KEY),
+                                          ETLBatchConfig.class);
+    StageSpecification sourceSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Source.SPECIFICATION),
+                                                  StageSpecification.class);
+    StageSpecification sinkSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
+                                                StageSpecification.class);
 
-    BatchSource source = (BatchSource) Class.forName(sourceClass).newInstance();
-    BatchSink sink = (BatchSink) Class.forName(sinkClass).newInstance();
-
-    prepareSource(source, context);
-    prepareSink(sink, context);
-    prepareTransforms(context);
+    prepareSource(sourceSpec, context, config.getSource());
+    prepareSink(sinkSpec, context, config.getSink());
+    prepareTransforms(context, config.getTransforms());
 
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }
 
-  private void prepareSource(BatchSource source, MapReduceContext context) {
-    DefaultStageConfigurer sourceConfigurer = new DefaultStageConfigurer(source.getClass());
-    source.configure(sourceConfigurer);
-    context.getDataset("table1");
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceConfigurer.createSpecification());
+  private void prepareSource(StageSpecification sourceSpec, MapReduceContext context, ETLStage sourceStage)
+    throws Exception {
+    BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec);
+    LOG.info("Source Stage : {}", sourceStage);
+    LOG.info("Source Class : {}", source.getClass().getName());
+    LOG.info("Specifications of Source : {}", sourceSpec);
     source.prepareJob(sourceContext);
   }
 
-  private void prepareSink(BatchSink sink, MapReduceContext context) {
-    DefaultStageConfigurer sinkConfigurer = new DefaultStageConfigurer(sink.getClass());
-    sink.configure(sinkConfigurer);
-    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkConfigurer.createSpecification());
+  private void prepareSink(StageSpecification sinkSpec, MapReduceContext context, ETLStage sinkStage) throws Exception {
+    BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec);
+    LOG.info("Sink Stage : {}", sinkStage);
+    LOG.info("Sink Class : {}", sink.getClass().getName());
+    LOG.info("Specifications of Sink : {}", sinkSpec);
     sink.prepareJob(sinkContext);
   }
 
-  private void prepareTransforms(MapReduceContext context) {
+  private void prepareTransforms(MapReduceContext context, List<ETLStage> transformStages) {
     Job job = context.getHadoopJob();
-    JsonObject config = JSON_PARSER.parse(context.getRuntimeArguments().get(Constants.CONFIG_KEY)).getAsJsonObject();
-    JsonArray transformArray = config.get(Constants.TRANSFORM_KEY).getAsJsonArray();
 
-    //Set list of Transform classes to be used in the Mapper
-    job.getConfiguration().set(Constants.Transform.TRANSFORM_CLASS_LIST,
-                               context.getRuntimeArguments().get(Constants.Transform.TRANSFORM_CLASS_LIST));
+    //Set list of Transform specifications to be used in the Mapper
+    job.getConfiguration().set(Constants.Transform.SPECIFICATION,
+                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATION));
 
-    //Set the properties of the Transforms to be used in the initialization in the Mapper
-    job.getConfiguration().set(Constants.Transform.TRANSFORM_PROPERTIES, GSON.toJson(transformArray));
+    //Set the Transform configurations to be used in the initialization in the Mapper
+    job.getConfiguration().set(Constants.Transform.TRANSFORM_CONFIGS, GSON.toJson(transformStages));
   }
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) {
-    //TODO: Get the Adapter Name and include it in the log
-    LOG.info("BatchDriver Run {}", succeeded);
+    LOG.info("Batch Run for Adapter {} : {}", context.getRuntimeArguments().get(Constants.ADAPTER_NAME), succeeded);
   }
 
   /**
@@ -121,9 +123,9 @@ public class ETLMapReduce extends AbstractMapReduce {
    */
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceContext> {
     private static final Gson GSON = new Gson();
-    private static final JsonParser JSON_PARSER = new JsonParser();
-    private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
-    private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+    private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
+    private static final Type STAGE_LIST_TYPE = new TypeToken<List<ETLStage>>() { }.getType();
+
     private TransformExecutor transformExecutor;
     private DefaultEmitter data;
 
@@ -139,48 +141,40 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
-      //Get transform class names from the context.
-      String transformClassList = context.getConfiguration().get(Constants.Transform.TRANSFORM_CLASS_LIST);
-      List<String> classList = GSON.fromJson(transformClassList, STRING_LIST_TYPE);
-      JsonArray transformArray = JSON_PARSER.parse(context.getConfiguration().get(
-        Constants.Transform.TRANSFORM_PROPERTIES)).getAsJsonArray();
-      LOG.info("Transform Classes to be used : {}", classList);
-      LOG.info("Properties for Transform Classes : {}", transformArray);
-      Preconditions.checkArgument(classList.size() == transformArray.size());
-      instantiateTransforms(classList);
-      initializeTransforms(transforms, transformArray);
+      //Get transform class names and specifications from the context.
+      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATION);
+      String transformStages = context.getConfiguration().get(Constants.Transform.TRANSFORM_CONFIGS);
+
+      List<StageSpecification> specificationList = GSON.fromJson(transformSpecs, SPEC_LIST_TYPE);
+      List<ETLStage> stageList = GSON.fromJson(transformStages, STAGE_LIST_TYPE);
+
+      LOG.info("Transform Stages : {}", stageList);
+      LOG.info("Specifications of Transforms : {}", specificationList);
+
+      Preconditions.checkArgument(stageList.size() == specificationList.size());
+      instantiateTransforms(specificationList, stageList);
       transformExecutor = new TransformExecutor(transforms);
     }
 
-    private void instantiateTransforms(List<String> classList) {
-      for (String transformClass : classList) {
+    private void instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageList) {
+      for (int i = 0; i < specList.size(); i++) {
+        StageSpecification spec = specList.get(i);
+        ETLStage stage = stageList.get(i);
         try {
-          Transform transform = (Transform) Class.forName(transformClass).newInstance();
+          Transform transform = (Transform) Class.forName(spec.getClassName()).newInstance();
+          DefaultTransformContext transformContext = new DefaultTransformContext(spec, stage.getProperties());
+          transform.initialize(transformContext);
           transforms.add(transform);
         } catch (ClassNotFoundException e) {
-          LOG.error("Unable to load Transform : {}; {}", transformClass, e.getMessage(), e);
+          LOG.error("Unable to load Transform : {}", spec.getClassName(), e);
           Throwables.propagate(e);
         } catch (InstantiationException e) {
-          LOG.error("Unable to instantiate Transform : {}; {}", transformClass, e.getMessage(), e);
+          LOG.error("Unable to instantiate Transform : {}", spec.getClassName(), e);
           Throwables.propagate(e);
         } catch (IllegalAccessException e) {
-          LOG.error("Error while creating instance of Transform : {}; {}", transformClass, e.getMessage(), e);
+          LOG.error("Error while creating instance of Transform : {}", spec.getClassName(), e);
           Throwables.propagate(e);
         }
-      }
-    }
-
-    private void initializeTransforms(List<Transform> transforms, JsonArray transformArray) {
-      for (int i = 0; i < transforms.size(); i++) {
-        Transform transform = transforms.get(i);
-        JsonObject transformMap = transformArray.get(i).getAsJsonObject();
-        JsonObject propertyJson = transformMap.getAsJsonObject(Constants.PROPERTIES_KEY);
-        Map<String, String> propertyMap = GSON.fromJson(propertyJson, STRING_MAP_TYPE);
-        DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transform.getClass());
-        transform.configure(stageConfigurer);
-        DefaultTransformContext transformContext = new DefaultTransformContext(
-          stageConfigurer.createSpecification(), propertyMap);
-        transform.initialize(transformContext);
       }
     }
 

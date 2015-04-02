@@ -17,16 +17,17 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.templates.ManifestConfigurer;
+import co.cask.cdap.api.templates.AdapterConfigurer;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
 
 /**
- *
+ * Default implementation of {@link AdapterConfigurer} for ETL Batch Tests.
  */
-public class DefaultManifestConfigurer implements ManifestConfigurer {
-
+//TODO: Remove/Move this class else where until we figure out how to write tests without AdapterConfigurer dependency
+public class DefaultAdapterConfigurer implements AdapterConfigurer {
   private Schedule schedule;
   private int instances;
   private Map<String, String> arguments = Maps.newHashMap();
@@ -55,11 +56,11 @@ public class DefaultManifestConfigurer implements ManifestConfigurer {
     return schedule;
   }
 
-  public Map<String, String> getArguments() {
-    return arguments;
-  }
-
   public int getInstances() {
     return instances;
+  }
+
+  public Map<String, String> getArguments() {
+    return ImmutableMap.copyOf(arguments);
   }
 }

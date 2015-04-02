@@ -20,25 +20,19 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.common.Constants;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import co.cask.cdap.templates.etl.common.config.ETLStage;
 
-import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
  * MapReduce Sink Context.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
-  private static final JsonParser JSON_PARSER = new JsonParser();
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private final ETLStage sinkStage;
 
-  public MapReduceSinkContext(MapReduceContext context, StageSpecification specification) {
+  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage, StageSpecification specification) {
     super(context, specification);
+    this.sinkStage = sinkStage;
   }
 
   @Override
@@ -53,10 +47,6 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    JsonObject configObject = JSON_PARSER.parse(
-      mrContext.getRuntimeArguments().get(Constants.CONFIG_KEY)).getAsJsonObject();
-    JsonObject sourceObject = configObject.getAsJsonObject(Constants.SINK_KEY);
-    JsonObject properties = sourceObject.getAsJsonObject(Constants.PROPERTIES_KEY);
-    return GSON.fromJson(properties, STRING_MAP_TYPE);
+    return sinkStage.getProperties();
   }
 }
