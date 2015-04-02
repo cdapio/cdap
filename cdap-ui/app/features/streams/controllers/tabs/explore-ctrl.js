@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.streams')
       $scope.doEventSearch();
 
 
-      $scope.query = 'SELECT * FROM history LIMIT 5';
+      $scope.query = 'SELECT * FROM stream_' + $state.params.streamId;
 
       $scope.execute = function() {
         dataSrc
