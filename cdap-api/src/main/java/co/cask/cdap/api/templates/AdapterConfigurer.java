@@ -22,11 +22,11 @@ import co.cask.cdap.api.schedule.Schedule;
 import java.util.Map;
 
 /**
- * Configurer used to configure program used in the execution of the Manifest.
+ * Configurer used to configure program used in the execution of the Adapter.
  * Currently, only Worker or Workflow can be used in the execution.
  */
 @Beta
-public interface ManifestConfigurer {
+public interface AdapterConfigurer {
 
   /**
    * Set the schedule for the program. Must be set for Workflows and is not valid for other program types.

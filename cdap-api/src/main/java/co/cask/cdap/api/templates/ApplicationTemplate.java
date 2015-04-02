@@ -32,13 +32,13 @@ import javax.annotation.Nullable;
 public abstract class ApplicationTemplate<T> extends AbstractApplication {
 
   /**
-   * Given the manifest configuration, configures the Manifest.
+   * Given the adapter configuration, configures the {@link AdapterConfigurer}.
    *
-   * @param configuration manifest configuration
-   * @param configurer {@link ManifestConfigurer}
+   * @param configuration adapter configuration
+   * @param configurer {@link AdapterConfigurer}
    * @throws Exception if the configuration is not valid
    */
-  public void configureManifest(T configuration, ManifestConfigurer configurer) throws Exception {
+  public void configureAdapter(T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op
   }
 
