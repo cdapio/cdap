@@ -54,6 +54,44 @@ body.theme-cdap {
     #gradient > .striped();
   }
 
+  //
+  // Tables
+  // --------------------------------------------------
+
+  .table[cask-sortable] {
+    background-color: @table-bg;
+    border: 1px solid lightgray;
+    td, th {
+      padding: 20px;
+      &:not(:last-child) {
+        border-right: 1px solid lightgray;
+      }
+      &:hover, &:focus { outline: none; }
+    }
+    th {
+      &:hover, &:focus {
+        background-color: lightgray;
+        cursor: pointer;
+      }
+    }
+    thead {
+      color: @cdap-header;
+    }
+    tbody {
+      color: @cdap-bluegray;
+      a {
+        color: @cdap-bluegray;
+        &:hover, &:focus {
+          text-decoration: underline;
+        }
+        &.btn-danger {
+          .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0);
+          font-size: 18px;
+          font-weight: 600;
+        }
+      }
+    }
+  }
 
   //
   // List groups
