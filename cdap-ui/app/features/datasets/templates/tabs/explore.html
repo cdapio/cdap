@@ -15,7 +15,22 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <pre>{{tables | json}}</pre>
+        <table class="table" ng-if="tables.length">
+          <thead>
+            <tr>
+              <th>Database</th>
+              <th>Table</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="entry in tables">
+              <td>
+                {{entry.database}}
+              </td>
+              <td>{{entry.table}}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
