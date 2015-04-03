@@ -46,7 +46,6 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   public LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
-    super(true);
     this.cConf = cConf;
     this.metricStore = metricStore;
   }

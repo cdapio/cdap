@@ -51,7 +51,7 @@ public class AggregatedMetricsCollectionServiceTest {
   public void testPublish() throws InterruptedException {
     final BlockingQueue<MetricValue> published = new LinkedBlockingQueue<MetricValue>();
 
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(false) {
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
       protected void publish(Iterator<MetricValue> metrics) throws Exception {
         Iterators.addAll(published, metrics);
@@ -60,6 +60,11 @@ public class AggregatedMetricsCollectionServiceTest {
       @Override
       protected Scheduler scheduler() {
         return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
+      }
+
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
       }
     };
 

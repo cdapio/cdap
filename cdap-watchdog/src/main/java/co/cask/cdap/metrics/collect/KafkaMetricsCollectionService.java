@@ -39,7 +39,7 @@ import java.util.Iterator;
  * is determined by the metric context.
  */
 @Singleton
-public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
+public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionService.class);
 
   private final KafkaClient kafkaClient;
@@ -55,13 +55,11 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   public KafkaMetricsCollectionService(KafkaClient kafkaClient,
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                        DatumWriter<MetricValue> recordWriter) {
-    this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter, true);
+    this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
 
   public KafkaMetricsCollectionService(KafkaClient kafkaClient, String topicPrefix,
-                                       KafkaPublisher.Ack ack, DatumWriter<MetricValue> recordWriter,
-                                       boolean recordMetaMetrics) {
-    super(recordMetaMetrics);
+                                       KafkaPublisher.Ack ack, DatumWriter<MetricValue> recordWriter) {
     this.kafkaClient = kafkaClient;
     this.topicPrefix = topicPrefix;
     this.ack = ack;

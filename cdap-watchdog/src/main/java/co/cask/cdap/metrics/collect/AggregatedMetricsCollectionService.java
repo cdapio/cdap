@@ -53,13 +53,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
-  private final boolean recordMetaMetrics;
 
   private ScheduledExecutorService executorService;
   private long timestampLastSampled;
 
-  public AggregatedMetricsCollectionService(boolean recordMetaMetrics) {
-    this.recordMetaMetrics = recordMetaMetrics;
+  public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
       .build(createCollectorLoader());
@@ -86,6 +84,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    */
   protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
 
+  /**
+   * @return true if we want to publish metrics about the received metrics in {@link #publish(java.util.Iterator)}.
+   */
+  protected boolean isPublishMetaMetrics() {
+    return true;
+  }
+
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -93,7 +98,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     final Iterator<MetricValue> rawMetricsItor = getMetrics(timestamp);
     Iterator<MetricValue> metricsItor;
-    if (!recordMetaMetrics) {
+    if (!isPublishMetaMetrics()) {
       metricsItor = rawMetricsItor;
     } else {
       // wrap the raw metrics iterator with an iterator that will publish meta metrics
@@ -131,11 +136,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
             }
           } else {
             if (!queuedAggregateMetrics) {
-              // looking at last value - queue aggregate metrics
-              MetricValue processedCountMetric = new MetricValue(
-                ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-                "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
-              pendingMetrics.add(processedCountMetric);
+              // looking at last value - queue aggregate metrics if we got anything
+              if (numMetrics > 0) {
+                MetricValue processedCountMetric = new MetricValue(
+                  ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
+                  "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
+                pendingMetrics.add(processedCountMetric);
+              }
               queuedAggregateMetrics = true;
             }
 
