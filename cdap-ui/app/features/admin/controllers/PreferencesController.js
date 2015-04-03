@@ -45,7 +45,7 @@ angular.module(PKG.name + '.feature.admin')
         key: '',
         value: ''
       });
-    }
+    };
 
     $scope.removePreference = function(preference) {
       var match = filterFilter($scope.preferences, preference);
