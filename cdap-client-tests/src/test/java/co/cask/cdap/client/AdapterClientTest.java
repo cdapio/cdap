@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.AdapterApp;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -24,13 +23,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -63,7 +60,7 @@ public class AdapterClientTest extends ClientTestBase {
     if (START_LOCAL_STANDALONE) {
       File adapterDir = TMP_FOLDER.newFolder("adapter");
       configuration = CConfiguration.create();
-      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
       StandaloneTestBase.setUpClass();
@@ -83,14 +80,11 @@ public class AdapterClientTest extends ClientTestBase {
     List<AdapterSpecification> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
-    AdapterConfig adapterConfig = new AdapterConfig();
-    adapterConfig.type = "dummyAdapter";
-    adapterConfig.properties = ImmutableMap.of("frequency", "1m");
-    adapterConfig.source = new AdapterConfig.Source("mySource", ImmutableMap.<String, String>of());
-    adapterConfig.sink = new AdapterConfig.Sink("mySink", ImmutableMap.of("dataset.class", FileSet.class.getName()));
+    AdapterSpecification<Object> adapterSpec =
+      new AdapterSpecification<Object>("someAdapter", "description", "dummyAdapter", null);
 
     // Create Adapter
-    adapterClient.create("someAdapter", adapterConfig);
+    adapterClient.create("someAdapter", adapterSpec);
 
     // Check that the created adapter is present
     adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);

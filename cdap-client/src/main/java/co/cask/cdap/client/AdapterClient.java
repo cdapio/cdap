@@ -23,7 +23,6 @@ import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -103,18 +102,18 @@ public class AdapterClient {
    * Creates an adapter.
    *
    * @param adapterName name of the adapter to create
-   * @param adapterConfig properties of the adapter to create
+   * @param adapterSpec properties of the adapter to create
    * @throws AdapterTypeNotFoundException if the desired adapter type was not found
-   * @throws BadRequestException if the provided {@link AdapterConfig} was bad
+   * @throws BadRequestException if the provided {@link AdapterSpecification} was bad
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void create(String adapterName, AdapterConfig adapterConfig)
+  public void create(String adapterName, AdapterSpecification adapterSpec)
     throws AdapterTypeNotFoundException, BadRequestException, IOException, UnauthorizedException {
 
-    Id.AdapterType adapterType = Id.AdapterType.from(config.getNamespace(), adapterConfig.type);
+    Id.AdapterType adapterType = Id.AdapterType.from(config.getNamespace(), adapterSpec.getTemplate());
     URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
-    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(adapterConfig)).build();
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(adapterSpec)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);

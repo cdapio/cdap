@@ -114,7 +114,7 @@ public class CLIMainTest extends StandaloneTestBase {
       configuration = CConfiguration.create();
       configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.Router.ADDRESS, HOSTNAME);
-      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
       StandaloneTestBase.setUpClass();
@@ -452,7 +452,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // describe non-existing namespace
     testCommandOutputContains(cli, String.format("describe namespace %s", doesNotExist),
-                              String.format("Error: namespace '%s' was not found", doesNotExist));
+                              String.format("Error: 'namespace:%s' was not found", doesNotExist));
     // delete non-existing namespace
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    testCommandOutputContains(cli, String.format("delete namespace %s", doesNotExist),
@@ -475,7 +475,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // try creating a namespace with existing id
     command = String.format("create namespace %s", name);
-    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", name));
+    testCommandOutputContains(cli, command, String.format("Error: 'namespace:%s' already exists\n", name));
 
     // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
@@ -494,25 +494,6 @@ public class CLIMainTest extends StandaloneTestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
-  }
-
-  @Test
-  public void testAdapters() throws Exception {
-    // Create Adapter
-    String createCommand = "create adapter someAdapter type dummyAdapter" +
-      " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
-      " src mySource" +
-      " sink mySink sink-props " + GSON.toJson(ImmutableMap.of("dataset.class", FileSet.class.getName()));
-    testCommandOutputContains(cli, createCommand, "Successfully created adapter");
-
-    // Check that the created adapter is present
-    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists("someAdapter"));
-
-    testCommandOutputContains(cli, "list adapters", "someAdapter");
-    testCommandOutputContains(cli, "get adapter someAdapter", "someAdapter");
-    testCommandOutputContains(cli, "delete adapter someAdapter", "Successfully deleted adapter");
-    testCommandOutputNotContains(cli, "list adapters", "someAdapter");
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

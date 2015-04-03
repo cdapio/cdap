@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * A {@link StreamEvent} which also carries the file position where this event starts.
  */
-class PositionStreamEvent extends StreamEvent {
+public class PositionStreamEvent extends StreamEvent {
 
   private final StreamEventData delegate;
   private final long timestamp;

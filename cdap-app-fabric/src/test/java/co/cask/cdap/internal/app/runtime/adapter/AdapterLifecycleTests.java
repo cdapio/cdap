@@ -16,27 +16,22 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.AdapterApp;
 import co.cask.cdap.AppWithServices;
-import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.DummyTemplate;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
 import co.cask.cdap.test.internal.AppFabricClient;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -54,61 +48,60 @@ import java.util.jar.Manifest;
  */
 public class AdapterLifecycleTests extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static final Type ADAPTER_SPEC_LIST_TYPE = new TypeToken<List<AdapterSpecification>>() { }.getType();
+  private static final Type ADAPTER_SPEC_LIST_TYPE =
+    new TypeToken<List<AdapterSpecification<DummyTemplate.Config>>>() { }.getType();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
-
-  private static final String adapterType = "dummyAdapter";
 
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    adapterDir = new File(conf.get(Constants.AppFabric.ADAPTER_DIR));
-    setupAdapters();
+    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    setupAdapter(DummyTemplate.class, DummyTemplate.NAME);
     adapterService = getInjector().getInstance(AdapterService.class);
-    adapterService.registerAdapters();
+    // this is called here because the service is already started by the test base at this po
+    adapterService.registerTemplates();
+  }
+
+  @AfterClass
+  public static void tearDown() throws Exception {
+    adapterService.stop();
   }
 
   @Test
   public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterName = "myStreamConverter";
+    DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
 
-    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
-    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
-    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
+    AdapterSpecification<DummyTemplate.Config> specification =
+      new AdapterSpecification<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
 
-    AdapterSpecification specification =
-      new AdapterSpecification(adapterName, adapterType, properties,
-                               ImmutableSet.of(new Source("mySource", Source.Type.STREAM, sourceProperties)),
-                               ImmutableSet.of(new Sink("mySink", Sink.Type.DATASET, sinkProperties)));
-
-    HttpResponse response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
-                                          sourceProperties, sinkProperties);
+    HttpResponse response = createAdapter(namespaceId, specification);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // A duplicate create request (or any other create request with the same namespace + adapterName) will result in 409
-    response = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink", properties,
-                             sourceProperties, sinkProperties);
+    response = createAdapter(namespaceId, specification);
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    List<AdapterSpecification<DummyTemplate.Config>> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(specification, list.get(0));
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    AdapterSpecification receivedAdapterSpecification = readResponse(response, AdapterSpecification.class);
+    AdapterSpecification<DummyTemplate.Config> receivedAdapterSpecification =
+      readResponse(response, new TypeToken<AdapterSpecification<DummyTemplate.Config>>() { }.getType());
     Assert.assertEquals(specification, receivedAdapterSpecification);
 
     List<JsonObject> deployedApps = getAppList(namespaceId);
     Assert.assertEquals(1, deployedApps.size());
     JsonObject deployedApp = deployedApps.get(0);
-    Assert.assertEquals(adapterType, deployedApp.get("id").getAsString());
+    Assert.assertEquals(DummyTemplate.NAME, deployedApp.get("id").getAsString());
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -144,7 +137,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testRestrictUserApps() throws Exception {
     // Testing that users can not deploy an application
-    HttpResponse response = deploy(AppWithServices.class, adapterType);
+    HttpResponse response = deploy(AppWithServices.class, DummyTemplate.NAME);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
@@ -152,7 +145,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
 
     // Users can not delete adapter applications
-    response = doDelete(getVersionedAPIPath(String.format("apps/%s", adapterType),
+    response = doDelete(getVersionedAPIPath(String.format("apps/%s", DummyTemplate.NAME),
                                             Constants.Gateway.API_VERSION_3_TOKEN,
                                             Constants.DEFAULT_NAMESPACE));
     responseString = readResponse(response);
@@ -162,40 +155,39 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testInvalidAdapters() throws Exception {
-    //Invalid adapter tests.
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
-
-    ImmutableMap<String, String> properties = ImmutableMap.of("frequency", "1m");
-    ImmutableMap<String, String> sourceProperties = ImmutableMap.of();
-    ImmutableMap<String, String> sinkProperties = ImmutableMap.of("dataset.class", FileSet.class.getName());
-
-    String adapterName = "myAdapter";
-
-    // Create Adapter without specifying the dataset.class attribute in the sink properties results in an error.
-    HttpResponse httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
-                                              properties, sourceProperties, ImmutableMap.<String, String>of());
-    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
-    Assert.assertEquals("Dataset class cannot be null", EntityUtils.toString(httpResponse.getEntity()));
-
-    // Create Adapter without specifying the frequency attribute in the adapter properties results in an error.
-    httpResponse = createAdapter(namespaceId, adapterType, adapterName, "mySource", "mySink",
-                                 ImmutableMap.<String, String>of(), sourceProperties, sinkProperties);
-    Assert.assertEquals(400, httpResponse.getStatusLine().getStatusCode());
-    Assert.assertEquals("Frequency of running the adapter is missing from adapter properties. Cannot schedule program.",
-                        EntityUtils.toString(httpResponse.getEntity()));
+  public void testMissingTemplateReturns404() throws Exception {
+    DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
+    AdapterSpecification<DummyTemplate.Config> badSpec =
+      new AdapterSpecification<DummyTemplate.Config>("somename", "", "badtemplate", config);
+    HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, badSpec);
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
-  private static void setupAdapters() throws IOException {
-    setupAdapter(AdapterApp.class, adapterType);
+  @Test
+  public void testInvalidJsonBodyReturns400() throws Exception {
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/adapters/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, "myadapter"), "[]");
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testNoTemplateFieldReturns400() throws Exception {
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/adapters/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, "myadapter"), "{}");
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testInvalidConfigReturns400() throws Exception {
+    // TODO: implement once adapter creation calls configureTemplate()
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
     attributes.putValue("CDAP-Adapter-Type", adapterType);
     attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
 
@@ -207,30 +199,9 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Files.copy(adapterJar, destination);
   }
 
-  private HttpResponse createAdapter(String namespaceId, String type, String name, String sourceName,
-                                     String sinkName, ImmutableMap<String, String> adapterProperties,
-                                     ImmutableMap<String, String> sourceProperties,
-                                     ImmutableMap<String, String> sinkProperties) throws Exception {
-    JsonObject source = new JsonObject();
-    source.addProperty("name", sourceName);
-    source.add("properties", toJsonObject(sourceProperties));
-
-    JsonObject sink = new JsonObject();
-    sink.addProperty("name", sinkName);
-    sink.add("properties", toJsonObject(sinkProperties));
-
-    JsonObject adapterConfig = new JsonObject();
-    adapterConfig.addProperty("type", type);
-    adapterConfig.add("properties", toJsonObject(adapterProperties));
-    adapterConfig.add("source", source);
-    adapterConfig.add("sink", sink);
-
-    return createAdapter(namespaceId, name, GSON.toJson(adapterConfig));
-  }
-
-  private HttpResponse createAdapter(String namespaceId, String name, String adapterConfig) throws Exception {
-    return doPost(String.format("%s/namespaces/%s/adapters/%s",
-                                Constants.Gateway.API_VERSION_3, namespaceId, name), adapterConfig);
+  private <T> HttpResponse createAdapter(String namespaceId, AdapterSpecification<T> spec) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/adapters/%s",
+                               Constants.Gateway.API_VERSION_3, namespaceId, spec.getName()), GSON.toJson(spec));
   }
 
   private HttpResponse getAdapterStatus(String namespaceId, String name) throws Exception {
@@ -256,13 +227,5 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse deleteAdapter(String namespaceId, String adapterId) throws Exception {
     return doDelete(String.format("%s/namespaces/%s/adapters/%s",
                                   Constants.Gateway.API_VERSION_3, namespaceId, adapterId));
-  }
-
-  private JsonObject toJsonObject(Map<String, String> properties) {
-    JsonObject jsonProperties = new JsonObject();
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      jsonProperties.addProperty(entry.getKey(), entry.getValue());
-    }
-    return jsonProperties;
   }
 }
