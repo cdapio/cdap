@@ -16,14 +16,13 @@
 
 package formats;
 
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+  import co.cask.cdap.api.data.format.RecordFormat;
+  import co.cask.cdap.api.data.format.StructuredRecord;
+  import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 /**
  * Format for a record contained in a {@link StreamEvent}.
  *
- * @param <T> type of object to read the byte buffer as.
  */
 public abstract class StreamEventRecordFormat extends RecordFormat<StreamEvent, StructuredRecord> {
 

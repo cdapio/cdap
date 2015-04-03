@@ -29,6 +29,10 @@ import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
+import co.cask.cdap.templates.etl.lib.sinks.TimePartitionedFileSetDatasetAvroSink;
+import co.cask.cdap.templates.etl.lib.sources.StreamBatchSource;
+import co.cask.cdap.templates.etl.lib.transforms.StreamToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.lib.transforms.StructuredRecordToAvroTransform;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
@@ -49,7 +53,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     nameToClass = HashBasedTable.create();
     //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
     //plugins management is completed.
-    initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class));
+    initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class,
+                                        StreamBatchSource.class, StreamToStructuredRecordTransform.class,
+                                        StructuredRecordToAvroTransform.class,
+                                        TimePartitionedFileSetDatasetAvroSink.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
