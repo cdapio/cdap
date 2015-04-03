@@ -108,7 +108,7 @@ public abstract class MetricsSuiteTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
 
-  private static MetricStore metricStore;
+  protected static MetricStore metricStore;
 
   private static Injector injector;
 

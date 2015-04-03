@@ -16,6 +16,9 @@
 
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -439,6 +442,80 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&groupBy=namespace&groupBy=flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
+  public void testInterpolate() throws Exception {
+    long start = System.currentTimeMillis() / 1000;
+    long end = start + 3;
+    Map<String, String> sliceBy = getFlowletContext("interspace", "WordCount1", "WordCounter", "run1", "splitter");
+    MetricValue value =
+      new MetricValue(sliceBy, "reads", start, 100, MetricType.COUNTER);
+    metricStore.add(value);
+
+    value =
+      new MetricValue(sliceBy, "reads", end, 400, MetricType.COUNTER);
+    metricStore.add(value);
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("interspace", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&interpolate=step&start=" + start + "&end="
+        + end, 4, 700);
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("interspace", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&interpolate=linear&start=" + start + "&end="
+        + end, 4, 1000);
+
+    // delete the added metrics for testing interpolator
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, null, sliceBy);
+    metricStore.delete(deleteQuery);
+  }
+
+
+  @Test
+  public void testAutoResolutions() throws Exception {
+    long start = 1;
+    Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
+
+    // 1 second
+    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    // 30 second
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    // 1 minute
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    // 10 minutes
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    // 1 hour
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    // 10 hour
+    metricStore.add(new MetricValue(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
+
+    // seconds
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&start=" + start  + "&end="
+        + (start + 600), 4, 4);
+
+    // minutes
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+        + (start + 600), 3, 4);
+
+    // minutes
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+        + (start + 3600), 4, 5);
+
+    // hours
+    verifyRangeQueryResult(
+      "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
+        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+        + (start + 36000), 3, 6);
+
+    // delete the added metrics for testing auto resolutions
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), null, sliceBy);
+    metricStore.delete(deleteQuery);
+  }
 
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
     MetricQueryResult result = post(url, MetricQueryResult.class);

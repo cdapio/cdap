@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.common.conf.Constants;
@@ -84,6 +86,6 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes a %s.", ElementType.NAMESPACE.getPrettyName());
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getTitleName()));
   }
 }

@@ -54,6 +54,44 @@ body.theme-cdap {
     #gradient > .striped();
   }
 
+  //
+  // Tables
+  // --------------------------------------------------
+
+  .table[cask-sortable] {
+    background-color: @table-bg;
+    border: 1px solid lightgray;
+    td, th {
+      padding: 20px;
+      &:not(:last-child) {
+        border-right: 1px solid lightgray;
+      }
+      &:hover, &:focus { outline: none; }
+    }
+    th {
+      &:hover, &:focus {
+        background-color: lightgray;
+        cursor: pointer;
+      }
+    }
+    thead {
+      color: @cdap-header;
+    }
+    tbody {
+      color: @cdap-bluegray;
+      a {
+        color: @cdap-bluegray;
+        &:hover, &:focus {
+          text-decoration: underline;
+        }
+        &.btn-danger {
+          .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0);
+          font-size: 18px;
+          font-weight: 600;
+        }
+      }
+    }
+  }
 
   //
   // List groups
@@ -78,24 +116,59 @@ body.theme-cdap {
 
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
-    background: transparent;
+    background: white;
     border: 0;
+    padding: 10px;
+    .border-radius(8px);
     .box-shadow(0 8px 6px -6px @cdap-darkness);
-    .fa-close {
-      color: white;
-      font-size: 32px;
-      padding: 12px 15px;
-      vertical-align: text-top;
-    }
-    .panel-body {
-      .col-sm-4 {
-        &:not(:first-child) {
-          border-left: 1px dashed @cdap-gray;
-        }
+    .btn-close {
+      .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
+      cursor: pointer;
+      line-height: 0;
+      .fa-close {
+        color: white;
+        font-size: 16px;
+        padding: 8px 10px;
+        vertical-align: text-top;
       }
     }
   }
 
+  .panel-explore {
+    background-color: transparent;
+    color: @cdap-header;
+    .box-shadow(none);
+    > .panel-heading {
+      background: white;
+      border: 1px solid lightgray;
+      padding: 20px;
+      .border-radius(8px);
+      .fa {
+        color: white;
+        font-size: 13px;
+        margin-right: 10px;
+        vertical-align: top;
+      }
+      .fa-caret-right { .cdap-caret(); }
+      .fa-caret-down { .cdap-caret(@background: @cdap-gray); }
+    }
+    > .panel-collapse {
+      > .panel-body {
+        border-top: 0;
+        padding-right: 0;
+        padding-left: 0;
+        pre {
+          background-color: #dcdce4;
+          color: @cdap-header;
+          .border-radius(8px);
+        }
+        table {
+          thead { background-color: @cdap-header; color: white; }
+          tbody { background-color: @cdap-gray; color: @cdap-header; }
+        }
+      }
+    }
+  }
   // Mixin for generating new styles
   .panel-heading-styles(@color) {
     #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 5%));

@@ -77,11 +77,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
    */
   public static final String PROPERTY_PREFIX_BYTES = "cdap.prefix.bytes";
 
-  public static final int ROW_KEY_DISTRIBUTION_BUCKETS = 16;
-  public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
-    new RowKeyDistributorByHashPrefix(
-      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
-
   protected final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -492,10 +487,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
         addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
       }
 
-      // Create queue table with splits.
-      int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
-                                QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-      byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
+      // Create queue table with splits. The distributor bucket size is the same as splits.
+      int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
+      AbstractRowKeyDistributor distributor = new RowKeyDistributorByHashPrefix(
+        new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+
+      byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
+      htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
       createQueueTable(tableId, htd, splitKeys);
     }
 
