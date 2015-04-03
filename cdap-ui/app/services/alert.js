@@ -1,6 +1,6 @@
 angular.module(PKG.name+'.services')
   .service('myAlert', function($rootScope){
-    var __list = [{title: 500, content: 'hahahha a;sdjf a;slkdjf   wlkejrlakjldfjalksjdlfkas f'}, {title: 500, content: 'hahahha a;sdjf a;slkdjf   wlkejrlakjldfjalksjdlfkas f'}];
+    var __list = [];
     function alert(item) {
       if (angular.isObject(item) && Object.keys(item).length) {
         __list.push(item);
