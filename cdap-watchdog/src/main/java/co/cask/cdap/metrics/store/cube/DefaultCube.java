@@ -53,7 +53,7 @@ public class DefaultCube implements Cube {
 
   private static final TagValueComparator TAG_VALUE_COMPARATOR = new TagValueComparator();
   // hard-limit on max records to scan
-  private static final int MAX_RECORDS_TO_SCAN = 10 * 1000;
+  private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
 
   private final Collection<? extends Aggregation> aggregations;

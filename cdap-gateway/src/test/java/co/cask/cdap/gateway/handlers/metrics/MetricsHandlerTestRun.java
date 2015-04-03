@@ -26,7 +26,6 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -388,19 +387,22 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // 1 hour
     metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
 
-    // just one record
+    // count is one record
     verifyRangeQueryResult(
       "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&limit=1&start=" + start + "&end="
+        "&metric=system.reads&resolution=auto&count=1&start=" + start + "&end="
         + (start + 600), 1, 1);
 
+    // count is greater than data points in time-range
     verifyRangeQueryResult(
       "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&limit=4&start=" + start + "&end="
+        "&metric=system.reads&resolution=auto&count=6&start=" + start + "&end="
         + (start + 600), 4, 4);
+
+    // count is less than data points in time-range
     verifyRangeQueryResult(
       "/v3/metrics/query?context=" + getContext("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&limit=2&start=" + (start - 1) + "&end="
+        "&metric=system.reads&resolution=auto&count=2&start=" + (start - 1) + "&end="
         + (start + 3600), 2, 3);
   }
 
@@ -433,7 +435,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    }.getType());
     // We want to make sure expectedValues are in the response. Response may also have other things that denote
     // null values for tags - we'll ignore them.
     Assert.assertTrue(reply.containsAll(expectedValues));

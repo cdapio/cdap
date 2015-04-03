@@ -46,7 +46,6 @@ final class MetricQueryParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String RESOLUTION = "resolution";
-  private static final String LIMIT = "limit";
   private static final String END_TIME = "end";
   private static final String RUN_ID = "runs";
   private static final String INTERPOLATE = "interpolate";
@@ -478,7 +477,11 @@ final class MetricQueryParser {
       } else {
         resolution = Resolution.SECOND.getResolution();
       }
-      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      if (queryParams.containsKey(COUNT)) {
+        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      } else {
+        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      }
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
@@ -500,11 +503,10 @@ final class MetricQueryParser {
       // max int means aggregate "all time totals"
       resolution = Integer.MAX_VALUE;
     }
-    int limit = queryParams.containsKey(LIMIT) ? Integer.parseInt(queryParams.get(LIMIT).get(0)) : count;
 
     builder.setStartTs(startTime);
     builder.setEndTs(endTime);
-    builder.setLimit(limit);
+    builder.setLimit(count);
     builder.setResolution(resolution);
 
     setInterpolator(queryParams, builder);
