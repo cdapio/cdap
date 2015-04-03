@@ -123,6 +123,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     this.metricStore = metricStore;
   }
 
+  // Deprecate search with context param
   @POST
   @Path("/search")
   public void search(HttpRequest request, HttpResponder responder,
@@ -134,23 +135,21 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    if (tags.size() > 0) {
-      if ("tag".equals(target)) {
-        searchTargetContextAndRespond(responder, tags);
-      } else if ("metric".equals(target)) {
+    if (target.equals("tag")) {
+      searchTargetContextAndRespond(responder, tags);
+    } else if (target.equals("childContext")) {
+      // NOTE: supporting 2.8 format -- should remove after deprecation
+      searchChildContextAndRespond(responder, context);
+    } else if (target.equals("metric")) {
+      if (tags.size() > 0) {
         searchMetricAndRespond(responder, tags);
       } else {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+        // NOTE : remove after deprecation. if there are no tags, we use the context call, however
+        // since the returned format is same between for metrics, we wouldn't notice a difference in result.
+        searchMetricAndRespond(responder, context);
       }
     } else {
-     // 2.8 API call
-      if ("childContext".equals(target)) {
-        searchChildContextAndRespond(responder, context);
-      } else if ("metric".equals(target)) {
-        searchMetricAndRespond(responder, context);
-      } else {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
-      }
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
     }
   }
 
@@ -179,6 +178,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
+  // Deprecate querying with context param
   @POST
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
@@ -224,7 +224,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
                                                   // todo: figure out MetricType
-                                                  MetricType.COUNTER, tagsSliceBy, groupByTags);
+                                                  MetricType.COUNTER, tagsSliceBy, humanToTagNamesGroupBy(groupByTags));
 
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);

@@ -22,24 +22,18 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
-import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +57,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static final String DOT_FLOWLET_ESCAPED = DOT_FLOWLET.replaceAll("\\.", "~");
 
   private static final List<String> FLOW_TAGS = ImmutableList.of(Tag.NAMESPACE, Tag.APP, Tag.FLOW, Tag.FLOWLET);
+  private static final List<String> FLOW_TAGS_HUMAN = ImmutableList.of("namespace", "app", "flow", "flowlet");
 
   private static long emitTs;
 
@@ -137,6 +132,100 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
   }
 
+  private List<Map<String, String>> getSearchResultExpected(String... searchExpectations) {
+    // iterate search results, add them as name-value map to the result list and return the list
+    List<Map<String, String>> result = Lists.newArrayList();
+    for (int i = 0; i < searchExpectations.length; i += 2) {
+      result.add(ImmutableMap.of("name", searchExpectations[i], "value", searchExpectations[i + 1]));
+    }
+    return result;
+  }
+
+  @Test
+  public void testSearchContextWithTags() throws Exception {
+    // empty context
+    verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", DOT_NAMESPACE,
+                                                                                "namespace", "myspace",
+                                                                                "namespace", "yourspace"));
+
+    // WordCount is in myspace, WCount in yourspace
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
+                       getSearchResultExpected("app", "WordCount1"));
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace",
+                       getSearchResultExpected("app", "WCount1"));
+
+    // WordCount should be found in myspace, not in yourspace
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WordCount1",
+                       getSearchResultExpected("flow", "WordCounter"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WordCount1",
+                               getSearchResultExpected());
+
+    // WCount should be found in yourspace, not in myspace
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
+                       getSearchResultExpected("flow", "WCounter",
+                                                "flow", "WordCounter",
+                                                "mapreduce", "ClassicWordCount",
+                                                "procedure", "RCounts"
+                       ));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WCount1",
+                               getSearchResultExpected());
+
+    // verify other metrics for WCount app
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=mapreduce:ClassicWordCount",
+                               getSearchResultExpected("run", "run1"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1",
+                               getSearchResultExpected("tasktype", "m", "tasktype", "r"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m",
+                               getSearchResultExpected("instance", "task1"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m&tag=instance:task1",
+                               getSearchResultExpected());
+
+    // verify "*"
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
+                               getSearchResultExpected("app", "WordCount1", "app", "WCount1"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
+                               getSearchResultExpected("flow", "WCounter",
+                                                       "flow", "WordCounter",
+                                                       "flow", DOT_FLOW,
+                                                       "mapreduce", "ClassicWordCount",
+                                                       "procedure", "RCounts"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=flow:*",
+                               getSearchResultExpected("run", "run1"));
+
+    // verify dots more
+    String parts[] = new String[] {
+      "namespace:" + DOT_NAMESPACE,
+      "app:" + DOT_APP,
+      "flow:" + DOT_FLOW,
+      "run:" + DOT_RUN,
+      "flowlet:" + DOT_FLOWLET
+    };
+    // drilling down into above parts one at a time
+    String context = "tag=" + parts[0];
+    int i = 1;
+    do {
+      String contextNext = context + "&tag=" + parts[i];
+      verifySearchResultWithTags("/v3/metrics/search?target=tag&" + context,
+                                 getSearchResultExpected(parts[i].split(":", 2)));
+      context = contextNext;
+      i++;
+    } while (i < parts.length);
+  }
+
+
+  // can remove this test after context (query-param) based searching is removed
   @Test
   public void testSearchContext() throws Exception {
     // empty context
@@ -223,6 +312,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     } while (i < parts.length);
   }
 
+  // can remove this test after context (query-param) based querying is removed
   @Test
   public void testQueryMetrics() throws Exception {
 
@@ -286,6 +376,70 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&groupBy=namespace,flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
+  @Test
+  public void testQueryMetricsWithTags() throws Exception {
+
+    //aggregate result, in the right namespace
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&aggregate=true", 3);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "counter") +
+        "&metric=system.reads&aggregate=true", 1);
+
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 4);
+
+    // aggregate result, in the wrong namespace
+    verifyEmptyQueryResult(
+      "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&aggregate=true");
+
+    verifyAggregateQueryResult("/v3/metrics/query?context=" +
+                                 getTags(DOT_NAMESPACE, DOT_APP,
+                                         DOT_FLOW, DOT_FLOWLET) +
+                                 "&metric=system.dot.reads&aggregate=true", 55);
+
+    // time range
+    // now-60s, now+60s
+    verifyRangeQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+
+    // note: times are in seconds, hence "divide by 1000";
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 60 * 1000) / 1000;
+    verifyRangeQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + start + "&end="
+        + end, 2, 3);
+    // range query, in the wrong namespace
+    verifyEmptyQueryResult(
+      "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + start + "&end="
+        + end);
+
+    List<TimeSeriesResult> groupByResult =
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("flowlet", "counter"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("flowlet", "splitter"), 3));
+
+    verifyGroupByResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
+        "&metric=system.reads&groupBy=flowlet&start=" + start + "&end="
+        + end, groupByResult);
+
+    groupByResult =
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("namespace", "myspace", "flowlet", "splitter"), 2),
+                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "counter"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "splitter"), 4));
+
+    verifyGroupByResult(
+      "/v3/metrics/query?metric=system.reads" +
+        "&groupBy=namespace&groupBy=flowlet&start=" + start + "&end=" + end, groupByResult);
+  }
+
+
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
     MetricQueryResult result = post(url, MetricQueryResult.class);
     Assert.assertEquals(groupByResult.size(), result.getSeries().length);
@@ -314,6 +468,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(0, queryResult.getSeries().length);
   }
 
+  private String getTags(String... tags) {
+    String result = "";
+    for (int i = 0; i < tags.length; i++) {
+      result += "&tag=" + FLOW_TAGS_HUMAN.get(i) + ":" + tags[i];
+    }
+    return result;
+  }
+
   private String getContext(String... tags) {
     String context = "";
     for (int i = 0; i < tags.length; i++) {
@@ -323,16 +485,70 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
+  public void testSearchMetricsWithTags() throws Exception {
+
+    // verify dots
+    verifySearchMetricResult("/v3/metrics/search?target=metric&" +
+                               "tag=" + Tag.NAMESPACE + ":" + DOT_NAMESPACE + "&" +
+                               "tag=" + Tag.APP + ":" + DOT_APP + "&" +
+                               "tag=" + Tag.FLOW + ":" + DOT_FLOW + "&" +
+                               "tag=" + Tag.DATASET + ":*&" +
+                               "tag=" + Tag.RUN_ID + ":" + DOT_RUN + "&" +
+                               "tag=" + Tag.FLOWLET + ":" + DOT_FLOWLET,
+                             ImmutableList.<String>of("system.dot.reads"));
+    // metrics in myspace
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
+                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                             ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
+
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
+                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:collector",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
+                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
+                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+
+    // wrong namespace
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1" +
+                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                             ImmutableList.<String>of());
+
+
+    // metrics in yourspace
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1" +
+                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                             ImmutableList.<String>of("system.reads"));
+
+    // wrong namespace
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +
+                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                             ImmutableList.<String>of());
+
+    // verify "*"
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
+                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:*",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
+                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
+                               "&tag=flow:*&tag=dataset:*&tag=run:run1",
+                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
+                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+  }
+
+  // can remove this test after context (query-param) based searching is removed
+  @Test
   public void testSearchMetrics() throws Exception {
 
     // verify dots
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=" +
-                              Tag.NAMESPACE + "." + DOT_NAMESPACE_ESCAPED + "." +
-                              Tag.APP + "." + DOT_APP_ESCAPED + "." +
-                              Tag.FLOW + "." + DOT_FLOW_ESCAPED + "." +
-                              Tag.DATASET + ".*." +
-                              Tag.RUN_ID + "." + DOT_RUN_ESCAPED + "." +
-                              Tag.FLOWLET + "." + DOT_FLOWLET_ESCAPED,
+                               Tag.NAMESPACE + "." + DOT_NAMESPACE_ESCAPED + "." +
+                               Tag.APP + "." + DOT_APP_ESCAPED + "." +
+                               Tag.FLOW + "." + DOT_FLOW_ESCAPED + "." +
+                               Tag.DATASET + ".*." +
+                               Tag.RUN_ID + "." + DOT_RUN_ESCAPED + "." +
+                               Tag.FLOWLET + "." + DOT_FLOWLET_ESCAPED,
                              ImmutableList.<String>of("system.dot.reads"));
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
@@ -378,57 +594,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
     // todo : can refactor this to test only the new tag name queries once we deprecate queryParam using context.
-    URI sourceUrl = new URI(url);
     MetricQueryResult queryResult;
-    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
-    if (!queryParams.containsKey("tag") || queryParams.get("groupBy").size() < 1) {
-      queryResult = post(url, MetricQueryResult.class);
-      Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
-    }
-
-    // get new url replacing context with tags and groupBy (comma separated) into multiple query params
-    url = getTagQueryUrl(url);
     queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
   }
 
-  // NOTE : this is for tests with queryParam `context`, translate those test with queryParam `tag`,
-  // new tests should only use `tag` queryParam
-  private String getTagQueryUrl(String url) throws Exception {
-    URI sourceUrl = new URI(url);
-    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
-    Map<String, String> tags = Maps.newHashMap();
-    List<String> groupByTags = Lists.newArrayList();
-    if (queryParams.containsKey("context")) {
-      String[] context = queryParams.get("context").get(0).split("\\.");
-      for (int i = 0; i < context.length; i += 2) {
-        tags.put(context[i], context[i + 1].replace("~", "."));
-      }
-      queryParams.remove("context");
-    }
-    if (queryParams.containsKey("groupBy")) {
-      groupByTags = Lists.newArrayList(Splitter.on(",").split(queryParams.get("groupBy").get(0)).iterator());
-      queryParams.remove("groupBy");
-    }
-    String targetUrl = sourceUrl.getPath() + "?";
-    for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
-      targetUrl += entry.getKey() + "=" + URLEncoder.encode(entry.getValue().get(0), Charsets.UTF_8.name()) + "&";
-    }
-
-    for (Map.Entry<String, String> entry : tags.entrySet()) {
-      targetUrl += "tag=" + entry.getKey() + ":" + entry.getValue() + "&";
-    }
-    for (String gtag : groupByTags) {
-      targetUrl += "groupBy=" + gtag.replace("~", ".") + "&";
-    }
-    targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
-    return targetUrl;
-  }
-
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    verifyTimeSeries(queryResult, nonZeroPointsCount, expectedSum);
-    queryResult = post(getTagQueryUrl(url), MetricQueryResult.class);
     verifyTimeSeries(queryResult, nonZeroPointsCount, expectedSum);
   }
 
@@ -462,33 +634,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     for (String returned: reply) {
       Assert.assertTrue(expectedValues.contains(returned) || returned.endsWith(".*"));
     }
-    verifySearchResultWithTagNames(url, expectedValues);
-  }
-
-
-  private void verifySearchResultWithTagNames(String url, List<String> expectedValues) throws Exception {
-    URI sourceUrl = new URI(url);
-    String result = sourceUrl.getPath() + "?target=tag";
-    Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
-    String context = queryParams.get("context").get(0);
-    String[] contextSplit = context.split("\\.");
-    for (int i = 0; i < contextSplit.length; i += 2) {
-       result += "&tag=" + contextSplit[i] + ":" + contextSplit[i + 1].replace("~", ".");
-    }
-    List<Map<String, String>> expectedValuesMap = Lists.newArrayList();
-    for (String expect : expectedValues) {
-      String[] tagValue = expect.substring(context.length() + 1).split("\\.", 2);
-      expectedValuesMap.add(ImmutableMap.of("name", tagValue[0], "value", tagValue[1].replace("~", ".")));
-    }
-
-    HttpResponse response = doPost(result, null);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String resultContent = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> reply = new Gson().fromJson(resultContent,
-                                                          new TypeToken<List<Map<String, String>>>() { }.getType());
-    // We want to make sure expectedValues are in the response. Response may also have other things that denote
-    // null values for tags - we'll ignore them.
-    Assert.assertTrue(reply.containsAll(expectedValuesMap));
   }
 
   private void verifySearchMetricResult(String url, List<String> expectedValues) throws Exception {
@@ -500,6 +645,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     for (int i = 0; i < expectedValues.size(); i++) {
       Assert.assertEquals(expectedValues.get(i), reply.get(i));
     }
+  }
+
+  private void verifySearchResultWithTags(String url, List<Map<String, String>> expectedValues) throws Exception {
+    HttpResponse response = doPost(url, null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> reply = new Gson().fromJson(result,
+                                                          new TypeToken<List<Map<String, String>>>() { }.getType());
+    Assert.assertTrue(reply.containsAll(expectedValues));
   }
 
   private void verifySearchResultContains(String url, List<String> expectedValues) throws Exception {
