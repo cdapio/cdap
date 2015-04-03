@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TimeValue;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -27,6 +26,7 @@ import java.util.Map;
  * <p/>
  * See also {@link Cube#add(CubeFact)}.
  */
+@Beta
 public class CubeFact {
   private final Map<String, String> tagValues;
   private final MeasureType measureType;

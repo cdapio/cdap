@@ -16,10 +16,15 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.api.metrics.Interpolators;
-import co.cask.cdap.api.metrics.TimeValue;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

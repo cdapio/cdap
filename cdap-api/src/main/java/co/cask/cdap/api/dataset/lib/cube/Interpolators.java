@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Preconditions;
 
 /**
  * Returns interpolators of different types.
  */
+@Beta
 public final class Interpolators {
   public static final long DEFAULT_MAX_ALLOWED_GAP = 60;
-
-  public static Interpolator createDefault() {
-    return new Step();
-  }
 
   /**
    * Return 0 if the time between data points is above a give limit, or if the point to interpolate

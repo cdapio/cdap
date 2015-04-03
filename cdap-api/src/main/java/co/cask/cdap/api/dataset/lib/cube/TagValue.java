@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
@@ -23,6 +24,7 @@ import javax.annotation.Nullable;
 /**
  * Represents tag and its value.
  */
+@Beta
 public final class TagValue {
   private final String tagName;
   private final String value;

@@ -13,21 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
+
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Interpolate a value between two other time values.
+ * COUNTER or GAUGE type
  */
-public interface Interpolator {
-
-  /**
-   * Given start and end TimeValues, and a time in-between the two, return a TimeValue for the in-between time.
-   */
-  public long interpolate(TimeValue start, TimeValue end, long ts);
-
-  /**
-   * Data points that are more than this many seconds apart will not cause interpolation to occur and will instead
-   * return 0 for any point in between.
-   */
-  public long getMaxAllowedGap();
+@Beta
+public enum MeasureType {
+  COUNTER,
+  GAUGE
 }

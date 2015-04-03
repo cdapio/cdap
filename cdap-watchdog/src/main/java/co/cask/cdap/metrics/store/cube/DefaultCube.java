@@ -16,15 +16,21 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.metrics.store.timeseries.Fact;
 import co.cask.cdap.metrics.store.timeseries.FactScan;
 import co.cask.cdap.metrics.store.timeseries.FactScanResult;
 import co.cask.cdap.metrics.store.timeseries.FactScanner;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -46,7 +52,7 @@ import java.util.SortedSet;
 import javax.annotation.Nullable;
 
 /**
- * Default implementation of {@link Cube}.
+ * Default implementation of {@link co.cask.cdap.api.dataset.lib.cube.Cube}.
  */
 public class DefaultCube implements Cube {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);

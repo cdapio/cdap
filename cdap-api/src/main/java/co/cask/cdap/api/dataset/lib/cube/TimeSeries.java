@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TimeValue;
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -28,6 +28,7 @@ import java.util.Map;
 /**
  * Represents a single time series defined by a measure name and set of tag values.
  */
+@Beta
 public final class TimeSeries {
   private final String measureName;
   private final Map<String, String> tagValues;

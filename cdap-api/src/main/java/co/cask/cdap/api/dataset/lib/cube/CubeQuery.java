@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +39,7 @@ import javax.annotation.Nullable;
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
  */
-// todo: should support interpolator
+@Beta
 public final class CubeQuery {
   private final long startTs;
   private final long endTs;
