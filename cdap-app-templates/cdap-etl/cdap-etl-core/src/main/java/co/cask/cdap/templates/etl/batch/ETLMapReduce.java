@@ -27,7 +27,6 @@ import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
-import co.cask.cdap.templates.etl.common.DefaultEmitter;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 import com.google.common.base.Preconditions;
@@ -127,7 +126,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Type STAGE_LIST_TYPE = new TypeToken<List<ETLStage>>() { }.getType();
 
     private TransformExecutor transformExecutor;
-    private DefaultEmitter data;
 
     private MapReduceContext mapReduceContext;
     private List<Transform> transforms = Lists.newArrayList();
@@ -135,7 +133,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       this.mapReduceContext = context;
-      this.data = new DefaultEmitter();
     }
 
     @Override
@@ -181,12 +178,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        data.emit(key, value);
-        transformExecutor.runOneIteration(data);
-        for (Map.Entry entry : data) {
+        for (Map.Entry entry : transformExecutor.runOneIteration(key, value)) {
           context.write(entry.getKey(), entry.getValue());
         }
-        data.reset();
       } catch (Exception e) {
         LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
         Throwables.propagate(e);
