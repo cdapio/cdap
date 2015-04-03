@@ -671,8 +671,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
     // todo : can refactor this to test only the new tag name queries once we deprecate queryParam using context.
-    MetricQueryResult queryResult;
-    queryResult = post(url, MetricQueryResult.class);
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
   }
 
