@@ -35,6 +35,7 @@ import co.cask.cdap.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -371,22 +372,23 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
+  <T> void addAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
    * @param id  Namespace id.
    * @param name Adapter name
+   * @param type Type of the config object used by the AdapterSpecification
    * @return an instance of {@link AdapterSpecification}.
    */
   @Nullable
-  AdapterSpecification getAdapter(Id.Namespace id, String name);
+  <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type);
 
   /**
    * Fetch the status for an adapter identified by the name in a give namespace.
@@ -415,7 +417,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
+  <T> Collection<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

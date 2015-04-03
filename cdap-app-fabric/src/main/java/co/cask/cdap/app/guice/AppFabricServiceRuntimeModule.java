@@ -32,12 +32,14 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
+import co.cask.cdap.gateway.handlers.AdapterLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
+import co.cask.cdap.gateway.handlers.MockETLHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandlerV2;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -291,6 +293,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
+      handlerBinder.addBinding().to(MockETLHandler.class);
+      handlerBinder.addBinding().to(AdapterLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {

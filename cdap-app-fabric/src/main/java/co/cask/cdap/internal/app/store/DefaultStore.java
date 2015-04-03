@@ -74,6 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
@@ -864,9 +865,8 @@ public class DefaultStore implements Store {
     });
   }
 
-
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
+  public <T> void addAdapter(final Id.Namespace id, final AdapterSpecification<T> adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -876,18 +876,16 @@ public class DefaultStore implements Store {
     });
   }
 
-
   @Nullable
   @Override
-  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
+  public <T> AdapterSpecification<T> getAdapter(final Id.Namespace id, final String name, final Type type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification<T>>() {
       @Override
-      public AdapterSpecification apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapter(id, name);
+      public AdapterSpecification<T> apply(AppMds mds) throws Exception {
+        return mds.apps.getAdapter(id, name, type);
       }
     });
   }
-
 
   @Nullable
   @Override
@@ -912,11 +910,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
+  public <T> Collection<AdapterSpecification<T>> getAllAdapters(final Id.Namespace id, final Type type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification<T>>>() {
       @Override
-      public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
-        return mds.apps.getAllAdapters(id);
+      public Collection<AdapterSpecification<T>> apply(AppMds mds) throws Exception {
+        return mds.apps.getAllAdapters(id, type);
       }
     });
   }

@@ -149,7 +149,7 @@ public abstract class AppFabricTestBase {
     conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+    conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
 

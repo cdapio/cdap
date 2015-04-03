@@ -36,9 +36,12 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -70,8 +73,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Override
-  protected <T> T deserialize(byte[] serialized, Class<T> classOfT) {
-    return GSON.fromJson(Bytes.toString(serialized), classOfT);
+  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+    return GSON.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
   @Nullable
@@ -377,27 +380,47 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec, AdapterStatus adapterStatus) {
+  public <T> void writeAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec,
+                               AdapterStatus adapterStatus) {
     write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
-          new AdapterMeta(adapterSpec, adapterStatus));
+          new AdapterMeta<T>(adapterSpec, adapterStatus), new TypeToken<AdapterMeta<T>>() { }.getType());
   }
 
+  // TODO: get rid of AdapterMeta and store AdapterSpecification separate from the Status.
+  private Type getAdapterMetaType(final Type type) {
+    return new ParameterizedType() {
+      @Override
+      public Type[] getActualTypeArguments() {
+        return new Type[] { type };
+      }
+
+      @Override
+      public Type getRawType() {
+        return AdapterMeta.class;
+      }
+
+      @Override
+      public Type getOwnerType() {
+        return null;
+      }
+    };
+  }
 
   @Nullable
-  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+  public <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type) {
+    AdapterMeta<T> adapterMeta = getAdapterMeta(id, name, type);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
 
   @Nullable
   public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+    AdapterMeta adapterMeta = getAdapterMeta(id, name, new TypeToken<Map<String, Object>>() { }.getType());
     return adapterMeta == null ?  null : adapterMeta.getStatus();
   }
 
   @Nullable
   public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
+    AdapterMeta<Object> adapterMeta = getAdapterMeta(id, name, Object.class);
     if (adapterMeta == null) {
       return null;
     }
@@ -406,14 +429,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return previousStatus;
   }
 
-  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
+  @SuppressWarnings("unchecked")
+  private <T> AdapterMeta<T> getAdapterMeta(Id.Namespace id, String name, Type type) {
+    return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(),
+               getAdapterMetaType(type));
   }
 
-  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
-    List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
-                                          AdapterMeta.class);
+  public <T> List<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type) {
+    List<AdapterSpecification<T>> adapterSpecs = Lists.newArrayList();
+    List<AdapterMeta<T>> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
+                                             getAdapterMetaType(type));
     for (AdapterMeta adapterMeta : adapterMetas) {
       adapterSpecs.add(adapterMeta.getSpec());
     }

@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -114,7 +113,7 @@ public class CLIMainTest extends StandaloneTestBase {
       configuration = CConfiguration.create();
       configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.Router.ADDRESS, HOSTNAME);
-      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
       StandaloneTestBase.setUpClass();
@@ -486,25 +485,6 @@ public class CLIMainTest extends StandaloneTestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
-  }
-
-  @Test
-  public void testAdapters() throws Exception {
-    // Create Adapter
-    String createCommand = "create adapter someAdapter type dummyAdapter" +
-      " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
-      " src mySource" +
-      " sink mySink sink-props " + GSON.toJson(ImmutableMap.of("dataset.class", FileSet.class.getName()));
-    testCommandOutputContains(cli, createCommand, "Successfully created adapter");
-
-    // Check that the created adapter is present
-    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists("someAdapter"));
-
-    testCommandOutputContains(cli, "list adapters", "someAdapter");
-    testCommandOutputContains(cli, "get adapter someAdapter", "someAdapter");
-    testCommandOutputContains(cli, "delete adapter someAdapter", "Successfully deleted adapter");
-    testCommandOutputNotContains(cli, "list adapters", "someAdapter");
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

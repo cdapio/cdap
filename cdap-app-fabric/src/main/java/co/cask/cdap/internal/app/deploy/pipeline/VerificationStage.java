@@ -36,7 +36,7 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
+import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -87,8 +87,8 @@ public class VerificationStage extends AbstractStage<ApplicationDeployable> {
     Id.Application appId = input.getId();
 
     if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
-      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(appId.getId());
-      if (adapterTypeInfo != null) {
+      ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(appId.getId());
+      if (applicationTemplateInfo != null) {
         throw new RuntimeException
           (String.format("Cannot deploy Application %s. An AdapterType exists with a conflicting name.", appId));
       }

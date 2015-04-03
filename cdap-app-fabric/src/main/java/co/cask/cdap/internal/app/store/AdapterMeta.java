@@ -21,21 +21,19 @@ import co.cask.cdap.proto.AdapterSpecification;
 
 /**
  * Holds adapter metadata
+ *
+ * @param <T> the type of config used by the adapter
  */
-public class AdapterMeta {
-  private final AdapterSpecification spec;
+public class AdapterMeta<T> {
+  private final AdapterSpecification<T> spec;
   private final AdapterStatus status;
 
-  public AdapterMeta(AdapterSpecification spec, AdapterStatus status) {
+  public AdapterMeta(AdapterSpecification<T> spec, AdapterStatus status) {
     this.spec = spec;
     this.status = status;
   }
 
-  public static AdapterMeta updateStatus(AdapterMeta original, AdapterStatus newStatus) {
-    return new AdapterMeta(original.spec, newStatus);
-  }
-
-  public AdapterSpecification getSpec() {
+  public AdapterSpecification<T> getSpec() {
     return spec;
   }
 

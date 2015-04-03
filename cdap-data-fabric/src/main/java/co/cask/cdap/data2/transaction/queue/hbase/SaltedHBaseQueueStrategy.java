@@ -21,7 +21,9 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
+import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
+import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.common.base.Function;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -57,16 +59,25 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
 
   public static final int SALT_BYTES = 1;
 
-  private static final Function<byte[], byte[]> ROW_KEY_CONVERTER = new Function<byte[], byte[]>() {
-    @Override
-    public byte[] apply(byte[] input) {
-      return HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getOriginalKey(input);
-    }
-  };
-
+  private int distributorBuckets;
+  private final AbstractRowKeyDistributor rowKeyDistributor;
+  private final Function<byte[], byte[]> rowKeyConverter;
   private final ExecutorService scansExecutor;
 
-  SaltedHBaseQueueStrategy() {
+  /**
+   * Constructs a new instance with the given number of buckets for distributed scan.
+   */
+  SaltedHBaseQueueStrategy(int distributorBuckets) {
+    this.distributorBuckets = distributorBuckets;
+    this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(distributorBuckets));
+    this.rowKeyConverter = new Function<byte[], byte[]>() {
+      @Override
+      public byte[] apply(byte[] input) {
+        return rowKeyDistributor.getOriginalKey(input);
+      }
+    };
+
     // Using the "direct handoff" approach, new threads will only be created
     // if it is necessary and will grow unbounded. This could be bad but in DistributedScanner
     // we only create as many Runnables as there are buckets data is distributed to. It means
@@ -82,13 +93,18 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
                                     HTable hTable, Scan scan, int numRows) throws IOException {
-    ResultScanner scanner = DistributedScanner.create(hTable, scan, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR, scansExecutor);
-    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+    // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
+    Scan distributedScan = new Scan(scan);
+    int caching = (int) (1.1 * numRows / distributorBuckets);
+    distributedScan.setCaching(caching);
+
+    ResultScanner scanner = DistributedScanner.create(hTable, distributedScan, rowKeyDistributor, scansExecutor);
+    return new HBaseQueueScanner(scanner, numRows, rowKeyConverter);
   }
 
   @Override
   public byte[] getActualRowKey(ConsumerConfig consumerConfig, byte[] originalRowKey) {
-    return HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(originalRowKey);
+    return rowKeyDistributor.getDistributedKey(originalRowKey);
   }
 
   @Override
@@ -99,7 +115,7 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
     Bytes.putLong(rowKey, rowKeyPrefix.length, writePointer);
     Bytes.putInt(rowKey, rowKey.length - Bytes.SIZEOF_INT, counter);
 
-    rowKeys.add(HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey));
+    rowKeys.add(rowKeyDistributor.getDistributedKey(rowKey));
   }
 
   @Override
