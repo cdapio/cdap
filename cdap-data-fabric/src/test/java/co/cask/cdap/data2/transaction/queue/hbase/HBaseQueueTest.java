@@ -275,7 +275,8 @@ public abstract class HBaseQueueTest extends QueueTest {
               HBaseConsumerState state = stateStore.getState(groupId, instanceId);
 
               if (groupId == 2L && instanceId == 0) {
-                // For group 1L, the start row shouldn't be changed. End row should be the same as the first barrier
+                // For group 2L instance 0, the start row shouldn't be changed.
+                // End row should be the same as the first barrier
                 Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
                                                        QueueEntryRow.getQueueEntryRowKey(queueName, 10L, 0)));
                 Assert.assertEquals(0, Bytes.compareTo(state.getNextBarrier(),
@@ -381,9 +382,10 @@ public abstract class HBaseQueueTest extends QueueTest {
           } catch (Exception e) {
             // Expected
           }
-          // For group 2, there should be three barrier infos
+          // For group 2, there should be two barrier infos,
+          // since all consumers passed the first barrier (groupSize = 2). Only the size = 3 and size = 1 left
           List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(2L);
-          Assert.assertEquals(3, queueBarriers.size());
+          Assert.assertEquals(2, queueBarriers.size());
 
           // Make all consumers (3 of them before reconfigure) in group 2 consumes everything
           for (int instanceId = 0; instanceId < 3; instanceId++) {
@@ -393,7 +395,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           // For the remaining consumer, it should start consuming from the latest barrier
           HBaseConsumerState state = stateStore.getState(2L, 0);
           Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
-                                                 queueBarriers.get(2).getStartRow()));
+                                                 queueBarriers.get(1).getStartRow()));
           Assert.assertNull(state.getNextBarrier());
 
           // For removed instances, they should throw exception when retrieving their states

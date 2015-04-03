@@ -33,7 +33,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -76,6 +78,13 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
   public void startTx(Transaction tx) {
     super.startTx(tx);
     this.transaction = tx;
+  }
+
+  /**
+   * Returns the internal dataset table. Only for QueueAdmin to use.
+   */
+  Table getInternalTable() {
+    return table;
   }
 
   /**
@@ -174,7 +183,7 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
     }
 
     // If the instance has been removed in the next barrier,
-    // find the next start barrier that this instance need to consumer
+    // find the next start barrier that this instance needs to consume from
     Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), nextBarrier.getStartRow()), barrierScanEndRow);
     try {
       Row row;
@@ -200,14 +209,16 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
    * Remove all states related to the queue that this state store is representing.
    */
   void clear() {
-    // Scan and delete all rows prefix with queueName
-    Scanner scanner = table.scan(queueName.toBytes(), Bytes.stopKeyForPrefix(queueName.toBytes()));
+    // Scan and delete all barrier rows
+    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
     try {
       Row row = scanner.next();
       while (row != null) {
         table.delete(row.getRow());
         row = scanner.next();
       }
+      // Also delete the consumer state rows
+      table.delete(queueName.toBytes());
     } finally {
       scanner.close();
     }
@@ -287,16 +298,34 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
       }
     }
 
-    // Remove all states and barrier information for groups that are removed.
-    // It doesn't matter what the consumer start row is.
-    Scanner scanner = table.scan(queueName.toBytes(), Bytes.stopKeyForPrefix(queueName.toBytes()));
+    // Remove all states for groups that are removed.
+    deleteRemovedGroups(table.get(queueName.toBytes()), groupsIds);
+
+    // Remove all barriers for groups that are removed.
+    // Also remove barriers that have all consumers consumed pass that barrier
+    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
+    // Multimap from groupId to barrier start rows. Ordering need to be maintained as the scan order.
+    Multimap<Long, byte[]> deletes = LinkedHashMultimap.create();
     try {
       Row row = scanner.next();
       while (row != null) {
-        for (byte[] column : row.getColumns().keySet()) {
-          long groupId = getGroupIdFromColumn(column);
-          if (!groupsIds.contains(groupId)) {
-            table.delete(row.getRow(), column);
+        deleteRemovedGroups(row, groupsIds);
+
+        // Check all instances in all groups
+        for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+          QueueBarrier barrier = decodeBarrierInfo(row.getRow(), entry.getValue());
+          long groupId = barrier.getGroupConfig().getGroupId();
+          boolean delete = true;
+          // Check if all instances in a group has consumed passed the current barrier
+          for (int instanceId = 0; instanceId < barrier.getGroupConfig().getGroupSize(); instanceId++) {
+            byte[] consumerStartRow = startRows.get(groupId, instanceId);
+            if (consumerStartRow == null || Bytes.compareTo(consumerStartRow, barrier.getStartRow()) < 0) {
+              delete = false;
+              break;
+            }
+          }
+          if (delete) {
+            deletes.put(groupId, row.getRow());
           }
         }
         row = scanner.next();
@@ -305,7 +334,30 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
       scanner.close();
     }
 
+    // Remove barries that have all consumers consumed passed it
+    for (Map.Entry<Long, Collection<byte[]>> entry : deletes.asMap().entrySet()) {
+      // Retains the last barrier info
+      if (entry.getValue().size() <= 1) {
+        continue;
+      }
+      Deque<byte[]> rows = Lists.newLinkedList(entry.getValue());
+      rows.removeLast();
+      byte[] groupColumn = Bytes.toBytes(entry.getKey());
+      for (byte[] rowKey : rows) {
+        table.delete(rowKey, groupColumn);
+      }
+    }
+
     table.put(put);
+  }
+
+  private void deleteRemovedGroups(Row row, Set<Long> existingGroups) {
+    for (byte[] column : row.getColumns().keySet()) {
+      long groupId = getGroupIdFromColumn(column);
+      if (!existingGroups.contains(groupId)) {
+        table.delete(row.getRow(), column);
+      }
+    }
   }
 
   /**
@@ -452,8 +504,11 @@ final class HBaseConsumerStateStore extends AbstractDataset implements QueueConf
     if (groupInfo == null) {
       return null;
     }
+    return decodeBarrierInfo(row.getRow(), groupInfo);
+  }
+
+  private QueueBarrier decodeBarrierInfo(byte[] rowKey, byte[] groupInfo) {
     ConsumerGroupConfig groupConfig = GSON.fromJson(new String(groupInfo, Charsets.UTF_8), ConsumerGroupConfig.class);
-    byte[] rowKey = row.getRow();
     byte[] startRow = Arrays.copyOfRange(rowKey, queueName.toBytes().length, rowKey.length);
     return new QueueBarrier(groupConfig, startRow);
   }
