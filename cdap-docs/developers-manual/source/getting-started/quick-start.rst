@@ -98,7 +98,7 @@ or using ``curl`` to directly make an HTTP request:
 (If you cloned the source code and built the app, you'll need to adjust the above paths to
 include the ``cdap-apps/Wise`` directory.)
 
-**Learn More:** *You can also deploy apps by dragging and dropping their jars on * :ref:`the CDAP Console <cdap-console>`.
+**Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP Console <cdap-console>`.
 
 
 Starting Realtime Processing
