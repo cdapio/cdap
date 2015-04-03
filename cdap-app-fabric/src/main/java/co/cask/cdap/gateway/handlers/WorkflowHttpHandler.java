@@ -28,16 +28,14 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -201,15 +199,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
       List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
-
-      JsonArray array = new JsonArray();
-      for (ScheduledRuntime runtime : runtimes) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", runtime.getScheduleId());
-        object.addProperty("time", runtime.getTime());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
+      responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

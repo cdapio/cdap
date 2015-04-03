@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
@@ -42,8 +43,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -189,11 +188,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    JsonArray array = readResponse(response, JsonArray.class);
-    JsonObject wfObject = (JsonObject) array.get(0);
-    Assert.assertNotNull(wfObject);
-    String id = wfObject.get("id").getAsString();
-    Long time = wfObject.get("time").getAsLong();
+    List<ScheduledRuntime> runtimes = readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+    ScheduledRuntime runtime = runtimes.get(0);
+    Assert.assertNotNull(runtime);
+    String id = runtime.getId();
+    Long time = runtime.getTime();
     Assert.assertTrue(id.contains(schedule));
     return time;
   }

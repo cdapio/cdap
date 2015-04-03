@@ -50,7 +50,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
