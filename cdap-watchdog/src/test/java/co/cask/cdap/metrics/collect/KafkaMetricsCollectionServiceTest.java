@@ -94,7 +94,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
                                                                                    KafkaPublisher.Ack.FIRE_AND_FORGET,
-                                                                                   metricRecordDatumWriter ) {
+                                                                                   metricRecordDatumWriter) {
       @Override
       protected boolean isPublishMetaMetrics() {
         return false;

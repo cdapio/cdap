@@ -19,6 +19,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.iterator.MetricsIterator;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -26,7 +27,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,10 +51,18 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(MetricsIterator metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue metric = metrics.next();
       metricStore.add(metric);
+    }
+
+    if (isPublishMetaMetrics()) {
+      // send meta metrics batch now
+      long timeSentBatch = System.currentTimeMillis();
+      for (MetricValue metaMetric : metrics.getMetaMetrics(timeSentBatch)) {
+        metricStore.add(metaMetric);
+      }
     }
   }
 

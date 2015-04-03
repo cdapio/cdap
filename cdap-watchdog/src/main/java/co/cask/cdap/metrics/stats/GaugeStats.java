@@ -58,11 +58,11 @@ public class GaugeStats {
     return sum * 1.0f / count;
   }
 
-  public float getMin() {
+  public long getMin() {
     return min;
   }
 
-  public float getMax() {
+  public long getMax() {
     return max;
   }
 }

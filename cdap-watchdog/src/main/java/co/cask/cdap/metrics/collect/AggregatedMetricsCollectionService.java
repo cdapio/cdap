@@ -19,10 +19,8 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.iterator.IteratorWithMetaMetrics;
-import com.google.common.base.Function;
+import co.cask.cdap.metrics.iterator.MetricsIterator;
 import com.google.common.base.Objects;
-import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -79,10 +77,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValue} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
+  protected abstract void publish(MetricsIterator metrics) throws Exception;
 
   /**
-   * @return true if we want to publish metrics about the received metrics in {@link #publish(java.util.Iterator)}.
+   * @return true if we want to publish metrics about
+   *              the received metrics in {@link #publish(co.cask.cdap.metrics.iterator.MetricsIterator)}.
    */
   protected boolean isPublishMetaMetrics() {
     return true;
@@ -93,17 +92,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
-    final Iterator<MetricValue> rawMetricsItor = getMetrics(timestamp);
-    Iterator<MetricValue> metricsItor;
-    if (!isPublishMetaMetrics()) {
-      metricsItor = rawMetricsItor;
-    } else {
-      // wrap the raw metrics iterator with an iterator that will publish meta metrics
-      metricsItor = new IteratorWithMetaMetrics(rawMetricsItor);
-    }
-
+    final Iterator<MetricValue> metricsItor = getMetrics(timestamp);
     try {
-      publish(metricsItor);
+      publish(new MetricsIterator(metricsItor));
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
