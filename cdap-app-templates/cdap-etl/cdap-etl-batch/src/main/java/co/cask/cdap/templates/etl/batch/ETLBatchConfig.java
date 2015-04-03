@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.templates.etl.common.config.ETLStage;
+import com.google.common.base.Objects;
 
 import java.util.List;
 
@@ -50,5 +51,23 @@ public class ETLBatchConfig {
 
   public List<ETLStage> getTransforms() {
     return transforms;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || o.getClass() != this.getClass()) {
+      return false;
+    }
+
+    ETLBatchConfig other = (ETLBatchConfig) o;
+    return Objects.equal(this.schedule, other.schedule) &&
+      Objects.equal(this.source, other.source) &&
+      Objects.equal(this.sink, other.sink) &&
+      Objects.equal(this.transforms, other.transforms);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(schedule, source, sink, transforms);
   }
 }
