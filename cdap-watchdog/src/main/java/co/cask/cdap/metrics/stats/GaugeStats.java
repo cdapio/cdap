@@ -19,6 +19,8 @@ package co.cask.cdap.metrics.stats;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
+import java.math.BigInteger;
+
 /**
  * Computes statistics for a gauge.
  */
@@ -48,14 +50,18 @@ public class GaugeStats {
     return count;
   }
 
-  public float getAverage() {
-    long sum = 0;
-    for (Long value : values) {
-      int valueCount = values.count(value);
-      sum += value * valueCount;
+  public long getAverage() {
+    if (count == 0) {
+      return 0;
     }
 
-    return sum * 1.0f / count;
+    double average = 0;
+    for (Long value : values.elementSet()) {
+      int valueCount = values.count(value);
+      average += value * (valueCount * 1.0 / count);
+    }
+
+    return (long) average;
   }
 
   public long getMin() {
@@ -64,5 +70,9 @@ public class GaugeStats {
 
   public long getMax() {
     return max;
+  }
+
+  public boolean isEmpty() {
+    return count == 0;
   }
 }

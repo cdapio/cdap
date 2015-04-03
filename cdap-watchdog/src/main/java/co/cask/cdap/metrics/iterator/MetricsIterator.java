@@ -23,6 +23,7 @@ import co.cask.cdap.metrics.stats.GaugeStats;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -52,13 +53,17 @@ public class MetricsIterator extends AbstractIterator<MetricValue> {
   }
 
   public Iterator<MetricValue> getMetaMetrics() {
+    if (processDelayStats.isEmpty()) {
+      return Iterators.emptyIterator();
+    }
+
     long currentTimeMs = System.currentTimeMillis();
     long currentTimeSec = TimeUnit.MILLISECONDS.toSeconds(currentTimeMs);
 
     MetricValue delayAvg = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
       "metrics.global.processed.delay.avg", currentTimeSec,
-      currentTimeMs - TimeUnit.SECONDS.toMillis((long) processDelayStats.getAverage()), MetricType.GAUGE);
+      currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getAverage()), MetricType.GAUGE);
 
     MetricValue delayMin = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
@@ -74,6 +79,6 @@ public class MetricsIterator extends AbstractIterator<MetricValue> {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
       "metrics.global.processed.count", currentTimeSec, processDelayStats.getCount(), MetricType.COUNTER);
 
-    return ImmutableList.of(delayAvg, delayMin, delayMax, count).iterator();
+     return ImmutableList.of(delayAvg, delayMin, delayMax, count).iterator();
   }
 }
