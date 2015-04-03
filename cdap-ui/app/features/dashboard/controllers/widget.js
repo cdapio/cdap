@@ -50,7 +50,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
 
     Widget.prototype.getPartial = function () {
-      return '/assets/features/dashboard/widgets/' + this.type + '.html';
+      return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
 
     Widget.prototype.getClassName = function () {

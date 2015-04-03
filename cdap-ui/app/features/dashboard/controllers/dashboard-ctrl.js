@@ -15,7 +15,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
   $scope.currentBoard = rDashboardsModel.current();
-  console.info("Alright the current activeIndex: currentBoard", $scope.dashboards.activeIndex, $scope.currentBoard);
   if (!$scope.currentBoard) {
     $scope.unknownBoard = true;
   }
@@ -36,7 +35,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
     var scope = $scope.$new(),
         dd = $dropdown(toggle, {
-          template: 'assets/features/dashboard/partials/tab-dd.html',
+          template: 'assets/features/dashboard/templates/partials/tab-dd.html',
           animation: 'am-flip-x',
           trigger: 'manual',
           prefixEvent: 'dashboard-tab-dd',
