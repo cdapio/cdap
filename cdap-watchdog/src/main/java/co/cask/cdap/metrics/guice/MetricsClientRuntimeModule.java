@@ -16,12 +16,12 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
-import co.cask.cdap.metrics.iterator.MetricsIterator;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -30,6 +30,8 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
+import java.util.Iterator;
 
 /**
  *
@@ -89,7 +91,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
           @Override
-          protected void publish(MetricsIterator metrics) throws Exception {
+          protected void publish(Iterator<MetricValue> metrics) throws Exception {
           }
         });
       }

@@ -18,7 +18,6 @@ package co.cask.cdap.metrics.collect;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.iterator.MetricsIterator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -27,6 +26,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,7 +53,7 @@ public class AggregatedMetricsCollectionServiceTest {
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(MetricsIterator metrics) throws Exception {
+      protected void publish(Iterator<MetricValue> metrics) throws Exception {
         Iterators.addAll(published, metrics);
       }
 

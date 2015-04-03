@@ -77,11 +77,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValue} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(MetricsIterator metrics) throws Exception;
+  protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
 
   /**
    * @return true if we want to publish metrics about
-   *              the received metrics in {@link #publish(co.cask.cdap.metrics.iterator.MetricsIterator)}.
+   *              the received metrics in {@link #publish(java.util.Iterator)}.
    */
   protected boolean isPublishMetaMetrics() {
     return true;
@@ -92,11 +92,20 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
-    final Iterator<MetricValue> metricsItor = getMetrics(timestamp);
+    final MetricsIterator metricsItor = new MetricsIterator(getMetrics(timestamp));
+
     try {
-      publish(new MetricsIterator(metricsItor));
+      publish(metricsItor);
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+    }
+
+    if (isPublishMetaMetrics()) {
+      try {
+        publish(metricsItor.getMetaMetrics(System.currentTimeMillis()));
+      } catch (Throwable t) {
+        LOG.error("Failed in publishing meta metrics for timestamp {}.", timestamp, t);
+      }
     }
 
     // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.

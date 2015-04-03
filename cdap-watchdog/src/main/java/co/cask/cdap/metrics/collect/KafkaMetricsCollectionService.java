@@ -20,7 +20,6 @@ import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.iterator.MetricsIterator;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 /**
  * A {@link AggregatedMetricsCollectionService} that publish {@link MetricValue} to kafka. The partition
@@ -76,7 +76,7 @@ public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionSe
   }
 
   @Override
-  protected void publish(MetricsIterator metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     KafkaPublisher publisher = getPublisher();
     if (publisher == null) {
       LOG.warn("Unable to get kafka publisher, will not be able to publish metrics.");
@@ -92,16 +92,6 @@ public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionSe
     }
 
     preparer.send();
-
-    if (isPublishMetaMetrics()) {
-      // send meta metrics batch now
-      preparer = publisher.prepare(topicPrefix);
-      long timeSentBatch = System.currentTimeMillis();
-      for (MetricValue metaMetric : metrics.getMetaMetrics(timeSentBatch)) {
-        publishMetric(preparer, metaMetric);
-      }
-      preparer.send();
-    }
   }
 
   private void publishMetric(KafkaPublisher.Preparer preparer, MetricValue value) throws IOException {

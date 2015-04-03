@@ -52,7 +52,7 @@ public class MetricsIterator extends AbstractIterator<MetricValue> {
     }
   }
 
-  public List<MetricValue> getMetaMetrics(long timestampMs) {
+  public Iterator<MetricValue> getMetaMetrics(long timestampMs) {
     long timestamp = TimeUnit.MILLISECONDS.toSeconds(timestampMs);
 
     MetricValue delayAvg = new MetricValue(
@@ -70,6 +70,7 @@ public class MetricsIterator extends AbstractIterator<MetricValue> {
     MetricValue count = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
       "metrics.global.processed.count", timestamp, stats.getCount(), MetricType.COUNTER);
-    return ImmutableList.of(delayAvg, delayMin, delayMax, count);
+
+    return ImmutableList.of(delayAvg, delayMin, delayMax, count).iterator();
   }
 }

@@ -17,13 +17,13 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.metrics.iterator.MetricsIterator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -46,18 +46,10 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(MetricsIterator metrics) throws Exception {
+  protected void publish(Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
       publishMetric(record);
-    }
-
-    if (isPublishMetaMetrics()) {
-      // send meta metrics batch now
-      long timeSentBatch = System.currentTimeMillis();
-      for (MetricValue metaMetric : metrics.getMetaMetrics(timeSentBatch)) {
-        publishMetric(metaMetric);
-      }
     }
   }
 
