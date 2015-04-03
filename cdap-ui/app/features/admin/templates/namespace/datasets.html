@@ -1,16 +1,25 @@
-<h2> {{$stateParams.nsadmin}}: Data </h2>
 
-<div class="btn-group">
+
+<!-- <div class="btn-group"> -->
     <!-- <button type="button" class="btn btn-default" bs-dropdown="dropdown">Select core dataset type <span class="caret"></span></button>
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Add Dataset</button>
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button> -->
-  <button class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+<!--   <button class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+</div> -->
+
+<div class="row">
+    <div class="col-xs-6">
+        <h2> {{$stateParams.nsadmin}}: Data </h2>
+    </div>
+    <div class="col-xs-6 text-right h2">
+      <button class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+    </div>
 </div>
 
-<table class="table table-striped table-responsive">
+<table class="table table-responsive" cask-sortable>
   <thead ng-class="{'sort-enabled': datasets.length>0}">
-    <th>Name</th>
+    <th data-predicate="name" data-predicate-default="reverse">Name</th>
     <th>Type</th>
     <th>Edit</th>
   </thead>
@@ -20,7 +29,7 @@
         <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})" ng-bind="dataset.name"></a>
       </td>
       <td ng-bind="dataset.type"></td>
-
+      <td></td>
     </tr>
     <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
       <td>

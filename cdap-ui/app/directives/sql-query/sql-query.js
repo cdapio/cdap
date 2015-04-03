@@ -17,7 +17,7 @@ angular.module(PKG.name + '.commons')
           current = 'dataset_' + $state.params.datasetId;
         }
 
-        $scope.query = "SELECT * FROM " + current;
+        $scope.query = 'SELECT * FROM ' + current + ' LIMIT 5';
 
         $scope.execute = function() {
           dataSrc
