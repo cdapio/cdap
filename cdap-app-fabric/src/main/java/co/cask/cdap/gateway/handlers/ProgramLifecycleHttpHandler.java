@@ -1274,7 +1274,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           } else {
-            // program exists and not running. so return stopped.
+            // program exists
+            if (type == ProgramType.MAPREDUCE) {
+              // check if MapReduce program is running as a part of the Workflow
+              if (store.getRuns(id, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).size() > 0) {
+                return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
+              }
+            }
             return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
         } else {
