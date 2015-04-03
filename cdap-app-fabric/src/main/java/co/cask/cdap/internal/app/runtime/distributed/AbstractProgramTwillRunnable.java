@@ -379,7 +379,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
             }
           });
 
-          bind(Store.class).to(DefaultStore.class).in(Scopes.SINGLETON);
+          bind(Store.class).to(DefaultStore.class);
         }
       }
     );

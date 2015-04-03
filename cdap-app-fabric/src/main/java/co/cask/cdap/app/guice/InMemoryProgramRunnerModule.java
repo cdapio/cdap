@@ -18,7 +18,6 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
@@ -39,7 +38,6 @@ import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.worker.WorkerProgramRunner;
 import com.google.common.base.Preconditions;
@@ -113,8 +111,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
-
-    bind(Store.class).to(DefaultStore.class).in(Scopes.SINGLETON);
   }
 
   @Singleton
