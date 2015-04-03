@@ -38,13 +38,10 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
 
   public void configure(StageConfigurer configurer) {
-    configurer.addProperty(new Property("streamName", "Name of the stream to use as Source", true));
-    configurer.addProperty(new Property("startTime", "Start time to read the stream from. If not specified the " +
-      "stream will be read from the beginning.", false));
-    configurer.addProperty(new Property("endTime", "End time to read the stream to. If not specified the stream " +
-      "will be read till the end.", false));
     configurer.setName(StreamBatchSource.class.getName());
     configurer.setDescription("Use Stream as Source");
+    configurer.addProperty(new Property("streamName", "Name of the stream to use as Source", true));
+    configurer.addProperty(new Property("frequency", "Frequency of the schedule", false));
   }
 
   /**
@@ -54,10 +51,10 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
    */
   @Override
   public void prepareJob(BatchSourceContext context) {
-    long startTime = context.getRuntimeArguments().containsKey("startTime") ?
-      Long.valueOf(context.getRuntimeArguments().get("startTime")) : 0L;
-    long endTime = context.getRuntimeArguments().containsKey("endTime") ?
-      Long.valueOf(context.getRuntimeArguments().get("endTime")) : Long.MAX_VALUE;
+    long endTime = context.getLogicalStartTime();
+    //TODO: Once the method to get the frequency from the schedule is added change it to use that. Then we will not
+    // need the frequency as a configuration here
+    long startTime = endTime - Long.valueOf(context.getRuntimeArguments().get("frequency"));
 
     String streamName = context.getRuntimeArguments().get("streamName");
     LOG.info("Setting input to Stream : {}", streamName);

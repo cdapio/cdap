@@ -17,14 +17,12 @@
 package co.cask.cdap.templates.etl.lib.transforms;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.conversion.avro.Converter;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
-import com.google.common.collect.ImmutableMap;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -32,32 +30,27 @@ import org.apache.hadoop.io.NullWritable;
 import javax.annotation.Nullable;
 
 /**
- * Transform for converting a StructuredRecord to Avro format
+ * Transform {@link StructuredRecord} to {@link AvroKey<GenericRecord>}
  */
 public class StructuredRecordToAvroTransform extends Transform<LongWritable, StructuredRecord,
   AvroKey<GenericRecord>, NullWritable> {
 
-  /**
-   * Configure the Transform stage. Used to provide information about the Transform.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
   @Override
   public void configure(StageConfigurer configurer) {
     configurer.setName(StructuredRecordToAvroTransform.class.getName());
     configurer.setDescription("Transforms a StructuredRecord to Avro format");
-    configurer.addProperty(new Property("schemaType", "Type of the Schema", true));
-    configurer.addProperty(new Property("schema", "The schema of the Structured record events", true));
   }
 
   @Override
   public void transform(@Nullable final LongWritable inputKey, StructuredRecord structuredRecord,
                         final Emitter<AvroKey<GenericRecord>, NullWritable> emitter) throws Exception {
-    Schema schema = new Schema.Parser().parse(getContext().getRuntimeArguments().get("schema"));
-    String headersStr = getContext().getRuntimeArguments().get("headers");
-    String[] headers = headersStr == null ? new String[0] : headersStr.split(",");
-    Converter converter = new Converter(schema, headers);
-    GenericRecord record = converter.convert(structuredRecord, inputKey.get(), ImmutableMap.<String, String>of());
-    emitter.emit(new AvroKey<GenericRecord>(record), NullWritable.get());
+    co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
+    Schema avroSchema = new Schema.Parser().parse(structuredRecordSchema.toString());
+    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(avroSchema);
+    for (Schema.Field field : avroSchema.getFields()) {
+      String fieldName = field.name();
+      recordBuilder.set(fieldName, structuredRecord.get(fieldName));
+    }
+    emitter.emit(new AvroKey<GenericRecord>(recordBuilder.build()), NullWritable.get());
   }
 }
