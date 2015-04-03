@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Objects;
 
 /**
- * Represents a value of the measure at specific timestamp.
+ * Represents a value of the measure at a specific timestamp.
  */
 @Beta
 public final class TimeValue implements Comparable<TimeValue> {

@@ -22,7 +22,7 @@ import com.google.common.base.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value.
+ * Represents tag and its value associated with {@link CubeFact}.
  */
 @Beta
 public final class TagValue {

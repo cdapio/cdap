@@ -22,20 +22,29 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Query that specifies parameters to delete entries from cube.
+ * Defines a query for deleting data in {@link Cube}.
  */
 @Beta
 public class CubeDeleteQuery {
-
   private final long startTs;
   private final long endTs;
   private final int resolution;
   private final String measureName;
   private final Map<String, String> sliceByTagValues;
 
-  public CubeDeleteQuery(long startTs, long endTs, int resolution, String measureName,
+  /**
+   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
+   * @param startTs start time of the data selection, in seconds since epoch
+   * @param endTs end time of the data selection, in seconds since epoch
+   * @param resolution resolution of the aggregations to delete from
+   * @param measureName name of the measure to delete, {@code null} means delete all
+   * @param sliceByTagValues tag name, tag value pairs that define the data selection
+   */
+  public CubeDeleteQuery(long startTs, long endTs, int resolution,
+                         @Nullable String measureName,
                          Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
@@ -69,8 +78,9 @@ public class CubeDeleteQuery {
     return Objects.toStringHelper(this)
       .add("startTs", startTs)
       .add("endTs", endTs)
+      .add("resolution", resolution)
       .add("measureName", measureName)
-      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
+      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").join(sliceByTagValues))
       .toString();
   }
 }

@@ -18,7 +18,7 @@ package co.cask.cdap.api.dataset.lib.cube;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * COUNTER or GAUGE type
+ * Type of measurement in {@link CubeFact}.
  */
 @Beta
 public enum MeasureType {

@@ -49,7 +49,6 @@ public interface Cube {
   Collection<TimeSeries> query(CubeQuery query) throws Exception;
 
   /**
-
    * Deletes the data specified by {@link CubeQuery} from all the fact tables.
    * @param query query specifies parameters for deletion.
    * @throws Exception

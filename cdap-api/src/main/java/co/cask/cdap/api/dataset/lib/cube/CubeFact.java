@@ -33,6 +33,13 @@ public class CubeFact {
   private final String measureName;
   private final TimeValue timeValue;
 
+  /**
+   * Creates an instance of {@link CubeFact}
+   * @param tagValues tag name, tag value pairs associated with the fact
+   * @param measureType measurement type, see {@link MeasureType} for available types
+   * @param measureName measurement name
+   * @param timeValue value of the measurement at specific time
+   */
   public CubeFact(Map<String, String> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
     this.tagValues = ImmutableMap.copyOf(tagValues);
     this.measureType = measureType;

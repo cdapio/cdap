@@ -29,12 +29,13 @@ import javax.annotation.Nullable;
 /**
  * Defines a query to perform on {@link Cube} data.
  * </p>
- * Though limited currently in functionality, you can map {@link CubeQuery} to the following statement:
+ * Another way to think about the query is to map it to the following statement::
  * <pre>
  * SELECT count('read.ops')                                     << measure name and type
- * FROM Cube
+ * FROM 1min_resolution                                         << resolution
  * GROUP BY dataset,                                            << groupByTags
  * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
+ * LIMIT 100                                                    << limit
  *
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
@@ -46,11 +47,9 @@ public final class CubeQuery {
   private final int resolution;
   private final int limit;
   private final String measureName;
-  // todo: should be aggregation? e.g. also support min/max, etc.
   private final MeasureType measureType;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
-
   private final Interpolator interpolator;
 
   public CubeQuery(long startTs, long endTs, int resolution,
@@ -121,6 +120,7 @@ public final class CubeQuery {
       .add("resolution", resolution)
       .add("measureName", measureName)
       .add("measureType", measureType)
+      .add("interpolator", interpolator)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .add("groupByTags", Joiner.on(",").join(groupByTags)).toString();
   }

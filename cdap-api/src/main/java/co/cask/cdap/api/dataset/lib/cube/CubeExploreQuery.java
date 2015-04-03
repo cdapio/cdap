@@ -23,9 +23,7 @@ import com.google.common.base.Objects;
 import java.util.List;
 
 /**
- * Defines a query to perform Exploration and Search on {@link Cube} data.
- * Given a list of {@link TagValue} this explore query can be used
- * to find next set of tags available or the measureNames belonging to this tag list.
+ * Defines a query to perform exploration of the {@link Cube} data, e.g. to find tag name and values and measure names.
  */
 @Beta
 public class CubeExploreQuery {
@@ -35,6 +33,13 @@ public class CubeExploreQuery {
   private final int limit;
   private final List<TagValue> tagValues;
 
+  /**
+   * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to explore in.
+   * @param startTs start time of the data selection, in seconds since epoch
+   * @param endTs end time of the data selection, in seconds since epoch
+   * @param resolution resolution of the aggregations explore
+   * @param tagValues tag name, tag value pairs that define the data selection
+   */
   public CubeExploreQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
