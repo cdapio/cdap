@@ -40,6 +40,7 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -286,6 +287,28 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&groupBy=namespace,flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
+  @Test
+  public void testMultipleMetricsSingleContext() throws Exception {
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
+        "&metric=system.reads&aggregate=true", ImmutableList.<Long>of(2L));
+
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
+        "&metric=system.reads&aggregate=true", ImmutableList.<Long>of(2L));
+
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
+        "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.<Long>of(2L, 2L));
+
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 300 * 1000) / 1000;
+    verifyRangeQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:collector" +
+        "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
+        + end, ImmutableList.<Long>of(1L, 1L, 1L), ImmutableList.<Long>of(1L, 1L, 1L));
+  }
+
   private void verifyGroupByResult(String url, List<TimeSeriesResult> groupByResult) throws Exception {
     MetricQueryResult result = post(url, MetricQueryResult.class);
     Assert.assertEquals(groupByResult.size(), result.getSeries().length);
@@ -375,13 +398,28 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                       "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
+  private void verifyAggregateQueryResult(String url, List<Long> expectedValue) throws Exception {
+    List<MetricQueryResult> queryResult = post(url, new TypeToken<List<MetricQueryResult>>() { }.getType());
+    for (int i = 0; i < queryResult.size(); i++) {
+      Assert.assertEquals((Long) expectedValue.get(i),
+                          (Long) queryResult.get(i).getSeries()[0].getData()[0].getValue());
+    }
+  }
+
+  private void verifyRangeQueryResult(String url, List<Long> expectedPoints, List<Long> expectedSum) throws Exception {
+    List<MetricQueryResult> queryResult = post(url, new TypeToken<List<MetricQueryResult>>() { }.getType());
+    for (int i = 0; i < queryResult.size(); i++) {
+      verifyTimeSeries(queryResult.get(i), expectedPoints.get(i), expectedSum.get(i));
+    }
+  }
 
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
     // todo : can refactor this to test only the new tag name queries once we deprecate queryParam using context.
     URI sourceUrl = new URI(url);
     MetricQueryResult queryResult;
     Map<String, List<String>> queryParams = new QueryStringDecoder(sourceUrl).getParameters();
-    if (!queryParams.containsKey("tag") || queryParams.get("groupBy").size() < 1) {
+    if (!queryParams.containsKey("tag")
+      || (queryParams.containsKey("groupBy") && queryParams.get("groupBy").size() < 1)) {
       queryResult = post(url, MetricQueryResult.class);
       Assert.assertEquals(expectedValue, queryResult.getSeries()[0].getData()[0].getValue());
     }

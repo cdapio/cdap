@@ -31,6 +31,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -183,32 +184,55 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
                     @QueryParam("context") String context,
-                    @QueryParam("metric") String metric,
+                    @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
                     @QueryParam("tag") List<String> tags) throws Exception {
-    if (tags.size() > 0 || (groupBy.size() > 1)) {
-      tagsQuerying(request, responder, tags, metric, groupBy);
+    if (tags.size() > 0 || (groupBy.size() > 1) || metrics.size() > 1) {
+      tagsQuerying(request, responder, tags, metrics, groupBy);
     } else {
       // context querying support for 2.8 compatibility.
-      contextQuerying(request, responder, context, metric, groupBy.size() > 0 ? groupBy.get(0) : null);
+      contextQuerying(request, responder, context, metrics.get(0), groupBy.size() > 0 ? groupBy.get(0) : null);
     }
   }
 
-  private void tagsQuerying(HttpRequest request, HttpResponder responder, List<String> tags, String metric,
+  private void tagsQuerying(HttpRequest request, HttpResponder responder, List<String> tags, List<String> metrics,
                             List<String> groupByTags) {
-    executeQuery(request, responder, parseTagValuesAsMap(tags), groupByTags, metric);
+    try {
+      List<MetricQueryResult> results = Lists.newArrayList();
+      for (String metric : metrics) {
+        results.add(executeQuery(request, responder, parseTagValuesAsMap(tags), groupByTags, metric));
+      }
+      responder.sendJson(HttpResponseStatus.OK, results);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
   }
 
   private void contextQuerying(HttpRequest request, HttpResponder responder,
                                @QueryParam("context") String context,
                                @QueryParam("metric") String metric,
-                               @QueryParam("groupBy") String groupBy) throws Exception {
-    List<String> groupByTags = parseGroupBy(groupBy);
-    executeQuery(request, responder, parseTagValuesAsMap(context), groupByTags, metric);
+                               @QueryParam("groupBy") String groupBy) {
+    try {
+      List<String> groupByTags = parseGroupBy(groupBy);
+      MetricQueryResult queryResult = executeQuery(request, responder, parseTagValuesAsMap(context),
+                                                   groupByTags, metric);
+      responder.sendJson(HttpResponseStatus.OK, queryResult);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
   }
 
-  private void executeQuery(HttpRequest request, HttpResponder responder,
-                            Map<String, String> sliceByTags, List<String> groupByTags, String metric) {
+  private MetricQueryResult executeQuery(HttpRequest request, HttpResponder responder,
+                                         Map<String, String> sliceByTags,
+                                         List<String> groupByTags, String metric) {
     try {
       // todo: refactor parsing time range params
       // sets time range, query type, etc.
@@ -222,20 +246,18 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
 
+
       MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
                                                   // todo: figure out MetricType
                                                   MetricType.COUNTER, tagsSliceBy, groupByTags);
 
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);
-
-      responder.sendJson(HttpResponseStatus.OK, result);
+      return result;
     } catch (IllegalArgumentException e) {
-      LOG.warn("Invalid request", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      throw Throwables.propagate(e);
     } catch (Exception e) {
-      LOG.error("Exception querying metrics ", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      throw Throwables.propagate(e);
     }
   }
 
