@@ -40,6 +40,7 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
@@ -64,6 +65,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -78,11 +81,14 @@ import javax.annotation.Nullable;
  * Tests for {@link ProgramLifecycleHttpHandler}
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandlerTest.class);
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
+  private static final Type LIST_OF_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
@@ -1010,9 +1016,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 
+    } catch (Exception e) {
+      // Log exception before finally block is called
+      LOG.error("Got exception: ", e);
     } finally {
-      Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + appId, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                            namespace)).getStatusLine().getStatusCode());
+      HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + appId, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                               namespace));
+      Assert.assertEquals(EntityUtils.toString(httpResponse.getEntity()),
+                          200, httpResponse.getStatusLine().getStatusCode());
     }
   }
 
@@ -1021,20 +1032,26 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     while (trials++ < 5) {
       HttpResponse response = doGet(url);
       List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                       new TypeToken<List<Map<String, String>>>() {
-                                                       }.getType());
-
+                                                       LIST_OF_MAP_STRING_STRING_TYPE);
       if (result.size() >= size) {
         // For each one, we have 4 fields.
         for (Map<String, String> m : result) {
           int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
           Assert.assertEquals(expectedFieldSize, m.size());
+          assertRunRecord(String.format("%s/%s", url.substring(0, url.indexOf("?")), m.get("runid")),
+                          GSON.fromJson(GSON.toJson(m), RunRecord.class));
         }
         break;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 5);
+  }
+
+  private void assertRunRecord(String url, RunRecord expectedRunRecord) throws Exception {
+    HttpResponse response = doGet(url);
+    RunRecord actualRunRecord = GSON.fromJson(EntityUtils.toString(response.getEntity()), RunRecord.class);
+    Assert.assertEquals(expectedRunRecord, actualRunRecord);
   }
 
   private void testRuntimeArgs(Class<?> app, String namespace, String appId, String runnableType, String runnableId)
