@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.common.DefaultEmitter;
 
 import java.util.List;
 import java.util.Map;

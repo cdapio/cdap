@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch.config;
+package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 
