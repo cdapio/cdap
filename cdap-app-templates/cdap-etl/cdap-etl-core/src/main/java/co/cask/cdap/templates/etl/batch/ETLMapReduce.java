@@ -61,18 +61,18 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
+    Map<String, String> runtimeArgs = context.getRuntimeArguments();
 
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.ADAPTER_NAME));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.CONFIG_KEY));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Source.SPECIFICATION));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Sink.SPECIFICATION));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Transform.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATION));
 
-    ETLBatchConfig config = GSON.fromJson(context.getRuntimeArguments().get(Constants.CONFIG_KEY),
-                                          ETLBatchConfig.class);
-    StageSpecification sourceSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Source.SPECIFICATION),
+    ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
+    StageSpecification sourceSpec = GSON.fromJson(runtimeArgs.get(Constants.Source.SPECIFICATION),
                                                   StageSpecification.class);
-    StageSpecification sinkSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
+    StageSpecification sinkSpec = GSON.fromJson(runtimeArgs.get(Constants.Sink.SPECIFICATION),
                                                 StageSpecification.class);
 
     prepareSource(sourceSpec, context, config.getSource());

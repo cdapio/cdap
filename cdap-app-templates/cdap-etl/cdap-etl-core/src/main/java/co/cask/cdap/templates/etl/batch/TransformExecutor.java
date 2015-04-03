@@ -34,7 +34,6 @@ public final class TransformExecutor {
     this.transformList = transforms;
     this.previousEmitter = new DefaultEmitter();
     this.currentEmitter = new DefaultEmitter();
-
   }
 
   public void runOneIteration(DefaultEmitter data) throws Exception {
