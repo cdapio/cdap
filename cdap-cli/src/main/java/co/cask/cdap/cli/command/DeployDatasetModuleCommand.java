@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.DatasetModuleClient;
@@ -68,6 +70,6 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deploys a %s.", ElementType.DATASET_MODULE.getPrettyName());
+    return String.format("Deploys %s.", Fragment.of(Article.A, ElementType.DATASET_MODULE.getTitleName()));
   }
 }

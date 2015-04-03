@@ -16,6 +16,29 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   $scope.datasets = [];
   $scope.streams = [];
   $scope.hideWelcomeMessage = false;
+  //$scope.mockData = [];
+  $scope.chartHistory = [
+    {
+      label: 'mockData',
+      values: loopGraph()
+    }
+  ];
+  $scope.appHistory = [
+    {
+      label: 'mockData',
+      values: loopGraph()
+    }
+  ];
+  function loopGraph() {
+    var arr = [];
+    for (var i = 0; i < 100; i++) {
+      arr.push({
+        time: i, y: Math.floor(Math.random() * 500 + 1)
+      });
+    }
+
+    return arr;
+  }
 
   var dataSrc = new MyDataSource($scope),
       partialPath = '/assets/features/overview/templates/',

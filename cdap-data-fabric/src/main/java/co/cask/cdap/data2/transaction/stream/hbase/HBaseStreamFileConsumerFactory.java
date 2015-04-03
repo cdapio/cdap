@@ -24,7 +24,6 @@ import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -34,6 +33,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
+import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -71,14 +72,19 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
                                   FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                   @Nullable ReadFilter extraFilter) throws IOException {
 
+    int splits = cConf.getInt(Constants.Stream.CONSUMER_TABLE_PRESPLITS);
+    AbstractRowKeyDistributor distributor = new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+
+    byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
+
     HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
-    htd.addFamily(hcd);
     hcd.setMaxVersions(1);
 
-    int splits = cConf.getInt(Constants.Stream.CONSUMER_TABLE_PRESPLITS, 1);
-    byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
+    htd.addFamily(hcd);
+    htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
 
     tableUtil.createTableIfNotExists(getAdmin(), tableId, htd, splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
@@ -86,9 +92,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
+
     return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,
                                        stateStore, beginConsumerState, extraFilter,
-                                       HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
+                                       createKeyDistributor(hTable.getTableDescriptor()));
   }
 
   @Override
@@ -104,5 +111,20 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
       admin = new HBaseAdmin(hConf);
     }
     return admin;
+  }
+
+  /**
+   * Creates a {@link AbstractRowKeyDistributor} based on the meta data in the given {@link HTableDescriptor}.
+   */
+  private AbstractRowKeyDistributor createKeyDistributor(HTableDescriptor htd) {
+    int buckets = QueueConstants.DEFAULT_ROW_KEY_BUCKETS;
+    String value = htd.getValue(QueueConstants.DISTRIBUTOR_BUCKETS);
+
+    if (value != null) {
+      buckets = Integer.parseInt(value);
+    }
+
+    return new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(buckets));
   }
 }

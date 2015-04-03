@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
@@ -53,7 +55,7 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
     Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
     programClient.setRuntimeArgs(appId, elementType.getProgramType(), programId, runtimeArgs);
     output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
-                  elementType.getPrettyName(), programId, appId, runtimeArgsString);
+                  elementType.getTitleName(), programId, appId, runtimeArgsString);
   }
 
   @Override
@@ -64,7 +66,7 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the runtime arguments of a " + elementType.getPrettyName() + "." +
+    return "Sets the runtime arguments of " + Fragment.of(Article.A, elementType.getTitleName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

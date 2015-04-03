@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -69,6 +71,7 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about a %s.", ElementType.DATASET_TYPE.getPrettyName());
+    return String.format("Shows information about %s.",
+                         Fragment.of(Article.A, ElementType.DATASET_TYPE.getTitleName()));
   }
 }

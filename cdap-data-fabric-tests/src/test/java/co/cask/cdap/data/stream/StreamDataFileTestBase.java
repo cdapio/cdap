@@ -56,6 +56,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -377,6 +378,40 @@ public abstract class StreamDataFileTestBase {
       List<StreamEvent> events = Lists.newArrayList();
       Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
       Assert.assertEquals(iterator.currentTimestamp(), events.get(0).getTimestamp());
+    }
+  }
+
+  @Test
+  public void testArbitraryOffset() throws Exception {
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
+
+    // Writer 100 events with different timestamps.
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
+                                                           10L);
+    for (int i = 0; i < 100; i++) {
+      writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
+    }
+    writer.close();
+
+    // Read all 100 events to record their start position
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
+    List<PositionStreamEvent> events = Lists.newArrayList();
+    Assert.assertEquals(100, reader.read(events, 100, 0, TimeUnit.SECONDS));
+    reader.close();
+
+    // Read the events again by seeking to some arbitary offset
+    Random random = new Random();
+    for (PositionStreamEvent event : ImmutableList.copyOf(events)) {
+      int rand = random.nextInt(5) + 1;
+      reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(eventFile),
+                                                     Locations.newInputSupplier(indexFile), event.getStart() - rand);
+      events.clear();
+      Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
+      reader.close();
+      Assert.assertEquals(event.getStart(), events.get(0).getStart());
     }
   }
 

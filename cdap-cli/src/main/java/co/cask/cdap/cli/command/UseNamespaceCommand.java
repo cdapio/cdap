@@ -59,7 +59,8 @@ public class UseNamespaceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Changes the current %s to <%s>.", ElementType.NAMESPACE.getPrettyName(),
+    return String.format("Changes the current %s to <%s>.",
+                         ElementType.NAMESPACE.getTitleName(),
                          ArgumentName.NAMESPACE_NAME);
   }
 }

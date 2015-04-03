@@ -513,9 +513,9 @@ final class MetricQueryParser {
   }
 
   private static Resolution getResolution(long difference) {
-    if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
+    if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
       return  Resolution.HOUR;
-    } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
+    } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
       return Resolution.MINUTE;
     } else {
       return Resolution.SECOND;
