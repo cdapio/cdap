@@ -1,17 +1,11 @@
-<div class="modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content" ng-controller="DashboardAddWdgtCtrl">
-
-      <form name="addWdgtForm" class="form-horizontal"
-          ng-submit="doAddWidget()"
-          novalidate>
-
-        <div class="modal-header">
-          <button type="button" class="close" ng-click="$hide()">&times;</button>
-          <h4 class="modal-title">Add a Widget</h4>
-        </div>
-
-        <div class="modal-body">
+<form name="addWdgtForm"
+      class="form-horizontal"
+      ng-submit="doAddWidget()"
+        novalidate>
+  <div class="modal-header">
+      <h4 class="modal-title">Add a Widget</h4>
+  </div>
+  <div class="modal-body">
 
           <div class="form-group">
             <label for="addWdgtType" class="col-xs-3 control-label">Type</label>
@@ -47,15 +41,19 @@
 
         </div>
 
-        <div class="modal-footer text-right">
+        <!-- <div class="modal-footer text-right">
           <button type="submit"
             ng-disabled="addWdgtForm.$invalid"
             class="btn btn-primary"
           >Add</button>
-        </div>
+        </div> -->
 
-      </form>
 
-    </div>
   </div>
-</div>
+  <div class="modal-footer">
+      <button type="submit"
+        ng-disabled="addWdgtForm.$invalid"
+        class="btn btn-primary"
+      >Add</button>
+  </div>
+</form>

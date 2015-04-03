@@ -1,7 +1,7 @@
 <ul class="dropdown-menu" role="menu">
 
   <li role="presentation">
-    <a role="menuitem" tabindex="-1" ui-sref="dashboard.addwdgt">
+    <a role="menuitem" tabindex="-1" ui-sref="dashboard.user.addwdgt">
       <span class="fa fa-fw fa-dashboard"></span>
       Add widget
     </a>
@@ -12,7 +12,7 @@
   <li role="presentation">
     <a role="menuitem" tabindex="-1" href=""
       ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)"
-      cask-promptable="currentBoard.rename($value)"
+      cask-promptable="dashboards[dashboards.activeIndex].rename($value)"
     >
       <span class="fa fa-fw fa-pencil"></span>
       Rename
@@ -39,9 +39,9 @@
 
   <li role="presentation" class="divider"></li>
 
-  <li role="presentation" ng-class="{disabled: dashboards.length<2}">
+  <li role="presentation">
     <a role="menuitem" tabindex="-1" href=""
-      ng-click="dashboards.length>1 && caskConfirm()"
+      ng-click="caskConfirm()"
       cask-confirmable="removeDashboard()"
       data-confirmable-content="Really delete the dashboard?"
     >
