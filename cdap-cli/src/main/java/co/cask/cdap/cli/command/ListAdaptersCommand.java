@@ -51,14 +51,12 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
     List<AdapterSpecification> list = adapterClient.list();
 
     Table table = Table.builder()
-      .setHeader("name", "type", "sources", "sinks", "properties")
+      .setHeader("name", "description", "template", "config")
       .setRows(list, new RowMaker<AdapterSpecification>() {
         @Override
         public List<?> makeRow(AdapterSpecification object) {
-          return Lists.newArrayList(object.getName(), object.getType(),
-                                    GSON.toJson(object.getSources()),
-                                    GSON.toJson(object.getSinks()),
-                                    GSON.toJson(object.getProperties()));
+          return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
+                                    GSON.toJson(object.getConfig()));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
