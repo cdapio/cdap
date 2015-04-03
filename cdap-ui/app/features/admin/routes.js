@@ -115,7 +115,7 @@ angular.module(PKG.name + '.feature.admin')
                 keyboard: true,
                 controller: 'AdminNamespaceCreateController'
               }).result.finally(function() {
-                //$state.go('streams.list');
+                $state.go('admin.overview', {}, {reload: true});
               });
             }
           })

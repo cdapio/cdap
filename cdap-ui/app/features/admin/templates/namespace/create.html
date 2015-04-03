@@ -1,34 +1,33 @@
-<div class="modal-header">
-  <button type="button" class="fa fa-times pull-right" data-dismiss="modal">
-    <!-- <span class="fa fa-close" aria-hidden="true"> </span> -->
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left"> Add Namespace </h3>
+  <a class="btn pull-right" ng-click="closeModal()">
+    <span aria-hidden="true">×</span>
     <span class="sr-only"> Close </span>
-  </button>
-  <h3 class="modal-title"> Add Namespace </h3>
+  </a>
 </div>
 <div class="modal-body">
   <form class="form-horizontal"
         role="form"
         name="namespaceCreateForm"
-        ng-submit="submitHandler()"
         no-validate
   >
 
     <div class="form-group">
-      <label class="col-xs-12 col-sm-3 control-label" for="namespaceDisplayName"> Name: </label>
-      <div class="col-xs-12 col-sm-9">
+      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDisplayName"> Name: </label>
+      <div class="col-xs-12 col-sm-10">
         <input type="text"
                id="namespaceDisplayName"
                ng-model="model.name"
                class="form-control"
                required
-               disabled
+
         >
       </div>
     </div>
 
     <div class="form-group">
-      <label  class="col-xs-12 col-sm-3 control-label" for="namespaceDescription"> Description: </label>
-      <div class="col-xs-12 col-sm-9">
+      <label  class="col-xs-12 col-sm-2 control-label" for="namespaceDescription"> Description: </label>
+      <div class="col-xs-12 col-sm-10">
         <textarea type="text"
                id="namespaceDescription"
                ng-model="model.description"
@@ -73,6 +72,8 @@
   </form>
 </div>
 <div class="modal-footer">
-  <a ui-sref="admin.overview" class="btn btn-default">Cancel</a>
-  <button ng-disabled="namespaceCreateForm.$invalid" type="submit" class="btn btn-primary">Create</button>
+  <div class="form-group">
+    <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
+    <a ng-disabled="namespaceCreateForm.$invalid" class="btn btn-primary" ng-click="submitHandler()">Create</a>
+  </div>
 </div>
