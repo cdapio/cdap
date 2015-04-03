@@ -31,7 +31,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -139,11 +138,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final String appFabricDir;
 
   /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
-  /**
    * Runtime program service for running and managing programs.
    */
   private final ProgramRuntimeService runtimeService;
@@ -196,7 +190,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
                                      WorkflowClient workflowClient, CConfiguration configuration,
                                      ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
@@ -204,11 +198,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = storeFactory.create();
+    this.store = store;
     this.workflowClient = workflowClient;
-    this.configuration = configuration;
     this.runtimeService = runtimeService;
-    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
