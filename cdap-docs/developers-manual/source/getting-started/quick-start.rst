@@ -128,7 +128,7 @@ The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream 
 endpoint used to ingest data with HTTP requests, and you can do that using the
 Command Line Interface::
 
-  $ ./bin/cdap-cli.sh send stream logEventStream \
+  $ cdap-cli.sh send stream logEventStream \
     \''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] '\
     '"GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'\'
 
@@ -284,11 +284,24 @@ using a REST call::
   $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
   42
 
-Or, we can find out how many times the URL ``/home.html`` was accessed from the same IP address::
+Or, we can find out how many times the URL ``/home.html`` was accessed from the same IP address
+(reformatted to fit)::
 
   $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count \
   -d "/home.html"
   6
+  
+  $ cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"
+  +==================================================================+
+  | status  | headers                    | body size   | body        |
+  +==================================================================+
+  | 200     | Content-Length : 1         | 1           | 6           |
+  |         | Connection : keep-alive    |             |             |
+  |         | Content-Type : application |             |             |
+  |         | /json                      |             |             |
+  +==================================================================+
+  
+  
 
 Note that this is a POST request, because we need to send over the URL of interest.
 Because an URL can contain characters that have special meaning within URLs, it is most
@@ -440,10 +453,10 @@ Congratulations! You've just successfully run your first Big Data log analytics 
 You can deploy the same application on a real cluster and experience the power of CDAP.
 
 Additional :ref:`examples, <examples-index>` :ref:`guides, <guides-index>` and
-:ref:`tutorials <tutorials>` on building CDAP applications are available. 
+:ref:`tutorials <tutorials>` on building CDAP applications :ref:`are available <examples-introduction-index>`. 
 
 As a next step, we recommend reviewing all of these :ref:`training materials <examples-introduction-index>`
-as being the easiest way to become familiar with CDAP.
+as being the easiest way to become familiar and proficient with CDAP.
 
 If you want to begin writing your own application, continue with the instructions on the 
 :ref:`Getting Started <getting-started-index>` page.
