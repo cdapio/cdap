@@ -15,12 +15,14 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.metrics.iterator.IteratorWithMetaMetrics;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -33,9 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,13 +49,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
-  private static final long SAMPLING_DELAY_SEC = 1;
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
   private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
 
   private ScheduledExecutorService executorService;
-  private long timestampLastSampled;
 
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
@@ -67,8 +65,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(new CacheLoader<EmitterKey, AggregatedMetricsEmitter>() {
         @Override
         public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getTags(),
-                                              key.getMetric());
+          return new AggregatedMetricsEmitter(key.getTags(), key.getMetric());
         }
       });
   }
@@ -102,60 +99,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       metricsItor = rawMetricsItor;
     } else {
       // wrap the raw metrics iterator with an iterator that will publish meta metrics
-      metricsItor = new AbstractIterator<MetricValue>() {
-        private Queue<MetricValue> pendingMetrics = new LinkedList<MetricValue>();
-        private boolean queuedAggregateMetrics = false;
-        private int numMetrics = 0;
-
-        @Override
-        protected MetricValue computeNext() {
-          if (rawMetricsItor.hasNext()) {
-
-            if (pendingMetrics.isEmpty()) {
-              // publish raw metric
-              MetricValue raw = rawMetricsItor.next();
-              numMetrics++;
-
-              // sample processing delay - assumes we mostly receive metrics in time order
-              if (raw.getTimestamp() - timestampLastSampled >= SAMPLING_DELAY_SEC) {
-                timestampLastSampled = raw.getTimestamp();
-
-                long timestampMs = TimeUnit.SECONDS.toMillis(raw.getTimestamp());
-                long nowMs = System.currentTimeMillis();
-                long delayMs = nowMs - timestampMs;
-                MetricValue processDelayMetric = new MetricValue(
-                  ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-                  "metrics.global.processed.delay.ms", timestamp, delayMs, MetricType.GAUGE);
-                pendingMetrics.add(processDelayMetric);
-              }
-
-              return raw;
-            } else {
-              // publish pending metric
-              return pendingMetrics.poll();
-            }
-          } else {
-            if (!queuedAggregateMetrics) {
-              // looking at last value - queue aggregate metrics if we got anything
-              if (numMetrics > 0) {
-                MetricValue processedCountMetric = new MetricValue(
-                  ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-                  "metrics.global.processed.count", timestamp, numMetrics, MetricType.COUNTER);
-                pendingMetrics.add(processedCountMetric);
-              }
-              queuedAggregateMetrics = true;
-            }
-
-            if (!pendingMetrics.isEmpty()) {
-              // publish an aggregate metric
-              return pendingMetrics.poll();
-            } else {
-              // done publishing aggregate metrics
-              return endOfData();
-            }
-          }
-        }
-      };
+      metricsItor = new IteratorWithMetaMetrics(rawMetricsItor);
     }
 
     try {
