@@ -1,0 +1,36 @@
+<div class="well well-lg" ng-if="unknownBoard">
+  <h3 class="text-center"> This dashboard is either deleted or not found.</h3>
+</div>
+
+<div class="well well-lg" ng-if="currentBoard.isEmpty">
+  <h3 class="text-center"> No cool widgets in this board! <a ui-sref="dashboard.user.addwdgt"> Add one! </a>  </h3>
+</div>
+
+<div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">
+  <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-4': colWidth.oneThird }"
+       ng-repeat="column in currentBoard.columns"
+       ng-model="column"
+       as-sortable="dragdrop">
+
+    <div class="panel"
+      ng-class="wdgt.getClassName()"
+      ng-repeat="wdgt in column"
+      as-sortable-item>
+
+      <div class="panel-heading"
+        ng-include="'/assets/features/dashboard/partials/wdgt-head.html'"
+        as-sortable-item-handle></div>
+
+      <div class="panel-body"
+        ng-include="wdgt.getPartial()"
+        ></div>
+
+      <div class="panel-footer"
+        ng-show="wdgt.metric"
+        ng-include="'/assets/features/dashboard/partials/wdgt-foot.html'"
+        ></div>
+
+    </div>
+  </div>
+
+</div>
