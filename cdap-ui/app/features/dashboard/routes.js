@@ -14,7 +14,7 @@ angular.module(PKG.name+'.feature.dashboard')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'dashboard'
         },
-        templateUrl: '/assets/features/dashboard/dashboard.html',
+        templateUrl: '/assets/features/dashboard/templates/dashboard.html',
         resolve: {
           rDashboardsModel: function ($stateParams, MyDashboardsModel) {
             return (new MyDashboardsModel($stateParams.namespace)).$promise;
@@ -58,48 +58,13 @@ angular.module(PKG.name+'.feature.dashboard')
           }
         })
 
-
-      // .state('dashboard', {
-      //   data: {
-      //     authorizedRoles: MYAUTH_ROLE.all,
-      //     highlightTab: 'operations'
-      //   },
-      //   parent: 'ns',
-      //   url: '/dashboard/:tab',
-      //   templateUrl: '/assets/features/dashboard/main.html',
-      //   controller: 'DashboardCtrl',
-      //   resolve: {
-      //     rDashboardsModel: function ($stateParams, MyDashboardsModel) {
-      //       return (new MyDashboardsModel($stateParams.namespace)).$promise;
-      //     }
-      //
-      //   }
-      // })
-
-        //
-        // .state('dashboard.cdap', {
-        //   url: '/cdap',
-        //   templateUrl: path + 'tab/charts.html',
-        //   controller: 'Op28CdapCtrl'
-        // })
-        // .state('operations.system', {
-        //   url: '/system',
-        //   templateUrl: path + 'tab/charts.html',
-        //   controller: 'Op28SystemCtrl'
-        // })
-        // .state('operations.apps', {
-        //   url: '/apps',
-        //   templateUrl: path + 'tab/apps.html',
-        //   controller: 'Op28AppsCtrl'
-        // })
-
         .state('dashboard.user.addwdgt', {
           url: '/widget/add',
           onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
             var scope = $rootScope.$new();
             scope.currentDashboard = rDashboardsModel.current();
             $bootstrapModal.open({
-              templateUrl: '/assets/features/dashboard/partials/addwdgt.html',
+              templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
               size: 'md',
               backdrop: true,
               keyboard: true,
