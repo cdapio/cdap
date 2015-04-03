@@ -22,7 +22,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.RunIds;
-import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -65,11 +65,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private final WorkflowClient workflowClient;
 
   @Inject
-  public WorkflowHttpHandler(Authenticator authenticator, StoreFactory storeFactory, WorkflowClient workflowClient,
+  public WorkflowHttpHandler(Authenticator authenticator, Store store, WorkflowClient workflowClient,
                              CConfiguration configuration, ProgramRuntimeService runtimeService,
                              DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin, Scheduler scheduler,
                              PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory) {
-    super(authenticator, storeFactory, configuration, runtimeService, discoveryServiceClient,
+    super(authenticator, store, configuration, runtimeService, discoveryServiceClient,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory);
     this.workflowClient = workflowClient;
   }

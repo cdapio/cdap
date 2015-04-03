@@ -30,7 +30,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -117,12 +116,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-
-  /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
+  
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
@@ -193,17 +187,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                                     CConfiguration configuration, ProgramRuntimeService runtimeService,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
+                                     ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = storeFactory.create();
-    this.configuration = configuration;
+    this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;

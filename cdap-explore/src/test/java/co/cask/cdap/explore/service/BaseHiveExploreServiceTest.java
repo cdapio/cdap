@@ -18,7 +18,6 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -362,10 +361,7 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class)
-          );
+          bind(Store.class).to(DefaultStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }
@@ -413,10 +409,7 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class)
-          );
+          bind(Store.class).to(DefaultStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }

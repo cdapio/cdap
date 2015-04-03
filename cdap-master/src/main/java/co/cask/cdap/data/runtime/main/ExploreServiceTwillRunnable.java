@@ -17,7 +17,6 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -45,6 +44,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
@@ -93,9 +93,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new AbstractModule() {
         @Override
         protected void configure() {
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class));
+          bind(Store.class).to(DefaultStore.class);
         }
       });
 

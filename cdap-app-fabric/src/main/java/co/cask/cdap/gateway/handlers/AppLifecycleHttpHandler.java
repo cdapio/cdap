@@ -31,7 +31,6 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
@@ -104,15 +103,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
-  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
-
-  private final Scheduler scheduler;
-
-  /**
    * Runtime program service for running and managing programs.
    */
   private final ProgramRuntimeService runtimeService;
@@ -122,6 +112,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
+  private final CConfiguration configuration;
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
+  private final Scheduler scheduler;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
@@ -133,7 +126,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                 Scheduler scheduler, ProgramRuntimeService runtimeService, StoreFactory storeFactory,
+                                 Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  PreferencesStore preferencesStore, AdapterService adapterService,
                                  NamespaceAdmin namespaceAdmin, MetricStore metricStore,
@@ -145,7 +138,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = storeFactory.create();
+    this.store = store;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.preferencesStore = preferencesStore;

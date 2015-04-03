@@ -28,7 +28,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
@@ -127,8 +126,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              StoreFactory storeFactory,
-                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
+                              Store store, ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               DatasetFramework dsFramework, AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                               AppFabricDataHttpHandler appFabricDataHttpHandler,
@@ -141,7 +139,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.namespaceAdmin = namespaceAdmin;
-    this.store = storeFactory.create();
+    this.store = store;
     this.dsFramework = dsFramework;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
