@@ -14,9 +14,25 @@ body.state-dashboard {
       display: flex;
 
       > li {
-        // flex-grow: 1;
+        min-width: 80px;
 
         > a {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          min-width: 80px;
+          max-width: 200px;
+
+          .dtitle::before {
+            display: inline-block;
+            width: 0;
+            height: 0;
+            vertical-align: middle;
+            border-top: 4px solid;
+            border-right: 4px solid transparent;
+            border-left: 4px solid transparent;
+            content: '';
+          }
 
           > em {
             font-style: normal;
@@ -27,13 +43,6 @@ body.state-dashboard {
             margin-right: 6px;
           }
 
-          > .caret {
-            visibility: hidden;
-            position: absolute;
-            right: 9px;
-            top: 18px;
-          }
-
         }
 
         &.active > a {
@@ -41,11 +50,9 @@ body.state-dashboard {
           &:hover {
             color: @cdap-orange;
           }
-          > .caret {
-            visibility: visible;
-          }
         }
       }
+
     }
 
   }
