@@ -34,7 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Wrapper around Hadoop JobClient
+ * Wrapper around Hadoop JobClient that operates with CDAP Program RunIds.
+ * This class is responsible for the MapReduce RunId->JobId mapping logic as well as to simplify the response
+ * from the Job History Server.
  */
 public class MRJobClient {
   private final Configuration hConf;
@@ -60,17 +62,7 @@ public class MRJobClient {
       throw new IOException(e);
     }
 
-    JobStatus thisJob = null;
-    for (JobStatus job : jobs) {
-      if (job.getJobName().startsWith(runId)) {
-        thisJob = job;
-        break;
-      }
-    }
-    if (thisJob == null) {
-      throw new NotFoundException("MapReduce Job", runId);
-    }
-
+    JobStatus thisJob = findJobForRunId(jobs, runId);
     Counters counters = jobClient.getJob(thisJob.getJobID()).getCounters();
 
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());
@@ -81,6 +73,20 @@ public class MRJobClient {
                          thisJob.getMapProgress(), thisJob.getReduceProgress(),
                          groupToMap(counters.getGroup(TaskCounter.class.getName())),
                          toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports));
+  }
+
+  private JobStatus findJobForRunId(JobStatus[] jobs, String runId) throws NotFoundException {
+    JobStatus thisJob = null;
+    for (JobStatus job : jobs) {
+      if (job.getJobName().startsWith(runId)) {
+        thisJob = job;
+        break;
+      }
+    }
+    if (thisJob == null) {
+      throw new NotFoundException("MapReduce Run", runId);
+    }
+    return thisJob;
   }
 
   // Converts a TaskReport to a simplified version of it - a MRTaskInfo.

@@ -611,6 +611,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private String getJobName(BasicMapReduceContext context) {
     Id.Program programId = context.getProgram().getId();
+    // MRJobClient expects the following format (for RunId to be the first component)
     return String.format("%s.%s.%s.%s.%s",
                          context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
                          programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
