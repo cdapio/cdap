@@ -52,24 +52,28 @@ public class MetricsIterator extends AbstractIterator<MetricValue> {
     }
   }
 
-  public Iterator<MetricValue> getMetaMetrics(long timestampMs) {
-    long timestamp = TimeUnit.MILLISECONDS.toSeconds(timestampMs);
+  public Iterator<MetricValue> getMetaMetrics() {
+    long currentTimeMs = System.currentTimeMillis();
+    long currentTimeSec = TimeUnit.MILLISECONDS.toSeconds(currentTimeMs);
 
     MetricValue delayAvg = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-      "metrics.global.processed.delay.avg", timestamp, (long) stats.getAverage(), MetricType.GAUGE);
+      "metrics.global.processed.delay.avg", currentTimeSec,
+      currentTimeMs - TimeUnit.SECONDS.toMillis((long) stats.getAverage()), MetricType.GAUGE);
 
     MetricValue delayMin = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-      "metrics.global.processed.delay.min", timestamp, stats.getMin(), MetricType.GAUGE);
+      "metrics.global.processed.delay.min", currentTimeSec,
+      currentTimeMs - TimeUnit.SECONDS.toMillis(stats.getMin()), MetricType.GAUGE);
 
     MetricValue delayMax = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-      "metrics.global.processed.delay.max", timestamp, stats.getMax(), MetricType.GAUGE);
+      "metrics.global.processed.delay.max", currentTimeSec,
+      currentTimeMs - TimeUnit.SECONDS.toMillis(stats.getMax()), MetricType.GAUGE);
 
     MetricValue count = new MetricValue(
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system"),
-      "metrics.global.processed.count", timestamp, stats.getCount(), MetricType.COUNTER);
+      "metrics.global.processed.count", currentTimeSec, stats.getCount(), MetricType.COUNTER);
 
     return ImmutableList.of(delayAvg, delayMin, delayMax, count).iterator();
   }

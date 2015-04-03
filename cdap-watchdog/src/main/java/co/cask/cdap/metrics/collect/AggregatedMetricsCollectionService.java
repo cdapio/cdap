@@ -102,7 +102,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     if (isPublishMetaMetrics()) {
       try {
-        publish(metricsItor.getMetaMetrics(System.currentTimeMillis()));
+        publish(metricsItor.getMetaMetrics());
       } catch (Throwable t) {
         LOG.error("Failed in publishing meta metrics for timestamp {}.", timestamp, t);
       }
