@@ -53,10 +53,10 @@
       <a ui-sref="admin.namespace.create" class="btn btn-success">Add Namespace</a>
     </div>
   </div>
-  <table class="table table-striped table-responsive">
+  <table class="table table-responsive" cask-sortable>
     <thead>
-      <tr>
-        <th>Name</th>
+      <tr ng-class="{'sort-enabled': nsList.length>0}">
+        <th data-predicate="name" data-predicate-default="reverse">Name</th>
         <th>Apps</th>
       </tr>
     </thead>

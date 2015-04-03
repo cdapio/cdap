@@ -151,10 +151,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
-
-      MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
+      MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(),
+                                                  queryTimeParams.getLimit(), metric,
                                                   // todo: figure out MetricType
-                                                  MetricType.COUNTER, tagsSliceBy, groupByTags);
+                                                  MetricType.COUNTER, tagsSliceBy, groupByTags,
+                                                  queryTimeParams.getInterpolator());
 
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
       MetricQueryResult result = decorate(queryResult, startTs, endTs);

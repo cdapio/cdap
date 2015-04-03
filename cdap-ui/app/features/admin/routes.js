@@ -60,6 +60,16 @@ angular.module(PKG.name + '.feature.admin')
             url: '/notifications',
             templateUrl: '/assets/features/admin/templates/system/notifications.html'
           })
+          .state('admin.system.preferences', {
+            url: '/preferences',
+            templateUrl: '/assets/features/admin/templates/preferences.html',
+            controller: 'PreferencesController',
+            resolve: {
+              source: function() {
+                return 'SYSTEM';
+              }
+            }
+          })
 
         .state('admin.security', {
           abstract: true,
@@ -124,6 +134,16 @@ angular.module(PKG.name + '.feature.admin')
             url: '/detail/:nsadmin',
             templateUrl: '/assets/features/admin/templates/namespace.html'
           })
+            .state('admin.namespace.detail.preferences', {
+              url: '/preferences',
+              templateUrl: '/assets/features/admin/templates/preferences.html',
+              controller: 'PreferencesController',
+              resolve: {
+                source: function () {
+                  return 'NAMESPACE';
+                }
+              }
+            })
 
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',
@@ -192,4 +212,6 @@ angular.module(PKG.name + '.feature.admin')
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
                 controller: 'AdminNamespaceAppMetadataController'
               });
+
+
   });

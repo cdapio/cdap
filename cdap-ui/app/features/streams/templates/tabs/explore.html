@@ -4,15 +4,15 @@
      bs-collapse>
 
   <!-- VIEW DATA -->
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading" bs-collapse-toggle>
-      <h4 class="panel-title">
+      <h3 class="panel-title">
         <span
-          ng-class="{'fa-chevron-right': activePanel!==0,
-                     'fa-chevron-down': activePanel===0}"
+          ng-class="{'fa-caret-right': activePanel!==0,
+                     'fa-caret-down': activePanel===0}"
           class="fa fa-fw"
         ></span>View Data
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
@@ -51,17 +51,17 @@
           <thead>
             <tr>
               <th>Timestamp</th>
+              <th>Event Time</th>
               <th>Body</th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
               <td>
-                {{event.timestamp | amDateFormat: 'MMMM Do, YYYY, h:mm:ss a'}}
-                <br />
-                <small class="timestamp text-muted">{{event.timestamp | amTimeAgo}}</small>
+                {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
               </td>
-              <td>{{event.body | json}}</td>
+              <td>{{event.timestamp | amTimeAgo}}</td>
+              <td>{{event.body | json | myEllipsis: 80 }}</td>
             </tr>
           </tbody>
         </table>
@@ -73,109 +73,39 @@
   </div>
 
   <!-- WRITE & EXECUTE SQL -->
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading">
-      <h4 class="panel-title" bs-collapse-toggle>
+      <h3 class="panel-title" bs-collapse-toggle>
         <span
-          ng-class="{'fa-chevron-right': activePanel!==1,
-                     'fa-chevron-down': activePanel===1}"
+          ng-class="{'fa-caret-right': activePanel!==1,
+                     'fa-caret-down': activePanel===1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <p>
-          <textarea class="form-control" ng-model="query"></textarea>
-        </p>
-        <div class="text-right">
-          <button class="btn btn-primary" type="button" ng-click="execute()">
-            Execute
-          </button>
-        </div>
+        <my-sql-query data-panel="activePanel"></my-sql-query>
       </div>
     </div>
   </div>
 
   <!-- VIEW QUERIES -->
-  <div class="panel panel-default">
+  <div class="panel panel-explore">
     <div class="panel-heading">
-      <h4 class="panel-title" bs-collapse-toggle>
+      <h3 class="panel-title" bs-collapse-toggle>
         <span
-          ng-class="{'fa-chevron-right': activePanel!==2,
-                     'fa-chevron-down': activePanel===2}"
+          ng-class="{'fa-caret-right': activePanel!==2,
+                     'fa-caret-down': activePanel===2}"
           class="fa fa-fw"
         ></span>View Queries
-      </h4>
+      </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <!-- Left Panel -->
-        <div class="col-xs-6">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Start</th>
-                <th>Status</th>
-                <th>SQL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="query in queries" ng-click="fetchResult(query)">
-                <td>{{ query.timestamp | amDateFormat: 'MM/DD/YYYY h:mm:ss a'}}</td>
-                <td>{{ query.status }}</td>
-                <td>{{ query.statement }}</td>
-              </tr>
-            </tbody>
+        <my-view-queries ng-if="activePanel === 2"></my-view-queries>
 
-          </table>
-        </div>
-
-        <!-- Right Panel -->
-        <div class="col-xs-6 well">
-          <div ng-show="responses.results.length">
-            <p><strong>{{ responses.request.status }}</strong></p>
-            <div class='sql-statement'>
-              <p>{{ responses.request.statement }}</p>
-            </div>
-
-            <div class="text-right" ng-show="query">
-              <button class="btn btn-primary" disabled>Execute</button>
-              <button class="btn btn-default" disabled>Clone</button>
-            </div>
-
-            <div class="results">
-              <h3>Results</h3>
-              <div class="text-right">
-                <a
-                  class="btn btn-default"
-                  ng-click="download(responses.request)"
-                >
-                  Download All
-                </a>
-              </div>
-
-              <div>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th ng-repeat="header in responses.schema">{{ header.name }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr ng-repeat="results in responses.results">
-                      <td ng-repeat="result in results.columns">{{ result }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div ng-hide="responses.results.length" class="text-center">
-            <p>(Select Query)</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>

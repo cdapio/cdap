@@ -21,6 +21,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -30,7 +31,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.internal.RunIds;
 
 import java.net.InetAddress;
 
