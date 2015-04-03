@@ -29,14 +29,18 @@ import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
+import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
+import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.transforms.StructuredRecordToAvroTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.base.Preconditions;
@@ -78,7 +82,11 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         IdentityTransform.class,
                                         StructuredRecordToPutTransform.class,
                                         RowToStructuredRecordTransform.class,
-                                        StructuredRecordToGenericRecordTransform.class));
+                                        StructuredRecordToGenericRecordTransform.class,
+                                        StreamBatchSource.class,
+                                        TimePartitionedFileSetDatasetAvroSink.class,
+                                        StreamToStructuredRecordTransform.class,
+                                        StructuredRecordToAvroTransform.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
