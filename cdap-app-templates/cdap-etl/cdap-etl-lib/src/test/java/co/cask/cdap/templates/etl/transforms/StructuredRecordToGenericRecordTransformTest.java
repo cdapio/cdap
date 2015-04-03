@@ -16,27 +16,22 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.TransformContext;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.io.LongWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Tests {@link StreamToStructuredRecordTransform#transform(LongWritable, StreamEvent, Emitter)}
+ * Tests {@link StructuredRecordToGenericRecordTransform#transform(LongWritable, StructuredRecord, Emitter)}
  */
-public class StreamToStructuredRecordTransformTest {
+public class StructuredRecordToGenericRecordTransformTest {
 
   Schema eventSchema = Schema.recordOf(
     "event",
@@ -45,9 +40,16 @@ public class StreamToStructuredRecordTransformTest {
     Schema.Field.of("field3", Schema.of(Schema.Type.DOUBLE)));
 
   @Test
-  public void testStreamToStrucuturedRecordTransform() throws Exception {
+  public void testStructuredRecordToAvroTransform() throws Exception {
 
-    StreamToStructuredRecordTransform transformer = new StreamToStructuredRecordTransform();
+    StructuredRecordToGenericRecordTransform transformer = new StructuredRecordToGenericRecordTransform();
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(eventSchema);
+    builder.set("field1", "string1");
+    builder.set("field2", 2);
+    builder.set("field3", 3.0);
+    StructuredRecord structuredRecord = builder.build();
+
     TransformContext transformContext = new TransformContext() {
       @Override
       public StageSpecification getSpecification() {
@@ -56,24 +58,18 @@ public class StreamToStructuredRecordTransformTest {
 
       @Override
       public Map<String, String> getRuntimeArguments() {
-        Map<String, String> runtimeArgs = Maps.newHashMap();
-        runtimeArgs.put("format.name", Formats.CSV);
-        runtimeArgs.put("schema", eventSchema.toString());
-        return runtimeArgs;
+        return null;
       }
     };
     transformer.initialize(transformContext);
-    StreamEvent streamEvent = new StreamEvent(ImmutableMap.of("header1", "one"),
-                                              ByteBuffer.wrap(Bytes.toBytes("String1,2,3.0")));
-    Emitter<LongWritable, StructuredRecord> emitter = new Emitter<LongWritable, StructuredRecord>() {
+    Emitter<LongWritable, GenericRecord> emitter = new Emitter<LongWritable, GenericRecord>() {
       @Override
-      public void emit(LongWritable key, StructuredRecord value) {
-        Assert.assertNotNull(value.get("headers"));
-        Assert.assertEquals("String1", value.get("field1"));
+      public void emit(LongWritable key, GenericRecord value) {
+        Assert.assertEquals("string1", value.get("field1"));
         Assert.assertEquals(2, value.get("field2"));
         Assert.assertEquals(3.0, value.get("field3"));
       }
     };
-    transformer.transform(null, streamEvent, emitter);
+    transformer.transform(null, structuredRecord, emitter);
   }
 }

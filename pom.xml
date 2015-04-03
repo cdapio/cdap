@@ -142,6 +142,7 @@
   <modules>
     <module>cdap-common-unit-test</module>
     <module>cdap-api</module>
+    <module>cdap-app-templates</module>
     <module>cdap-common</module>
     <module>cdap-watchdog-api</module>
     <module>cdap-kafka</module>
