@@ -51,24 +51,28 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
     DataSetManager<KeyValueTable> table1 = getDataset("table1");
     KeyValueTable inputTable = table1.get();
-    inputTable.write("hello", "world");
+    for (int i = 0; i < 10000; i++) {
+      inputTable.write("hello" + i, "world" + i);
+    }
     table1.flush();
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig();
     DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
-    Map<String, String> workflowArgs = Maps.newHashMap();
+    Map<String, String> mapReduceArgs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
-      workflowArgs.put(entry.getKey(), entry.getValue());
+      mapReduceArgs.put(entry.getKey(), entry.getValue());
     }
-    workflowArgs.put("config", GSON.toJson(adapterConfig));
-    MapReduceManager mrManager = batchManager.startMapReduce("ETLMapReduce", workflowArgs);
+    mapReduceArgs.put("config", GSON.toJson(adapterConfig));
+    MapReduceManager mrManager = batchManager.startMapReduce("ETLMapReduce", mapReduceArgs);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     batchManager.stopAll();
     DataSetManager<KeyValueTable> table2 = getDataset("table2");
     KeyValueTable outputTable = table2.get();
-    Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+    for (int i = 0; i < 10000; i++) {
+      Assert.assertEquals("world" + i, Bytes.toString(outputTable.read("hello" + i)));
+    }
   }
 
   private ETLBatchConfig constructETLBatchConfig() {
