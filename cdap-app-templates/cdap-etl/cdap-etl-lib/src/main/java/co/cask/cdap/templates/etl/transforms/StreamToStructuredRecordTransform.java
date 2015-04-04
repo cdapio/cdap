@@ -25,13 +25,13 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.LongWritable;
 
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -41,6 +41,8 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
                                                                  LongWritable, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String FORMAT_NAME = "format.name";
+  private static final String FORMAT_SETTING_PREFIX = "format.setting";
+
   private static SchemaWrapper schemaWrapper = null;
 
   @Override
@@ -83,9 +85,16 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
       Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
     fields.addAll(streamBodySchema.getFields());
 
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : getContext().getRuntimeArguments().entrySet()) {
+      if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
+        builder.put(entry);
+      }
+    }
+
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(
       new FormatSpecification(getContext().getRuntimeArguments().get(FORMAT_NAME), streamBodySchema,
-                              ImmutableMap.<String, String>of()));
+                              builder.build()));
 
     return new SchemaWrapper(Schema.recordOf("streamEvent", fields), streamBodySchema, format);
   }
