@@ -66,7 +66,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
 
     ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
     StageSpecification sourceSpec = GSON.fromJson(runtimeArgs.get(Constants.Source.SPECIFICATION),
@@ -105,11 +105,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     Job job = context.getHadoopJob();
 
     //Set list of Transform specifications to be used in the Mapper
-    job.getConfiguration().set(Constants.Transform.SPECIFICATION,
-                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATION));
+    job.getConfiguration().set(Constants.Transform.SPECIFICATIONS,
+                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATIONS));
 
     //Set the Transform configurations to be used in the initialization in the Mapper
-    job.getConfiguration().set(Constants.Transform.TRANSFORM_CONFIGS, GSON.toJson(transformStages));
+    job.getConfiguration().set(Constants.Transform.CONFIGS, GSON.toJson(transformStages));
   }
 
   @Override
@@ -139,8 +139,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     public void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
       //Get transform class names and specifications from the context.
-      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATION);
-      String transformStages = context.getConfiguration().get(Constants.Transform.TRANSFORM_CONFIGS);
+      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATIONS);
+      String transformStages = context.getConfiguration().get(Constants.Transform.CONFIGS);
 
       List<StageSpecification> specificationList = GSON.fromJson(transformSpecs, SPEC_LIST_TYPE);
       List<ETLStage> stageList = GSON.fromJson(transformStages, STAGE_LIST_TYPE);

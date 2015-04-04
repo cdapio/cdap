@@ -127,7 +127,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       StageSpecification specification = stageConfigurer.createSpecification();
       transformSpecs.add(specification);
     }
-    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATION, GSON.toJson(transformSpecs));
+    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATIONS, GSON.toJson(transformSpecs));
   }
 
   @Override

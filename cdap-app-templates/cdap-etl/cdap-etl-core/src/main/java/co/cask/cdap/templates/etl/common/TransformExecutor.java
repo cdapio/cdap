@@ -36,7 +36,6 @@ public final class TransformExecutor {
   }
 
   public Iterable<Map.Entry> runOneIteration(Object key, Object value) throws Exception {
-    //Copy Data into previousEmitter and reset 'data'.
     previousEmitter.reset();
     previousEmitter.emit(key, value);
     for (Transform transform : transformList) {
