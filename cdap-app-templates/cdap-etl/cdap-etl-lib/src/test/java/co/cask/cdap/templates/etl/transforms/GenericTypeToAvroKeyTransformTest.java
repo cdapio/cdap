@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  *
  */
-public class GenericRecordToAvroKeyTransformTest {
+public class GenericTypeToAvroKeyTransformTest {
 
   Schema eventSchema = SchemaBuilder.record("event").fields()
                                     .optionalString("field1")
@@ -46,7 +46,7 @@ public class GenericRecordToAvroKeyTransformTest {
   @Test
   public void testGenericRecordToAvroKeyGenericRecord() throws Exception {
 
-    GenericRecordToAvroKeyTransform transformer = new GenericRecordToAvroKeyTransform();
+    GenericTypeToAvroKeyTransform<GenericRecord> transformer = new GenericTypeToAvroKeyTransform();
     GenericRecordBuilder builder = new GenericRecordBuilder(eventSchema);
     builder.set("field1", "string1");
     builder.set("field2", 2);

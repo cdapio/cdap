@@ -28,12 +28,12 @@ import javax.annotation.Nullable;
 /**
  * Transform {@link GenericRecord} to {@link AvroKey<GenericRecord>}
  */
-public class GenericRecordToAvroKeyTransform extends Transform<LongWritable, GenericRecord,
-                                                               NullWritable, AvroKey<GenericRecord>> {
+public class GenericTypeToAvroKeyTransform<T> extends Transform<LongWritable, T,
+                                                               NullWritable, AvroKey<T>> {
   @Override
-  public void transform(@Nullable LongWritable inputKey, GenericRecord genericRecord,
-                        Emitter<NullWritable, AvroKey<GenericRecord>> emitter) throws Exception {
+  public void transform(@Nullable LongWritable inputKey, T value,
+                        Emitter<NullWritable, AvroKey<T>> emitter) throws Exception {
 
-    emitter.emit(null, new AvroKey<GenericRecord>(genericRecord));
+    emitter.emit(null, new AvroKey<T>(value));
   }
 }

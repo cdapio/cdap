@@ -25,6 +25,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -39,7 +40,7 @@ import javax.annotation.Nullable;
 public class StreamToStructuredRecordTransform extends Transform<LongWritable, StreamEvent,
                                                                  LongWritable, StructuredRecord> {
   private static final String SCHEMA = "schema";
-  private static final String SCHEMA_TYPE = "schemaType";
+  private static final String FORMAT_NAME = "format.name";
   private static SchemaWrapper schemaWrapper = null;
 
   @Override
@@ -47,7 +48,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
     configurer.setName(StreamToStructuredRecordTransform.class.getName());
     configurer.setDescription("Transforms a StreamEvent to StructuredRecord.");
     configurer.addProperty(new Property(SCHEMA, "The schema of the body of stream events", true));
-    configurer.addProperty(new Property(SCHEMA_TYPE, "Type of the Schema ex: CSV, TSV etc.", true));
+    configurer.addProperty(new Property(FORMAT_NAME, "Format name: CSV, TSV etc.", true));
   }
 
   @Override
@@ -83,7 +84,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
     fields.addAll(streamBodySchema.getFields());
 
     RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(
-      new FormatSpecification(getContext().getRuntimeArguments().get(SCHEMA_TYPE), streamBodySchema,
+      new FormatSpecification(getContext().getRuntimeArguments().get(FORMAT_NAME), streamBodySchema,
                               ImmutableMap.<String, String>of()));
 
     return new SchemaWrapper(Schema.recordOf("streamEvent", fields), streamBodySchema, format);

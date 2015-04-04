@@ -24,7 +24,6 @@ import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.avro.mapred.AvroKey;
 import org.apache.hadoop.io.LongWritable;
 
 import java.util.Map;
@@ -35,8 +34,6 @@ import javax.annotation.Nullable;
  */
 public class StructuredRecordToGenericRecordTransform extends Transform<LongWritable, StructuredRecord,
                                                                LongWritable, GenericRecord> {
-
-
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
 
   @Override
