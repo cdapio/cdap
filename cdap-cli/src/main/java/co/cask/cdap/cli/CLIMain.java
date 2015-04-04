@@ -32,6 +32,7 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -64,25 +65,30 @@ public class CLIMain {
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
-  private static final Option HELP_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option HELP_OPTION = new Option(
     "h", "help", false, "Print the usage message.");
 
-  private static final Option URI_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
     " Defaults to \"" + getDefaultURI().toString() + "\".");
 
-  private static final Option VERIFY_SSL_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option VERIFY_SSL_OPTION = new Option(
     "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
-  private static final Option AUTOCONNECT_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option AUTOCONNECT_OPTION = new Option(
     "a", "autoconnect", true, "If \"true\", try provided connection" +
     " (from " + URI_OPTION.getLongOpt() + ")" +
     " upon launch or try default connection if none provided." +
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
-  private static final Option DEBUG_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
 
   private final CLI cli;
@@ -214,9 +220,11 @@ public class CLIMain {
     final PrintStream output = System.out;
 
     Options options = getOptions();
+    CLIMainArgs cliMainArgs = CLIMainArgs.parse(args, options);
+
     CommandLineParser parser = new BasicParser();
     try {
-      CommandLine command = parser.parse(options, args);
+      CommandLine command = parser.parse(options, cliMainArgs.getOptionTokens());
       if (command.hasOption(HELP_OPTION.getOpt())) {
         usage();
         System.exit(0);
@@ -229,7 +237,7 @@ public class CLIMain {
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
         .build();
 
-      String[] commandArgs = command.getArgs();
+      String[] commandArgs = cliMainArgs.getCommandTokens();
 
       try {
         ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(null).build();
@@ -259,7 +267,8 @@ public class CLIMain {
     return "true".equals(value);
   }
 
-  private static Options getOptions() {
+  @VisibleForTesting
+  public static Options getOptions() {
     Options options = new Options();
     addOptionalOption(options, HELP_OPTION);
     addOptionalOption(options, URI_OPTION);

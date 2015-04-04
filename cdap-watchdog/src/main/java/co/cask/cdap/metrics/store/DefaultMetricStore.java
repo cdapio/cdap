@@ -213,8 +213,8 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getMetricName(),
-                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags());
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricName(),
+                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
   @Override

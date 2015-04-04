@@ -16,23 +16,37 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests whether txns get closed on stopping explore service.
  */
-public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
+public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    // Services are stopped in test testServiceStop, hence no need to stop in AfterClass
+    BaseHiveExploreServiceTest.runAfter = false;
+    initialize(tmpFolder);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    BaseHiveExploreServiceTest.runAfter = true;
   }
 
   @Test
@@ -45,16 +59,16 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
 
-    waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-
-    // Stop explore service
-    exploreService.stopAndWait();
+    // Stop all services so that explore service gets stopped.
+    stopServices();
 
     // Make sure that the transaction got closed
+    TransactionStateStorage transactionStateStorage = injector.getInstance(TransactionStateStorage.class);
+    TransactionSnapshot latestSnapshot = transactionStateStorage.getLatestSnapshot();
     Assert.assertEquals(ImmutableSet.<Long>of(),
                         Sets.intersection(
                           queryTxns,
-                          transactionManager.getCurrentState().getInProgress().keySet()).immutableCopy()
+                          latestSnapshot.getInProgress().keySet()).immutableCopy()
     );
   }
 

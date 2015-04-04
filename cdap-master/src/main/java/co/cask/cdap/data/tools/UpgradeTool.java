@@ -22,7 +22,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -185,10 +184,7 @@ public class UpgradeTool {
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class)
-          );
+          bind(Store.class).to(DefaultStore.class);
           bind(ConfigStore.class).to(DefaultConfigStore.class);
         }
 
