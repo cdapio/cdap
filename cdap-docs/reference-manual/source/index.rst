@@ -18,7 +18,7 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |cli| replace:: **Command Line Interface API:**
 .. _cli: cli-api.html
 
-- |cli|_ methods for interacting with a CDAP instance from within a shell.
+- |cli|_ Methods for interacting with a CDAP instance from within a shell.
 
 
 .. |http| replace:: **HTTP RESTful API:**
@@ -35,7 +35,7 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |java-client| replace:: **Java Client API:**
 .. _java-client: java-client-api.html
 
-- |java-client|_ provides methods for interacting with CDAP from external Java applications.
+- |java-client|_ Provides methods for interacting with CDAP from external Java applications.
 
 
 .. |java| replace:: **Javadocs:**
