@@ -19,7 +19,7 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.metrics.iterator.MetricsIterator;
+import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -92,7 +92,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
-    final MetricsIterator metricsItor = new MetricsIterator(getMetrics(timestamp));
+    final MetricsCollectorIterator metricsItor = new MetricsCollectorIterator(getMetrics(timestamp));
 
     try {
       publish(metricsItor);
