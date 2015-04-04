@@ -263,12 +263,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() {
-          },
-                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() {
-                     })
-          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
-          })
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
+                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() { })
+          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
       );
 
       bind(Store.class).to(DefaultStore.class);
