@@ -1357,8 +1357,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           ProgramController.State.KILLED.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);
-      }
-      else {
+      } else {
         controller.addListener(new AbstractListener() {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
