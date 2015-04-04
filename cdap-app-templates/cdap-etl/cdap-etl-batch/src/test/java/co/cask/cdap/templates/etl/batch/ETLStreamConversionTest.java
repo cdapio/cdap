@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 import co.cask.cdap.templates.etl.lib.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.lib.sources.StreamBatchSource;
@@ -95,7 +94,7 @@ public class ETLStreamConversionTest extends TestBase {
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig();
-    DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     Map<String, String> mapReduceArgs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
@@ -119,7 +118,8 @@ public class ETLStreamConversionTest extends TestBase {
                                    ImmutableMap.of("streamName", "myStream", "frequency", "10"));
     ETLStage transform1 = new ETLStage(StreamToStructuredRecordTransform.class.getName(),
                                        ImmutableMap.of("schemaType", Formats.CSV, "schema", bodySchema.toString()));
-    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(), ImmutableMap.<String, String>of());
+    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(),
+                                       ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getName(),
                                  ImmutableMap.of("schema", bodySchema.toString(), "name", "streamTPFS"));
     List<ETLStage> transformList = Lists.newArrayList();
@@ -131,7 +131,7 @@ public class ETLStreamConversionTest extends TestBase {
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(avroSchema);
-    List<GenericRecord> records = com.google.common.collect.Lists.newArrayList();
+    List<GenericRecord> records = Lists.newArrayList();
     for (Location dayLoc : fileSet.getEmbeddedFileSet().getBaseLocation().list()) {
       // this level should be the day (ex: 2015-01-19)
       for (Location timeLoc : dayLoc.list()) {

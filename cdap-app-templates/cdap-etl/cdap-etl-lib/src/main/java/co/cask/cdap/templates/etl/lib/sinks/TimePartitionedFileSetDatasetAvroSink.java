@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapreduce.AvroJob;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
@@ -71,8 +72,6 @@ public class TimePartitionedFileSetDatasetAvroSink extends BatchSink<AvroKey<Gen
     Schema streamSchema = Schema.recordOf("streamEvent", fields);
     org.apache.avro.Schema avroSchema = new  org.apache.avro.Schema.Parser().parse(streamSchema.toString());
     Job job = context.getHadoopJob();
-    //AvroJob.setOutputKeySchema(job, avroSchema);
-    job.setOutputKeyClass(AvroKey.class);
-    job.getConfiguration().set("avro.schema.output.key", avroSchema.toString());
+    AvroJob.setOutputKeySchema(job, avroSchema);
   }
 }
