@@ -117,10 +117,11 @@ body.theme-cdap {
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
     background: white;
-    border: 0;
+    border: 1px solid lightgray;
     padding: 10px;
     .border-radius(8px);
     .box-shadow(0 8px 6px -6px @cdap-darkness);
+    p { margin-bottom: 0; }
     .btn-close {
       .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
       cursor: pointer;
@@ -195,6 +196,25 @@ body.theme-cdap {
   }
 
   //
+  // Breadcrumbs
+  // --------------------------------------------------
+
+  .breadcrumb {
+    background-color: transparent;
+    padding-left: 0px;
+    > li {
+      color: @cdap-gray;
+      a { color: @cdap-header; }
+      + li:before {
+        content: ">";
+        padding: 0 10px;
+        color: @cdap-gray;
+        font-weight: bold;
+      }
+    }
+  }
+
+  //
   // Modals
   // --------------------------------------------------
   .modal {
@@ -253,7 +273,8 @@ body.theme-cdap {
     .modal-dialog {
       .modal-header {
         .btn {
-          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 24px, @padding: 5px 10px);
+          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 10px);
+          font-size: 24px;
           line-height: 1;
         }
       }

@@ -4,9 +4,9 @@
 
 body.state-overview {
   section {
-    padding-top: 40px;
+    padding-top: 20px;
     &.cdap-health {
-      padding-bottom: 40px;
+      padding-bottom: 20px;
 
       .col-xs-12.col-md-6 {
         p { height: 208px; }
@@ -36,7 +36,9 @@ body.state-overview {
       }
       h3 + p { font-size: 14px; }
     }
-
+    section {
+      color: @cdap-header;
+    }
     section.cdap-health {
       color: @cdap-bluegray;
       .box-shadow(0 8px 6px -6px @cdap-darkness);
@@ -52,11 +54,14 @@ body.state-overview {
       }
     }
     section.data-apps {
-      h2 { margin-bottom: 40px; }
-      div > p { font-weight: 600; margin-bottom: 0; line-height: 33px; }
+      h2 { margin-bottom: 20px; }
+      div > p { margin-bottom: 0; }
       .btn-group {
-        .border-radius(8px);
-        .btn-default { .cask-btn(@border-radius: 0, @padding: 6px 12px); }
+        .btn-default {
+          .cask-btn(@border-radius: 0, @padding: 6px 12px);
+          &:first-child { .border-radius(8px 0 0 8px); }
+          &:last-of-type { .border-radius(0 8px 8px 0); }
+        }
         @media (min-width: @screen-lg-min) { float: right; }
       }
       .btn-default {
@@ -84,12 +89,18 @@ body.state-overview {
         a {
           color: white;
           display: block;
-          padding: 10px 25px;
+          padding: 5px 10px;
           word-wrap: break-word;
           &:hover, &:focus { text-decoration: none; }
         }
         strong { font-size: 18px; font-weight: 500; }
-        p { color: white; }
+        p {
+          color: white;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 95%;
+        }
       }
     }
   }

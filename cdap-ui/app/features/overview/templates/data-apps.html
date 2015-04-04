@@ -3,10 +3,10 @@
     <div ng-if="datasets.length > 0 || streams.length > 0">
       <h2 class="text-uppercase"> Data </h2>
       <div class="row">
-        <div class="col-xs-12 col-lg-4">
-          <p> Deployed datasets: </p>
+        <div class="col-xs-12 col-sm-5">
+          <p> Most recent: </p>
         </div>
-        <div class="col-xs-12 col-lg-8">
+        <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
             <a ui-sref="data.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -47,7 +47,6 @@
             data-button-label="Add Data"
             data-button-disabled="true"
             data-button-icon="fa-plus"
-            data-button-class="btn-lg"
             on-file-select="onFileSelected($files)">
         </my-file-select>
       </div>
@@ -57,10 +56,10 @@
     <div ng-if="apps.length > 0">
       <h2 class="text-uppercase"> Apps </h2>
       <div class="row">
-        <div class="col-xs-12 col-lg-4">
-          <p> Deployed apps: </p>
+        <div class="col-xs-12 col-sm-5">
+          <p> Most recent: </p>
         </div>
-        <div class="col-xs-12 col-lg-8">
+        <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -73,7 +72,6 @@
             <my-file-select
                 data-button-label="Add App"
                 data-button-icon="fa-plus"
-                data-button-class="btn-lg"
                 on-file-select="onFileSelected($files)"
                 ng-controller="AppsSectionCtrl">
             </my-file-select>
@@ -101,7 +99,6 @@
         <my-file-select
             data-button-label="Add App"
             data-button-icon="fa-plus"
-            data-button-class="btn-lg"
             on-file-select="onFileSelected($files)">
         </my-file-select>
       </div>
