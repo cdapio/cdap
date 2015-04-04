@@ -31,8 +31,10 @@ import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 
@@ -41,12 +43,15 @@ import java.util.List;
  */
 @Category(SlowTests.class)
 public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceTest {
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static Record record1;
   private static Record record2;
 
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE, ObjectMappedTableProperties.builder()
       .setType(Record.class)
