@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import com.google.common.collect.ImmutableList;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.Metrics;
