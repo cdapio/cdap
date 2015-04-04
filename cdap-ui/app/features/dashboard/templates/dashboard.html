@@ -11,13 +11,13 @@
 
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="dashboard.standard.cdap" role="tab" data-toggle="tab">CDAP</a>
+    <a ui-sref="dashboard.standard.cdap" role="tab" tooltip="CDAP" data-toggle="tab">CDAP</a>
   </li>
   <li role="presentation" ui-sref-active="active" ng-if="isEnterprise">
-    <a ui-sref="dashboard.standard.system" role="tab" data-toggle="tab">System</a>
+    <a ui-sref="dashboard.standard.system" tooltip="System" role="tab" data-toggle="tab">System</a>
   </li>
   <li role="presentation" ui-sref-active="active" ng-if="isEnterprise">
-    <a ui-sref="dashboard.standard.apps" role="tab" data-toggle="tab">Apps</a>
+    <a ui-sref="dashboard.standard.apps" tooltip="Apps" role="tab" data-toggle="tab">Apps</a>
   </li>
   <li role="presentation"
       ui-sref-active="active"
@@ -25,6 +25,7 @@
     <a ui-sref="dashboard.user({tab: $index})"
         role="tab"
         ng-click="activeTabClick($event, $index)"
+        tooltip="{{dashboard.title}}"
         data-toggle="tab">
         <span class="dtitle">
         {{dashboard.title}}
