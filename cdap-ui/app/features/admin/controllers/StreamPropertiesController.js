@@ -7,7 +7,7 @@ angular.module(PKG.name + '.feature.admin')
     var filterFilter = $filter('filter');
 
     var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamid;
-    $scope.formatOptions = ['text', 'clf', 'csv', 'syslog', 'grok'];
+    $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv'];
 
     $scope.reload = function () {
       dataSrc
