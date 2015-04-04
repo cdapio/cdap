@@ -24,13 +24,36 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
+=============================================================
+
+General
+-------
+
+New Features
+------------
+
+Improvement
+-----------
+
+API Changes
+-----------
+
+.. _known-issues-300:
+
+Known Issues
+------------
+
+- See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
+
+
 `Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
 =============================================================
 
 General
 -------
 
-- The :ref:`HTTP RESTful API v2 <http-restful-api-v2>` is deprecated, replaced with the
+- The HTTP RESTful API v2 was deprecated, replaced with the
   :ref:`namespaced HTTP RESTful API v3 <http-restful-api-v3>`.
 
 - Added log rotation for CDAP programs running in YARN containers

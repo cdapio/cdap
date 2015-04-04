@@ -15,6 +15,12 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 - |characters|_ Accepted naming conventions for CDAP elements.
 
 
+.. |cli| replace:: **Command Line Interface API:**
+.. _cli: cli-api.html
+
+- |cli|_ methods for interacting with a CDAP instance from within a shell.
+
+
 .. |http| replace:: **HTTP RESTful API:**
 .. _http: http-restful-api/index.html
 
@@ -26,22 +32,16 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
   <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
   
-.. |java| replace:: **Javadocs:**
-.. _java: javadocs/index.html
-
-- |java|_ Javadocs of the Java APIs for writing CDAP Applications.
-
-
 .. |java-client| replace:: **Java Client API:**
 .. _java-client: java-client-api.html
 
 - |java-client|_ provides methods for interacting with CDAP from external Java applications.
 
 
-.. |cli| replace:: **Command Line Interface API:**
-.. _cli: cli-api.html
+.. |java| replace:: **Javadocs:**
+.. _java: javadocs/index.html
 
-- |cli|_ methods for interacting with a CDAP instance from within a shell.
+- |java|_ Javadocs of the Java APIs for writing CDAP Applications.
 
 
 .. |licenses| replace:: **Trademarks, Licenses, and Dependencies:**

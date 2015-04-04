@@ -71,7 +71,7 @@ perhaps in this case *default* and *mystream*::
 Converting from V2 APIs
 =======================
 
-If you are converting code from the :ref:`HTTP RESTful API v2 <http-restful-api-v2>`, the
+If you are converting code from the  earlier HTTP RESTful API v2, the
 simplest way to convert your code is to use the ``default`` namespace, which is pre-existing
 in CDAP. Example::
 

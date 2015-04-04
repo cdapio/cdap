@@ -95,10 +95,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |reference-manual|_ 
 
-  - **HTTP RESTful API:** HTTP interface for a multitude of purposes
-  - **Javadocs:** The Java APIs for writing CDAP Applications
-  - **Java Client API:** Methods for interacting with CDAP from external Java applications
   - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
+  - **HTTP RESTful API:** HTTP interface for a multitude of purposes
+  - **Java Client API:** Methods for interacting with CDAP from external Java applications
+  - **Javadocs:** The Java APIs for writing CDAP Applications
   - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP Dependent Packages
 
 
