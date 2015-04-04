@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -64,13 +63,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Scheduler scheduler;
 
   @Inject
-  public DefaultNamespaceAdmin(StoreFactory storeFactory, PreferencesStore preferencesStore,
+  public DefaultNamespaceAdmin(Store store, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                MetricStore metricStore, Scheduler scheduler) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
-    this.store = storeFactory.create();
+    this.store = store;
     this.preferencesStore = preferencesStore;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;

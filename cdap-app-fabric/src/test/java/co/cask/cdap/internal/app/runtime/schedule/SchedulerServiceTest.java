@@ -24,7 +24,6 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
@@ -65,7 +64,7 @@ public class SchedulerServiceTest {
   @BeforeClass
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
-    store = AppFabricTestHelper.getInjector().getInstance(StoreFactory.class).create();
+    store = AppFabricTestHelper.getInjector().getInstance(Store.class);
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());

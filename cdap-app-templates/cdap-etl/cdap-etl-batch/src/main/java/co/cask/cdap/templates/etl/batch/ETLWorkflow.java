@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.store;
+package co.cask.cdap.templates.etl.batch;
+
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- *
+ * Workflow for scheduling Batch ETL MapReduce Driver.
  */
-public interface StoreFactory {
-  Store create();
+public class ETLWorkflow extends AbstractWorkflow {
+
+  @Override
+  protected void configure() {
+    setName("ETLWorkflow");
+    setDescription("Workflow for Batch ETL MapReduce Driver");
+    addMapReduce("ETLMapReduce");
+  }
 }

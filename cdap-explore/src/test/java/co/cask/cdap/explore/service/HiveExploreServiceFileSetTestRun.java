@@ -40,8 +40,10 @@ import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.text.DateFormat;
 import java.util.Collections;
@@ -52,7 +54,10 @@ import java.util.Collections;
  * This does not test querying through Hive (it will be covered by an integration test).
  */
 @Category(SlowTests.class)
-public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
+public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static final Schema SCHEMA = Schema.recordOf("kv",
                                                        Schema.Field.of("key", Schema.of(Schema.Type.STRING)),
@@ -61,8 +66,7 @@ public class HiveExploreServiceFileSetTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    runBefore = true;
-    initialize(CConfiguration.create(), false);
+    initialize(CConfiguration.create(), tmpFolder, false);
   }
 
   @After
