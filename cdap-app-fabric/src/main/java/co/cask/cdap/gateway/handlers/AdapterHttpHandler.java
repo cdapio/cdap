@@ -39,6 +39,9 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -50,24 +53,55 @@ import javax.ws.rs.PathParam;
  * {@link co.cask.http.HttpHandler} for managing adapter lifecycle.
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/adapters")
-public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(AdapterLifecycleHttpHandler.class);
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AdapterHttpHandler.class);
 
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
   @Inject
-  public AdapterLifecycleHttpHandler(Authenticator authenticator, AdapterService adapterService,
-                                     NamespaceAdmin namespaceAdmin) {
+  public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
+                            NamespaceAdmin namespaceAdmin) {
     super(authenticator);
     this.namespaceAdmin = namespaceAdmin;
     this.adapterService = adapterService;
   }
 
   /**
+   * Deploy a template. Allows users to update a template, but leaves upgrade specifics to the user.
+   * For example, if a program is renamed or new arguments are required, users must handle recreation of
+   * adapters themselves.
+   */
+  @POST
+  @Path("/templates/{template-id}/deploy")
+  public void deployTemplate(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("template-id") String templateId) {
+    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Namespace '%s' does not exist.", namespaceId));
+      return;
+    }
+    try {
+      adapterService.deployTemplate(Id.Namespace.from(namespaceId), templateId);
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Template '%s' does not exist.", templateId));
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("Template '%s' is invalid: %s", templateId, e.getMessage()));
+    } catch (Exception e) {
+      LOG.error("Exception while trying to deploy template {} in namespace {}.", templateId, namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Internal error while trying to deploy template.");
+    }
+  }
+
+  /**
    * Retrieves all adapters in a given namespace.
    */
   @GET
+  @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
@@ -82,7 +116,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Retrieves an adapter
    */
   @GET
-  @Path("/{adapter-id}")
+  @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
@@ -99,7 +133,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts/stops an adapter
    */
   @POST
-  @Path("/{adapter-id}/{action}")
+  @Path("/adapters/{adapter-id}/{action}")
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId,
@@ -134,7 +168,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Retrieves the status of an adapter
    */
   @GET
-  @Path("/{adapter-id}/status")
+  @Path("/adapters/{adapter-id}/status")
   public void getAdapterStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId) {
@@ -150,7 +184,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes an adapter
    */
   @DELETE
-  @Path("/{adapter-id}")
+  @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {
@@ -174,7 +208,7 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Create an adapter.
    */
   @PUT
-  @Path("/{adapter-id}")
+  @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {

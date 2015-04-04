@@ -31,7 +31,7 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
-import co.cask.cdap.gateway.handlers.AdapterLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -263,9 +263,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() {
+          },
+                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() {
+                     })
+          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
+          })
       );
 
       bind(Store.class).to(DefaultStore.class);
@@ -290,7 +293,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
       handlerBinder.addBinding().to(MockETLHandler.class);
-      handlerBinder.addBinding().to(AdapterLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(AdapterHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {

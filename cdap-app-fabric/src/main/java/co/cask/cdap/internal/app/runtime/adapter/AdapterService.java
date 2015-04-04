@@ -23,6 +23,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.Store;
@@ -32,6 +33,8 @@ import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -47,9 +50,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +73,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -73,13 +82,17 @@ import javax.annotation.Nullable;
  */
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final Store store;
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  // template name to template info mapping
   private Map<String, ApplicationTemplateInfo> appTemplateInfos;
+  // jar file name to template info mapping
+  private Map<String, ApplicationTemplateInfo> fileToTemplateMap;
 
   @Inject
   public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
@@ -91,6 +104,7 @@ public class AdapterService extends AbstractIdleService {
     this.store = store;
     this.managerFactory = managerFactory;
     this.appTemplateInfos = Maps.newHashMap();
+    this.fileToTemplateMap = Maps.newHashMap();
     this.preferencesStore = preferencesStore;
   }
 
@@ -103,6 +117,27 @@ public class AdapterService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down AdapterService");
+  }
+
+  /**
+   * Deploy the given application template in the given namespace.
+   *
+   * @param namespace the namespace to deploy in
+   * @param templateName the name of the template to deploy
+   * @throws NotFoundException if the template was not found
+   * @throws IllegalArgumentException if the template is invalid
+   * @throws IOException if there was an error reading the template jar
+   * @throws TimeoutException if there was a timeout examining the template jar
+   */
+  public void deployTemplate(Id.Namespace namespace, String templateName)
+    throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
+    ApplicationTemplateInfo templateInfo = appTemplateInfos.get(templateName);
+    if (templateInfo == null) {
+      throw new NotFoundException("ApplicationTemplate", templateName);
+    }
+    // make sure we're up to date on template info
+    registerTemplates();
+    deployTemplate(namespace, templateInfo);
   }
 
   /**
@@ -216,8 +251,14 @@ public class AdapterService extends AbstractIdleService {
       throw new AdapterAlreadyExistsException(adapterName);
     }
 
-    ApplicationSpecification appSpec = deployApplication(namespace, applicationTemplateInfo);
+    // if the template has not been deployed, deploy it first
+    Id.Application templateId = Id.Application.from(namespace, applicationTemplateInfo.getName());
+    ApplicationSpecification appSpec = store.getApplication(templateId);
+    if (appSpec == null) {
+      appSpec = deployTemplate(namespace, applicationTemplateInfo);
+    }
 
+    // now create the adapter
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     preferencesStore.setProperties(namespace.getId(), appSpec.getName(), properties);
     schedule(namespace, appSpec, applicationTemplateInfo, adapterSpec);
@@ -292,17 +333,10 @@ public class AdapterService extends AbstractIdleService {
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
-  // Deploys adapter application if it is not already deployed.
-  private ApplicationSpecification deployApplication(Id.Namespace namespace,
-                                                     ApplicationTemplateInfo applicationTemplateInfo) {
+  // Deploys application template.
+  private ApplicationSpecification deployTemplate(Id.Namespace namespace,
+                                                  ApplicationTemplateInfo applicationTemplateInfo) {
     try {
-      ApplicationSpecification spec = store.getApplication(
-        Id.Application.from(namespace, applicationTemplateInfo.getName()));
-      // Application is already deployed.
-      if (spec != null) {
-        return spec;
-      }
-
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
@@ -395,42 +429,56 @@ public class AdapterService extends AbstractIdleService {
   @VisibleForTesting
   void registerTemplates() {
     try {
+      // generate a completely new map in case some templates were removed
+      Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();
+      Map<String, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
+
       File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
       Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
       for (File file : files) {
-        try {
-          Manifest manifest = new JarFile(file.getAbsolutePath()).getManifest();
-          ApplicationTemplateInfo applicationTemplateInfo = createAppTemplateInfo(file, manifest);
-          if (applicationTemplateInfo != null) {
-            appTemplateInfos.put(applicationTemplateInfo.getName(), applicationTemplateInfo);
-          } else {
-            LOG.warn("Missing required information to create adapter {}", file.getAbsolutePath());
-          }
-        } catch (IOException e) {
-          LOG.warn(String.format("Unable to read adapter jar %s", file.getAbsolutePath()));
-        }
+        ApplicationTemplateInfo info = getTemplateInfo(file);
+        newInfoMap.put(info.getName(), info);
+        newFileTemplateMap.put(info.getFile().getName(), info);
       }
+      appTemplateInfos = newInfoMap;
+      fileToTemplateMap = newFileTemplateMap;
     } catch (Exception e) {
       LOG.warn("Unable to read the plugins directory");
     }
   }
 
-  // TODO: call configure on the application itself to get name and program type instead of requiring
-  //       them in the manifest
-  private ApplicationTemplateInfo createAppTemplateInfo(File file, Manifest manifest) {
-    if (manifest != null) {
-      Attributes mainAttributes = manifest.getMainAttributes();
-
-      String name = mainAttributes.getValue(ApplicationTemplateManifestAttributes.NAME);
-      String programType = mainAttributes.getValue(ApplicationTemplateManifestAttributes.PROGRAM_TYPE);
-      return new ApplicationTemplateInfo(file, name, ProgramType.valueOf(programType.toUpperCase()));
+  private ApplicationTemplateInfo getTemplateInfo(File jarFile)
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    ApplicationTemplateInfo existing = fileToTemplateMap.get(jarFile.getAbsolutePath());
+    HashCode fileHash = Files.hash(jarFile, Hashing.md5());
+    // if the file is the same, just return
+    if (existing != null && fileHash.equals(existing.getFileHash())) {
+      return existing;
     }
-    return null;
-  }
 
-  private static class ApplicationTemplateManifestAttributes {
-    private static final String NAME = "CDAP-Adapter-Type";
-    private static final String PROGRAM_TYPE = "CDAP-Adapter-Program-Type";
+    // instantiate the template application and call configure() on it to determine it's specification
+    InMemoryConfigurator configurator = new InMemoryConfigurator(
+      Constants.SYSTEM_NAMESPACE_ID, new LocalLocationFactory().create(jarFile.toURI()));
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(2, TimeUnit.MINUTES);
+    ApplicationSpecification spec = GSON.fromJson(response.get(), ApplicationSpecification.class);
+
+    // verify that the name is ok
+    Id.Application applicationID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
+
+    // determine the program type of the template
+    ProgramType programType;
+    int numWorkflows = spec.getWorkflows().size();
+    int numWorkers = spec.getWorkers().size();
+    if (numWorkers == 0 && numWorkflows == 1) {
+      programType = ProgramType.WORKFLOW;
+    } else if (numWorkers == 1 && numWorkflows == 0) {
+      programType = ProgramType.WORKER;
+    } else {
+      throw new IllegalArgumentException("An application template must contain exactly one worker or one workflow.");
+    }
+
+    return new ApplicationTemplateInfo(jarFile, spec.getName(), spec.getDescription(), programType, fileHash);
   }
 
   /**
