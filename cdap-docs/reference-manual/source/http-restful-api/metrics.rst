@@ -494,10 +494,28 @@ Query Tips
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
 
-- Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
-  the request body that enumerates the name and attributes for each metric, is currently not
-  supported in this API. Instead, use the :ref:`v2 API
-  <http-restful-api-v2-metrics-multiple>` until it is supported in a future release.
+Querying for Multiple Metrics
+-----------------------------
+Retrieving multiple metrics at once, by issuing an HTTP POST request with a JSON list as
+the request body that enumerates the name and attributes for each metric, is currently not
+supported in this API. Instead, use the v2 API until it is supported in a future release.
+
+To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON
+list as the request body that enumerates the name and attributes for each metrics. For
+example::
+
+  POST http://<host>:<port>/v2/metrics
+
+with the arguments as a JSON string in the body. For example, to retrieve multiple metrics
+using a ``curl`` call::
+
+  $ curl -w'\n' -X POST 'http://localhost:10000/v2/metrics' \
+  -H "Content-Type: application/json" \
+  -d '[ "/system/collect.events?aggregate=true", '\
+  '"/system/apps/HelloWorld/process.events.processed?start=1380323712&count=6000" ]'
+
+If the context of the requested metric or metric itself doesn't exist, the system returns a
+status 200 (OK) with JSON formed following the above description with zeroes for the values.
 
 
 .. _http-restful-api-metrics-groupby:
