@@ -1352,8 +1352,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         controller.addListener(new AbstractListener() {
           @Override
           public void killed() {
-            store.setStop(id, runId,
-                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                           ProgramController.State.KILLED.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);
@@ -1361,28 +1360,24 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         controller.addListener(new AbstractListener() {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
-            if (id.getType() != ProgramType.MAPREDUCE) {
-              store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-              if (state == ProgramController.State.COMPLETED) {
-                completed();
-              }
-              if (state == ProgramController.State.ERROR) {
-                error(controller.getFailureCause());
-              }
+            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+            if (state == ProgramController.State.COMPLETED) {
+              completed();
+            }
+            if (state == ProgramController.State.ERROR) {
+              error(controller.getFailureCause());
             }
           }
 
           @Override
           public void completed() {
-              store.setStop(id, runId,
-                            TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                            ProgramController.State.COMPLETED.getRunStatus());
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.COMPLETED.getRunStatus());
           }
 
           @Override
           public void killed() {
-            store.setStop(id, runId,
-                          TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
                           ProgramController.State.KILLED.getRunStatus());
           }
 
@@ -1398,12 +1393,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           @Override
           public void error(Throwable cause) {
-            if (id.getType() != ProgramType.MAPREDUCE) {
-              LOG.info("Program stopped with error {}, {}", id, runId, cause);
-              store.setStop(id, runId,
-                            TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                            ProgramController.State.ERROR.getRunStatus());
-            }
+            LOG.info("Program stopped with error {}, {}", id, runId, cause);
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.ERROR.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);
       }
