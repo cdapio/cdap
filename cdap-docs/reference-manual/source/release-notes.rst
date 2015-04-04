@@ -178,7 +178,7 @@ Known Issues
 - Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
   the request body that enumerates the name and attributes for each metric |---| is currently not
   supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
-  Instead, use the :ref:`v2 API <http-restful-api-v2-metrics-multiple>`. It will be
+  Instead, use the v2 API. It will be
   supported in a future release.
 - Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
   any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
