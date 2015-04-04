@@ -20,7 +20,7 @@ import com.google.common.base.Objects;
 import com.google.gson.JsonElement;
 
 /**
- * Specification of an adapter.
+ * Config of an adapter. This is the input for requests to add an adapter.
  */
 public final class AdapterConfig {
   private final String description;

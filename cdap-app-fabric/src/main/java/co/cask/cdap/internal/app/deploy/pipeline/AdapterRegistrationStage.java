@@ -23,7 +23,7 @@ import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.reflect.TypeToken;
 
 /**
- *
+ * Adds a configured adapter to the store.
  */
 public class AdapterRegistrationStage extends AbstractStage<AdapterSpecification> {
   private final Store store;

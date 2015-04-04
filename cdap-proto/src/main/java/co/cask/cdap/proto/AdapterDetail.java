@@ -20,7 +20,8 @@ import com.google.common.base.Objects;
 import com.google.gson.JsonElement;
 
 /**
- * Specification of an adapter.
+ * Adapter details that come back from get calls.
+ * TODO: finalize what should be present here
  */
 public final class AdapterDetail {
   private final String name;

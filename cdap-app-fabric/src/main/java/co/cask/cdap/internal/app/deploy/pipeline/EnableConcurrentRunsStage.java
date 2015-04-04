@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -26,7 +25,7 @@ import com.google.common.reflect.TypeToken;
 import java.util.Map;
 
 /**
- *
+ * Enables concurrent runs for an application.
  */
 public class EnableConcurrentRunsStage extends AbstractStage<ApplicationWithPrograms> {
   private final PreferencesStore preferencesStore;

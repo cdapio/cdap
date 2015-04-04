@@ -24,7 +24,6 @@ import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for verifying an adapter specification.
-
  */
 public class AdapterVerificationStage extends AbstractStage<AdapterSpecification> {
   private final ApplicationSpecification templateSpec;
