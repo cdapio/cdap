@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -115,13 +114,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
-                                   StoreFactory storeFactory, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                                   Store store, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
                                    TransactionExecutorFactory txExecutorFactory) {
     super(programRunnerFactory);
     this.twillRunner = twillRunner;
-    this.store = storeFactory.create();
+    this.store = store;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

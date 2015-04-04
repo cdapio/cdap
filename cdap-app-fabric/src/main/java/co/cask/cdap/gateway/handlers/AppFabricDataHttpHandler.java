@@ -18,8 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -50,15 +48,14 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
-
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricDataHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                                  StoreFactory storeFactory, DatasetFramework dsFramework) {
+  public AppFabricDataHttpHandler(Authenticator authenticator,
+                                  Store store, DatasetFramework dsFramework) {
     super(authenticator);
-    this.store = storeFactory.create();
+    this.store = store;
     this.dsFramework = dsFramework;
   }
 

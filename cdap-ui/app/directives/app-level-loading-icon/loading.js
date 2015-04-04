@@ -7,7 +7,6 @@ angular.module(PKG.name + '.commons')
       controller: function($scope) {
         var modalObj = {
           templateUrl: 'app-level-loading-icon/loading.html',
-          size: 'lg',
           backdrop: 'static',
           keyboard: true,
           scope: $scope,

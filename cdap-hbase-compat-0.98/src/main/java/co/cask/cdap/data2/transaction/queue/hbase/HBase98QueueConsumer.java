@@ -48,9 +48,6 @@ final class HBase98QueueConsumer extends HBaseQueueConsumer {
   protected Scan createScan(byte[] startRow, byte[] stopRow, int numRows) {
     // Scan the table for queue entries.
     Scan scan = new Scan();
-    // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
-    int caching = (int) (1.1 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS);
-    scan.setCaching(caching);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);

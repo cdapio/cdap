@@ -1,7 +1,9 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
 body.state-dashboard {
+
   .widget {
     .panel-heading {
       padding: 15px;
@@ -38,6 +40,99 @@ body.state-dashboard {
     }
   }
 
-
+  [bs-tabs] {
+    > ul.nav-tabs {
+      border-bottom: 0;
+      > li {
+        > a {
+          color: @cdap-gray;
+          cursor: pointer;
+          height: 43px;
+          background-color: white;
+          position: relative;
+          border: 1px solid @subnav-border;
+          text-align: center;
+          .border-radius(0 10px 0 0);
+          .transition(background-color 0.05s ease-in);
+          &:hover, &:focus {
+            background-color: @subnav-background;
+            color: @cdap-gray;
+            &:before, &:after { background-color: @subnav-background; }
+          }
+          &:before, &:after {
+            background-color: white;
+            content:" ";
+            display: block;
+            position: absolute;
+            top: -1px;
+            .transition(background-color 0.05s ease-in);
+          }
+          &:before {
+            height: 42px;
+            width: 10px;
+            right: -2px;
+            border-top: 1px solid @subnav-border;
+          }
+          &:after {
+            width: 100px;
+            height: 43px;
+            right: -10px;
+            border: 1px solid @subnav-border;
+            border-left: 0;
+            z-index: 1;
+            .skew(15deg, 0);
+          }
+          > span {
+            position: relative;
+            left: 7px;
+            z-index: 2;
+            .caret { position: relative; bottom: 7px; }
+            em {
+              margin-right: 0;
+              max-width: 100px;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              display: inline-block;
+            }
+          }
+        }
+        &:not(:last-child) > a { min-width: 100px; }
+        &:last-child > a {
+          width: 60px;
+          &:after { width: 60px; }
+          span { color: @brand-primary; right: -10px; }
+        }
+        &.active > a {
+          background-color: @subnav-background;
+          height: 43px;
+          min-width: 100px;
+          position: relative;
+          border: 1px solid @subnav-border;
+          .border-radius(0 10px 0 0);
+          &:before, &:after {
+            background-color: @subnav-background;
+            content:" ";
+            display: block;
+            height: 43px;
+            position: absolute;
+            top: -1px;
+          }
+          &:before {
+            width: 10px;
+            right: -2px;
+            border-top: 1px solid @subnav-border;
+          }
+          &:after {
+            width: 100px;
+            right: -10px;
+            border: 1px solid @subnav-border;
+            border-left: 0;
+            z-index: 1;
+            .skew(15deg, 0);
+          }
+        }
+      }
+    }
+  }
 
 }

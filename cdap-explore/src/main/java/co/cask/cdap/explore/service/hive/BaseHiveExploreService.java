@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -140,7 +139,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
-  private final Store store;
   private final SchedulerQueueResolver schedulerQueueResolver;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
@@ -170,11 +168,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   File previewsDir, StreamAdmin streamAdmin, StoreFactory storeFactory) {
+                                   File previewsDir, StreamAdmin streamAdmin, Store store) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
-    this.store = storeFactory.create();
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();

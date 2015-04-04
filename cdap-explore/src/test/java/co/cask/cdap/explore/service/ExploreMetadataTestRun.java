@@ -28,8 +28,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,9 @@ import java.util.concurrent.TimeUnit;
 @Category(SlowTests.class)
 public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
   private static final String otherTableName = getDatasetHiveName(otherTable);
   private static final Id.DatasetInstance namespacedOtherTable =
@@ -49,7 +54,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
