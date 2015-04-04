@@ -46,7 +46,7 @@ CDAP Developers’ Manual
 .. _testing: testing/index.html
 
 - |testing|_ CDAP has a **test framework** that developers can use with their applications
-  plus **tools and procedures for debugging** your application prior to deployment.
+  plus **tools and practices for debugging** your application prior to deployment.
 
 
 .. |ingesting-tools| replace:: **Ingesting Data:**

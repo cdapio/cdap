@@ -56,21 +56,25 @@ Strategies in Testing Flows
 Let’s write a test case for the *WordCount* example::
 
   public class WordCountTest extends TestBase {
+    static Type stringMapType = new TypeToken<Map<String, String>>() { }.getType();
+    static Type objectMapType = new TypeToken<Map<String, Object>>() { }.getType();
+
     @Test
     public void testWordCount() throws Exception {
 
 
 The first thing we do in this test is deploy the application,
-then we’ll start the Flow and the Procedure::
+then we’ll start the Flow and the Service::
 
       // Deploy the Application
       ApplicationManager appManager = deployApplication(WordCount.class);
 
-      // Start the Flow and the Procedure
+      // Start the Flow and the Service
       FlowManager flowManager = appManager.startFlow("WordCounter");
-      ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
-
-Now that the Flow is running, we can send some events to the Stream::
+      ServiceManager serviceManager = appManager.startService("RetrieveCounts");
+      serviceManager.waitForStatus(true);
+      
+Now that the Flow and Service are running, we can send some events to the Stream::
 
       // Send a few events to the Stream
       StreamWriter writer = appManager.getStreamWriter("wordStream");
@@ -88,14 +92,23 @@ its processed count to either reach 3 or time out after 5 seconds::
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Now we can start verifying that the processing was correct by obtaining
-a client for the Procedure, and then submitting a query for the global
-statistics::
+a client for the Service, and then submitting queries. We'll add a private method to the 
+``WordCountTest`` Class to help us::
 
-      // Call the Procedure
-      ProcedureClient client = procManager.getClient();
+  private String requestService(URL url) throws IOException {
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+    try {
+      return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+    } finally {
+      conn.disconnect();
+    }
+  }
+
+We can then use this to query for the global statistics::
 
       // Query global statistics
-      String response = client.query("getStats", Collections.EMPTY_MAP);
+      String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "stats"));
 
 If the query fails for any reason this method would throw an exception.
 In case of success, the response is a JSON string. We must deserialize
@@ -112,12 +125,13 @@ The verification is a little more complex, because we have a nested map
 as a response, and the value types in the top-level map are not uniform::
 
       // Verify some statistics for one of the words
-      response = client.query("getCount", ImmutableMap.of("word","world"));
-      Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
+      response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "count/world"));
+      Map<String, Object> omap = new Gson().fromJson(response, stringMapType);
       Assert.assertEquals("world", omap.get("word"));
       Assert.assertEquals(3.0, omap.get("count"));
 
       // The associations are a map within the map
+      @SuppressWarnings("unchecked")
       Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
       Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
       Assert.assertTrue(assocs.containsKey("hello"));

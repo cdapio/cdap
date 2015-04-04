@@ -40,7 +40,7 @@ are dispersed over multiple—if not many—containers in the Hadoop cluster. Th
 single place to debug the entire application.
 
 You can, however, debug every individual container by attaching a remote debugger to it.
-This is supported for each Flowlet of a Flow and each instance of a Procedure. In order
+This is supported for each Flowlet of a Flow and each instance of a Service. In order
 to debug a container, you need to start the component with debugging enabled by making
 an HTTP request to the component’s URL. For example, the following will start a Flow for debugging::
 
@@ -54,7 +54,7 @@ runtime arguments in the exact same way as you normally would start a Flow.
 Once the Flow is running, each Flowlet will detect an available port in its container
 and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the CDAP for a Procedure or Flow’s live info via HTTP::
+the CDAP for a Service or Flow’s live info via HTTP::
 
   GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 

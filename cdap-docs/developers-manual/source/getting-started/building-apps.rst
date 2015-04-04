@@ -93,11 +93,11 @@ Once an application is deployed:
     * - Parameter
       - Description
     * - ``<program-type>``
-      - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+      - One of ``flow``, ``mapreduce``, ``workflow`` or ``service``
     * - ``<app-id>``
       - Name of the Application being called
     * - ``<program-id>``
-      - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+      - Name of the *Flow*, *MapReduce*, *Workflow*, or *Custom Service*
         being called
 
 Stopping an Application
