@@ -34,13 +34,12 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Programs, User Services, Workflows, and Workers
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
 - `StreamClient: <#stream-client>`_ interacting with Streams
 - `DatasetClient: <#dataset-client>`_ interacting with Datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
 - `QueryClient: <#query-client>`_ querying Datasets
-- `ProcedureClient: <#procedure-client>`_ interacting with Procedures
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
@@ -55,8 +54,7 @@ Alphabetical list:
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
 - `PreferencesClient: <#preferences-client>`_ interacting with Preferences
-- `ProcedureClient: <#procedure-client>`_ interacting with Procedures
-- `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Programs, User Services, Workflows, and Workers
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
 - `QueryClient: <#query-client>`_ querying Datasets
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `StreamClient: <#stream-client>`_ interacting with Streams

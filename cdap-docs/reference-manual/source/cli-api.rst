@@ -218,7 +218,6 @@ These are the available commands:
    ``list apps``,"Lists all Applications."
    ``list flows``,"Lists all Flows."
    ``list mapreduce``,"Lists all MapReduce Programs."
-   ``list procedures``,"Lists all Procedures."
    ``list programs``,"Lists all Programs."
    ``list services``,"Lists all Services."
    ``list spark``,"Lists all Spark Programs."

@@ -96,12 +96,12 @@ can see the host name and debugging port for each Flowlet. For example, the only
 splitter Flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
 attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
-The corresponding HTTP requests for the ``RetrieveCounts`` Procedure of this application would be::
+The corresponding HTTP requests for the ``RetrieveCounts`` Service of this application would be::
 
-  POST <base-url>/apps/WordCount/procedures/RetrieveCounts/debug
-  GET <base-url>/apps/WordCount/procedures/RetrieveCounts/live-info
+  POST <base-url>/apps/WordCount/Service/RetrieveCounts/debug
+  GET <base-url>/apps/WordCount/Service/RetrieveCounts/live-info
 
-Analysis of the response would give you the host names and debugging ports for all instances of the Procedure.
+Analysis of the response would give you the host names and debugging ports for all instances of the Service.
 
 .. highlight:: java
 
