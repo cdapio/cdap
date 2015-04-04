@@ -48,6 +48,44 @@ public abstract class TableRendererTest {
   }
 
   @Test
+  public void testEmptyColumns() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333", "", "foo")
+      .setRows(Table.rows()
+                 .add("r1\n456", "", "r1", "", "foo")
+                 .add("r2", "", "r", "", "foo")
+                 .add("r3333", "", "r3\n1", "", "foo")
+                 .build())
+      .build();
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
+  }
+
+  @Test
+  public void testLastColumnEmpty() {
+    Table table = Table.builder()
+      .setHeader("c1", "c2", "c3333", "")
+      .setRows(Table.rows()
+                 .add("r1\n456", "", "r1", "")
+                 .add("r2", "", "r", "")
+                 .add("r3333", "", "r3\n1", "")
+                 .build())
+      .build();
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
+  }
+
+  @Test
+  public void testNoHeader() {
+    Table table = Table.builder()
+      .setRows(Table.rows()
+                 .add("r1\n456", "r11", "r1")
+                 .add("r2", "r2222\n123", "r")
+                 .add("r3333", "r3", "r3\n1")
+                 .build())
+      .build();
+    getRenderer().render(TEST_CONFIG, OUTPUT, table);
+  }
+
+  @Test
   public void testFormat() {
     Table table = Table.builder()
       .setHeader("c1", "c2", "c3333")
