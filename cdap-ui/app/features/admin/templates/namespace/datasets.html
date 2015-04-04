@@ -1,13 +1,15 @@
 <div ng-if="datasets.length > 0 || streams.length > 0">
-  <div class="col-xs-6">
-    <h2>{{ $state.params.nsadmin | myEllipsis: 15 }}: Data</h2>
-  </div>
-  <div class="col-xs-6 h2">
-    <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+  <div class="row">
+    <div class="col-xs-6">
+      <h2>{{ $state.params.nsadmin | myEllipsis: 15 }}: Data</h2>
+    </div>
+    <div class="col-xs-6 h2">
+      <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
+    </div>
   </div>
 
 
-  <table class="table table-striped table-responsive">
+  <table class="table table-striped table-responsive" cask-sortable>
     <thead ng-class="{'sort-enabled': datasets.length>0}">
       <th>Name</th>
       <th>Type</th>
