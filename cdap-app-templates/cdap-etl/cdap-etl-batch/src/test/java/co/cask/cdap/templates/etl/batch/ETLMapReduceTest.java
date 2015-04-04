@@ -19,14 +19,13 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.TestBase;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -58,7 +57,7 @@ public class ETLMapReduceTest extends TestBase {
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig();
-    DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     Map<String, String> mapReduceArgs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {

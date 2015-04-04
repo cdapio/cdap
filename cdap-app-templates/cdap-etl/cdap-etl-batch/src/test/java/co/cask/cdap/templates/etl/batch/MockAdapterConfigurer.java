@@ -27,7 +27,7 @@ import java.util.Map;
  * Default implementation of {@link AdapterConfigurer} for ETL Batch Tests.
  */
 //TODO: Remove/Move this class else where until we figure out how to write tests without AdapterConfigurer dependency
-public class DefaultAdapterConfigurer implements AdapterConfigurer {
+public class MockAdapterConfigurer implements AdapterConfigurer {
   private Schedule schedule;
   private int instances;
   private Map<String, String> arguments = Maps.newHashMap();

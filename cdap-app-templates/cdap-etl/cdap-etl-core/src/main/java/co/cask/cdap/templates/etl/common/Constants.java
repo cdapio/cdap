@@ -42,7 +42,7 @@ public final class Constants {
    * Constants related to Transform.
    */
   public static final class Transform {
-    public static final String TRANSFORM_CONFIGS = "templates.etl.adapter.transform.configs";
-    public static final String SPECIFICATION = "templates.etl.adapter.transform.specification";
+    public static final String CONFIGS = "templates.etl.adapter.transform.configs";
+    public static final String SPECIFICATIONS = "templates.etl.adapter.transform.specifications";
   }
 }

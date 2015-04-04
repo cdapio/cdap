@@ -31,6 +31,7 @@
 
   <modules>
     <module>cdap-etl-api</module>
+    <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
     <module>cdap-etl-lib</module>
     <module>cdap-etl-test</module>
@@ -163,6 +164,13 @@
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-unit-test</artifactId>
         <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
 

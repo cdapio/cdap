@@ -23,7 +23,6 @@ import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
-import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.common.Constants;
@@ -35,22 +34,27 @@ import co.cask.cdap.templates.etl.lib.transforms.StreamToStructuredRecordTransfo
 import co.cask.cdap.templates.etl.lib.transforms.StructuredRecordToAvroTransform;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Table;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * ETL Batch Template.
  */
 public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   private static final Gson GSON = new Gson();
-  private final Table<String, String, String> nameToClass;
+  private final Map<String, String> sourceClassMap;
+  private final Map<String, String> sinkClassMap;
+  private final Map<String, String> transformClassMap;
 
   public ETLBatchTemplate() throws Exception {
-    nameToClass = HashBasedTable.create();
+    sourceClassMap = Maps.newHashMap();
+    sinkClassMap = Maps.newHashMap();
+    transformClassMap = Maps.newHashMap();
+
     //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
     //plugins management is completed.
     initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class,
@@ -65,19 +69,17 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       if (BatchSource.class.isAssignableFrom(klass)) {
         BatchSource source = (BatchSource) klass.newInstance();
         source.configure(configurer);
-        nameToClass.put("source", configurer.createSpecification().getName(),
-                        configurer.createSpecification().getClassName());
+        sourceClassMap.put(configurer.createSpecification().getName(), configurer.createSpecification().getClassName());
       } else if (BatchSink.class.isAssignableFrom(klass)) {
         BatchSink sink = (BatchSink) klass.newInstance();
         sink.configure(configurer);
-        nameToClass.put("sink", configurer.createSpecification().getName(),
-                        configurer.createSpecification().getClassName());
+        sinkClassMap.put(configurer.createSpecification().getName(), configurer.createSpecification().getClassName());
       } else {
         Preconditions.checkArgument(Transform.class.isAssignableFrom(klass));
         Transform transform = (Transform) klass.newInstance();
         transform.configure(configurer);
-        nameToClass.put("transform", configurer.createSpecification().getName(),
-                        configurer.createSpecification().getClassName());
+        transformClassMap.put(configurer.createSpecification().getName(),
+                              configurer.createSpecification().getClassName());
       }
     }
   }
@@ -94,7 +96,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
     configureSource(source, configurer);
     configureSink(sink, configurer);
-    configureTransform(transform, configurer);
+    configureTransforms(transform, configurer);
 
     //TODO: Validate if source, transforms, sink can be tied together
 
@@ -106,7 +108,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
   private void configureSource(ETLStage source, AdapterConfigurer configurer) throws Exception {
     String sourceName = source.getName();
-    String className = nameToClass.get("source", sourceName);
+    String className = sourceClassMap.get(sourceName);
     BatchSource batchSource = (BatchSource) Class.forName(className).newInstance();
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSource.getClass());
     StageSpecification specification = stageConfigurer.createSpecification();
@@ -115,24 +117,24 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
   private void configureSink(ETLStage sink, AdapterConfigurer configurer) throws Exception {
     String sinkName = sink.getName();
-    String className = nameToClass.get("sink", sinkName);
+    String className = sinkClassMap.get(sinkName);
     BatchSink batchSink = (BatchSink) Class.forName(className).newInstance();
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSink.getClass());
     StageSpecification specification = stageConfigurer.createSpecification();
     configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
   }
 
-  private void configureTransform(List<ETLStage> transforms, AdapterConfigurer configurer) throws Exception {
+  private void configureTransforms(List<ETLStage> transforms, AdapterConfigurer configurer) throws Exception {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
     for (ETLStage transform : transforms) {
       String transformName = transform.getName();
-      String className = nameToClass.get("transform", transformName);
+      String className = transformClassMap.get(transformName);
       Transform transformObj = (Transform) Class.forName(className).newInstance();
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
       StageSpecification specification = stageConfigurer.createSpecification();
       transformSpecs.add(specification);
     }
-    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATION, GSON.toJson(transformSpecs));
+    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATIONS, GSON.toJson(transformSpecs));
   }
 
   @Override

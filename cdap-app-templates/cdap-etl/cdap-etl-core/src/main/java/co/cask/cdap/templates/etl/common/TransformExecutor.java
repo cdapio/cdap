@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.common.DefaultEmitter;
 
 import java.util.List;
 import java.util.Map;
@@ -34,16 +33,11 @@ public final class TransformExecutor {
     this.transformList = transforms;
     this.previousEmitter = new DefaultEmitter();
     this.currentEmitter = new DefaultEmitter();
-
   }
 
-  public void runOneIteration(DefaultEmitter data) throws Exception {
-    //Copy Data into previousEmitter and reset 'data'.
-    for (Map.Entry entry : data) {
-      previousEmitter.emit(entry.getKey(), entry.getValue());
-    }
-    data.reset();
-
+  public Iterable<Map.Entry> runOneIteration(Object key, Object value) throws Exception {
+    previousEmitter.reset();
+    previousEmitter.emit(key, value);
     for (Transform transform : transformList) {
       for (Map.Entry entry : previousEmitter) {
         transform.transform(entry.getKey(), entry.getValue(), currentEmitter);
@@ -53,11 +47,6 @@ public final class TransformExecutor {
       previousEmitter = currentEmitter;
       currentEmitter = temp;
     }
-
-    //Copy result into 'data'
-    for (Map.Entry entry : previousEmitter) {
-      data.emit(entry.getKey(), entry.getValue());
-    }
-    previousEmitter.reset();
+    return previousEmitter;
   }
 }

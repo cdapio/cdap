@@ -25,10 +25,9 @@ import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
-import co.cask.cdap.templates.etl.common.DefaultEmitter;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
+import co.cask.cdap.templates.etl.common.TransformExecutor;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -61,18 +60,18 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
+    Map<String, String> runtimeArgs = context.getRuntimeArguments();
 
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.ADAPTER_NAME));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.CONFIG_KEY));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Source.SPECIFICATION));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Sink.SPECIFICATION));
-    Preconditions.checkArgument(context.getRuntimeArguments().containsKey(Constants.Transform.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
 
-    ETLBatchConfig config = GSON.fromJson(context.getRuntimeArguments().get(Constants.CONFIG_KEY),
-                                          ETLBatchConfig.class);
-    StageSpecification sourceSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Source.SPECIFICATION),
+    ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
+    StageSpecification sourceSpec = GSON.fromJson(runtimeArgs.get(Constants.Source.SPECIFICATION),
                                                   StageSpecification.class);
-    StageSpecification sinkSpec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
+    StageSpecification sinkSpec = GSON.fromJson(runtimeArgs.get(Constants.Sink.SPECIFICATION),
                                                 StageSpecification.class);
 
     prepareSource(sourceSpec, context, config.getSource());
@@ -106,11 +105,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     Job job = context.getHadoopJob();
 
     //Set list of Transform specifications to be used in the Mapper
-    job.getConfiguration().set(Constants.Transform.SPECIFICATION,
-                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATION));
+    job.getConfiguration().set(Constants.Transform.SPECIFICATIONS,
+                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATIONS));
 
     //Set the Transform configurations to be used in the initialization in the Mapper
-    job.getConfiguration().set(Constants.Transform.TRANSFORM_CONFIGS, GSON.toJson(transformStages));
+    job.getConfiguration().set(Constants.Transform.CONFIGS, GSON.toJson(transformStages));
   }
 
   @Override
@@ -127,7 +126,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Type STAGE_LIST_TYPE = new TypeToken<List<ETLStage>>() { }.getType();
 
     private TransformExecutor transformExecutor;
-    private DefaultEmitter data;
 
     private MapReduceContext mapReduceContext;
     private List<Transform> transforms = Lists.newArrayList();
@@ -135,15 +133,14 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       this.mapReduceContext = context;
-      this.data = new DefaultEmitter();
     }
 
     @Override
     public void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
       //Get transform class names and specifications from the context.
-      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATION);
-      String transformStages = context.getConfiguration().get(Constants.Transform.TRANSFORM_CONFIGS);
+      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATIONS);
+      String transformStages = context.getConfiguration().get(Constants.Transform.CONFIGS);
 
       List<StageSpecification> specificationList = GSON.fromJson(transformSpecs, SPEC_LIST_TYPE);
       List<ETLStage> stageList = GSON.fromJson(transformStages, STAGE_LIST_TYPE);
@@ -181,12 +178,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        data.emit(key, value);
-        transformExecutor.runOneIteration(data);
-        for (Map.Entry entry : data) {
+        for (Map.Entry entry : transformExecutor.runOneIteration(key, value)) {
           context.write(entry.getKey(), entry.getValue());
         }
-        data.reset();
       } catch (Exception e) {
         LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
         Throwables.propagate(e);
