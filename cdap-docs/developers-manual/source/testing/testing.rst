@@ -177,17 +177,27 @@ Start the MapReduce and wait for a maximum of 60 seconds::
       mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce was run correctly by
-obtaining a client for the Procedure, and then submitting a query for
-the counts::
+using the PurchaseHistoryService to retrieve a customer's purchase history::
 
-      ProcedureClient client = procedureManager.getClient();
+    // Start PurchaseHistoryService
+    ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
-      // Verify the query.
-      String response = client.query("history", ImmutableMap.of("customer", "joe"));
+    // Wait for service startup
+    purchaseHistoryServiceManager.waitForStatus(true);
 
-      // Deserialize the JSON string.
-      PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
-      Assert.assertEquals(2, result.getPurchases().size());
+    // Test service to retrieve a customer's purchase history
+    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(15, TimeUnit.SECONDS), "history/joe");
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+    String historyJson;
+    try {
+      historyJson = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+    } finally {
+      conn.disconnect();
+    }
+    PurchaseHistory history = GSON.fromJson(historyJson, PurchaseHistory.class);
+    Assert.assertEquals("joe", history.getCustomer());
+    Assert.assertEquals(2, history.getPurchases().size());
 
 The assertion will verify that the correct result was received.
 
@@ -229,14 +239,14 @@ Start the Spark program and wait for a maximum of 60 seconds::
   sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We verify that the Spark program ran correctly by
-obtaining a client for the Procedure, and then submitting a query for
-the ranks::
+using the Ranks Service to check the results::
 
-  ProcedureClient client = procedureManager.getClient();
+  // Wait for ranks service to start
+  serviceManager.waitForStatus(true);
 
-  // Verify the query.
-  String response = client.query("rank", ImmutableMap.of("url", "http://example.com/page1"));
-  Assert.assertEquals("1.3690036520596678", response);
+  String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
+                                           "rank?url=http://example.com/page1"));
+  Assert.assertEquals("14", response);
 
 The assertion will verify that the correct result was received.
 
