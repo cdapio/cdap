@@ -189,6 +189,28 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setSuspend(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramSuspend(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setResume(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramResumed(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
                                  final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {

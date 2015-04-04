@@ -63,6 +63,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Core of Workflow engine that drives the execution of Workflow.
@@ -81,6 +84,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private NettyHttpService httpService;
   private volatile Thread runningThread;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
+  private boolean suspended;
+  private Lock lock;
+  private Condition condition;
 
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
@@ -96,6 +102,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
                                                                          runId, options.getUserArguments(),
                                                                          logicalStartTime);
+    lock = new ReentrantLock();
+    condition = lock.newCondition();
   }
 
   @Override
@@ -112,6 +120,49 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     httpService.startAndWait();
     runningThread = Thread.currentThread();
+  }
+
+  private void blockIfSuspended() {
+    lock.lock();
+    try {
+      while (suspended) {
+        condition.await();
+      }
+    } catch (InterruptedException e) {
+      LOG.warn("Wait on the Condition is interrupted.");
+      Thread.currentThread().interrupt();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Suspends the execution of the Workflow after the currently running actions complete.
+   * @throws Exception
+   */
+  public void suspend() throws Exception {
+    LOG.info("Suspending the Workflow");
+    lock.lock();
+    try {
+      suspended = true;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Resumes the execution of the Workflow.
+   * @throws Exception
+   */
+  public void resume() throws Exception {
+    LOG.info("Resuming the Workflow");
+    lock.lock();
+    try {
+      suspended = false;
+      condition.signalAll();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -176,10 +227,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         completionService.submit(new Callable<String>() {
           @Override
           public String call() throws Exception {
-            Iterator<WorkflowNode> iterator = branch.iterator();
-            while (!Thread.currentThread().isInterrupted() && iterator.hasNext()) {
-              executeNode(appSpec, iterator.next(), instantiator, classLoader);
-            }
+            executeAll(branch.iterator(), appSpec, instantiator, classLoader);
             return branch.toString();
           }
         });
@@ -228,22 +276,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
-    InstantiatorFactory instantiator = new InstantiatorFactory(false);
-    ClassLoader classLoader = program.getClassLoader();
 
-    // Executes actions step by step. Individually invoke the init()->run()->destroy() sequence.
+    executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
+               new InstantiatorFactory(false), program.getClassLoader());
 
-    final ApplicationSpecification appSpec = program.getApplicationSpecification();
-    final Iterator<WorkflowNode> iterator = workflowSpec.getNodes().iterator();
+    LOG.info("Workflow execution succeeded for {}", workflowSpec);
+  }
+
+  private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
+                          InstantiatorFactory instantiator, ClassLoader classLoader) {
     while (iterator.hasNext() && runningThread != null) {
       try {
+        blockIfSuspended();
         executeNode(appSpec, iterator.next(), instantiator, classLoader);
       } catch (Throwable t) {
         Throwables.propagate(t);
       }
     }
-
-    LOG.info("Workflow execution succeeded for {}", workflowSpec);
   }
 
   @Override
