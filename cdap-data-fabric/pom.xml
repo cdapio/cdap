@@ -60,6 +60,10 @@
       <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.thekraken</groupId>
+      <artifactId>grok</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-explore-client</artifactId>
         <version>${project.version}</version>
