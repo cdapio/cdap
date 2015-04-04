@@ -1,30 +1,29 @@
-<div class="input-group">
-  <div class="input-group-btn">
-    <button type="button" class="btn btn-default"
-      ng-model="metric.type"
-      bs-options="t for t in available.types"
-      data-container="body"
-      bs-select>
-        <strong ng-bind="metric.type"></strong>
-        <span class="caret"></span>
-    </button>
+<div class="form-group">
+  <div class="col-xs-12 col-sm-6">
+    <div class="input-group-btn">
+      <button type="button" class="btn btn-default form-control"
+        ng-model="metric.type"
+        bs-options="t for t in available.types"
+        data-container="body"
+        bs-select>
+          <strong ng-bind="metric.type"></strong>
+          <span class="caret"></span>
+      </button>
+    </div>
   </div>
-  <input type="text" class="form-control"
-    placeholder="Context"
-    ng-model="metric.context"
-    bs-options="c.value as c.display for c in available.contexts"
-    data-watch-options="1"
-    data-min-length="0"
-    data-container="body"
-    bs-typeahead />
+  <div class="col-xs-12 col-sm-6">
+    <input type="text" class="form-control"
+      placeholder="Context"
+      ng-model="metric.context"
+      bs-options="c.value as c.display for c in available.contexts"
+      data-watch-options="1"
+      data-min-length="0"
+      data-container="body"
+      bs-typeahead />
+  </div>
 </div>
 
-<br />
-
 <div class="input-group">
-  <span class="input-group-addon">
-    <i class="fa fa-line-chart"></i>
-  </span>
   <input type="text" class="form-control"
     placeholder="Metric Name"
     ng-model="metric.name"
@@ -34,4 +33,7 @@
     data-min-length="0"
     data-container="body"
     bs-typeahead />
+  <span class="input-group-addon">
+    <i class="fa fa-line-chart"></i>
+  </span>
 </div>

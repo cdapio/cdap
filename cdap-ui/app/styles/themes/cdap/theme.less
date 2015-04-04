@@ -62,7 +62,7 @@ body.theme-cdap {
     background-color: @table-bg;
     border: 1px solid lightgray;
     td, th {
-      padding: 20px;
+      padding: 10px;
       &:not(:last-child) {
         border-right: 1px solid lightgray;
       }
@@ -70,12 +70,13 @@ body.theme-cdap {
     }
     th {
       &:hover, &:focus {
-        background-color: lightgray;
+        background-color: transparent;
         cursor: pointer;
       }
     }
     thead {
       color: @cdap-header;
+      .empty { cursor: default; }
     }
     tbody {
       color: @cdap-bluegray;
@@ -201,26 +202,33 @@ body.theme-cdap {
     // Styling for all modals
     .modal-header {
       border-bottom: 0;
-      .modal-title {
-        color: white;
-        font-weight: bold;
+      .btn, button {
+        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 24px, @padding: 5px 10px);
+        line-height: 1;
+        opacity: 1;
       }
+      .modal-title { font-weight: bold; }
     }
     .modal-dialog { .border-radius(8px); }
+    .modal-content {
+      background-color: fade(#343841, 85%);
+      color: white;
+    }
     .modal-footer {
       border-top: 0;
       .btn-default { .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 10px 20px); }
+      .btn-primary, .btn-success {
+        .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
+        margin-left: 30px;
+      }
     }
-    label {
-      color: white;
-      font-size: 21px;
-    }
+    label { color: white; }
     .form-control {
       border: 0;
       .border-radius(8px);
       .box-shadow(none);
       font-size: 18px;
-      height: 50px;
+      height: 35px;
       text-indent: 5px;
       &:focus {
         border-color: transparent;
@@ -232,7 +240,7 @@ body.theme-cdap {
     select.form-control {
       background-color: @cdap-darkness;
       color: white;
-      height: 50px;
+      height: 35px;
     }
 
     // caskConfirm modal styling (no modal-lg or modal-sm class present)
@@ -240,33 +248,16 @@ body.theme-cdap {
       h4 { font-weight: bold; }
       .close { display: none; }
       .modal-content, .modal-footer { text-align: center; }
-      .modal-content { .box-shadow(none); }
       .modal-content {
-        background-color: fade(#3A3E47, 90%);
         border: 0;
         color: white;
+        .box-shadow(none);
       }
       .modal-footer {
         .btn-primary { .cask-btn(@color: white, @background: @brand-danger, @border: 0, @padding: 10px 20px); }
       }
     }
     .modal-dialog {
-      .modal-header {
-        .btn {
-          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 24px, @padding: 5px 10px);
-          line-height: 1;
-        }
-      }
-      // Small and large modal styling
-      &.modal-sm, &.modal-lg {
-        color: white;
-        .modal-footer {
-          .btn-primary, .btn-success {
-            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
-            margin-left: 30px;
-          }
-        }
-      }
       // Small modal styling
       &.modal-sm {
         text-align: center;
