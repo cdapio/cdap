@@ -200,6 +200,7 @@ body.theme-cdap {
   // --------------------------------------------------
   .modal {
     // Styling for all modals
+    h4 { color: white; }
     .modal-header {
       border-bottom: 0;
       .btn, button {
@@ -213,6 +214,9 @@ body.theme-cdap {
     .modal-content {
       background-color: fade(#343841, 85%);
       color: white;
+      button.form-control {
+        &:focus { outline: none; }
+      }
     }
     .modal-footer {
       border-top: 0;
@@ -227,20 +231,18 @@ body.theme-cdap {
       border: 0;
       .border-radius(8px);
       .box-shadow(none);
-      font-size: 18px;
-      height: 35px;
+      text-align: left;
       text-indent: 5px;
       &:focus {
         border-color: transparent;
         .box-shadow(none);
       }
-      &:disabled { background-color: #B9C4E2; }
     }
+    .input-group-addon + .form-control { border-left: 1px solid lightgray; .border-radius(0 8px 8px 0); }
     textarea.form-control { min-height: 100px; }
     select.form-control {
       background-color: @cdap-darkness;
       color: white;
-      height: 35px;
     }
 
     // caskConfirm modal styling (no modal-lg or modal-sm class present)
