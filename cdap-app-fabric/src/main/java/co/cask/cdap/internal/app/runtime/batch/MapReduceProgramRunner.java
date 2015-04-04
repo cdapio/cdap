@@ -44,6 +44,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -129,6 +130,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String adapterName = getAdapterName(arguments);
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -140,7 +142,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final DynamicMapReduceContext context =
       new DynamicMapReduceContext(program, null, runId, null,
                                   options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch,
+                                  logicalStartTime, workflowBatch, adapterName,
                                   discoveryServiceClient, metricsCollectionService,
                                   txSystemClient, datasetFramework);
 
@@ -227,5 +229,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
       mapReduceRuntimeService.start();
     }
     return controller;
+  }
+
+  @Nullable
+  private String getAdapterName(Arguments arguments) {
+    // TODO: Currently this logic is super ugly, should try and pass adapter name as its own separate arg
+    if (arguments.hasOption(ProgramOptionConstants.SCHEDULE_NAME)) {
+      String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
+      if (scheduleName.contains(".")) {
+        return scheduleName.substring(0, scheduleName.indexOf("."));
+      }
+    }
+    return null;
   }
 }

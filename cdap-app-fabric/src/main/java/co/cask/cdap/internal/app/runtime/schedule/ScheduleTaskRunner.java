@@ -92,8 +92,9 @@ public final class ScheduleTaskRunner {
       userArgs.putAll(spec.getProperties());
 
       Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),
-                                                        programId.getApplicationId(), programType.getCategoryName(),
-                                                        programId.getId());
+                                                                               programId.getApplicationId(),
+                                                                               programType.getCategoryName(),
+                                                                               programId.getId());
 
       userArgs.putAll(runtimeArgs);
 

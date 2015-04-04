@@ -30,7 +30,7 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
                                    final String applicationId,
                                    final String serviceId,
                                    final String runnableId) {
-    super(namespaceId, applicationId);
+    super(namespaceId, applicationId, null);
     setSystemTag(TAG_USERSERVICE_ID, serviceId);
     setSystemTag(TAG_RUNNABLE_ID, runnableId);
   }
