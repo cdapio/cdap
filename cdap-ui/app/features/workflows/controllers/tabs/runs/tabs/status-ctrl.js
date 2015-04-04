@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailRunStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.workflows')
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
         var run, startMs;
-        var runsThatWeCareAbout = filterFilter(res, { runid:$state.params.runId });
+        var runsThatWeCareAbout = filterFilter(res, { runid:$state.params.runid });
         if(runsThatWeCareAbout.length) {
           run = runsThatWeCareAbout[0];
           startMs = run.start * 1000;
@@ -94,7 +94,7 @@ function addStartAndEndNodes(nodes, edges) {
       sourceType: nodes[nodes.length - 2].nodeType,
       targetName: nodes[nodes.length - 1].name
     });
-    
+
   }
 
 }
