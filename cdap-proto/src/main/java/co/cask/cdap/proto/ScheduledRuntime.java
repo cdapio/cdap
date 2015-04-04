@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package co.cask.cdap.proto;
 
 /**
  * Represents scheduled run time.
  */
 public class ScheduledRuntime {
 
-  private String scheduleId;
+  private String id;
   private long time;
 
-  public ScheduledRuntime(String scheduleId, long time) {
-    this.scheduleId = scheduleId;
+  public ScheduledRuntime(String id, long time) {
+    this.id = id;
     this.time = time;
   }
 
   /**
    * @return schedule id.
    */
-  public String getScheduleId() {
-    return scheduleId;
+  public String getId() {
+    return id;
   }
 
   /**

@@ -477,7 +477,11 @@ final class MetricQueryParser {
       } else {
         resolution = Resolution.SECOND.getResolution();
       }
-      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      if (queryParams.containsKey(COUNT)) {
+        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      } else {
+        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      }
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.

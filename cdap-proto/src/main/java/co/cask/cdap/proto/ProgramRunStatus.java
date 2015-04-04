@@ -23,6 +23,7 @@ package co.cask.cdap.proto;
 public enum ProgramRunStatus {
   ALL,
   RUNNING,
+  SUSPENDED,
   COMPLETED,
   FAILED,
   KILLED
