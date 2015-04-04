@@ -46,8 +46,8 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
   public void configure(StageConfigurer configurer) {
     configurer.setName(StreamToStructuredRecordTransform.class.getName());
     configurer.setDescription("Transforms a StreamEvent to StructuredRecord.");
-    configurer.addProperty(new Property(SCHEMA, "Type of the Schema ex: CSV, TSV etc.", true));
-    configurer.addProperty(new Property(SCHEMA_TYPE, "The schema of the body of stream events", true));
+    configurer.addProperty(new Property(SCHEMA, "The schema of the body of stream events", true));
+    configurer.addProperty(new Property(SCHEMA_TYPE, "Type of the Schema ex: CSV, TSV etc.", true));
   }
 
   @Override
