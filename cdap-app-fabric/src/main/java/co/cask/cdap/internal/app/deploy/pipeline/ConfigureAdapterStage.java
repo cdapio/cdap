@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryAdapterConfigurator;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -25,6 +26,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -41,9 +44,10 @@ import java.io.IOException;
  * </p>
  */
 public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> {
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Logger LOG = LoggerFactory.getLogger(ConfigureAdapterStage.class);
   private final Id.Namespace namespace;
   private final String adapterName;
-  private static final Logger LOG = LoggerFactory.getLogger(ConfigureAdapterStage.class);
 
   /**
    * Constructor with hit for handling type.
@@ -87,7 +91,8 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
     InMemoryAdapterConfigurator inMemoryAdapterConfigurator =
       new InMemoryAdapterConfigurator(namespace, new LocalLocationFactory().create(input.toURI()), adapterName,
                                       deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec());
-    AdapterSpecification spec = inMemoryAdapterConfigurator.config();
+    AdapterSpecification spec = GSON.fromJson(inMemoryAdapterConfigurator.config().get().get(),
+                                              AdapterSpecification.class);
     emit(spec);
   }
 }

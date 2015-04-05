@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -155,8 +156,8 @@ public class AdapterLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (InvalidAdapterOperationException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (CannotBeDeletedException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Throwable t) {

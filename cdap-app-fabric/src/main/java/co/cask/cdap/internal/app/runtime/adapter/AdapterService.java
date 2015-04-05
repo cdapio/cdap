@@ -25,6 +25,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -227,14 +228,14 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace namespace id
    * @param adapterName adapter name
    * @throws AdapterNotFoundException if the adapter to be removed is not found.
-   * @throws InvalidAdapterOperationException if the adapter is not stopped.
+   * @throws CannotBeDeletedException if the adapter is not stopped.
    */
   public void removeAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException {
+    throws NotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
-      throw new InvalidAdapterOperationException("Cannot delete an adapter unless it is stopped.");
+      throw new CannotBeDeletedException("Adapter", adapterName);
     }
     store.removeAdapter(namespace, adapterName);
 

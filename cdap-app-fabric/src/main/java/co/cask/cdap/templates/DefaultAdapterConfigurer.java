@@ -80,7 +80,6 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
     streams.put(spec.getName(), spec);
-    instances = 1;
   }
 
   public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
