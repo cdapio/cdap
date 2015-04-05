@@ -45,6 +45,7 @@ public class MapReduceMetricsWriter {
   private static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
   private static final String METRIC_BYTES = "process.bytes";
   private static final String METRIC_COMPLETION = "process.completion";
+  private static final String METRIC_TASK_COMPLETION = "process.completion.task";
   private static final String METRIC_USED_CONTAINERS = "resources.used.containers";
   private static final String METRIC_USED_MEMORY = "resources.used.memory";
 
@@ -107,9 +108,6 @@ public class MapReduceMetricsWriter {
     long mapOutputBytes = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_BYTES);
 
     mapperMetrics.gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
-    mapperMetrics.gauge(METRIC_INPUT_RECORDS, mapInputRecords);
-    mapperMetrics.gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
-    mapperMetrics.gauge(METRIC_BYTES, mapOutputBytes);
     mapperMetrics.gauge(METRIC_USED_CONTAINERS, runningMappers);
     mapperMetrics.gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
@@ -119,18 +117,13 @@ public class MapReduceMetricsWriter {
 
     // reduce stats
     float reduceProgress = jobStatus.getReduceProgress();
-    long reduceInputRecords = getTaskCounter(jobCounters, TaskCounter.REDUCE_INPUT_RECORDS);
-    long reduceOutputRecords = getTaskCounter(jobCounters, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
     reducerMetrics.gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
-    reducerMetrics.gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
-    reducerMetrics.gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
     reducerMetrics.gauge(METRIC_USED_CONTAINERS, runningReducers);
     reducerMetrics.gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
     LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
-              (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
-              runningReducers * memoryPerReducer);
+              (int) (reduceProgress * 100), runningReducers, runningReducers * memoryPerReducer);
   }
 
   private void reportMapTaskMetrics(TaskReport taskReport) {
@@ -139,7 +132,7 @@ public class MapReduceMetricsWriter {
     metricsCollector.gauge(METRIC_INPUT_RECORDS, getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS));
     metricsCollector.gauge(METRIC_OUTPUT_RECORDS, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS));
     metricsCollector.gauge(METRIC_BYTES, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES));
-    metricsCollector.gauge(METRIC_COMPLETION, (long) (taskReport.getProgress() * 100));
+    metricsCollector.gauge(METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
   }
 
   private void reportReduceTaskMetrics(TaskReport taskReport) {
@@ -147,7 +140,7 @@ public class MapReduceMetricsWriter {
     MetricsCollector metricsCollector = reduceTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
     metricsCollector.gauge(METRIC_INPUT_RECORDS, getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS));
     metricsCollector.gauge(METRIC_OUTPUT_RECORDS, getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS));
-    metricsCollector.gauge(METRIC_COMPLETION, (long) (taskReport.getProgress() * 100));
+    metricsCollector.gauge(METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
   }
 
   // report system stats coming from user metrics or dataset operations
