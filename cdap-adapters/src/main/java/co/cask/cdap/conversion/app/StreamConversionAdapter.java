@@ -29,6 +29,7 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
  * Application that converts a stream into a partitioned file set.
  */
 public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
+  static final String CONFIG_KEY = "adapter.args";
 
   @Override
   public void configure() {
@@ -59,7 +60,7 @@ public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
   @Override
   public void configureAdapter(String adapterName, AdapterArgs args,
                                AdapterConfigurer configurer) throws Exception {
-    configurer.addRuntimeArgument("adapter.args", new Gson().toJson(args));
+    configurer.addRuntimeArgument(CONFIG_KEY, new Gson().toJson(args));
     configurer.setSchedule(Schedules.createTimeSchedule("test", "adapter schedule", "* * * * *"));
   }
 

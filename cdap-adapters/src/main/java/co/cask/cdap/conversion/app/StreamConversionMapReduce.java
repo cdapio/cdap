@@ -70,7 +70,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setMapOutputValueClass(NullWritable.class);
 
     AdapterArgs args = new Gson().fromJson(
-      context.getRuntimeArguments().get("adapter.args"), AdapterArgs.class);
+      context.getRuntimeArguments().get(StreamConversionAdapter.CONFIG_KEY), AdapterArgs.class);
     ConversionConfig config = args.getConfig();
     sinkName = config.getSinkName();
     partitionTime = context.getLogicalStartTime();

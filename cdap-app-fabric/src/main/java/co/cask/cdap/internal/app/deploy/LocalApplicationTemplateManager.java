@@ -106,8 +106,6 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, templateId));
     pipeline.addLast(new ApplicationTemplateVerificationStage(store, datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
-    pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
