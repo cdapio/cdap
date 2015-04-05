@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
@@ -33,7 +32,6 @@ public class TemplateApp extends ApplicationTemplate<Map<String, String>> {
   @Override
   public void configure() {
     setName("AdapterApp");
-    addStream(new Stream("mySource"));
     setDescription("Application for to test Adapter lifecycle");
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());
