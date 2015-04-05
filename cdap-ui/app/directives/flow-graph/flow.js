@@ -169,7 +169,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
           // $state.go('flows.detail.status.runs.status.streamsDetail', {streamId: nodeId});
         } else {
           console.log('node', nodeId);
-          $state.go('flows.detail.flowlet', { flowletid: nodeId });
+          $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
         }
       };
 
@@ -383,6 +383,8 @@ function genericRender(scope, $filter) {
     .on('mouseover', scope.handleShowTip)
     .on('mouseout', scope.handleHideTip);
 
+  scope.$on('$destroy', scope.handleHideTip);
+
   // Center svg.
   var initialScale = 1.1;
   var svgWidth = svg.node().getBoundingClientRect().width;
@@ -396,17 +398,18 @@ function genericRender(scope, $filter) {
    * Handles showing tooltip on mouseover of node name.
    */
   scope.handleShowTip = function(nodeId) {
+    console.log('test');
     tip
       .html(function(d) {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
       })
       .show();
-  }
+  };
 
   /**
    * Handles hiding tooltip on mouseout of node name.
    */
   scope.handleHideTip = function(nodeId) {
     tip.hide();
-  }
-};
+  };
+}
