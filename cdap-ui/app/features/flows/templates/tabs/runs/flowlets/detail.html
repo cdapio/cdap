@@ -1,6 +1,135 @@
-<div class="row h4">
-  <div class="col-sm-3">
-    <span> FlowletId </span>
-    <div ng-bind="flowletId"></div>
+<div class="row">
+  <div class="col-xs-6">
+    <h1><span ng-bind="$state.params.flowletid | caskCapitalizeFilter"></span></h1>
+    <p> {{description}} </p>
+  </div>
+
+  <div class="col-xs-offset-3 col-xs-3 instances">
+    <table class="table pull-right">
+      <tr>
+        <td></td>
+        <td>Provisioned</td>
+        <td>Requested</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><strong>Instances:</strong></td>
+        <td class="text-center">{{ provisionedInstances }}</td>
+        <td><input class="form-control" type="number" ng-model="instance"></td>
+        <td><button class="btn" ng-click="setIntance()" ng-disabled="instance < 1">Set</button></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" ng-class="{active: activeTab === 0}" ng-click="activeTab=0">
+    <a role="tab">Input</a>
+  </li>
+
+  <li role="presentation" ng-class="{active: activeTab === 1}" ng-click="activeTab=1">
+    <a role="tab">Process</a>
+  </li>
+
+  <li role="presentation" ng-class="{active: activeTab === 2}" ng-click="activeTab=2">
+    <a role="tab">Data</a>
+  </li>
+
+  <li role="presentation" ng-class="{active: activeTab === 3}" ng-click="activeTab=3">
+    <a role="tab">Output</a>
+  </li>
+</ul>
+
+<!-- INPUT -->
+<div ng-if="activeTab === 0">
+  <table class="table table-responsive" ng-if="inputs.length > 0" cask-sortable>
+    <thead>
+      <th>Source</th>
+      <th>Arrival Rate</th>
+      <th>Pending Events</th>
+      <th>Day</th>
+      <th>Max Pending</th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="input in inputs">
+        <td>
+          <a ui-sref="flows.detail.flowlet({flowletid: input})">
+            {{input}}
+          </a>
+        </td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="inputs.length === 0">
+    <h3>No Input</h3>
+  </div>
+</div>
+
+
+<!-- PROCESS -->
+<div class="well text-center" ng-if="activeTab === 1">
+  <h3>Not Implemented Yet</h3>
+</div>
+
+
+<!-- DATA -->
+<div ng-if="activeTab === 2">
+  <table class="table table-responsive" ng-if="datasets.length > 0" cask-sortable>
+    <thead>
+      <th>Dataset</th>
+      <th>Reads</th>
+      <th>Writes</th>
+      <th>Distribution of ops vs. instances</th>
+      <th>Skew</th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="dataset in datasets">
+        <td>
+          <a ui-sref="datasets.detail.overview({datasetId: dataset})">
+            {{dataset}}
+          </a>
+        </td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="datasets.length === 0">
+    <h3>No Dataset</h3>
+  </div>
+</div>
+
+
+<!-- OUTPUT -->
+<div ng-if="activeTab === 3">
+  <table class="table table-responsive" ng-if="outputs.length > 0" cask-sortable>
+    <thead>
+      <th>Rate</th>
+      <th>Total</th>
+      <th>Target</th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="output in outputs">
+        <td></td>
+        <td></td>
+        <td>
+          <a ui-sref="flows.detail.flowlet({flowletid: output})">
+            {{output}}
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="outputs.length === 0">
+    <h3>No Output</h3>
   </div>
 </div>

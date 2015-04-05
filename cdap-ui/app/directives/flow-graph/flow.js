@@ -168,12 +168,8 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
           });
           // $state.go('flows.detail.status.runs.status.streamsDetail', {streamId: nodeId});
         } else {
-          $alert({
-            type: 'info',
-            title: 'Temporary Problem',
-            content: 'Navigating to a flowlet is not available temporarily. Will be fixed ASAP'
-          });
-          // $state.go('flows.detail.status.runs.status.flowletsDetail', {flowletId: nodeId});
+          console.log('node', nodeId);
+          $state.go('flows.detail.flowlet', { flowletid: nodeId });
         }
       };
 

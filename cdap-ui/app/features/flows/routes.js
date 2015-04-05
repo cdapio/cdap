@@ -26,6 +26,11 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/detail.html',
         controller: 'FlowsDetailController'
       })
+        .state('flows.detail.flowlet', {
+          url: '/flowlet/:flowletid',
+          templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
+          controller: 'FlowsFlowletDetailController'
+        })
 
       .state('flows.detail.status', {
         url: '/status',
