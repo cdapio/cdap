@@ -57,7 +57,7 @@ public class StreamToStructuredRecordTransformTest {
       @Override
       public Map<String, String> getRuntimeArguments() {
         Map<String, String> runtimeArgs = Maps.newHashMap();
-        runtimeArgs.put("schemaType", Formats.CSV);
+        runtimeArgs.put("format.name", Formats.CSV);
         runtimeArgs.put("schema", eventSchema.toString());
         return runtimeArgs;
       }
