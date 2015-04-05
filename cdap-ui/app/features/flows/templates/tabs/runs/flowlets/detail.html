@@ -53,9 +53,7 @@
     <tbody>
       <tr ng-repeat="input in inputs">
         <td>
-          <a ui-sref="flows.detail.flowlets.flowlet({flowletid: input})">
-            {{input}}
-          </a>
+          {{input}}
         </td>
         <td></td>
         <td></td>
@@ -90,9 +88,7 @@
     <tbody>
       <tr ng-repeat="dataset in datasets">
         <td>
-          <a ui-sref="datasets.detail.overview({datasetId: dataset})">
-            {{dataset}}
-          </a>
+          {{dataset}}
         </td>
         <td></td>
         <td></td>
@@ -121,9 +117,7 @@
         <td></td>
         <td></td>
         <td>
-          <a ui-sref="flows.detail.flowlets.flowlet({flowletid: output})">
-            {{output}}
-          </a>
+          {{output}}
         </td>
       </tr>
     </tbody>
