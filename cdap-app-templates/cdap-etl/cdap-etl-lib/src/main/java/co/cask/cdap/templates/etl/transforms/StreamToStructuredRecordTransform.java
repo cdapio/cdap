@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.LongWritable;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -44,7 +43,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
                                                                  LongWritable, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String FORMAT_NAME = "format.name";
-  private static final String FORMAT_SETTING_PREFIX = "format.setting";
+  private static final String FORMAT_SETTING_PREFIX = "format.setting.";
 
   private static SchemaWrapper schemaWrapper = null;
 
@@ -96,7 +95,8 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (Map.Entry<String, String> entry : getContext().getRuntimeArguments().entrySet()) {
       if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
-        builder.put(entry);
+        String key = entry.getKey().replace(FORMAT_SETTING_PREFIX, "");
+        builder.put(key, entry.getValue());
       }
     }
 
