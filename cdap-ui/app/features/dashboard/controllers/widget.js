@@ -5,8 +5,6 @@
 angular.module(PKG.name+'.feature.dashboard')
   .factory('Widget', function (MyDataSource) {
 
-    var dataSrc = new MyDataSource();
-
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
@@ -14,7 +12,8 @@ angular.module(PKG.name+'.feature.dashboard')
       this.metric = opts.metric || false;
     }
 
-    Widget.prototype.fetchData = function () {
+    Widget.prototype.fetchData = function (scope) {
+      var dataSrc = new MyDataSource(scope);
       if(!this.metric) {
         return;
       }
@@ -50,7 +49,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
 
     Widget.prototype.getPartial = function () {
-      return '/assets/features/dashboard/widgets/' + this.type + '.html';
+      return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
 
     Widget.prototype.getClassName = function () {
@@ -70,7 +69,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
 
-    $scope.wdgt.fetchData();
+    $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;
     $scope.stream = null;
     $scope.$watch('wdgt.data', function (newVal) {

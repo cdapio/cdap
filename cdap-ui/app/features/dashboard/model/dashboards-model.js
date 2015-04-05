@@ -31,6 +31,7 @@ function (Widget, MyDataSource, mySettings, $q) {
       // default is a single empty column
       this.columns.push([]);
     }
+    this.checkForEmptyDashboard();
   }
 
 
@@ -56,9 +57,19 @@ function (Widget, MyDataSource, mySettings, $q) {
         return widget !== p;
       });
     });
+    this.checkForEmptyDashboard();
     this.persist();
   };
 
+  Dashboard.prototype.checkForEmptyDashboard = function() {
+    var isEmpty = true;
+    angular.forEach(this.columns, function(column) {
+      if (column.length > 0) {
+        isEmpty = false;
+      }
+    });
+    this.isEmpty = isEmpty;
+  };
 
 
   /**
@@ -262,8 +273,7 @@ function (Widget, MyDataSource, mySettings, $q) {
     // default widget in first column
     d.columns[0].push(new Widget({type:'welcome'}));
 
-    // insert at beginning of data array
-    this.data.unshift(d);
+    this.data.push(d);
 
     // save to backend
     return d.persist().then((function(){
@@ -275,5 +285,3 @@ function (Widget, MyDataSource, mySettings, $q) {
 
   return Model;
 });
-
-
