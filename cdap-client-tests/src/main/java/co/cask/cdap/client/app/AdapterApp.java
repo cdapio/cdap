@@ -25,10 +25,11 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
  *  App to test adapter lifecycle.
  */
 public class AdapterApp extends AbstractApplication {
+  public static String NAME = "dummyAdapter";
 
   @Override
   public void configure() {
-    setName("AdapterApp");
+    setName(NAME);
     addStream(new Stream("mySource"));
     setDescription("Application for to test Adapter lifecycle");
     addWorkflow(new AdapterWorkflow());
