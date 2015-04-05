@@ -53,7 +53,7 @@
     <tbody>
       <tr ng-repeat="input in inputs">
         <td>
-          <a ui-sref="flows.detail.flowlet({flowletid: input})">
+          <a ui-sref="flows.detail.flowlets.flowlet({flowletid: input})">
             {{input}}
           </a>
         </td>
@@ -121,7 +121,7 @@
         <td></td>
         <td></td>
         <td>
-          <a ui-sref="flows.detail.flowlet({flowletid: output})">
+          <a ui-sref="flows.detail.flowlets.flowlet({flowletid: output})">
             {{output}}
           </a>
         </td>

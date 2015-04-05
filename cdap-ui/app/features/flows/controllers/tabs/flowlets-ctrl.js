@@ -20,10 +20,11 @@ angular.module(PKG.name + '.feature.flows')
 
     // This is for toggling (opening/closing) accordions if state changes.
     $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
-      if (fromState.name !== 'flows.detail.flowlets.flowlet' && toState.name !== 'flows.detail.flowlets.flowlet') {
+      if (fromState.name !== 'flows.detail.flowlets.flowlet' || toState.name !== 'flows.detail.flowlets.flowlet') {
         return;
       }
       angular.forEach($scope.flowlets, function(value) {
+        console.log('test');
         if (value.name === toParams.flowletid) {
           value.isOpen = true;
         }
