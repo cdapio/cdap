@@ -17,6 +17,9 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.DummyTemplate;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -58,6 +61,12 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerTemplates();
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testInvalidTemplate() throws Exception {
+    AdapterConfig adapterConfig = new AdapterConfig("description", BadTemplate.NAME, null);
+    adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "badAdapter", adapterConfig);
   }
 
   @Test(expected = RuntimeException.class)
@@ -214,6 +223,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
   private static void setupAdapters() throws IOException {
     setupAdapter(DummyTemplate.class, DummyTemplate.NAME);
+    setupAdapter(BadTemplate.class, BadTemplate.NAME);
   }
 
   private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
@@ -225,5 +235,42 @@ public class AdapterServiceTests extends AppFabricTestBase {
     File adapterJar = AppFabricClient.createDeploymentJar(locationFactory, clz, manifest);
     File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
     Files.copy(adapterJar, destination);
+  }
+
+  /**
+   * Bad template that contains 2 workflows.
+   */
+  public static class BadTemplate extends ApplicationTemplate {
+    public static final String NAME = "badtemplate";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+      addWorkflow(new SomeWorkflow1());
+      addWorkflow(new SomeWorkflow2());
+    }
+
+    public static class SomeWorkflow1 extends AbstractWorkflow {
+      @Override
+      protected void configure() {
+        setName("wf1");
+        addMapReduce("DummyMapReduceJob");
+      }
+    }
+
+    public static class SomeWorkflow2 extends AbstractWorkflow {
+      @Override
+      protected void configure() {
+        setName("wf2");
+        addMapReduce("DummyMapReduceJob");
+      }
+    }
+
+    public static class DummyMapReduceJob extends AbstractMapReduce {
+      @Override
+      protected void configure() {
+        setName("DummyMapReduceJob");
+      }
+    }
   }
 }
