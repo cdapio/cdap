@@ -25,11 +25,14 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.LongWritable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -54,14 +57,19 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
   }
 
   @Override
-  public void transform(@Nullable LongWritable inputKey, StreamEvent streamEvent,
-                        Emitter<LongWritable, StructuredRecord> emitter) throws Exception {
-
-    if (schemaWrapper == null) {
-      // read the stream event body as a StructuredRecord
+  public void initialize(TransformContext context) {
+    super.initialize(context);
+    try {
       Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));
       schemaWrapper = getSchemaWrapper(streamBodySchema);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void transform(@Nullable LongWritable inputKey, StreamEvent streamEvent,
+                        Emitter<LongWritable, StructuredRecord> emitter) throws Exception {
 
     StructuredRecord streamEventRecord = schemaWrapper.format.read(streamEvent);
 
