@@ -39,4 +39,28 @@ public class MRTaskInfo {
     this.progress = progress;
     this.counters = counters;
   }
+
+  public String getTaskId() {
+    return taskId;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public long getFinishTime() {
+    return finishTime;
+  }
+
+  public float getProgress() {
+    return progress;
+  }
+
+  public Map<String, Long> getCounters() {
+    return counters;
+  }
 }

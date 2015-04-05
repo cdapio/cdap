@@ -45,4 +45,36 @@ public class MRJobInfo {
     this.mapTasks = mapTasks;
     this.reduceTasks = reduceTasks;
   }
+
+  public String getState() {
+    return state;
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public long getFinishTime() {
+    return finishTime;
+  }
+
+  public float getMapProgress() {
+    return mapProgress;
+  }
+
+  public float getReduceProgress() {
+    return reduceProgress;
+  }
+
+  public Map<String, Long> getCounters() {
+    return counters;
+  }
+
+  public List<MRTaskInfo> getMapTasks() {
+    return mapTasks;
+  }
+
+  public List<MRTaskInfo> getReduceTasks() {
+    return reduceTasks;
+  }
 }

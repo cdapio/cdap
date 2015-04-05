@@ -28,6 +28,8 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapreduce.TaskCounter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.Map;
  * from the Job History Server.
  */
 public class MRJobClient {
+  private static final Logger LOG = LoggerFactory.getLogger(MRJobClient.class);
   private final Configuration hConf;
 
   @Inject
@@ -59,6 +62,7 @@ public class MRJobClient {
       jobClient = new JobClient(hConf);
       jobs = jobClient.getAllJobs();
     } catch (Exception e) {
+      LOG.warn("JobClient failed to get all jobs.", e);
       throw new IOException(e);
     }
 
@@ -76,17 +80,12 @@ public class MRJobClient {
   }
 
   private JobStatus findJobForRunId(JobStatus[] jobs, String runId) throws NotFoundException {
-    JobStatus thisJob = null;
     for (JobStatus job : jobs) {
       if (job.getJobName().startsWith(runId)) {
-        thisJob = job;
-        break;
+        return job;
       }
     }
-    if (thisJob == null) {
-      throw new NotFoundException("MapReduce Run", runId);
-    }
-    return thisJob;
+    throw new NotFoundException("MapReduce Run", runId);
   }
 
   // Converts a TaskReport to a simplified version of it - a MRTaskInfo.
