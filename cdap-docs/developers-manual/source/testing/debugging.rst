@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
+.. _debugging-cdap:
+
 ================================================
 Debugging a CDAP Application
 ================================================
-
-.. _debugging-cdap:
 
 Debugging an Application in Standalone CDAP
 ===========================================
