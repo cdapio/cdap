@@ -457,14 +457,13 @@ public class AdapterService extends AbstractIdleService {
     }
 
     // instantiate the template application and call configure() on it to determine it's specification
-    InMemoryConfigurator configurator = new InMemoryConfigurator(
-      Constants.SYSTEM_NAMESPACE_ID, new LocalLocationFactory().create(jarFile.toURI()));
+    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()));
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(2, TimeUnit.MINUTES);
     ApplicationSpecification spec = GSON.fromJson(response.get(), ApplicationSpecification.class);
 
     // verify that the name is ok
-    Id.Application applicationID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
+    Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
 
     // determine the program type of the template
     ProgramType programType;

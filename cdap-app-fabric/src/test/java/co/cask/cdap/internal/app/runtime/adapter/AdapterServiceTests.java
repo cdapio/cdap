@@ -206,7 +206,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     public void configure() {
       super.configure();
       setName(NAME);
-      setDescription(UUID.randomUUID().toString());
     }
   }
 

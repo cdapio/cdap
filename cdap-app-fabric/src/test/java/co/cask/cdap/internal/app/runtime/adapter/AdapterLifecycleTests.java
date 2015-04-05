@@ -183,6 +183,21 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     // TODO: implement once adapter creation calls configureTemplate()
   }
 
+  @Test
+  public void testDeployTemplate() throws Exception {
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/templates/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    response = doPut(
+      String.format("%s/namespaces/%s/templates/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
+  }
+
   private static void setupAdapter(Class<?> clz) throws IOException {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());

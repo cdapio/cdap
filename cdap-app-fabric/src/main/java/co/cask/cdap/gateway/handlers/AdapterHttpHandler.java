@@ -72,8 +72,8 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
    * For example, if a program is renamed or new arguments are required, users must handle recreation of
    * adapters themselves.
    */
-  @POST
-  @Path("/templates/{template-id}/deploy")
+  @PUT
+  @Path("/templates/{template-id}")
   public void deployTemplate(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("template-id") String templateId) {
@@ -84,6 +84,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     }
     try {
       adapterService.deployTemplate(Id.Namespace.from(namespaceId), templateId);
+      responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Template '%s' does not exist.", templateId));

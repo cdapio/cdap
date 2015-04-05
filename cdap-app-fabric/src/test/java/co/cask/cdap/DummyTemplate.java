@@ -26,6 +26,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Type;
+import java.util.UUID;
 
 /**
  * App Template to test adapter lifecycle.
@@ -65,7 +66,8 @@ public class DummyTemplate extends ApplicationTemplate<DummyTemplate.Config> {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Application for to test Adapter lifecycle");
+    // make the description different each time to distinguish between deployed versions in unit tests
+    setDescription(UUID.randomUUID().toString());
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());
   }
