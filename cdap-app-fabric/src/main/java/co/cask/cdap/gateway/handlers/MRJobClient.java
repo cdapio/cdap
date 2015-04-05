@@ -16,13 +16,17 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobStatus;
@@ -45,8 +49,12 @@ public class MRJobClient {
   private final Configuration hConf;
 
   @Inject
-  public MRJobClient(Configuration hConf) {
-    this.hConf = hConf;
+  public MRJobClient(CConfiguration cConf, Configuration hConf) {
+    int numRetries = cConf.getInt(Constants.AppFabric.MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES);
+    this.hConf = new Configuration(hConf);
+    // Override a cloned hConf's configuration of IPC Client max retries based upon value in CConf to avoid longer
+    // amounts of retrying (especially when the Job History Server is not installed)
+    this.hConf.setInt(CommonConfigurationKeysPublic.IPC_CLIENT_CONNECT_MAX_RETRIES_KEY, numRetries);
   }
 
   /**
@@ -55,7 +63,7 @@ public class MRJobClient {
    * @throws IOException if there is failure to communicate through the JobClient.
    * @throws NotFoundException if a Job with the given runId is not found.
    */
-  public MRJobInfo getMRJobInfo(String runId) throws IOException, NotFoundException {
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
     JobClient jobClient;
     JobStatus[] jobs;
     try {
@@ -79,13 +87,13 @@ public class MRJobClient {
                          toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports));
   }
 
-  private JobStatus findJobForRunId(JobStatus[] jobs, String runId) throws NotFoundException {
+  private JobStatus findJobForRunId(JobStatus[] jobs, Id.Run runId) throws NotFoundException {
     for (JobStatus job : jobs) {
-      if (job.getJobName().startsWith(runId)) {
+      if (job.getJobName().startsWith(runId.getId())) {
         return job;
       }
     }
-    throw new NotFoundException("MapReduce Run", runId);
+    throw new NotFoundException(runId);
   }
 
   // Converts a TaskReport to a simplified version of it - a MRTaskInfo.

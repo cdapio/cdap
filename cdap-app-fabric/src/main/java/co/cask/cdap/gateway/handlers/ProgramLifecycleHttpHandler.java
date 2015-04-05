@@ -210,7 +210,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Relays job-level and task-level information about a particular MapReduce program run.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/runs/{run-id}/info")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runs/{run-id}/info")
   public void mapReduceInfo(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
@@ -218,6 +218,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("run-id") String runId) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+      Id.Run run = new Id.Run(programId, runId);
       ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
       if (appSpec == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application not found: %s",
@@ -229,7 +230,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      MRJobInfo mrJobInfo = mrJobClient.getMRJobInfo(runId);
+      MRJobInfo mrJobInfo = mrJobClient.getMRJobInfo(run);
       responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
     } catch (NotFoundException e) {
       LOG.debug("RunId not found: {}", runId, e);
