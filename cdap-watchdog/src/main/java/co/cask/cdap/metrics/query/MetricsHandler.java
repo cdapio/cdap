@@ -24,10 +24,12 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
@@ -44,8 +46,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,6 +191,12 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
                     @QueryParam("tag") List<String> tags) throws Exception {
+
+    if (new QueryStringDecoder(request.getUri()).getParameters().isEmpty()) {
+      executeBatchQueries(request, responder);
+      return;
+    }
+
     if (tags.size() > 0 || (groupBy.size() > 1) || metrics.size() > 1) {
       tagsQuerying(request, responder, tags, metrics, groupBy);
     } else {
@@ -195,12 +205,32 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private void executeBatchQueries(HttpRequest request, HttpResponder responder) {
+    if (HttpHeaders.getContentLength(request) > 0) {
+      String json = request.getContent().toString(Charsets.UTF_8);
+      Map<String, List<QueryRequest>> queries =
+        GSON.fromJson(json, new TypeToken<Map<String, List<QueryRequest>>>() { }.getType());
+      LOG.trace("Received Queries {}", queries);
+      Map<String, List<MetricQueryResult>> queryFinalResponse = Maps.newHashMap();
+      for (Map.Entry<String, List<QueryRequest>> query : queries.entrySet()) {
+        List<MetricQueryResult> queryResultSet = Lists.newArrayList();
+        for (QueryRequest queryRequest : query.getValue()) {
+          queryResultSet.add(executeQuery(queryRequest));
+        }
+        queryFinalResponse.put(query.getKey(), queryResultSet);
+      }
+      responder.sendJson(HttpResponseStatus.OK, queryFinalResponse);
+    } else {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+    }
+  }
+
   private void tagsQuerying(HttpRequest request, HttpResponder responder, List<String> tags, List<String> metrics,
                             List<String> groupByTags) {
     try {
       List<MetricQueryResult> results = Lists.newArrayList();
       for (String metric : metrics) {
-        results.add(executeQuery(request, responder, parseTagValuesAsMap(tags), groupByTags, metric));
+        results.add(executeQuery(request, parseTagValuesAsMap(tags), groupByTags, metric));
       }
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
@@ -218,7 +248,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
                                @QueryParam("groupBy") String groupBy) {
     try {
       List<String> groupByTags = parseGroupBy(groupBy);
-      MetricQueryResult queryResult = executeQuery(request, responder, parseTagValuesAsMap(context),
+      MetricQueryResult queryResult = executeQuery(request, parseTagValuesAsMap(context),
                                                    groupByTags, metric);
       responder.sendJson(HttpResponseStatus.OK, queryResult);
     } catch (IllegalArgumentException e) {
@@ -230,8 +260,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private MetricQueryResult executeQuery(HttpRequest request, HttpResponder responder,
-                                         Map<String, String> sliceByTags,
+  private MetricQueryResult executeQuery(HttpRequest request, Map<String, String> sliceByTags,
                                          List<String> groupByTags, String metric) {
     try {
       // todo: refactor parsing time range params
@@ -246,7 +275,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
 
-
       MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
                                                   // todo: figure out MetricType
                                                   MetricType.COUNTER, tagsSliceBy, groupByTags);
@@ -260,6 +288,78 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       throw Throwables.propagate(e);
     }
   }
+
+
+  private MetricQueryResult executeQuery(QueryRequest queryRequest) {
+    try {
+      // todo: refactor parsing time range params
+      // sets time range, query type, etc.
+      MetricQueryParser.MetricDataQueryBuilder builder = new MetricQueryParser.MetricDataQueryBuilder();
+      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
+      parseTimeRange(queryRequest.getTimeRange(), queryRequest.getResolution(), builder);
+      MetricDataQuery queryTimeParams = builder.build();
+
+      Map<String, String> tagsSliceBy = humanToTagNames(queryRequest.getTags());
+
+      long startTs = queryTimeParams.getStartTs();
+      long endTs = queryTimeParams.getEndTs();
+
+      Collection<MetricTimeSeries> queryResult = Lists.newArrayList();
+      for (String metric : queryRequest.getMetrics()) {
+        MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(), metric,
+                                                    // todo: figure out MetricType
+                                                    MetricType.COUNTER, tagsSliceBy, queryRequest.getGroupBy());
+        Collection<MetricTimeSeries> timeSerieses = metricStore.query(query);
+
+        queryResult.addAll(timeSerieses);
+      }
+
+      MetricQueryResult result = decorate(queryResult, startTs, endTs);
+      return result;
+    } catch (IllegalArgumentException e) {
+      throw Throwables.propagate(e);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private void parseTimeRange(Map<String, String> timeRange, String resolution,
+                              MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
+    long startTs = 0, endTs = 0;
+    int count = 0;
+    int resolutionInterval = 1;
+    if (resolution != null) {
+      resolutionInterval = (int) TimeMathParser.parseTime(resolution);
+    }
+    for (Map.Entry<String, String> entry : timeRange.entrySet()) {
+      if (entry.getKey().equals("aggregate") && entry.getValue().equals("true")) {
+        queryTimeParams.setStartTs(0);
+        queryTimeParams.setEndTs(0);
+        queryTimeParams.setResolution(Integer.MAX_VALUE);
+        queryTimeParams.setLimit(1);
+        return;
+      }
+      if (entry.getKey().equals("start")) {
+        startTs = TimeMathParser.parseTime(entry.getValue());
+        queryTimeParams.setStartTs(startTs);
+      }
+      if (entry.getKey().equals("end")) {
+        endTs = TimeMathParser.parseTime(entry.getValue());
+        queryTimeParams.setEndTs(endTs);
+      }
+      if (entry.getKey().equals("count")) {
+        count = Integer.parseInt(entry.getValue());
+        queryTimeParams.setLimit(count);
+      }
+    }
+    queryTimeParams.setResolution(resolutionInterval);
+    if (endTs == 0 && startTs > 0 && count > 0) {
+      queryTimeParams.setEndTs(startTs + (count * resolutionInterval));
+    } else if (startTs == 0 && endTs > 0 & count > 0) {
+      queryTimeParams.setStartTs(endTs - (count * resolutionInterval));
+    }
+  }
+
 
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
@@ -469,6 +569,66 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       timeValues[k++] = new MetricQueryResult.TimeValue(timeValue.getTimestamp(), timeValue.getValue());
     }
     return timeValues;
+  }
+
+  /**
+   * Parsing metrics request queries
+   */
+  class QueryRequest {
+    Map<String, String> tags;
+    List<String> metrics;
+    List<String> groupBy;
+    Map<String, String> timeRange;
+    String resolution;
+
+    QueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy,
+                 Map<String, String> timeRange, String resolution) {
+      this.tags = tags;
+      this.metrics = metrics;
+      this.groupBy = groupBy;
+      this.timeRange = timeRange;
+      this.resolution = resolution;
+    }
+
+    private Map<String, String> parseTags(Map<String, String> tags) {
+      return Maps.transformValues(tags, new Function<String, String>() {
+          @Override
+          public String apply(String value) {
+            if (ANY_TAG_VALUE.equals(value)) {
+              return null;
+            } else {
+              return value;
+            }
+          }
+        });
+    }
+
+    public Map<String, String> getTags() {
+      return parseTags(tags);
+    }
+
+    public List<String> getMetrics() {
+      return metrics;
+    }
+
+    public List<String> getGroupBy() {
+      return Lists.transform(groupBy, new Function<String, String>() {
+        @Nullable
+        @Override
+        public String apply(@Nullable String input) {
+            String replacement = humanToTagName.get(input);
+            return replacement != null ? replacement : input;
+        }
+      });
+    }
+
+    public String getResolution() {
+      return resolution;
+    }
+
+    public Map<String, String> getTimeRange() {
+      return timeRange;
+    }
   }
 
   /**
