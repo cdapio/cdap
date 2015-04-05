@@ -57,8 +57,10 @@
 
             <div class="form-group">
               <label class="col-sm-2 control-label">Format</label>
-              <div class="col-sm-4">
-                <input type="text" class="form-control" ng-model="format" placeholder="ie. csv">
+              <div class="col-sm-2">
+                <select ng-model="format" class="form-control">
+                  <option ng-repeat="option in formatOptions" value="{{option}}">{{option}}</option>
+                </select>
               </div>
             </div>
 
@@ -93,6 +95,44 @@
 
                   <div class="col-sm-2 h4">
                     <button class="btn btn-info" ng-click="addProperties()">
+                      <span class="fa fa-fw fa-plus"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Settings</label>
+              <div class="col-sm-10">
+
+                <div class="row">
+                  <div class="col-sm-10" ng-show="settings.length > 0">
+                    <div ng-repeat="setting in settings" class="h4">
+                      <div class="row">
+                        <div class="col-sm-4">
+                          <input type="text" class="form-control" ng-model="setting.key" placeholder="key"/>
+                        </div>
+                        <div class="col-sm-6">
+                          <input type="text" class="form-control" ng-model="setting.value" placeholder="value"/>
+
+                        </div>
+                        <div class="col-sm-2">
+                          <a href="" class="btn btn-danger btn-xs" ng-click="removeSetting(setting)">
+                            <span class="fa fa-fw fa-trash"> </span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-10" ng-show="settings.length === 0">
+                    <div class="well well-sm text-center h4">
+                      <h4> No Setting </h4>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-2 h4">
+                    <button class="btn btn-info" ng-click="addSetting()">
                       <span class="fa fa-fw fa-plus"></span>
                     </button>
                   </div>
