@@ -384,8 +384,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     simpleActionDoneFile.createNewFile();
 
     // delete the application
-    String deleteURL = getVersionedAPIPath("apps/" + appWithConcurrentWorkflow, Constants.Gateway
-      .API_VERSION_3_TOKEN, defaultNamespace);
+    String deleteURL = getVersionedAPIPath("apps/" + appWithConcurrentWorkflow,
+                                           Constants.Gateway.API_VERSION_3_TOKEN, defaultNamespace);
     deleteApplication(60, deleteURL, 200);
   }
 
@@ -539,8 +539,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW,
-                                           workflowName);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("someKey", "someWorkflowValue");
@@ -548,12 +547,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
-    Assert.assertEquals(200,
-                        resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName,
-                                                         workflowName);
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
@@ -639,14 +636,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
-                                            sampleSchedule1));
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
-                                            sampleSchedule2));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule1));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule2));
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName,
-                                                         workflowName);
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(2, schedules.size());
     String scheduleName1 = schedules.get(0).getSchedule().getName();
     String scheduleName2 = schedules.get(1).getSchedule().getName();
@@ -654,29 +648,23 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertFalse(scheduleName1.isEmpty());
 
     // Change notification threshold for stream
-    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2,
-                                   streamName),
+    response = doPut(String.format("/v3/namespaces/%s/streams/%s/properties", TEST_NAMESPACE2, streamName),
                      "{'notification.threshold.mb': 1}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                   streamName));
+    response = doGet(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName));
     String json = EntityUtils.toString(response.getEntity());
     StreamProperties properties = new Gson().fromJson(json, StreamProperties.class);
     Assert.assertEquals(1, properties.getNotificationThresholdMB().intValue());
 
     // Ingest over 1MB of data in stream
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                      streamName),
-                        longString);
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName), longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     TimeUnit.SECONDS.sleep(10);
-    String runsURL = getRunsUrl(TEST_NAMESPACE2, appName,
-                                workflowName,
-                                "completed");
+    String runsURL = getRunsUrl(TEST_NAMESPACE2, appName, workflowName, "completed");
     scheduleHistoryRuns(5, runsURL, 0);
 
     //Check schedule status
@@ -685,10 +673,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     scheduleStatusCheck(5, statusURL1, "SCHEDULED");
     scheduleStatusCheck(5, statusURL2, "SCHEDULED");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
-                                             scheduleName1));
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
-                                             scheduleName2));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName2));
     //check paused state
     scheduleStatusCheck(5, statusURL1, "SUSPENDED");
     scheduleStatusCheck(5, statusURL2, "SUSPENDED");
@@ -699,9 +685,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     for (int i = 0; i < 12; ++i) {
-      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2,
-                                      streamName),
-                        longString);
+      response = doPost(String.format("/v3/namespaces/%s/streams/%s", TEST_NAMESPACE2, streamName), longString);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
     TimeUnit.SECONDS.sleep(5);
@@ -709,8 +693,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     int workflowRunsAfterSuspend = getRuns(runsURL);
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
-                                            scheduleName1));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName1));
 
     scheduleHistoryRuns(5, runsURL, workflowRunsAfterSuspend);
 
@@ -745,22 +728,18 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName,
-                                            sampleSchedule));
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW,
-                                           workflowName);
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
     verifyProgramRuns(programId, "completed");
 
     Map<String, String> propMap = ImmutableMap.of("ThrowError", "true");
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW.getCategoryName(),
-                        workflowName, propMap);
+    store.setProperties(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW.getCategoryName(), workflowName, propMap);
 
     verifyProgramRuns(programId, "failed");
 
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName,
-                                             sampleSchedule));
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
   }
 }

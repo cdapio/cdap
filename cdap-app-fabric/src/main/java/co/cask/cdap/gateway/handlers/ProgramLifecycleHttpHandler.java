@@ -1170,16 +1170,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec == null) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          } else {
-            // program exists
-            if (type == ProgramType.MAPREDUCE) {
-              // check if MapReduce program is running as a part of the Workflow
-              if (store.getRuns(id, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).size() > 0) {
-                return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
-              }
-            }
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
+          if (type == ProgramType.MAPREDUCE && !store.getRuns(id, ProgramRunStatus.RUNNING, 0,
+                                                              Long.MAX_VALUE, 1).isEmpty()) {
+            // MapReduce program exists and running as a part of Workflow
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
+          }
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
         } else {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
           Location webappLoc = null;
@@ -1346,17 +1343,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
-      if (type == ProgramType.MAPREDUCE) {
-        // For MapReduce programs recording of the states in the MDS is done by MapReduceRuntimeService
-        // We only need listener here to record explicit stopping of the MapReduce program
-        controller.addListener(new AbstractListener() {
-          @Override
-          public void killed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.KILLED.getRunStatus());
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-      } else {
+      if (type != ProgramType.MAPREDUCE) {
+        // MapReduce state recording is done by the MapReduceProgramRunner
+        // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
         controller.addListener(new AbstractListener() {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
