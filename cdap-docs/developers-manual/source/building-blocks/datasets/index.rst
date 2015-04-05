@@ -161,7 +161,6 @@ While these Tables have rows and columns similar to relational database tables, 
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
 
-
 A |fileset|_ represents a collections of files in the file system that share some common attributes
 such as the format and schema, while abstracting from the actual underlying file system interfaces.
 
@@ -178,6 +177,11 @@ such as the format and schema, while abstracting from the actual underlying file
 - An extension of FileSets, ``PartitionedFileSets`` allow the associating of meta data (partitioning keys)
   with each file. The file can then be addressed through its meta data, removing the need for programs to
   be aware of actual file paths.
+  
+- A ``TimePartitionedFileSet`` is a further variation that uses a timestamp as the partitioning key.
+  Unlike a :ref:`Timeseries Table <cdap-timeseries-guide>` dataset, where the same schema is
+  used for all batches, a ``TimePartitionedFileSet`` can be used to batch together data
+  whose schema varies from batch to batch.
 
 .. |fileset| replace:: **FileSet**
 .. _fileset: fileset.html
@@ -213,3 +217,8 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 
 - For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.
 
+- For an example of a FileSet dataset, see the :ref:`FileSet example <examples-fileset>`.
+  The :ref:`Sport Results example <examples-sport-results>` demonstrates the use of a
+  ``PartitionedFileSet``, while the :ref:`Stream Conversion example 
+  <examples-stream-conversion>` shows use of a ``TimePartitionedFileSet``.
+  
