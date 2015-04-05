@@ -107,7 +107,7 @@ public class ClientConfig {
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v3/<namespace>/apps".
+   *             in a URL like "http://example.com:10000/v3/&lt;namespace&gt;/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
