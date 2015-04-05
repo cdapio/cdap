@@ -29,12 +29,18 @@ angular.module(PKG.name + '.feature.flows')
         .state('flows.detail.flowlets', {
           url: '/flowlets',
           templateUrl: '/assets/features/flows/templates/tabs/flowlets.html',
-          controller: 'FlowletsController'
+          controller: 'FlowletsController',
+          ncyBreadcrumb: {
+            label: 'Flowlets'
+          }
         })
           .state('flows.detail.flowlets.flowlet', {
             url: '/:flowletid',
             templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
-            controller: 'FlowsFlowletDetailController'
+            controller: 'FlowsFlowletDetailController',
+            ncyBreadcrumb:{
+              label: '{{$state.params.flowletid}}'
+            }
           })
 
       .state('flows.detail.status', {
