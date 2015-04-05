@@ -134,13 +134,14 @@ Glossary
    Master Services
       CDAP system services that are run in YARN containers like Transaction Service,
       Dataset Executor, Log Saver, Metrics Processor, etc.
-  
-  TimePartitioned Dataset
+
+   TimePartitioned Dataset
       A :term:`Dataset` that consists of batches of data, differentiated by a timestamp.
       Unlike a :term:`TimeSeries Dataset`, the schema of batches may vary from batch to
       batch.
-  
-  TimeSeries Dataset
+
+   TimeSeries Dataset
       A :term:`Dataset` that consists of batches of data with identical schema,
       differentiated by a timestamp. Unlike a :term:`TimePartitioned Dataset`, the schema
       of the batches must be identical.
+
