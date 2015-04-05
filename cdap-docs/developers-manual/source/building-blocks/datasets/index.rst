@@ -204,10 +204,11 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 
 - For an example of a **FileSet dataset,** see the :ref:`FileSet <examples-fileset>` example.
 
-- For an example of a **PartitionedFileSet,** see the :ref:`Sport Results example <examples-sport-results>`.
+- For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
+  example.
 
-- For an example of a **TimePartitionedFileSet,** see the :ref:`Stream Conversion example 
-  <examples-stream-conversion>`.
+- For an example of a **TimePartitionedFileSet,** see the :ref:`Stream Conversion 
+  <examples-stream-conversion>` example.
 
 - For examples of **key-value Table datasets,** see the
   :ref:`Hello World <examples-hello-world>`,
@@ -221,4 +222,5 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
   :ref:`Spark K-Means <examples-spark-k-means>`, and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.
+
   
