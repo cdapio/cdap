@@ -168,7 +168,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
           });
           // $state.go('flows.detail.status.runs.status.streamsDetail', {streamId: nodeId});
         } else {
-          console.log('node', nodeId);
           $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
         }
       };
