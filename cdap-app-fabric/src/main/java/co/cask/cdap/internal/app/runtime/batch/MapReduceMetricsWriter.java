@@ -80,13 +80,12 @@ public class MapReduceMetricsWriter {
   }
 
   public void reportStats() throws IOException, InterruptedException {
-    Counters jobCounters = jobConf.getCounters();
-    reportMapredStats(jobCounters);
-    reportSystemStats(jobCounters);
+    reportMapredStats();
+    reportSystemStats();
   }
 
   // job level stats from counters built in to mapreduce
-  private void reportMapredStats(Counters jobCounters) throws IOException, InterruptedException {
+  private void reportMapredStats() throws IOException, InterruptedException {
     JobStatus jobStatus = jobConf.getStatus();
     // map stats
     float mapProgress = jobStatus.getMapProgress();
@@ -103,17 +102,12 @@ public class MapReduceMetricsWriter {
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
     int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
-    long mapInputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_INPUT_RECORDS);
-    long mapOutputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_RECORDS);
-    long mapOutputBytes = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_BYTES);
-
     mapperMetrics.gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
     mapperMetrics.gauge(METRIC_USED_CONTAINERS, runningMappers);
     mapperMetrics.gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
-    LOG.trace("Reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
-              (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
-              runningMappers * memoryPerMapper);
+    LOG.trace("Reporting mapper stats: (completion, containers, memory) = ({}, {}, {})",
+              (int) (mapProgress * 100), runningMappers, runningMappers * memoryPerMapper);
 
     // reduce stats
     float reduceProgress = jobStatus.getReduceProgress();
@@ -122,7 +116,7 @@ public class MapReduceMetricsWriter {
     reducerMetrics.gauge(METRIC_USED_CONTAINERS, runningReducers);
     reducerMetrics.gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
-    LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
+    LOG.trace("Reporting reducer stats: (completion, containers, memory) = ({}, {}, {})",
               (int) (reduceProgress * 100), runningReducers, runningReducers * memoryPerReducer);
   }
 
@@ -144,7 +138,8 @@ public class MapReduceMetricsWriter {
   }
 
   // report system stats coming from user metrics or dataset operations
-  private void reportSystemStats(Counters jobCounters) {
+  private void reportSystemStats() throws IOException {
+    Counters jobCounters = jobConf.getCounters();
     for (String group : jobCounters.getGroupNames()) {
       if (group.startsWith("cdap.")) {
 

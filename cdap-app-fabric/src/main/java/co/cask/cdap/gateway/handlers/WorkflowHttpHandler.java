@@ -71,7 +71,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin, Scheduler scheduler,
                              PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory,
                              MRJobClient mrJobClient) {
-    super(authenticator, store, hConf, configuration, runtimeService, discoveryServiceClient,
+    super(authenticator, store, configuration, runtimeService, discoveryServiceClient,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient);
     this.workflowClient = workflowClient;
   }
