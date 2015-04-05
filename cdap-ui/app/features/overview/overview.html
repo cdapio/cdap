@@ -40,41 +40,26 @@
 <section class="cdap-health"> <!-- ng-show="isEnterprise" -->
   <h2> CDAP Health </h2>
   <div class="row">
-    <div class="col-xs-12 col-md-6">
-      <div class="row">
-        <div class="col-xs-3">
-          <div>
-            <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-               <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="yellow" />
-            </svg>
-          </div>
-        </div>
-        <div class="col-xs-9">
-          <p><span> 3.0 upgrade started 11:00 am </span></p>
-        </div>
+    <div class="col-xs-12 col-md-4">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+           <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="yellow" />
+        </svg>
+        <p> 3.0 upgrade started 11:00 am </p>
       </div>
     </div>
 
-    <div class="col-xs-12 col-md-3">
-      <p class="text-left"> Errors last hour </p>
-      <br />
-      <epoch-line
-        data-history="chartHistory"
-        data-stream ="chartHistory"
-        chart-height="130"
-        chart-ticks="{ bottom: 3 }"
-      ></epoch-line>
-      <p class="text-center"> System </p>
-    </div>
-    <div class="col-xs-12 col-md-3">
-    <br /><br />
-      <epoch-line
-        data-history="appHistory"
-        data-stream ="chartHistory"
-        chart-height="130"
-        chart-ticks="{ bottom: 3 }"
-      ></epoch-line>
-      <p class="text-center"> App </p>
+    <div class="col-xs-12 col-md-8 text-right">
+      <div>
+        <p class="text-left"> Errors last hour </p>
+        <img src="assets/img/health_graph.png" alt="" />
+        <p class="text-center"> System </p>
+      </div>
+      <div>
+        <br />
+        <img src="assets/img/health_graph.png" alt="" />
+        <p class="text-center"> App </p>
+      </div>
     </div>
   </div>
 </section>

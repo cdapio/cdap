@@ -23,14 +23,14 @@
       <ul class="list-group" >
         <li class="list-group-item" ng-repeat="stream in streams track by $index">
           <a ui-sref="streams.detail.overview({streamId: stream.name})">
-            <strong ng-bind="stream.name | caskCapitalizeFilter">  </strong>
-            <div> <p ng-bind="'Type: ' + (stream.type)"></p> </div>
+            <p ng-bind="stream.name | caskCapitalizeFilter"> </p>
+            <p><i class="fa fa-dot-circle-o"></i> Stream </p>
           </a>
         </li>
         <li class="list-group-item" ng-repeat="dataset in datasets track by $index">
           <a ui-sref="datasets.detail.overview({datasetId: dataset.name})">
-            <strong ng-bind="dataset.name | caskCapitalizeFilter">  </strong>
-            <div> <p ng-bind="'Type: ' + (dataset.type)"></p> </div>
+            <p ng-bind="dataset.name | caskCapitalizeFilter"> </p>
+            <p><i class="fa fa-th-large"></i> Dataset </p>
           </a>
         </li>
       </ul>
@@ -82,8 +82,8 @@
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in apps">
           <a ui-sref="apps.detail.overview({appId: app.id})">
-            <strong ng-bind="app.name">  </strong>
-            <div><p ng-bind="app.description"> </p></div>
+            <p ng-bind="app.name"> </p>
+            <p><i class="fa fa-server"></i> CDAP </p>
           </a>
         </li>
       </ul>
