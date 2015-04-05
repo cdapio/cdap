@@ -109,6 +109,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     public static final AppFabricServiceStatus PROGRAM_ALREADY_STOPPED =
       new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
 
+    public static final AppFabricServiceStatus PROGRAM_ALREADY_SUSPENDED =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program run already suspended");
+
     public static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
       new AppFabricServiceStatus(HttpResponseStatus.CONFLICT,
                                  UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));

@@ -19,7 +19,6 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -56,6 +55,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
@@ -217,10 +217,7 @@ public class ExploreDisabledTest {
           @Override
           protected void configure() {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            install(new FactoryModuleBuilder()
-                      .implement(Store.class, DefaultStore.class)
-                      .build(StoreFactory.class)
-            );
+            bind(Store.class).to(DefaultStore.class);
           }
         }
     );

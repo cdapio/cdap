@@ -19,6 +19,7 @@ package co.cask.cdap.data.format;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.RecordFormat;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -38,11 +39,24 @@ public final class RecordFormats {
       .put(Formats.TSV, DelimitedStringsRecordFormat.class)
       .put(Formats.AVRO, AvroRecordFormat.class)
       .put(Formats.COMBINED_LOG_FORMAT, CombinedLogRecordFormat.class)
+      .put(Formats.GROK, GrokRecordFormat.class)
+      .put(Formats.SYSLOG, GrokRecordFormat.class)
       .build();
   private static final Map<String, Map<String, String>> NAME_SETTINGS_MAP =
     ImmutableMap.<String, Map<String, String>>builder()
       .put(Formats.CSV, ImmutableMap.of(DelimitedStringsRecordFormat.DELIMITER, ","))
       .put(Formats.TSV, ImmutableMap.of(DelimitedStringsRecordFormat.DELIMITER, "\t"))
+      .put(Formats.SYSLOG, GrokRecordFormat.settings("%{SYSLOGLINE:syslogline}"))
+      .build();
+  private static final Map<String, Schema> DEFAULT_SCHEMA_MAP =
+    ImmutableMap.<String, Schema>builder()
+      .put(Formats.SYSLOG, Schema.recordOf(
+        "streamEvent",
+        Schema.Field.of("timestamp", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("logsource", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("program", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("message", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("pid", Schema.nullableOf(Schema.of(Schema.Type.STRING)))))
       .build();
 
   /**
@@ -71,18 +85,29 @@ public final class RecordFormats {
     RecordFormat<FROM, TO> format = (RecordFormat<FROM, TO>) (formatClass == null ?
       Class.forName(name).newInstance() : formatClass.newInstance());
 
-    // check if there should be some default settings
+    // compute actual settings: use default settings if present
+    Map<String, String> settings;
     Map<String, String> defaultSettings = NAME_SETTINGS_MAP.get(name.toLowerCase());
     if (defaultSettings != null) {
-      Map<String, String> mergedSettings = Maps.newHashMap(defaultSettings);
+      settings = Maps.newHashMap(defaultSettings);
       if (spec.getSettings() != null) {
-        mergedSettings.putAll(spec.getSettings());
+        settings.putAll(spec.getSettings());
       }
-      FormatSpecification mergedSpec = new FormatSpecification(name, spec.getSchema(), mergedSettings);
-      format.initialize(mergedSpec);
     } else {
-      format.initialize(spec);
+      settings = spec.getSettings();
     }
+
+    // compute actual schema
+    Schema schema;
+    Schema defaultSchema = DEFAULT_SCHEMA_MAP.get(name.toLowerCase());
+    if (defaultSchema != null && spec.getSchema() == null) {
+      schema = defaultSchema;
+    } else {
+      schema = spec.getSchema();
+    }
+
+    FormatSpecification actualSpec = new FormatSpecification(name, schema, settings);
+    format.initialize(actualSpec);
     return format;
   }
 }

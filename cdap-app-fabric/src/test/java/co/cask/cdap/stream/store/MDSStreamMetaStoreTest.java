@@ -17,7 +17,6 @@
 package co.cask.cdap.stream.store;
 
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -73,10 +72,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
         protected void configure() {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class)
-          );
+          bind(Store.class).to(DefaultStore.class);
         }
       }
     );
@@ -86,7 +82,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    store = injector.getInstance(StoreFactory.class).create();
+    store = injector.getInstance(Store.class);
   }
 
   @AfterClass

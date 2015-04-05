@@ -47,8 +47,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;
@@ -67,9 +69,12 @@ import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinitio
 @Category(SlowTests.class)
 public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 

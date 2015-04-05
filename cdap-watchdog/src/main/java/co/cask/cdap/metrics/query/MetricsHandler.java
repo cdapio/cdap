@@ -221,6 +221,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
+
       MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(),
                                                   queryTimeParams.getLimit(), metric,
                                                   // todo: figure out MetricType

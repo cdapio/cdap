@@ -14,11 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.app.store;
+package co.cask.cdap.proto;
 
 /**
- *
+ * Represents scheduled run time.
  */
-public interface StoreFactory {
-  Store create();
+public class ScheduledRuntime {
+
+  private String id;
+  private long time;
+
+  public ScheduledRuntime(String id, long time) {
+    this.id = id;
+    this.time = time;
+  }
+
+  /**
+   * @return schedule id.
+   */
+  public String getId() {
+    return id;
+  }
+
+  /**
+   * @return runtime.
+   */
+  public long getTime() {
+    return time;
+  }
 }
