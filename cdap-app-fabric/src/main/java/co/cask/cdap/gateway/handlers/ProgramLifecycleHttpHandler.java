@@ -1177,23 +1177,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
           }
           return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
-        } else {
-          // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
-          Location webappLoc = null;
-          try {
-            webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
-          } catch (FileNotFoundException e) {
-            // No location found for webapp, no need to log this exception
-          }
-
-          if (webappLoc != null && webappLoc.exists()) {
-            // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
-          } else {
-            // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          }
         }
+        // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
+        Location webappLoc = null;
+        try {
+          webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
+        } catch (FileNotFoundException e) {
+          // No location found for webapp, no need to log this exception
+        }
+
+        if (webappLoc != null && webappLoc.exists()) {
+          // webapp exists and not running. so return stopped.
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
+        }
+
+        // webapp doesn't exist
+        return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
       }
 
       String status = controllerStateToString(runtimeInfo.getController().getState());
