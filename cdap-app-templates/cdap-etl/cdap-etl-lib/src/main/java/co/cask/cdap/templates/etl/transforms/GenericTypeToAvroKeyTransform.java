@@ -26,7 +26,8 @@ import org.apache.hadoop.io.NullWritable;
 import javax.annotation.Nullable;
 
 /**
- * Transform {@link GenericRecord} to {@link AvroKey<GenericRecord>}
+ * Transform to AvroKey<T>
+ * @param <T> type to convert to AvroKey
  */
 public class GenericTypeToAvroKeyTransform<T> extends Transform<LongWritable, T,
                                                                NullWritable, AvroKey<T>> {
