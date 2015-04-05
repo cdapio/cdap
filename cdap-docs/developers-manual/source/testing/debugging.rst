@@ -40,23 +40,30 @@ are dispersed over multiple—if not many—containers in the Hadoop cluster. Th
 single place to debug the entire application.
 
 You can, however, debug every individual container by attaching a remote debugger to it.
-This is supported for each Flowlet of a Flow and each instance of a Procedure. In order
+This is supported for each Flowlet of a Flow and each instance of a Service. In order
 to debug a container, you need to start the component with debugging enabled by making
 an HTTP request to the component’s URL. For example, the following will start a Flow for debugging::
 
-  POST <base-url>/apps/WordCount/flows/WordCounter/debug
+  POST <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/debug
+  
+Using ``curl``::
+
+  $ curl -w'\n' -X POST 'http://<hostname>:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug'
 
 Note that this URL differs from the URL for starting the Flow only by the last path
-component (``debug`` instead of ``start``; see
-:ref:`http-restful-api-lifecycle`). You can pass in
-runtime arguments in the exact same way as you normally would start a Flow.
+component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`). 
+You can pass in runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container
 and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the CDAP for a Procedure or Flow’s live info via HTTP::
+the CDAP for a Flow or Service’s live info via HTTP::
 
-  GET <base-url>/apps/WordCount/flows/WordCounter/live-info
+  GET <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/live-info
+  
+or::
+
+  $ cdap-cli.sh get flow live WordCount.WordCounter
 
 The response is formatted in JSON and—pretty-printed— would look similar to this::
 
@@ -93,15 +100,15 @@ The response is formatted in JSON and—pretty-printed— would look similar to 
 
 You see the YARN application id and the YARN container IDs of each Flowlet. More importantly, you
 can see the host name and debugging port for each Flowlet. For example, the only instance of the
-splitter Flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
+*splitter* Flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
 attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
-The corresponding HTTP requests for the ``RetrieveCounts`` Procedure of this application would be::
+The corresponding HTTP requests for the ``RetrieveCounts`` Service of this application would be::
 
-  POST <base-url>/apps/WordCount/procedures/RetrieveCounts/debug
-  GET <base-url>/apps/WordCount/procedures/RetrieveCounts/live-info
+  POST <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/debug
+  GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/live-info
 
-Analysis of the response would give you the host names and debugging ports for all instances of the Procedure.
+Analysis of the response would give you the host names and debugging ports for all instances of the Service.
 
 .. highlight:: java
 
@@ -173,7 +180,7 @@ You may need to adjust them for your installation or version.
 Debugging the Transaction Manager (Advanced Use)
 ================================================
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the :ref:`Transaction System. <transaction-system>`
+Transactions are introduced in the :ref:`Transaction System <transaction-system>`.
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
