@@ -94,7 +94,6 @@ angular.module(PKG.name+'.feature.dashboard')
         ];
 
       }
-
     });
 
   })

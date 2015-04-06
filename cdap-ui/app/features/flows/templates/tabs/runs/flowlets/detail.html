@@ -47,7 +47,6 @@
       <th>Source</th>
       <th>Arrival Rate</th>
       <th>Pending Events</th>
-      <th>Day</th>
       <th>Max Pending</th>
     </thead>
     <tbody>
@@ -56,8 +55,15 @@
           {{input}}
         </td>
         <td></td>
-        <td></td>
-        <td></td>
+        <td>
+          <epoch-line
+            data-history="outputHistory"
+            data-stream="outputStream"
+            chart-height="100"
+            chart-width="400"
+            chart-axes="['left', 'bottom']"
+            ></epoch-line>
+        </td>
         <td></td>
       </tr>
     </tbody>
@@ -114,7 +120,15 @@
     </thead>
     <tbody>
       <tr ng-repeat="output in outputs">
-        <td></td>
+        <td>
+          <epoch-line
+            data-history="outputHistory"
+            data-stream="outputStream"
+            chart-height="100"
+            chart-width="400"
+            chart-axes="['left', 'bottom']"
+            ></epoch-line>
+        </td>
         <td></td>
         <td>
           {{output}}
