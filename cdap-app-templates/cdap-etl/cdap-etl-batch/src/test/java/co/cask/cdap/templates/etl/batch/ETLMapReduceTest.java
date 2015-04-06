@@ -63,7 +63,6 @@ public class ETLMapReduceTest extends TestBase {
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
       mapReduceArgs.put(entry.getKey(), entry.getValue());
     }
-    mapReduceArgs.put("config", GSON.toJson(adapterConfig));
     MapReduceManager mrManager = batchManager.startMapReduce("ETLMapReduce", mapReduceArgs);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     batchManager.stopAll();
