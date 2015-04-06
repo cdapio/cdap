@@ -45,6 +45,11 @@ public interface ApplicationSpecification {
   String getName();
 
   /**
+   * @return Version of the Application, according to the Bundle-Version in the jar manifest.
+   */
+  String getVersion();
+
+  /**
    * @return Description of the Application.
    */
   String getDescription();

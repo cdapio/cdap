@@ -47,6 +47,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
+  public String getVersion() {
+    return delegate.getVersion();
+  }
+
+  @Override
   public String getDescription() {
     return delegate.getDescription();
   }
@@ -106,5 +111,7 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
-  public Map<String, ScheduleSpecification> getSchedules() { return delegate.getSchedules(); }
+  public Map<String, ScheduleSpecification> getSchedules() {
+    return delegate.getSchedules();
+  }
 }

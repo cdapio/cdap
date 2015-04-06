@@ -235,10 +235,14 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     schedules.put(schedule.getName(), spec);
   }
 
-  public ApplicationSpecification createSpecification() {
-    return new DefaultApplicationSpecification(name, description, streams,
+  public ApplicationSpecification createSpecification(String version) {
+    return new DefaultApplicationSpecification(name, version, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services,
                                                schedules, workers);
+  }
+
+  public ApplicationSpecification createSpecification() {
+    return createSpecification("");
   }
 }
