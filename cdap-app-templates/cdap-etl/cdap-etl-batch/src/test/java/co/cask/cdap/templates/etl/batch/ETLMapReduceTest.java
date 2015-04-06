@@ -27,7 +27,6 @@ import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,8 +38,6 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLBatchTemplate}.
  */
 public class ETLMapReduceTest extends TestBase {
-
-  private static final Gson GSON = new Gson();
 
   @Test
   public void testConfig() throws Exception {
