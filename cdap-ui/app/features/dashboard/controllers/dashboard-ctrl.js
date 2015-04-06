@@ -61,6 +61,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   $scope.removeDashboard = function () {
     rDashboardsModel.remove($scope.dashboards.activeIndex);
+    $state.go('dashboard.standard.cdap', {}, {reload: true});
   };
 
   $scope.reorderDashboard = function (reverse) {
