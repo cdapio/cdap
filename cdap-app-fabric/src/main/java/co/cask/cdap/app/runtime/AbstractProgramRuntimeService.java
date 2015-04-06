@@ -25,6 +25,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
@@ -72,6 +73,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
     return ImmutableMap.copyOf(runtimeInfos.row(type));
+  }
+
+  @Override
+  public synchronized Map<RunId, RuntimeInfo> list(final Id.Program program) {
+    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
+      @Override
+      public boolean apply(RuntimeInfo info) {
+        return info.getProgramId().equals(program);
+      }
+    });
   }
 
   @Override

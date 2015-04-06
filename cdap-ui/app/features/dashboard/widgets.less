@@ -40,6 +40,7 @@ body.state-dashboard {
     }
   }
 
+  // No longer using bs-tabs. We should remove this code.
   [bs-tabs] {
     > ul.nav-tabs {
       border-bottom: 0;
@@ -47,7 +48,7 @@ body.state-dashboard {
         > a {
           color: @cdap-gray;
           cursor: pointer;
-          height: 42px;
+          height: 43px;
           background-color: white;
           position: relative;
           border: 1px solid @subnav-border;
@@ -64,7 +65,7 @@ body.state-dashboard {
             content:" ";
             display: block;
             position: absolute;
-            top: -2px;
+            top: -1px;
             .transition(background-color 0.05s ease-in);
           }
           &:before {
@@ -104,7 +105,7 @@ body.state-dashboard {
         }
         &.active > a {
           background-color: @subnav-background;
-          height: 42px;
+          height: 43px;
           min-width: 100px;
           position: relative;
           border: 1px solid @subnav-border;
@@ -115,7 +116,7 @@ body.state-dashboard {
             display: block;
             height: 43px;
             position: absolute;
-            top: -2px;
+            top: -1px;
           }
           &:before {
             width: 10px;

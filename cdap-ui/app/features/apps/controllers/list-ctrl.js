@@ -25,4 +25,10 @@ angular.module(PKG.name + '.feature.apps')
         $timeout($state.reload);
       });
     };
+
+    $scope.closeModal = function() {
+      $modalInstance.close();
+
+    };
+
   });

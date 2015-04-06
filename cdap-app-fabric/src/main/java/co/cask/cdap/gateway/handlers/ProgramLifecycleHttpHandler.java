@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
@@ -31,7 +30,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -48,7 +46,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
@@ -66,12 +63,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -85,7 +79,6 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -120,36 +113,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
 
   /**
-   * Json serializer.
-   */
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .create();
-
-  /**
-   * Store manages non-runtime lifecycle.
-   */
-  private final Store store;
-
-  private final WorkflowClient workflowClient;
-
-  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
-
-  /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
-  /**
-   * Runtime program service for running and managing programs.
-   */
-  private final ProgramRuntimeService runtimeService;
+  
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
-  private final Scheduler scheduler;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -195,20 +164,39 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Json serializer.
+   */
+  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
+
+  /**
+   * Store manages non-runtime lifecycle.
+   */
+  protected final Store store;
+
+  /**
+   * Runtime program service for running and managing programs.
+   */
+  protected final ProgramRuntimeService runtimeService;
+
+  /**
+   * Scheduler provides ability to schedule/un-schedule the jobs.
+   */
+  protected final Scheduler scheduler;
+
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                                     WorkflowClient workflowClient, CConfiguration configuration,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
                                      ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = storeFactory.create();
-    this.workflowClient = workflowClient;
-    this.configuration = configuration;
+    this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
@@ -884,97 +872,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**************************** Workflow/schedule APIs *****************************************************/
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
-  public void workflowStatus(HttpRequest request, final HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                             @PathParam("run-id") String runId) {
-
-    try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
-                                           } else {
-                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                  status.getResult());
-                                           }
-                                         }
-                                       });
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Returns next scheduled runtime of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
-  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
-
-      JsonArray array = new JsonArray();
-      for (ScheduledRuntime runtime : runtimes) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", runtime.getScheduleId());
-        object.addProperty("time", runtime.getTime());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Get Workflow schedules
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("workflow-id") String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
-    if (appSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
-      return;
-    }
-
-    List<ScheduleSpecification> specList = Lists.newArrayList();
-    for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
-      ScheduleSpecification spec = entry.getValue();
-      if (spec.getProgram().getProgramName().equals(workflowId) &&
-        spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
-        specList.add(entry.getValue());
-      }
-    }
-    responder.sendJson(HttpResponseStatus.OK, specList,
-                       new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
-  }
-
   /**
    * Return the number of instances of a service.
    */
@@ -1454,6 +1351,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           if (state == ProgramController.State.ERROR) {
             error(controller.getFailureCause());
           }
+        }
+
+        @Override
+        public void suspended() {
+          store.setSuspend(id, runId);
+        }
+
+        @Override
+        public void resuming() {
+          store.setResume(id, runId);
         }
 
         @Override

@@ -6,10 +6,16 @@
       <button class="btn btn-sm btn-default" ng-click="clear()">Clear All</button>
     </div>
     <div class="clearfix">
-      <p ng-repeat="alert in alerts" class="bg-danger">
-        <strong>{{ alert.title }}</strong> {{ alert.content }}
-        <span class="pull-right" ng-click="remove(alert)"><i class="fa fa-times"></i></span>
-      </p>
+
+      <div class="row bg-danger" ng-repeat="alert in alerts">
+        <div class="col-xs-10">
+          <strong>{{ alert.title }}</strong>  {{ alert.content }}
+        </div>
+        <div class="col-xs-2">
+          <span class="pull-right" ng-click="remove(alert)"><i class="fa fa-times"></i></span>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

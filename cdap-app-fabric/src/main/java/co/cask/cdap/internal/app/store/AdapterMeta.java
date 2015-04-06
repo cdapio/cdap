@@ -17,23 +17,21 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.templates.AdapterSpecification;
 
 /**
  * Holds adapter metadata
- *
- * @param <T> the type of config used by the adapter
  */
-public class AdapterMeta<T> {
-  private final AdapterSpecification<T> spec;
+public class AdapterMeta {
+  private final AdapterSpecification spec;
   private final AdapterStatus status;
 
-  public AdapterMeta(AdapterSpecification<T> spec, AdapterStatus status) {
+  public AdapterMeta(AdapterSpecification spec, AdapterStatus status) {
     this.spec = spec;
     this.status = status;
   }
 
-  public AdapterSpecification<T> getSpec() {
+  public AdapterSpecification getSpec() {
     return spec;
   }
 

@@ -176,6 +176,20 @@ public final class ScheduleTaskRunner {
 
         latch.countDown();
       }
+
+      @Override
+      public void suspended() {
+        LOG.debug("Suspending Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
+                  program.getId(), runId);
+        store.setSuspend(programId, runId);
+      }
+
+      @Override
+      public void resuming() {
+        LOG.debug("Resuming Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
+                  program.getId(), runId);
+        store.setResume(programId, runId);
+      }
     }, Threads.SAME_THREAD_EXECUTOR);
 
     return executorService.submit(new Callable<Void>() {

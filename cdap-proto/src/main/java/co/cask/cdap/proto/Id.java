@@ -244,6 +244,51 @@ public abstract class Id {
   }
 
   /**
+   * Uniquely identifies an Application Template.
+   */
+  public static final class ApplicationTemplate extends Id {
+    private final String template;
+
+    public ApplicationTemplate(final String template) {
+      Preconditions.checkNotNull(template, "template cannot be null.");
+      this.template = template;
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return template;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Application that = (Application) o;
+      return template.equals(that.applicationId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(template);
+    }
+
+    public static ApplicationTemplate from(String template) {
+      return new ApplicationTemplate(template);
+    }
+  }
+
+  /**
    * Uniquely identifies an Application.
    */
   public static final class Application extends NamespacedId {
