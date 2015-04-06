@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
@@ -39,6 +40,8 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
+import org.apache.avro.mapreduce.AvroKeyInputFormat;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
@@ -74,7 +77,16 @@ public class ETLStreamConversionTest extends TestBase {
   public void testConfig() throws Exception {
     String filesetName = "converted_stream";
 
-    addDatasetInstance("timePartitionedFileSet", "streamTPFS").create();
+    addDatasetInstance("timePartitionedFileSet", filesetName, FileSetProperties.builder()
+      .setBasePath(filesetName)
+      .setInputFormat(AvroKeyInputFormat.class)
+      .setOutputFormat(AvroKeyOutputFormat.class)
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", eventSchema.toString())
+      .build());
 
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
     StreamWriter streamWriter = batchManager.getStreamWriter("myStream");
@@ -82,9 +94,10 @@ public class ETLStreamConversionTest extends TestBase {
     streamWriter.send(ImmutableMap.of("header1", "bar"), "AAPL,10,500.32");
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
-    ETLBatchConfig adapterConfig = constructETLBatchConfig();
+    ETLBatchConfig adapterConfig = constructETLBatchConfig(filesetName);
     DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
+
     Map<String, String> mapReduceArgs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
       mapReduceArgs.put(entry.getKey(), entry.getValue());
@@ -99,17 +112,17 @@ public class ETLStreamConversionTest extends TestBase {
 
     List<GenericRecord> records = readOutput(fileSet, eventSchema);
 
-    Assert.assertEquals(3, records.size());
+    Assert.assertEquals(1, records.size());
   }
 
-  private ETLBatchConfig constructETLBatchConfig() {
+  private ETLBatchConfig constructETLBatchConfig(String fileSetName) {
     ETLStage source = new ETLStage(StreamBatchSource.class.getName(),
-                                   ImmutableMap.of("streamName", "myStream", "frequency", "10"));
+                                   ImmutableMap.of("streamName", "myStream", "frequency", "30"));
     ETLStage transform1 = new ETLStage(StreamToStructuredRecordTransform.class.getName(),
                                        ImmutableMap.of("schemaType", Formats.CSV, "schema", bodySchema.toString()));
     ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(), ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getName(),
-                                 ImmutableMap.of("schema", bodySchema.toString(), "name", "streamTPFS"));
+                                 ImmutableMap.of("schema", bodySchema.toString(), "name", fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(transform1);
     transformList.add(transform2);
