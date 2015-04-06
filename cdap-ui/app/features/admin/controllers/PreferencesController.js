@@ -8,14 +8,12 @@ angular.module(PKG.name + '.feature.admin')
     if (source === 'SYSTEM') {
       path = '/preferences';
 
-      $scope.heading = 'System';
+      $scope.heading = 'System Preferences';
     } else {
       path = '/namespaces/' + $state.params.nsadmin + '/preferences';
 
-      $scope.heading = $state.params.nsadmin + ': ';
+      $scope.heading = $state.params.nsadmin + ': Namespace Preferences';
     }
-
-    console.log('path', path);
 
     $scope.preferences = [];
 
@@ -45,7 +43,7 @@ angular.module(PKG.name + '.feature.admin')
         key: '',
         value: ''
       });
-    }
+    };
 
     $scope.removePreference = function(preference) {
       var match = filterFilter($scope.preferences, preference);
@@ -58,7 +56,9 @@ angular.module(PKG.name + '.feature.admin')
       var obj = {};
 
       angular.forEach($scope.preferences, function(v) {
-        obj[v.key] = v.value;
+        if (v.key) {
+          obj[v.key] = v.value;
+        }
       });
 
       dataSrc
@@ -72,6 +72,7 @@ angular.module(PKG.name + '.feature.admin')
             content: 'Your preferences have been successfully saved!',
             type: 'success'
           });
+          $scope.loadProperties();
         });
     };
 

@@ -1,5 +1,6 @@
 @import "../../styles/variables.less";
-
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
 body.state-dashboard {
 
   main {
@@ -10,42 +11,37 @@ body.state-dashboard {
     }
 
     .nav-tabs {
+      // A
+      border-bottom: 0;
       margin-bottom: 10px;
       display: flex;
 
       > li {
-        // flex-grow: 1;
-
         > a {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          min-width: 80px;
+          max-width: 200px;
 
-          > em {
-            font-style: normal;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            display: block;
-            margin-right: 6px;
+          // A
+          color: @cdap-gray;
+
+
+          .dtitle::before {
+            display: inline-block;
+            width: 0;
+            height: 0;
+            vertical-align: middle;
+            border-top: 4px solid;
+            border-right: 4px solid transparent;
+            border-left: 4px solid transparent;
+            content: '';
           }
 
-          > .caret {
-            visibility: hidden;
-            position: absolute;
-            right: 9px;
-            top: 18px;
-          }
-
-        }
-
-        &.active > a {
-          cursor: pointer;
-          &:hover {
-            color: @cdap-orange;
-          }
-          > .caret {
-            visibility: visible;
-          }
         }
       }
+
     }
 
   }

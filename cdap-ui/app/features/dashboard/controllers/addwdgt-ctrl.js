@@ -27,8 +27,7 @@ function ($scope, caskFocusManager, Widget) {
 
   $scope.doAddWidget = function () {
     $scope.currentDashboard.addWidget($scope.model);
-    $scope.$hide();
+    $scope.$close();
   };
 
 });
-

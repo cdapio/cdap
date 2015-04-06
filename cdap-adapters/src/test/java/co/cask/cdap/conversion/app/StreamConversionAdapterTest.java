@@ -28,6 +28,8 @@ import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -87,13 +89,13 @@ public class StreamConversionAdapterTest extends TestBase {
       .build());
 
     Map<String, String> runtimeArgs = Maps.newHashMap();
-    runtimeArgs.put(AdapterArguments.SOURCE_NAME, streamName);
-    runtimeArgs.put(AdapterArguments.SINK_NAME, filesetName);
-    runtimeArgs.put(AdapterArguments.FREQUENCY, "10m");
-    runtimeArgs.put(AdapterArguments.FORMAT_NAME, Formats.CSV);
-    runtimeArgs.put(AdapterArguments.FORMAT_SETTINGS, "{}");
-    runtimeArgs.put(AdapterArguments.HEADERS, "header1,header2");
-    runtimeArgs.put(AdapterArguments.SCHEMA, bodySchema.toString());
+    AdapterArgs args = new AdapterArgs(Formats.CSV,
+                                       new Gson().fromJson(bodySchema.toString(), JsonObject.class),
+                                       "header1,header2",
+                                       streamName,
+                                       filesetName,
+                                       "10m");
+    runtimeArgs.put("adapter.args", new Gson().toJson(args));
 
     // run the mapreduce job and wait for it to finish
     MapReduceManager mapReduceManager = appManager.startMapReduce("StreamConversionMapReduce", runtimeArgs);

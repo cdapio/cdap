@@ -17,6 +17,9 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.DummyTemplate;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -24,12 +27,11 @@ import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricClient;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -37,11 +39,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -64,47 +63,70 @@ public class AdapterServiceTests extends AppFabricTestBase {
     adapterService.registerTemplates();
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testInvalidTemplate() throws Exception {
+    AdapterConfig adapterConfig = new AdapterConfig("description", BadTemplate.NAME, null);
+    adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "badAdapter", adapterConfig);
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testInvalidAdapter() throws Exception {
+    Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
+    String adapterName = "myAdapter";
+    // the template should check that the first field is not null.
+    DummyTemplate.Config config = new DummyTemplate.Config(null, "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
+
+    // Create Adapter
+    adapterService.createAdapter(namespace, adapterName, adapterConfig);
+  }
+
   @Test
   public void testAdapters() throws Exception {
     String adapterName = "myAdapter";
-    DummyTemplate.Config config = new DummyTemplate.Config("* * * * *", "myStream");
-
-    AdapterSpecification<DummyTemplate.Config> adapterSpecification =
-      new AdapterSpecification<DummyTemplate.Config>(adapterName, "", DummyTemplate.NAME, config);
+    DummyTemplate.Config config = new DummyTemplate.Config("somestream", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
-    adapterService.createAdapter(NAMESPACE, adapterSpecification);
+    adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
     PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
     Map<String, String> prop = preferencesStore.getResolvedProperties(
-      NAMESPACE.getId(), adapterSpecification.getTemplate());
+      TEST_NAMESPACE1, adapterConfig.getTemplate());
     Assert.assertTrue(Boolean.parseBoolean(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED)));
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
-      adapterService.createAdapter(NAMESPACE, adapterSpecification);
+      adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
       Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
     } catch (AdapterAlreadyExistsException expected) {
       // expected
     }
 
-    AdapterSpecification<DummyTemplate.Config> actualAdapterSpec =
-      adapterService.getAdapter(NAMESPACE, adapterName, DummyTemplate.Config.class);
+    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
-    Assert.assertEquals(adapterSpecification, actualAdapterSpec);
+    assertDummyConfigEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification<Object>> adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
+    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
-    AdapterSpecification<Object> actualRaw = adapters.iterator().next();
-    AdapterSpecification<DummyTemplate.Config> actual = GSON.fromJson(
-      GSON.toJson(actualRaw), new TypeToken<AdapterSpecification<DummyTemplate.Config>>() {
-    }.getType());
-    Assert.assertEquals(actual, adapterSpecification);
+    AdapterSpecification actual = adapters.iterator().next();
+    assertDummyConfigEquals(adapterConfig, actual);
+
+    // adapter should be stopped
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
+
+    // start adapter
+    adapterService.startAdapter(NAMESPACE, adapterName);
+    Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
+
+    // stop adapter
+    adapterService.stopAdapter(NAMESPACE, adapterName);
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
 
     // Delete Adapter
-    adapterService.removeAdapter(NAMESPACE, "myAdapter");
+    adapterService.removeAdapter(NAMESPACE, adapterName);
     // verify that the adapter is deleted
     try {
-      adapterService.getAdapter(NAMESPACE, adapterName, Object.class);
+      adapterService.getAdapter(NAMESPACE, adapterName);
       Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapterName));
     } catch (AdapterNotFoundException expected) {
       // expected
@@ -115,45 +137,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testGetAllAdapters() throws Exception {
-
-    AdapterSpecification<int[]> spec1 =
-      new AdapterSpecification<int[]>("adapter1", "desc1", DummyTemplate1.NAME, new int[] { 1, 2, 3 });
-    AdapterSpecification<Map<String, String>> spec2 =
-      new AdapterSpecification<Map<String, String>>("adapter2", "desc2",
-                                                    DummyTemplate2.NAME, ImmutableMap.of("k1", "v1"));
-
-    // Create Adapters
-    adapterService.createAdapter(NAMESPACE, spec1);
-    adapterService.createAdapter(NAMESPACE, spec2);
-
-    // check get all
-    Collection<AdapterSpecification<Object>> adapters = adapterService.getAdapters(NAMESPACE);
-    Assert.assertEquals(2, adapters.size());
-    Iterator<AdapterSpecification<Object>> iter = adapters.iterator();
-    AdapterSpecification<Object> actual1 = iter.next();
-    AdapterSpecification<Object> actual2 = iter.next();
-    if (actual1.getName().equals(spec1.getName())) {
-      assertArrayConfigEquals(spec1, actual1);
-      assertMapConfigEquals(spec2, actual2);
-    } else {
-      assertArrayConfigEquals(spec1, actual2);
-      assertMapConfigEquals(spec2, actual1);
-    }
-
-    // check get all for a specific template
-    Collection<AdapterSpecification<Object>> template1Adapters =
-      adapterService.getAdapters(NAMESPACE, spec1.getTemplate());
-    Assert.assertEquals(1, template1Adapters.size());
-    assertArrayConfigEquals(spec1, template1Adapters.iterator().next());
-
-    Collection<AdapterSpecification<Object>> template2Adapters =
-      adapterService.getAdapters(NAMESPACE, spec2.getTemplate());
-    Assert.assertEquals(1, template2Adapters.size());
-    assertMapConfigEquals(spec2, template2Adapters.iterator().next());
-  }
-
-  @Test
   public void testRedeploy() throws Exception {
     ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate1.NAME);
     adapterService.deployTemplate(NAMESPACE, DummyTemplate1.NAME);
@@ -161,18 +144,10 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
   }
 
-  private void assertArrayConfigEquals(AdapterSpecification<int[]> expected, AdapterSpecification<Object> actual) {
-    Assert.assertEquals(expected.getName(), actual.getName());
+  private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
-    Assert.assertArrayEquals(expected.getConfig(), GSON.fromJson(GSON.toJson(actual.getConfig()), int[].class));
-  }
-
-  private void assertMapConfigEquals(AdapterSpecification<Map<String, String>> expected,
-                                     AdapterSpecification<Object> actual) {
-    Type type = new TypeToken<AdapterSpecification<Map<String, String>>>() { }.getType();
-    AdapterSpecification<Map<String, String>> actualAsMap = GSON.fromJson(GSON.toJson(actual), type);
-    Assert.assertEquals(expected, actualAsMap);
+    Assert.assertEquals(expected.getConfig(), actual.getConfig());
   }
 
   private static Attributes generateRequiredAttributes(Class<?> clz) {
@@ -186,6 +161,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(DummyTemplate.class);
     setupAdapter(DummyTemplate1.class);
     setupAdapter(DummyTemplate2.class);
+    setupAdapter(BadTemplate.class);
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {
@@ -211,10 +187,48 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
   public static class DummyTemplate2 extends DummyTemplate {
     public static final String NAME = "template2";
+
     @Override
     public void configure() {
       super.configure();
       setName(NAME);
+    }
+  }
+
+  /**
+   * Bad template that contains 2 workflows.
+   */
+  public static class BadTemplate extends ApplicationTemplate {
+    public static final String NAME = "badtemplate";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+      addWorkflow(new SomeWorkflow1());
+      addWorkflow(new SomeWorkflow2());
+    }
+
+    public static class SomeWorkflow1 extends AbstractWorkflow {
+      @Override
+      protected void configure() {
+        setName("wf1");
+        addMapReduce("DummyMapReduceJob");
+      }
+    }
+
+    public static class SomeWorkflow2 extends AbstractWorkflow {
+      @Override
+      protected void configure() {
+        setName("wf2");
+        addMapReduce("DummyMapReduceJob");
+      }
+    }
+
+    public static class DummyMapReduceJob extends AbstractMapReduce {
+      @Override
+      protected void configure() {
+        setName("DummyMapReduceJob");
+      }
     }
   }
 }

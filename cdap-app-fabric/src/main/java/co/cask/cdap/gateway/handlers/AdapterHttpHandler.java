@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -27,11 +28,10 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.http.HttpResponder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -122,8 +122,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
     try {
-      AdapterSpecification<JsonObject> adapterSpec =
-        adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName, JsonObject.class);
+      AdapterSpecification adapterSpec = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -192,12 +191,10 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
+    } catch (CannotBeDeletedException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (SchedulerException e) {
-      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     } catch (Throwable t) {
       LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
                 namespaceId, adapterName, "delete", t);
@@ -214,19 +211,19 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {
 
-    AdapterSpecification<JsonObject> spec;
+    AdapterConfig config;
     try {
-      spec = parseBody(request, new TypeToken<AdapterSpecification<JsonObject>>() { }.getType());
-      if (spec == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter specification");
+      config = parseBody(request, AdapterConfig.class);
+      if (config == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter config");
         return;
       }
-      if (spec.getTemplate() == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "A template must be given in the adapter specification");
+      if (config.getTemplate() == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "A template must be given in the adapter config");
         return;
       }
     } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter specification: " + e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter config: " + e.getMessage());
       return;
     }
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
@@ -239,14 +236,14 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // Validate the adapter
-      String templateName = spec.getTemplate();
+      String templateName = config.getTemplate();
       ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(templateName);
       if (applicationTemplateInfo == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("App template %s not found", templateName));
         return;
       }
 
-      adapterService.createAdapter(namespace, spec);
+      adapterService.createAdapter(namespace, adapterName, config);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

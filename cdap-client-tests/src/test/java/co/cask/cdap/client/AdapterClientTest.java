@@ -14,16 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package co.cask.cdap.
+
+
+  client;
 
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.client.app.AdapterApp;
+import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
@@ -76,25 +80,24 @@ public class AdapterClientTest extends ClientTestBase {
 
   @Test
   public void testAdapters() throws Exception {
-    List<AdapterSpecification> initialList = adapterClient.list();
+    List<AdapterDetail> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
     String adapterName = "someAdapter";
-    AdapterSpecification<Object> adapterSpec =
-      new AdapterSpecification<Object>(adapterName, "description", AdapterApp.NAME, null);
+    AdapterConfig adapterConfig = new AdapterConfig("description", TemplateApp.NAME, null);
 
     // Create Adapter
-    adapterClient.create(adapterName, adapterSpec);
+    adapterClient.create("someAdapter", adapterConfig);
 
     // Check that the created adapter is present
-    adapterClient.waitForExists(adapterName, 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists(adapterName));
-    AdapterSpecification someAdapter = adapterClient.get(adapterName);
+    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists("someAdapter"));
+    AdapterDetail someAdapter = adapterClient.get("someAdapter");
     Assert.assertNotNull(someAdapter);
 
     // list all adapters
-    List<AdapterSpecification> list = adapterClient.list();
-    Assert.assertArrayEquals(new AdapterSpecification[] {someAdapter}, list.toArray());
+    List<AdapterDetail> list = adapterClient.list();
+    Assert.assertArrayEquals(new AdapterDetail[] {someAdapter}, list.toArray());
 
     // Delete Adapter
     adapterClient.delete(adapterName);
@@ -108,15 +111,15 @@ public class AdapterClientTest extends ClientTestBase {
       // Expected
     }
 
-    List<AdapterSpecification> finalList = adapterClient.list();
+    List<AdapterDetail> finalList = adapterClient.list();
     Assert.assertEquals(0, finalList.size());
 
     applicationClient.deleteAll();
-    applicationClient.waitForDeleted(AdapterApp.NAME, 30, TimeUnit.SECONDS);
+    applicationClient.waitForDeleted(TemplateApp.NAME, 30, TimeUnit.SECONDS);
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, AdapterApp.class);
+    setupAdapter(adapterDir, TemplateApp.class);
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {

@@ -19,11 +19,12 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.AdapterTypeNotFoundException;
+import co.cask.cdap.common.exception.ApplicationTemplateNotFoundException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterDetail;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -66,25 +67,25 @@ public class AdapterClient {
   /**
    * Lists all adapters.
    *
-   * @return list of {@link AdapterSpecification}.
+   * @return list of {@link AdapterDetail}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<AdapterSpecification> list() throws IOException, UnauthorizedException {
+  public List<AdapterDetail> list() throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("adapters");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<AdapterSpecification>>() { })
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<AdapterDetail>>() { })
       .getResponseObject();
   }
 
   /**
    * Gets an adapter.
    *
-   * @return an {@link AdapterSpecification}.
+   * @return an {@link AdapterConfig}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public AdapterSpecification get(String adapterName)
+  public AdapterDetail get(String adapterName)
     throws AdapterNotFoundException, IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("adapters/" + adapterName);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -92,7 +93,7 @@ public class AdapterClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new AdapterNotFoundException(adapterName);
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterSpecification>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterDetail>() { }).getResponseObject();
   }
 
   /**
@@ -100,13 +101,13 @@ public class AdapterClient {
    *
    * @param adapterName name of the adapter to create
    * @param adapterSpec properties of the adapter to create
-   * @throws AdapterTypeNotFoundException if the desired adapter type was not found
-   * @throws BadRequestException if the provided {@link AdapterSpecification} was bad
+   * @throws ApplicationTemplateNotFoundException if the desired adapter type was not found
+   * @throws BadRequestException if the provided {@link AdapterConfig} was bad
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void create(String adapterName, AdapterSpecification adapterSpec)
-    throws AdapterTypeNotFoundException, BadRequestException, IOException, UnauthorizedException {
+  public void create(String adapterName, AdapterConfig adapterSpec)
+    throws ApplicationTemplateNotFoundException, BadRequestException, IOException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(adapterSpec)).build();
@@ -114,7 +115,7 @@ public class AdapterClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new AdapterTypeNotFoundException(adapterSpec.getTemplate());
+      throw new ApplicationTemplateNotFoundException(adapterSpec.getTemplate());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseMessage());
     }
