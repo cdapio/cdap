@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * A {@link StreamEventDecoder} that decodes {@link StreamEvent} into {@link LongWritable} as key
  * and {@link GenericStreamEventData} as value for Mapper input. The key carries the event timestamp, while
- * the value is a {@link GenericStreamEventData>}, which contains the event headers and the event body
+ * the value is a {@link GenericStreamEventData}, which contains the event headers and the event body
  * formatted by some {@link RecordFormat}.
  *
  * @param <T> Type of the stream body.
