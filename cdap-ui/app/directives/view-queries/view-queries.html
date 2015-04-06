@@ -46,7 +46,10 @@
           </thead>
           <tbody>
             <tr ng-repeat="results in responses.results">
-              <td ng-repeat="result in results.columns">{{ result }}</td>
+              <td ng-repeat="result in results.columns track by $index">
+                <span>{{ result }}</span>
+                <span ng-if="!result">null</span>
+              </td>
             </tr>
           </tbody>
         </table>

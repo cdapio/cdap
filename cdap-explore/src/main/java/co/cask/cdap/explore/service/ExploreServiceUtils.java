@@ -394,7 +394,7 @@ public class ExploreServiceUtils {
     try {
       Dataset dataset = datasetFramework.getDataset(datasetID, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
-        throw new DatasetNotFoundException("Dataset " + datasetID + " not found.");
+        throw new DatasetNotFoundException(datasetID);
       }
       return dataset;
     } catch (Exception e) {

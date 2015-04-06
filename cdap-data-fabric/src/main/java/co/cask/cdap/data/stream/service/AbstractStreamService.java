@@ -125,7 +125,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
       Integer.MAX_VALUE, "system.collect.bytes",
       MetricType.COUNTER,
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                      Constants.Metrics.Tag.STREAM, streamId.getName()),
+                      Constants.Metrics.Tag.STREAM, streamId.getId()),
       ImmutableList.<String>of()
     );
 

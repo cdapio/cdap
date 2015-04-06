@@ -34,11 +34,12 @@ public abstract class ApplicationTemplate<T> extends AbstractApplication {
   /**
    * Given the adapter configuration, configures the {@link AdapterConfigurer}.
    *
+   * @param name name of the adapter
    * @param configuration adapter configuration
    * @param configurer {@link AdapterConfigurer}
    * @throws Exception if the configuration is not valid
    */
-  public void configureAdapter(T configuration, AdapterConfigurer configurer) throws Exception {
+  public void configureAdapter(String name, T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op
   }
 

@@ -58,7 +58,8 @@ public class DefaultCube implements Cube {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
 
   private static final TagValueComparator TAG_VALUE_COMPARATOR = new TagValueComparator();
-
+  // hard-limit on max records to scan
+  private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
 
   private final Collection<? extends Aggregation> aggregations;
@@ -246,6 +247,7 @@ public class DefaultCube implements Cube {
   private Table<Map<String, String>, Long, Long> getTimeSeries(CubeQuery query, FactScanner scanner) {
     // tag values -> time -> values
     Table<Map<String, String>, Long, Long> resultTable = HashBasedTable.create();
+    int count = 0;
     while (scanner.hasNext()) {
       FactScanResult next = scanner.next();
 
@@ -289,6 +291,9 @@ public class DefaultCube implements Cube {
           throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
         }
       }
+      if (++count >= MAX_RECORDS_TO_SCAN) {
+        break;
+      }
     }
     return resultTable;
   }
@@ -297,6 +302,7 @@ public class DefaultCube implements Cube {
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
     List<TimeSeries> result = Lists.newArrayList();
     for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
+      int count = 0;
       List<TimeValue> timeValues = Lists.newArrayList();
       for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
         timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
@@ -308,6 +314,9 @@ public class DefaultCube implements Cube {
       while (timeValueItor.hasNext()) {
         TimeValue timeValue = timeValueItor.next();
         resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+        if (++count >= query.getLimit()) {
+          break;
+        }
       }
       result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }

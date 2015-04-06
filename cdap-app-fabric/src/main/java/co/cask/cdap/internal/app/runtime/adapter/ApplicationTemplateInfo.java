@@ -17,8 +17,10 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.hash.HashCode;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Holds information about an ApplicationTemplate.
@@ -26,12 +28,17 @@ import java.io.File;
 public final class ApplicationTemplateInfo {
   private final File file;
   private final String name;
+  private final String description;
   private final ProgramType programType;
+  private final HashCode fileHash;
 
-  public ApplicationTemplateInfo(File file, String name, ProgramType programType) {
+  public ApplicationTemplateInfo(File file, String name, String description, ProgramType programType,
+                                 HashCode fileHash) throws IOException {
     this.file = file;
     this.name = name;
+    this.description = description;
     this.programType = programType;
+    this.fileHash = fileHash;
   }
 
   public File getFile() {
@@ -42,7 +49,15 @@ public final class ApplicationTemplateInfo {
     return name;
   }
 
+  public String getDescription() {
+    return description;
+  }
+
   public ProgramType getProgramType() {
     return programType;
+  }
+
+  public HashCode getFileHash() {
+    return fileHash;
   }
 }

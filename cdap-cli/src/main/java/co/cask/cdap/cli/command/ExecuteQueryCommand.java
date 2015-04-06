@@ -94,6 +94,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
           }
         }).build();
       cliConfig.getTableRenderer().render(cliConfig, output, table);
+
+      output.printf("Fetched %d rows", rows.size()).println();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {

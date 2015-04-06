@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -98,6 +99,10 @@ public class AltStyleTableRenderer implements TableRenderer {
     // inner column widths
     int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
 
+    if (columnWidths.length == 0) {
+      return;
+    }
+
     boolean useRowDivider = false;
     for (List<String> row : table.getRows()) {
       useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;
@@ -145,7 +150,10 @@ public class AltStyleTableRenderer implements TableRenderer {
       done = true;
       for (int i = 0; i < row.size(); i++) {
         Cell cell = row.get(i);
-        cell.output(output, "| %-" + columnWidths[i] + "s ", line);
+        output.printf("|");
+        if (columnWidths[i] != 0) {
+          cell.output(output, " %-" + columnWidths[i] + "s ", line);
+        }
         done = done && (line + 1 >= cell.size());
       }
       output.printf("|").println();
@@ -164,7 +172,9 @@ public class AltStyleTableRenderer implements TableRenderer {
   private void outputDivider(PrintStream output, int[] columnWidths, char lineChar, char edgeChar) {
     output.print(edgeChar);
     for (int columnWidth : columnWidths) {
-      output.print(Strings.repeat(Character.toString(lineChar), columnWidth + 2));
+      if (columnWidth != 0) {
+        output.print(Strings.repeat(Character.toString(lineChar), columnWidth + 2));
+      }
     }
 
     // one for each divider
@@ -188,6 +198,10 @@ public class AltStyleTableRenderer implements TableRenderer {
     for (int column = 0; column < row.size(); column++) {
       Object field = row.get(column);
       int width = columnWidths[column];
+      if (width == 0) {
+        builder.add(new Cell());
+        continue;
+      }
 
       String fieldString = field == null ? "" : field.toString();
       Iterable<String> splitField = newlineSplitter.split(fieldString);
@@ -239,22 +253,57 @@ public class AltStyleTableRenderer implements TableRenderer {
       return new int[0];
     }
 
-    int maxInnerTableWidth = maxOuterTableWidth
-      - (widths.length + 1) // for the '|' borders
-      - (2 * widths.length); // for the spaces within each column
-
-    // distribute maxInnerTableWidth equally to each column
-    int remainingWidth = maxInnerTableWidth;
-    for (int i = 0; i < header.size(); i++) {
-      widths[i] = (int) (maxInnerTableWidth * 1.0 / header.size());
-      remainingWidth -= widths[i];
+    // max(header or content length of cells in row) for every column
+    int[] maxColumnWidths = new int[widths.length];
+    if (!header.isEmpty()) {
+      for (int i = 0; i < maxColumnWidths.length; i++) {
+        maxColumnWidths[i] = Math.max(maxColumnWidths[i], header.get(i).length());
+      }
     }
-    // fix any rounding issues by resizing the last column width
-    widths[widths.length - 1] += remainingWidth;
+    for (List<String> row : rows) {
+      for (int i = 0; i < maxColumnWidths.length; i++) {
+        maxColumnWidths[i] = Math.max(maxColumnWidths[i], row.get(i).length());
+      }
+    }
 
-    // apply minColumnWidth constraint
+    int numBorderAndSpaceChars = (widths.length + 1) // for the '|' borders
+      + (2 * widths.length); // for the spaces within each column
+
+    // outer width of the table if every row was in a single line
+    int flatOuterTableWidth = numBorderAndSpaceChars;
+    for (int maxColumnWidth : maxColumnWidths) {
+      flatOuterTableWidth += maxColumnWidth;
+    }
+
+    // may not need the entire maxOuterTableWidth, so downsize if necessary
+    int actualOuterTableWidth = Math.min(maxOuterTableWidth, flatOuterTableWidth);
+    int remainingInnerTableWidth = actualOuterTableWidth - numBorderAndSpaceChars;
+
+    int maxInnerTableWidth = maxOuterTableWidth - numBorderAndSpaceChars;
+    int defaultWidthPerColumn = (int) (maxInnerTableWidth * 1.0 / widths.length);
+
+    // downsize any column widths if they're < defaultWidthPerColumn
+    for (int i = 0; i < maxColumnWidths.length; i++) {
+      int maxColumnWidth = maxColumnWidths[i];
+      if (maxColumnWidth < defaultWidthPerColumn) {
+        widths[i] = maxColumnWidth;
+        remainingInnerTableWidth -= maxColumnWidth;
+      }
+    }
+
+    // distribute remainingInnerTableWidth equally to the remaining columns
+    int widthPerRemainingColumn = (int) (remainingInnerTableWidth * 1.0 / widths.length);
     for (int i = 0; i < widths.length; i++) {
-      widths[i] = Math.max(widths[i], minColumnWidth);
+      // 0 means width is not yet set
+      if (widths[i] == 0) {
+        widths[i] = widthPerRemainingColumn;
+        remainingInnerTableWidth -= widths[i];
+        // fix any rounding issues by resizing the last column width
+        if (i == widths.length - 1) {
+          widths[i] += remainingInnerTableWidth;
+          remainingInnerTableWidth = 0;
+        }
+      }
     }
 
     return widths;
@@ -277,6 +326,10 @@ public class AltStyleTableRenderer implements TableRenderer {
         }
       }
       this.width = maxWidth;
+    }
+
+    Cell() {
+      this(Collections.<String>emptyList());
     }
 
     /**

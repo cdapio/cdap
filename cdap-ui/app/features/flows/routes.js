@@ -26,6 +26,22 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/detail.html',
         controller: 'FlowsDetailController'
       })
+        .state('flows.detail.flowlets', {
+          url: '/flowlets',
+          templateUrl: '/assets/features/flows/templates/tabs/flowlets.html',
+          controller: 'FlowletsController',
+          ncyBreadcrumb: {
+            label: 'Flowlets'
+          }
+        })
+          .state('flows.detail.flowlets.flowlet', {
+            url: '/:flowletid',
+            templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
+            controller: 'FlowsFlowletDetailController',
+            ncyBreadcrumb:{
+              label: '{{$state.params.flowletid}}'
+            }
+          })
 
       .state('flows.detail.status', {
         url: '/status',
@@ -69,4 +85,5 @@ angular.module(PKG.name + '.feature.flows')
           label: 'History'
         }
       })
+
   });

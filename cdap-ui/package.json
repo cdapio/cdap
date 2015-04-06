@@ -1,10 +1,10 @@
 {
   "name": "cdap-ui",
-  "version": "2.8.0",
+  "version": "3.0.0",
   "description": "Front-end for CDAP",
   "scripts": {
     "start": "node ./server.js",
-    "backend": "../cdap-standalone/target/cdap-sdk-2.8.0/bin/cdap.sh",
+    "backend": "../cdap-standalone/target/cdap-sdk-3.0.0-SNAPSHOT/bin/cdap.sh",
     "prebuild": "npm install && ./node_modules/bower/bin/bower update --config.interactive=false",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
     "test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",

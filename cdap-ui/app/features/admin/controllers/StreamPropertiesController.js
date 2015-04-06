@@ -7,6 +7,7 @@ angular.module(PKG.name + '.feature.admin')
     var filterFilter = $filter('filter');
 
     var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamid;
+    $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv'];
 
     $scope.reload = function () {
       dataSrc
@@ -18,6 +19,15 @@ angular.module(PKG.name + '.feature.admin')
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
           $scope.properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
+
+          var settings = myHelpers.objectQuery(res, 'format', 'settings');
+          $scope.settings = [];
+          angular.forEach(settings, function(v, k) {
+            $scope.settings.push({
+              key: k,
+              value: v
+            });
+          });
         });
     };
 
@@ -31,11 +41,21 @@ angular.module(PKG.name + '.feature.admin')
         name: $scope.format
       };
 
-      // do not include schema on the request when schema field is em
+      // do not include schema on the request when schema field is empty
       if (fields.length !== 0) {
         obj.schema = {
           fields: fields
         };
+      }
+
+      var settings = {};
+
+      angular.forEach($scope.settings, function(v) {
+        settings[v.key] = v.value;
+      });
+
+      if (Object.keys(settings).length !== 0) {
+        obj.settings = settings;
       }
 
       var params = {
@@ -62,12 +82,26 @@ angular.module(PKG.name + '.feature.admin')
         name: '',
         type: ''
       });
-    }
+    };
 
     $scope.removeProperty = function(property) {
       var match = filterFilter($scope.properties, property);
       if (match.length) {
         $scope.properties.splice($scope.properties.indexOf(match[0]), 1);
+      }
+    };
+
+    $scope.addSetting = function() {
+      $scope.settings.push({
+        key: '',
+        value: ''
+      });
+    };
+
+    $scope.removeSetting = function(setting) {
+      var match = filterFilter($scope.settings, setting);
+      if (match.length) {
+        $scope.settings.splice($scope.settings.indexOf(match[0]), 1);
       }
     };
 

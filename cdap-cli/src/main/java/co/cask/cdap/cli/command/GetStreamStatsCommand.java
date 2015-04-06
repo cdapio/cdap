@@ -86,10 +86,6 @@ public class GetStreamStatsCommand extends AbstractCommand {
       return;
     }
 
-    output.printf("Analyzing %d Stream events in the time range [%d, %d]...", limit, startTime, endTime);
-    output.println();
-    output.println();
-
     // build processorMap: Hive column name -> StatsProcessor
     Map<String, Set<StatsProcessor>> processorMap = Maps.newHashMap();
     Schema streamSchema = config.getFormat().getSchema();
@@ -109,7 +105,9 @@ public class GetStreamStatsCommand extends AbstractCommand {
     List<ColumnDesc> schema = results.getResultSchema();
 
     // apply StatsProcessors to every element in every row
+    int rows = 0;
     while (results.hasNext()) {
+      rows++;
       QueryResult row = results.next();
       for (int i = 0; i < row.getColumns().size(); i++) {
         Object column = row.getColumns().get(i);
@@ -144,6 +142,10 @@ public class GetStreamStatsCommand extends AbstractCommand {
         }
       }
     }
+
+    output.printf("Analyzed %d Stream events in the time range [%d, %d]...", rows, startTime, endTime);
+    output.println();
+    output.println();
   }
 
   private String getTruncatedColumnName(String streamId, String hiveColumnName) {

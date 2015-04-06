@@ -45,25 +45,4 @@ public class ApplicationVerificationTest {
     Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 
-  private static class ApplicationWithBadId extends AbstractApplication {
-    @Override
-    public void configure() {
-      setName("Bad App Name");
-      setDescription("Bad Application Name Test");
-    }
-  }
-
-  /**
-   * This test that verification of application id fails.
-   */
-  @Test
-  public void testApplicationWithBadId() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new ApplicationWithBadId());
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-    ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    ApplicationVerification app = new ApplicationVerification();
-    VerifyResult result = app.verify(Id.Application.from("test", newSpec.getName()), newSpec);
-    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.FAILED);
-  }
-
 }

@@ -1,8 +1,7 @@
 <div ncy-breadcrumb></div>
-<h2>
-  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
-  <small> <em>Type: Tigon </em></small>
-</h2>
+<h1><span ng-bind="$state.params.programId | caskCapitalizeFilter"></span></h1>
+<p> Type: Tigon </p>
+
 
 <div class="row">
   <div class="col-sm-6 h4">
@@ -13,16 +12,18 @@
   </div>
   <div class="col-sm-6 text-right">
 
-    <div ng-show="status != 'start' && status != 'stop'"
+    <a ng-show="status != 'start' && status != 'stop'"
          ng-disabled = "activeRuns > 0"
-         class="btn btn-default btn-md"
+         class="btn btn-success"
          ng-click="do('start')">
-      <span class="fa fa-play"> Start a new run</span>
-    </div>
-    <div ng-show="status == 'start' || status == 'stop'"
-         class="btn btn-default btn-md">
+      Start a new run
+    </a>
+
+    <a ng-show="status == 'start' || status == 'stop'"
+         class="btn btn-default">
       <span class="fa fa-refresh fa-spin"></span>
-    </div>
+    </a>
+
   </div>
 </div>
 
@@ -31,6 +32,10 @@
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="flows.detail.flowlets" role="tab">Flowlets</a>
   </li>
 
   <li role="presentation" ui-sref-active="active">

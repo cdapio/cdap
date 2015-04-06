@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
 
@@ -26,16 +25,16 @@ import javax.annotation.Nullable;
  */
 @Beta
 public final class TagValue {
-  private final String tagName;
+  private final String name;
   private final String value;
 
-  public TagValue(String tagName, @Nullable String value) {
-    this.tagName = tagName;
+  public TagValue(String name, @Nullable String value) {
+    this.name = name;
     this.value = value;
   }
 
   public String getTagName() {
-    return tagName;
+    return name;
   }
 
   @Nullable
@@ -55,19 +54,20 @@ public final class TagValue {
 
     TagValue tagValue = (TagValue) o;
 
-    return tagName.equals(tagValue.tagName) &&  Objects.equal(value, tagValue.value);
+    boolean result = value == null ? tagValue.value == null : value.equals(tagValue.value);
+    return result && name.equals(tagValue.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(tagName, value);
+    return name.hashCode() + (value == null ? 0 : 31 * value.hashCode());
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("TagValue");
-    sb.append("{tagName='").append(tagName).append('\'');
+    sb.append("{name='").append(name).append('\'');
     sb.append(", value='").append(value == null ? "null" : value).append('\'');
     sb.append('}');
     return sb.toString();

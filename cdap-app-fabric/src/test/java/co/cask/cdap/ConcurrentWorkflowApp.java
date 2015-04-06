@@ -20,9 +20,10 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.collect.Maps;
 
+import java.io.File;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,10 +38,15 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
     addWorkflow(new ConcurrentWorkflow());
 
     // Schedule Workflow
+    Map<String, String> schedule1Properties = Maps.newHashMap();
+    schedule1Properties.put("schedule.name", "concurrentWorkflowSchedule1");
     scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule1", "", "* * * * *"),
-                     "ConcurrentWorkflow");
+                     "ConcurrentWorkflow", schedule1Properties);
+
+    Map<String, String> schedule2Properties = Maps.newHashMap();
+    schedule2Properties.put("schedule.name", "concurrentWorkflowSchedule2");
     scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule2", "", "* * * * *"),
-                     "ConcurrentWorkflow");
+                     "ConcurrentWorkflow", schedule2Properties);
   }
 
   /**
@@ -52,22 +58,26 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
     public void configure() {
       setName("ConcurrentWorkflow");
       setDescription("Workflow configured to run concurrently.");
-      addAction(new SleepAction());
+      addAction(new SimpleAction());
     }
   }
 
-  /**
-   * SleepAction
-   */
-  public static class SleepAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(SleepAction.class);
+  static final class SimpleAction extends AbstractWorkflowAction {
     @Override
     public void run() {
-      LOG.info("Ran Sleep action");
       try {
-        TimeUnit.SECONDS.sleep(30);
-      } catch (InterruptedException ex) {
-        LOG.info("Interrupted");
+        String scheduleName = getContext().getRuntimeArguments().get("schedule.name");
+
+        File file = new File(getContext().getRuntimeArguments().get(scheduleName + ".file"));
+        System.out.println("Creating file - " + getContext().getRuntimeArguments().get(scheduleName + ".file"));
+        file.createNewFile();
+        File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
+
+        while (!doneFile.exists()) {
+          TimeUnit.MILLISECONDS.sleep(50);
+        }
+      } catch (Exception e) {
+        // no-op
       }
     }
   }
