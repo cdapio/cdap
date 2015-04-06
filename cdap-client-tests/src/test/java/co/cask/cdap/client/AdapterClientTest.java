@@ -14,7 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package co.cask.cdap.
+
+
+  client;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.TemplateApp;
@@ -25,7 +28,6 @@ import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
@@ -81,7 +83,8 @@ public class AdapterClientTest extends ClientTestBase {
     List<AdapterDetail> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
-    AdapterConfig adapterConfig = new AdapterConfig("description", "dummyAdapter", null);
+    String adapterName = "someAdapter";
+    AdapterConfig adapterConfig = new AdapterConfig("description", TemplateApp.NAME, null);
 
     // Create Adapter
     adapterClient.create("someAdapter", adapterConfig);
@@ -97,12 +100,12 @@ public class AdapterClientTest extends ClientTestBase {
     Assert.assertArrayEquals(new AdapterDetail[] {someAdapter}, list.toArray());
 
     // Delete Adapter
-    adapterClient.delete("someAdapter");
+    adapterClient.delete(adapterName);
 
     // verify that the adapter is deleted
-    Assert.assertFalse(adapterClient.exists("someAdapter"));
+    Assert.assertFalse(adapterClient.exists(adapterName));
     try {
-      adapterClient.get("someAdapter");
+      adapterClient.get(adapterName);
       Assert.fail();
     } catch (AdapterNotFoundException e) {
       // Expected
@@ -112,22 +115,18 @@ public class AdapterClientTest extends ClientTestBase {
     Assert.assertEquals(0, finalList.size());
 
     applicationClient.deleteAll();
-    applicationClient.waitForDeleted("dummyAdapter", 30, TimeUnit.SECONDS);
+    applicationClient.waitForDeleted(TemplateApp.NAME, 30, TimeUnit.SECONDS);
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, TemplateApp.class, "dummyAdapter");
+    setupAdapter(adapterDir, TemplateApp.class);
   }
 
-  private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
+  private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {
 
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);

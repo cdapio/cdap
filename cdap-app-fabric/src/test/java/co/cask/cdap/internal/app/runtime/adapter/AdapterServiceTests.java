@@ -29,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.io.Files;
@@ -49,6 +48,7 @@ import java.util.jar.Manifest;
  * AdapterService life cycle tests.
  */
 public class AdapterServiceTests extends AppFabricTestBase {
+  private static final Id.Namespace NAMESPACE = Id.Namespace.from(TEST_NAMESPACE1);
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
@@ -87,54 +87,61 @@ public class AdapterServiceTests extends AppFabricTestBase {
     DummyTemplate.Config config = new DummyTemplate.Config("somestream", "0 0 1 1 *");
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
 
-    Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
     // Create Adapter
-    adapterService.createAdapter(namespace, adapterName, adapterConfig);
+    adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
     PreferencesStore preferencesStore = getInjector().getInstance(PreferencesStore.class);
     Map<String, String> prop = preferencesStore.getResolvedProperties(
       TEST_NAMESPACE1, adapterConfig.getTemplate());
     Assert.assertTrue(Boolean.parseBoolean(prop.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED)));
     try {
       // Expect another call to create Adapter with the same adapterName to throw an AdapterAlreadyExistsException.
-      adapterService.createAdapter(namespace, adapterName, adapterConfig);
+      adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
       Assert.fail("Second call to create adapter with same adapterName did not throw AdapterAlreadyExistsException.");
     } catch (AdapterAlreadyExistsException expected) {
       // expected
     }
 
-    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(namespace, adapterName);
+    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     assertDummyConfigEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification> adapters = adapterService.getAdapters(namespace, DummyTemplate.NAME);
+    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
     AdapterSpecification actual = adapters.iterator().next();
     assertDummyConfigEquals(adapterConfig, actual);
 
     // adapter should be stopped
-    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(namespace, adapterName));
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
 
     // start adapter
-    adapterService.startAdapter(namespace, adapterName);
-    Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(namespace, adapterName));
+    adapterService.startAdapter(NAMESPACE, adapterName);
+    Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
 
     // stop adapter
-    adapterService.stopAdapter(namespace, adapterName);
-    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(namespace, adapterName));
+    adapterService.stopAdapter(NAMESPACE, adapterName);
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
 
     // Delete Adapter
-    adapterService.removeAdapter(namespace, adapterName);
+    adapterService.removeAdapter(NAMESPACE, adapterName);
     // verify that the adapter is deleted
     try {
-      adapterService.getAdapter(namespace, adapterName);
+      adapterService.getAdapter(NAMESPACE, adapterName);
       Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapterName));
     } catch (AdapterNotFoundException expected) {
       // expected
     }
 
-    adapters = adapterService.getAdapters(namespace, DummyTemplate.NAME);
+    adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
     Assert.assertTrue(adapters.isEmpty());
+  }
+
+  @Test
+  public void testRedeploy() throws Exception {
+    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate1.NAME);
+    adapterService.deployTemplate(NAMESPACE, DummyTemplate1.NAME);
+    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyTemplate1.NAME);
+    Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
   }
 
   private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
@@ -143,91 +150,22 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertEquals(expected.getConfig(), actual.getConfig());
   }
 
-  @Test
-  public void testInvalidJars() throws Exception {
-    Class<?> clz = DummyTemplate.class;
-    String adapterType = "adapterType";
-
-    Attributes attributes = generateRequiredAttributes(clz, adapterType);
-    setupAdapterJarWithManifestAttributes(clz, attributes);
-
-    // Using a valid manifest (no missing attributes) results in the template being registered
-    adapterService.registerTemplates();
-    Assert.assertNotNull(adapterService.getApplicationTemplateInfo(adapterType));
-
-    // removing the any of the required attributes from the manifest results in the templateInfo not being created.
-    // Missing the CDAP-Source-Type attribute
-    adapterType = "adapterType1";
-    attributes = new Attributes();
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
-    setupAdapterJarWithManifestAttributes(clz, attributes);
-
-    adapterService.registerTemplates();
-    Assert.assertNull(adapterService.getApplicationTemplateInfo(adapterType));
-
-    // Missing the CDAP-Sink-Type attribute
-    adapterType = "adapterType2";
-    attributes = new Attributes();
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
-    setupAdapterJarWithManifestAttributes(clz, attributes);
-
-    adapterService.registerTemplates();
-    Assert.assertNull(adapterService.getApplicationTemplateInfo(adapterType));
-
-    // Missing the CDAP-Adapter-Type attribute
-    adapterType = "adapterType3";
-    attributes = new Attributes();
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
-    setupAdapterJarWithManifestAttributes(clz, attributes);
-
-    adapterService.registerTemplates();
-    Assert.assertNull(adapterService.getApplicationTemplateInfo(adapterType));
-
-    // Missing the CDAP-Adapter-Program-Type attribute
-    adapterType = "adapterType4";
-    attributes = new Attributes();
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    setupAdapterJarWithManifestAttributes(clz, attributes);
-
-    adapterService.registerTemplates();
-    Assert.assertNull(adapterService.getApplicationTemplateInfo(adapterType));
-  }
-
-  private static Attributes generateRequiredAttributes(Class<?> clz, String adapterType) {
+  private static Attributes generateRequiredAttributes(Class<?> clz) {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
     return attributes;
   }
 
-
-  private void setupAdapterJarWithManifestAttributes(Class<?> clz, Attributes attributes) throws IOException {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().putAll(attributes);
-    File adapterJar = AppFabricClient.createDeploymentJar(locationFactory, clz, manifest);
-    File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-    Files.copy(adapterJar, destination);
-  }
-
   private static void setupAdapters() throws IOException {
-    setupAdapter(DummyTemplate.class, DummyTemplate.NAME);
-    setupAdapter(BadTemplate.class, BadTemplate.NAME);
+    setupAdapter(DummyTemplate.class);
+    setupAdapter(DummyTemplate1.class);
+    setupAdapter(DummyTemplate2.class);
+    setupAdapter(BadTemplate.class);
   }
 
-  private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
-    Attributes attributes = generateRequiredAttributes(clz, adapterType);
+  private static void setupAdapter(Class<?> clz) throws IOException {
+    Attributes attributes = generateRequiredAttributes(clz);
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
@@ -235,6 +173,26 @@ public class AdapterServiceTests extends AppFabricTestBase {
     File adapterJar = AppFabricClient.createDeploymentJar(locationFactory, clz, manifest);
     File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
     Files.copy(adapterJar, destination);
+  }
+
+  public static class DummyTemplate1 extends DummyTemplate {
+    public static final String NAME = "template1";
+
+    @Override
+    public void configure() {
+      super.configure();
+      setName(NAME);
+    }
+  }
+
+  public static class DummyTemplate2 extends DummyTemplate {
+    public static final String NAME = "template2";
+
+    @Override
+    public void configure() {
+      super.configure();
+      setName(NAME);
+    }
   }
 
   /**

@@ -103,6 +103,7 @@ public final class Id  {
     public Application(final Namespace namespace, final String applicationId) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(applicationId, "Application cannot be null.");
+      Preconditions.checkArgument(isId(applicationId), "Invalid Application ID.");
       this.namespace = namespace;
       this.applicationId = applicationId;
     }
