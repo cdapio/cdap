@@ -17,7 +17,7 @@ See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of Se
 Listing all Services
 --------------------
 
-You can list all Services in CDAP by issuing an HTTP GET request to the URL::
+You can list all Services in a namespace in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/services
 
@@ -42,6 +42,39 @@ The response body will contain a JSON-formatted list of the existing Services::
       }
       ...
   ]
+
+Listing all System Services
+---------------------------
+
+You can list all System Services in CDAP by issuing an HTTP GET request to the URL::
+
+  GET <base-url>/system/services
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+     
+The response body will contain a JSON-formatted list of the existing System Services::
+
+  [
+      {
+          "name": "appfabric",
+          "description": "Service for managing application lifecycle.",
+          "status": "OK",
+          "logs": "OK",
+          "min": 1,
+          "max": 1,
+          "requested": 1,
+          "provisioned": 1
+      }
+      ...
+  ]
+
 
 Requesting Service Methods
 --------------------------
