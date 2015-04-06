@@ -50,6 +50,8 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
 
+.. _http-restful-api-logging_downloading_system_logs:
+
 Downloading System Logs
 -----------------------
 Logs emitted by a system service running in CDAP can be downloaded with the Logging HTTP

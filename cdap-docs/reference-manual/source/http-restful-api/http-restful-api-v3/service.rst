@@ -49,15 +49,6 @@ Listing all System Services
 You can list all System Services in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/system/services
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<namespace>``
-     - Namespace ID
      
 The response body will contain a JSON-formatted list of the existing System Services::
 
@@ -74,6 +65,9 @@ The response body will contain a JSON-formatted list of the existing System Serv
       }
       ...
   ]
+  
+See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
+information and an example of using these system services.
 
 
 Requesting Service Methods
