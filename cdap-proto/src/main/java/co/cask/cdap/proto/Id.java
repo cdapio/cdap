@@ -296,8 +296,9 @@ public abstract class Id {
     private final String applicationId;
 
     public Application(final Namespace namespace, final String applicationId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
-      Preconditions.checkNotNull(applicationId, "applicationId cannot be null.");
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(applicationId, "Application cannot be null.");
+      Preconditions.checkArgument(isId(applicationId), "Invalid Application ID.");
       this.namespace = namespace;
       this.applicationId = applicationId;
     }

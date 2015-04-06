@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterConfig;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.collect.ImmutableMap;
@@ -62,7 +61,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    setupAdapter(DummyTemplate.class, DummyTemplate.NAME);
+    setupAdapter(DummyTemplate.class);
     adapterService = getInjector().getInstance(AdapterService.class);
     // this is called here because the service is already started by the test base at this po
     adapterService.registerTemplates();
@@ -187,12 +186,25 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     // TODO: implement once adapter creation calls configureTemplate()
   }
 
-  private static void setupAdapter(Class<?> clz, String adapterType) throws IOException {
+  @Test
+  public void testDeployTemplate() throws Exception {
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/templates/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    response = doPut(
+      String.format("%s/namespaces/%s/templates/%s",
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
+  }
+
+  private static void setupAdapter(Class<?> clz) throws IOException {
     Attributes attributes = new Attributes();
     attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
     attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);

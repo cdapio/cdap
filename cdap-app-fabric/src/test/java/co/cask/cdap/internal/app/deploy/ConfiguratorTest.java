@@ -45,7 +45,7 @@ public class ConfiguratorTest {
     Location appJar = AppFabricTestHelper.createAppJar(WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(DefaultId.NAMESPACE, appJar);
+    Configurator configurator = new InMemoryConfigurator(appJar);
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();

@@ -28,10 +28,11 @@ import java.util.Map;
  *  App to test adapter lifecycle.
  */
 public class TemplateApp extends ApplicationTemplate<Map<String, String>> {
+  public static final String NAME = "dummyAdapter";
 
   @Override
   public void configure() {
-    setName("AdapterApp");
+    setName(NAME);
     setDescription("Application for to test Adapter lifecycle");
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());
