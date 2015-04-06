@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch.inmemory;
 
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -30,6 +31,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -79,7 +81,6 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
@@ -100,7 +101,6 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new AuthModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),

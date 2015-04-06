@@ -1170,27 +1170,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec == null) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          } else {
-            // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
-        } else {
-          // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
-          Location webappLoc = null;
-          try {
-            webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
-          } catch (FileNotFoundException e) {
-            // No location found for webapp, no need to log this exception
+          if (type == ProgramType.MAPREDUCE && !store.getRuns(id, ProgramRunStatus.RUNNING, 0,
+                                                              Long.MAX_VALUE, 1).isEmpty()) {
+            // MapReduce program exists and running as a part of Workflow
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
           }
-
-          if (webappLoc != null && webappLoc.exists()) {
-            // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
-          } else {
-            // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          }
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
         }
+        // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
+        Location webappLoc = null;
+        try {
+          webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
+        } catch (FileNotFoundException e) {
+          // No location found for webapp, no need to log this exception
+        }
+
+        if (webappLoc != null && webappLoc.exists()) {
+          // webapp exists and not running. so return stopped.
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
+        }
+
+        // webapp doesn't exist
+        return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
       }
 
       String status = controllerStateToString(runtimeInfo.getController().getState());
@@ -1315,7 +1317,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      Program program = store.loadProgram(id, type);
+      final Program program = store.loadProgram(id, type);
       if (program == null) {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
@@ -1340,53 +1342,51 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
-      controller.addListener(new AbstractListener() {
-
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
+      if (type != ProgramType.MAPREDUCE) {
+        // MapReduce state recording is done by the MapReduceProgramRunner
+        // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
+        controller.addListener(new AbstractListener() {
+          @Override
+          public void init(ProgramController.State state, @Nullable Throwable cause) {
+            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+            if (state == ProgramController.State.COMPLETED) {
+              completed();
+            }
+            if (state == ProgramController.State.ERROR) {
+              error(controller.getFailureCause());
+            }
           }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
+
+          @Override
+          public void completed() {
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.COMPLETED.getRunStatus());
           }
-        }
 
-        @Override
-        public void suspended() {
-          store.setSuspend(id, runId);
-        }
+          @Override
+          public void killed() {
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.KILLED.getRunStatus());
+          }
 
-        @Override
-        public void resuming() {
-          store.setResume(id, runId);
-        }
+          @Override
+          public void suspended() {
+            store.setSuspend(id, runId);
+          }
 
-        @Override
-        public void completed () {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.COMPLETED.getRunStatus());
-        }
+          @Override
+          public void resuming() {
+            store.setResume(id, runId);
+          }
 
-        @Override
-        public void killed() {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.KILLED.getRunStatus());
-        }
-
-        @Override
-        public void error(Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", id, runId, cause);
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR.getRunStatus());
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-
+          @Override
+          public void error(Throwable cause) {
+            LOG.info("Program stopped with error {}, {}", id, runId, cause);
+            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                          ProgramController.State.ERROR.getRunStatus());
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      }
       return AppFabricServiceStatus.OK;
     } catch (DatasetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
