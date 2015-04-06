@@ -3,6 +3,8 @@ angular.module(PKG.name + '.feature.flows')
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $state.params.flowletid;
+    $scope.inputs = [];
+
     // Initialize
     dataSrc
       .request({
@@ -29,6 +31,7 @@ angular.module(PKG.name + '.feature.flows')
               method: 'POST'
             }, function (res) {
               updateInput(res.series[0].data);
+
             });
 
           function updateInput(newVal) {
@@ -56,6 +59,19 @@ angular.module(PKG.name + '.feature.flows')
             }
           }
         }
+
+
+        dataSrc
+          .poll({
+            _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+                          + '.app.' + $state.params.appId
+                          + '.flow.' + $state.params.programId
+                          + '.flowlet.' + $scope.inputs[0]
+                          + '&metric=system.process.events.out&start=now-60s&count=1',
+            method: 'POST'
+          }, function (res) {
+            $scope.total = res.series[0].data[0].value / 60;
+          });
 
       });
   });

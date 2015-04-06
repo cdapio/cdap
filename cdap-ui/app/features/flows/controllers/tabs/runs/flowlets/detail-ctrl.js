@@ -4,8 +4,6 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope);
     $scope.activeTab = 0;
     var flowletid = $state.params.flowletid;
-    $scope.inputs = [];
-    $scope.outputs = [];
     $scope.datasets = [];
 
     // Initialize

@@ -54,7 +54,9 @@
         <td>
           {{input}}
         </td>
-        <td></td>
+        <td>
+          <strong>{{ total | myNumber: 1 }}</strong> events/s
+        </td>
         <td>
           <epoch-line
             data-history="inputHistory"
@@ -129,7 +131,9 @@
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
-        <td></td>
+        <td>
+          {{ total | myNumber: 0 }} tuples
+        </td>
         <td>
           {{output}}
         </td>
