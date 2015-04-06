@@ -81,20 +81,13 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
-        }
-      }
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -108,20 +101,13 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new AuthModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new LoggingModules().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamAdminModules().getStandaloneModules(),
-      new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
-        }
-      }
+      new NotificationFeedServiceRuntimeModule().getStandaloneModules()
     );
     return Guice.createInjector(standaloneModules);
   }
