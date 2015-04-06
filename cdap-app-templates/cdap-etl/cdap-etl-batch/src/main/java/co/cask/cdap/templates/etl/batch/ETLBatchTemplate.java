@@ -37,10 +37,10 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
+import co.cask.cdap.templates.etl.transforms.GenericTypeToAvroKeyTransform;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToAvroTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.base.Preconditions;
@@ -86,7 +86,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
                                         StreamToStructuredRecordTransform.class,
-                                        StructuredRecordToAvroTransform.class));
+                                        GenericTypeToAvroKeyTransform.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
