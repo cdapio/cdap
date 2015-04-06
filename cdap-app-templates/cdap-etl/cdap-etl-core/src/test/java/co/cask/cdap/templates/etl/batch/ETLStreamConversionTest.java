@@ -120,9 +120,10 @@ public class ETLStreamConversionTest extends TestBase {
                                    ImmutableMap.of("streamName", "myStream", "frequency", "30"));
     ETLStage transform1 = new ETLStage(StreamToStructuredRecordTransform.class.getName(),
                                        ImmutableMap.of("schemaType", Formats.CSV, "schema", bodySchema.toString()));
-    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(), ImmutableMap.<String, String>of());
+    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(),
+                                       ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getName(),
-                                 ImmutableMap.of("schema", bodySchema.toString(), "name", fileSetName));
+                                 ImmutableMap.of("schema", eventSchema.toString(), "name", fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(transform1);
     transformList.add(transform2);

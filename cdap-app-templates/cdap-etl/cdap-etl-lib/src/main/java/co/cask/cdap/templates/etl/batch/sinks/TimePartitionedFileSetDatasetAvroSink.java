@@ -23,6 +23,7 @@ import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -59,18 +60,14 @@ public class TimePartitionedFileSetDatasetAvroSink extends BatchSink<AvroKey<Gen
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     TimePartitionedFileSet sink = context.getDataset(context.getRuntimeArguments().get(DATASETNAME), sinkArgs);
     context.setOutput(context.getRuntimeArguments().get(DATASETNAME), sink);
-    Schema streamBodySchema = null;
+    Schema userSchema = null;
     try {
-      streamBodySchema = Schema.parseJson(context.getRuntimeArguments().get("schema"));
+      userSchema = Schema.parseJson(context.getRuntimeArguments().get("schema"));
     } catch (IOException e) {
       Throwables.propagate(e);
     }
-    List<Schema.Field> fields = Lists.newArrayList(
-      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
-    fields.addAll(streamBodySchema.getFields());
-    Schema streamSchema = Schema.recordOf("streamEvent", fields);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(streamSchema.toString());
+    Preconditions.checkNotNull(userSchema, "A valid schema must be provided to the Sink");
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(userSchema.toString());
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
   }

@@ -223,9 +223,22 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, Class<? extends StreamEventDecoder> decoderType) {
+    this(streamName, startTime, endTime, decoderType.getName());
+  }
+
+  /**
+   * Constructs an instance with the given properties.
+   *
+   * @param streamName Name of the stream
+   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
+   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
+   * @param decoderTypeClassname The full qualified name of the class for decoding {@link StreamEvent}
+   */
+  public StreamBatchReadable(String streamName, long startTime,
+                             long endTime, String decoderTypeClassname) {
     this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
                                                                      END_TIME_KEY, endTime,
-                                                                     DECODER_KEY, decoderType.getName())));
+                                                                     DECODER_KEY, decoderTypeClassname)));
   }
 
   /**
