@@ -34,6 +34,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.avro.mapred.AvroTextOutputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
@@ -50,6 +51,8 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
+  // TODO: Need to figure this out. Adding a dummy avro dependency should be avoided. Getting classloading issue otherwise.
+  private AvroTextOutputFormat<String, String> format;
 
   @Override
   public void configure() {
