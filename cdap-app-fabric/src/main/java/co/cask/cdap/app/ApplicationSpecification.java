@@ -33,6 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Application Specification used in core code.
@@ -47,6 +48,7 @@ public interface ApplicationSpecification {
   /**
    * @return Version of the Application, according to the Bundle-Version in the jar manifest.
    */
+  @Nullable
   String getVersion();
 
   /**

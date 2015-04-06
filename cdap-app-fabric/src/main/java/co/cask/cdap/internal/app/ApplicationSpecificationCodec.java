@@ -48,7 +48,9 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
-    jsonObj.add("version", new JsonPrimitive(src.getVersion()));
+    if (src.getVersion() != null) {
+      jsonObj.add("version", new JsonPrimitive(src.getVersion()));
+    }
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
@@ -71,7 +73,11 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = json.getAsJsonObject();
 
     String name = jsonObj.get("name").getAsString();
-    String version = jsonObj.get("version").getAsString();
+
+    String version = null;
+    if (jsonObj.has("version")) {
+      version = jsonObj.get("version").getAsString();
+    }
     String description = jsonObj.get("description").getAsString();
 
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
