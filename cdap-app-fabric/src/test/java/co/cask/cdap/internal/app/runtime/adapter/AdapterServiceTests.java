@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.DataTemplate;
 import co.cask.cdap.DummyTemplate;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
@@ -29,9 +30,11 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.io.Files;
+import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -144,6 +147,18 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
   }
 
+  @Test
+  public void testDataCreation() throws Exception {
+    String streamName = "somestream";
+    String tableName = "sometable";
+    String adapterName = "streamAdapter";
+    DataTemplate.Config config = new DataTemplate.Config(streamName, tableName);
+    AdapterConfig adapterConfig = new AdapterConfig("description", DataTemplate.NAME, GSON.toJsonTree(config));
+    adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
+
+    Assert.assertTrue(streamExists(Id.Stream.from(NAMESPACE, streamName)));
+    Assert.assertTrue(datasetExists(Id.DatasetInstance.from(NAMESPACE, tableName)));
+  }
   private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
@@ -162,6 +177,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(DummyTemplate1.class);
     setupAdapter(DummyTemplate2.class);
     setupAdapter(BadTemplate.class);
+    setupAdapter(DataTemplate.class);
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {

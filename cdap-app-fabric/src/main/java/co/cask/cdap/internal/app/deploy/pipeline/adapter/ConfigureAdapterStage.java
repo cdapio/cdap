@@ -14,13 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryAdapterConfigurator;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
+import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterSpecification;
@@ -45,51 +46,30 @@ import java.io.IOException;
  */
 public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private static final Logger LOG = LoggerFactory.getLogger(ConfigureAdapterStage.class);
   private final Id.Namespace namespace;
   private final String adapterName;
+  private final Location templateJarLocation;
 
   /**
    * Constructor with hit for handling type.
    */
-  public ConfigureAdapterStage(Id.Namespace namespace, String adapterName) {
+  public ConfigureAdapterStage(Id.Namespace namespace, String adapterName, Location templateJarLocation) {
     super(TypeToken.of(AdapterDeploymentInfo.class));
     this.namespace = namespace;
     this.adapterName = adapterName;
+    this.templateJarLocation = templateJarLocation;
   }
 
   /**
    * Creates a {@link InMemoryConfigurator} to run through
-   * the process of generation of {@link ApplicationSpecification}
+   * the process of generation of {@link AdapterSpecification}
    *
    * @param deploymentInfo Location of the input and output location
    */
   @Override
   public void process(AdapterDeploymentInfo deploymentInfo) throws Exception {
-
-    Location outputLocation = deploymentInfo.getTempJarLoc();
-    Location parent = Locations.getParent(outputLocation);
-    Locations.mkdirsIfNotExists(parent);
-
-    File input = deploymentInfo.getTemplateInfo().getFile();
-    Location tmpLocation = parent.getTempFile(".tmp");
-    LOG.debug("Copy from {} to {}", input.getName(), tmpLocation.toURI());
-    Files.copy(input, Locations.newOutputSupplier(tmpLocation));
-
-    // Finally, move archive to final location
-    try {
-      if (tmpLocation.renameTo(outputLocation) == null) {
-        throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                            tmpLocation.toURI(), outputLocation.toURI()));
-      }
-    } catch (IOException e) {
-      // In case copy to temporary file failed, or rename failed
-      tmpLocation.delete();
-      throw e;
-    }
-
     InMemoryAdapterConfigurator inMemoryAdapterConfigurator =
-      new InMemoryAdapterConfigurator(namespace, new LocalLocationFactory().create(input.toURI()), adapterName,
+      new InMemoryAdapterConfigurator(namespace, templateJarLocation, adapterName,
                                       deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec());
     AdapterSpecification spec = GSON.fromJson(inMemoryAdapterConfigurator.config().get().get(),
                                               AdapterSpecification.class);

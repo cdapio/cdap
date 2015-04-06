@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,41 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.deploy.pipeline.DatasetInstanceCreator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link co.cask.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
-public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
+public class CreateAdapterDatasetInstancesStage extends AbstractStage<AdapterSpecification> {
   private final DatasetInstanceCreator datasetInstanceCreator;
 
-  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
-                                     Id.Namespace namespace) {
-    super(TypeToken.of(ApplicationDeployable.class));
+  public CreateAdapterDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
+                                            Id.Namespace namespace) {
+    super(TypeToken.of(AdapterSpecification.class));
     this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework, namespace);
   }
 
   /**
-   * Receives an input containing application specification and location
-   * and verifies both.
+   * Creates the dataset instances contained in the give adapter specification.
    *
-   * @param input An instance of {@link ApplicationDeployable}
+   * @param input An instance of {@link AdapterSpecification}
    */
   @Override
-  public void process(ApplicationDeployable input) throws Exception {
-    // create dataset instances
-    ApplicationSpecification specification = input.getSpecification();
-    datasetInstanceCreator.createInstances(specification.getDatasets());
+  public void process(AdapterSpecification input) throws Exception {
+    datasetInstanceCreator.createInstances(input.getDatasets());
 
     // Emit the input to next stage.
     emit(input);

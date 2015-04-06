@@ -32,7 +32,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeployCleanupStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
@@ -100,19 +99,19 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   }
 
   @Override
-  public ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception {
+  public ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, appId));
+    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, namespace, appId));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, adapterService));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
-    pipeline.addLast(new CreateStreamsStage(id, streamAdmin, exploreFacade, exploreEnabled));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace, datasetFramework,
+                                                   inMemoryDatasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
+    pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    pipeline.addLast(new CreateSchedulesStage(scheduler));
-    pipeline.setFinally(new DeployCleanupStage());
+    pipeline.setFinally(new CreateSchedulesStage(scheduler));
     return pipeline.execute(input);
   }
 }
