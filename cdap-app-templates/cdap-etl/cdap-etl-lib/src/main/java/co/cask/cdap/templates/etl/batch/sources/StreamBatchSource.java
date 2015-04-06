@@ -59,8 +59,9 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
     Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
     // TODO: This is not clean.
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, IdentityStreamEventDecoder.class)
-                         .toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime,
+                                             "co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder")
+                       .toURI().toString());
   }
 
 

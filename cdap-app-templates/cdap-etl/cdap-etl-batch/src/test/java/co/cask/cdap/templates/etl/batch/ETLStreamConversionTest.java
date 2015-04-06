@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
@@ -95,7 +94,7 @@ public class ETLStreamConversionTest extends TestBase {
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig(filesetName);
-    DefaultAdapterConfigurer adapterConfigurer = new DefaultAdapterConfigurer();
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
 
     Map<String, String> mapReduceArgs = Maps.newHashMap();
@@ -120,9 +119,10 @@ public class ETLStreamConversionTest extends TestBase {
                                    ImmutableMap.of("streamName", "myStream", "frequency", "30"));
     ETLStage transform1 = new ETLStage(StreamToStructuredRecordTransform.class.getName(),
                                        ImmutableMap.of("schemaType", Formats.CSV, "schema", bodySchema.toString()));
-    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(), ImmutableMap.<String, String>of());
+    ETLStage transform2 = new ETLStage(StructuredRecordToAvroTransform.class.getName(),
+                                       ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getName(),
-                                 ImmutableMap.of("schema", bodySchema.toString(), "name", fileSetName));
+                                 ImmutableMap.of("schema", eventSchema.toString(), "name", fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(transform1);
     transformList.add(transform2);
