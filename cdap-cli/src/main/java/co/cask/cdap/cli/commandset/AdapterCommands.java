@@ -18,8 +18,6 @@ package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.CreateAdapterCommand;
-import co.cask.cdap.cli.command.CreateStreamConversionAdapterCommand;
 import co.cask.cdap.cli.command.DeleteAdapterCommand;
 import co.cask.cdap.cli.command.ListAdaptersCommand;
 import co.cask.common.cli.Command;
@@ -38,9 +36,7 @@ public class AdapterCommands extends CommandSet<Command> implements Categorized 
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(ListAdaptersCommand.class))
-        .add(injector.getInstance(CreateAdapterCommand.class))
         .add(injector.getInstance(DeleteAdapterCommand.class))
-        .add(injector.getInstance(CreateStreamConversionAdapterCommand.class))
         .build());
   }
 

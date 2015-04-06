@@ -28,6 +28,7 @@ import co.cask.cdap.conversion.avro.Converter;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
@@ -48,7 +49,6 @@ import java.util.Map;
  */
 public class StreamConversionMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(StreamConversionMapReduce.class);
-  public static final String ADAPTER_PROPERTIES = "adapter.properties";
   public static final String SCHEMA_KEY = "cdap.stream.conversion.output.schema";
   public static final String HEADERS_KEY = "cdap.stream.conversion.headers";
   private String sinkName;
@@ -69,16 +69,18 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     job.setMapOutputKeyClass(AvroKey.class);
     job.setMapOutputValueClass(NullWritable.class);
 
-    AdapterArguments adapterArguments = new AdapterArguments(context.getRuntimeArguments());
-    sinkName = adapterArguments.getSinkName();
+    AdapterArgs args = new Gson().fromJson(
+      context.getRuntimeArguments().get(StreamConversionAdapter.CONFIG_KEY), AdapterArgs.class);
+    ConversionConfig config = args.getConfig();
+    sinkName = config.getSinkName();
     partitionTime = context.getLogicalStartTime();
 
     // setup input for the job
     long endTime = context.getLogicalStartTime();
-    long startTime = endTime - adapterArguments.getFrequency();
-    StreamBatchReadable.useStreamInput(context, adapterArguments.getSourceName(), startTime, endTime,
-                                       adapterArguments.getSourceFormatSpec());
-    context.setMapperResources(adapterArguments.getMapperResources());
+    long startTime = endTime - config.getFrequency();
+    StreamBatchReadable.useStreamInput(context, config.getSourceName(), startTime, endTime,
+                                       config.getSourceFormatSpec());
+    context.setMapperResources(config.getMapperResources());
 
     // setup output for the job
     Map<String, String> sinkArgs = Maps.newHashMap();
@@ -86,14 +88,14 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     TimePartitionedFileSet sink = context.getDataset(sinkName, sinkArgs);
     outputPath = FileSetArguments.getOutputPath(sink.getEmbeddedFileSet().getRuntimeArguments());
     context.setOutput(sinkName, sink);
-    AvroJob.setOutputKeySchema(job, adapterArguments.getSinkSchema());
+    AvroJob.setOutputKeySchema(job, config.getSinkSchema());
 
     // set configuration the mappers will need
-    job.getConfiguration().set(SCHEMA_KEY, adapterArguments.getSinkSchema().toString());
-    if (adapterArguments.getHeadersStr() != null) {
-      job.getConfiguration().set(HEADERS_KEY, adapterArguments.getHeadersStr());
+    job.getConfiguration().set(SCHEMA_KEY, config.getSinkSchema().toString());
+    if (config.getHeaders() != null && !config.getHeaders().isEmpty()) {
+      job.getConfiguration().set(HEADERS_KEY, config.getHeaders());
     }
-    job.setJobName("adapter.stream-conversion." + adapterArguments.getSourceName()
+    job.setJobName("adapter.stream-conversion." + config.getSourceName()
                      + ".to." + sinkName + "." + partitionTime);
   }
 

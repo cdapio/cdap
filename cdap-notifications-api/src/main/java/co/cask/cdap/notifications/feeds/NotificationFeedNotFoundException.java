@@ -24,14 +24,14 @@ import co.cask.cdap.proto.Id;
  */
 public class NotificationFeedNotFoundException extends NotFoundException {
 
-  public NotificationFeedNotFoundException(String elementId) {
-    super("feed", elementId);
+  private final Id.NotificationFeed id;
+
+  public NotificationFeedNotFoundException(Id.NotificationFeed id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return The name of the feed that could not be found
-   */
-  public String getFeedName() {
-    return getElementId();
+  public Id.NotificationFeed getId() {
+    return id;
   }
 }

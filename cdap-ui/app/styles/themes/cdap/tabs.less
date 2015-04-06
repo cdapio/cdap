@@ -1,0 +1,31 @@
+@import "../../variables.less";
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+  main {
+    .nav-tabs {
+      > li {
+        min-width: 80px;
+      }
+      > li.active > a {
+        border-right:0;
+        cursor: pointer;
+        &:hover {
+          color: @cdap-orange;
+        }
+      }
+      > li.active::after {
+        content: '';
+        height: 100%;
+        width: 15%;
+        border-right: 1px solid #d1d3da;
+        border-top: 1px solid #d1d3da;
+        .skew(15deg, 0);
+        position: absolute;
+        top: 0px;
+        right: -5px;
+        background-color: #ebecf1;
+      }
+    }
+  }
+}

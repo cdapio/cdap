@@ -17,7 +17,6 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneContainer;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
@@ -27,7 +26,6 @@ import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.app.AdapterApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
@@ -35,10 +33,12 @@ import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
+import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.DirUtils;
@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -114,7 +113,7 @@ public class CLIMainTest extends StandaloneTestBase {
       configuration = CConfiguration.create();
       configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
       configuration.set(Constants.Router.ADDRESS, HOSTNAME);
-      configuration.set(Constants.AppFabric.ADAPTER_DIR, adapterDir.getAbsolutePath());
+      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
       setupAdapters(adapterDir);
 
       StandaloneTestBase.setUpClass();
@@ -124,7 +123,8 @@ public class CLIMainTest extends StandaloneTestBase {
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
-    cliMain = new CLIMain(LaunchOptions.DEFAULT, cliConfig);
+    LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
+    cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
@@ -227,13 +227,13 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for Stream '%s'", streamId));
-    testCommandOutputContains(cli, "set stream format " + streamId + " csv",
+    testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
                               String.format("Successfully set format of stream '%s'", streamId));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              "Analyzing 100 Stream events in the time range [0, 9223372036854775807]");
-    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 50 start 50 end 500",
-                              "Analyzing 50 Stream events in the time range [50, 500]");
+                              "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
+    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 5 start 5 end 10",
+                              "Analyzed 0 Stream events in the time range [5, 10]");
   }
 
   @Test
@@ -265,8 +265,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
+    Id.DatasetType datasetType1 = Id.DatasetType.from(barspace, datasetType.getName());
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
-                              "Error: dataset type '" + datasetType.getName() + "' was not found");
+                              new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
@@ -278,16 +279,23 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @Test
   public void testProcedure() throws Exception {
-    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
-    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
+    String originalApiVersion = cliConfig.getClientConfig().getApiVersion();
     try {
-      testCommandOutputContains(cli, "call procedure " +
-        qualifiedProcedureId + " " + FakeProcedure.METHOD_NAME +
-        " 'customer bob'", "realbob");
+      cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_2_TOKEN);
+      testCommandOutputContains(cli, "use namespace " + Constants.DEFAULT_NAMESPACE, "using namespace");
+
+      String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
+      testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
+      try {
+        testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+          + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+      } finally {
+        testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+        assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
+      }
     } finally {
-      testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
+      cliConfig.getClientConfig().setApiVersion(originalApiVersion);
     }
   }
 
@@ -444,7 +452,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // describe non-existing namespace
     testCommandOutputContains(cli, String.format("describe namespace %s", doesNotExist),
-                              String.format("Error: namespace '%s' was not found", doesNotExist));
+                              String.format("Error: 'namespace:%s' was not found", doesNotExist));
     // delete non-existing namespace
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    testCommandOutputContains(cli, String.format("delete namespace %s", doesNotExist),
@@ -467,7 +475,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     // try creating a namespace with existing id
     command = String.format("create namespace %s", name);
-    testCommandOutputContains(cli, command, String.format("Error: namespace '%s' already exists\n", name));
+    testCommandOutputContains(cli, command, String.format("Error: 'namespace:%s' already exists\n", name));
 
     // create a namespace with default name and description
     command = String.format("create namespace %s", defaultFields);
@@ -488,27 +496,8 @@ public class CLIMainTest extends StandaloneTestBase {
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
-  @Test
-  public void testAdapters() throws Exception {
-    // Create Adapter
-    String createCommand = "create adapter someAdapter type dummyAdapter" +
-      " props " + GSON.toJson(ImmutableMap.of("frequency", "1m")) +
-      " src mySource" +
-      " sink mySink sink-props " + GSON.toJson(ImmutableMap.of("dataset.class", FileSet.class.getName()));
-    testCommandOutputContains(cli, createCommand, "Successfully created adapter");
-
-    // Check that the created adapter is present
-    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists("someAdapter"));
-
-    testCommandOutputContains(cli, "list adapters", "someAdapter");
-    testCommandOutputContains(cli, "get adapter someAdapter", "someAdapter");
-    testCommandOutputContains(cli, "delete adapter someAdapter", "Successfully deleted adapter");
-    testCommandOutputNotContains(cli, "list adapters", "someAdapter");
-  }
-
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, AdapterApp.class, "dummyAdapter");
+    setupAdapter(adapterDir, TemplateApp.class, "dummyAdapter");
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {

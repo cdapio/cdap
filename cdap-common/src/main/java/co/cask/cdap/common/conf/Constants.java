@@ -92,7 +92,7 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
-    public static final String ADAPTER_DIR = "app.adapter.dir";
+    public static final String APP_TEMPLATE_DIR = "app.template.dir";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
 
     /**
@@ -494,8 +494,6 @@ public final class Constants {
   public static final class Security {
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
-    /** Enables authorization. */
-    public static final String AUTHORIZATION_ENABLED = "security.authorization.enabled";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */

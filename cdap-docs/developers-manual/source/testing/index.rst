@@ -29,7 +29,7 @@ help with testing and debugging CDAP applications:
 
 
 .. |debugging| replace:: **Debugging:**
-.. _debugging: debugging.html#debugging-cdap
+.. _debugging: debugging.html
 
 - |debugging|_ How you can **debug CDAP applications** in Standalone mode and app
   containers in Distributed mode.

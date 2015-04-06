@@ -55,12 +55,12 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void createStream() throws IOException {
-    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getName());
+    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.create(httpRequest, responder, streamId.getNamespaceId(), streamId.getName());
+      streamHandler.create(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);
@@ -107,11 +107,11 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getName());
+    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     for (Map.Entry<String, String> entry : headers.entrySet()) {
-      httpRequest.setHeader(streamId.getName() + "." + entry.getKey(), entry.getValue());
+      httpRequest.setHeader(streamId.getId() + "." + entry.getKey(), entry.getValue());
     }
     ChannelBuffer content = ChannelBuffers.wrappedBuffer(buffer);
     httpRequest.setContent(content);
@@ -119,7 +119,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
     MockResponder responder = new MockResponder();
     try {
-      streamHandler.enqueue(httpRequest, responder, streamId.getNamespaceId(), streamId.getName());
+      streamHandler.enqueue(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

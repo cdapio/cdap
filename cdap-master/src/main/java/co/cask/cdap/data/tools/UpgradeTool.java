@@ -22,7 +22,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -50,7 +49,6 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -61,6 +59,7 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
@@ -185,10 +184,7 @@ public class UpgradeTool {
           bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
-          install(new FactoryModuleBuilder()
-                    .implement(Store.class, DefaultStore.class)
-                    .build(StoreFactory.class)
-          );
+          bind(Store.class).to(DefaultStore.class);
           bind(ConfigStore.class).to(DefaultConfigStore.class);
         }
 

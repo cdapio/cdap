@@ -60,6 +60,16 @@ angular.module(PKG.name + '.feature.admin')
             url: '/notifications',
             templateUrl: '/assets/features/admin/templates/system/notifications.html'
           })
+          .state('admin.system.preferences', {
+            url: '/preferences',
+            templateUrl: '/assets/features/admin/templates/preferences.html',
+            controller: 'PreferencesController',
+            resolve: {
+              source: function() {
+                return 'SYSTEM';
+              }
+            }
+          })
 
         .state('admin.security', {
           abstract: true,
@@ -107,14 +117,33 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.namespace.create', {
             url: '/create',
-            templateUrl: '/assets/features/admin/templates/namespace/create.html',
-            controller: 'AdminNamespaceCreateController'
+            onEnter: function($bootstrapModal, $state) {
+              $bootstrapModal.open({
+                templateUrl: '/assets/features/admin/templates/namespace/create.html',
+                size: 'lg',
+                backdrop: true,
+                keyboard: true,
+                controller: 'AdminNamespaceCreateController'
+              }).result.finally(function() {
+                $state.go('admin.overview', {}, {reload: true});
+              });
+            }
           })
 
           .state('admin.namespace.detail', {
             url: '/detail/:nsadmin',
             templateUrl: '/assets/features/admin/templates/namespace.html'
           })
+            .state('admin.namespace.detail.preferences', {
+              url: '/preferences',
+              templateUrl: '/assets/features/admin/templates/preferences.html',
+              controller: 'PreferencesController',
+              resolve: {
+                source: function () {
+                  return 'NAMESPACE';
+                }
+              }
+            })
 
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',
@@ -183,4 +212,6 @@ angular.module(PKG.name + '.feature.admin')
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
                 controller: 'AdminNamespaceAppMetadataController'
               });
+
+
   });

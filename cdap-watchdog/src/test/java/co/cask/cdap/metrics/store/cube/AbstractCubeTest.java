@@ -223,20 +223,11 @@ public abstract class AbstractCubeTest {
   private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution, String measureName,
                                 Map<String, String> sliceByTagValues, List<String> groupByTags,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
-    CubeQuery query = new CubeQuery(startTs, endTs, resolution, -1, measureName, MeasureType.COUNTER,
+    CubeQuery query = new CubeQuery(startTs, endTs, resolution, Integer.MAX_VALUE, measureName, MeasureType.COUNTER,
                                     sliceByTagValues, groupByTags, interpolator);
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
     Assert.assertTrue(expected.containsAll(result));
-  }
-
-  private TimeSeries getTimeSeries(List<TimeSeries> resultList, Map<String, String> tagValues) {
-    for (int i = 0; i < resultList.size(); i++) {
-      if (tagValues.equals(resultList.get(i).getTagValues())) {
-        return resultList.get(i);
-      }
-    }
-    return null;
   }
 
   private List<TimeValue> timeValues(long... longs) {

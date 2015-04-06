@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -55,13 +56,13 @@ public class MetadataStoreDataset extends AbstractDataset {
     return Bytes.toBytes(GSON.toJson(value));
   }
 
-  protected <T> T deserialize(byte[] serialized, Class<T> classOfT) {
-    return GSON.fromJson(Bytes.toString(serialized), classOfT);
+  protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+    return GSON.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
   // returns first that matches
   @Nullable
-  public <T> T get(MDSKey id, Class<T> classOfT) {
+  public <T> T get(MDSKey id, Type typeOfT) {
     try {
       Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
       Row row = scan.next();
@@ -74,40 +75,40 @@ public class MetadataStoreDataset extends AbstractDataset {
         return null;
       }
 
-      return deserialize(value, classOfT);
+      return deserialize(value, typeOfT);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   // lists all that has same first id parts
-  public <T> List<T> list(MDSKey id, Class<T> classOfT) {
-    return list(id, classOfT, Integer.MAX_VALUE);
+  public <T> List<T> list(MDSKey id, Type typeOfT) {
+    return list(id, typeOfT, Integer.MAX_VALUE);
   }
 
   // lists all that has same first id parts, with a limit
-  public <T> List<T> list(MDSKey id, Class<T> classOfT, int limit) {
-    return list(id, null, classOfT, limit, Predicates.<T>alwaysTrue());
+  public <T> List<T> list(MDSKey id, Type typeOfT, int limit) {
+    return list(id, null, typeOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   // lists all that has first id parts in range of startId and stopId
-  public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Class<T> classOfT, int limit,
+  public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                           Predicate<T> filter) {
-    return Lists.newArrayList(listKV(startId, stopId, classOfT, limit, filter).values());
+    return Lists.newArrayList(listKV(startId, stopId, typeOfT, limit, filter).values());
   }
 
   // returns mapping of all that has same first id parts
-  public <T> Map<MDSKey, T> listKV(MDSKey id, Class<T> classOfT) {
-    return listKV(id, classOfT, Integer.MAX_VALUE);
+  public <T> Map<MDSKey, T> listKV(MDSKey id, Type typeOfT) {
+    return listKV(id, typeOfT, Integer.MAX_VALUE);
   }
 
   // returns mapping of  all that has same first id parts, with a limit
-  public <T> Map<MDSKey, T> listKV(MDSKey id, Class<T> classOfT, int limit) {
-    return listKV(id, null, classOfT, limit, Predicates.<T>alwaysTrue());
+  public <T> Map<MDSKey, T> listKV(MDSKey id, Type typeOfT, int limit) {
+    return listKV(id, null, typeOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   // returns mapping of all that has first id parts in range of startId and stopId
-  public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Class<T> classOfT, int limit,
+  public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                                    Predicate<T> filter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
@@ -121,7 +122,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         if (columnValue == null) {
           continue;
         }
-        T value = deserialize(columnValue, classOfT);
+        T value = deserialize(columnValue, typeOfT);
 
         if (filter.apply(value)) {
           MDSKey key = new MDSKey(next.getRow());
@@ -160,5 +161,4 @@ public class MetadataStoreDataset extends AbstractDataset {
       throw Throwables.propagate(e);
     }
   }
-
 }
