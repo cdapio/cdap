@@ -88,17 +88,19 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   /**
    * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&limit=[event_limit]}
-   * <p/>
+   * <p>
    * Responds with:
    * <ul>
    * <li>404 if stream does not exist</li>
    * <li>204 if no event in the given start/end time range exists</li>
    * <li>200 if there is are one or more events</li>
    * </ul>
-   * <p/>
+   * </p>
+   * <p>
    * Response body is a JSON array of the StreamEvent object.
+   * </p>
    *
-   * @see co.cask.cdap.common.stream.StreamEventTypeAdapter for the format of the StreamEvent object
+   * @see StreamEventTypeAdapter StreamEventTypeAdapter for the format of the StreamEvent object
    */
   @GET
   @Path("/{stream}/events")
