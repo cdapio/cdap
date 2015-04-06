@@ -82,7 +82,7 @@ Note that the start and stop times are **not** optional.
    * - HTTP Method
      - ``GET <base-url>/services/system/appfabric/logs?start=1428541200&stop=1428541500``
    * - Description
-     - Return the logs for the *AppFabric* 
+     - Return the logs for the *AppFabric* Service
        beginning ``Thu, 09 Apr 2015 01:00:00 GMT`` and
        ending ``Thu, 09 Apr 2015 01:05:00 GMT`` (five minutes later)
 
