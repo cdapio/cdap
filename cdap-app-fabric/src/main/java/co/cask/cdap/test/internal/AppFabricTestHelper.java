@@ -27,6 +27,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
@@ -89,7 +90,7 @@ public class AppFabricTestHelper {
   }
 
   /**
-   * @return Returns an instance of {@link co.cask.cdap.internal.app.deploy.LocalManager}
+   * @return Returns an instance of {@link LocalApplicationManager}
    */
   public static Manager<DeploymentInfo, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory<DeploymentInfo, ApplicationWithPrograms> factory =

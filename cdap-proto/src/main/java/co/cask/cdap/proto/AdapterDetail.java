@@ -17,29 +17,19 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.gson.JsonElement;
 
 /**
- * Specification of an adapter.
- *
- * @param <T> the type for the configuration of the adapter.
+ * Adapter details that come back from get calls.
+ * TODO: finalize what should be present here
  */
-public final class AdapterSpecification<T> {
-
+public final class AdapterDetail {
   private final String name;
   private final String description;
   private final String template;
-  // config object that will be interpreted differently by different templates.
-  private final T config;
+  private final JsonElement config;
 
-  /**
-   * Construct an AdapterSpecification with the given parameters.
-   *
-   * @param name the name of the adapter
-   * @param description the description of the adapter
-   * @param template the template to base the adapter off of
-   * @param config the config for the adapter
-   */
-  public AdapterSpecification(String name, String description, String template, T config) {
+  public AdapterDetail(String name, String description, String template, JsonElement config) {
     this.name = name;
     this.description = description;
     this.template = template;
@@ -58,7 +48,7 @@ public final class AdapterSpecification<T> {
     return template;
   }
 
-  public T getConfig() {
+  public JsonElement getConfig() {
     return config;
   }
 
@@ -71,7 +61,7 @@ public final class AdapterSpecification<T> {
       return false;
     }
 
-    AdapterSpecification that = (AdapterSpecification) o;
+    AdapterDetail that = (AdapterDetail) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&

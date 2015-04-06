@@ -48,12 +48,12 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -74,7 +74,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
@@ -866,11 +865,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public <T> void addAdapter(final Id.Namespace id, final AdapterSpecification<T> adapterSpec) {
+  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
+        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STOPPED);
         return null;
       }
     });
@@ -878,11 +877,11 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public <T> AdapterSpecification<T> getAdapter(final Id.Namespace id, final String name, final Type type) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification<T>>() {
+  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
       @Override
-      public AdapterSpecification<T> apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapter(id, name, type);
+      public AdapterSpecification apply(AppMds mds) throws Exception {
+        return mds.apps.getAdapter(id, name);
       }
     });
   }
@@ -910,11 +909,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public <T> Collection<AdapterSpecification<T>> getAllAdapters(final Id.Namespace id, final Type type) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification<T>>>() {
+  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
       @Override
-      public Collection<AdapterSpecification<T>> apply(AppMds mds) throws Exception {
-        return mds.apps.getAllAdapters(id, type);
+      public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
+        return mds.apps.getAllAdapters(id);
       }
     });
   }

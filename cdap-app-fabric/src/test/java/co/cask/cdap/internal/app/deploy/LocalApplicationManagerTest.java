@@ -44,7 +44,7 @@ import java.util.jar.Manifest;
 /**
  * Tests the functionality of Deploy Manager.
  */
-public class LocalManagerTest {
+public class LocalApplicationManagerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 

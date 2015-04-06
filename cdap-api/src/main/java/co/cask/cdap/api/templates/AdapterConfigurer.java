@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.templates;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.schedule.Schedule;
 
@@ -41,6 +42,13 @@ public interface AdapterConfigurer {
    * @param instances number of instances
    */
   public void setInstances(int instances);
+
+  /**
+   * Set the resources the program should use.
+   *
+   * @param resources
+   */
+  public void setResources(Resources resources);
 
   /**
    * Add arguments to be passed to the program as runtime arguments.
