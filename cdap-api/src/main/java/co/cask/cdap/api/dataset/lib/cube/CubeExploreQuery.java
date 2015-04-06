@@ -35,8 +35,8 @@ public class CubeExploreQuery {
 
   /**
    * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to explore in.
-   * @param startTs start time of the data selection, in seconds since epoch
-   * @param endTs end time of the data selection, in seconds since epoch
+   * @param startTs start time of the data selection, inclusive, in seconds since epoch
+   * @param endTs end time of the data selection, exclusive, in seconds since epoch
    * @param resolution resolution of the aggregations explore
    * @param tagValues tag name, tag value pairs that define the data selection
    */
