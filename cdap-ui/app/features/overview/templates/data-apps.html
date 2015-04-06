@@ -6,7 +6,7 @@
         <div class="col-xs-12 col-sm-5">
           <p> Most recent: </p>
         </div>
-        <div class="col-xs-12 col-sm-7 text-right">
+        <div class="col-xs-12 col-sm-7">
           <div class="btn-group">
             <a ui-sref="data.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -21,15 +21,13 @@
       </div>
 
       <ul class="list-group" >
-        <li class="list-group-item" ng-repeat="stream in streams track by $index">
-          <a ui-sref="streams.detail.overview({streamId: stream.name})">
-            <p ng-bind="stream.name | caskCapitalizeFilter"> </p>
-            <p><i class="fa fa-dot-circle-o"></i> Stream </p>
+        <li class="list-group-item" ng-repeat="data in combined = streams.concat(datasets) | orderBy:'name' | limitTo: 5 track by $index ">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
+            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
+            <p><i class="fa fa-dot-circle-o"></i> Stream</p>
           </a>
-        </li>
-        <li class="list-group-item" ng-repeat="dataset in datasets track by $index">
-          <a ui-sref="datasets.detail.overview({datasetId: dataset.name})">
-            <p ng-bind="dataset.name | caskCapitalizeFilter"> </p>
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
+            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <p><i class="fa fa-th-large"></i> Dataset </p>
           </a>
         </li>
@@ -59,7 +57,7 @@
         <div class="col-xs-12 col-sm-5">
           <p> Most recent: </p>
         </div>
-        <div class="col-xs-12 col-sm-7 text-right">
+        <div class="col-xs-12 col-sm-7">
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -80,7 +78,7 @@
       </div>
 
       <ul class="list-group">
-        <li class="list-group-item" ng-repeat="app in apps">
+        <li class="list-group-item" ng-repeat="app in apps | orderBy:'name' | limitTo:5">
           <a ui-sref="apps.detail.overview({appId: app.id})">
             <p ng-bind="app.name"> </p>
             <p><i class="fa fa-server"></i> CDAP </p>

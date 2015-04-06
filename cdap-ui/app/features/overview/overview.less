@@ -9,36 +9,37 @@ body.state-overview {
       padding-bottom: 20px;
       margin-bottom: 20px;
       h2 { margin-top: 0; }
-      .col-xs-12.col-md-4 {
-        span {
-          line-height: 134px;
-          vertical-align: middle;
-        }
+      .col-xs-12.col-lg-4 {
+        white-space: nowrap;
+        @media (max-width: @screen-md-max) { text-align: center; }
         svg {
           position: relative;
           top: -10px;
+          left: 15px;
           max-height: 119px;
           max-width: 115px;
         }
         p {
           display: inline-block;
-          line-height: 110px;
+          line-height: 119px;
           vertical-align: top;
+          white-space: nowrap;
         }
       }
-      .col-xs-12.col-md-8 {
+      .col-xs-12.col-lg-8 {
+        text-align: center;
+        @media (min-width: @screen-lg-min) { text-align: right; }
         > div {
           display: inline-block;
           margin-right: 20px;
+          text-align: center;
           p.text-left { padding-left: 5px; }
         }
         svg {
           vertical-align: middle;
           circle { width: 90px; }
         }
-        img {
-          max-width: 300px;
-        }
+        img { max-width: 300px; }
         .epoch svg { max-height: 75px; }
         p {
           font-size: 16px;
@@ -77,8 +78,8 @@ body.state-overview {
         }
       }
       &.data-apps {
-        h2 { margin-bottom: 20px; }
-        div > p { margin-bottom: 0; }
+        h2 { margin: 0 0 20px; }
+        div > p { font-family: @font-medium; line-height: 32px; margin-bottom: 0; }
         .btn-group {
           a.btn-default {
             .cask-btn(@border-radius: 0, @padding: 6px 12px);
@@ -89,6 +90,9 @@ body.state-overview {
           @media (min-width: @screen-lg-min) { float: right; }
         }
         .col-xs-12.col-md-6 {
+          @media (min-width: @screen-sm-min) {
+            .col-xs-12.col-sm-7 { text-align: right; }
+          }
           @media (min-width: @screen-md-min) {
             &:first-child > div { margin-right: 15px; }
             &:last-child > div { margin-left: 15px; }
