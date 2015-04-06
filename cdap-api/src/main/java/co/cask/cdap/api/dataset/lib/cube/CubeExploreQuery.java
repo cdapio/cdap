@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,7 +45,7 @@ public class CubeExploreQuery {
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.tagValues = tagValues;
+    this.tagValues = Collections.unmodifiableList(new ArrayList<TagValue>(tagValues));
   }
 
   public long getStartTs() {
@@ -70,10 +70,14 @@ public class CubeExploreQuery {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startTs", startTs)
-      .add("endTs", endTs)
-      .add("resolution", resolution)
-      .add("tagValues", Joiner.on(",").join(tagValues)).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CubeExploreQuery");
+    sb.append("{startTs=").append(startTs);
+    sb.append(", endTs=").append(endTs);
+    sb.append(", resolution=").append(resolution);
+    sb.append(", limit=").append(limit);
+    sb.append(", tagValues=").append(tagValues);
+    sb.append('}');
+    return sb.toString();
   }
 }

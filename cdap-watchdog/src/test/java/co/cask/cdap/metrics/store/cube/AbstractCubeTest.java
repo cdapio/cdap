@@ -105,8 +105,8 @@ public abstract class AbstractCubeTest {
     // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
-    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution, "metric1",
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
@@ -116,7 +116,7 @@ public abstract class AbstractCubeTest {
 
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
-    query = new CubeDeleteQuery(0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"));
+    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"), "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
@@ -147,8 +147,8 @@ public abstract class AbstractCubeTest {
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
-    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -163,8 +163,8 @@ public abstract class AbstractCubeTest {
                                                                                            4, 4, 5, 3))),
                      new Interpolators.Linear());
 
-    query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
-                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    query = new CubeDeleteQuery(startTs, endTs, resolution,
+                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
 
     //test big-slope linear interpolation

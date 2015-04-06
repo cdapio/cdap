@@ -17,8 +17,9 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +42,7 @@ public class CubeFact {
    * @param timeValue value of the measurement at specific time
    */
   public CubeFact(Map<String, String> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
-    this.tagValues = ImmutableMap.copyOf(tagValues);
+    this.tagValues = Collections.unmodifiableMap(new HashMap<String, String>(tagValues));
     this.measureType = measureType;
     this.measureName = measureName;
     this.timeValue = timeValue;

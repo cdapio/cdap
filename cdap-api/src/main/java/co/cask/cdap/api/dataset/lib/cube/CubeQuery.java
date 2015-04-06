@@ -17,11 +17,10 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -70,8 +69,8 @@ public final class CubeQuery {
     this.limit = limit;
     this.measureName = measureName;
     this.measureType = measureType;
-    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
-    this.groupByTags = ImmutableList.copyOf(groupByTags);
+    this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
+    this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
     this.interpolator = interpolator;
   }
 
@@ -114,14 +113,18 @@ public final class CubeQuery {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startTs", startTs)
-      .add("endTs", endTs)
-      .add("resolution", resolution)
-      .add("measureName", measureName)
-      .add("measureType", measureType)
-      .add("interpolator", interpolator)
-      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
-      .add("groupByTags", Joiner.on(",").join(groupByTags)).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CubeQuery");
+    sb.append("{startTs=").append(startTs);
+    sb.append(", endTs=").append(endTs);
+    sb.append(", resolution=").append(resolution);
+    sb.append(", limit=").append(limit);
+    sb.append(", measureName='").append(measureName).append('\'');
+    sb.append(", measureType=").append(measureType);
+    sb.append(", sliceByTagValues=").append(sliceByTagValues);
+    sb.append(", groupByTags=").append(groupByTags);
+    sb.append(", interpolator=").append(interpolator);
+    sb.append('}');
+    return sb.toString();
   }
 }

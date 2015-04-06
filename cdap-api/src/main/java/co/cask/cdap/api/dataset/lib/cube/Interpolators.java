@@ -16,7 +16,6 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Preconditions;
 
 /**
  * Returns interpolators of different types.
@@ -38,9 +37,15 @@ public final class Interpolators {
 
     @Override
     public long interpolate(TimeValue start, TimeValue end, long ts) {
-      Preconditions.checkNotNull(start);
-      Preconditions.checkNotNull(end);
-      Preconditions.checkArgument((ts <= end.getTimestamp()) && (ts >= start.getTimestamp()));
+      if (start == null) {
+        throw new NullPointerException("start cannot be null");
+      }
+      if (end == null) {
+        throw new NullPointerException("end cannot be null");
+      }
+      if (ts > end.getTimestamp() || ts < start.getTimestamp()) {
+        throw new IllegalArgumentException("ts must be within given start and end");
+      }
       // if its been too many seconds between datapoints, return a 0 for everything in between.
       if ((end.getTimestamp() - start.getTimestamp()) > maxAllowedGap) {
         return 0;

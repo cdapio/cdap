@@ -225,7 +225,7 @@ public class DefaultMetricStore implements MetricStore {
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, null, Maps.<String, String>newHashMap());
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
       cube.get().delete(query);
     }
   }
@@ -248,7 +248,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getMetricName(), query.getSliceByTags());
+                               query.getSliceByTags(), query.getMetricName());
   }
 
   @Override

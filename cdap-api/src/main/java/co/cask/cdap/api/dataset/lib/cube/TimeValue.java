@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Objects;
 
 /**
  * Represents a value of the measure at a specific timestamp.
@@ -42,7 +41,7 @@ public final class TimeValue implements Comparable<TimeValue> {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(timestamp, value);
+    return (int) (timestamp + 31 * value);
   }
 
   @Override
@@ -61,12 +60,17 @@ public final class TimeValue implements Comparable<TimeValue> {
   }
 
   @Override
-  public String toString() {
-    return Objects.toStringHelper(this).add("ts", timestamp).add("value", value).toString();
+  public int compareTo(TimeValue o) {
+    return timestamp > o.timestamp ? 1 : (timestamp < o.timestamp ? -1 : 0);
   }
 
   @Override
-  public int compareTo(TimeValue o) {
-    return timestamp > o.timestamp ? 1 : (timestamp < o.timestamp ? -1 : 0);
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("TimeValue");
+    sb.append("{timestamp=").append(timestamp);
+    sb.append(", value=").append(value);
+    sb.append('}');
+    return sb.toString();
   }
 }
