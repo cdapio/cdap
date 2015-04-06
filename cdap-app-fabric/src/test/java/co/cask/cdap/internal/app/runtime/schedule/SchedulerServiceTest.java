@@ -25,10 +25,10 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -57,9 +57,9 @@ public class SchedulerServiceTest {
   private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
   private static final Schedule timeSchedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
   private static final Schedule dataSchedule1 =
-    Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
+    Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
   private static final Schedule dataSchedule2 =
-    Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getName(), 10);
+    Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getId(), 10);
 
   @BeforeClass
   public static void set() throws Exception {

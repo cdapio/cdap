@@ -28,6 +28,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -236,7 +237,7 @@ final class TimeScheduler implements Scheduler {
       Trigger trigger = scheduler.getTrigger(
         new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
       if (trigger == null) {
-        throw new ScheduleNotFoundException(scheduleName);
+        throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
       }
 
       scheduler.unscheduleJob(trigger.getKey());

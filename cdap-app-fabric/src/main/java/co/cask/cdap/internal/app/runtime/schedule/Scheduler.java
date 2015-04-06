@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 
 import java.util.List;
 

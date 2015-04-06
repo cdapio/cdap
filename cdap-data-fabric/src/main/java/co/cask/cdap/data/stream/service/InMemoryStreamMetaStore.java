@@ -43,17 +43,17 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
 
   @Override
   public void addStream(Id.Stream streamId) throws Exception {
-    streams.put(streamId.getNamespaceId(), streamId.getName());
+    streams.put(streamId.getNamespaceId(), streamId.getId());
   }
 
   @Override
   public void removeStream(Id.Stream streamId) throws Exception {
-    streams.remove(streamId.getNamespaceId(), streamId.getName());
+    streams.remove(streamId.getNamespaceId(), streamId.getId());
   }
 
   @Override
   public boolean streamExists(Id.Stream streamId) throws Exception {
-    return streams.containsEntry(streamId.getNamespaceId(), streamId.getName());
+    return streams.containsEntry(streamId.getNamespaceId(), streamId.getId());
   }
 
   @Override

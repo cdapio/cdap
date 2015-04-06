@@ -35,10 +35,11 @@ import java.util.Map;
  * A GSon {@link TypeAdapter} for serializing/deserializing {@link StreamEvent} to/from JSON. It serializes
  *
  * StreamEvent into
- * <p/>
+ * <p>
  * {@code {"timestamp": ... , "headers": { ... }, "body": ... }}
- * <p/>
- * where the the body is encoded as string binary using Bytes.toStringBinary
+ * </p><p>
+ * where the body is encoded as a string binary using Bytes.toStringBinary.
+ * </p>
  */
 public class StreamEventTypeAdapter extends TypeAdapter<StreamEvent> {
 

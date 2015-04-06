@@ -50,12 +50,12 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doSuspend() throws Exception {
-    LOG.info("Suspend not supported.");
+    driver.suspend();
   }
 
   @Override
   protected void doResume() throws Exception {
-    LOG.info("Resume not supported.");
+    driver.resume();
   }
 
   @Override

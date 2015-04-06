@@ -88,15 +88,19 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   /**
    * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&limit=[event_limit]}
-   * <p/>
-   * Response with
-   * 404 if stream not exists.
-   * 204 if no event in the given start/end time range
-   * 200 if there is event
-   * <p/>
-   * Response body is an Json array of StreamEvent object
+   * <p>
+   * Responds with:
+   * <ul>
+   * <li>404 if stream does not exist</li>
+   * <li>204 if no event in the given start/end time range exists</li>
+   * <li>200 if there is are one or more events</li>
+   * </ul>
+   * </p>
+   * <p>
+   * Response body is a JSON array of the StreamEvent object.
+   * </p>
    *
-   * @see StreamEventTypeAdapter for the format of StreamEvent object.
+   * @see StreamEventTypeAdapter StreamEventTypeAdapter for the format of the StreamEvent object
    */
   @GET
   @Path("/{stream}/events")

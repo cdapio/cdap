@@ -31,6 +31,7 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -308,12 +309,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                                             String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = store.getApplication(program.getApplication());
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(program.getApplicationId());
+      throw new ApplicationNotFoundException(program.getApplication());
     }
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
     if (schedules == null || !schedules.containsKey(scheduleName)) {
-      throw new ScheduleNotFoundException(scheduleName);
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
     }
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);

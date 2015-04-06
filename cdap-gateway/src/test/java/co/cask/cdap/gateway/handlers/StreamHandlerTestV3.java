@@ -137,7 +137,7 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
 
 
   private HttpResponse createStream(Id.Stream streamId, int... allowedErrorCodes) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId());
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
@@ -148,14 +148,14 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   }
 
   private void sendEvent(Id.Stream streamId, String body) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName());
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId());
     HttpRequest request = HttpRequest.post(url).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private List<String> fetchEvents(Id.Stream streamId) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getName() + "/events");
+    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId() + "/events");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
@@ -184,7 +184,7 @@ public class StreamHandlerTestV3 extends StreamHandlerTest {
   private long getNumProcessed(Id.Stream streamId) throws Exception {
     String path =
       String.format("/v3/metrics/query?metric=system.collect.events&context=namespace.%s.stream.%s&aggregate=true",
-                    streamId.getNamespaceId(), streamId.getName());
+                    streamId.getNamespaceId(), streamId.getId());
     HttpRequest request = HttpRequest.post(getEndPoint(path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());

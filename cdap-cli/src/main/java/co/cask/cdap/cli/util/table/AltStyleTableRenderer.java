@@ -99,6 +99,10 @@ public class AltStyleTableRenderer implements TableRenderer {
     // inner column widths
     int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
 
+    if (columnWidths.length == 0) {
+      return;
+    }
+
     boolean useRowDivider = false;
     for (List<String> row : table.getRows()) {
       useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;

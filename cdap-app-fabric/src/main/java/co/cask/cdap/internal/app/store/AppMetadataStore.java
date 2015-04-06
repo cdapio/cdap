@@ -26,21 +26,19 @@ import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +55,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public static final String TYPE_APP_META = "appMeta";
   public static final String TYPE_STREAM = "stream";
   public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
   public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   public static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
@@ -136,6 +135,56 @@ public class AppMetadataStore extends MetadataStoreDataset {
             new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING));
   }
 
+  public void recordProgramSuspend(Id.Program program, String pid) {
+    recordProgramSuspendResume(program, pid, "suspend");
+  }
+
+  public void recordProgramResumed(Id.Program program, String pid) {
+    recordProgramSuspendResume(program, pid, "resume");
+  }
+
+  private void recordProgramSuspendResume(Id.Program program, String pid, String action) {
+    String fromType = TYPE_RUN_RECORD_STARTED;
+    String toType = TYPE_RUN_RECORD_SUSPENDED;
+    ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
+
+    if (action.equals("resume")) {
+      fromType = TYPE_RUN_RECORD_SUSPENDED;
+      toType = TYPE_RUN_RECORD_STARTED;
+      toStatus = ProgramRunStatus.RUNNING;
+    }
+
+    MDSKey key = new MDSKey.Builder()
+      .add(fromType)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .add(pid)
+      .build();
+    RunRecord record = get(key, RunRecord.class);
+    if (record == null) {
+      String msg = String.format("No meta for %s run record for namespace %s app %s program type %s " +
+                                   "program %s pid %s exists", action.equals("suspend") ? "started" : "suspended",
+                                 program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
+                                 program.getId(), pid);
+      LOG.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+
+    deleteAll(key);
+
+    key = new MDSKey.Builder()
+      .add(toType)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .add(pid)
+      .build();
+    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus));
+  }
+
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
@@ -172,14 +221,30 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  long startTime, long endTime, int limit) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecord> resultRecords = Lists.newArrayList();
+      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit));
       resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit));
       resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
       return getActiveRuns(program, startTime, endTime, limit);
+    } else if (status.equals(ProgramRunStatus.SUSPENDED)) {
+      return getSuspendedRuns(program, startTime, endTime, limit);
     } else {
       return getHistoricalRuns(program, status, startTime, endTime, limit);
     }
+  }
+
+  private List<RunRecord> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit) {
+    MDSKey activeKey = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_SUSPENDED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .build();
+    MDSKey start = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
+    MDSKey stop = new MDSKey.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
+    return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
   }
 
   private List<RunRecord> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit) {
@@ -313,47 +378,27 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public <T> void writeAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec,
-                               AdapterStatus adapterStatus) {
+  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec,
+                           AdapterStatus adapterStatus) {
     write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
-          new AdapterMeta<T>(adapterSpec, adapterStatus), new TypeToken<AdapterMeta<T>>() { }.getType());
-  }
-
-  // TODO: get rid of AdapterMeta and store AdapterSpecification separate from the Status.
-  private Type getAdapterMetaType(final Type type) {
-    return new ParameterizedType() {
-      @Override
-      public Type[] getActualTypeArguments() {
-        return new Type[] { type };
-      }
-
-      @Override
-      public Type getRawType() {
-        return AdapterMeta.class;
-      }
-
-      @Override
-      public Type getOwnerType() {
-        return null;
-      }
-    };
+          new AdapterMeta(adapterSpec, adapterStatus));
   }
 
   @Nullable
-  public <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type) {
-    AdapterMeta<T> adapterMeta = getAdapterMeta(id, name, type);
+  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
 
   @Nullable
   public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name, new TypeToken<Map<String, Object>>() { }.getType());
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getStatus();
   }
 
   @Nullable
   public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
-    AdapterMeta<Object> adapterMeta = getAdapterMeta(id, name, Object.class);
+    AdapterMeta adapterMeta = getAdapterMeta(id, name);
     if (adapterMeta == null) {
       return null;
     }
@@ -363,15 +408,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> AdapterMeta<T> getAdapterMeta(Id.Namespace id, String name, Type type) {
+  private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
     return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(),
-               getAdapterMetaType(type));
+               AdapterMeta.class);
   }
 
-  public <T> List<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type) {
-    List<AdapterSpecification<T>> adapterSpecs = Lists.newArrayList();
-    List<AdapterMeta<T>> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
-                                             getAdapterMetaType(type));
+  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
+    List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
+    List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
+                                          AdapterMeta.class);
     for (AdapterMeta adapterMeta : adapterMetas) {
       adapterSpecs.add(adapterMeta.getSpec());
     }

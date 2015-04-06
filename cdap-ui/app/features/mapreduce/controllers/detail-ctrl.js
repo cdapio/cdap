@@ -28,7 +28,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     });
 
     $scope.toggleFlow = function(action) {
-      $scope.status = action;
+      $scope.status = (action === 'start'? 'STARTING': 'STOPPING');
       dataSrc.request({
         method: 'POST',
         _cdapNsPath: basePath + '/' + action

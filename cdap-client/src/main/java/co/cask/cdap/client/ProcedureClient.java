@@ -22,6 +22,7 @@ import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -95,6 +96,9 @@ public class ProcedureClient {
   public byte[] callRaw(String appId, String procedureId, String methodId, Map<String, String> parameters)
     throws BadRequestException, NotFoundException, IOException, UnauthorizedException {
     VersionMigrationUtils.assertProcedureSupported(config);
+
+    Id.Procedure procedure = Id.Procedure.from(appId, procedureId);
+    Id.Procedure.Method procedureMethod = Id.Procedure.Method.from(procedure, methodId);
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
 
@@ -105,7 +109,7 @@ public class ProcedureClient {
       throw new BadRequestException("The Application, Procedure and method exist, " +
                                       "but the arguments are not as expected: " + GSON.toJson(parameters));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or procedure or method", appId + "/" + procedureId + "/" + methodId);
+      throw new NotFoundException(procedureMethod);
     }
     return response.getResponseBody();
   }

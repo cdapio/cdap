@@ -21,11 +21,11 @@
               <a ng-bind="program.name"
                   ng-if="program.type === 'Flow'" ui-sref="flows.detail.status({programId: program.name})"></a>
               <a ng-bind="program.name"
-                  ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})"></a>
+                  ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.status({programId: program.name})"></a>
               <a ng-bind="program.name"
                   ng-if="program.type === 'Service'" ui-sref="services.detail.status({programId: program.name})"></a>
               <a ng-bind="program.name"
-                  ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})"></a>
+                  ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.status({programId: program.name})"></a>
             </td>
             <td ng-bind="program.status"></td>
             <td ng-bind="program.description"></td>
