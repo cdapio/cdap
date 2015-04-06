@@ -34,7 +34,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
 
 ### Build the complete set of Javadocs, for all modules
-    MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=512m -DskipTests
+    MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=1024m -DskipTests
     
 ### Build distributions (rpm, deb, tgz)
     mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
