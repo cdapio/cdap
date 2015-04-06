@@ -230,15 +230,6 @@ public abstract class AbstractCubeTest {
     Assert.assertTrue(expected.containsAll(result));
   }
 
-  private TimeSeries getTimeSeries(List<TimeSeries> resultList, Map<String, String> tagValues) {
-    for (int i = 0; i < resultList.size(); i++) {
-      if (tagValues.equals(resultList.get(i).getTagValues())) {
-        return resultList.get(i);
-      }
-    }
-    return null;
-  }
-
   private List<TimeValue> timeValues(long... longs) {
     List<TimeValue> timeValues = Lists.newArrayList();
     for (int i = 0; i < longs.length; i += 2) {
