@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -25,7 +24,6 @@ import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +52,16 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
     long endTime = context.getLogicalStartTime();
     //TODO: Once the method to get the frequency from the schedule is added change it to use that. Then we will not
     // need the frequency as a configuration here
-    long startTime = endTime - Long.valueOf(context.getRuntimeArguments().get("frequency"));
+    long startTime = endTime - Long.valueOf(context.getRuntimeArguments().get("frequency")) * 1000L;
 
     String streamName = context.getRuntimeArguments().get("streamName");
     LOG.info("Setting input to Stream : {}", streamName);
     Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime,
-                                             new FormatSpecification("text", schema, Maps.<String, String>newHashMap()))
-                       .toURI().toString());
+
+    // TODO: This is not clean.
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, IdentityStreamEventDecoder.class)
+                         .toURI().toString());
   }
+
+
 }
