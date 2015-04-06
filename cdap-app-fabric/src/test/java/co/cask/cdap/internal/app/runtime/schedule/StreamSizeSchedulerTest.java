@@ -47,7 +47,7 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
     final Id.NotificationFeed feed = new Id.NotificationFeed.Builder()
       .setNamespaceId(streamId.getNamespaceId())
       .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-      .setName(streamId.getName() + "Size")
+      .setName(streamId.getId() + "Size")
       .build();
 
     return new StreamMetricsPublisher() {
@@ -57,7 +57,7 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
       @Override
       public void increment(long size) throws Exception {
         metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                                                        Constants.Metrics.Tag.STREAM, streamId.getName()),
+                                                        Constants.Metrics.Tag.STREAM, streamId.getId()),
                                         "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                         size, MetricType.COUNTER));
         totalSize += size;

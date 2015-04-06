@@ -16,22 +16,24 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when an ApplicationTemplate is not found
  */
 public class ApplicationTemplateNotFoundException extends NotFoundException {
 
-  private final String template;
+  private final Id.ApplicationTemplate template;
 
-  public ApplicationTemplateNotFoundException(String template) {
-    super("ApplicationTemplate", template);
+  public ApplicationTemplateNotFoundException(Id.ApplicationTemplate template) {
+    super(template);
     this.template = template;
   }
 
   /**
    * @return the template that was not found
    */
-  public String getTemplate() {
+  public Id.ApplicationTemplate getTemplate() {
     return template;
   }
 }

@@ -16,22 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when a dataset was not found.
  */
 public class DatasetNotFoundException extends NotFoundException {
 
-  private final String datasetName;
+  private final Id.DatasetInstance dataset;
 
-  public DatasetNotFoundException(String datasetName) {
-    super("dataset", datasetName);
-    this.datasetName = datasetName;
+  public DatasetNotFoundException(Id.DatasetInstance dataset) {
+    super(dataset);
+    this.dataset = dataset;
   }
 
-  /**
-   * @return Name of the dataset that was not found
-   */
-  public String getDatasetName() {
-    return datasetName;
+  public Id.DatasetInstance getId() {
+    return dataset;
   }
 }

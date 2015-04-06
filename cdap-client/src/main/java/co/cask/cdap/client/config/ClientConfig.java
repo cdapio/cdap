@@ -92,6 +92,10 @@ public class ClientConfig {
     return resolveURL(apiVersion, path);
   }
 
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
+  }
+
   /**
    * Resolves a path against the target CDAP server
    *
@@ -238,7 +242,6 @@ public class ClientConfig {
   public static final class Builder {
 
     private ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
-
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
     private boolean verifySSLCert = DEFAULT_VERIFY_SSL_CERTIFICATE;

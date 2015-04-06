@@ -44,7 +44,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -321,7 +320,7 @@ public class FileStreamAdmin implements StreamAdmin {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(config.getStreamId().getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getStreamId().getName()))
+        .setName(String.format("%sSize", config.getStreamId().getId()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
@@ -352,7 +351,7 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given stream.
    */
   private Location getStreamLocation(Id.Stream streamId) throws IOException {
-    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getName());
+    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getId());
   }
 
   /**

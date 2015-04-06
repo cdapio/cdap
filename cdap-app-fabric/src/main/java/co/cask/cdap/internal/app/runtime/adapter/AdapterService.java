@@ -131,7 +131,7 @@ public class AdapterService extends AbstractIdleService {
     throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
     ApplicationTemplateInfo templateInfo = appTemplateInfos.get(templateName);
     if (templateInfo == null) {
-      throw new NotFoundException("ApplicationTemplate", templateName);
+      throw new NotFoundException(Id.ApplicationTemplate.from(templateName));
     }
     // make sure we're up to date on template info
     registerTemplates();
@@ -160,7 +160,7 @@ public class AdapterService extends AbstractIdleService {
   public AdapterSpecification getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
     AdapterSpecification adapterSpec = store.getAdapter(namespace, adapterName);
     if (adapterSpec == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return adapterSpec;
   }
@@ -176,7 +176,7 @@ public class AdapterService extends AbstractIdleService {
   public AdapterStatus getAdapterStatus(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
     AdapterStatus adapterStatus = store.getAdapterStatus(namespace, adapterName);
     if (adapterStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return adapterStatus;
   }
@@ -193,7 +193,7 @@ public class AdapterService extends AbstractIdleService {
     throws AdapterNotFoundException {
     AdapterStatus existingStatus = store.setAdapterStatus(namespace, adapterName, status);
     if (existingStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return existingStatus;
   }
@@ -271,7 +271,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
-      throw new CannotBeDeletedException("Adapter", adapterName);
+      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
     }
     store.removeAdapter(namespace, adapterName);
 
