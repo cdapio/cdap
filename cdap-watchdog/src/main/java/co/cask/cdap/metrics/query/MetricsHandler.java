@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -66,9 +65,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/metrics")
 public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(TagValue.class, new TagValueSerializer())
-    .create();
 
   public static final String ANY_TAG_VALUE = "*";
   public static final String TAG_DELIM = ".";
@@ -136,15 +132,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
 
     if (target.equals("tag")) {
-      searchTargetContextAndRespond(responder, tags);
+      tagBasedSearchAndRespond(responder, tags);
     } else if (target.equals("childContext")) {
-      // NOTE: supporting 2.8 format -- should remove after deprecation
+      // todo supporting 2.8 format - should be removed after deprecation (CDAP-1998)
       searchChildContextAndRespond(responder, context);
     } else if (target.equals("metric")) {
       if (tags.size() > 0) {
         searchMetricAndRespond(responder, tags);
       } else {
-        // NOTE : remove after deprecation. if there are no tags, we use the context call, however
+        // todo supporting 2.8 format - should be removed after deprecation (CDAP-1998)
+        // if there are no tags, we use the context call, however
         // since the returned format is same between for metrics, we wouldn't notice a difference in result.
         searchMetricAndRespond(responder, context);
       }
@@ -178,7 +175,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  // Deprecate querying with context param
+  // todo supporting 2.8 format - context param should be removed after deprecation (CDAP-1998)
   @POST
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
@@ -282,10 +279,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private Map<String, String> parseTagValuesAsMap(List<String> tags) {
+    List<TagValue> tagValues = parseTagValues(tags);
+
     Map<String, String> result = Maps.newHashMap();
-    for (String tag : tags) {
-      String[] tagSplit = tag.split(":", 2);
-      result.put(tagSplit[0], ANY_TAG_VALUE.equals(tagSplit[1]) ? null : tagSplit[1]);
+    for (TagValue tagValue : tagValues) {
+      result.put(tagValue.getTagName(), tagValue.getValue());
     }
     return result;
   }
@@ -312,12 +310,14 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void searchTargetContextAndRespond(HttpResponder responder, List<String> tags) {
+  private void tagBasedSearchAndRespond(HttpResponder responder, List<String> tags) {
     try {
-      MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1,
+      // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
+      // limit is -1 , to include the entire search result.
+      MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
                                                             humanToTagNames(parseTagValues(tags)));
       Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
-      responder.sendJson(HttpResponseStatus.OK, nextTags, new TypeToken<Collection<TagValue>>() { }.getType(), GSON);
+      responder.sendJson(HttpResponseStatus.OK, tagValuesToHuman(nextTags));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -352,7 +352,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private Collection<String> searchChildContext(String contextPrefix) throws Exception {
     List<TagValue> tagValues = parseTagValues(contextPrefix);
 
-    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1,
+    // we want to search the entire range, so startTimestamp is '0' and endTimestamp is Integer.MAX_VALUE and
+    // limit is -1 , to include the entire search result.
+    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
                                                           humanToTagNames(tagValues));
     Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
@@ -366,6 +368,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       String tagValue = encodeTag(name)  + TAG_DELIM + encodeTag(value);
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
+    }
+    return result;
+  }
+
+  private List<TagValue> tagValuesToHuman(Collection<TagValue> tagValues) {
+    List<TagValue> result = Lists.newArrayList();
+    for (TagValue tagValue : tagValues) {
+      String human = tagNameToHuman.get(tagValue.getTagName());
+      human = human != null ? human : tagValue.getTagName();
+      String value = tagValue.getValue() == null ? ANY_TAG_VALUE : tagValue.getValue();
+      result.add(new TagValue(human, value));
     }
     return result;
   }
@@ -417,8 +430,10 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private Collection<String> getMetrics(List<TagValue> tagValues) throws Exception {
+    // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
+    // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery =
-      new MetricSearchQuery(0, Integer.MAX_VALUE - 1, -1, tagValues);
+      new MetricSearchQuery(0, Integer.MAX_VALUE, -1, tagValues);
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
@@ -449,20 +464,5 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       timeValues[k++] = new MetricQueryResult.TimeValue(timeValue.getTimestamp(), timeValue.getValue());
     }
     return timeValues;
-  }
-
-  /**
-   * Adapter for {@link co.cask.cdap.api.metrics.TagValue}
-   */
-  private static final class TagValueSerializer implements JsonSerializer<TagValue> {
-    @Override
-    public JsonElement serialize(TagValue tagValue, Type typeOfSrc, JsonSerializationContext context) {
-      String human = tagNameToHuman.get(tagValue.getTagName());
-      human = human != null ? human : tagValue.getTagName();
-      JsonObject jsonObject = new JsonObject();
-      jsonObject.addProperty("name", human);
-      jsonObject.addProperty("value", tagValue.getValue());
-      return jsonObject;
-    }
   }
 }

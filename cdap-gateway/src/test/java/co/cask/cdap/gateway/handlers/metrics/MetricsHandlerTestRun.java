@@ -25,6 +25,7 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -145,7 +146,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testSearchContextWithTags() throws Exception {
+  public void testSearchWithTags() throws Exception {
     // empty context
     verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", DOT_NAMESPACE,
                                                                                 "namespace", "myspace",
@@ -751,7 +752,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    }.getType());
     Assert.assertEquals(expectedValues.size(), reply.size());
     for (int i = 0; i < expectedValues.size(); i++) {
       Assert.assertEquals(expectedValues.get(i), reply.get(i));
@@ -761,7 +763,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private void verifySearchResultWithTags(String url, List<Map<String, String>> expectedValues) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String result = EntityUtils.toString(response.getEntity());
+    String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
     List<Map<String, String>> reply = new Gson().fromJson(result,
                                                           new TypeToken<List<Map<String, String>>>() { }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
