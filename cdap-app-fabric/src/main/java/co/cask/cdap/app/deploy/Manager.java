@@ -32,10 +32,10 @@ public interface Manager<I, O> {
   /**
    * Executes a pipeline for deploying an input.
    *
-   * @param id namespace id to which the archive is deployed.
-   * @param appId application id to be used to override app name provided by app spec. If null, name of app spec is used
+   * @param namespace the namespace to which the input is deployed.
+   * @param id the id of the input to deploy. If null, a default is used
    * @param input the input to the deployment pipeline
-   * @return A future of Application with Programs.
+   * @return A future of the output of the deployment pipeline
    */
-  ListenableFuture<O> deploy(Id.Namespace id, @Nullable String appId, I input) throws Exception;
+  ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String id, I input) throws Exception;
 }

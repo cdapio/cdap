@@ -56,19 +56,19 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -76,6 +76,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -85,6 +87,7 @@ import java.util.Set;
  *
  */
 public class DefaultStoreTest {
+  private static final Gson GSON = new Gson();
   private static DefaultStore store;
 
   @BeforeClass
@@ -752,49 +755,94 @@ public class DefaultStoreTest {
     Assert.assertNotNull(application);
     return application.getSchedules();
   }
+
   @Test
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    Set<Source> sources = Sets.newHashSet(new Source("eventStream", Source.Type.STREAM,
-                                                         ImmutableMap.of("prop1", "val1")));
+    AdapterSpecification spec1 = AdapterSpecification.builder("spec1", "template1")
+      .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
+      .build();
 
-    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
-                                                   ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
+    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
+    AdapterSpecification spec2 = AdapterSpecification.builder("spec2", "template2")
+      .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
+      .build();
 
-    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
+    store.addAdapter(namespaceId, spec1);
+    store.addAdapter(namespaceId, spec2);
 
-    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
-
-    store.addAdapter(namespaceId, specStreamToAvro1);
-    store.addAdapter(namespaceId, specStreamToAvro2);
+    // check get all adapters
+    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespaceId);
+    Assert.assertEquals(2, adapters.size());
+    // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
+    // them in a set and compare...
+    Iterator<AdapterSpecification> iter = adapters.iterator();
+    AdapterSpecification actual1 = iter.next();
+    AdapterSpecification actual2 = iter.next();
+    // since order is not guaranteed...
+    if (actual1.getName().equals(spec1.getName())) {
+      Assert.assertEquals(actual1, spec1);
+      Assert.assertEquals(actual2, spec2);
+    } else {
+      Assert.assertEquals(actual1, spec2);
+      Assert.assertEquals(actual2, spec1);
+    }
 
     // Get non existing spec
     AdapterSpecification retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
     Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
-    Assert.assertEquals(specStreamToAvro1, retrievedSpec);
+    AdapterSpecification retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
+    Assert.assertEquals(spec1, retrievedSpec1);
     // Remove spec
-    store.removeAdapter(namespaceId, "streamToAvro1");
+    store.removeAdapter(namespaceId, spec1.getName());
 
     // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro1");
+    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName());
     Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
-    Assert.assertEquals(specStreamToAvro2, retrievedSpec);
+    AdapterSpecification retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
+    Assert.assertEquals(spec2, retrievedSpec2);
 
     // remove all
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro2");
+    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName());
     Assert.assertNull(retrievedAdapter);
+  }
+
+  private static class TemplateConf {
+    private final int x;
+    private final String y;
+    private final Map<String, String> z;
+
+    public TemplateConf(int x, String y, Map<String, String> z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TemplateConf that = (TemplateConf) o;
+
+      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(x, y, z);
+    }
   }
 }

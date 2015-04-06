@@ -26,12 +26,12 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -74,6 +74,20 @@ public interface Store {
    * @param runStatus   {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs suspend of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setSuspend(Id.Program id, String pid);
+
+  /**
+   * Logs resume of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setResume(Id.Program id, String pid);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -357,7 +371,7 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added

@@ -28,7 +28,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
@@ -62,8 +61,7 @@ public final class InMemoryConfigurator implements Configurator {
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Id.Namespace id, Location archive) {
-    Preconditions.checkNotNull(id);
+  public InMemoryConfigurator(Location archive) {
     Preconditions.checkNotNull(archive);
     this.archive = archive;
   }

@@ -48,12 +48,12 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -185,6 +185,28 @@ public class DefaultStore implements Store {
 
 
     // todo: delete old history data
+  }
+
+  @Override
+  public void setSuspend(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramSuspend(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setResume(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramResumed(id, pid);
+        return null;
+      }
+    });
   }
 
   @Override
@@ -842,18 +864,16 @@ public class DefaultStore implements Store {
     });
   }
 
-
   @Override
   public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
+        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STOPPED);
         return null;
       }
     });
   }
-
 
   @Nullable
   @Override
@@ -865,7 +885,6 @@ public class DefaultStore implements Store {
       }
     });
   }
-
 
   @Nullable
   @Override

@@ -1,0 +1,13 @@
+<accordion close-others="oneAtATime">
+   <accordion-group ng-repeat="flowlet in flowlets" is-open="flowlet.isOpen" id="c{{flowlet.name}}" ui-sref="flows.detail.flowlets.flowlet({flowletid: flowlet.name})">
+     <accordion-heading>
+        <div class="clearfix">
+          <span class="pull-left"> {{flowlet.name}} </span>
+          <span class="pull-right">
+            <i class="fa fa-fw" ng-class="{'fa-chevron-down': flowlet.isOpen, 'fa-chevron-right': !flowlet.isOpen}"></i>
+          </span>
+        </div>
+     </accordion-heading>
+     <div ui-view ng-if="flowlet.isOpen"></div>
+ </accordion-group>
+</accordion>

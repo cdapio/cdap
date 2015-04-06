@@ -21,6 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -92,6 +94,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
           }
         }).build();
       cliConfig.getTableRenderer().render(cliConfig, output, table);
+
+      output.printf("Fetched %d rows", rows.size()).println();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
@@ -119,8 +123,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return String.format("Executes a %s with optional <%s> in minutes (default is no timeout).",
-                         ElementType.QUERY.getPrettyName(), ArgumentName.TIMEOUT);
+    return String.format("Executes %s with optional <%s> in minutes (default is no timeout).",
+                         Fragment.of(Article.A, ElementType.QUERY.getTitleName()), ArgumentName.TIMEOUT);
   }
 
   @Override

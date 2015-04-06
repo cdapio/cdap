@@ -22,19 +22,20 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
@@ -60,7 +61,6 @@ final class TimeScheduler implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
 
   private org.quartz.Scheduler scheduler;
-  private final StoreFactory storeFactory;
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
   private final ProgramRuntimeService programRuntimeService;
   private final PreferencesStore preferencesStore;
@@ -69,11 +69,11 @@ final class TimeScheduler implements Scheduler {
   private boolean schedulerStarted;
   private final Store store;
 
-  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, StoreFactory storeFactory,
+  @Inject
+  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
                 ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
-    this.storeFactory = storeFactory;
-    this.store = storeFactory.create();
+    this.store = store;
     this.programRuntimeService = programRuntimeService;
     this.scheduler = null;
     this.preferencesStore = preferencesStore;
@@ -86,7 +86,7 @@ final class TimeScheduler implements Scheduler {
       taskExecutorService = MoreExecutors.listeningDecorator(
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
-      scheduler.setJobFactory(createJobFactory(storeFactory.create()));
+      scheduler.setJobFactory(createJobFactory(store));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -237,7 +237,7 @@ final class TimeScheduler implements Scheduler {
       Trigger trigger = scheduler.getTrigger(
         new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
       if (trigger == null) {
-        throw new ScheduleNotFoundException(scheduleName);
+        throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
       }
 
       scheduler.unscheduleJob(trigger.getKey());

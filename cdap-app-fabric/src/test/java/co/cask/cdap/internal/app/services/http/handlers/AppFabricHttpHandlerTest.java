@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
@@ -990,7 +991,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<RunRecord> history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
     int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
@@ -998,7 +999,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 

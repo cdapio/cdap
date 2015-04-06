@@ -23,14 +23,13 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -70,7 +69,7 @@ public abstract class SchedulerTestBase {
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "stream");
   private static final Schedule UPDATE_SCHEDULE_2 =
-    Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getName(), 1);
+    Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
 
   protected interface StreamMetricsPublisher {
     void increment(long size) throws Exception;
@@ -85,8 +84,7 @@ public abstract class SchedulerTestBase {
     Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
     preferencesStore.setProperties(Constants.DEFAULT_NAMESPACE_ID.getId(), APP_ID.getId(), properties);
     streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
-    StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
-    store = storeFactory.create();
+    store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);

@@ -6,6 +6,7 @@
 @import "cdap/header.less";
 @import "cdap/buttons.less";
 @import "cdap/theme.less";
+@import "cdap/tabs.less";
 
 html { font-size: 100%; }
 body.theme-cdap {
@@ -53,23 +54,15 @@ body.theme-cdap {
       background-color: transparent;
       padding-left: 0px;
       > li {
-        font-weight: bold;
+        color: @cdap-gray;
+        a { color: @cdap-header; }
         + li:before {
-          content: "<";
-          padding: 0 5px;
-          color: #cccccc;
+          content: ">";
+          padding: 0 10px;
+          color: @cdap-gray;
           font-weight: bold;
         }
       }
-    }
-
-    button, .btn-default {
-      .cask-btn();
-    }
-    .btn-close {
-      .cask-btn(@background: fade(@btn-default-color, 50%), @border: 0, @border-radius: 28px, @padding: 0);
-      cursor: pointer;
-      line-height: 0;
     }
 
   } // end main.container

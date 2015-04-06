@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.templates.AdapterSpecification;
 
 /**
  * Holds adapter metadata
@@ -29,10 +29,6 @@ public class AdapterMeta {
   public AdapterMeta(AdapterSpecification spec, AdapterStatus status) {
     this.spec = spec;
     this.status = status;
-  }
-
-  public static AdapterMeta updateStatus(AdapterMeta original, AdapterStatus newStatus) {
-    return new AdapterMeta(original.spec, newStatus);
   }
 
   public AdapterSpecification getSpec() {

@@ -28,11 +28,13 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -90,12 +92,20 @@ public abstract class AbstractMapReduceContextBuilder {
       (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Set<String> datasets = Sets.newHashSet(programSpec.getDatasets().keySet());
+    if (inputDataSetName != null) {
+      datasets.add(inputDataSetName);
+    }
+
+    if (outputDataSetName != null) {
+      datasets.add(outputDataSetName);
+    }
 
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId,
-                                runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
+                                runtimeArguments, datasets, spec, logicalStartTime,
                                 workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework);
 

@@ -99,6 +99,7 @@
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
+    <grok.version>0.1.0</grok.version>
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <guice.version>3.0</guice.version>
@@ -883,6 +884,17 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>io.thekraken</groupId>
+        <artifactId>grok</artifactId>
+        <version>${grok.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>${shiro.version}</version>
@@ -1301,6 +1313,7 @@
                   <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>cdap-docs/**</exclude>
+                  <exclude>**/grok/patterns/**</exclude>
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
@@ -1314,6 +1327,8 @@
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>cdap-examples/**</exclude>
+                  <!-- Excludes app-templates by default, include it in the templates profile -->
+                  <exclude>cdap-app-templates/**</exclude>
                   <exclude>**/*.json</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
@@ -1423,6 +1438,14 @@
       <id>examples</id>
       <modules>
         <module>cdap-examples</module>
+      </modules>
+    </profile>
+
+    <!-- Profile to turn on inclusion of all cdap-app-templates -->
+    <profile>
+      <id>templates</id>
+      <modules>
+        <module>cdap-app-templates</module>
       </modules>
     </profile>
 

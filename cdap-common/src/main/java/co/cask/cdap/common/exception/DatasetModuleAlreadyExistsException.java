@@ -16,22 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
  */
 public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
 
-  private final String moduleName;
+  private final Id.DatasetModule id;
 
-  public DatasetModuleAlreadyExistsException(String moduleName) {
-    super("dataset module", moduleName);
-    this.moduleName = moduleName;
+  public DatasetModuleAlreadyExistsException(Id.DatasetModule id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return Name of the existing dataset module
-   */
-  public String getModuleName() {
-    return moduleName;
+  public Id.DatasetModule getId() {
+    return id;
   }
 }

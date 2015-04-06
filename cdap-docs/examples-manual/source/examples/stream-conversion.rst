@@ -35,7 +35,7 @@ of the Application are tied together by the class ``StreamConversionApp``:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
      :language: java
-     :lines: 34-
+     :lines: 32-
 
 The interesting part is the creation of the dataset ``converted``:
 
@@ -61,30 +61,35 @@ and it configures the ``events`` stream as its input and the ``converted`` datas
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 63-68
-
+     :dedent: 4
+     
 - Based on the logical start time, the MapReduce determines the range of events to read from the stream:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 70-72
+     :dedent: 4
 
 - Each MapReduce run writes its output to a partition with the logical start time:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 75-77
+     :dedent: 4
 
 - Note that the output file path is derived from the output partition time by the dataset itself:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
      :lines: 79-80
+     :dedent: 4
 
 - The Mapper itself is straight-forward: for each event, it emits an Avro record:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
      :language: java
-     :lines: 90-97
+     :lines: 86-98
+     :dedent: 2
 
 Building and Starting
 =====================
