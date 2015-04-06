@@ -68,7 +68,7 @@ where:
    * - Parameter
      - Description
    * - ``<service-id>``
-     - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``metrics``, ``streams``
+     - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``metrics``, ``metrics.processor``, ``streams``, ``transaction``
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
