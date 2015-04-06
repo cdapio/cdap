@@ -79,7 +79,6 @@ public class DataTemplate extends ApplicationTemplate<DataTemplate.Config> {
 
   @Override
   public void configureAdapter(String adapterName, Config config, AdapterConfigurer configurer) throws Exception {
-    //configurer.addDatasetType(TrackingTable.class);
     configurer.addDatasetModule("customDataset", CustomDatasetModule.class);
     if (config.streamName != null && !config.streamName.isEmpty()) {
       configurer.addStream(new Stream(config.streamName));
