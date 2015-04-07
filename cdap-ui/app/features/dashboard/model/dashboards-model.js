@@ -205,6 +205,10 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
         }
 
         deferred.resolve(self);
+      }, function(err) {
+        console.log("Dashboard delete failed for some reason");
+        console.log(err);
+        deferred.resolve(self);
       });
   }
 
@@ -232,14 +236,14 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
   Model.prototype.remove = function (index) {
     var removed = this.data.splice(index, 1)[0];
 
-    dSrc.request(
+    return dSrc.request(
       {
         method: 'DELETE',
         _cdapNsPath: API_PATH + '/' + removed.id
       }
-    );
-
-    this.persist();
+    ).then(function() {
+      return this.persist();
+    }.bind(this));
   };
 
   /**
