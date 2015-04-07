@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
-function (Widget, MyDataSource, mySettings, $q) {
+function (Widget, MyDataSource, mySettings, $q, myHelpers) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -76,24 +76,32 @@ function (Widget, MyDataSource, mySettings, $q) {
    * add a widget to the active dashboard tab
    */
   Dashboard.prototype.addWidget = function (w) {
-    var c = this.columns,
-        index = 0,
-        smallest;
 
-    // find the column with the least widgets
-    for (var i = 0; i < c.length; i++) {
-      var len = c[i].length;
-      if(smallest===undefined || (len < smallest)) {
-        smallest = len;
-        index = i;
+    function findSmallestColumn(c) {
+      var index = 0,
+          smallest;
+      // find the column with the least widgets
+      for (var i = 0; i < c.length; i++) {
+        var len = c[i].length;
+        if(smallest===undefined || (len < smallest)) {
+          smallest = len;
+          index = i;
+        }
       }
+      return index;
     }
 
-    w = w || new Widget({
-      title: 'just added'
-    });
+    if (angular.isArray(w)) {
+      angular.forEach(w, function(widget) {
+        this.columns[findSmallestColumn(this.columns)].unshift(widget);
+      }.bind(this));
+    } else {
+      w = w || new Widget({
+        title: 'just added'
+      });
 
-    this.columns[index].unshift(w);
+      this.columns[findSmallestColumn(this.columns)].unshift(w);
+    }
     this.persist();
   };
 
@@ -167,7 +175,7 @@ function (Widget, MyDataSource, mySettings, $q) {
       this._key += '.'+suffix;
     }
 
-    mySettings.get(this._key)
+    mySettings.get(this._key, true)
       .then(function(cfg){
         if(!angular.isArray(cfg)) {
           cfg = [];

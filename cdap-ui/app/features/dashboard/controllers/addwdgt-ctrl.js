@@ -14,7 +14,6 @@ function ($scope, caskFocusManager, Widget) {
     { name: 'Histogram (bar)',       type: 'bar' },
     { name: 'Timeseries (area)',     type: 'area' },
     { name: 'Pie Chart',             type: 'pie' },
-    // { name: 'Welcome',               type: 'welcome' },
     { name: 'Debug',                 type: 'json' }
   ];
 
@@ -22,11 +21,28 @@ function ($scope, caskFocusManager, Widget) {
     if(newVal) {
       $scope.model.title = newVal;
     }
-
   });
 
   $scope.doAddWidget = function () {
-    $scope.currentDashboard.addWidget($scope.model);
+    var widgets = [];
+    if ($scope.model.metric.addAll) {
+      // If the user chooses 'Add All' option, add all the metrics in the current context.
+      angular.forEach($scope.model.metric.allMetrics, function(value) {
+        widgets.push(
+          new Widget({
+            type: $scope.model.type,
+            title: value,
+            metric: {
+              context: $scope.model.metric.context,
+              name: value
+            }
+          })
+        );
+      });
+      $scope.currentDashboard.addWidget(widgets);
+    } else {
+      $scope.currentDashboard.addWidget($scope.model);
+    }
     $scope.$close();
   };
 
