@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -76,12 +77,27 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     this.instances = 1;
   }
 
+  @Override
   public void addStream(Stream stream) {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
     streams.put(spec.getName(), spec);
   }
 
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
+    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
+    dataSetModules.put(moduleName, moduleClass.getName());
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
   public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
@@ -90,6 +106,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
                          new DatasetCreationSpec(datasetInstanceName, typeName, properties));
   }
 
+  @Override
   public void createDataset(String datasetInstanceName,
                             Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
@@ -153,6 +170,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
+        .setDatasetModules(dataSetModules)
         .setStreams(streams);
 
     if (programType == ProgramType.WORKFLOW) {

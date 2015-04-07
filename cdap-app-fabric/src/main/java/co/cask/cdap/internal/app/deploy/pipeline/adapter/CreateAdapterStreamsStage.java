@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,39 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.internal.app.deploy.pipeline.StreamCreator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic creation of any new streams specified by the
  * application. Additionally, it will enable exploration of those streams if exploration is enabled.
  */
-public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
+public class CreateAdapterStreamsStage extends AbstractStage<AdapterSpecification> {
   private final StreamCreator streamCreator;
 
-  public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                            boolean enableExplore) {
-    super(TypeToken.of(ApplicationDeployable.class));
+  public CreateAdapterStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
+                                   boolean enableExplore) {
+    super(TypeToken.of(AdapterSpecification.class));
     this.streamCreator = new StreamCreator(namespace, streamAdmin, exploreFacade, enableExplore);
   }
 
   /**
-   * Receives an input containing application specification and location
-   * and verifies both.
+   * Create any streams in the given specification.
    *
-   * @param input An instance of {@link ApplicationDeployable}
+   * @param input An instance of {@link AdapterSpecification}
    */
   @Override
-  public void process(ApplicationDeployable input) throws Exception {
-    // create stream instances
-    ApplicationSpecification specification = input.getSpecification();
-    streamCreator.createStreams(specification.getStreams().keySet());
+  public void process(AdapterSpecification input) throws Exception {
+    streamCreator.createStreams(input.getStreams().keySet());
 
     // Emit the input to next stage.
     emit(input);
