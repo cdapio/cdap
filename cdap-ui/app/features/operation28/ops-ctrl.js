@@ -2,7 +2,7 @@
  * Operation 2.8
  */
 
-angular.module(PKG.name+'.feature.operation28')
+angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
 
   .controller('Op28CdapCtrl',

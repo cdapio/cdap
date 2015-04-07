@@ -118,10 +118,12 @@ body.theme-cdap {
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
     background: white;
-    border: 0;
+    border: 1px solid lightgray;
+    margin-bottom: 20px;
     padding: 10px;
     .border-radius(8px);
     .box-shadow(0 8px 6px -6px @cdap-darkness);
+    p { margin-bottom: 0; }
     .btn-close {
       .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
       cursor: pointer;
@@ -196,6 +198,25 @@ body.theme-cdap {
   }
 
   //
+  // Breadcrumbs
+  // --------------------------------------------------
+
+  .breadcrumb {
+    background-color: transparent;
+    padding-left: 0px;
+    > li {
+      color: @cdap-gray;
+      a { color: @cdap-header; }
+      + li:before {
+        content: ">";
+        padding: 0 10px;
+        color: @cdap-gray;
+        font-weight: bold;
+      }
+    }
+  }
+
+  //
   // Modals
   // --------------------------------------------------
   .modal {
@@ -259,6 +280,23 @@ body.theme-cdap {
       }
     }
     .modal-dialog {
+      .modal-header {
+        .btn {
+          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 10px);
+          font-size: 24px;
+          line-height: 1;
+        }
+      }
+      // Small and large modal styling
+      &.modal-sm, &.modal-lg {
+        color: white;
+        .modal-footer {
+          .btn-primary, .btn-success {
+            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
+            margin-left: 30px;
+          }
+        }
+      }
       // Small modal styling
       &.modal-sm {
         text-align: center;

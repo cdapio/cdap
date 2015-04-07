@@ -16,31 +16,22 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when an element already exists.
  */
 public class AlreadyExistsException extends Exception {
 
-  private final String elementType;
-  private final String elementId;
+  private final Id objectId;
 
-  public AlreadyExistsException(String elementType, String elementId) {
-    super(String.format("%s '%s' already exists", elementType, elementId));
-    this.elementType = elementType;
-    this.elementId = elementId;
+  public AlreadyExistsException(Id id) {
+    super(String.format("'%s' already exists", id.getIdRep()));
+    this.objectId = id;
   }
 
-  /**
-   * @return Type of the element: flow, stream, dataset, etc.
-   */
-  public String getElementType() {
-    return elementType;
+  public Id getObjectId() {
+    return objectId;
   }
 
-  /**
-   * @return ID of the element.
-   */
-  public String getElementId() {
-    return elementId;
-  }
 }

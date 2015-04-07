@@ -37,7 +37,7 @@ public interface NotificationFeedManager {
 
   /**
    * Deletes the {@code feed} from the manager store. To determine if the feed exists,
-   * the {@link Id.NotificationFeed#getId} method is used.
+   * the {@link Id.NotificationFeed#getFeedId} method is used.
    *
    * @param feed the {@link Id.NotificationFeed} to delete
    * @throws NotificationFeedNotFoundException if the feed does not exist

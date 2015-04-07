@@ -97,7 +97,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
                     feed.getNamespaceId(), feed.getCategory(), feed.getName()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(feed.getId());
+      throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
     }
@@ -111,7 +111,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
                     feed.getNamespaceId(), feed.getCategory(), feed.getName()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(feed.getId());
+      throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
     }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import com.google.common.collect.ImmutableMap;
@@ -31,6 +32,7 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
   private Schedule schedule;
   private int instances;
   private Map<String, String> arguments = Maps.newHashMap();
+  private Resources resources;
 
   @Override
   public void setSchedule(Schedule schedule) {
@@ -40,6 +42,11 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
   @Override
   public void setInstances(int instances) {
     this.instances = instances;
+  }
+
+  @Override
+  public void setResources(Resources resources) {
+    this.resources = resources;
   }
 
   @Override
@@ -62,5 +69,9 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
 
   public Map<String, String> getArguments() {
     return ImmutableMap.copyOf(arguments);
+  }
+
+  public Resources getResources() {
+    return resources;
   }
 }

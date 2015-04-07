@@ -16,42 +16,21 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a program is not found
  */
 public class ProgramNotFoundException extends NotFoundException {
 
-  private ProgramType programType;
-  private String appId;
-  private String programId;
+  private final Id.Program id;
 
-  public ProgramNotFoundException(ProgramType programType, String appId, String programId) {
-    super(programType.getCategoryName(), appId + "/" + programId);
-    this.programType = programType;
-    this.appId = appId;
-    this.programId = programId;
+  public ProgramNotFoundException(Id.Program id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return Type of the program that was not found
-   */
-  public ProgramType getProgramType() {
-    return programType;
-  }
-
-  /**
-   * @return Application ID of the application that the program that was not found belongs to
-   */
-  public String getAppId() {
-    return appId;
-  }
-
-  /**
-   * @return ID of the program that was not found
-   */
-  public String getProgramId() {
-    return programId;
+  public Id.Program getId() {
+    return id;
   }
 }

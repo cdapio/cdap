@@ -33,6 +33,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -103,6 +104,7 @@ public abstract class AppFabricTestBase {
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
+  protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
@@ -431,17 +433,17 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
+  protected List<RunRecord> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;
-    List<Map<String, String>> history;
+    List<RunRecord> history;
     String json;
     HttpResponse response;
     while (trial++ < retries) {
       response = doGet(url);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
-      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      history = new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
         return history;
@@ -650,10 +652,37 @@ public abstract class AppFabricTestBase {
     }.getType());
   }
 
+  /**
+   * @deprecated Use {@link #getProgramRuns(Id.Program, String status)}.
+   */
+  @Deprecated
   protected int getRuns(String runsUrl) throws Exception {
     HttpResponse response = doGet(runsUrl);
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
     return history.size();
+  }
+
+  protected void verifyProgramRuns(final Id.Program program, final String status) throws Exception {
+    verifyProgramRuns(program, status, 0);
+  }
+
+  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() > expected;
+      }
+    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+  }
+
+  protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
+                                program.getType().getCategoryName(), program.getId(), status);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    return new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
   }
 }

@@ -26,16 +26,15 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -377,18 +376,17 @@ public interface Store {
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
-  <T> void addAdapter(Id.Namespace id, AdapterSpecification<T> adapterSpec);
+  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
    * @param id  Namespace id.
    * @param name Adapter name
-   * @param type Type of the config object used by the AdapterSpecification
    * @return an instance of {@link AdapterSpecification}.
    */
   @Nullable
-  <T> AdapterSpecification<T> getAdapter(Id.Namespace id, String name, Type type);
+  AdapterSpecification getAdapter(Id.Namespace id, String name);
 
   /**
    * Fetch the status for an adapter identified by the name in a give namespace.
@@ -417,7 +415,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
-  <T> Collection<AdapterSpecification<T>> getAllAdapters(Id.Namespace id, Type type);
+  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.
