@@ -130,7 +130,7 @@ your manifest file contains these properties:
 
 You can look at the cdap-adapters module in the CDAP project as an example.
 Once you have built your application jar, you must place it in the directory specified
-by the ``app.adapter.dir`` configuration setting.
+by the ``app.template.dir`` configuration setting.
 This setting defaults to ``/opt/cdap/master/plugins`` for distributed CDAP, and ``plugins``
 for CDAP Standalone. Note that the jar must be present on all CDAP masters. 
 
