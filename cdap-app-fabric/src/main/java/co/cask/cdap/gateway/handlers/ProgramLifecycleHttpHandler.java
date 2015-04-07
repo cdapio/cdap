@@ -1437,12 +1437,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
             // Get start time from RunId
-            long startTimeMillis = RunIds.getTimeMillis(controller.getRunId());
-            if (startTimeMillis == -1) {
+            long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+            if (startTimeInSeconds == -1) {
               // If RunId is not time-based, use current time as start time
-              startTimeMillis = System.currentTimeMillis();
+              startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
             }
-            store.setStart(id, runId, TimeUnit.MILLISECONDS.toSeconds(startTimeMillis));
+            store.setStart(id, runId, startTimeInSeconds);
             if (state == ProgramController.State.COMPLETED) {
               completed();
             }
@@ -1453,13 +1453,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           @Override
           public void completed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.COMPLETED.getRunStatus());
           }
 
           @Override
           public void killed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.KILLED.getRunStatus());
           }
 
@@ -1476,7 +1476,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           @Override
           public void error(Throwable cause) {
             LOG.info("Program stopped with error {}, {}", id, runId, cause);
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.ERROR.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);

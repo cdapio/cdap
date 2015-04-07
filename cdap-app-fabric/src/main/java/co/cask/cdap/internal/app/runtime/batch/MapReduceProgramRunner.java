@@ -52,6 +52,7 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -156,42 +157,34 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
                                                                         streamAdmin, txSystemClient);
-    mapReduceRuntimeService.addListener(new Service.Listener() {
+    mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
       @Override
       public void starting() {
-        store.setStart(program.getId(), runId.getId(), TimeUnit.SECONDS.convert(System.currentTimeMillis(),
-                                                                                TimeUnit.MILLISECONDS));
-      }
-
-      @Override
-      public void running() {
-        //no-op
-      }
-
-      @Override
-      public void stopping(Service.State from) {
-        //no-op
+        //Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        }
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
       }
 
       @Override
       public void terminated(Service.State from) {
-        if (from != Service.State.STOPPING) {
-          // Service completed by itself.
-          store.setStop(program.getId(), runId.getId(),
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.COMPLETED.getRunStatus());
-        } else {
+        if (from == Service.State.STOPPING) {
           // Service was killed
-          store.setStop(program.getId(), runId.getId(),
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
+        } else {
+          // Service completed by itself.
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.COMPLETED.getRunStatus());
         }
       }
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     }, Threads.SAME_THREAD_EXECUTOR);

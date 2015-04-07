@@ -275,10 +275,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .build();
 
     // Get start time from RunId
-    long programStartMillis = RunIds.getTimeMillis(RunIds.fromString(runid));
-    if (programStartMillis > -1) {
+    long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
+    if (programStartSecs > -1) {
       // If start time is found, run a get
-      long programStartSecs = TimeUnit.MILLISECONDS.toSeconds(programStartMillis);
       return get(new MDSKey.Builder(completedKey).add(getInvertedTsKeyPart(programStartSecs)).add(runid).build(),
                  RunRecord.class);
     } else {
