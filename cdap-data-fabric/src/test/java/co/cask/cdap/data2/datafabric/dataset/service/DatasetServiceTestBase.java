@@ -30,6 +30,7 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -53,6 +54,7 @@ import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
@@ -156,12 +158,14 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
-    Map<String, DatasetModule> defaultModules =
-      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                   Names.named("defaultDatasetModules")));
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .putAll(injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                           Names.named("defaultDatasetModules"))))
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, defaultModules, cConf));
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
