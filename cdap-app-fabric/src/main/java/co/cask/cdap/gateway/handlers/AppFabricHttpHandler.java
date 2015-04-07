@@ -511,25 +511,31 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
    * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
    * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
-   *
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1"},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1"}]
-   *
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
    * as well as 3 fields:
-   * "provisioned" which maps to the number of instances actually provided for the input runnable,
-   * "requested" which maps to the number of instances the user has requested for the input runnable,
-   * "statusCode" which maps to the http status code for the data in that JsonObjects. (200, 400, 404)
+   * </p><ul>
+   * <li>"provisioned" which maps to the number of instances actually provided for the input runnable,</li>
+   * <li>"requested" which maps to the number of instances the user has requested for the input runnable,</li>
+   * <li>"statusCode" which maps to the http status code for the data in that JsonObjects (200, 400, 404).</li>
+   * </p><p>
    * If an error occurs in the input (i.e. in the example above, Flowlet1 does not exist), then all JsonObjects for
    * which the parameters have a valid instances will have the provisioned and requested fields status code fields
    * but all JsonObjects for which the parameters are not valid will have an error message and statusCode.
-   *
-   * E.g. given the above data, if there is no Flowlet1, then the response would be 200 OK with following possible data:
+   * </p><p>
+   * For example, if there is no Flowlet1 in the above data, then the response could be 200 OK with the following data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
    *   "statusCode": 200, "provisioned": 2, "requested": 2},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2", "statusCode": 200, "provisioned": 1,
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "provisioned": 1,
    *   "requested": 3},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Runnable": Flowlet1 not found"}]
@@ -545,23 +551,33 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the status for all programs that are passed into the data. The data is an array of Json objects
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
-   * <p/>
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
    * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
-   * <p/>
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
-   * as well as 2 fields, "status" which maps to the status of the program and "statusCode" which maps to the
-   * status code for the data in that JsonObjects. If an error occurs in the
+   * as well as 2 fields:
+   * <ul>
+   * <li>"status" which maps to the status of the program and </li>
+   * <li>"statusCode" which maps to the status code for the data in that JsonObjects.</li>
+   * </ul>
+   * </p><p>
+   * If an error occurs in the
    * input (i.e. in the example above, App2 does not exist), then all JsonObjects for which the parameters
    * have a valid status will have the status field but all JsonObjects for which the parameters do not have a valid
    * status will have an error message and statusCode.
-   * <p/>
-   * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * </p><p>
+   * For example, if there is no App2 in the data above, then the response could be 200 OK with the following data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "status": "STOPPED"},
    * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * </code></pre>
    */
   @POST
   @Path("/status")

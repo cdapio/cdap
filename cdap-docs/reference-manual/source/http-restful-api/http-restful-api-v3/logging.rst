@@ -41,7 +41,7 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``
+     - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``\
        ``logs?start=1382576400&stop=1382576700``
    * - Description
      - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
@@ -50,12 +50,16 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
 
+.. _http-restful-api-logging_downloading_system_logs:
+
 Downloading System Logs
 -----------------------
 Logs emitted by a system service running in CDAP can be downloaded with the Logging HTTP
 API. To do that, send an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/system/<component-id>/<service-id>/logs?start=<ts>&stop=<ts>
+  GET <base-url>/system/services/<service-id>/logs?start=<ts>&stop=<ts>
+  
+where:
 
 .. list-table::
    :widths: 20 80
@@ -63,15 +67,24 @@ API. To do that, send an HTTP GET request::
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
-   * - ``<component-id>``
-     - ``appfabric``
    * - ``<service-id>``
-     - [to be completed]
+     - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``metrics``, ``metrics.processor``, ``streams``, ``transaction``
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
-     
+
+Note that the start and stop times are **not** optional.
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/services/system/appfabric/logs?start=1428541200&stop=1428541500``
+   * - Description
+     - Return the logs for the *AppFabric* Service
+       beginning ``Thu, 09 Apr 2015 01:00:00 GMT`` and
+       ending ``Thu, 09 Apr 2015 01:05:00 GMT`` (five minutes later)
 
 Formatting
 ----------
