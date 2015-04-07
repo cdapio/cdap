@@ -41,23 +41,31 @@
 </ul>
 
 <!-- INPUT -->
-<div ng-if="activeTab === 0">
+<div ng-if="activeTab === 0" ng-controller="FlowletDetailInputController">
   <table class="table table-responsive" ng-if="inputs.length > 0" cask-sortable>
     <thead>
       <th>Source</th>
       <th>Arrival Rate</th>
       <th>Pending Events</th>
-      <th>Day</th>
       <th>Max Pending</th>
     </thead>
     <tbody>
-      <tr ng-repeat="input in inputs">
+      <tr ng-repeat="input in inputs track by $index">
         <td>
           {{input}}
         </td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>
+          <strong>{{ total | myNumber: 1 }}</strong> events/s
+        </td>
+        <td>
+          <epoch-line
+            data-history="inputHistory"
+            data-stream="inputStream"
+            chart-height="100"
+            chart-width="400"
+            chart-axes="['left', 'bottom']"
+            ></epoch-line>
+        </td>
         <td></td>
       </tr>
     </tbody>
@@ -105,7 +113,7 @@
 
 
 <!-- OUTPUT -->
-<div ng-if="activeTab === 3">
+<div ng-if="activeTab === 3" ng-controller="FlowletDetailOutputController">
   <table class="table table-responsive" ng-if="outputs.length > 0" cask-sortable>
     <thead>
       <th>Rate</th>
@@ -113,9 +121,19 @@
       <th>Target</th>
     </thead>
     <tbody>
-      <tr ng-repeat="output in outputs">
-        <td></td>
-        <td></td>
+      <tr ng-repeat="output in outputs track by $index">
+        <td>
+          <epoch-line
+            data-history="outputHistory"
+            data-stream="outputStream"
+            chart-height="100"
+            chart-width="400"
+            chart-axes="['left', 'bottom']"
+            ></epoch-line>
+        </td>
+        <td>
+          {{ total | myNumber: 0 }} tuples
+        </td>
         <td>
           {{output}}
         </td>
