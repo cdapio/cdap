@@ -43,13 +43,13 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
                                                                  LongWritable, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String FORMAT_NAME = "format.name";
-  private static final String FORMAT_SETTING_PREFIX = "format.setting.";
+
 
   private static SchemaWrapper schemaWrapper = null;
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName(StreamToStructuredRecordTransform.class.getName());
+    configurer.setName(StreamToStructuredRecordTransform.class.getSimpleName());
     configurer.setDescription("Transforms a StreamEvent to StructuredRecord.");
     configurer.addProperty(new Property(SCHEMA, "The schema of the body of stream events", true));
     configurer.addProperty(new Property(FORMAT_NAME, "Format name: CSV, TSV etc.", true));
@@ -86,6 +86,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
   }
 
   private SchemaWrapper getSchemaWrapper(Schema streamBodySchema) throws Exception {
+    final String formatSettingPrefix = "format.setting.";
     // create the new schema with timestamp and headers to reatin them in StructuredRecord
     List<Schema.Field> fields = Lists.newArrayList(
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
@@ -94,8 +95,8 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
 
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (Map.Entry<String, String> entry : getContext().getRuntimeArguments().entrySet()) {
-      if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
-        String key = entry.getKey().replace(FORMAT_SETTING_PREFIX, "");
+      if (entry.getKey().startsWith(formatSettingPrefix)) {
+        String key = entry.getKey().replace(formatSettingPrefix, "");
         builder.put(key, entry.getValue());
       }
     }

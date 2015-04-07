@@ -38,7 +38,7 @@ public class StructuredRecordToGenericRecordTransform extends Transform<LongWrit
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName(StructuredRecordToGenericRecordTransform.class.getName());
+    configurer.setName(StructuredRecordToGenericRecordTransform.class.getSimpleName());
     configurer.setDescription("Transforms a StructuredRecord to Avro format");
   }
 
