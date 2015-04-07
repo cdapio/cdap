@@ -10,6 +10,7 @@
 
 html { font-size: 100%; }
 body.theme-cdap {
+  font-family: @font-regular;
   font-size: 100%;
   visibility: visible;
 
@@ -40,7 +41,7 @@ body.theme-cdap {
       }
     }
     blockquote { border: 0; }
-    h1, h2, h3, h4, h5, h6 { font-family: @heading-font; font-weight: 600; }
+    h1, h2, h3, h4, h5, h6 { font-family: @heading-font-medium; font-weight: bold; }
     h1 { font-size: 2em; }
     h2 { color: @cdap-header; font-size: 1.5em; }
     h3 { color: @cdap-header; font-size: 1.17em; }
@@ -49,21 +50,6 @@ body.theme-cdap {
     h6 { font-size: .67em; }
 
     h3, .h3 { margin: .4rem inherit; }
-
-    .breadcrumb {
-      background-color: transparent;
-      padding-left: 0px;
-      > li {
-        color: @cdap-gray;
-        a { color: @cdap-header; }
-        + li:before {
-          content: ">";
-          padding: 0 10px;
-          color: @cdap-gray;
-          font-weight: bold;
-        }
-      }
-    }
 
   } // end main.container
 
