@@ -94,6 +94,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       .put(Constants.Metrics.Tag.SERVICE, "service")
       .put(Constants.Metrics.Tag.SERVICE_RUNNABLE, "runnable")
 
+      .put(Constants.Metrics.Tag.WORKER, "worker")
+
       .put(Constants.Metrics.Tag.FLOW, "flow")
       .put(Constants.Metrics.Tag.FLOWLET, "flowlet")
       .put(Constants.Metrics.Tag.FLOWLET_QUEUE, "queue")
