@@ -321,22 +321,30 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName);
+    return deploy(application, null, null, appName, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null);
+    return deploy(application, apiVersion, namespace, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                @Nullable String appName) throws Exception {
+    return deploy(application, apiVersion, namespace, appName, null);
   }
 
   /**
-   * Deploys an application with (optionally) a defined app name
+   * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                       @Nullable String appName) throws Exception {
+                                       @Nullable String appName, @Nullable String appVersion) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+    if (appVersion != null) {
+      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
+    }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     final JarOutputStream jarOut = new JarOutputStream(bos, manifest);

@@ -38,6 +38,7 @@ import java.util.Map;
 public final class DefaultApplicationSpecification implements ApplicationSpecification {
 
   private final String name;
+  private final String version;
   private final String description;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
@@ -51,7 +52,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, ScheduleSpecification> schedules;
   private final Map<String, WorkerSpecification> workers;
 
-  public DefaultApplicationSpecification(String name, String description,
+  public DefaultApplicationSpecification(String name, String version, String description,
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
@@ -64,6 +65,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ScheduleSpecification> schedules,
                                          Map<String, WorkerSpecification> workers) {
     this.name = name;
+    this.version = version;
     this.description = description;
     this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
@@ -79,7 +81,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
-    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
+    return new DefaultApplicationSpecification(spec.getName(), spec.getVersion(), spec.getDescription(),
                                                spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(), spec.getProcedures(),
@@ -90,6 +92,11 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getVersion() {
+    return version;
   }
 
   @Override
