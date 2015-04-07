@@ -393,11 +393,17 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testTimeRangeQueryBatch() throws Exception {
+    // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
-    long end = (emitTs + 120 * 1000) / 1000;
+    long end = (emitTs + 60 * 1000) / 1000;
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=" + start + "&end="
+        + end, 2, 3);
 
     JsonObject q1 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                       "flowlet", "counter"),
+                                                       "flowlet", "splitter"),
                                        ImmutableList.of("system.reads"), ImmutableList.<String>of(),
                                        ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
 
@@ -406,17 +412,17 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                        ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
     JsonArray queries = new JsonArray();
     queries.add(q1);
-    //queries.add(q2);
+    queries.add(q2);
     JsonObject taggedQuery = new JsonObject();
     taggedQuery.add("timeRangeBatch", queries);
     ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
       ImmutableMap.of("timeRangeBatch", ImmutableList.<ImmutableList<QueryResult>>of(
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1))
-//        , ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of("flowlet", "counter"),
-//                                                      "system.reads", 1, 1),
-//                                      new QueryResult(ImmutableMap.<String, String>of("flowlet", "splitter"),
-//                                                      "system.reads", 2, 3)
-                                      ));
+        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of("flowlet", "counter"),
+                                                      "system.reads", 1, 1),
+                                      new QueryResult(ImmutableMap.<String, String>of("flowlet", "splitter"),
+                                                      "system.reads", 2, 3)
+                                      )));
     batchTest(taggedQuery, expected);
   }
 
@@ -444,9 +450,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testQueryMetricsWithTags() throws Exception {
-
     //aggregate result, in the right namespace
-    /*verifyAggregateQueryResult(
+    verifyAggregateQueryResult(
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
         "&metric=system.reads&aggregate=true", 3);
     verifyAggregateQueryResult(
@@ -465,13 +470,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifyAggregateQueryResult("/v3/metrics/query?context=" +
                                  getTags(DOT_NAMESPACE, DOT_APP,
                                          DOT_FLOW, DOT_FLOWLET) +
-                                 "&metric=system.dot.reads&aggregate=true", 55);*/
+                                 "&metric=system.dot.reads&aggregate=true", 55);
 
     // time range
     // now-60s, now+60s
-//    verifyRangeQueryResult(
-//      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
-//        "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+    verifyRangeQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
+        "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
 
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
@@ -1009,8 +1014,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private <T> T post(String url, Type type) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-    return new Gson().fromJson(result, type);
+    return new Gson().fromJson(EntityUtils.toString(response.getEntity(), Charsets.UTF_8), type);
   }
 
   private void verifySearchResult(String url, List<String> expectedValues) throws Exception {
