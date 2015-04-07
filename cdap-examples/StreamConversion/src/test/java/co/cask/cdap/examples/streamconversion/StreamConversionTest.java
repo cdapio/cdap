@@ -19,6 +19,7 @@ package co.cask.cdap.examples.streamconversion;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -32,7 +33,11 @@ import java.sql.ResultSet;
 import java.util.Calendar;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 
 /**
  * Test the stream conversion example app.
@@ -60,7 +65,7 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    long partitionTime = testWithRetry(new Callable<Long>() {
+    long partitionTime = assertWithRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
@@ -69,7 +74,7 @@ public class StreamConversionTest extends TestBase {
         Assert.assertEquals(1, partitions.size());
         return partitions.iterator().next().getTime();
       }
-    }, 5, 3L, TimeUnit.SECONDS);
+    }, 15L, TimeUnit.SECONDS, 3L, TimeUnit.SECONDS);
 
     // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
@@ -106,19 +111,39 @@ public class StreamConversionTest extends TestBase {
     Assert.assertFalse(results.next());
   }
 
-  private <T> T testWithRetry(Callable<T> callable, int timesToRetry,
-                              long waitBeforeRetry, TimeUnit timeUnit) throws Exception {
-
-    AssertionError error = null;
-    for (int retry = 0; retry < timesToRetry; retry++) {
-      try {
-        return callable.call();
-      } catch (AssertionError e) {
-        // sleep, then retry
-        timeUnit.sleep(waitBeforeRetry);
-        error = e;
+  @Test
+  public void testAssertWithRetry() throws InterruptedException, ExecutionException, TimeoutException {
+    final int requiredCount = 10;
+    final AtomicInteger count = new AtomicInteger(0);
+    int actualCount = assertWithRetry(new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        int actualCount = count.getAndIncrement();
+        Assert.assertEquals(requiredCount, actualCount);
+        return actualCount;
       }
-    }
-    throw error;
+    }, 10, TimeUnit.SECONDS, 0, TimeUnit.SECONDS);
+    Assert.assertEquals(requiredCount, actualCount);
+  }
+
+  // TODO: move elsewhere?
+  private <T> T assertWithRetry(final Callable<T> callable, long timeout, TimeUnit timeoutUnit,
+                        long sleepDelay, TimeUnit sleepDelayUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+
+    final AtomicMarkableReference<T> result = new AtomicMarkableReference<T>(null, false);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      public Boolean call() throws Exception {
+        try {
+          result.set(callable.call(), true);
+        } catch (AssertionError e) {
+          // retry
+          return false;
+        }
+        return true;
+      }
+    }, timeout, timeoutUnit, sleepDelay, sleepDelayUnit);
+    Assert.assertTrue(result.isMarked());
+    return result.getReference();
   }
 }
