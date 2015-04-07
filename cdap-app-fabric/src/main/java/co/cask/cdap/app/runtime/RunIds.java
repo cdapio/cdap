@@ -56,11 +56,24 @@ public final class RunIds {
    * guaranteed to generate at least 10000 unique UUIDs for the millisecond.
    */
   public static RunId generate() {
-    return new TimeBasedRunId(generateUUIDForTime(System.currentTimeMillis()));
+    return new RunIdImpl(generateUUIDForTime(System.currentTimeMillis()));
   }
 
+  /**
+   * Converts string representation of run id into {@link RunId}l
+   */
   public static RunId fromString(String id) {
-    return new TimeBasedRunId(UUID.fromString(id));
+    return new RunIdImpl(UUID.fromString(id));
+  }
+
+  /**
+   * Returns time-based UUID for given time. This method is recommended to be used only for testing.
+   * @param timeMillis time since epoch
+   * @return time-based UUID.
+   */
+  @VisibleForTesting
+  public static RunId generate(long timeMillis) {
+    return new RunIdImpl(generateUUIDForTime(timeMillis));
   }
 
   /**
@@ -117,10 +130,10 @@ public final class RunIds {
     return new java.util.UUID(upperLong, lowerLong);
   }
 
-  private static class TimeBasedRunId implements RunId {
+  private static class RunIdImpl implements RunId {
     private final UUID id;
 
-    public TimeBasedRunId(UUID id) {
+    public RunIdImpl(UUID id) {
       this.id = id;
     }
 
@@ -143,7 +156,7 @@ public final class RunIds {
         return false;
       }
 
-      TimeBasedRunId that = (TimeBasedRunId) o;
+      RunIdImpl that = (RunIdImpl) o;
 
       return Objects.equal(this.id, that.id);
     }

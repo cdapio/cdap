@@ -919,8 +919,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, ProgramType.WORKFLOW, workflowName);
-      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, Long.MIN_VALUE, Long.MAX_VALUE,
-                                                    100);
+      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100);
       if (runRecordList.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

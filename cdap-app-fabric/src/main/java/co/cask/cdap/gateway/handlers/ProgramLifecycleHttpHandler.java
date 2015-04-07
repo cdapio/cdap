@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -57,6 +58,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
@@ -414,9 +416,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+  }
+
+  /**
+   * Returns run record for a particular run of a program.
+   */
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}")
+  public void programRunRecord(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @PathParam("run-id") String runid) {
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    if (type == null || type == ProgramType.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
+      if (runRecord != null) {
+        responder.sendJson(HttpResponseStatus.OK, runRecord);
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -1402,7 +1436,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         controller.addListener(new AbstractListener() {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
-            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+            // Get start time from RunId
+            long startTimeMillis = RunIds.getTimeMillis(controller.getRunId());
+            if (startTimeMillis == -1) {
+              // If RunId is not time-based, use current time as start time
+              startTimeMillis = System.currentTimeMillis();
+            }
+            store.setStart(id, runId, TimeUnit.MILLISECONDS.toSeconds(startTimeMillis));
             if (state == ProgramController.State.COMPLETED) {
               completed();
             }
