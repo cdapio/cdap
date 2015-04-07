@@ -77,4 +77,13 @@ body.theme-cdap {
   .btn-warning { .btn-styles(@btn-warning-bg); background-image:none; border:none;}
   .btn-danger  { .btn-styles(@btn-danger-bg); background-image:none; border:none;}
 
+  .btn-transparent {
+    background-color: transparent;
+    padding: 0;
+    
+    &:hover,
+    &:focus  {
+      background-color: transparent;
+    }
+  }
 }
