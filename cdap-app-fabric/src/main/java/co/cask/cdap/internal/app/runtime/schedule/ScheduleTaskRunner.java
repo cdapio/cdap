@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
@@ -146,7 +147,13 @@ public final class ScheduleTaskRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
-        store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        // Get start time from RunId
+        long startTimeMillis = RunIds.getTimeMillis(controller.getRunId());
+        if (startTimeMillis == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeMillis = System.currentTimeMillis();
+        }
+        store.setStart(programId, runId, TimeUnit.MILLISECONDS.toSeconds(startTimeMillis));
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }

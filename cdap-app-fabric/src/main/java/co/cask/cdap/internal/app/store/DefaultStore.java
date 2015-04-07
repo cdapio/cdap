@@ -220,6 +220,23 @@ public class DefaultStore implements Store {
     });
   }
 
+  /**
+   * Returns run record for a given run.
+   *
+   * @param id program id
+   * @param runid run id
+   * @return run record for runid
+   */
+  @Override
+  public RunRecord getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
+      @Override
+      public RunRecord apply(AppMds mds) throws Exception {
+        return mds.apps.getRun(id, runid);
+      }
+    });
+  }
+
   @Override
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, final Location appArchiveLocation) {

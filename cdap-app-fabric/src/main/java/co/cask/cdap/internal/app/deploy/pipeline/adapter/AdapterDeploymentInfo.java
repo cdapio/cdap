@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
@@ -30,14 +30,12 @@ public class AdapterDeploymentInfo {
   private final AdapterConfig adapterConfig;
   private final ApplicationTemplateInfo templateInfo;
   private final ApplicationSpecification templateSpec;
-  private final Location tempJarLoc;
 
   public AdapterDeploymentInfo(AdapterConfig adapterConfig, ApplicationTemplateInfo templateInfo,
-                               ApplicationSpecification templateSpec, Location tempJarLoc) {
+                               ApplicationSpecification templateSpec) {
     this.adapterConfig = adapterConfig;
     this.templateInfo = templateInfo;
     this.templateSpec = templateSpec;
-    this.tempJarLoc = tempJarLoc;
   }
 
   public AdapterConfig getAdapterConfig() {
@@ -46,10 +44,6 @@ public class AdapterDeploymentInfo {
 
   public ApplicationTemplateInfo getTemplateInfo() {
     return templateInfo;
-  }
-
-  public Location getTempJarLoc() {
-    return tempJarLoc;
   }
 
   public ApplicationSpecification getTemplateSpec() {

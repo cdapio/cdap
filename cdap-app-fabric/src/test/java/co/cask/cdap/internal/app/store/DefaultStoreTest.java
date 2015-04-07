@@ -52,6 +52,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.Specifications;
@@ -70,6 +71,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,6 +84,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -128,15 +132,18 @@ public class DefaultStoreTest {
     // Should have two run history.
     Id.Program programId = Id.Program.from("account1", "concurrentApp", ProgramType.FLOW, "concurrentFlow");
     long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
-    store.setStart(programId, "run1", now - 1000);
-    store.setStart(programId, "run2", now - 1000);
+    RunId run1 = RunIds.generate(now - 10000);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1));
+    RunId run2 = RunIds.generate(now - 10000);
+    store.setStart(programId, run2.getId(), runIdToSecs(run2));
 
-    store.setStop(programId, "run1", now, ProgramController.State.COMPLETED.getRunStatus());
-    store.setStop(programId, "run2", now, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, run1.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
 
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
-                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
   }
 
@@ -145,31 +152,39 @@ public class DefaultStoreTest {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow1");
     long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
-    store.setStart(programId, "run1", now - 2000);
-    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR.getRunStatus());
+    RunId run1 = RunIds.generate(now - 20000);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1));
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.ERROR.getRunStatus());
 
     // record another finished flow
-    store.setStart(programId, "run2", now - 1000);
-    store.setStop(programId, "run2", now - 500, ProgramController.State.COMPLETED.getRunStatus());
+    RunId run2 = RunIds.generate(now - 10000);
+    store.setStart(programId, run2.getId(), runIdToSecs(run2));
+    store.setStop(programId, run2.getId(), nowSecs - 5, ProgramController.State.COMPLETED.getRunStatus());
 
     // record not finished flow
-    store.setStart(programId, "run3", now);
+    RunId run3 = RunIds.generate(now);
+    store.setStart(programId, run3.getId(), runIdToSecs(run3));
 
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
-    store.setStart(programId2, "run4", now - 500);
-    store.setStop(programId2, "run4", now - 400, ProgramController.State.COMPLETED.getRunStatus());
+    RunId run4 = RunIds.generate(now - 5000);
+    store.setStart(programId2, run4.getId(), runIdToSecs(run4));
+    store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"), "run3", now - 300);
+    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
+                   run3.getId(), RunIds.getTimeMillis(run3));
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> successHistory = store.getRuns(programId, ProgramRunStatus.COMPLETED,
-                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                   0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     List<RunRecord> failureHistory = store.getRuns(programId, ProgramRunStatus.FAILED,
-                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                   nowSecs - 20, nowSecs - 10, Integer.MAX_VALUE);
+    Assert.assertEquals(failureHistory, store.getRuns(programId, ProgramRunStatus.FAILED,
+                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE));
 
     // only finished + succeeded runs should be returned
     Assert.assertEquals(1, successHistory.size());
@@ -177,14 +192,71 @@ public class DefaultStoreTest {
     Assert.assertEquals(1, failureHistory.size());
     // records should be sorted by start time latest to earliest
     RunRecord run = successHistory.get(0);
-    Assert.assertEquals(now - 1000, run.getStartTs());
-    Assert.assertEquals(now - 500, run.getStopTs());
+    Assert.assertEquals(nowSecs - 10, run.getStartTs());
+    Assert.assertEquals(nowSecs - 5, run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
-    Assert.assertEquals(now - 2000, run.getStartTs());
-    Assert.assertEquals(now - 1000, run.getStopTs());
+    Assert.assertEquals(nowSecs - 20, run.getStartTs());
+    Assert.assertEquals(nowSecs - 10, run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
+
+    // Assert all history
+    List<RunRecord> allHistory = store.getRuns(programId, ProgramRunStatus.ALL,
+                                               nowSecs - 20, nowSecs + 1, Integer.MAX_VALUE);
+    Assert.assertEquals(allHistory.toString(), 3, allHistory.size());
+
+    // Assert running programs
+    List<RunRecord> runningHistory = store.getRuns(programId, ProgramRunStatus.RUNNING, nowSecs, nowSecs + 1, 100);
+    Assert.assertEquals(1, runningHistory.size());
+    Assert.assertEquals(runningHistory, store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100));
+
+    // Get a run record for running program
+    RunRecord expectedRunning = runningHistory.get(0);
+    Assert.assertNotNull(expectedRunning);
+    RunRecord actualRunning = store.getRun(programId, expectedRunning.getPid());
+    Assert.assertEquals(expectedRunning, actualRunning);
+
+    // Get a run record for completed run
+    RunRecord expectedCompleted = successHistory.get(0);
+    Assert.assertNotNull(expectedCompleted);
+    RunRecord actualCompleted = store.getRun(programId, expectedCompleted.getPid());
+    Assert.assertEquals(expectedCompleted, actualCompleted);
+
+    // Backwards compatibility test with random UUIDs
+    // record finished flow
+    RunId run5 = RunIds.fromString(UUID.randomUUID().toString());
+    store.setStart(programId, run5.getId(), nowSecs - 8);
+    store.setStop(programId, run5.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
+
+    // record not finished flow
+    RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
+    store.setStart(programId, run6.getId(), nowSecs - 2);
+
+    // Get run record for run5
+    RunRecord expectedRecord5 = new RunRecord(run5.getId(), nowSecs - 8, nowSecs - 4, ProgramRunStatus.COMPLETED);
+    RunRecord actualRecord5 = store.getRun(programId, run5.getId());
+    Assert.assertEquals(expectedRecord5, actualRecord5);
+
+    // Get run record for run6
+    RunRecord expectedRecord6 = new RunRecord(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING);
+    RunRecord actualRecord6 = store.getRun(programId, run6.getId());
+    Assert.assertEquals(expectedRecord6, actualRecord6);
+
+    // Non-existent run record should give null
+    Assert.assertNull(store.getRun(programId, UUID.randomUUID().toString()));
+
+    // Searching for history in wrong time range should give us no results
+    Assert.assertTrue(
+      store.getRuns(programId, ProgramRunStatus.COMPLETED, nowSecs - 5000, nowSecs - 2000, Integer.MAX_VALUE).isEmpty()
+    );
+    Assert.assertTrue(
+      store.getRuns(programId, ProgramRunStatus.ALL, nowSecs - 5000, nowSecs - 2000, Integer.MAX_VALUE).isEmpty()
+    );
+  }
+
+  private long runIdToSecs(RunId runId) {
+    return TimeUnit.MILLISECONDS.toSeconds(RunIds.getTimeMillis(runId));
   }
 
   @Test
@@ -616,7 +688,7 @@ public class DefaultStoreTest {
 
   private void verifyRunHistory(Id.Program programId, int count) {
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
-                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
   }
 

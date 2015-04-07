@@ -61,7 +61,7 @@ public interface Store {
    *
    * @param id        Info about program
    * @param pid       run id
-   * @param startTime start timestamp
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
   void setStart(Id.Program id, String pid, long startTime);
 
@@ -70,7 +70,7 @@ public interface Store {
    *
    * @param id      id of program
    * @param pid     run id
-   * @param endTime end timestamp
+   * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
@@ -95,13 +95,22 @@ public interface Store {
    *
    * @param id        program id.
    * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime.
-   * @param endTime   fetch run history that has started before the endTime.
-   * @param limit     max number of entries to fetch for this history call.
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
                           long startTime, long endTime, int limit);
+
+  /**
+   * Fetches the run record for particular run of a program.
+   *
+   * @param id        program id
+   * @param runid     run id of the program
+   * @return          run record for the specified program and runid, null if not found
+   */
+  RunRecord getRun(Id.Program id, String runid);
 
   /**
    * Creates a new stream if it does not exist.
