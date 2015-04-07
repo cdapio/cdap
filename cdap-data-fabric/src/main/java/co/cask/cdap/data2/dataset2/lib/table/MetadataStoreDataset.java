@@ -59,22 +59,41 @@ public class MetadataStoreDataset extends AbstractDataset {
     return GSON.fromJson(Bytes.toString(serialized), classOfT);
   }
 
-  // returns first that matches
   @Nullable
   public <T> T get(MDSKey id, Class<T> classOfT) {
+    Row row = table.get(id.getKey());
+    if (row == null || row.isEmpty()) {
+      return null;
+    }
+
+    byte[] value = row.get(COLUMN);
+    if (value == null) {
+      return null;
+    }
+
+    return deserialize(value, classOfT);
+  }
+
+  // returns first that matches
+  @Nullable
+  public <T> T getFirst(MDSKey id, Class<T> classOfT) {
     try {
       Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
-      Row row = scan.next();
-      if (row == null || row.isEmpty()) {
-        return null;
-      }
+      try {
+        Row row = scan.next();
+        if (row == null || row.isEmpty()) {
+          return null;
+        }
 
-      byte[] value = row.get(COLUMN);
-      if (value == null) {
-        return null;
-      }
+        byte[] value = row.get(COLUMN);
+        if (value == null) {
+          return null;
+        }
 
-      return deserialize(value, classOfT);
+        return deserialize(value, classOfT);
+      } finally {
+        scan.close();
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -115,38 +134,46 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
       Scanner scan = table.scan(startKey, stopKey);
-      Row next;
-      while ((limit-- > 0) && (next = scan.next()) != null) {
-        byte[] columnValue = next.get(COLUMN);
-        if (columnValue == null) {
-          continue;
-        }
-        T value = deserialize(columnValue, classOfT);
+      try {
+        Row next;
+        while ((limit-- > 0) && (next = scan.next()) != null) {
+          byte[] columnValue = next.get(COLUMN);
+          if (columnValue == null) {
+            continue;
+          }
+          T value = deserialize(columnValue, classOfT);
 
-        if (filter.apply(value)) {
-          MDSKey key = new MDSKey(next.getRow());
-          map.put(key, value);
+          if (filter.apply(value)) {
+            MDSKey key = new MDSKey(next.getRow());
+            map.put(key, value);
+          }
         }
+        return map;
+      } finally {
+        scan.close();
       }
-      return map;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  public <T> void deleteAll(MDSKey id) {
+  public void deleteAll(MDSKey id) {
     byte[] prefix = id.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
     try {
       Scanner scan = table.scan(prefix, stopKey);
-      Row next;
-      while ((next = scan.next()) != null) {
-        String columnValue = next.getString(COLUMN);
-        if (columnValue == null) {
-          continue;
+      try {
+        Row next;
+        while ((next = scan.next()) != null) {
+          String columnValue = next.getString(COLUMN);
+          if (columnValue == null) {
+            continue;
+          }
+          table.delete(new Delete(next.getRow()).add(COLUMN));
         }
-        table.delete(new Delete(next.getRow()).add(COLUMN));
+      } finally {
+        scan.close();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
