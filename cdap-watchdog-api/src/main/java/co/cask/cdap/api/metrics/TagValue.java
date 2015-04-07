@@ -24,16 +24,16 @@ import javax.annotation.Nullable;
  * Represents tag and its value.
  */
 public final class TagValue {
-  private final String tagName;
+  private final String name;
   private final String value;
 
-  public TagValue(String tagName, @Nullable String value) {
-    this.tagName = tagName;
+  public TagValue(String name, @Nullable String value) {
+    this.name = name;
     this.value = value;
   }
 
   public String getTagName() {
-    return tagName;
+    return name;
   }
 
   @Nullable
@@ -53,16 +53,16 @@ public final class TagValue {
 
     TagValue tagValue = (TagValue) o;
 
-    return tagName.equals(tagValue.tagName) &&  Objects.equal(value, tagValue.value);
+    return name.equals(tagValue.name) &&  Objects.equal(value, tagValue.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(tagName, value);
+    return Objects.hashCode(name, value);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("tagName", tagName).add("value", value).toString();
+    return Objects.toStringHelper(this).add("name", name).add("value", value).toString();
   }
 }

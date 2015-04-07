@@ -1,14 +1,5 @@
 CDAP-Adapter-Type: stream-conversion
 CDAP-Adapter-Program-Type: WORKFLOW
-CDAP-Adapter-Properties: {
- "frequency":"10m",
- "source.format.name":"string",
- "source.format.settings":"{}",
- "source.schema":"{\"type\": \"record\", \"name\": \"stringBody\",
- \"fields\": [ { \"name\":\"body\", \"type\":\"string\" } ] }"
- }
-CDAP-Source-Type: STREAM
-CDAP-Sink-Type: DATASET
 CDAP-Sink-Properties: {
  "dataset.class":"co.cask.cdap.api.dataset.lib.TimePartitionedFileSet",
  "input.format":"org.apache.avro.mapreduce.AvroKeyInputFormat",

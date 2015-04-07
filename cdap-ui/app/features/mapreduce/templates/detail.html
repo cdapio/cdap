@@ -26,6 +26,7 @@
     </div>
     <div ng-show="status == 'start' || status == 'stop' || status == 'STARTING' || status == 'STOPPING'"
          class="btn btn-default btn-md">
+      <span> {{status}} </span>
       <span class="fa fa-refresh fa-spin"></span>
     </div>
   </div>
@@ -35,20 +36,14 @@
 
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
-  </li>
-<!--   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.schedules" role="tab">Schedules</a>
+    <a ui-sref="mapreduce.detail.status" role="tab">Status</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.metadata" role="tab">Metadata</a>
-  </li> -->
+    <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
+  </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.history" role="tab">History</a>
   </li>
-<!--   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.resources" role="tab">Resources</a>
-  </li> -->
 </ul>
 
 <br />

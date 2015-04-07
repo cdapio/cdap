@@ -215,9 +215,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
       if (adapterService.getApplicationTemplateInfo(appId) != null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Cannot delete Application %s." +
-                                             " An AdapterType exists with a conflicting name.", appId));
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
 
         return;
       }
@@ -614,6 +613,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getDescription(), streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), streams, datasets, programs);
   }
 }

@@ -17,9 +17,15 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+
+import java.util.UUID;
 
 /**
  * App Template to test adapter lifecycle.
@@ -28,12 +34,12 @@ public class DummyTemplate extends ApplicationTemplate<DummyTemplate.Config> {
   public static final String NAME = "DummyTemplate";
 
   public static class Config {
-    private final String field1;
-    private final String field2;
+    private final String sourceName;
+    private final String crontab;
 
-    public Config(String field1, String field2) {
-      this.field1 = field1;
-      this.field2 = field2;
+    public Config(String sourceName, String crontab) {
+      this.sourceName = sourceName;
+      this.crontab = crontab;
     }
 
     @Override
@@ -47,21 +53,32 @@ public class DummyTemplate extends ApplicationTemplate<DummyTemplate.Config> {
 
       Config that = (Config) o;
 
-      return Objects.equal(field1, that.field1) && Objects.equal(field2, that.field2);
+      return Objects.equal(sourceName, that.sourceName) && Objects.equal(crontab, that.crontab);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(field1, field2);
+      return Objects.hashCode(sourceName, crontab);
     }
   }
 
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Application for to test Adapter lifecycle");
+    // make the description different each time to distinguish between deployed versions in unit tests
+    setDescription(UUID.randomUUID().toString());
     addWorkflow(new AdapterWorkflow());
     addMapReduce(new DummyMapReduceJob());
+  }
+
+  @Override
+  public void configureAdapter(String adapterName, Config configuration,
+                               AdapterConfigurer configurer) throws Exception {
+    Preconditions.checkNotNull(configuration.sourceName);
+    Preconditions.checkNotNull(configuration.crontab);
+
+    Schedule schedule = Schedules.createTimeSchedule("dummy.schedule", "a dummy schedule", configuration.crontab);
+    configurer.setSchedule(schedule);
   }
 
   /**

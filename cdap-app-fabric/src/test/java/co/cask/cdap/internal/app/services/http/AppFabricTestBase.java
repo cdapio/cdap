@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -32,6 +33,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -102,6 +104,7 @@ public abstract class AppFabricTestBase {
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
+  protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
@@ -318,22 +321,30 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName);
+    return deploy(application, null, null, appName, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null);
+    return deploy(application, apiVersion, namespace, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                @Nullable String appName) throws Exception {
+    return deploy(application, apiVersion, namespace, appName, null);
   }
 
   /**
-   * Deploys an application with (optionally) a defined app name
+   * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                       @Nullable String appName) throws Exception {
+                                       @Nullable String appName, @Nullable String appVersion) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+    if (appVersion != null) {
+      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
+    }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
@@ -430,17 +441,17 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected List<Map<String, String>> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
+  protected List<RunRecord> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
     int trial = 0;
     int workflowRuns = 0;
-    List<Map<String, String>> history;
+    List<RunRecord> history;
     String json;
     HttpResponse response;
     while (trial++ < retries) {
       response = doGet(url);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
-      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      history = new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
         return history;
@@ -612,5 +623,74 @@ public abstract class AppFabricTestBase {
     response = doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3,
                                       TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  protected String getRunnableStatus(String namespaceId, String appId, String runnableType, String runnableId)
+    throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
+                                                        "/status", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
+    return o.get("status");
+  }
+
+  protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
+    String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           namespace);
+    HttpResponse response = doPost(versionedScheduledSuspend);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
+    String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
+    HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                       namespace));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  protected List<ScheduleSpecification> getSchedules(String namespace, String appName, String workflowName)
+    throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
+    }.getType());
+  }
+
+  /**
+   * @deprecated Use {@link #getProgramRuns(Id.Program, String status)}.
+   */
+  @Deprecated
+  protected int getRuns(String runsUrl) throws Exception {
+    HttpResponse response = doGet(runsUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
+    return history.size();
+  }
+
+  protected void verifyProgramRuns(final Id.Program program, final String status) throws Exception {
+    verifyProgramRuns(program, status, 0);
+  }
+
+  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() > expected;
+      }
+    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+  }
+
+  protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
+                                program.getType().getCategoryName(), program.getId(), status);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    return new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
   }
 }

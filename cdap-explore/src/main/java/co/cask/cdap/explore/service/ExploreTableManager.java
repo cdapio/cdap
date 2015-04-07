@@ -85,7 +85,7 @@ public class ExploreTableManager {
    */
   public QueryHandle enableStream(Id.Stream streamID, StreamConfig streamConfig)
     throws UnsupportedTypeException, ExploreException, SQLException {
-    String streamName = streamID.getName();
+    String streamName = streamID.getId();
     Location streamLocation = streamConfig.getLocation();
     LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocation.toURI());
 
@@ -331,7 +331,7 @@ public class ExploreTableManager {
   }
 
   private String getStreamTableName(Id.Stream streamId) {
-    return cleanHiveTableName(String.format("stream_%s", streamId.getName()));
+    return cleanHiveTableName(String.format("stream_%s", streamId.getId()));
   }
 
   private String getDatasetTableName(Id.DatasetInstance datasetID) {
