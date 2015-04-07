@@ -74,7 +74,7 @@ public class StreamConversionTest extends TestBase {
         Assert.assertEquals(1, partitions.size());
         return partitions.iterator().next().getTime();
       }
-    }, 15L, TimeUnit.SECONDS, 3L, TimeUnit.SECONDS);
+    }, 15L, TimeUnit.SECONDS, 100L, TimeUnit.MILLISECONDS);
 
     // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
