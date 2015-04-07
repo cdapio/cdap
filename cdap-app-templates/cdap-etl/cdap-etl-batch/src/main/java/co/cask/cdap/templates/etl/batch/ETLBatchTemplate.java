@@ -94,6 +94,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     //TODO: Validate if source, transforms, sink can be tied together
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
+    configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                             String.format("Schedule for %s Adapter", adapterName),
                                             cronEntry));

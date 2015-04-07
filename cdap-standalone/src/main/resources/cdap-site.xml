@@ -111,12 +111,12 @@
     </property>
 
     <!--
-        Adapter Jar directory
+        Application Template Jar directory
     -->
     <property>
-      <name>app.adapter.dir</name>
+      <name>app.template.dir</name>
       <value>plugins</value>
-      <description>Directory where all archives for adapters are stored</description>
+      <description>Directory where all archives for application templates are stored</description>
     </property>
 
 </configuration>

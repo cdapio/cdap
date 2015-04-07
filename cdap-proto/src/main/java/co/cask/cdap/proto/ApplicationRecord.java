@@ -23,18 +23,24 @@ public class ApplicationRecord {
   private final String type;
   private final String id;
   private final String name;
+  private final String version;
   private final String description;
 
-  public ApplicationRecord(String name, String description) {
-    this("App", name, name, description);
+  public ApplicationRecord(String name, String version, String description) {
+    this("App", name, name, version, description);
   }
 
   @Deprecated
-  public ApplicationRecord(String type, String id, String name, String description) {
+  public ApplicationRecord(String type, String id, String name, String version, String description) {
     this.type = type;
     this.id = id;
     this.name = name;
+    this.version = version;
     this.description = description;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getType() {
