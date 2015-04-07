@@ -25,7 +25,6 @@ angular.module(PKG.name + '.feature.admin')
           })
           .then(function (res) {
 
-            console.log('test', res);
             var arr = [];
 
             angular.forEach(res, function(v, k) {
