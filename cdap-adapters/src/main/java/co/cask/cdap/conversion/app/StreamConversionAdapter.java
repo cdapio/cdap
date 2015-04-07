@@ -24,6 +24,8 @@ import com.google.gson.Gson;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Application that converts a stream into a partitioned file set.
  */
@@ -41,7 +43,6 @@ public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
   public void configureAdapter(String adapterName, AdapterArgs args,
                                AdapterConfigurer configurer) throws Exception {
     configurer.addRuntimeArgument(CONFIG_KEY, new Gson().toJson(args));
-    configurer.setSchedule(Schedules.createTimeSchedule("test", "adapter schedule", "* * * * *"));
 
     ConversionConfig config = args.getConfig();
     configurer.createDataset(config.getSinkName(), "timePartitionedFileSet", FileSetProperties.builder()
@@ -54,6 +55,9 @@ public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
       .setTableProperty("avro.schema.literal", config.getSinkSchema().toString())
       .build());
+
+    long minutes = TimeUnit.MINUTES.convert(config.getFrequency(), TimeUnit.MILLISECONDS);
+    configurer.setSchedule(Schedules.createTimeSchedule("test", "adapter schedule", "*/" + minutes + " * * * *"));
   }
 
 }

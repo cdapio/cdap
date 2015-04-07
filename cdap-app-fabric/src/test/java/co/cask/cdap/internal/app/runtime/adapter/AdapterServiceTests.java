@@ -159,6 +159,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertTrue(streamExists(Id.Stream.from(NAMESPACE, streamName)));
     Assert.assertTrue(datasetExists(Id.DatasetInstance.from(NAMESPACE, tableName)));
   }
+
   private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
