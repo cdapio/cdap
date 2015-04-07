@@ -14,44 +14,44 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
 /**
- * Represents measure in time with tags assigned to it
+ * Defines a scan over facts in a {@link FactTable}.
+ * <p/>
+ * NOTE: it will only scan those facts that at the time of writing had all given tags (some could have null values).
  */
-public final class Fact {
+public final class FactScan {
   private final List<TagValue> tagValues;
-  private final MeasureType measureType;
   private final String measureName;
-  private final TimeValue timeValue;
+  private final long startTs;
+  private final long endTs;
 
-  public Fact(List<TagValue> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
-    this.tagValues = ImmutableList.copyOf(tagValues);
-    this.measureType = measureType;
+  public FactScan(long startTs, long endTs, String measureName, List<TagValue> tagValues) {
+    this.endTs = endTs;
+    this.startTs = startTs;
     this.measureName = measureName;
-    this.timeValue = timeValue;
+    this.tagValues = ImmutableList.copyOf(tagValues);
   }
 
   public List<TagValue> getTagValues() {
     return tagValues;
   }
 
-  public MeasureType getMeasureType() {
-    return measureType;
-  }
-
   public String getMeasureName() {
     return measureName;
   }
 
-  public TimeValue getTimeValue() {
-    return timeValue;
+  public long getStartTs() {
+    return startTs;
+  }
+
+  public long getEndTs() {
+    return endTs;
   }
 }

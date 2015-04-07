@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.data2.dataset2.lib.cube;
 
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 
 import java.util.List;
 
 /**
- * Defines an aggregation in {@link co.cask.cdap.metrics.store.cube.DefaultCube}.
+ * Defines an aggregation in {@link DefaultCube}.
  * <p/>
  * Aggregation usually defines a list of tags, or dimensions that are extracted from the
  * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} when it is

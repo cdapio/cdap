@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Test base for {@link co.cask.cdap.metrics.store.timeseries.FactTable}.
+ * Test base for {@link co.cask.cdap.data2.dataset2.lib.timeseries.FactTable}.
  */
 public class FactTableTest {
 
