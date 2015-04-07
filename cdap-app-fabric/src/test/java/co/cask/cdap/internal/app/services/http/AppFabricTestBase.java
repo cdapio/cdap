@@ -185,11 +185,11 @@ public abstract class AppFabricTestBase {
     deleteNamespaces();
     streamService.stopAndWait();
     appFabricServer.stopAndWait();
+    metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-    metricsCollectionService.stopAndWait();
   }
 
   protected String getAPIVersion() {
