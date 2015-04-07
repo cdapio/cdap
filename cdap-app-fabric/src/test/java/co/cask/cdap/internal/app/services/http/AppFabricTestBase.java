@@ -28,6 +28,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
@@ -131,6 +132,7 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
+  private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
 
   private static final String adapterFolder = "adapter";
@@ -176,6 +178,7 @@ public abstract class AppFabricTestBase {
     streamService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
+    streamAdmin = injector.getInstance(StreamAdmin.class);
 
     createNamespaces();
   }
@@ -692,5 +695,13 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
+  }
+
+  protected boolean datasetExists(Id.DatasetInstance datasetID) throws Exception {
+    return dsOpService.exists(datasetID);
+  }
+
+  protected boolean streamExists(Id.Stream streamID) throws Exception {
+    return streamAdmin.exists(streamID);
   }
 }

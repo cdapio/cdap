@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.pipeline.AbstractStage;

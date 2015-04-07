@@ -18,6 +18,10 @@ package co.cask.cdap.api.templates;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.Schedule;
 
 import java.util.Map;
@@ -46,22 +50,69 @@ public interface AdapterConfigurer {
   /**
    * Set the resources the program should use.
    *
-   * @param resources
+   * @param resources the resources the program should use
    */
   public void setResources(Resources resources);
 
   /**
    * Add arguments to be passed to the program as runtime arguments.
    *
-   * @param arguments runtime arguments
+   * @param arguments the runtime arguments to add to the program
    */
   public void addRuntimeArguments(Map<String, String> arguments);
 
   /**
    * Add argument to be passed to the program as runtime arguments.
    *
-   * @param key key
-   * @param value value
+   * @param key the runtime argument key
+   * @param value the runtime argument value
    */
   public void addRuntimeArgument(String key, String value);
+
+  /**
+   * Adds a {@link Stream} to the Adapter. The stream will be created during adapter creation if it does not
+   * already exist.
+   *
+   * @param stream the {@link Stream} to add in the Adapter
+   */
+  void addStream(Stream stream);
+
+  /**
+   * Adds a {@link DatasetModule} to be deployed during adapter creation if it does not already exist.
+   *
+   * @param moduleName the name of the module to deploy
+   * @param moduleClass the class of the module
+   */
+  void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
+
+  /**
+   * Adds a {@link DatasetModule} to be deployed automatically during adapter creation if it does not already exist.
+   * Uses {@link Dataset} as a base for the {@link DatasetModule}.
+   * The module will have a single dataset type identical to the name of the class in the datasetClass parameter.
+   *
+   * @param datasetClass the class of the dataset, with the module name the same as the class in the parameter
+   */
+  void addDatasetType(Class<? extends Dataset> datasetClass);
+
+  /**
+   * Adds a Dataset instance to the Adapter. The Dataset instance will be created during adapter creation if it
+   * does not already exist.
+   *
+   * @param datasetName the name of the dataset instance
+   * @param typeName the name of the dataset type
+   * @param properties the properties of the dataset instance
+   */
+  void createDataset(String datasetName, String typeName, DatasetProperties properties);
+
+  /**
+   * Adds a Dataset instance to the Adapter. The Dataset instance will be created during adapter creation if it
+   * does not already exist.
+   *
+   * @param datasetName dataset instance name
+   * @param datasetClass dataset class to create the Dataset type from
+   * @param props dataset instance properties
+   */
+  void createDataset(String datasetName,
+                     Class<? extends Dataset> datasetClass,
+                     DatasetProperties props);
 }

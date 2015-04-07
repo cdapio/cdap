@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.deploy;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -30,10 +29,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationTemplateVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeployCleanupStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.EnableConcurrentRunsStage;
@@ -62,9 +58,6 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
   private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
@@ -92,26 +85,23 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     this.programTerminator = programTerminator;
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
-    this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
-    this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
     this.preferencesStore = preferencesStore;
   }
 
   @Override
-  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Namespace id, @Nullable String templateId,
+  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Namespace namespace, @Nullable String templateId,
                                                           DeploymentInfo input) throws Exception {
     Pipeline<ApplicationWithPrograms> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, id, templateId));
+    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, namespace, templateId));
     pipeline.addLast(new ApplicationTemplateVerificationStage(store, datasetFramework, adapterService));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace,
+                                                   datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    pipeline.addLast(new EnableConcurrentRunsStage(preferencesStore));
-    pipeline.setFinally(new DeployCleanupStage());
+    pipeline.setFinally(new EnableConcurrentRunsStage(preferencesStore));
     return pipeline.execute(input);
   }
 }

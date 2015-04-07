@@ -39,6 +39,7 @@ public final class AdapterSpecification {
   private final WorkerSpecification workerSpec;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, DatasetCreationSpec> datasets;
+  private final Map<String, String> datasetModules;
   private final int instances;
   // this is a json representation of some config that templates will use to configure
   // an adapter. At configuration time it will be translated into the correct object,
@@ -49,6 +50,7 @@ public final class AdapterSpecification {
                                ScheduleSpecification scheduleSpec, WorkerSpecification workerSpec,
                                Map<String, StreamSpecification> streams,
                                Map<String, DatasetCreationSpec> datasets,
+                               Map<String, String> datasetModules,
                                int instances, JsonElement config) {
     this.name = name;
     this.description = description;
@@ -57,6 +59,8 @@ public final class AdapterSpecification {
     this.workerSpec = workerSpec;
     this.streams = streams == null ? ImmutableMap.<String, StreamSpecification>of() : ImmutableMap.copyOf(streams);
     this.datasets = datasets == null ? ImmutableMap.<String, DatasetCreationSpec>of() : ImmutableMap.copyOf(datasets);
+    this.datasetModules = datasetModules == null ?
+      ImmutableMap.<String, String>of() : ImmutableMap.copyOf(datasetModules);
     this.instances = instances;
     this.config = config;
   }
@@ -91,6 +95,10 @@ public final class AdapterSpecification {
     return datasets;
   }
 
+  public Map<String, String> getDatasetModules() {
+    return datasetModules;
+  }
+
   public int getInstances() {
     return instances;
   }
@@ -114,6 +122,7 @@ public final class AdapterSpecification {
     private WorkerSpecification workerSpec;
     private Map<String, StreamSpecification> streams;
     private Map<String, DatasetCreationSpec> datasets;
+    private Map<String, String> datasetModules;
     private int instances;
     private JsonElement config;
 
@@ -152,6 +161,11 @@ public final class AdapterSpecification {
       return this;
     }
 
+    public Builder setDatasetModules(Map<String, String> modules) {
+      this.datasetModules = modules;
+      return this;
+    }
+
     public Builder setConfig(JsonElement config) {
       this.config = config;
       return this;
@@ -164,7 +178,7 @@ public final class AdapterSpecification {
 
     public AdapterSpecification build() {
       return new AdapterSpecification(name, description, template, scheduleSpec, workerSpec,
-                                      streams, datasets, instances, config);
+                                      streams, datasets, datasetModules, instances, config);
     }
   }
 
@@ -187,13 +201,14 @@ public final class AdapterSpecification {
       Objects.equal(workerSpec, that.workerSpec) &&
       Objects.equal(streams, that.streams) &&
       Objects.equal(datasets, that.datasets) &&
+      Objects.equal(datasetModules, that.datasetModules) &&
       Objects.equal(instances, that.instances);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(name, description, template, config, scheduleSpec, workerSpec,
-                            streams, datasets, instances);
+                            streams, datasets, datasetModules, instances);
   }
 
   @Override
@@ -207,6 +222,7 @@ public final class AdapterSpecification {
       .add("workerSpec", workerSpec)
       .add("streams", streams)
       .add("datasets", datasets)
+      .add("datasetModules", datasetModules)
       .add("instances", instances)
       .toString();
   }
