@@ -75,7 +75,9 @@ public final class MapReduceContextProvider {
                createProgram(),
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
-               contextConfig.getOutputDataSet());
+               contextConfig.getOutputDataSet(),
+               contextConfig.getAdapterName()
+        );
     }
     return context;
   }
