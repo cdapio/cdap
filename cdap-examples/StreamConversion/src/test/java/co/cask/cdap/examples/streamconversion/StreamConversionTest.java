@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Calendar;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +52,7 @@ public class StreamConversionTest extends TestBase {
     streamWriter.send("17");
 
     // record the current time
-    long startTime = System.currentTimeMillis();
+    final long startTime = System.currentTimeMillis();
 
     // run the mapreduce
     MapReduceManager mapReduceManager =
@@ -59,11 +60,16 @@ public class StreamConversionTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
-    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
-    TimePartitionedFileSet converted = fileSetManager.get();
-    Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
-    Assert.assertEquals(1, partitions.size());
-    long partitionTime = partitions.iterator().next().getTime();
+    long partitionTime = testWithRetry(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
+        TimePartitionedFileSet converted = fileSetManager.get();
+        Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
+        Assert.assertEquals(1, partitions.size());
+        return partitions.iterator().next().getTime();
+      }
+    }, 5, 3L, TimeUnit.SECONDS);
 
     // we must round down the start time to the full minute before we compare the partition time
     Calendar calendar = Calendar.getInstance();
@@ -98,5 +104,21 @@ public class StreamConversionTest extends TestBase {
     Assert.assertEquals(hour, results.getInt(4));
     Assert.assertEquals(minute, results.getInt(5));
     Assert.assertFalse(results.next());
+  }
+
+  private <T> T testWithRetry(Callable<T> callable, int timesToRetry,
+                              long waitBeforeRetry, TimeUnit timeUnit) throws Exception {
+
+    AssertionError error = null;
+    for (int retry = 0; retry < timesToRetry; retry++) {
+      try {
+        return callable.call();
+      } catch (AssertionError e) {
+        // sleep, then retry
+        timeUnit.sleep(waitBeforeRetry);
+        error = e;
+      }
+    }
+    throw error;
   }
 }
