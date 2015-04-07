@@ -189,7 +189,7 @@ public class AdapterService extends AbstractIdleService {
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public AdapterStatus setAdapterStatus(Id.Namespace namespace, String adapterName, AdapterStatus status)
+  private AdapterStatus setAdapterStatus(Id.Namespace namespace, String adapterName, AdapterStatus status)
     throws AdapterNotFoundException {
     AdapterStatus existingStatus = store.setAdapterStatus(namespace, adapterName, status);
     if (existingStatus == null) {
@@ -370,7 +370,9 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
-    // TODO: implement
+    String workerName = adapterSpec.getWorkerSpec().getName();
+    Id.Program workerId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workerName);
+    //TODO: Start Worker with correct properties
   }
 
   private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {

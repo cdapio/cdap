@@ -39,9 +39,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -59,6 +56,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
+
   @Inject
   public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
                             NamespaceAdmin namespaceAdmin) {
