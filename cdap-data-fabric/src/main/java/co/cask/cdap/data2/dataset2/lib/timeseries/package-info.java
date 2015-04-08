@@ -17,4 +17,4 @@
 /**
  * This package contains {@link FactTable} that handle storing time series {@link Fact}s.
  */
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.data2.dataset2.lib.timeseries;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.common.utils.ImmutablePair;

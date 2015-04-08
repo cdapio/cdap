@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,38 +14,44 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.data2.dataset2.lib.timeseries;
 
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import com.google.common.collect.ImmutableList;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
- * An single result item returned by {@link FactScanner}.
+ * Represents measure in time with tags assigned to it
  */
-public final class FactScanResult implements Iterable<TimeValue> {
-  private final String measureName;
+public final class Fact {
   private final List<TagValue> tagValues;
-  private final Iterable<TimeValue> timeValues;
+  private final MeasureType measureType;
+  private final String measureName;
+  private final TimeValue timeValue;
 
-  public FactScanResult(String measureName, List<TagValue> tagValues, Iterable<TimeValue> timeValues) {
+  public Fact(List<TagValue> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
+    this.tagValues = ImmutableList.copyOf(tagValues);
+    this.measureType = measureType;
     this.measureName = measureName;
-    this.tagValues = tagValues;
-    this.timeValues = timeValues;
-  }
-
-  public String getMeasureName() {
-    return measureName;
+    this.timeValue = timeValue;
   }
 
   public List<TagValue> getTagValues() {
     return tagValues;
   }
 
-  @Override
-  public Iterator<TimeValue> iterator() {
-    return timeValues.iterator();
+  public MeasureType getMeasureType() {
+    return measureType;
+  }
+
+  public String getMeasureName() {
+    return measureName;
+  }
+
+  public TimeValue getTimeValue() {
+    return timeValue;
   }
 }
