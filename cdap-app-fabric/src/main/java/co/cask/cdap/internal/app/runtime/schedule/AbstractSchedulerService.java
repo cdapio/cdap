@@ -166,7 +166,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
     }
 
-    scheduler.schedule(programId, programType, schedule);
+    scheduler.schedule(programId, programType, schedule, properties);
     if (isLazyStart()) {
       try {
         scheduler.suspendSchedule(programId, programType, schedule.getName());
