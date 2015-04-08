@@ -25,30 +25,21 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
+import co.cask.cdap.proto.QueryRequest;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +61,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static final String DOT_FLOW_ESCAPED = DOT_FLOW.replaceAll("\\.", "~");
   private static final String DOT_RUN_ESCAPED = DOT_RUN.replaceAll("\\.", "~");
   private static final String DOT_FLOWLET_ESCAPED = DOT_FLOWLET.replaceAll("\\.", "~");
+  private static final Gson GSON = new Gson();
 
   private static final List<String> FLOW_TAGS = ImmutableList.of(Tag.NAMESPACE, Tag.APP, Tag.FLOW, Tag.FLOWLET);
   private static final List<String> FLOW_TAGS_HUMAN = ImmutableList.of("namespace", "app", "flow", "flowlet");
@@ -390,6 +382,77 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&groupBy=namespace,flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
+  @Test
+  public void testAggregateQueryBatch() throws Exception {
+
+    Map<String, List<QueryRequest>> batchQueryInput = Maps.newHashMap();
+
+    QueryRequest query1 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
+                                                         "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
+
+    QueryRequest query2 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
+                                                         "flowlet", "counter"),
+                                           ImmutableList.of("system.reads"),
+                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+
+    QueryRequest query3 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
+                                                         "flowlet", "*"),
+                                           ImmutableList.of("system.reads"),
+                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+
+    QueryRequest query4 = new QueryRequest(ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "flow",
+                                                           "WordCounter", "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads", "system.writes"),
+                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+
+    // test batching of multiple queries under a single query-id
+    batchQueryInput.put("testBatch", ImmutableList.of(query1, query2));
+    ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
+      ImmutableMap.of("testBatch", ImmutableList.<ImmutableList<QueryResult>>of(
+        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1))));
+
+    batchTest(batchQueryInput, expected);
+
+    // test batching of multiple queries under a single query-id, with one query having multiple metrics
+    batchQueryInput.clear();
+    batchQueryInput.put("testBatch2", ImmutableList.of(query3, query4));
+    expected = ImmutableMap.of("testBatch2", ImmutableList.<ImmutableList<QueryResult>>of(
+      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 4)),
+      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
+                                    new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2))
+    ));
+
+    batchTest(batchQueryInput, expected);
+
+    // test batching with multiple query-id
+    batchQueryInput.clear();
+    batchQueryInput.put("testBatch1", ImmutableList.of(query3));
+    batchQueryInput.put("testBatch2", ImmutableList.of(query4));
+    expected = ImmutableMap.of("testBatch1", ImmutableList.of(
+                                 ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
+                                                                  "system.reads", 1, 4))),
+                               "testBatch2", ImmutableList.of(
+        ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
+                         new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2)))
+    );
+
+    batchTest(batchQueryInput, expected);
+
+    // test invalid request - query without any query Params and body content
+    HttpResponse response = doPost("/v3/metrics/query", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+
+  private Map<String, String> getContextMap(String... entries) {
+    Map<String, String> contextMap = Maps.newHashMap();
+    for (int i = 0; i < entries.length; i += 2) {
+      contextMap.put(entries[i], entries[i + 1]);
+    }
+    return contextMap;
+  }
 
   @Test
   public void testTimeRangeQueryBatch() throws Exception {
@@ -397,33 +460,29 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
 
-    verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&start=" + start + "&end="
-        + end, 2, 3);
+    QueryRequest query1 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1",
+                                                         "flow", "WCounter", "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                           ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
 
-    JsonObject q1 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                       "flowlet", "splitter"),
-                                       ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                       ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
+    QueryRequest query2 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1",
+                                                         "flow", "WCounter"), ImmutableList.of("system.reads"),
+                                           ImmutableList.of("flowlet"),
+                                           ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
 
-    JsonObject q2 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter"),
-                                       ImmutableList.of("system.reads"), ImmutableList.<String>of("flowlet"),
-                                       ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
-    JsonArray queries = new JsonArray();
-    queries.add(q1);
-    queries.add(q2);
-    JsonObject taggedQuery = new JsonObject();
-    taggedQuery.add("timeRangeBatch", queries);
     ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
-      ImmutableMap.of("timeRangeBatch", ImmutableList.<ImmutableList<QueryResult>>of(
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of("flowlet", "counter"),
-                                                      "system.reads", 1, 1),
-                                      new QueryResult(ImmutableMap.<String, String>of("flowlet", "splitter"),
-                                                      "system.reads", 2, 3)
-                                      )));
-    batchTest(taggedQuery, expected);
+      ImmutableMap.of("timeRangeBatch", ImmutableList.of(
+        ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+        ImmutableList.of(new QueryResult(ImmutableMap.of("flowlet", "counter"),
+                                         "system.reads", 1, 1),
+                         new QueryResult(ImmutableMap.of("flowlet", "splitter"),
+                                         "system.reads", 2, 3)
+        )));
+
+    List<QueryRequest> queryRequests = ImmutableList.of(query1, query2);
+    Map<String, List<QueryRequest>> batchQueries = ImmutableMap.<String, List<QueryRequest>>of("timeRangeBatch",
+                                                                                       queryRequests);
+    batchTest(batchQueries, expected);
   }
 
   @Test
@@ -737,97 +796,9 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                       "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
-  @Test
-  public void testAggregateQueryBatch() throws Exception {
-    JsonObject q1 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                       "flowlet", "splitter"),
-                                       ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                       ImmutableMap.of("aggregate", "true"));
-    JsonObject q2 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                       "flowlet", "counter"),
-                                       ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                       ImmutableMap.of("aggregate", "true"));
-    JsonArray queries = new JsonArray();
-    queries.add(q1);
-    queries.add(q2);
-    JsonObject taggedQuery = new JsonObject();
-    taggedQuery.add("testBatch", queries);
-    ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
-      ImmutableMap.of("testBatch", ImmutableList.<ImmutableList<QueryResult>>of(
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1))));
-
-    q1 = getSingleQueryJson(ImmutableMap.of("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                            "flowlet", "*"),
-                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                            ImmutableMap.of("aggregate", "true"));
-
-    q2 = getSingleQueryJson(ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "flow", "WordCounter",
-                                            "flowlet", "splitter"),
-                            ImmutableList.of("system.reads", "system.writes"), ImmutableList.<String>of(),
-                            ImmutableMap.of("aggregate", "true"));
-    queries = new JsonArray();
-    queries.add(q1);
-    queries.add(q2);
-    batchTest(taggedQuery, expected);
-    taggedQuery = new JsonObject();
-    taggedQuery.add("testBatch2", queries);
-    expected = ImmutableMap.of("testBatch2", ImmutableList.<ImmutableList<QueryResult>>of(
-      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 4)),
-      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
-                                    new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2))
-    ));
-    batchTest(taggedQuery, expected);
-    taggedQuery = new JsonObject();
-    queries = new JsonArray();
-    queries.add(q1);
-    taggedQuery.add("testBatch1", queries);
-    queries = new JsonArray();
-    queries.add(q2);
-    taggedQuery.add("testBatch2", queries);
-
-    expected = ImmutableMap.of("testBatch1", ImmutableList.<ImmutableList<QueryResult>>of(
-                                 ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(),
-                                                                               "system.reads", 1, 4))),
-                               "testBatch2", ImmutableList.<ImmutableList<QueryResult>>of(
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
-                                      new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2)))
-    );
-    batchTest(taggedQuery, expected);
-
-    // test invalid request - query without any query Params and body content
-    HttpResponse response = doPost("/v3/metrics/query", null);
-    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
-  }
-
-  JsonObject getSingleQueryJson(Map<String, String> tags, List<String> metrics,
-                               List<String> groupBy, Map<String, String> timeRange) {
-    JsonObject query = new JsonObject();
-    JsonObject tagsJson = new JsonObject();
-    for (Map.Entry<String, String> entry : tags.entrySet()) {
-      tagsJson.addProperty(entry.getKey(), entry.getValue());
-    }
-    query.add("tags", tagsJson);
-    JsonArray metricsArray = new JsonArray();
-    for (String metric : metrics) {
-      metricsArray.add(new JsonPrimitive(metric));
-    }
-    query.add("metrics", metricsArray);
-
-    JsonArray groupByArray = new JsonArray();
-    for (String group : groupBy) {
-      groupByArray.add(new JsonPrimitive(group));
-    }
-    query.add("groupBy", groupByArray);
-
-    JsonObject timerangeJson = new JsonObject();
-    for (Map.Entry<String, String> entry : timeRange.entrySet()) {
-      timerangeJson.addProperty(entry.getKey(), entry.getValue());
-    }
-    query.add("timeRange", timerangeJson);
-    return query;
-  }
-
+  /**
+   * Used to test time range queries when requests are batched
+   */
   class QueryResult {
     Map<String, String> grouping;
     String metricName;
@@ -858,22 +829,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-
-  private  void batchTest(JsonObject batchRequests,
+  private  void batchTest(Map<String, List<QueryRequest>> jsonBatch,
                           ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected) throws Exception {
     String url = "/v3/metrics/query";
-    HttpURLConnection urlConn = openURL(MetricsSuiteTestBase.getEndPoint(url).toURL(),
-                                        HttpMethod.POST);
-    urlConn.setDoOutput(true);
-    String jsonBatch = new Gson().toJson(batchRequests);
-    urlConn.getOutputStream().write(jsonBatch.getBytes());
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
-
-    String result = IOUtils.toString(urlConn.getInputStream(), Charsets.UTF_8);
     Map<String, List<MetricQueryResult>> results =
-      new Gson().fromJson(result, new TypeToken<Map<String, List<MetricQueryResult>>>() {
+      post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, List<MetricQueryResult>>>() {
       }.getType());
-    urlConn.disconnect();
+
     // check we have all the keys
     Assert.assertEquals(expected.keySet(), results.keySet());
     for (Map.Entry<String, List<MetricQueryResult>> entry : results.entrySet()) {
@@ -881,21 +843,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       List<MetricQueryResult> actualQueryResult = entry.getValue();
       // check list length size
       Assert.assertEquals(expectedQueryResult.size(), actualQueryResult.size());
-      for (int i = 0; i < expectedQueryResult.size(); i++) {
+
+      for (int i = 0; i < actualQueryResult.size(); i++) {
         compareQueryResults(expectedQueryResult.get(i), actualQueryResult.get(i));
       }
     }
   }
 
   private void compareQueryResults(ImmutableList<QueryResult> expected, MetricQueryResult actual) {
-    MetricQueryResult.TimeSeries[] actualTimeSeries = actual.getSeries();
-    sortTimeSeriesBasedOnGrouping(actualTimeSeries);
-    // check length
-    Assert.assertEquals(expected.size(), actualTimeSeries.length);
-    for (int i = 0; i < expected.size(); i++) {
 
-      Assert.assertEquals(expected.get(i).getMetricName(), actualTimeSeries[i].getMetricName());
-      Assert.assertEquals(expected.get(i).getGrouping(), actualTimeSeries[i].getGrouping());
+    MetricQueryResult.TimeSeries[] actualTimeSeries = actual.getSeries();
+    for (int i = 0; i < actualTimeSeries.length; i++) {
+
+      QueryResult expectedQueryResult = findExpectedQueryResult(expected, actualTimeSeries[i]);
+      Assert.assertNotNull(expectedQueryResult);
       MetricQueryResult.TimeValue[] values = actualTimeSeries[i].getData();
       long numPoints = 0;
       long totalSum = 0;
@@ -903,45 +864,27 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         numPoints++;
         totalSum += tv.getValue();
       }
-      Assert.assertEquals(expected.get(i).getNumPoints(), numPoints);
-      Assert.assertEquals(expected.get(i).getTotalSum(), totalSum);
+      Assert.assertEquals(expectedQueryResult.getNumPoints(), numPoints);
+      Assert.assertEquals(expectedQueryResult.getTotalSum(), totalSum);
     }
   }
 
-  private void sortTimeSeriesBasedOnGrouping(MetricQueryResult.TimeSeries[] actualTimeSeries) {
-     Arrays.sort(actualTimeSeries, new Comparator<MetricQueryResult.TimeSeries>() {
-      @Override
-      public int compare(MetricQueryResult.TimeSeries t1, MetricQueryResult.TimeSeries t2) {
-        if (t1.getGrouping().size() == 0 && t2.getGrouping().size() == 0) {
-          return 0;
-        }
-        Map<String, String> t1Map = t1.getGrouping();
-        Map<String, String> t2Map = t2.getGrouping();
-        for (Map.Entry<String, String> entry1 : t1Map.entrySet()) {
-          for (Map.Entry<String, String> entry2 : t2Map.entrySet()) {
-            if (entry1.getKey().equals(entry2.getKey())) {
-              return entry1.getValue().compareTo(entry2.getValue());
-            } else {
-              return entry1.getKey().compareTo(entry2.getValue());
-            }
-          }
-        }
-        return 1;
+  private QueryResult findExpectedQueryResult(ImmutableList<QueryResult> expected,
+                                              MetricQueryResult.TimeSeries actualTimeSeries) {
+    for (QueryResult result : expected) {
+      if (result.getGrouping().equals(actualTimeSeries.getGrouping()) &&
+        result.getMetricName().equals(actualTimeSeries.getMetricName())) {
+        return result;
       }
-    });
-  }
+    }
 
-  private HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
-    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setRequestMethod(method.getName());
-    return urlConn;
+    return null;
   }
 
   private void verifyAggregateQueryResult(String url, List<Long> expectedValue) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
     for (int i = 0; i < queryResult.getSeries().length; i++) {
-      Assert.assertEquals((Long) expectedValue.get(i),
-                          (Long) queryResult.getSeries()[i].getData()[0].getValue());
+      Assert.assertEquals(expectedValue.get(i), (Long) queryResult.getSeries()[i].getData()[0].getValue());
     }
   }
 
@@ -1012,16 +955,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private <T> T post(String url, Type type) throws Exception {
-    HttpResponse response = doPost(url, null);
+    return post(url, null, type);
+  }
+
+  private <T> T post(String url, String body, Type type) throws Exception {
+    HttpResponse response = doPost(url, body);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return new Gson().fromJson(EntityUtils.toString(response.getEntity(), Charsets.UTF_8), type);
+    return GSON.fromJson(EntityUtils.toString(response.getEntity(), Charsets.UTF_8), type);
   }
 
   private void verifySearchResult(String url, List<String> expectedValues) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
     }.getType());
     // We want to make sure expectedValues are in the response. Response may also have other things that denote
     // null values for tags - we'll ignore them.
@@ -1035,7 +982,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
     }.getType());
     Assert.assertEquals(expectedValues.size(), reply.size());
     for (int i = 0; i < expectedValues.size(); i++) {
@@ -1047,7 +994,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-    List<Map<String, String>> reply = new Gson().fromJson(result,
+    List<Map<String, String>> reply = GSON.fromJson(result,
                                                           new TypeToken<List<Map<String, String>>>() { }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
@@ -1056,7 +1003,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
+    }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
 

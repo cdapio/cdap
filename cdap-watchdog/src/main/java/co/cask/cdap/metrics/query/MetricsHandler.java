@@ -30,6 +30,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.proto.MetricQueryResult;
+import co.cask.cdap.proto.QueryRequest;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -300,7 +301,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       parseTimeRange(queryRequest.getTimeRange(), builder);
       MetricDataQuery queryTimeParams = builder.build();
 
-      Map<String, String> tagsSliceBy = humanToTagNames(queryRequest.getTags());
+      Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
       long startTs = queryTimeParams.getStartTs();
       long endTs = queryTimeParams.getEndTs();
@@ -311,7 +312,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
                                                     queryTimeParams.getLimit(), metric,
                                                     // todo: figure out MetricType
                                                     MetricType.COUNTER, tagsSliceBy,
-                                                    queryRequest.getGroupBy(),
+                                                    transformGroupByTags(queryRequest.getGroupBy()),
                                                     queryTimeParams.getInterpolator());
         Collection<MetricTimeSeries> timeSerieses = metricStore.query(query);
 
@@ -327,6 +328,29 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private Map<String, String> transformTagMap(Map<String, String> tags) {
+    return Maps.transformValues(tags, new Function<String, String>() {
+      @Override
+      public String apply(String value) {
+        if (ANY_TAG_VALUE.equals(value)) {
+          return null;
+        } else {
+          return value;
+        }
+      }
+    });
+  }
+
+  private List<String> transformGroupByTags(List<String> groupBy) {
+    return Lists.transform(groupBy, new Function<String, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable String input) {
+        String replacement = humanToTagName.get(input);
+        return replacement != null ? replacement : input;
+      }
+    });
+  }
   private void parseTimeRange(Map<String, String> timeRange, MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
 
     if (timeRange.containsKey(AGGREGATE) && timeRange.get(AGGREGATE).equals("true")) {
@@ -675,7 +699,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   /**
    * Format for metrics query in batched queries
    */
-  class QueryRequest {
+  /*class QueryRequest {
     Map<String, String> tags;
     List<String> metrics;
     List<String> groupBy;
@@ -724,5 +748,5 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     public Map<String, String> getTimeRange() {
       return timeRange;
     }
-  }
+  }*/
 }
