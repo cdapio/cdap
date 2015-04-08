@@ -27,9 +27,9 @@
     <a role="tab">Input</a>
   </li>
 
-  <li role="presentation" ng-class="{active: activeTab === 1}" ng-click="activeTab=1">
+  <!-- <li role="presentation" ng-class="{active: activeTab === 1}" ng-click="activeTab=1">
     <a role="tab">Process</a>
-  </li>
+  </li> -->
 
   <li role="presentation" ng-class="{active: activeTab === 2}" ng-click="activeTab=2">
     <a role="tab">Data</a>
@@ -66,7 +66,9 @@
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
-        <td></td>
+        <td>
+          {{ input.max }}
+        </td>
       </tr>
     </tbody>
   </table>

@@ -16,25 +16,13 @@ angular.module(PKG.name + '.feature.flows')
         angular.forEach(res.connections, function(v) {
           if (v.targetName === flowletid) {
             $scope.inputs.push({
-              name: v.sourceName
+              name: v.sourceName,
+              max: 0
             });
           }
         });
 
         if ($scope.inputs.length > 0) {
-          // INPUT METRICS
-          // dataSrc
-          //   .poll({
-          //     _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-          //                   + '.app.' + $state.params.appId
-          //                   + '.flow.' + $state.params.programId
-          //                   + '.flowlet.' + $scope.inputs[0].name
-          //                   + '&metric=system.process.events.out&start=now-60s&count=60',
-          //     method: 'POST'
-          //   }, function (res) {
-          //     updateInput(res.series[0].data);
-
-          //   });
 
           angular.forEach($scope.inputs, function (input) {
             // POLLING GRAPH
@@ -70,6 +58,7 @@ angular.module(PKG.name + '.feature.flows')
                     }
                   ];
 
+                  input.max = Math.max.apply(Math, v.map(function(o){return o.y;}));
                 }
 
               });
