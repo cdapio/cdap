@@ -21,6 +21,14 @@ package co.cask.cdap.app.metrics;
  * todo: extract TaskType enum in its own class
  */
 public final class MapReduceMetrics {
+  public static final String METRIC_INPUT_RECORDS = "process.entries.in";
+  public static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
+  public static final String METRIC_BYTES = "process.bytes";
+  public static final String METRIC_COMPLETION = "process.completion";
+  public static final String METRIC_TASK_COMPLETION = "process.completion.task";
+  public static final String METRIC_USED_CONTAINERS = "resources.used.containers";
+  public static final String METRIC_USED_MEMORY = "resources.used.memory";
+
   /**
    * Type of map reduce task.
    */

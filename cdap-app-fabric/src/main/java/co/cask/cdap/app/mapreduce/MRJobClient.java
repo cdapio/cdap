@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package co.cask.cdap.app.mapreduce;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -22,6 +22,8 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
+import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -53,7 +55,7 @@ public class MRJobClient {
     int numRetries = cConf.getInt(Constants.AppFabric.MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES);
     this.hConf = new Configuration(hConf);
     // Override a cloned hConf's configuration of IPC Client max retries based upon value in CConf to avoid longer
-    // amounts of retrying (especially when the Job History Server is not installed)
+    // amounts of retrying (this is helpful especially when the Job History Server is not installed)
     this.hConf.setInt(CommonConfigurationKeysPublic.IPC_CLIENT_CONNECT_MAX_RETRIES_KEY, numRetries);
   }
 
@@ -64,6 +66,8 @@ public class MRJobClient {
    * @throws NotFoundException if a Job with the given runId is not found.
    */
   public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
+    Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
+
     JobClient jobClient;
     JobStatus[] jobs;
     try {
