@@ -53,6 +53,7 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -158,52 +159,39 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
                                                                         streamAdmin, txSystemClient);
-    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
-    controller.addListener(new AbstractListener() {
+    mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
       @Override
-      public void init(ProgramController.State state, @Nullable Throwable cause) {
-        store.setStart(program.getId(), runId.getId(), TimeUnit.SECONDS.convert(System.currentTimeMillis(),
-                                                                                TimeUnit.MILLISECONDS));
-        if (state == ProgramController.State.COMPLETED) {
-          completed();
+      public void starting() {
+        //Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        if (state == ProgramController.State.ERROR) {
-          error(controller.getFailureCause());
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        if (from == Service.State.STOPPING) {
+          // Service was killed
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.KILLED.getRunStatus());
+        } else {
+          // Service completed by itself.
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.COMPLETED.getRunStatus());
         }
       }
 
       @Override
-      public void completed() {
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.COMPLETED.getRunStatus());
-      }
-
-      @Override
-      public void killed() {
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.KILLED.getRunStatus());
-      }
-
-      @Override
-      public void suspended() {
-        store.setSuspend(program.getId(), runId.getId());
-      }
-
-      @Override
-      public void resuming() {
-        store.setResume(program.getId(), runId.getId());
-      }
-
-      @Override
-      public void error(Throwable cause) {
-        LOG.info("MapReduce Program stopped with error {}, {}", program.getId(), runId, cause);
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+      public void failed(Service.State from, Throwable failure) {
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+
+    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
     LOG.info("Starting MapReduce Job: {}", context.toString());
     // if security is not enabled, start the job as the user we're using to access hdfs with.

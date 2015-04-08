@@ -26,6 +26,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -77,12 +78,13 @@ public final class RunIds {
   }
 
   /**
-   * @return time in milliseconds from the UUID if it is a time-based UUID, -1 otherwise.
+   * @return time from the UUID if it is a time-based UUID, -1 otherwise.
    */
-  public static long getTimeMillis(RunId runId) {
+  public static long getTime(RunId runId, TimeUnit timeUnit) {
     UUID uuid = UUID.fromString(runId.getId());
     if (uuid.version() == 1 && uuid.variant() == 2) {
-      return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
+      long timeInMilliseconds = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
+      return timeUnit.convert(timeInMilliseconds, TimeUnit.MILLISECONDS);
     }
     return -1;
   }
