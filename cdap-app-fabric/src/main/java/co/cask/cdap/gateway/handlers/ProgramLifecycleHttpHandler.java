@@ -26,7 +26,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -41,9 +40,7 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Containers;
@@ -64,7 +61,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -1769,37 +1765,5 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } finally {
       client.close();
     }
-  }
-
-  private BasicArguments getSystemArguments(String namespaceId) {
-    // Get Configs from Cconf
-    Map<String, String> systemConfigsFromCDAP = getDefaultSystemArguments();
-    // Override the Configs from configs at namespace level.
-    return new BasicArguments(getResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
-  }
-
-  // Get default system arguments from Cconfiguration.
-  private Map<String, String> getDefaultSystemArguments() {
-
-    Map<String, String> configs = Maps.newHashMap();
-
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getDefaultQueue();
-    if (schedulerQueue != null) {
-      configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-
-    return configs;
-  }
-
-  // Get system arguments resolved at namespace level, fall back to default
-  private Map<String, String> getResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
-    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-    return resolvedConfigs;
   }
 }
