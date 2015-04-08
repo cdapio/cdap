@@ -32,10 +32,14 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
+import jline.internal.Log;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -54,6 +58,7 @@ import java.util.concurrent.ExecutionException;
  * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramWorkflowRunner.class);
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
@@ -86,15 +91,13 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
    * @return a {@link Callable} of {@link RuntimeContext} for this {@link Program}
    */
   protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> systemArgument : systemArguments) {
-      builder.put(systemArgument);
-    }
-    builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
-    builder.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
+    Map<String, String> systemArgumentsMap = Maps.newHashMap();
+    systemArgumentsMap.putAll(systemArguments.asMap());
+    systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
-      new BasicArguments(builder.build()),
+      new BasicArguments(ImmutableMap.copyOf(systemArgumentsMap)),
       new BasicArguments(RuntimeArguments.extractScope(Scope.scopeFor(program.getType().getCategoryName()), name,
                                                        userArguments.asMap()))
     );
