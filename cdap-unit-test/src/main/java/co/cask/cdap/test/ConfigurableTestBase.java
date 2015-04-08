@@ -51,11 +51,9 @@ import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -67,12 +65,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
-import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
-import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -84,7 +76,6 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultProcedureClient;
@@ -92,11 +83,13 @@ import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalNamespaceClient;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -106,10 +99,9 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -117,9 +109,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
@@ -136,40 +127,25 @@ public class ConfigurableTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static int startCount;
-  private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static AppFabricClient appFabricClient;
   private static SchedulerService schedulerService;
-  private static DatasetFramework datasetFramework;
-  private static TransactionSystemClient txSystemClient;
-  private static DiscoveryServiceClient discoveryClient;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
-  private static NamespaceAdmin namespaceAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
 
   private static TestManager testManager;
+  private static NamespaceAdmin namespaceAdmin;
 
   private static TestManager getTestManager() {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager;
-  }
-
-  /**
-   * Creates a Namespace.
-   *
-   * @param namespace the namespace to create
-   * @throws Exception
-   */
-  protected static void createNamespace(Id.Namespace namespace) throws Exception {
-    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   @Before
@@ -205,6 +181,7 @@ public class ConfigurableTestBase {
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+    cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
 
@@ -226,7 +203,7 @@ public class ConfigurableTestBase {
     if (OSDetector.isWindows()) {
       File tmpDir = tmpFolder.newFolder();
       File binDir = new File(tmpDir, "bin");
-      binDir.mkdir();
+      Assert.assertTrue(binDir.mkdirs());
 
       copyTempFile("hadoop.dll", tmpDir);
       copyTempFile("winutils.exe", binDir);
@@ -234,8 +211,8 @@ public class ConfigurableTestBase {
       System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
-    injector = Guice.createInjector(
-      createDataFabricModule(cConf),
+    Injector injector = Guice.createInjector(
+      createDataFabricModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
@@ -292,36 +269,22 @@ public class ConfigurableTestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    appFabricClient = new AppFabricClient(httpHandler, locationFactory,
-                                          injector.getInstance(AppLifecycleHttpHandler.class),
-                                          injector.getInstance(ProgramLifecycleHttpHandler.class),
-                                          injector.getInstance(NamespaceHttpHandler.class),
-                                          injector.getInstance(NamespaceAdmin.class),
-                                          injector.getInstance(StreamAdmin.class),
-                                          injector.getInstance(StreamMetaStore.class),
-                                          injector.getInstance(WorkflowHttpHandler.class));
-    datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
-    discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
-    txSystemClient = injector.getInstance(TransactionSystemClient.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
-    testManager = new UnitTestManager(appFabricClient, datasetFramework, txSystemClient, discoveryClient,
-                                      injector.getInstance(ApplicationManagerFactory.class),
-                                      injector.getInstance(NamespaceAdmin.class));
+    testManager = injector.getInstance(UnitTestManager.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
   }
 
-  private static Module createDataFabricModule(final CConfiguration cConf) {
+  private static Module createDataFabricModule() {
     return Modules.override(new DataFabricModules().getInMemoryModules(), new StreamAdminModules().getInMemoryModules())
       .with(new AbstractModule() {
 
@@ -336,31 +299,17 @@ public class ConfigurableTestBase {
       });
   }
 
-  private static void copyTempFile (String infileName, File outDir) {
-    InputStream in = null;
-    FileOutputStream out = null;
-    try {
-      in = ConfigurableTestBase.class.getClassLoader().getResourceAsStream(infileName);
-      out = new FileOutputStream(new File(outDir, infileName)); // localized within container, so it get cleaned.
-      ByteStreams.copy(in, out);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    } finally {
-      try {
-        if (in != null) {
-          in.close();
-        }
-        if (out != null) {
-          out.close();
-        }
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+  private static void copyTempFile(String infileName, File outDir) throws IOException {
+    URL url = TestBase.class.getClassLoader().getResource(infileName);
+    if (url == null) {
+      throw new IOException("Failed to get resource for " + infileName);
     }
+    File outFile = new File(outDir, infileName);
+    ByteStreams.copy(Resources.newInputStreamSupplier(url), Files.newOutputStreamSupplier(outFile));
   }
 
   @AfterClass
-  public static final void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
+  public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
     if (--startCount != 0) {
       return;
     }
@@ -370,38 +319,40 @@ public class ConfigurableTestBase {
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();
-    try {
-      exploreClient.close();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    Closeables.closeQuietly(exploreClient);
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
   }
 
-  private static void cleanDir(File dir) {
-    File[] files = dir.listFiles();
-    if (files == null) {
-      return;
-    }
-    for (File file : files) {
-      if (file.isFile()) {
-        file.delete();
-      } else {
-        cleanDir(file);
-      }
-    }
+  /**
+   * Creates a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void createNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   /**
-   * Deploys an {@link co.cask.cdap.api.app.Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * Deletes a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().deleteNamespace(namespace);
+  }
+
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link ApplicationManager} to manage the deployed application.
+   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
@@ -414,12 +365,12 @@ public class ConfigurableTestBase {
 
 
   /**
-   * Deploys an {@link co.cask.cdap.api.app.Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
    * must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link ApplicationManager} to manage the deployed application.
+   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
@@ -440,9 +391,9 @@ public class ConfigurableTestBase {
   }
 
   /**
-   * Deploys {@link co.cask.cdap.api.dataset.module.DatasetModule}.
+   * Deploys {@link DatasetModule}.
    *
-   * @param moduleName name othe module
+   * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
    */
@@ -453,9 +404,9 @@ public class ConfigurableTestBase {
 
 
   /**
-   * Deploys {@link co.cask.cdap.api.dataset.module.DatasetModule}.
+   * Deploys {@link DatasetModule}.
    *
-   * @param moduleName name othe module
+   * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
    */
@@ -555,3 +506,4 @@ public class ConfigurableTestBase {
     return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
   }
 }
+
