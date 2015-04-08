@@ -53,7 +53,7 @@ public class DatasetUpgradeDisabledTest extends ConfigurableTestBase {
       (DatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(expectedRecord, actualRecord);
 
-    // Test compatible upgrade
+    // Test incompatible upgrade
     applicationManager = deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
     datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     // new dataset is incompatible, but because dataset upgrade is disabled, it should not have an effect
