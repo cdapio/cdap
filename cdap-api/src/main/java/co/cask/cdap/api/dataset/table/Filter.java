@@ -14,7 +14,14 @@
  * the License.
  */
 
+package co.cask.cdap.api.dataset.table;
+
+import co.cask.cdap.api.annotation.Beta;
+
 /**
- * This package contains {@link FactTable} that handle storing time series {@link Fact}s.
+ * Filter to be applied to {@link Scan}. It is an experimental feature.
  */
-package co.cask.cdap.metrics.store.timeseries;
+@Beta
+public interface Filter {
+
+}

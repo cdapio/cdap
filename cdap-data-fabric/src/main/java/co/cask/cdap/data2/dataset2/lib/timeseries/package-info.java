@@ -14,24 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store;
-
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
-
 /**
- * Manages metric system datasets.
+ * This package contains {@link FactTable} that handle storing time series {@link Fact}s.
  */
-public interface MetricDatasetFactory {
-
-  /**
-   * @param resolution resolution of {@link FactTable}
-   * @return A new instance of {@link FactTable}.
-   */
-  FactTable get(int resolution);
-
-  /**
-   * @return A new instance of {@link KafkaConsumerMetaTable}.
-   */
-  KafkaConsumerMetaTable createKafkaConsumerMeta();
-}
+package co.cask.cdap.data2.dataset2.lib.timeseries;

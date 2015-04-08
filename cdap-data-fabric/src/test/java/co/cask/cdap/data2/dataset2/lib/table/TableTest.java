@@ -24,8 +24,10 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -900,19 +902,19 @@ public abstract class TableTest<T extends Table> {
              aa(a(C2, V2),
                 a(C3, V3, C4, V4),
                 a(C4, V4)),
-             myTable2.scan(R2, R5));
+             myTable2, new Scan(R2, R5));
       // open start scan
       verify(a(R1, R2, R3),
              aa(a(C1, V1),
                 a(C2, V2),
                 a(C3, V3, C4, V4)),
-             myTable2.scan(null, R4));
+             myTable2, new Scan(null, R4));
       // open end scan
       verify(a(R3, R4, R5),
              aa(a(C3, V3, C4, V4),
                 a(C4, V4),
                 a(C5, V5)),
-             myTable2.scan(R3, null));
+             myTable2, new Scan(R3, null));
       // open ends scan
       verify(a(R1, R2, R3, R4, R5),
              aa(a(C1, V1),
@@ -920,7 +922,7 @@ public abstract class TableTest<T extends Table> {
                 a(C3, V3, C4, V4),
                 a(C4, V4),
                 a(C5, V5)),
-             myTable2.scan(null, null));
+             myTable2, new Scan(null, null));
 
       // adding/changing/removing some columns
       myTable2.put(R2, a(C1, C2, C3), a(V4, V3, V2));
@@ -939,7 +941,7 @@ public abstract class TableTest<T extends Table> {
              aa(a(C1, V4, C2, V3, C3, V2),
                 a(C3, V3),
                 a(C4, V4)),
-             myTable1.scan(R2, R5));
+             myTable1, new Scan(R2, R5));
 
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -1072,7 +1074,7 @@ public abstract class TableTest<T extends Table> {
       verify(a(Bytes.toBytes("1_08a"), Bytes.toBytes("1_09b")),
              aa(a(C1, V1),
                 a(C1, V1)),
-             myTable1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       myTable1.delete(Bytes.toBytes("1_08a"));
       myTable1.put(Bytes.toBytes("1_07a"), a(C1), a(V1));
@@ -1093,12 +1095,83 @@ public abstract class TableTest<T extends Table> {
              aa(a(C1, V1),
                 a(C1, V1),
                 a(C1, V1)),
-             myTable1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
     } finally {
       admin.drop();
     }
   }
+
+  @Test
+  public void testScanWithFuzzyRowFilter() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      Transaction tx1 = txClient.startShort();
+      Table table = getTable(CONTEXT1, MY_TABLE);
+      ((TransactionAware) table).startTx(tx1);
+
+      // write data
+      byte[] abc = { 'a', 'b', 'c' };
+      for (byte b1 : abc) {
+        for (byte b2 : abc) {
+          for (byte b3 : abc) {
+            for (byte b4 : abc) {
+              table.put(new Put(new byte[] { b1, b2, b3, b4 }).add(C1, V1));
+            }
+          }
+        }
+      }
+
+      // we should have 81 (3^4) rows now
+      Assert.assertEquals(81, countRows(table));
+
+      // check that filter works against data written in same tx
+      verifyScanWithFuzzyRowFilter(table);
+
+      // commit tx, start new and verify scan again against "persisted" data
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+      ((TransactionAware) table).postTxCommit();
+
+      Transaction tx2 = txClient.startShort();
+      ((TransactionAware) table).startTx(tx2);
+      verifyScanWithFuzzyRowFilter(table);
+
+    } finally {
+      admin.drop();
+    }
+  }
+
+  private static void verifyScanWithFuzzyRowFilter(Table table) {
+    FuzzyRowFilter filter = new FuzzyRowFilter(
+      ImmutableList.of(ImmutablePair.of(new byte[]{'*', 'b', '*', 'b'}, new byte[]{0x01, 0x00, 0x01, 0x00})));
+    Scanner scanner = table.scan(new Scan(null, null, filter));
+    int count = 0;
+    while (true) {
+      Row entry = scanner.next();
+      if (entry == null) {
+        break;
+      }
+      Assert.assertTrue(entry.getRow()[1] == 'b' && entry.getRow()[3] == 'b');
+      Assert.assertEquals(1, entry.getColumns().size());
+      Assert.assertTrue(entry.getColumns().containsKey(C1));
+      Assert.assertArrayEquals(V1, entry.get(C1));
+      count++;
+    }
+    Assert.assertEquals(9, count);
+  }
+
+  private static int countRows(Table table) throws Exception {
+    Scanner scanner = table.scan(null, null);
+    int count = 0;
+    while (scanner.next() != null) {
+      count++;
+    }
+    return count;
+  }
+
 
   @Test
   public void testBasicColumnRangeWithTx() throws Exception {
@@ -1565,16 +1638,24 @@ public abstract class TableTest<T extends Table> {
     Assert.assertArrayEquals(expected, actual);
   }
 
-  void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
+  void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Table table, Scan scan) {
+    verify(expectedRows, expectedRowMaps, table.scan(scan));
+    if (scan.getFilter() == null) {
+      // if only start and stop row are specified, we also want to check the scan(startRow, stopRow) APIs
+      verify(expectedRows, expectedRowMaps, table.scan(scan.getStartRow(), scan.getStopRow()));
+    }
+  }
+
+  void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scanner) {
     for (int i = 0; i < expectedRows.length; i++) {
-      Row next = scan.next();
+      Row next = scanner.next();
       Assert.assertNotNull(next);
       Assert.assertArrayEquals(expectedRows[i], next.getRow());
       verify(expectedRowMaps[i], next.getColumns());
     }
 
     // nothing is left in scan
-    Assert.assertNull(scan.next());
+    Assert.assertNull(scanner.next());
   }
 
   static long[] la(long... elems) {

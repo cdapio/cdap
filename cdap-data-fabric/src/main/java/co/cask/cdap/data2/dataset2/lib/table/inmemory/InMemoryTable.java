@@ -18,11 +18,15 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Filter;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
@@ -117,15 +121,41 @@ public class InMemoryTable extends BufferingTable {
   }
 
   @Override
-  protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
+  protected Scanner scanPersisted(Scan scan) {
     // todo: a lot of inefficient copying from one map to another
+    byte[] startRow = scan.getStartRow();
+    byte[] stopRow = scan.getStopRow();
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
       InMemoryTableService.getRowRange(getTableName(), startRow, stopRow,
           tx == null ? null : tx.getReadPointer());
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
+    rows = applyFilter(rows, scan.getFilter());
+
     return new InMemoryScanner(rows.entrySet().iterator());
+  }
+
+  private NavigableMap<byte[], NavigableMap<byte[], byte[]>> applyFilter(
+                                                    NavigableMap<byte[], NavigableMap<byte[], byte[]>> map,
+                                                    @Nullable Filter filter) {
+
+    if (filter == null) {
+      return map;
+    }
+
+    // todo: currently we support only FuzzyRowFilter as an experimental feature
+    if (filter instanceof FuzzyRowFilter) {
+      NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> entry : map.entrySet()) {
+        if (FuzzyRowFilter.ReturnCode.INCLUDE == ((FuzzyRowFilter) filter).filterRow(entry.getKey())) {
+          result.put(entry.getKey(), entry.getValue());
+        }
+      }
+      return result;
+    } else {
+      throw new DataSetException("Unknown filter type: " + filter);
+    }
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
