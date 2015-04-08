@@ -1411,7 +1411,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
 
-      RunId runId = lifecycleService.startProgram(id, type, overrides, debug);
+      RunId runId = lifecycleService.startProgram(id, type, userArgs, debug);
       return (runId != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
