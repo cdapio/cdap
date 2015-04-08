@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
 
 import org.junit.Assert;
 import org.junit.Test;

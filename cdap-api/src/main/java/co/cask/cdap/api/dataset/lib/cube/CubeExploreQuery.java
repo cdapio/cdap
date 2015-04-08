@@ -14,19 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TagValue;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
+import co.cask.cdap.api.annotation.Beta;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Defines a query to perform Exploration and Search on {@link Cube} data.
- * Given a list of {@link co.cask.cdap.api.metrics.TagValue} this explore query can be used
- * to find next set of tags available or the measureNames belonging to this tag list.
+ * Defines a query to perform exploration of the {@link Cube} data, e.g. to find tag name and values and measure names.
  */
+@Beta
 public class CubeExploreQuery {
   private final long startTs;
   private final long endTs;
@@ -34,12 +33,19 @@ public class CubeExploreQuery {
   private final int limit;
   private final List<TagValue> tagValues;
 
+  /**
+   * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to explore in.
+   * @param startTs start time of the data selection, inclusive, in seconds since epoch
+   * @param endTs end time of the data selection, exclusive, in seconds since epoch
+   * @param resolution resolution of the aggregations explore
+   * @param tagValues tag name, tag value pairs that define the data selection
+   */
   public CubeExploreQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.tagValues = tagValues;
+    this.tagValues = Collections.unmodifiableList(new ArrayList<TagValue>(tagValues));
   }
 
   public long getStartTs() {
@@ -64,10 +70,14 @@ public class CubeExploreQuery {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startTs", startTs)
-      .add("endTs", endTs)
-      .add("resolution", resolution)
-      .add("tagValues", Joiner.on(",").join(tagValues)).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CubeExploreQuery");
+    sb.append("{startTs=").append(startTs);
+    sb.append(", endTs=").append(endTs);
+    sb.append(", resolution=").append(resolution);
+    sb.append(", limit=").append(limit);
+    sb.append(", tagValues=").append(tagValues);
+    sb.append('}');
+    return sb.toString();
   }
 }

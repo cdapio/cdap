@@ -16,10 +16,15 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.api.metrics.Interpolators;
-import co.cask.cdap.api.metrics.TimeValue;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -100,8 +105,8 @@ public abstract class AbstractCubeTest {
     // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
-    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution, "metric1",
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
@@ -111,7 +116,7 @@ public abstract class AbstractCubeTest {
 
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
-    query = new CubeDeleteQuery(0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"));
+    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"), "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
@@ -142,8 +147,8 @@ public abstract class AbstractCubeTest {
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
-    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
-                                    ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -158,8 +163,8 @@ public abstract class AbstractCubeTest {
                                                                                            4, 4, 5, 3))),
                      new Interpolators.Linear());
 
-    query = new CubeDeleteQuery(startTs, endTs, resolution, "metric1",
-                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"));
+    query = new CubeDeleteQuery(startTs, endTs, resolution,
+                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
     cube.delete(query);
 
     //test big-slope linear interpolation

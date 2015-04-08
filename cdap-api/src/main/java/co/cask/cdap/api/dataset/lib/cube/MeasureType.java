@@ -13,11 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.store.timeseries;
+package co.cask.cdap.api.dataset.lib.cube;
+
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * COUNTER or GAUGE type
+ * Type of measurement in {@link CubeFact}.
  */
+@Beta
 public enum MeasureType {
   COUNTER,
   GAUGE

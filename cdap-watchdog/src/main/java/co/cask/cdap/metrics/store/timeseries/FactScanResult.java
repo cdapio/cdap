@@ -16,8 +16,8 @@
 
 package co.cask.cdap.metrics.store.timeseries;
 
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 
 import java.util.Iterator;
 import java.util.List;

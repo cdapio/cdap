@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TimeValue;
-import com.google.common.base.Joiner;
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Represents a single time series defined by a measure name and set of tag values.
  */
+@Beta
 public final class TimeSeries {
   private final String measureName;
   private final Map<String, String> tagValues;
@@ -35,8 +35,8 @@ public final class TimeSeries {
 
   public TimeSeries(String measureName, Map<String, String> tagValues, List<TimeValue> timeValues) {
     this.measureName = measureName;
-    this.tagValues = ImmutableMap.copyOf(tagValues);
-    this.timeValues = ImmutableList.copyOf(timeValues);
+    this.tagValues = Collections.unmodifiableMap(new HashMap<String, String>(tagValues));
+    this.timeValues = Collections.unmodifiableList(timeValues);
   }
 
   public String getMeasureName() {
@@ -72,12 +72,14 @@ public final class TimeSeries {
     return Objects.hashCode(measureName, tagValues, timeValues);
   }
 
-
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("measureName", measureName)
-      .add("tagValues", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(tagValues))
-      .add("timeValues", Joiner.on(",").join(timeValues)).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("TimeSeries");
+    sb.append("{measureName='").append(measureName).append('\'');
+    sb.append(", tagValues=").append(tagValues);
+    sb.append(", timeValues=").append(timeValues);
+    sb.append('}');
+    return sb.toString();
   }
 }

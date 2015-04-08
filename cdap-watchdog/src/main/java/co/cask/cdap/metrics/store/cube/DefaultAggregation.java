@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -45,7 +46,8 @@ public class DefaultAggregation implements Aggregation {
    * See also {@link Aggregation#getTagNames()} for more info on aggregateTags.
    *
    * @param aggregateTags tags to be included in aggregation.
-   * @param requiredTags tags that must be present in {@link CubeFact} for aggregated value to be stored.
+   * @param requiredTags tags that must be present in {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}
+   *                     for aggregated value to be stored.
    */
   public DefaultAggregation(List<String> aggregateTags, Collection<String> requiredTags) {
     this.aggregateTags = ImmutableList.copyOf(aggregateTags);

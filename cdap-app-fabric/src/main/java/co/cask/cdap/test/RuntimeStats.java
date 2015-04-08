@@ -16,13 +16,13 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
@@ -33,7 +33,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collection;

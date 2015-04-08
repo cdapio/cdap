@@ -13,11 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
+
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Interpolate a value between two other time values.
+ * Defines how to interpolate a value between two other time values.
+ * <p/>
+ * It is used to fill in empty timestamps in the result of {@link CubeQuery} when needed.
  */
+@Beta
 public interface Interpolator {
 
   /**

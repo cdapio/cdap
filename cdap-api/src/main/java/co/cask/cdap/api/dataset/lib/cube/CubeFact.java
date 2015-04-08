@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TimeValue;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.api.annotation.Beta;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,14 +27,22 @@ import java.util.Map;
  * <p/>
  * See also {@link Cube#add(CubeFact)}.
  */
+@Beta
 public class CubeFact {
   private final Map<String, String> tagValues;
   private final MeasureType measureType;
   private final String measureName;
   private final TimeValue timeValue;
 
+  /**
+   * Creates an instance of {@link CubeFact}
+   * @param tagValues tag name, tag value pairs associated with the fact
+   * @param measureType measurement type, see {@link MeasureType} for available types
+   * @param measureName measurement name
+   * @param timeValue value of the measurement at specific time
+   */
   public CubeFact(Map<String, String> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
-    this.tagValues = ImmutableMap.copyOf(tagValues);
+    this.tagValues = Collections.unmodifiableMap(new HashMap<String, String>(tagValues));
     this.measureType = measureType;
     this.measureName = measureName;
     this.timeValue = timeValue;
