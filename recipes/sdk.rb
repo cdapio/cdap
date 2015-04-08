@@ -60,9 +60,5 @@ link '/etc/init.d/cdap-sdk' do
 end
 
 service 'cdap-sdk' do
-  # init_command "#{ark_prefix_path}/sdk/bin/cdap.sh"
-  # start_command "#{ark_prefix_path}/sdk/bin/cdap.sh start"
-  # stop_command "#{ark_prefix_path}/sdk/bin/cdap.sh stop"
-  # status_command "#{ark_prefix_path}/sdk/bin/cdap.sh status"
   action :start
 end
