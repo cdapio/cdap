@@ -44,6 +44,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -52,6 +53,7 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -129,6 +131,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String adapterName = getAdapterName(arguments);
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -140,7 +143,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final DynamicMapReduceContext context =
       new DynamicMapReduceContext(program, null, runId, null,
                                   options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch,
+                                  logicalStartTime, workflowBatch, adapterName,
                                   discoveryServiceClient, metricsCollectionService,
                                   txSystemClient, datasetFramework);
 
@@ -156,52 +159,39 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
                                                                         streamAdmin, txSystemClient);
-    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
-    controller.addListener(new AbstractListener() {
+    mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
       @Override
-      public void init(ProgramController.State state, @Nullable Throwable cause) {
-        store.setStart(program.getId(), runId.getId(), TimeUnit.SECONDS.convert(System.currentTimeMillis(),
-                                                                                TimeUnit.MILLISECONDS));
-        if (state == ProgramController.State.COMPLETED) {
-          completed();
+      public void starting() {
+        //Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        if (state == ProgramController.State.ERROR) {
-          error(controller.getFailureCause());
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        if (from == Service.State.STOPPING) {
+          // Service was killed
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.KILLED.getRunStatus());
+        } else {
+          // Service completed by itself.
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.COMPLETED.getRunStatus());
         }
       }
 
       @Override
-      public void completed() {
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.COMPLETED.getRunStatus());
-      }
-
-      @Override
-      public void killed() {
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                      ProgramController.State.KILLED.getRunStatus());
-      }
-
-      @Override
-      public void suspended() {
-        store.setSuspend(program.getId(), runId.getId());
-      }
-
-      @Override
-      public void resuming() {
-        store.setResume(program.getId(), runId.getId());
-      }
-
-      @Override
-      public void error(Throwable cause) {
-        LOG.info("MapReduce Program stopped with error {}, {}", program.getId(), runId, cause);
-        store.setStop(program.getId(), runId.getId(),
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+      public void failed(Service.State from, Throwable failure) {
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+
+    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
     LOG.info("Starting MapReduce Job: {}", context.toString());
     // if security is not enabled, start the job as the user we're using to access hdfs with.
@@ -227,5 +217,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
       mapReduceRuntimeService.start();
     }
     return controller;
+  }
+
+  @Nullable
+  private String getAdapterName(Arguments arguments) {
+    // TODO: Currently this logic is super ugly, should try and pass adapter name as its own separate arg
+    if (arguments.hasOption(ProgramOptionConstants.SCHEDULE_NAME)) {
+      String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
+      if (scheduleName.contains(".")) {
+        return scheduleName.substring(0, scheduleName.indexOf("."));
+      }
+    }
+    return null;
   }
 }

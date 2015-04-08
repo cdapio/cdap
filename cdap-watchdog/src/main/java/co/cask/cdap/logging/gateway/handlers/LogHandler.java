@@ -153,6 +153,46 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
+  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/logs")
+  public void adapterList(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("adapter-id") String adapterId,
+                          // The following 3 query params should be removed,
+                          // when we have a way of querying adapter service
+                          // for the template and program, given an adapter name
+                          @QueryParam("template") String templateId,
+                          @QueryParam("programtype") String programType,
+                          @QueryParam("programid") String programId,
+                          @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                          @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                          @QueryParam("escape") @DefaultValue("true") boolean escape,
+                          @QueryParam("filter") @DefaultValue("") String filterStr) {
+    try {
+      Filter filter = FilterParser.parse(filterStr);
+      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
+      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
+
+      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
+          "greater than zero and 'stop' should be greater than 'start'.");
+        return;
+      }
+      LoggingContext loggingContext =
+        LoggingContextHelper.getLoggingContext(namespaceId, templateId, programId,
+                                               getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
+      logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
   @Path("/system/{component-id}/{service-id}/logs")
   public void sysList(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
                       @PathParam("service-id") String serviceId,

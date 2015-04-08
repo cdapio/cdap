@@ -33,7 +33,7 @@ public class SparkLoggingContext extends ApplicationLoggingContext {
    * @param sparkId spark job id
    */
   public SparkLoggingContext(final String namespaceId, final String applicationId, final String sparkId) {
-    super(namespaceId, applicationId);
+    super(namespaceId, applicationId, null);
     setSystemTag(TAG_SPARK_JOB_ID, sparkId);
   }
 

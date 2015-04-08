@@ -20,7 +20,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -36,9 +35,8 @@ import java.util.concurrent.Callable;
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                 Program workflowProgram, RunId runId,
-                                 Arguments runtimeArguments, long logicalStartTime) {
-    super(runtimeArguments, runId, workflowProgram, logicalStartTime, programRunnerFactory, workflowSpec);
+                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
+    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions);
   }
 
   /**

@@ -26,6 +26,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -42,17 +43,20 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
@@ -113,13 +117,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-
   private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private MRJobClient mrJobClient;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -185,22 +189,62 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
-                                     ProgramRuntimeService runtimeService, ProgramLifecycleService lifecycleService,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
+                                     CConfiguration cConf, ProgramRuntimeService runtimeService,
+                                     ProgramLifecycleService lifecycleService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.lifecycleService = lifecycleService;
+    this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
-    this.lifecycleService = lifecycleService;
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
+    this.mrJobClient = mrJobClient;
+  }
+
+  /**
+   * Relays job-level and task-level information about a particular MapReduce program run.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runs/{run-id}/info")
+  public void mapReduceInfo(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId,
+                            @PathParam("mapreduce-id") String mapreduceId,
+                            @PathParam("run-id") String runId) {
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+      Id.Run run = new Id.Run(programId, runId);
+      ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+      if (appSpec == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application not found: %s",
+                                                                         programId.getApplication()));
+        return;
+      }
+      if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Program not found: %s", programId));
+        return;
+      }
+
+      MRJobInfo mrJobInfo = mrJobClient.getMRJobInfo(run);
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+    } catch (NotFoundException e) {
+      LOG.debug("RunId not found: {}", runId, e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (IOException ioe) {
+      LOG.warn("Failed to get run history for runId: {}", runId, ioe);
+      responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
+    } catch (Exception e) {
+      LOG.error("Failed to get run history for runId: {}", runId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
@@ -373,9 +417,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+  }
+
+  /**
+   * Returns run record for a particular run of a program.
+   */
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}")
+  public void programRunRecord(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @PathParam("run-id") String runid) {
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    if (type == null || type == ProgramType.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
+      if (runRecord != null) {
+        responder.sendJson(HttpResponseStatus.OK, runRecord);
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**

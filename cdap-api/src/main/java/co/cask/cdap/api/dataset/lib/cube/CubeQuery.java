@@ -14,15 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import co.cask.cdap.api.annotation.Beta;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -30,28 +28,27 @@ import javax.annotation.Nullable;
 /**
  * Defines a query to perform on {@link Cube} data.
  * </p>
- * Though limited currently in functionality, you can map {@link CubeQuery} to the following statement:
+ * Another way to think about the query is to map it to the following statement::
  * <pre>
  * SELECT count('read.ops')                                     << measure name and type
- * FROM Cube
+ * FROM 1min_resolution                                         << resolution
  * GROUP BY dataset,                                            << groupByTags
  * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
+ * LIMIT 100                                                    << limit
  *
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
  */
-// todo: should support interpolator
+@Beta
 public final class CubeQuery {
   private final long startTs;
   private final long endTs;
   private final int resolution;
   private final int limit;
   private final String measureName;
-  // todo: should be aggregation? e.g. also support min/max, etc.
   private final MeasureType measureType;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
-
   private final Interpolator interpolator;
 
   public CubeQuery(long startTs, long endTs, int resolution,
@@ -72,8 +69,8 @@ public final class CubeQuery {
     this.limit = limit;
     this.measureName = measureName;
     this.measureType = measureType;
-    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
-    this.groupByTags = ImmutableList.copyOf(groupByTags);
+    this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
+    this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
     this.interpolator = interpolator;
   }
 
@@ -116,13 +113,18 @@ public final class CubeQuery {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startTs", startTs)
-      .add("endTs", endTs)
-      .add("resolution", resolution)
-      .add("measureName", measureName)
-      .add("measureType", measureType)
-      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
-      .add("groupByTags", Joiner.on(",").join(groupByTags)).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("CubeQuery");
+    sb.append("{startTs=").append(startTs);
+    sb.append(", endTs=").append(endTs);
+    sb.append(", resolution=").append(resolution);
+    sb.append(", limit=").append(limit);
+    sb.append(", measureName='").append(measureName).append('\'');
+    sb.append(", measureType=").append(measureType);
+    sb.append(", sliceByTagValues=").append(sliceByTagValues);
+    sb.append(", groupByTags=").append(groupByTags);
+    sb.append(", interpolator=").append(interpolator);
+    sb.append('}');
+    return sb.toString();
   }
 }

@@ -552,6 +552,40 @@ and can limit the number of returned records.
 The *runid* field is a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
+To fetch the run record for a particular run of a program, use::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>
+
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<program-type>``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
+   * - ``<program-id>``
+     - Name of the program
+   * - ``<run-id>``
+     - Run id of the run
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
+   * - Description
+     - Retrieve the run record of the Flow *WhoFlow* of the Application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
+   * - Returns
+     - ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
+
 For Services, you can retrieve the history of successfully completed Twill Service using::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed

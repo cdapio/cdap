@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.annotation.Beta;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +27,7 @@ import java.util.List;
  * Basic operations include adding {@link CubeFact}s and querying data.
  */
 // todo: methods should throw IOException instead of Exception
+@Beta
 public interface Cube {
   /**
    * Adds {@link CubeFact} to this {@link Cube}.
@@ -48,7 +49,6 @@ public interface Cube {
   Collection<TimeSeries> query(CubeQuery query) throws Exception;
 
   /**
-
    * Deletes the data specified by {@link CubeQuery} from all the fact tables.
    * @param query query specifies parameters for deletion.
    * @throws Exception

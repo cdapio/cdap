@@ -14,15 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import com.google.common.base.Objects;
+import co.cask.cdap.api.annotation.Beta;
 
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value.
+ * Represents tag and its value associated with {@link CubeFact}.
  */
+@Beta
 public final class TagValue {
   private final String name;
   private final String value;
@@ -53,16 +54,22 @@ public final class TagValue {
 
     TagValue tagValue = (TagValue) o;
 
-    return name.equals(tagValue.name) &&  Objects.equal(value, tagValue.value);
+    boolean result = value == null ? tagValue.value == null : value.equals(tagValue.value);
+    return result && name.equals(tagValue.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, value);
+    return name.hashCode() + (value == null ? 0 : 31 * value.hashCode());
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("name", name).add("value", value).toString();
+    final StringBuilder sb = new StringBuilder();
+    sb.append("TagValue");
+    sb.append("{name='").append(name).append('\'');
+    sb.append(", value='").append(value == null ? "null" : value).append('\'');
+    sb.append('}');
+    return sb.toString();
   }
 }

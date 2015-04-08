@@ -13,19 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib.cube;
 
-import com.google.common.base.Preconditions;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
  * Returns interpolators of different types.
  */
+@Beta
 public final class Interpolators {
   public static final long DEFAULT_MAX_ALLOWED_GAP = 60;
-
-  public static Interpolator createDefault() {
-    return new Step();
-  }
 
   /**
    * Return 0 if the time between data points is above a give limit, or if the point to interpolate
@@ -40,9 +37,15 @@ public final class Interpolators {
 
     @Override
     public long interpolate(TimeValue start, TimeValue end, long ts) {
-      Preconditions.checkNotNull(start);
-      Preconditions.checkNotNull(end);
-      Preconditions.checkArgument((ts <= end.getTimestamp()) && (ts >= start.getTimestamp()));
+      if (start == null) {
+        throw new NullPointerException("start cannot be null");
+      }
+      if (end == null) {
+        throw new NullPointerException("end cannot be null");
+      }
+      if (ts > end.getTimestamp() || ts < start.getTimestamp()) {
+        throw new IllegalArgumentException("ts must be within given start and end");
+      }
       // if its been too many seconds between datapoints, return a 0 for everything in between.
       if ((end.getTimestamp() - start.getTimestamp()) > maxAllowedGap) {
         return 0;

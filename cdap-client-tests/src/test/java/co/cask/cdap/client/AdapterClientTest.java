@@ -113,9 +113,6 @@ public class AdapterClientTest extends ClientTestBase {
 
     List<AdapterDetail> finalList = adapterClient.list();
     Assert.assertEquals(0, finalList.size());
-
-    applicationClient.deleteAll();
-    applicationClient.waitForDeleted(TemplateApp.NAME, 30, TimeUnit.SECONDS);
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

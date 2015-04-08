@@ -254,6 +254,22 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
+  public void testAdapterLogs() throws Exception {
+    testBatchAdapterLogs(MockLogReader.TEST_NAMESPACE, "testTemplate1", "testMapReduce1", "testAdapter1");
+    // also test that the same logs appear as mapreduce logs as well
+    testLogs("testTemplate1", "mapreduce", "testMapReduce1",
+             Constants.Gateway.API_VERSION_3_TOKEN, MockLogReader.TEST_NAMESPACE);
+    // in default namespace, mapreduce was run outside of adapter, so shouldn't find adapter logs
+    // TODO: this verification is not quite accurate, need to simulate in a better way,
+    // because testAdapter does not exist in default namespace
+    try {
+      testBatchAdapterLogs(Constants.DEFAULT_NAMESPACE, "testApp3", "testMapReduce1", "testAdapter1");
+      Assert.fail();
+    } catch (AssertionError e) {
+    }
+  }
+
+  @Test
   public void testSystemLogsV2() throws Exception {
     testPrevSystemLogs("v2", Constants.Service.APP_FABRIC_HTTP);
     testPrevSystemLogs("v2", Constants.Service.MASTER_SERVICES);
@@ -502,6 +518,24 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       String expectedStr = entityId + "&lt;img&gt;-" + expected;
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected += 2;
+    }
+  }
+
+  private void testBatchAdapterLogs(String namespaceId, String templateId, String mrName,
+                                    String adapterName) throws Exception {
+    String logsUrl = String.format("adapters/%s/logs?template=%s&programtype=%s&programid=%s&start=20&stop=35",
+                                   adapterName, templateId, "mapreduce", mrName);
+    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, "v3", namespaceId));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
+    logLines.remove(logLines.size() - 1);  // Remove last element that is empty
+    Assert.assertEquals(15, logLines.size());
+    int expected = 20;
+    for (String log : logLines) {
+      String expectedStr = mrName + "&lt;img&gt;-" + expected;
+      Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      expected++;
     }
   }
 }
