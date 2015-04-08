@@ -66,7 +66,7 @@ public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
 
     MetricValue delayAvg = new MetricValue(
       tags, "processed.delay.avg", currentTimeSec,
-      currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getAverage()), MetricType.GAUGE);
+      currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getAverage()), MetricType.COUNTER);
 
     MetricValue delayMin = new MetricValue(
       tags, "processed.delay.min", currentTimeSec,
