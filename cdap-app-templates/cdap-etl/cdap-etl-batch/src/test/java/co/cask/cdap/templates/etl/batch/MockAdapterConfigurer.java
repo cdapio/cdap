@@ -17,6 +17,10 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import com.google.common.collect.ImmutableMap;
@@ -57,6 +61,31 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
   @Override
   public void addRuntimeArgument(String key, String value) {
     this.arguments.put(key, value);
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    //no-op
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    //no-op
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    //no-op
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    //no-op
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    //no-op
   }
 
   public Schedule getSchedule() {
