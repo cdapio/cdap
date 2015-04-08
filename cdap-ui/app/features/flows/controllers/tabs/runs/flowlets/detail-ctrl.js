@@ -4,8 +4,6 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope);
     $scope.activeTab = 0;
     var flowletid = $state.params.flowletid;
-    $scope.inputs = [];
-    $scope.outputs = [];
     $scope.datasets = [];
 
     // Initialize
@@ -15,20 +13,6 @@ angular.module(PKG.name + '.feature.flows')
       })
       .then(function (res) {
         $scope.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
-
-        // INPUTS
-        angular.forEach(res.connections, function(v) {
-          if (v.targetName === flowletid) {
-            $scope.inputs.push(v.sourceName);
-          }
-        });
-
-        // OUTPUTS
-        angular.forEach(res.connections, function(v) {
-          if (v.sourceName === flowletid) {
-            $scope.outputs.push(v.targetName);
-          }
-        });
 
         $scope.datasets = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'dataSets');
 
@@ -49,7 +33,6 @@ angular.module(PKG.name + '.feature.flows')
       }, function(res) {
         $scope.provisionedInstances = res.instances;
       });
-
 
 
     $scope.setInstance = function () {

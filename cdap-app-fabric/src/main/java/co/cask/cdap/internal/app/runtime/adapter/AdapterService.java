@@ -32,10 +32,10 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.deploy.pipeline.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
@@ -393,7 +393,7 @@ public class AdapterService extends AbstractIdleService {
 
     try {
       AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
-        adapterConfig, applicationTemplateInfo, templateSpec, getTemplateTempLoc(namespace, applicationTemplateInfo));
+        adapterConfig, applicationTemplateInfo, templateSpec);
       Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
       if (!namespaceHomeLocation.exists()) {
         String msg = String.format("Home directory %s for namespace %s not found",

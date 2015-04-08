@@ -179,6 +179,7 @@ public class SchedulerServiceTest {
                                                               ImmutableMap.<String, String>of()));
     return new DefaultApplicationSpecification(
       spec.getName(),
+      spec.getVersion(),
       spec.getDescription(),
       spec.getStreams(),
       spec.getDatasetModules(),
@@ -197,6 +198,7 @@ public class SchedulerServiceTest {
   private ApplicationSpecification deleteSchedulesFromSpec(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(
       spec.getName(),
+      spec.getVersion(),
       spec.getDescription(),
       spec.getStreams(),
       spec.getDatasetModules(),

@@ -53,15 +53,15 @@ import javax.annotation.Nullable;
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
   private final MapReduceSpecification spec;
-  private final MapReduceLoggingContext loggingContext;
+  private final LoggingContext loggingContext;
   private final long logicalStartTime;
   private final String workflowBatch;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
+  private final String adapterName;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
-
   private String outputDatasetName;
   private Job job;
   private Dataset outputDataset;
@@ -79,12 +79,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                String workflowBatch,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               DatasetFramework dsFramework) {
+                               DatasetFramework dsFramework,
+                               @Nullable String adapterName) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, type, runId.getId(), taskId),
           dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
+    this.adapterName = adapterName;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -92,7 +94,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       this.userMetrics = null;
     }
-    this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName());
+    this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
+                                                      getAdapterName());
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
@@ -122,6 +125,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    */
   public String getWorkflowBatch() {
     return workflowBatch;
+  }
+
+  /**
+   * @return the adapter name if run from within adapter, otherwise null
+   */
+  @Nullable
+  public String getAdapterName() {
+    return adapterName;
   }
 
   public void setJob(Job job) {

@@ -210,7 +210,7 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       }
 
       for (ApplicationSpecification appSpec : specList) {
-        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getDescription()));
+        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
       }
 
       if (appId == null) {

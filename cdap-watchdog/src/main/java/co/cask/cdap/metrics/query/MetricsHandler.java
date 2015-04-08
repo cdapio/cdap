@@ -16,14 +16,14 @@
 
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.api.metrics.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.gateway.auth.Authenticator;

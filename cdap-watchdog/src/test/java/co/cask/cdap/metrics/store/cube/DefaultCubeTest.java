@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store.cube;
 
+import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.metrics.store.timeseries.EntityTable;

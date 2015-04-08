@@ -28,18 +28,12 @@ import com.google.common.reflect.TypeToken;
  * application. Additionally, it will enable exploration of those streams if exploration is enabled.
  */
 public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
-  private final Id.Namespace namespace;
-  private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean enableExplore;
+  private final StreamCreator streamCreator;
 
   public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                             boolean enableExplore) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.namespace = namespace;
-    this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
-    this.enableExplore = enableExplore;
+    this.streamCreator = new StreamCreator(namespace, streamAdmin, exploreFacade, enableExplore);
   }
 
   /**
@@ -52,16 +46,7 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   public void process(ApplicationDeployable input) throws Exception {
     // create stream instances
     ApplicationSpecification specification = input.getSpecification();
-    for (String streamName : specification.getStreams().keySet()) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamName);
-      // create the stream and enable exploration if the stream doesn't already exist.
-      if (!streamAdmin.exists(streamId)) {
-        streamAdmin.create(streamId);
-        if (enableExplore) {
-          exploreFacade.enableExploreStream(streamId);
-        }
-      }
-    }
+    streamCreator.createStreams(specification.getStreams().keySet());
 
     // Emit the input to next stage.
     emit(input);

@@ -17,10 +17,10 @@
 package co.cask.cdap.metrics.store.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 

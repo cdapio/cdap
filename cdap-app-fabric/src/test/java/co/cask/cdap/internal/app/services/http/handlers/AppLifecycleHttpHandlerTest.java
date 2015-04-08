@@ -59,6 +59,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testDeployWithVersion() throws Exception {
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE1, "BobApp", "1.2.3");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, "BobApp");
+    Assert.assertEquals("1.2.3", appDetails.get("version").getAsString());
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
   /**
    * Tests deploying an invalid application.
    */
