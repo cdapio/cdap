@@ -6,7 +6,7 @@ description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          '2.2.2'
 
-%w(apt hadoop java nodejs ntp yum yum-epel).each do |cb|
+%w(apt ark hadoop java nodejs ntp yum yum-epel).each do |cb|
   depends cb
 end
 
