@@ -84,7 +84,7 @@
 
 
 <!-- DATA -->
-<div ng-if="activeTab === 2">
+<div ng-if="activeTab === 2" ng-controller="FlowletDetailDataController">
   <table class="table table-responsive" ng-if="datasets.length > 0" cask-sortable>
     <thead>
       <th>Dataset</th>
@@ -96,10 +96,14 @@
     <tbody>
       <tr ng-repeat="dataset in datasets">
         <td>
-          {{dataset}}
+          {{ dataset.name }}
         </td>
-        <td></td>
-        <td></td>
+        <td>
+          {{ dataset.reads | myNumber:1 }}
+        </td>
+        <td>
+          {{ dataset.writes | myNumber:1 }}
+        </td>
         <td></td>
         <td></td>
       </tr>
