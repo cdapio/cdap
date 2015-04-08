@@ -8,14 +8,13 @@ angular.module(PKG.name + '.feature.flows')
                           $state.params.namespace +
                           '.app.' + $state.params.appId +
                           '.flow.' + $state.params.programId +
-                          '.run.' + $state.params.runId +
+                          '.run.' + $state.params.runid +
                           '.flowlet.',
         metricStreamPath = '/metrics/query?metric=system.collect.events' +
                            '&context=namespace.' +
                            $state.params.namespace +
                            '.stream.';
-
-
+    console.log('state', $state.params);
     $scope.data = {};
     $scope.status = null;
     $scope.duration = null;
@@ -24,7 +23,8 @@ angular.module(PKG.name + '.feature.flows')
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
       .then(function(data) {
         $scope.data = data;
-      })
+        pollMetrics();
+      });
 
     // This controller is NOT shared between the accordions.
     console.info("Polling on Runs");
