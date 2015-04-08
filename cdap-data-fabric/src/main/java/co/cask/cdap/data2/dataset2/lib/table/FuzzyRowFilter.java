@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.common.utils.ImmutablePair;
 
 import java.util.Arrays;
@@ -52,7 +53,7 @@ import java.util.List;
  * I.e. fuzzy info tells the matching mask is "????_99_????_01", where at ? can be any value.
  *
  */
-public class FuzzyRowFilter {
+public final class FuzzyRowFilter implements Filter {
 
   private final List<ImmutablePair<byte[], byte[]>> fuzzyKeysData;
 
