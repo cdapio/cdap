@@ -392,10 +392,11 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
                                            ImmutableMap.of("aggregate", "true"));
 
+    // empty time range should default to aggregate=true
     QueryRequest query2 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
                                                          "flowlet", "counter"),
                                            ImmutableList.of("system.reads"),
-                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+                                           ImmutableList.<String>of(), ImmutableMap.<String, String>of());
 
     QueryRequest query3 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
                                                          "flowlet", "*"),

@@ -351,9 +351,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       }
     });
   }
+  private boolean isAggregateQuery(Map<String, String> timeRange) {
+    // if aggregate=true is present, or if no time range parameters {start, end, count} is available we return true.
+    if ((timeRange.containsKey(AGGREGATE) && timeRange.get(AGGREGATE).equals("true")) ||
+         !(timeRange.containsKey(START_TIME) || timeRange.containsKey(END_TIME) || timeRange.containsKey(COUNT))) {
+      return true;
+    }
+    return false;
+  }
   private void parseTimeRange(Map<String, String> timeRange, MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
 
-    if (timeRange.containsKey(AGGREGATE) && timeRange.get(AGGREGATE).equals("true")) {
+    if (isAggregateQuery(timeRange)) {
         queryTimeParams.setStartTs(0);
         queryTimeParams.setEndTs(0);
         queryTimeParams.setResolution(Integer.MAX_VALUE);
