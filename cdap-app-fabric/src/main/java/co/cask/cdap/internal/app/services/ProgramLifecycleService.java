@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -91,7 +92,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
       controller.addListener(new AbstractListener() {
         @Override
         public void init(ProgramController.State state, @Nullable Throwable cause) {
-          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+          // Get start time from RunId
+          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+          if (startTimeInSeconds == -1) {
+            // If RunId is not time-based, use current time as start time
+            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          }
+          store.setStart(id, runId, startTimeInSeconds);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
