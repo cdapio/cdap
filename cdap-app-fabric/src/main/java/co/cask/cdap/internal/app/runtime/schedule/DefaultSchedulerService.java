@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +63,8 @@ public class DefaultSchedulerService {
     public void execute(JobExecutionContext context) throws JobExecutionException {
       LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
                 context.getTrigger().getKey().toString());
-
-      String key = context.getTrigger().getKey().getName();
+      Trigger trigger = context.getTrigger();
+      String key = trigger.getKey().getName();
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 5);
 
@@ -83,7 +84,10 @@ public class DefaultSchedulerService {
       if (schedulerQueue != null) {
         builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
       }
-
+      String adapterName = trigger.getJobDataMap().getString(ProgramOptionConstants.ADAPTER_NAME);
+      if (adapterName != null) {
+        builder.put(ProgramOptionConstants.ADAPTER_NAME, adapterName);
+      }
       Arguments args = new BasicArguments(builder.build());
 
       try {

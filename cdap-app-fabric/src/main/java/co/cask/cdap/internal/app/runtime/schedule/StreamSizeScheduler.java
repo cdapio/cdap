@@ -62,6 +62,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -215,6 +216,12 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
+    schedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                       Map<String, String> properties) throws SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
     StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
@@ -262,8 +269,14 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
     throws SchedulerException {
+    schedule(program, programType, schedules, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       Map<String, String> properties) throws SchedulerException {
     for (Schedule s : schedules) {
-      schedule(program, programType, s);
+      schedule(program, programType, s, properties);
     }
   }
 
@@ -308,6 +321,12 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
+    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                             Map<String, String> properties) throws NotFoundException, SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
     StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
@@ -324,7 +343,7 @@ public class StreamSizeScheduler implements Scheduler {
       // not found exception
       deleteSchedule(program, programType, schedule.getName());
 
-      schedule(program, programType, schedule);
+      schedule(program, programType, schedule, properties);
     } else {
       // The subscriber will take care of updating the data trigger
       subscriber.updateScheduleTask(program, programType, streamSizeSchedule);

@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
@@ -44,6 +45,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
@@ -352,7 +354,8 @@ public class AdapterService extends AbstractIdleService {
 
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
 
-    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                       ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);
   }
