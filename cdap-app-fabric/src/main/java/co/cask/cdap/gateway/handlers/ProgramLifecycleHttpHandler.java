@@ -26,7 +26,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -117,7 +116,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
-  private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private MRJobClient mrJobClient;
 
@@ -201,7 +199,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.mrJobClient = mrJobClient;
   }
 

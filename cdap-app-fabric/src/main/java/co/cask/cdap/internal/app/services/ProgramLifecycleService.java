@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -53,11 +54,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService,
-                                 SchedulerQueueResolver queueResolver) {
+  public ProgramLifecycleService(Store store, CConfiguration cConf, ProgramRuntimeService runtimeService) {
     this.store = store;
     this.runtimeService = runtimeService;
-    this.queueResolver = queueResolver;
+    this.queueResolver = new SchedulerQueueResolver(cConf, store);
   }
 
   @Override
