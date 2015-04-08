@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -156,12 +157,11 @@ public class ExploreTableManager {
     String datasetType = spec.getType();
     // special casing here... but we really should clean this up
     // there are two ways to refer to each dataset type...
-    if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
-      ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      // ObjectMappedTable must contain a schema in its properties
+    if (isExplorableTable(datasetType)) {
       String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
+      // if there is no schema, this is a no-op.
       if (schemaStr == null) {
-        throw new IllegalArgumentException("Schema not found for dataset " + datasetID);
+        return QueryHandle.NO_OP;
       }
       try {
         Schema schema = Schema.parseJson(schemaStr);
@@ -202,6 +202,13 @@ public class ExploreTableManager {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;
     }
+  }
+
+  private boolean isExplorableTable(String datasetType) {
+    return ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
+      ObjectMappedTableModule.SHORT_NAME.equals(datasetType) ||
+      "table".equals(datasetType) ||
+      Table.class.getName().equals(datasetType);
   }
 
   /**

@@ -17,12 +17,14 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
@@ -83,7 +85,10 @@ public class HBaseTable extends BufferingTable {
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
-          HBaseTableAdmin.supportsReadlessIncrements(spec));
+          HBaseTableAdmin.supportsReadlessIncrements(spec),
+          spec.getProperty(Table.PROPERTY_SCHEMA) == null ?
+            null : Schema.parseJson(spec.getProperty(Table.PROPERTY_SCHEMA)),
+          spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD));
     TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable

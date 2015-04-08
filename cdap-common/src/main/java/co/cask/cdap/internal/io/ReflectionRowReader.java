@@ -44,6 +44,11 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
   public ReflectionRowReader(Schema schema, TypeToken<T> type) {
     super(schema, type);
     Preconditions.checkArgument(schema.getType() == Schema.Type.RECORD, "Target schema must be a record.");
+    for (Schema.Field field : schema.getFields()) {
+      Preconditions.checkArgument(
+        field.getSchema().isSimpleOrNullableSimple(),
+        "Target schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
+    }
   }
 
   @SuppressWarnings("unchecked")

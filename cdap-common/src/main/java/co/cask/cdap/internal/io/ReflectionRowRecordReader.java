@@ -16,44 +16,123 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Decodes an object from a {@link Row} object fetched from a {@link Table} into a {@link StructuredRecord.Builder}
- * that is ready to be built. Used for exploration of Tables using only a schema without requiring a type token.
+ * Decodes an object from a {@link Row} object fetched from a {@link Table} into a {@link StructuredRecord}.
+ * The schema may contain a field for the row key, which must be a non-null simple type. The name of the
+ * row field must be given if the schema contains it.
  */
-public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRecord.Builder> {
+public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRecord> {
+  // these are used since we know the type or the row key in the constructor,
+  // and we don't want to have a big switch statement each time we read a row.
+  private static final Map<Schema.Type, RowKeyFunction> rowKeyFuctions =
+    ImmutableMap.<Schema.Type, RowKeyFunction>builder()
+      .put(Schema.Type.BOOLEAN, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toBoolean(rowKey);
+        }
+      })
+      .put(Schema.Type.BYTES, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return rowKey;
+        }
+      })
+      .put(Schema.Type.INT, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toInt(rowKey);
+        }
+      })
+      .put(Schema.Type.LONG, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toLong(rowKey);
+        }
+      })
+      .put(Schema.Type.FLOAT, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toFloat(rowKey);
+        }
+      })
+      .put(Schema.Type.DOUBLE, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toDouble(rowKey);
+        }
+      })
+      .put(Schema.Type.STRING, new RowKeyFunction() {
+        @Override
+        Object get(byte[] rowKey) {
+          return Bytes.toString(rowKey);
+        }
+      })
+      .build();
+  private final String rowFieldName;
+  private final RowKeyFunction rowKeyFunction;
 
-  public ReflectionRowRecordReader(Schema schema) {
-    super(schema, TypeToken.of(StructuredRecord.Builder.class));
-    Preconditions.checkArgument(schema.getType() == Schema.Type.RECORD, "Target schema must be a record.");
+  public ReflectionRowRecordReader(Schema schema, @Nullable String rowFieldName) {
+    super(schema, TypeToken.of(StructuredRecord.class));
+    this.rowFieldName = rowFieldName;
+    // if row field is given, make sure the type is a non-null simple type
+    if (rowFieldName != null) {
+      Schema.Field rowField = schema.getField(rowFieldName);
+      Schema.Type rowType = rowField.getSchema().getType();
+      Preconditions.checkArgument(rowField != null, "Row field not found in schema");
+      Preconditions.checkArgument(rowType != Schema.Type.NULL, "Row field cannot have null type.");
+      Preconditions.checkArgument(rowType.isSimpleType(),
+        "Row field must be a simple type (boolean, bytes, int, long, float, double, or string).");
+      this.rowKeyFunction = rowKeyFuctions.get(rowType);
+    } else {
+      this.rowKeyFunction = null;
+    }
   }
 
   @Override
-  public StructuredRecord.Builder read(Row row, Schema sourceSchema) throws IOException {
+  public StructuredRecord read(Row row, Schema sourceSchema) throws IOException {
     Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD, "Source schema must be a record.");
     initializeRead(sourceSchema);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    // if one of the fields should come from the row key, add it.
+    if (rowFieldName != null) {
+      builder.set(rowFieldName, rowKeyFunction.get(row.getRow()));
+    }
+
+    // go through the Row columns and add their values to the record
     try {
       for (Schema.Field sourceField : sourceSchema.getFields()) {
         String sourceFieldName = sourceField.getName();
         Schema.Field targetField = schema.getField(sourceFieldName);
-        if (targetField == null) {
+        // the Row may contain more fields than our target schema. Skip those fields that are not in the target schema,
+        // as well as the row key field since it comes from the row key and not the columns.
+        if (targetField == null || targetField.getName().equals(rowFieldName)) {
           advanceField();
           continue;
         }
         builder.set(sourceFieldName, read(row, sourceField.getSchema(), targetField.getSchema(), type));
       }
-      return builder;
+      return builder.build();
     } catch (Exception e) {
       throw propagate(e);
     }
+  }
+
+  // translates a row key into some other object.
+  private abstract static class RowKeyFunction {
+    abstract Object get(byte[] rowKey);
   }
 }

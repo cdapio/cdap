@@ -565,6 +565,16 @@ public final class Schema {
   }
 
   /**
+   * Check if this is a simple type or a nullable simple type, which is a union of a null and one other non-null
+   * simple type, where a simple type is a boolean, int, long, float, double, bytes, or string type.
+   *
+   * @return whether or not this is a nullable simple type.
+   */
+  public boolean isSimpleOrNullableSimple() {
+    return type.isSimpleType() || (type == Type.UNION && getNonNullable().getType().isSimpleType());
+  }
+
+  /**
    * Assuming this is a union of a null and one non-null type, return the non-null schema.
    *
    * @return non-null schema from a union of a null and non-null schema.

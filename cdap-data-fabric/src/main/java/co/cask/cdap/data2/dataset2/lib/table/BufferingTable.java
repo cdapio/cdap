@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -107,14 +108,16 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @param name table name
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, level, false);
+    this(name, level, false, null, null);
   }
 
   /**
    * Creates an instance of {@link BufferingTable}.
    * @param name table name
    */
-  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
+  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements,
+                        Schema schema, String schemaRowField) {
+    super(schema, schemaRowField);
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);

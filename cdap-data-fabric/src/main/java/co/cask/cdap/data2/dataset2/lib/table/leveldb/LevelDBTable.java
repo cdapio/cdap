@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -44,7 +45,8 @@ public class LevelDBTable extends BufferingTable {
   private long persistedVersion;
 
   public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
-                      LevelDBTableService service, CConfiguration cConf) throws IOException {
+                      LevelDBTableService service, CConfiguration cConf,
+                      Schema schema, String schemaRowField) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level);
     this.core = new LevelDBTableCore(getTableName(), service);
   }

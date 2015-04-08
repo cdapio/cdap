@@ -18,16 +18,21 @@ package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * An ordered, named table.
+ * An ordered, optionally explorable, named table.
  */
-public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>, Dataset {
+public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>,
+  Dataset, RecordScannable<StructuredRecord> {
+
   /**
    * Property set to configure time-to-live on data within this dataset. The value given is in milliseconds.
    * Once a cell's data has surpassed the given value in age,
@@ -54,6 +59,19 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @see ConflictDetection
    */
   String PROPERTY_CONFLICT_LEVEL = "conflict.level";
+
+  /**
+   * Property set to configure schema for the table. Schema is currently not enforced when writing to a Table,
+   * but is used when exploring a Table. Field names from the schema will be read from columns of the same name.
+   * For example, if the schema contains an integer field named "count", the value for that field will be read
+   * from the "count" column. The schema can only contain simple types.
+   */
+  String PROPERTY_SCHEMA = DatasetProperties.SCHEMA;
+
+  /**
+   * Property set to configure which field in the schema is the row key.
+   */
+  String PROPERTY_SCHEMA_ROW_FIELD = "schema.row.field";
 
   /**
    * Reads values of all columns of the specified row.
