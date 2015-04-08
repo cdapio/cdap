@@ -56,21 +56,21 @@ angular.module(PKG.name + '.feature.flows')
               ];
 
             }
+
+            // Total
+            dataSrc
+              .poll({
+                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+                              + '.app.' + $state.params.appId
+                              + '.flow.' + $state.params.programId
+                              + '.flowlet.' + $state.params.flowletid
+                              + '&metric=system.process.events.out',
+                method: 'POST'
+              }, function(res) {
+                $scope.total = res.series[0].data[0].value;
+              });
+
           }
-
-
-          // Total
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                            + '.app.' + $state.params.appId
-                            + '.flow.' + $state.params.programId
-                            + '.flowlet.' + $state.params.flowletid
-                            + '&metric=system.process.events.out',
-              method: 'POST'
-            }, function(res) {
-              $scope.total = res.series[0].data[0].value;
-            });
 
         }
 
