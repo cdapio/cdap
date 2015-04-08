@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,8 @@ import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,20 +55,24 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
   private static final String HCONF_ATTR_ADAPTER_NAME = "hconf.program.adapter.name";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
-  private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
+  private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
 
-  private final JobContext jobContext;
+  private final Configuration hConf;
 
-  public MapReduceContextConfig(JobContext context) {
-    this.jobContext = context;
+  public MapReduceContextConfig(Configuration hConf) {
+    this.hConf = hConf;
+  }
+
+  public Configuration getConfiguration() {
+    return hConf;
   }
 
   public void set(BasicMapReduceContext context, CConfiguration conf,
-                  Transaction tx, String programJarName) {
+                  Transaction tx, URI programJarURI) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     if (context.getWorkflowBatch() != null) {
@@ -78,7 +82,7 @@ public final class MapReduceContextConfig {
       setAdapterName(context.getAdapterName());
     }
     setArguments(context.getRuntimeArguments());
-    setProgramJarName(programJarName);
+    setProgramJarURI(programJarURI);
     setConf(conf);
     setTx(tx);
     if (context.getInputDataSelection() != null) {
@@ -87,67 +91,61 @@ public final class MapReduceContextConfig {
   }
 
   private void setArguments(Map<String, String> arguments) {
-    jobContext.getConfiguration().set(HCONF_ATTR_ARGS, new Gson().toJson(arguments));
+    hConf.set(HCONF_ATTR_ARGS, new Gson().toJson(arguments));
   }
 
   public Arguments getArguments() {
-    Map<String, String> arguments = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_ARGS),
+    Map<String, String> arguments = new Gson().fromJson(hConf.get(HCONF_ATTR_ARGS),
                                                         new TypeToken<Map<String, String>>() { }.getType());
     return new BasicArguments(arguments);
   }
 
-  public URI getProgramLocation() {
-    String programJarName = getProgramJarName();
-    for (Path file : jobContext.getFileClassPaths()) {
-      if (programJarName.equals(file.getName())) {
-        return file.toUri();
-      }
-    }
-    throw new IllegalStateException("Program jar " + programJarName + " not found in classpath files.");
-  }
-
   private void setRunId(String runId) {
-    jobContext.getConfiguration().set(HCONF_ATTR_RUN_ID, runId);
+    hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
   public String getRunId() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_RUN_ID);
+    return hConf.get(HCONF_ATTR_RUN_ID);
   }
 
   private void setLogicalStartTime(long startTime) {
-    jobContext.getConfiguration().setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
+    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
   }
 
   public long getLogicalStartTime() {
-    return jobContext.getConfiguration().getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
+    return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
   private void setWorkflowBatch(String workflowBatch) {
-    jobContext.getConfiguration().set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+    hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
   }
 
   public String getWorkflowBatch() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_WORKFLOW_BATCH);
+    return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
   }
 
   private void setAdapterName(String adapterName) {
-    jobContext.getConfiguration().set(HCONF_ATTR_ADAPTER_NAME, adapterName);
+    hConf.set(HCONF_ATTR_ADAPTER_NAME, adapterName);
   }
 
   public String getAdapterName() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_ADAPTER_NAME);
+    return hConf.get(HCONF_ATTR_ADAPTER_NAME);
   }
 
-  private void setProgramJarName(String programJarName) {
-    jobContext.getConfiguration().set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);
+  private void setProgramJarURI(URI programJarURI) {
+    hConf.set(HCONF_ATTR_PROGRAM_JAR_URI, programJarURI.toASCIIString());
+  }
+
+  public URI getProgramJarURI() {
+    return URI.create(hConf.get(HCONF_ATTR_PROGRAM_JAR_URI));
   }
 
   public String getProgramJarName() {
-    return jobContext.getConfiguration().get(HCONF_ATTR_PROGRAM_JAR_NAME);
+    return new Path(getProgramJarURI()).getName();
   }
 
   public String getInputDataSet() {
-    return jobContext.getConfiguration().get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
+    return hConf.get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
   }
 
   private void setInputSelection(List<Split> splits) {
@@ -159,15 +157,15 @@ public final class MapReduceContextConfig {
       // assign any
       splitClass = SimpleSplit.class;
     }
-    jobContext.getConfiguration().set(HCONF_ATTR_INPUT_SPLIT_CLASS, splitClass.getName());
+    hConf.set(HCONF_ATTR_INPUT_SPLIT_CLASS, splitClass.getName());
 
     // todo: re-use Gson instance?
-    jobContext.getConfiguration().set(HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(splits));
+    hConf.set(HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(splits));
   }
 
   public List<Split> getInputSelection() {
-    String splitClassName = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLIT_CLASS);
-    String splitsJson = jobContext.getConfiguration().get(HCONF_ATTR_INPUT_SPLITS);
+    String splitClassName = hConf.get(HCONF_ATTR_INPUT_SPLIT_CLASS);
+    String splitsJson = hConf.get(HCONF_ATTR_INPUT_SPLITS);
     if (splitClassName == null || splitsJson == null) {
       return Collections.emptyList();
     }
@@ -176,7 +174,7 @@ public final class MapReduceContextConfig {
       // Yes, we know that it implements Split
       @SuppressWarnings("unchecked")
       Class<? extends Split> splitClass =
-        (Class<? extends Split>) jobContext.getConfiguration().getClassLoader().loadClass(splitClassName);
+        (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
       return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
     } catch (ClassNotFoundException e) {
       //todo
@@ -210,7 +208,7 @@ public final class MapReduceContextConfig {
   }
 
   public String getOutputDataSet() {
-    return jobContext.getConfiguration().get(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET);
+    return hConf.get(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET);
   }
 
   private void setConf(CConfiguration conf) {
@@ -221,20 +219,20 @@ public final class MapReduceContextConfig {
       LOG.error("Unable to serialize CConfiguration into xml");
       throw Throwables.propagate(e);
     }
-    jobContext.getConfiguration().set(HCONF_ATTR_CCONF, stringWriter.toString());
+    hConf.set(HCONF_ATTR_CCONF, stringWriter.toString());
   }
 
   public CConfiguration getConf() {
     CConfiguration conf = CConfiguration.create();
-    conf.addResource(new ByteArrayInputStream(jobContext.getConfiguration().get(HCONF_ATTR_CCONF).getBytes()));
+    conf.addResource(new ByteArrayInputStream(hConf.get(HCONF_ATTR_CCONF).getBytes()));
     return conf;
   }
 
   private void setTx(Transaction tx) {
-    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
+    hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
   public Transaction getTx() {
-    return GSON.fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX), Transaction.class);
+    return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
   }
 }

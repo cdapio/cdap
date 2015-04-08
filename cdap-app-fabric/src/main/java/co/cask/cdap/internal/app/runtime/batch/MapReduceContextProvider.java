@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,15 +20,17 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,6 @@ import java.io.IOException;
 public final class MapReduceContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
-  private static final ThreadLocal<Program> PROGRAM_THREAD_LOCAL = new ThreadLocal<Program>();
 
   private final TaskAttemptContext taskContext;
   private final MapReduceMetrics.TaskType type;
@@ -52,7 +53,7 @@ public final class MapReduceContextProvider {
   public MapReduceContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
     this.taskContext = context;
     this.type = type;
-    this.contextConfig = new MapReduceContextConfig(context);
+    this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.contextBuilder = null;
   }
 
@@ -72,7 +73,7 @@ public final class MapReduceContextProvider {
                contextConfig.getWorkflowBatch(),
                contextConfig.getArguments(),
                contextConfig.getTx(),
-               createProgram(),
+               createProgram(contextConfig),
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet(),
@@ -87,7 +88,7 @@ public final class MapReduceContextProvider {
       return contextBuilder;
     }
 
-    if (isLocal()) {
+    if (isLocal(taskContext.getConfiguration())) {
       contextBuilder = new InMemoryMapReduceContextBuilder(conf, taskContext);
     } else {
       // mrFramework = "yarn" or "classic"
@@ -98,46 +99,43 @@ public final class MapReduceContextProvider {
     return contextBuilder;
   }
 
-  private boolean isLocal() {
-    String mrFramework = taskContext.getConfiguration().get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
+  private boolean isLocal(Configuration hConf) {
+    String mrFramework = hConf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
     return "local".equals(mrFramework);
   }
 
-  private Program createProgram() {
-    // If Program is already created, return it.
-    // It is needed so that in distributed mode, there is only one ProgramClassLoader created, even if
-    // there are multiple instances of this class being created (one from creating RecordReader/Writer, one from
-    // MapperWrapper/ReducerWrapper).
-
-    // For local mode, it doesn't matter than much, but no harm in returning the same program.
-    Program program = PROGRAM_THREAD_LOCAL.get();
-    if (program != null) {
-      return program;
+  private Program createProgram(MapReduceContextConfig contextConfig) {
+    LocationFactory locationFactory = new LocalLocationFactory();
+    Location programLocation;
+    if (isLocal(contextConfig.getConfiguration())) {
+      // Just create a local location factory. It's for temp usage only as the program location is always absolute.
+      programLocation = locationFactory.create(contextConfig.getProgramJarURI());
+    } else {
+      // In distributed mode, the program jar is localized to the container
+      programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
     }
-
     try {
-      if (isLocal()) {
-        // Just create a local location factory. It's for temp usage only as the program location is always absolute.
-        Location programLocation = new LocalLocationFactory().create(contextConfig.getProgramLocation());
-        // In local mode, use the task context classloader to create a new Program instance.
-        program = Programs.create(programLocation, taskContext.getConfiguration().getClassLoader());
-      } else {
-        // In distributed mode, the program is created by expanding the program jar.
-        // The program jar is localized to container with the program jar name.
-        // It's ok to expand to a temp dir in local directory, as the YARN container will be gone.
-        Location programLocation = new LocalLocationFactory()
-          .create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
-        File unpackDir = DirUtils.createTempDir(new File(System.getProperty("user.dir")));
-        LOG.info("Create Program from {}, expand to {}", programLocation.toURI(), unpackDir);
-        program = Programs.createWithUnpack(programLocation, unpackDir,
-                                            taskContext.getConfiguration().getClassLoader());
-      }
-      PROGRAM_THREAD_LOCAL.set(program);
-      return program;
-
+      // Use the configuration ClassLoader as the Program ClassLoader
+      // In local mode, it is set by the MapReduceRuntimeService
+      // In distributed mode, it is set by the MR framework to the ApplicationClassLoader
+      return Programs.create(programLocation, contextConfig.getConfiguration().getClassLoader());
     } catch (IOException e) {
-      LOG.error("Failed to create program from {}", contextConfig.getProgramLocation(), e);
+      LOG.error("Failed to create program from {}", contextConfig.getProgramJarURI(), e);
       throw Throwables.propagate(e);
     }
+  }
+
+
+  /**
+   * Returns the {@link ClassLoader} for the MapReduce program. The ClassLoader for MapReduce job is always
+   * an {@link ApplicationClassLoader}, which set by {@link MapReduceRuntimeService} in local mode and created by MR
+   * framework in distributed mode.
+   */
+  static ClassLoader getProgramClassLoader(Configuration hConf) {
+    ClassLoader classLoader = hConf.getClassLoader();
+    if (!(classLoader instanceof ApplicationClassLoader)) {
+      throw new IllegalArgumentException("ClassLoader is not an ApplicationClassLoader");
+    }
+    return ((ApplicationClassLoader) classLoader).getProgramClassLoader();
   }
 }
