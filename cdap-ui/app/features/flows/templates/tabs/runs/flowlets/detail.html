@@ -52,15 +52,15 @@
     <tbody>
       <tr ng-repeat="input in inputs track by $index">
         <td>
-          {{input}}
+          {{ input.name }}
         </td>
         <td>
-          <strong>{{ total | myNumber: 1 }}</strong> events/s
+          <strong>{{ input.total | myNumber: 1 }}</strong> events/s
         </td>
         <td>
           <epoch-line
-            data-history="inputHistory"
-            data-stream="inputStream"
+            data-history="input.history"
+            data-stream="input.stream"
             chart-height="100"
             chart-width="400"
             chart-axes="['left', 'bottom']"

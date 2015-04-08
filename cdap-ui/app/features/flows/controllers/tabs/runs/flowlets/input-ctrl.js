@@ -15,63 +15,81 @@ angular.module(PKG.name + '.feature.flows')
         // INPUTS
         angular.forEach(res.connections, function(v) {
           if (v.targetName === flowletid) {
-            $scope.inputs.push(v.sourceName);
+            $scope.inputs.push({
+              name: v.sourceName
+            });
           }
         });
 
         if ($scope.inputs.length > 0) {
           // INPUT METRICS
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                            + '.app.' + $state.params.appId
-                            + '.flow.' + $state.params.programId
-                            + '.flowlet.' + $scope.inputs[0]
-                            + '&metric=system.process.events.out&start=now-60s&count=60',
-              method: 'POST'
-            }, function (res) {
-              updateInput(res.series[0].data);
+          // dataSrc
+          //   .poll({
+          //     _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+          //                   + '.app.' + $state.params.appId
+          //                   + '.flow.' + $state.params.programId
+          //                   + '.flowlet.' + $scope.inputs[0].name
+          //                   + '&metric=system.process.events.out&start=now-60s&count=60',
+          //     method: 'POST'
+          //   }, function (res) {
+          //     updateInput(res.series[0].data);
 
-            });
+          //   });
 
-          function updateInput(newVal) {
-            if(angular.isObject(newVal)) {
-              var v = [];
+          angular.forEach($scope.inputs, function (input) {
+            // POLLING GRAPH
+            dataSrc
+              .poll({
+                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+                              + '.app.' + $state.params.appId
+                              + '.flow.' + $state.params.programId
+                              + '.flowlet.' + input.name
+                              + '&metric=system.process.events.out&start=now-60s&count=60',
+                method: 'POST'
+              }, function (res) {
+                // updateInput(res.series[0].data);
+                var response = res.series[0].data;
+                if(angular.isObject(response)) {
+                  var v = [];
 
-              angular.forEach(newVal, function(val) {
-                v.push({
-                  time: val.time,
-                  y: val.value
-                });
+                  angular.forEach(response, function(val) {
+                    v.push({
+                      time: val.time,
+                      y: val.value
+                    });
+                  });
+
+                  if (input.history) {
+                    input.stream = v.slice(-1);
+                  }
+
+                  input.history = [
+                    {
+                      label: 'output',
+                      values: v
+                    }
+                  ];
+
+                }
+
               });
 
-              if ($scope.inputHistory) {
-                $scope.inputStream = v.slice(-1);
-              }
+            // POLLING ARRIVAL RATE
+            dataSrc
+              .poll({
+                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+                              + '.app.' + $state.params.appId
+                              + '.flow.' + $state.params.programId
+                              + '.flowlet.' + input.name
+                              + '&metric=system.process.events.out&start=now-60s&count=1',
+                method: 'POST'
+              }, function (res) {
+                input.total = res.series[0].data[0].value / 60;
+              });
 
-              $scope.inputHistory = [
-                {
-                  label: 'output',
-                  values: v
-                }
-              ];
-
-            }
-          }
-        }
-
-
-        dataSrc
-          .poll({
-            _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                          + '.app.' + $state.params.appId
-                          + '.flow.' + $state.params.programId
-                          + '.flowlet.' + $scope.inputs[0]
-                          + '&metric=system.process.events.out&start=now-60s&count=1',
-            method: 'POST'
-          }, function (res) {
-            $scope.total = res.series[0].data[0].value / 60;
           });
+
+        }
 
       });
   });
