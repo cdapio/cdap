@@ -60,8 +60,8 @@ public class ObjectStoreDefinition
     // strip schema from the properties sent to the underlying table, since ObjectStore allows schemas
     // that tables do not
     Map<String, String> tableProperties = Maps.newHashMap(properties.getProperties());
-    //tableProperties.remove("type");
-    //tableProperties.remove("schema");
+    tableProperties.remove("type");
+    tableProperties.remove("schema");
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("objects", DatasetProperties.builder().addAll(tableProperties).build()))
