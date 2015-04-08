@@ -47,9 +47,9 @@ angular.module(PKG.name + '.feature.flows')
                               + '&metric=system.process.events.out&start=now-60s&count=60',
                 method: 'POST'
               }, function (res) {
-                // updateInput(res.series[0].data);
-                var response = res.series[0].data;
-                if(angular.isObject(response)) {
+
+                if(res.series[0]) {
+                  var response = res.series[0].data;
                   var v = [];
 
                   angular.forEach(response, function(val) {

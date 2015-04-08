@@ -30,7 +30,9 @@ angular.module(PKG.name + '.feature.flows')
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
-              updateOutput(res.series[0].data);
+              if (res.series[0]) {
+                updateOutput(res.series[0].data);
+              }
             });
 
           function updateOutput(newVal) {

@@ -31,7 +31,9 @@ angular.module(PKG.name + '.feature.flows')
                         + '&metric=system.dataset.store.reads',
               method: 'POST'
             }, function(res) {
-              dataset.reads = res.series[0].data[0].value;
+              if (res.series[0]) {
+                dataset.reads = res.series[0].data[0].value;
+              }
             });
 
           dataSrc
