@@ -90,8 +90,6 @@
       <th>Dataset</th>
       <th>Reads</th>
       <th>Writes</th>
-      <th>Distribution of ops vs. instances</th>
-      <th>Skew</th>
     </thead>
     <tbody>
       <tr ng-repeat="dataset in datasets">
@@ -104,8 +102,6 @@
         <td>
           {{ dataset.writes | myNumber:1 }}
         </td>
-        <td></td>
-        <td></td>
       </tr>
     </tbody>
   </table>

@@ -43,7 +43,9 @@ angular.module(PKG.name + '.feature.flows')
                         + '&metric=system.dataset.store.writes',
               method: 'POST'
             }, function(res) {
-              dataset.writes = res.series[0].data[0].value;
+              if (res.series[0]) {
+                dataset.writes = res.series[0].data[0].value;
+              }
             });
         });
 

@@ -84,7 +84,9 @@ angular.module(PKG.name + '.feature.flows')
                               + '&metric=system.process.events.out&start=now-60s&count=1',
                 method: 'POST'
               }, function (res) {
-                input.total = res.series[0].data[0].value / 60;
+                if (res.series[0]) {
+                  input.total = res.series[0].data[0].value / 60;
+                }
               });
 
           });

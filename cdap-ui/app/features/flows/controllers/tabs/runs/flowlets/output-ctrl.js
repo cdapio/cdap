@@ -67,7 +67,9 @@ angular.module(PKG.name + '.feature.flows')
                               + '&metric=system.process.events.out',
                 method: 'POST'
               }, function(res) {
-                $scope.total = res.series[0].data[0].value;
+                if (res.series[0]) {
+                  $scope.total = res.series[0].data[0].value;
+                }
               });
 
           }
