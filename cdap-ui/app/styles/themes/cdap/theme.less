@@ -261,6 +261,16 @@ body.theme-cdap {
         border-color: transparent;
         .box-shadow(none);
       }
+
+      // Metric picker specific styles.
+      &.mp-dropdown-toggle {
+        border-radius: 4px 0px 0px 4px;
+        border-right: 1px solid #ccc;
+      }
+
+      &.mp-input-group-input {
+        border-radius: 0px 4px 4px 0px; 
+      }
     }
     .input-group-addon + .form-control { border-left: 1px solid lightgray; .border-radius(0 4px 4px 0); }
     textarea.form-control { min-height: 100px; }

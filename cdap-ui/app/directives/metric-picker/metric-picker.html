@@ -1,25 +1,25 @@
 <div class="form-group">
-  <div class="col-xs-12 col-sm-6">
-    <div class="input-group-btn">
-      <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
-        ng-model="metric.type"
-        bs-options="t for t in available.types"
+  <div class="col-xs-12 col-sm-12">
+    <div class="input-group">
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+          ng-model="metric.type"
+          bs-options="t for t in available.types"
+          data-container="body"
+          bs-select>
+            <strong ng-bind="metric.type"></strong>
+            <span class="caret"></span>
+        </button>
+      </div>
+      <input type="text" class="form-control mp-input-group-input"
+        placeholder="Context"
+        ng-model="metric.context"
+        bs-options="c.value as c.display for c in available.contexts"
+        data-watch-options="1"
+        data-min-length="0"
         data-container="body"
-        bs-select>
-          <strong ng-bind="metric.type"></strong>
-          <span class="caret"></span>
-      </button>
+        bs-typeahead />
     </div>
-  </div>
-  <div class="col-xs-12 col-sm-6">
-    <input type="text" class="form-control"
-      placeholder="Context"
-      ng-model="metric.context"
-      bs-options="c.value as c.display for c in available.contexts"
-      data-watch-options="1"
-      data-min-length="0"
-      data-container="body"
-      bs-typeahead />
   </div>
 </div>
 
