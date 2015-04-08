@@ -14,7 +14,6 @@ angular.module(PKG.name + '.feature.flows')
                            '&context=namespace.' +
                            $state.params.namespace +
                            '.stream.';
-    console.log('state', $state.params);
     $scope.data = {};
     $scope.status = null;
     $scope.duration = null;
@@ -27,7 +26,6 @@ angular.module(PKG.name + '.feature.flows')
       });
 
     // This controller is NOT shared between the accordions.
-    console.info('Polling on Runs');
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
@@ -44,7 +42,6 @@ angular.module(PKG.name + '.feature.flows')
       var nodes = $scope.data.nodes;
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
-        console.info('Polling on Metrics');
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
           method: 'POST'
