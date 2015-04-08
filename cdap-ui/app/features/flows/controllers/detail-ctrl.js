@@ -41,6 +41,24 @@ angular.module(PKG.name + '.feature.flows')
         $scope.activeRuns = res.length;
       });
 
+    dataSrc.poll({
+      _cdapPath: '/metrics/query?metric=system.dataset.store.reads&context=namespace.'
+                + $state.params.namespace + '.app.' + $state.params.appId +
+                '.flow.' + $state.params.programId,
+      method: 'POST'
+    }, function (res) {
+      $scope.reads = myHelpers.objectQuery(res, 'series' , 0, 'data', 0, 'value') || 0;
+    });
+
+    dataSrc.poll({
+      _cdapPath: '/metrics/query?metric=system.dataset.store.writes&context=namespace.'
+                + $state.params.namespace + '.app.' + $state.params.appId +
+                '.flow.' + $state.params.programId,
+      method: 'POST'
+    }, function (res) {
+      $scope.writes = myHelpers.objectQuery(res, 'series' , 0, 'data', 0, 'value') || 0;
+    });
+
     $scope.do = function(action) {
       dataSrc.request({
         _cdapNsPath: basePath + '/' + action,
