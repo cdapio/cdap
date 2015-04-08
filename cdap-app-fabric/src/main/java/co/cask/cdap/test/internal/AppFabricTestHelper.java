@@ -22,7 +22,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -48,6 +49,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -162,9 +164,9 @@ public class AppFabricTestHelper {
     }
   }
 
-  public static Location createAppJar(Class<?> appClass) {
-    LocalLocationFactory lf = new LocalLocationFactory();
-    return lf.create(JarFinder.getJar(appClass, AppFabricClient.getManifestWithMainClass(appClass)));
+  private static Location createAppJar(Class<?> appClass) throws IOException {
+    LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(TEMP_FOLDER.getRoot()));
+    return AppJarHelper.createDeploymentJar(lf, appClass);
   }
 }
 

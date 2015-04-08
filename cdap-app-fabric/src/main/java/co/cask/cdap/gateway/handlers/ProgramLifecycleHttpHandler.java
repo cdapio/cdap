@@ -1520,7 +1520,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      Preconditions.checkNotNull(runtimeInfo,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), type, identifier);
       ProgramController controller = runtimeInfo.getController();
       controller.stop().get();
       return AppFabricServiceStatus.OK;

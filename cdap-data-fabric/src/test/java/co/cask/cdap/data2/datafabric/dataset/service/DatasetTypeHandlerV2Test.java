@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.common.http.HttpRequest;
@@ -28,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -188,10 +188,10 @@ public class DatasetTypeHandlerV2Test extends DatasetServiceTestBase {
   @Test
   public void testBundledJarModule() throws Exception {
     //Get jar of TestModule1
-    String module1Jar = JarFinder.getJar(TestModule1.class);
+    Location module1Jar = createModuleJar(TestModule1.class);
     // Create bundle jar with TestModule2 and TestModule1 inside it, request for deploy is made for Module1.
     Assert.assertEquals(200, deployModuleBundled("module1", TestModule1.class.getName(),
-                                                 TestModule2.class, new File(module1Jar)));
+                                                 TestModule2.class, module1Jar));
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     List<DatasetModuleMeta> modules = getModules().getResponseObject();
     Assert.assertEquals(0, modules.size());
