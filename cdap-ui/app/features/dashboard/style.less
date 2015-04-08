@@ -88,3 +88,60 @@ body.state-dashboard {
 
 
 }
+
+.chart-color(@color) {
+  .category1 {
+    .line { stroke: @color; }
+    .area, .dot { fill: @color; }
+  }
+  .arc.category1 path {
+    fill: @color;
+  }
+  .bar.category1 {
+    fill: @color;
+  }
+}
+
+.chart-red > .epoch {
+  .chart-color(red);
+}
+
+.chart-green > .epoch {
+  .chart-color(#99FF66);
+}
+
+.chart-orange > .epoch {
+  .chart-color(#FF9933);
+}
+
+.chart-purple > .epoch {
+  .chart-color(#663399);
+}
+
+.chart-blue > .epoch {
+  .chart-color(#4B77BE);
+}
+
+.chart-cream > .epoch {
+  .chart-color(#F5D76E);
+}
+
+.chart-pink > .epoch {
+  .chart-color(#E08283);
+}
+
+.chart-euc > .epoch {
+  .chart-color(#26A65B);
+}
+
+.chart-madang > .epoch {
+  .chart-color(#C8F7C5);
+}
+
+.chart-lynch > .epoch {
+  .chart-color(#6C7A89);
+}
+
+.chart-riptide > .epoch {
+  .chart-color(#86E2D5);
+}

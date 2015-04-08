@@ -2,6 +2,17 @@
  * Widget model & controllers
  */
 
+ String.prototype.hashCode = function(){
+  var hash = 0;
+  if (this.length == 0) return hash;
+  for (i = 0; i < this.length; i++) {
+    char = this.charCodeAt(i);
+    hash = ((hash<<5)-hash)+char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+ }
+
 angular.module(PKG.name+'.feature.dashboard')
   .factory('Widget', function (MyDataSource) {
 
@@ -69,6 +80,12 @@ angular.module(PKG.name+'.feature.dashboard')
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
 
+    var classes = ['chart-green', 'chart-red', 'chart-orange', 'chart-blue', 'chart-cream', 'chart-purple', 'chart-pink', 'chart-euc', 'chart-madang', 'chart-lynch', 'chart-riptide'];
+
+
+    // var rand = classes[Math.floor(Math.random() * classes.length)];
+    // $scope.classes = rand;
+
     $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;
     $scope.stream = null;
@@ -95,6 +112,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
       }
     });
+
+    $scope.classes = classes[($scope.wdgt.metric.name.hashCode() * 13) % classes.length];
 
   })
 
