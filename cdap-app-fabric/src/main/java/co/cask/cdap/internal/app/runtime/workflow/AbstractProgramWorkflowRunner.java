@@ -35,13 +35,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
-import jline.internal.Log;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -58,7 +54,6 @@ import java.util.concurrent.ExecutionException;
  * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramWorkflowRunner.class);
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
