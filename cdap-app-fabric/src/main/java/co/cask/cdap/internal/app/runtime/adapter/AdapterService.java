@@ -249,7 +249,7 @@ public class AdapterService extends AbstractIdleService {
 
     ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterConfig.getTemplate());
     Preconditions.checkArgument(applicationTemplateInfo != null,
-                                "Applicaiton template %s not found", adapterConfig.getTemplate());
+                                "Application template %s not found", adapterConfig.getTemplate());
 
     if (store.getAdapter(namespace, adapterName) != null) {
       throw new AdapterAlreadyExistsException(adapterName);

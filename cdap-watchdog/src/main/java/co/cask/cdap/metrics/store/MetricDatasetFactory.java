@@ -16,8 +16,8 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
-import co.cask.cdap.metrics.store.timeseries.FactTable;
 
 /**
  * Manages metric system datasets.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.cube;
+package co.cask.cdap.data2.dataset2.lib.cube;
 
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
@@ -26,11 +26,11 @@ import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
-import co.cask.cdap.metrics.store.timeseries.Fact;
-import co.cask.cdap.metrics.store.timeseries.FactScan;
-import co.cask.cdap.metrics.store.timeseries.FactScanResult;
-import co.cask.cdap.metrics.store.timeseries.FactScanner;
-import co.cask.cdap.metrics.store.timeseries.FactTable;
+import co.cask.cdap.data2.dataset2.lib.timeseries.Fact;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactScan;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactScanResult;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactScanner;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;

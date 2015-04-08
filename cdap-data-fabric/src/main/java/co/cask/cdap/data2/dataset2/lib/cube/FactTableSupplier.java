@@ -14,8 +14,13 @@
  * the License.
  */
 
+package co.cask.cdap.data2.dataset2.lib.cube;
+
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+
 /**
- * This package contains {@link co.cask.cdap.api.dataset.lib.cube.Cube} implementation that stores
- * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}s and allows querying its data.
+ * Provider for {@link FactTable}s.
  */
-package co.cask.cdap.metrics.store.cube;
+public interface FactTableSupplier {
+  FactTable get(int resolution, int rollTime);
+}
