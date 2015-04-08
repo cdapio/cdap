@@ -89,6 +89,20 @@ body.state-dashboard {
 
 }
 
+// @red: red;
+// @green: #99FF66;
+// @orange: #FF9933;
+// @purple: #663399;
+// @blue: #4B77BE;
+// @cream: #F5D76E;
+// @pink: #E08283;
+// @euc: #26A65B;
+// @madang: #C8F7C5;
+// @lynch: #6C7A89;
+// @riptide: #86E2D5;
+
+@colors: 'red', '#99FF66', '#FF9933', '#663399', '#4B77BE', '#F5D76E', '#E08283', '#26A65B', '#C8F7C5', '#6C7A89', '#86E2D5';
+
 .chart-color(@color) {
   .category1 {
     .line { stroke: @color; }
@@ -102,46 +116,15 @@ body.state-dashboard {
   }
 }
 
-.chart-red > .epoch {
-  .chart-color(red);
+.loop(@counter) when (@counter > 0) {
+  .loop((@counter) - 1);
+  .chart-@{counter} > .epoch {
+    .chart-color( e(extract(@colors, @counter)) );
+  }
 }
 
-.chart-green > .epoch {
-  .chart-color(#99FF66);
-}
+.loop(11);
 
-.chart-orange > .epoch {
-  .chart-color(#FF9933);
-}
-
-.chart-purple > .epoch {
-  .chart-color(#663399);
-}
-
-.chart-blue > .epoch {
-  .chart-color(#4B77BE);
-}
-
-.chart-cream > .epoch {
-  .chart-color(#F5D76E);
-}
-
-.chart-pink > .epoch {
-  .chart-color(#E08283);
-}
-
-.chart-euc > .epoch {
-  .chart-color(#26A65B);
-}
-
-.chart-madang > .epoch {
-  .chart-color(#C8F7C5);
-}
-
-.chart-lynch > .epoch {
-  .chart-color(#6C7A89);
-}
-
-.chart-riptide > .epoch {
-  .chart-color(#86E2D5);
-}
+// .chart-red > .epoch {
+//   .chart-color(red);
+// }
