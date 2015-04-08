@@ -17,14 +17,12 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -42,11 +40,10 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -72,7 +69,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.common.Threads;
+import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -116,7 +113,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-  
+
+  private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
@@ -188,7 +186,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
-                                     ProgramRuntimeService runtimeService,
+                                     ProgramRuntimeService runtimeService, ProgramLifecycleService lifecycleService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory) {
@@ -202,6 +200,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
+    this.lifecycleService = lifecycleService;
   }
 
   /**
@@ -1331,11 +1330,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      final Program program = store.loadProgram(id, type);
-      if (program == null) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
-
       if (isRunning(id, type)) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
@@ -1348,62 +1342,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
 
-      BasicArguments userArguments = new BasicArguments(userArgs);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), getSystemArguments(id.getNamespaceId()),
-                                                             userArguments, debug));
-
-      final ProgramController controller = runtimeInfo.getController();
-      final String runId = controller.getRunId().getId();
-
-      if (type != ProgramType.MAPREDUCE) {
-        // MapReduce state recording is done by the MapReduceProgramRunner
-        // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
-        controller.addListener(new AbstractListener() {
-          @Override
-          public void init(ProgramController.State state, @Nullable Throwable cause) {
-            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-            if (state == ProgramController.State.COMPLETED) {
-              completed();
-            }
-            if (state == ProgramController.State.ERROR) {
-              error(controller.getFailureCause());
-            }
-          }
-
-          @Override
-          public void completed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.COMPLETED.getRunStatus());
-          }
-
-          @Override
-          public void killed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.KILLED.getRunStatus());
-          }
-
-          @Override
-          public void suspended() {
-            store.setSuspend(id, runId);
-          }
-
-          @Override
-          public void resuming() {
-            store.setResume(id, runId);
-          }
-
-          @Override
-          public void error(Throwable cause) {
-            LOG.info("Program stopped with error {}, {}", id, runId, cause);
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                          ProgramController.State.ERROR.getRunStatus());
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-      }
-      return AppFabricServiceStatus.OK;
-    } catch (DatasetInstantiationException e) {
-      return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+      RunId runId = lifecycleService.startProgram(id, type, overrides, debug);
+      return (runId != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       if (throwable instanceof FileNotFoundException) {

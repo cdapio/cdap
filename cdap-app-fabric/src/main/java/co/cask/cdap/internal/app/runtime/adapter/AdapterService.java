@@ -38,12 +38,14 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
@@ -56,6 +58,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -82,7 +85,9 @@ public class AdapterService extends AbstractIdleService {
   private final ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory;
   private final CConfiguration configuration;
   private final Scheduler scheduler;
+  private final ProgramLifecycleService lifecycleService;
   private final Store store;
+  private final AdapterStore adapterStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
   // template name to template info mapping
   private Map<String, ApplicationTemplateInfo> appTemplateInfos;
@@ -90,14 +95,16 @@ public class AdapterService extends AbstractIdleService {
   private Map<String, ApplicationTemplateInfo> fileToTemplateMap;
 
   @Inject
-  public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
+  public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store, AdapterStore adapterStore,
                         @Named("templates")
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
                         @Named("adapters")
                         ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
-                        NamespacedLocationFactory namespacedLocationFactory) {
+                        NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService) {
     this.configuration = configuration;
+    this.adapterStore = adapterStore;
     this.scheduler = scheduler;
+    this.lifecycleService = lifecycleService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.templateManagerFactory = templateManagerFactory;
@@ -369,14 +376,37 @@ public class AdapterService extends AbstractIdleService {
     store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
   }
 
-  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+    Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     String workerName = adapterSpec.getWorkerSpec().getName();
     Id.Program workerId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workerName);
-    //TODO: Start Worker with correct properties
+    try {
+      RunId runId = lifecycleService.startProgram(workerId, ProgramType.WORKER,
+                                                  adapterSpec.getWorkerSpec().getProperties(), false);
+      adapterStore.setRunId(adapterId, runId);
+    } catch (Throwable t) {
+      if (t instanceof FileNotFoundException) {
+        throw new NotFoundException(workerId);
+      } else {
+        Throwables.propagate(t);
+      }
+    }
   }
 
-  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
-    // TODO: implement
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+    Id.Adapter adapterId = Id.Adapter.from(namespace, adapterSpec.getName());
+    RunId runId = adapterStore.getRunId(adapterId);
+    if (runId == null) {
+      throw new NotFoundException(adapterId);
+    }
+
+    try {
+      lifecycleService.stopProgram(runId);
+      adapterStore.deleteRunId(adapterId);
+    } catch (Throwable t) {
+      LOG.error("Error while trying to stop Adapter {} which has RunId of {} : ", adapterId, runId, t);
+      Throwables.propagate(t);
+    }
   }
 
   // deploys an adapter. This will call configureAdapter() on the adapter's template. It may create

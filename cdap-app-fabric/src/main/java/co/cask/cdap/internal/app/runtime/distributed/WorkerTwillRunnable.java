@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.internal.app.worker.WorkerProgramRunner;
+import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 
 /**
  * A TwillRunnable for running Workers in distributed mode.
