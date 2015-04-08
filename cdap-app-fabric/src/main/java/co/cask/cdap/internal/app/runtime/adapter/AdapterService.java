@@ -22,6 +22,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -381,9 +382,10 @@ public class AdapterService extends AbstractIdleService {
     String workerName = adapterSpec.getWorkerSpec().getName();
     Id.Program workerId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workerName);
     try {
-      RunId runId = lifecycleService.startProgram(workerId, ProgramType.WORKER,
-                                                  adapterSpec.getWorkerSpec().getProperties(), false);
-      adapterStore.setRunId(adapterId, runId);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
+        workerId, ProgramType.WORKER, Maps.<String, String>newHashMap(), adapterSpec.getWorkerSpec().getProperties(),
+        false);
+      adapterStore.setRunId(adapterId, runtimeInfo.getController().getRunId());
     } catch (Throwable t) {
       if (t instanceof FileNotFoundException) {
         throw new NotFoundException(workerId);

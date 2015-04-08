@@ -25,7 +25,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -35,6 +34,7 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
@@ -87,7 +87,7 @@ public class StreamSizeScheduler implements Scheduler {
   private final NotificationService notificationService;
   private final MetricStore metricStore;
   private final Provider<Store> storeProvider;
-  private final ProgramRuntimeService programRuntimeService;
+  private final ProgramLifecycleService lifecycleService;
   private final PreferencesStore preferencesStore;
   private final DatasetBasedStreamSizeScheduleStore scheduleStore;
   private final ConcurrentMap<Id.Stream, StreamSubscriber> streamSubscribers;
@@ -110,14 +110,14 @@ public class StreamSizeScheduler implements Scheduler {
 
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
-                             Provider<Store> storeProvider, ProgramRuntimeService programRuntimeService,
+                             Provider<Store> storeProvider, ProgramLifecycleService lifecycleService,
                              PreferencesStore preferencesStore, DatasetBasedStreamSizeScheduleStore scheduleStore) {
     this.pollingDelay = TimeUnit.SECONDS.toMillis(
       cConf.getLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY));
     this.notificationService = notificationService;
     this.metricStore = metricStore;
     this.storeProvider = storeProvider;
-    this.programRuntimeService = programRuntimeService;
+    this.lifecycleService = lifecycleService;
     this.preferencesStore = preferencesStore;
     this.scheduleStore = scheduleStore;
     this.streamSubscribers = Maps.newConcurrentMap();
@@ -994,7 +994,7 @@ public class StreamSizeScheduler implements Scheduler {
         basePollTs = pollingInfo.getTimestamp();
       }
 
-      final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore,
+      final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, preferencesStore,
                                                                    taskExecutorService);
       try {
         scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),

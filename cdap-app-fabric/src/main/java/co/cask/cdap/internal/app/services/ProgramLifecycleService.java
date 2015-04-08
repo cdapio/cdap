@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -71,8 +72,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
     LOG.info("Shutting down ProgramLifecycleService");
   }
 
-  public RunId startProgram(final Id.Program id, final ProgramType programType,
-                            final Map<String, String> userArgs, boolean debug) throws IOException {
+  public ProgramRuntimeService.RuntimeInfo startProgram(final Id.Program id, final ProgramType programType,
+                                                        final Map<String, String> sysArgs,
+                                                        final Map<String, String> userArgs, boolean debug)
+    throws IOException {
     Program program = store.loadProgram(id, programType);
     if (program == null) {
       throw new FileNotFoundException(String.format("Program not found: Id = %s; Type = %s", id, programType));
@@ -80,6 +83,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     BasicArguments userArguments = new BasicArguments(userArgs);
     Map<String, String> basicSystemArgs = getBasicSystemArguments(id.getNamespace());
+    basicSystemArgs.putAll(sysArgs);
     BasicArguments systemArguments = new BasicArguments(basicSystemArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, new SimpleProgramOptions(
       id.getId(), systemArguments, userArguments, debug));
@@ -109,23 +113,27 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
         @Override
         public void completed() {
+          LOG.debug("Program {} {} {} completed successfully.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.COMPLETED.getRunStatus());
         }
 
         @Override
         public void killed() {
+          LOG.debug("Program {} {} {} killed.", id.getNamespaceId(), id.getApplicationId(), id.getId());
           store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
         }
 
         @Override
         public void suspended() {
+          LOG.debug("Suspending Program {} {} {} {}.", id.getNamespaceId(), id.getApplicationId(), id, runId);
           store.setSuspend(id, runId);
         }
 
         @Override
         public void resuming() {
+          LOG.debug("Resuming Program {} {} {} {}.", id.getNamespaceId(), id.getApplicationId(), id, runId);
           store.setResume(id, runId);
         }
 
@@ -137,7 +145,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
     }
-    return controller.getRunId();
+    return runtimeInfo;
   }
 
   private Map<String, String> getBasicSystemArguments(Id.Namespace namespaceId) {
@@ -146,8 +154,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return systemArgs;
   }
 
+  //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program
   public void stopProgram(RunId runId) throws ExecutionException, InterruptedException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(runId);
     runtimeInfo.getController().stop().get();
+  }
+
+  /**
+   * Returns runtime information for the given program if it is running,
+   * or {@code null} if no instance of it is running.
+   */
+  public ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId, ProgramType programType) {
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programType).values();
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (programId.equals(info.getProgramId())) {
+        return info;
+      }
+    }
+    return null;
   }
 }

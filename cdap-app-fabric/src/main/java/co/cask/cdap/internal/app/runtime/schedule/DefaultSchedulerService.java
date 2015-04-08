@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -25,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -52,10 +52,10 @@ public class DefaultSchedulerService {
     private final ScheduleTaskRunner taskRunner;
     private final SchedulerQueueResolver schedulerQueueResolver;
 
-    ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
+    ScheduledJob(Store store, ProgramLifecycleService lifecycleService, PreferencesStore preferencesStore,
                  CConfiguration cConf, ListeningExecutorService taskExecutor) {
       this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
-      this.taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore, taskExecutor);
+      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, preferencesStore, taskExecutor);
     }
 
     @Override

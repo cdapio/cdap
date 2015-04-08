@@ -17,12 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
@@ -30,7 +27,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -42,11 +39,10 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -56,15 +52,15 @@ public final class ScheduleTaskRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
 
-  private final ProgramRuntimeService runtimeService;
+  private final ProgramLifecycleService lifecycleService;
   private final Store store;
   private final PreferencesStore preferencesStore;
   private final ListeningExecutorService executorService;
 
-  public ScheduleTaskRunner(Store store, ProgramRuntimeService runtimeService, PreferencesStore preferencesStore,
+  public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService, PreferencesStore preferencesStore,
                             ListeningExecutorService taskExecutor) {
-    this.runtimeService = runtimeService;
     this.store = store;
+    this.lifecycleService = lifecycleService;
     this.preferencesStore = preferencesStore;
     this.executorService = taskExecutor;
   }
@@ -76,17 +72,15 @@ public final class ScheduleTaskRunner {
    * @param programType Program type.
    * @param arguments Arguments that would be supplied as system runtime arguments for the program.
    * @return a {@link ListenableFuture} object that completes when the program completes
-   * @throws TaskExecutionException If fails to execute the program.
+   * @throws TaskExecutionException if program is already running or program is not found.
+   * @throws IOException if program failed to start.
    */
   public ListenableFuture<?> run(Id.Program programId, ProgramType programType, Arguments arguments)
-    throws TaskExecutionException {
+    throws TaskExecutionException, IOException {
     Map<String, String> userArgs = Maps.newHashMap();
-    Program program;
     try {
-      program = store.loadProgram(programId, ProgramType.WORKFLOW);
-      Preconditions.checkNotNull(program, "Program not found");
-
       String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
+      Preconditions.checkNotNull(store.getApplication(programId.getApplication()), "Application Not Found");
       ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
       Preconditions.checkNotNull(spec, "Schedule not found");
 
@@ -97,14 +91,15 @@ public final class ScheduleTaskRunner {
                                                                                programType.getCategoryName(),
                                                                                programId.getId());
 
+      // Schedule properties are overriden by resolved preferences
       userArgs.putAll(runtimeArgs);
 
       boolean runMultipleProgramInstances =
         Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
 
       if (!runMultipleProgramInstances) {
-        ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
-        if (existingRuntimeInfo != null) {
+        ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
+        if (existingInfo != null) {
           throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
         }
       }
@@ -113,22 +108,7 @@ public final class ScheduleTaskRunner {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
-    return execute(program, new SimpleProgramOptions(programId.getId(), arguments, new BasicArguments(userArgs)));
-  }
-
-  /**
-   * Returns runtime information for the given program if it is running,
-   * or {@code null} if no instance of it is running.
-   */
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId, ProgramType programType) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programType).values();
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
+    return execute(programId, programType, arguments, new BasicArguments(userArgs));
   }
 
   /**
@@ -136,25 +116,17 @@ public final class ScheduleTaskRunner {
    *
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private ListenableFuture<?> execute(final Program program, ProgramOptions options)
-    throws TaskExecutionException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
+  private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Arguments sysArgs,
+                                      Arguments userArgs) throws IOException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
+      id, type, sysArgs.asMap(), userArgs.asMap(), false);
 
     final ProgramController controller = runtimeInfo.getController();
-    final Id.Program programId = program.getId();
-    final String runId = controller.getRunId().getId();
     final CountDownLatch latch = new CountDownLatch(1);
 
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
-        // Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-        store.setStart(programId, runId, startTimeInSeconds);
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -165,36 +137,12 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void completed() {
-        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.COMPLETED.getRunStatus());
-        LOG.debug("Program {} {} {} completed successfully.",
-                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
       }
 
       @Override
       public void error(Throwable cause) {
-        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus());
-        LOG.debug("Program {} {} {} execution failed.",
-                  programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                  cause);
-
         latch.countDown();
-      }
-
-      @Override
-      public void suspended() {
-        LOG.debug("Suspending Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
-                  program.getId(), runId);
-        store.setSuspend(programId, runId);
-      }
-
-      @Override
-      public void resuming() {
-        LOG.debug("Resuming Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
-                  program.getId(), runId);
-        store.setResume(programId, runId);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 

@@ -60,6 +60,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -68,7 +69,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -1411,8 +1411,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
 
-      RunId runId = lifecycleService.startProgram(id, type, userArgs, debug);
-      return (runId != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
+        id, type, Maps.<String, String>newHashMap(), userArgs, debug);
+      return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       if (throwable instanceof FileNotFoundException) {
