@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.8.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-ui</artifactId>
@@ -56,16 +56,16 @@
 
   <profiles>
     <profile>
-      <id>install-npm-deps</id>
+      <id>dist</id>
       <build>
         <plugins>
           <plugin>
             <groupId>com.github.eirslett</groupId>
             <artifactId>frontend-maven-plugin</artifactId>
-            <version>0.0.20</version>
+            <version>0.0.23</version>
             <executions>
               <execution>
-                <id>install-node-and-npm</id>
+                <id>dist</id>
                 <goals>
                   <goal>install-node-and-npm</goal>
                 </goals>
@@ -74,7 +74,6 @@
                   <npmVersion>2.5.0</npmVersion>
                 </configuration>
               </execution>
-
               <execution>
                 <id>npm-install</id>
                 <goals>
@@ -85,18 +84,26 @@
                   <arguments>install</arguments>
                 </configuration>
               </execution>
-
               <execution>
                 <id>bower-install</id>
                 <goals>
                   <goal>bower</goal>
                 </goals>
                 <configuration>
-                  <arguments>install</arguments>
+                  <arguments>install --allow-root</arguments>
                 </configuration>
               </execution>
               <execution>
-                <id>gulp install</id>
+                <id>gulp clean</id>
+                <goals>
+                  <goal>gulp</goal>
+                </goals>
+                <configuration>
+                  <arguments>clean</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>gulp distribute</id>
                 <goals>
                   <goal>gulp</goal>
                 </goals>
@@ -106,79 +113,61 @@
               </execution>
             </executions>
           </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>dist</id>
-      <build>
-        <resources>
-          <resource>
-            <directory>./</directory>
-            <excludes>
-              <exclude>test</exclude>
-              <exclude>.gitignore</exclude>
-              <exclude>.gitmodules</exclude>
-              <exclude>.travis.yml</exclude>
-              <exclude>*.iml</exclude>
-              <exclude>README.md</exclude>
-              <exclude>bower_components</exclude>
-            </excludes>
-            <targetPath>${project.build.directory}</targetPath>
-          </resource>
-        </resources>
-
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.8</version>
-          </plugin>
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.3.1</version>
             <executions>
               <execution>
-                <id>local</id>
+               <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
+               <id>rpm-package</id>
+                 <phase/>
+              </execution>
+              <execution>
+                <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
+                <id>deb-package</id>
+                <phase/>
+              </execution>
+              <execution>
+                <id>clean-node-modules</id>
                 <phase>process-resources</phase>
                 <goals>
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>npm</executable>
+                  <executable>rm</executable>
                   <arguments>
-                    <argument>run</argument>
-                    <argument>build</argument>
+                    <argument>-rf</argument>
+                    <argument>node_modules</argument>
                   </arguments>
                 </configuration>
               </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
-            <executions>
               <execution>
-                <id>copy-enterprise</id>
+                <id>clean-bower-components</id>
                 <phase>process-resources</phase>
                 <goals>
-                  <goal>run</goal>
+                  <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <target>
-                    <copy todir="${stage.opt.dir}">
-                      <fileset dir="${project.build.directory}">
-                        <include name="**"/>
-                      </fileset>
-                    </copy>
-                  </target>
+                  <executable>rm</executable>
+                  <arguments>
+                    <argument>-rf</argument>
+                    <argument>bower_components</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>npm-install-production-deps</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <argument>${project.basedir}/node/npm/bin/npm-cli.js</argument>
+                    <argument>install</argument>
+                    <argument>--production</argument>
+                  </arguments>
                 </configuration>
               </execution>
             </executions>
@@ -186,164 +175,5 @@
         </plugins>
       </build>
     </profile>
-
-      <profile>
-          <id>rpm-prepare</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-resources-plugin</artifactId>
-                      <version>2.6</version>
-                  </plugin>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-antrun-plugin</artifactId>
-                      <version>1.7</version>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-
-      <profile>
-          <id>deb-prepare</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-resources-plugin</artifactId>
-                      <version>2.6</version>
-                  </plugin>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-antrun-plugin</artifactId>
-                      <version>1.7</version>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-
-      <profile>
-          <id>rpm</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.codehaus.mojo</groupId>
-                      <artifactId>exec-maven-plugin</artifactId>
-                      <version>1.3.1</version>
-                  </plugin>
-
-                  <!-- Extra deployment for rpm package. -->
-                  <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-deploy-plugin</artifactId>
-                      <version>2.8</version>
-                      <executions>
-                          <execution>
-                              <id>deploy-rpm</id>
-                              <phase>deploy</phase>
-                              <goals>
-                                  <goal>deploy-file</goal>
-                              </goals>
-                              <configuration>
-                                  <version>${project.version}</version>
-                                  <groupId>${dist.deploy.groupId}</groupId>
-                                  <artifactId>${project.artifactId}</artifactId>
-                                  <packaging>noarch.rpm</packaging>
-                                  <generatePom>false</generatePom>
-                                  <file>${project.build.directory}/${project.artifactId}-${package.version}-1.noarch.rpm</file>
-                                  <classifier>1</classifier>
-                                  <repositoryId>continuuity</repositoryId>
-                                  <url>${deploy.url}</url>
-                              </configuration>
-                          </execution>
-                      </executions>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-
-      <profile>
-          <id>deb</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.codehaus.mojo</groupId>
-                      <artifactId>exec-maven-plugin</artifactId>
-                      <version>1.3.1</version>
-                  </plugin>
-
-                  <!-- Extra deployment for deb package -->
-                  <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-deploy-plugin</artifactId>
-                      <version>2.8</version>
-                      <executions>
-                          <execution>
-                              <id>deploy-deb</id>
-                              <phase>deploy</phase>
-                              <goals>
-                                  <goal>deploy-file</goal>
-                              </goals>
-                              <configuration>
-                                  <version>${project.version}</version>
-                                  <groupId>${dist.deploy.groupId}</groupId>
-                                  <artifactId>${project.artifactId}</artifactId>
-                                  <packaging>deb</packaging>
-                                  <generatePom>false</generatePom>
-                                  <file>${project.build.directory}/${project.artifactId}_${package.version}-1_all.deb</file>
-                                  <repositoryId>continuuity</repositoryId>
-                                  <url>${deploy.url}</url>
-                              </configuration>
-                          </execution>
-                      </executions>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-
-      <profile>
-          <id>tgz</id>
-          <build>
-              <plugins>
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-assembly-plugin</artifactId>
-                      <version>2.4</version>
-                  </plugin>
-
-                  <!-- Extra deployment for tgz package -->
-                  <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-                  <plugin>
-                      <groupId>org.apache.maven.plugins</groupId>
-                      <artifactId>maven-deploy-plugin</artifactId>
-                      <version>2.8</version>
-                      <executions>
-                          <execution>
-                              <id>deploy-tgz</id>
-                              <phase>deploy</phase>
-                              <goals>
-                                  <goal>deploy-file</goal>
-                              </goals>
-                              <configuration>
-                                  <version>${project.version}</version>
-                                  <groupId>${dist.deploy.groupId}</groupId>
-                                  <artifactId>${project.artifactId}</artifactId>
-                                  <packaging>tar.gz</packaging>
-                                  <generatePom>false</generatePom>
-                                  <file>${project.build.directory}/${project.artifactId}-${package.version}.tar.gz</file>
-                                  <repositoryId>continuuity</repositoryId>
-                                  <url>${deploy.url}</url>
-                              </configuration>
-                          </execution>
-                      </executions>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
-
   </profiles>
-
 </project>

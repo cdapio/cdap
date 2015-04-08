@@ -15,9 +15,11 @@
  */
 package co.cask.cdap.data2.transaction.queue.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueConsumer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
@@ -40,28 +42,47 @@ import java.util.Set;
 abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   private final HTable hTable;
+  private final HBaseConsumerState state;
   private final HBaseConsumerStateStore stateStore;
   private final byte[] queueRowPrefix;
   private final HBaseQueueStrategy queueStrategy;
   private boolean closed;
+  private boolean canConsume;
+  private boolean completed;
 
   /**
    * Creates a HBaseQueue2Consumer.
-   * @param consumerConfig Configuration of the consumer.
+   *
    * @param hTable The HTable instance to use for communicating with HBase. This consumer is responsible for closing it.
    * @param queueName Name of the queue.
    * @param consumerState The persisted state of this consumer.
    * @param stateStore The store for persisting state for this consumer.
    */
-  HBaseQueueConsumer(CConfiguration cConf, ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+  HBaseQueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                      HBaseQueueStrategy queueStrategy) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
-    super(cConf, consumerConfig, queueName, consumerState.getStartRow());
+    super(cConf, consumerState.getConsumerConfig(), queueName, consumerState.getStartRow());
     this.hTable = hTable;
+    this.state = consumerState;
     this.stateStore = stateStore;
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.queueStrategy = queueStrategy;
+    this.canConsume = false;
+  }
+
+  @Override
+  public DequeueResult<byte[]> dequeue(int maxBatchSize) throws IOException {
+    DequeueResult<byte[]> result = super.dequeue(maxBatchSize);
+
+    if (canConsume && result.isEmpty() && state.getNextBarrier() != null) {
+      long groupId = state.getConsumerConfig().getGroupId();
+      int instanceId = state.getConsumerConfig().getInstanceId();
+      stateStore.completed(groupId, instanceId);
+      completed = true;
+    }
+
+    return result;
   }
 
   @Override
@@ -104,7 +125,16 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
-    Scan scan = createScan(startRow, stopRow, numRows);
+    if (!canConsume) {
+      // Need to wait if nothing every consumers reached the last barrier
+      byte[] barrierStartRow = state.getPreviousBarrier();
+      canConsume = barrierStartRow == null || stateStore.isAllConsumed(getConfig().getGroupId(), barrierStartRow);
+      if (!canConsume) {
+        return QueueScanner.EMPTY;
+      }
+    }
+
+    Scan scan = createScan(startRow, getScanStopRow(stopRow), numRows);
 
     /** TODO: Remove when {@link DequeueScanAttributes#ATTR_QUEUE_ROW_PREFIX} is removed. It is for transition. **/
     DequeueScanAttributes.setQueueRowPrefix(scan, queueRowPrefix);
@@ -129,6 +159,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   public void startTx(Transaction tx) {
     super.startTx(tx);
     stateStore.startTx(tx);
+    completed = false;
   }
 
   @Override
@@ -145,13 +176,27 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   @Override
   public void postTxCommit() {
     stateStore.postTxCommit();
+    if (completed) {
+      Closeables.closeQuietly(this);
+    }
+  }
+
+  boolean isClosed() {
+    return closed;
   }
 
   @Override
   protected void updateStartRow(byte[] startRow) {
-    ConsumerConfig consumerConfig = getConfig();
-    stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
+    if (canConsume && !completed) {
+      ConsumerConfig consumerConfig = getConfig();
+      stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
+    }
   }
 
   protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);
+
+  private byte[] getScanStopRow(byte[] stopRow) {
+    byte[] barrierEndRow = state.getNextBarrier();
+    return barrierEndRow == null || Bytes.compareTo(stopRow, barrierEndRow) < 0 ? stopRow : barrierEndRow;
+  }
 }

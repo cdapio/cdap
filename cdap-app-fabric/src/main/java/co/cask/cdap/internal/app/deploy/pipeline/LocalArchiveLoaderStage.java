@@ -98,7 +98,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     }
 
     InMemoryConfigurator inMemoryConfigurator =
-                new InMemoryConfigurator(id, new LocalLocationFactory().create(input.toURI()));
+      new InMemoryConfigurator(new LocalLocationFactory().create(input.toURI()));
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
@@ -113,7 +113,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     }
 
     Id.Application application = Id.Application.from(id, specification.getName());
-    emit(new ApplicationDeployable(cConf, application, specification, store.getApplication(application),
+    emit(new ApplicationDeployable(application, specification, store.getApplication(application),
                                    deploymentInfo.getApplicationDeployScope(), outputLocation));
   }
 }

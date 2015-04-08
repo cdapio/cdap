@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -161,7 +162,7 @@ public final class AppFabricServer extends AbstractIdleService {
         // TODO accept a list of services, and start them here
         // When it is running, register it with service discovery
         for (final String serviceName : servicesNames) {
-          cancellables.add(discoveryService.register(new Discoverable() {
+          cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
             @Override
             public String getName() {
               return serviceName;
@@ -171,7 +172,7 @@ public final class AppFabricServer extends AbstractIdleService {
             public InetSocketAddress getSocketAddress() {
               return socketAddress;
             }
-          }));
+          })));
         }
       }
 

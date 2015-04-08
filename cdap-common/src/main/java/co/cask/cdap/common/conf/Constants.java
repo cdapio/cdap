@@ -92,8 +92,9 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
-    public static final String ADAPTER_DIR = "app.adapter.dir";
+    public static final String APP_TEMPLATE_DIR = "app.template.dir";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
+    public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
 
     /**
      * Defaults.
@@ -138,6 +139,7 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+    public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
   }
 
   /**
@@ -493,8 +495,6 @@ public final class Constants {
   public static final class Security {
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
-    /** Enables authorization. */
-    public static final String AUTHORIZATION_ENABLED = "security.authorization.enabled";
     /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */
@@ -724,6 +724,11 @@ public final class Constants {
     new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
 
   /**
+   * Used for upgrade and backwards compatability
+   */
+  public static final String DEVELOPER_ACCOUNT = "developer";
+
+  /**
    * 'system' reserved namespace name
    */
   public static final String SYSTEM_NAMESPACE = "system";
@@ -782,5 +787,12 @@ public final class Constants {
     * Status endpoint
     */
     public static final String STATUS = "/status";
+  }
+
+  /**
+   * Constants for namespaces
+   */
+  public static final class Namespace {
+    public static final String NAMESPACES_DIR = "namespaces.dir";
   }
 }

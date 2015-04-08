@@ -25,19 +25,28 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.MultiStreamApp;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ScheduleSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -53,6 +62,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -65,8 +75,9 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link AppFabricHttpHandler}.
@@ -77,92 +88,96 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
-  private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
-    HttpResponse response =
-      doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/status");
+  @Override
+  protected String getAPIVersion() {
+    return Constants.Gateway.API_VERSION_2_TOKEN;
+  }
+
+  /**
+   * Creates an {@link Id.Program} in the default namespace.
+   */
+  private Id.Program createProgramId(ProgramType type, String appId, String id) {
+    return Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), type, id);
+  }
+
+  private String getRunnableStatus(Id.Program programId) throws Exception {
+    HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status",
+                                                programId.getApplicationId(),
+                                                programId.getType().getCategoryName(), programId.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = GSON.fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> o = GSON.fromJson(s, new TypeToken<Map<String, String>>() {
+    }.getType());
     return o.get("status");
   }
 
-  private int getFlowletInstances(String appId, String flowId, String flowletId) throws Exception {
+  private int getFlowletInstances(Id.Program flowId, String flowletId) throws Exception {
     HttpResponse response =
-      doGet("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" + flowletId + "/instances");
+      doGet(String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances",
+                          flowId.getApplicationId(), flowId.getId(), flowletId));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    Map<String, String> reply = new Gson().fromJson(result, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> reply = new Gson().fromJson(result, new TypeToken<Map<String, String>>() {
+    }.getType());
     return Integer.parseInt(reply.get("instances"));
   }
 
-  private void setFlowletInstances(String appId, String flowId, String flowletId, int instances) throws Exception {
+  private void setFlowletInstances(Id.Program flowId, String flowletId, int instances) throws Exception {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
-    HttpResponse response = doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" +
-                                    flowletId + "/instances", json.toString());
+    HttpResponse response = doPut(String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances",
+                                                flowId.getApplicationId(), flowId.getId(), flowletId),
+                                  json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
-    throws Exception {
-    HttpResponse response =
-      doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/" + action);
-    return response.getStatusLine().getStatusCode();
-  }
-
-  private void testHistory(Class<?> app, String appId, String runnableType, String runnableId)
-      throws Exception {
+  private void testHistory(Class<?> app, Id.Program programId) throws Exception {
     try {
       deploy(app);
       // first run
-      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
-      waitState(runnableType, appId, runnableId, "RUNNING");
-      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
-      waitState(runnableType, appId, runnableId, "STOPPED");
+      startProgram(programId);
+      waitState(programId, "RUNNING");
+      verifyHistories(programId, 1, "running");
+
+      stopProgram(programId);
+      waitState(programId, "STOPPED");
+      verifyHistories(programId, 1, "killed");
 
       // second run
-      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
-      waitState(runnableType, appId, runnableId, "RUNNING");
-      String url = String.format("/v2/apps/%s/%s/%s/runs?status=running", appId, runnableType, runnableId);
+      startProgram(programId);
+      waitState(programId, "RUNNING");
+      verifyHistories(programId, 1, "running");
 
-      //active size should be 1
-      historyStatusWithRetry(url, 1);
-      // completed runs size should be 1
-      url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
-      historyStatusWithRetry(url, 1);
-
-      Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
-      waitState(runnableType, appId, runnableId, "STOPPED");
-
-      historyStatusWithRetry(url, 2);
+      stopProgram(programId);
+      waitState(programId, "STOPPED");
+      verifyHistories(programId, 2, "killed");
 
     } finally {
-      Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
+      Assert.assertEquals(200, doDelete("/v2/apps/" + programId.getApplicationId()).getStatusLine().getStatusCode());
     }
   }
 
-  private void historyStatusWithRetry(String url, int size) throws Exception {
-    int trials = 0;
-    while (trials++ < 5) {
-      HttpResponse response = doGet(url);
-      List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                       new TypeToken<List<Map<String, String>>>() { }.getType());
-
-      if (result != null && result.size() >= size) {
-        // For each one, we have 4 fields.
-        for (Map<String, String> m : result) {
-          int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
-          Assert.assertEquals(expectedFieldSize, m.size());
-        }
-        break;
+  private void verifyHistories(Id.Program programId, int size, @Nullable final String status) throws Exception {
+    String path = String.format("/v2/apps/%s/%s/%s/runs",
+                                       programId.getApplicationId(),
+                                       programId.getType().getCategoryName(), programId.getId());
+    if (status != null) {
+      path += "?status=" + status;
+    }
+    final String historyPath = path;
+    Tasks.waitFor(size, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        HttpResponse response = doGet(historyPath);
+        List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                         new TypeToken<List<Map<String, String>>>() { }.getType());
+        Assert.assertNotNull(result);
+        return result.size();
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < 5);
+    }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
-  private void testRuntimeArgs(Class<?> app, String appId, String runnableType, String runnableId)
-      throws Exception {
+  private void testRuntimeArgs(Class<?> app, Id.Program programId) throws Exception {
     deploy(app);
 
     Map<String, String> args = Maps.newHashMap();
@@ -172,11 +187,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    response = doPut("/v2/apps/" + appId + "/" + runnableType + "/" +
-                                            runnableId + "/runtimeargs", argString);
+    String path = String.format("/v2/apps/%s/%s/%s/runtimeargs",
+                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
+
+    response = doPut(path, argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    response = doGet(path);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
@@ -190,23 +207,20 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     }
 
     //test empty runtime args
-    response = doPut("/v2/apps/" + appId + "/" + runnableType + "/"
-                                            + runnableId + "/runtimeargs", "");
+    response = doPut(path, "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    response = doGet(path);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead == null ? -1 : argsRead.size());
 
     //test null runtime args
-    response = doPut("/v2/apps/" + appId + "/" + runnableType + "/"
-                                            + runnableId + "/runtimeargs", null);
+    response = doPut(path, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v2/apps/" + appId + "/" + runnableType + "/"
-                                            + runnableId + "/runtimeargs");
+    response = doGet(path);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
         new TypeToken<Map<String, String>>() { }.getType());
@@ -229,7 +243,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Category(SlowTests.class)
   @Test
   public void testFlowHistory() throws Exception {
-    testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
+    testHistory(WordCountApp.class, createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow"));
   }
 
   /**
@@ -237,7 +251,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testProcedureHistory() throws Exception {
-    testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
+    testHistory(WordCountApp.class, createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency"));
   }
 
   /**
@@ -246,7 +260,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMapreduceHistory() throws Exception {
-    testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
+    testHistory(DummyAppWithTrackingTable.class, createProgramId(ProgramType.MAPREDUCE, "dummy", "dummy-batch"));
   }
 
   /**
@@ -257,21 +271,22 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testWorkflowHistory() throws Exception {
     try {
       deploy(SleepingWorkflowApp.class);
-      // first run
-      Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
-      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
+      Id.Program workflowId = createProgramId(ProgramType.WORKFLOW, "SleepWorkflowApp", "SleepWorkflow");
+      // first run with long sleep so that we can kill it
+      startProgram(workflowId, ImmutableMap.of("sleep.ms", "10000"));
+      waitState(workflowId, "RUNNING");
+      // Kill workflow
+      stopProgram(workflowId);
       // workflow stops by itself after actions are done
-      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+      waitState(workflowId, "STOPPED");
 
       // second run
-      Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
-      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
+      startProgram(workflowId, ImmutableMap.of("sleep.ms", "0"));
       // workflow stops by itself after actions are done
-      waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+      waitState(workflowId, "STOPPED");
 
-      String url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", "SleepWorkflowApp", "workflows",
-                                 "SleepWorkflow");
-      historyStatusWithRetry(url, 2);
+      verifyHistories(workflowId, 1, "completed");
+      verifyHistories(workflowId, 1, "killed");
 
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/SleepWorkflowApp").getStatusLine().getStatusCode());
@@ -281,10 +296,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testGetSetFlowletInstances() throws Exception {
     //deploy, check the status and start a flow. Also check the status
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+
     deploy(WordCountApp.class);
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+    Assert.assertEquals("STOPPED", getRunnableStatus(flowId));
+    startProgram(flowId);
+    waitState(flowId, "RUNNING");
 
     // Get instances for a non-existent flowlet, flow, and app.
     HttpResponse response = doGet("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/XXXX/instances");
@@ -308,17 +325,16 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPut("/v2/apps/XXXX/flows/WordCountFlow/flowlets/StreamSource/instances", payload);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-
     //Get Flowlet Instances
-    Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
+    Assert.assertEquals(1, getFlowletInstances(flowId, "StreamSource"));
 
     //Set Flowlet Instances
-    setFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource", 3);
-    Assert.assertEquals(3, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
+    setFlowletInstances(flowId, "StreamSource", 3);
+    Assert.assertEquals(3, getFlowletInstances(flowId, "StreamSource"));
 
     // Stop the flow and check its status
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+    stopProgram(flowId);
+    waitState(flowId, "STOPPED");
   }
 
   @Test
@@ -359,9 +375,11 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testStartStop() throws Exception {
     //deploy, check the status and start a flow. Also check the status
     deploy(WordCountApp.class);
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+    Assert.assertEquals("STOPPED", getRunnableStatus(flowId));
+    startProgram(flowId);
+    waitState(flowId, "RUNNING");
 
     //web-app, start, stop and status check.
     Assert.assertEquals(200,
@@ -373,34 +391,19 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("STOPPED", getWebappStatus("WordCountApp"));
 
     // Stop the flow and check its status
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+    stopProgram(flowId);
+    waitState(flowId, "STOPPED");
 
     // Check the start/stop endpoints for procedures
-    Assert.assertEquals("STOPPED", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
-    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
-    waitState("procedures", "WordCountApp", "WordFrequency", "RUNNING");
-    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
-    waitState("procedures", "WordCountApp", "WordFrequency", "STOPPED");
-
-    //start map-reduce and check status and stop the map-reduce job and check the status ..
-    deploy(DummyAppWithTrackingTable.class);
-    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
-    waitState("mapreduce", "dummy", "dummy-batch", "RUNNING");
-    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
-    waitState("mapreduce", "dummy", "dummy-batch", "STOPPED");
-
-    //deploy and check status of a workflow
-    deploy(SleepingWorkflowApp.class);
-    Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
-    waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "RUNNING");
-    // workflow will stop itself
-    waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
+    Id.Program procedureId = createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency");
+    Assert.assertEquals("STOPPED", getRunnableStatus(procedureId));
+    startProgram(procedureId);
+    waitState(procedureId, "RUNNING");
+    stopProgram(procedureId);
+    waitState(procedureId, "STOPPED");
 
     // removing apps
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
-    Assert.assertEquals(200, doDelete("/v2/apps/dummy").getStatusLine().getStatusCode());
-    Assert.assertEquals(200, doDelete("/v2/apps/SleepWorkflowApp").getStatusLine().getStatusCode());
   }
 
   /**
@@ -726,39 +729,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
 
-  @Category(XSlowTests.class)
-  @Test
-  public void testStatus() throws Exception {
-
-    //deploy and check the status
-    Assert.assertEquals(200, deploy(WordCountApp.class).getStatusLine().getStatusCode());
-
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
-
-    //start flow and check the status
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
-
-    //stop the flow and check the status
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
-
-    //check the status for procedure
-    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
-    waitState("procedures", "WordCountApp", "WordFrequency", "RUNNING");
-    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
-    waitState("procedures", "WordCountApp", "WordFrequency", "STOPPED");
-
-    deploy(DummyAppWithTrackingTable.class);
-    //start map-reduce and check status and stop the map-reduce job and check the status ..
-    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
-    waitState("mapreduce", "dummy", "dummy-batch", "RUNNING");
-
-    //stop the mapreduce program and check the status
-    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
-    waitState("mapreduce", "dummy", "dummy-batch", "STOPPED");
-  }
-
   private String getWebappStatus(String appId) throws Exception {
     HttpResponse response = doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -769,22 +739,23 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testFlowRuntimeArgs() throws Exception {
-    testRuntimeArgs(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
+    testRuntimeArgs(WordCountApp.class, createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow"));
   }
 
   @Test
   public void testWorkflowRuntimeArgs() throws Exception {
-    testRuntimeArgs(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow");
+    testRuntimeArgs(SleepingWorkflowApp.class,
+                    createProgramId(ProgramType.WORKFLOW, "SleepWorkflowApp", "SleepWorkflow"));
   }
 
   @Test
   public void testProcedureRuntimeArgs() throws Exception {
-    testRuntimeArgs(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
+    testRuntimeArgs(WordCountApp.class, createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency"));
   }
 
   @Test
   public void testMapreduceRuntimeArgs() throws Exception {
-    testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
+    testRuntimeArgs(DummyAppWithTrackingTable.class, createProgramId(ProgramType.MAPREDUCE, "dummy", "dummy-batch"));
   }
 
   /**
@@ -879,13 +850,16 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doDelete("/v2/apps/XYZ");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     deploy(WordCountApp.class);
-    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
-    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+    startProgram(flowId);
+    waitState(flowId, "RUNNING");
+
     //Try to delete an App while its flow is running
     response = doDelete("/v2/apps/WordCountApp");
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
-    getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+    stopProgram(flowId);
+
+    waitState(flowId, "STOPPED");
     //Delete the App after stopping the flow
     response = doDelete("/v2/apps/WordCountApp");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -940,11 +914,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  private void setAndTestRuntimeArgs(String appId, String runnableType, String runnableId,
-                                     Map<String, String> args) throws Exception {
+  private void setAndTestRuntimeArgs(Id.Program programId, Map<String, String> args) throws Exception {
     HttpResponse response;
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    String runtimeArgsUrl = String.format("/v2/apps/%s/%s/%s/runtimeargs", appId, runnableType, runnableId);
+    String runtimeArgsUrl = String.format("/v2/apps/%s/%s/%s/runtimeargs",
+                                          programId.getApplicationId(),
+                                          programId.getType().getCategoryName(), programId.getId());
     response = doPut(runtimeArgsUrl, argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -975,12 +950,16 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithSchedule.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    Id.Program workflowId = createProgramId(ProgramType.WORKFLOW, "AppWithSchedule", "SampleWorkflow");
+
+    response = doPost(String.format("/v2/apps/AppWithSchedule/schedules/SampleSchedule/resume"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     Map<String, String> runtimeArguments = Maps.newHashMap();
     runtimeArguments.put("someKey", "someWorkflowValue");
     runtimeArguments.put("workflowKey", "workflowValue");
 
-    setAndTestRuntimeArgs("AppWithSchedule", ProgramType.WORKFLOW.getCategoryName(), "SampleWorkflow",
-                          runtimeArguments);
+    setAndTestRuntimeArgs(workflowId, runtimeArguments);
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -1012,7 +991,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<RunRecord> history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
     int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
@@ -1020,7 +999,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
@@ -1078,8 +1057,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     try {
       // deploy app and create datasets
       deploy(WordCountApp.class);
-      getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
-      waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+      Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+      startProgram(flowId);
+      waitState(flowId, "RUNNING");
 
       // check that datasets were created
       Assert.assertTrue(
@@ -1090,8 +1070,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(400, response.getStatusLine().getStatusCode());
 
       // stop program
-      getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
-      waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+      stopProgram(flowId);
+      waitState(flowId, "STOPPED");
 
       // verify delete all datasets succeeded
       response = doDelete("/v2/unrecoverable/data/datasets");
@@ -1111,25 +1091,24 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testHistoryDeleteAfterUnrecoverableReset() throws Exception {
 
-    String appId = "dummy";
-    String runnableType = "mapreduce";
-    String runnableId = "dummy-batch";
+    Id.Program programId = createProgramId(ProgramType.MAPREDUCE, "dummy", "dummy-batch");
 
     deploy(DummyAppWithTrackingTable.class);
+
     // first run
-    Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
-    waitState(runnableType, appId, runnableId, "RUNNING");
-    Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
-    waitState(runnableType, appId, runnableId, "STOPPED");
-    String url = String.format("/v2/apps/%s/%s/%s/runs?status=killed", appId, runnableType, runnableId);
+    startProgram(programId);
+    waitState(programId, "RUNNING");
+    stopProgram(programId);
+    waitState(programId, "STOPPED");
+
     // verify the run by checking if history has one entry
-    historyStatusWithRetry(url, 1);
+    verifyHistories(programId, 1, "killed");
 
     HttpResponse response = doPost("/v2/unrecoverable/reset");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // Verify that the unrecoverable reset deletes the history
-    historyStatusWithRetry(url, 0);
+    verifyHistories(programId, 0, null);
   }
 
 
@@ -1140,27 +1119,14 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testUnRecoverableResetAppRunning() throws Exception {
 
     HttpResponse response = deploy(WordCountApp.class);
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
-    waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+    startProgram(flowId);
+    waitState(flowId, "RUNNING");
     response = doPost("/v2/unrecoverable/reset");
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
-    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
-  }
-
-  private void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
-    int trials = 0;
-    // it may take a while for workflow/mr to start...
-    int maxTrials = 120;
-    while (trials++ < maxTrials) {
-      HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status", appId, runnableType, runnableId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(trials < maxTrials);
+    stopProgram(flowId);
+    waitState(flowId, "STOPPED");
   }
 
   @Test
@@ -1205,13 +1171,16 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals("STOPPED", obj.get("status").getAsString());
     }
     // start the flow
-    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start");
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+    startProgram(flowId);
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}]");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, typeToken);
     Assert.assertEquals("RUNNING", returnedBody.get(0).get("status").getAsString());
+
     // start the service
-    doPost("/v2/apps/AppWithServices/services/NoOpService/start");
+    Id.Program serviceId = createProgramId(ProgramType.SERVICE, "AppWithServices", "NoOpService");
+    startProgram(serviceId);
 
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
       "{'appId': 'AppWithServices', 'programType': 'Service', 'programId': 'NoOpService'}," +
@@ -1223,10 +1192,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("RUNNING", returnedBody.get(1).get("status").getAsString());
     Assert.assertEquals("STOPPED", returnedBody.get(2).get("status").getAsString());
 
-    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/stop");
-    doPost("/v2/apps/AppWithServices/services/NoOpService/stop");
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
-    waitState("services", "AppWithServices", "NoOpService", "STOPPED");
+    stopProgram(flowId);
+    stopProgram(serviceId);
+    waitState(flowId, "STOPPED");
+    waitState(serviceId, "STOPPED");
 
   }
 
@@ -1273,13 +1242,17 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(0, obj.get("provisioned").getAsInt());
     }
     // start the flow
-    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start");
+    Id.Program flowId = createProgramId(ProgramType.FLOW, "WordCountApp", "WordCountFlow");
+    startProgram(flowId);
+
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
       "'runnableId': 'StreamSource'}]");
     returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
+
     // start the service
-    doPost("/v2/apps/AppWithServices/services/NoOpService/start");
+    Id.Program serviceId = createProgramId(ProgramType.SERVICE, "AppWithServices", "NoOpService");
+    startProgram(serviceId);
     response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':" +
       "'StreamSource'}, {'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService', 'runnableId':" +
       "'NoOpService'}, {'appId': 'WordCountApp', 'programType': 'Procedure','programId': 'VoidMapReduceJob'}]");
@@ -1289,17 +1262,18 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, returnedBody.get(1).get("provisioned").getAsInt());
     // does not exist
     Assert.assertEquals(404, returnedBody.get(2).get("statusCode").getAsInt());
-    doPut("/v2/apps/WordCountApp/flows/WordCountFlow/flowlets/StreamSource/instances", "{'instances': 2}");
+
+    setFlowletInstances(flowId, "StreamSource", 2);
+
     returnedBody = readResponse(doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow'," +
       "'programId':'WordCountFlow', 'runnableId': 'StreamSource'}]"), typeToken);
     Assert.assertEquals(2, returnedBody.get(0).get("requested").getAsInt());
 
-    doPost("/v2/apps/WordCountApp/flows/WordCountFlow/stop");
-    doPost("/v2/apps/AppWithServices/services/NoOpService/stop");
+    stopProgram(flowId);
+    stopProgram(serviceId);
 
-    waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
-    waitState("services", "AppWithServices", "NoOpService", "STOPPED");
-
+    waitState(flowId, "STOPPED");
+    waitState(serviceId, "STOPPED");
   }
 
   @Test
@@ -1329,4 +1303,42 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, specification.getWorkers().values().size());
   }
 
+  @Test
+  public void testWorkflowSpecification() throws Exception {
+    deploy(WorkflowApp.class);
+    HttpResponse response = doGet("/v2/apps/WorkflowApp/workflows/FunWorkflow/");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Gson gson = new GsonBuilder().registerTypeAdapter(WorkflowActionSpecification.class,
+                                                                    new WorkflowActionSpecificationCodec()).create();
+
+    String responseString = readResponse(response);
+
+    JsonObject jsonObj = new JsonParser().parse(responseString).getAsJsonObject();
+
+    Assert.assertTrue(jsonObj.get("className").getAsString().contains("FunWorkflow"));
+    Assert.assertEquals("FunWorkflow", jsonObj.get("name").getAsString());
+    Assert.assertEquals("FunWorkflow description", jsonObj.get("description").getAsString());
+
+    Type actionType = new TypeToken<List<ScheduleProgramInfo>>() { }.getType();
+    List<ScheduleProgramInfo> actions = gson.fromJson(jsonObj.get("actions").getAsJsonArray(), actionType);
+
+    Assert.assertNotNull(actions);
+    Assert.assertEquals(3, actions.size());
+
+    Assert.assertEquals(actions.get(0), new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "ClassicWordCount"));
+    Assert.assertEquals(actions.get(1), new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, "verify"));
+    Assert.assertEquals(actions.get(2), new ScheduleProgramInfo(SchedulableProgramType.SPARK, "SparkWorkflowTest"));
+
+    Type mapType = new TypeToken<Map<String, WorkflowActionSpecification>>() { }.getType();
+    Map<String, WorkflowActionSpecification> customActionMap = gson.fromJson(jsonObj.get("customActionMap")
+                                                                               .getAsJsonObject(), mapType);
+    Assert.assertNotNull(customActionMap);
+    Assert.assertEquals(1, customActionMap.size());
+
+    Assert.assertTrue(customActionMap.containsKey("verify"));
+    WorkflowActionSpecification actionSpec = customActionMap.get("verify");
+    Assert.assertEquals("verify", actionSpec.getName());
+    Assert.assertEquals(1, actionSpec.getProperties().size());
+  }
 }

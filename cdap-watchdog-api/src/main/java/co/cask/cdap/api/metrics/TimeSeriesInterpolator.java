@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;

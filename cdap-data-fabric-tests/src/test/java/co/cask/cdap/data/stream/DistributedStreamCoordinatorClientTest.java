@@ -15,11 +15,12 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -62,9 +63,10 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    final FileSystem fileSystem = dfsCluster.getFileSystem();
+    FileSystem fileSystem = dfsCluster.getFileSystem();
+    final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 
-    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
     Injector injector = Guice.createInjector(
@@ -78,7 +80,8 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(LocationFactory.class).toInstance(new HDFSLocationFactory(fileSystem));
+          bind(LocationFactory.class).toInstance(lf);
+          bind(NamespacedLocationFactory.class).toInstance(nlf);
         }
       },
       Modules.override(new StreamAdminModules().getDistributedModules())
@@ -93,7 +96,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
 
-    setupNamespaces(injector.getInstance(LocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

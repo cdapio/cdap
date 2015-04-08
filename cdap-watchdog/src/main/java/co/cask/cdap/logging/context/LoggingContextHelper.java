@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.context;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -31,11 +32,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Helper class for LoggingContext objects.
  */
 public final class LoggingContextHelper {
+
+  private static final String ACCOUNT_ID = ".accountId";
+
   private LoggingContextHelper() {}
 
   public static String getNamespacedBaseDir(String logBaseDir, String logPartition) {
@@ -76,7 +81,8 @@ public final class LoggingContextHelper {
                                        tags.get(FlowletLoggingContext.TAG_FLOWLET_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
-                                         tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID));
+                                         tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
+                                         tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
         return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID));
     } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
@@ -93,7 +99,8 @@ public final class LoggingContextHelper {
       return new ServiceLoggingContext(systemId, componentId,
                                        tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
     } else if (tags.containsKey(WorkerLoggingContext.TAG_WORKER_ID)) {
-      return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID));
+      return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID),
+                                      tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
     }
 
     throw new IllegalArgumentException("Unsupported logging context");
@@ -105,19 +112,24 @@ public final class LoggingContextHelper {
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
                                                  ProgramType programType) {
+    return getLoggingContext(namespaceId, applicationId, entityId, programType, null);
+  }
+
+  public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
+                                                 ProgramType programType, @Nullable String adapterName) {
     switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
       case PROCEDURE:
         return new ProcedureLoggingContext(namespaceId, applicationId, entityId);
       case MAPREDUCE:
-        return new MapReduceLoggingContext(namespaceId, applicationId, entityId);
+        return new MapReduceLoggingContext(namespaceId, applicationId, entityId, adapterName);
       case SPARK:
         return new SparkLoggingContext(namespaceId, applicationId, entityId);
       case SERVICE:
         return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "");
       case WORKER:
-        return new WorkerLoggingContext(namespaceId, applicationId, entityId);
+        return new WorkerLoggingContext(namespaceId, applicationId, entityId, adapterName);
       default:
         throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }
@@ -164,23 +176,42 @@ public final class LoggingContextHelper {
         throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
       }
 
+      // For backward compatibility: The old logs before namespace have .accountId and developer as value so we don't
+      // want them to get filtered out if they belong to this application and entity
+      OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
+                                                                 NamespaceLoggingContext.TAG_NAMESPACE_ID, namespaceId),
+                                                               new MdcExpression(ACCOUNT_ID,
+                                                                                 Constants.DEVELOPER_ACCOUNT)));
+      if (loggingContext.getSystemTagsMap().containsKey(ApplicationLoggingContext.TAG_ADAPTER_ID)) {
+        String adapterName = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ADAPTER_ID).getValue();
+        return new AndFilter(ImmutableList.of(namespaceFilter,
+                                              new MdcExpression(ApplicationLoggingContext.TAG_APPLICATION_ID, applId),
+                                              new MdcExpression(tagName, entityId),
+                                              new MdcExpression(ApplicationLoggingContext.TAG_ADAPTER_ID, adapterName))
+        );
+      }
       return new AndFilter(
-        ImmutableList.of(new MdcExpression(FlowletLoggingContext.TAG_NAMESPACE_ID, namespaceId),
-                         new MdcExpression(FlowletLoggingContext.TAG_APPLICATION_ID, applId),
+        ImmutableList.of(namespaceFilter,
+                         new MdcExpression(ApplicationLoggingContext.TAG_APPLICATION_ID, applId),
                          new MdcExpression(tagName, entityId)
         )
       );
+
     }
   }
 
   private static Filter createGenericFilter(String namespaceId, String applicationId, String entityId) {
     FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
     ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(namespaceId, applicationId, entityId);
-    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(namespaceId, applicationId, entityId);
+    // we don't care about adapters in GenericLoggingContext
+    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(namespaceId, applicationId, entityId,
+                                                                                  null);
     SparkLoggingContext sparkLoggingContext = new SparkLoggingContext(namespaceId, applicationId, entityId);
     UserServiceLoggingContext userServiceLoggingContext = new UserServiceLoggingContext(namespaceId, applicationId,
                                                                                         entityId, "");
-    WorkerLoggingContext workerLoggingContext = new WorkerLoggingContext(namespaceId, applicationId, entityId);
+    // we don't care about adapters in GenericLoggingContext
+    WorkerLoggingContext workerLoggingContext = new WorkerLoggingContext(namespaceId, applicationId, entityId,
+                                                                         null);
 
 
     return new OrFilter(

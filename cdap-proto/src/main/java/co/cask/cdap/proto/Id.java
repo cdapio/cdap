@@ -23,10 +23,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
+import javax.annotation.Nullable;
+
 /**
  * Contains collection of classes representing different types of Ids.
  */
-public final class Id  {
+public abstract class Id {
 
   private static boolean isId(String name) {
     return CharMatcher.inRange('A', 'Z')
@@ -49,10 +51,92 @@ public final class Id  {
       .or(CharMatcher.is('$')).matchesAllOf(datasetId);
   }
 
+  public final String getIdType() {
+    // TODO: refactor
+    return this.getClass().getSimpleName().toLowerCase();
+  }
+
+  public final String getIdRep() {
+    Id parent = getParent();
+    if (parent == null) {
+      return getIdType() + ":" + getId();
+    } else {
+      return parent.getIdRep() + "/" + getIdType() + ":" + getId();
+    }
+  }
+
+  @Nullable
+  protected abstract Id getParent();
+
+  public abstract String getId();
+
   /**
-   * Represents ID of a namespace.
+   * Indicates that the ID belongs to a namespace.
    */
-  public static final class Namespace {
+  public abstract static class NamespacedId extends Id {
+    public abstract Namespace getNamespace();
+  }
+
+  /**
+   * Uniquely identifies a Query Handle.
+   */
+  public static final class QueryHandle extends Id {
+    private final String id;
+
+    private QueryHandle(String id) {
+      Preconditions.checkNotNull(id, "id cannot be null.");
+      this.id = id;
+    }
+
+    public static QueryHandle from(String id) {
+      return new QueryHandle(id);
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+  }
+
+  /**
+   * Uniquely identifies a System Service.
+   */
+  public static final class SystemService extends Id {
+    private final String id;
+
+    private SystemService(String id) {
+      Preconditions.checkNotNull(id, "id cannot be null.");
+      this.id = id;
+    }
+
+    public static SystemService from(String id) {
+      return new SystemService(id);
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+  }
+
+  /**
+   * Uniquely identifies a Namespace.
+   */
+  public static final class Namespace extends Id {
+    public static final Namespace DEFAULT = Id.Namespace.from("default");
+
     private final String id;
 
     public Namespace(String id) {
@@ -61,6 +145,7 @@ public final class Id  {
       this.id = id;
     }
 
+    @Override
     public String getId() {
       return id;
     }
@@ -90,23 +175,29 @@ public final class Id  {
     public String toString() {
       return id;
     }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
   }
 
   /**
-   * Application Id identifies a given application.
-   * Application is global unique if used within context of namespace.
+   * Uniquely identifies an Adapter Type.
    */
-  public static final class Application {
+  public static final class AdapterType extends NamespacedId {
     private final Namespace namespace;
-    private final String applicationId;
+    private final String adapterTypeId;
 
-    public Application(final Namespace namespace, final String applicationId) {
-      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(applicationId, "Application cannot be null.");
+    public AdapterType(final Namespace namespace, final String adapterTypeId) {
+      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
+      Preconditions.checkNotNull(adapterTypeId, "adapterTypeId cannot be null.");
       this.namespace = namespace;
-      this.applicationId = applicationId;
+      this.adapterTypeId = adapterTypeId;
     }
 
+    @Override
     public Namespace getNamespace() {
       return namespace;
     }
@@ -115,6 +206,113 @@ public final class Id  {
       return namespace.getId();
     }
 
+    @Override
+    public String getId() {
+      return adapterTypeId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      AdapterType that = (AdapterType) o;
+      return namespace.equals(that.namespace) && adapterTypeId.equals(that.adapterTypeId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, adapterTypeId);
+    }
+
+    public static AdapterType from(Namespace id, String adapterTypeId) {
+      return new AdapterType(id, adapterTypeId);
+    }
+
+    public static AdapterType from(String namespaceId, String adapterTypeId) {
+      return new AdapterType(Namespace.from(namespaceId), adapterTypeId);
+    }
+
+    @Override
+    public Id getParent() {
+      return namespace;
+    }
+  }
+
+  /**
+   * Uniquely identifies an Application Template.
+   */
+  public static final class ApplicationTemplate extends Id {
+    private final String template;
+
+    public ApplicationTemplate(final String template) {
+      Preconditions.checkNotNull(template, "template cannot be null.");
+      this.template = template;
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return template;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Application that = (Application) o;
+      return template.equals(that.applicationId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(template);
+    }
+
+    public static ApplicationTemplate from(String template) {
+      return new ApplicationTemplate(template);
+    }
+  }
+
+  /**
+   * Uniquely identifies an Application.
+   */
+  public static final class Application extends NamespacedId {
+    private final Namespace namespace;
+    private final String applicationId;
+
+    public Application(final Namespace namespace, final String applicationId) {
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(applicationId, "Application cannot be null.");
+      Preconditions.checkArgument(isId(applicationId), "Invalid Application ID.");
+      this.namespace = namespace;
+      this.applicationId = applicationId;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    @Override
     public String getId() {
       return applicationId;
     }
@@ -137,39 +335,143 @@ public final class Id  {
       return Objects.hashCode(namespace, applicationId);
     }
 
-    public static Application from(Namespace id, String application) {
-      return new Application(id, application);
+    public static Application from(Namespace id, String applicationId) {
+      return new Application(id, applicationId);
     }
 
     public static Application from(String namespaceId, String applicationId) {
       return new Application(Namespace.from(namespaceId), applicationId);
     }
+
+    public static Application from(Adapter adapter, String adapterSpecType) {
+      return new Application(adapter.getNamespace(), adapterSpecType);
+    }
+
+    @Override
+    public Id getParent() {
+      return namespace;
+    }
   }
 
   /**
-   * Program Id identifies a given program.
-   * Program is global unique if used within context of namespace and application.
+   * Uniquely identifies an Adapter.
    */
-  public static class Program {
+  public static final class Adapter extends NamespacedId {
+    private final Namespace namespace;
+    private final String adapterId;
+
+    public Adapter(final Namespace namespace, final String adapterId) {
+      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
+      Preconditions.checkNotNull(adapterId, "adapterId cannot be null.");
+      this.namespace = namespace;
+      this.adapterId = adapterId;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
+    @Override
+    public String getId() {
+      return adapterId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Adapter that = (Adapter) o;
+      return namespace.equals(that.namespace) && adapterId.equals(that.adapterId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, adapterId);
+    }
+
+    public static Adapter from(Namespace id, String adapterId) {
+      return new Adapter(id, adapterId);
+    }
+
+    public static Adapter from(String namespaceId, String adapterId) {
+      return new Adapter(Namespace.from(namespaceId), adapterId);
+    }
+
+    @Override
+    public Id getParent() {
+      return namespace;
+    }
+  }
+
+
+  /**
+   * Uniquely identifies a Program run.
+   */
+  public static class Run extends NamespacedId {
+
+    private final Program program;
+    private final String id;
+
+    public Run(Program program, String id) {
+      this.program = program;
+      this.id = id;
+    }
+
+    public Program getProgram() {
+      return program;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return program.getNamespace();
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return program;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+  }
+
+  /**
+   * Uniquely identifies a Program.
+   */
+  public static class Program extends NamespacedId {
     private final Application application;
     private final ProgramType type;
     private final String id;
 
     public Program(Application application, ProgramType type, final String id) {
-      Preconditions.checkNotNull(application, "Application cannot be null.");
-      Preconditions.checkNotNull(type, "Program type cannot be null.");
-      Preconditions.checkNotNull(id, "Id cannot be null.");
+      Preconditions.checkNotNull(application, "application cannot be null.");
+      Preconditions.checkNotNull(application, "type cannot be null.");
+      Preconditions.checkNotNull(id, "id cannot be null.");
       this.application = application;
       this.type = type;
       this.id = id;
     }
 
-    public ProgramType getType() {
-      return type;
-    }
-
+    @Override
     public String getId() {
       return id;
+    }
+
+    public ProgramType getType() {
+      return type;
     }
 
     public String getApplicationId() {
@@ -212,6 +514,10 @@ public final class Id  {
       return new Program(appId, type, pgmId);
     }
 
+    public static Program from(Id.Namespace namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(namespaceId, appId), type, pgmId);
+    }
+
     public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
       return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
@@ -241,19 +547,24 @@ public final class Id  {
       sb.append(")");
       return sb.toString();
     }
+
+    @Override
+    public Id getParent() {
+      return application;
+    }
   }
 
   /**
-   * Uniquely identifies a Procedure.
+   * Uniquely identifies a Worker.
    */
-  public static class Procedure extends Program {
+  public static class Worker extends Program {
 
-    public Procedure(Application application, String id) {
-      super(application, ProgramType.PROCEDURE, id);
+    private Worker(Application application, String id) {
+      super(application, ProgramType.WORKER, id);
     }
 
-    public static Procedure from(Application application, String id) {
-      return new Procedure(application, id);
+    public static Worker from(Application application, String id) {
+      return new Worker(application, id);
     }
   }
 
@@ -262,19 +573,213 @@ public final class Id  {
    */
   public static class Service extends Program {
 
-    public Service(Application application, String id) {
+    private Service(Application application, String id) {
       super(application, ProgramType.SERVICE, id);
     }
 
     public static Service from(Application application, String id) {
       return new Service(application, id);
     }
+
+    /**
+     * Uniquely identifies a Service Runnable.
+     */
+    public static class Runnable extends NamespacedId {
+
+      private final Service service;
+      private final String id;
+
+      private Runnable(Service service, String id) {
+        Preconditions.checkArgument(service != null, "flow cannot be null");
+        Preconditions.checkArgument(id != null, "id cannot be null");
+        this.service = service;
+        this.id = id;
+      }
+
+      public static Runnable from(Service service, String id) {
+        return new Runnable(service, id);
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return service.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return service;
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+    }
+  }
+
+  /**
+   * Uniquely identifies a Flow.
+   */
+  public static class Flow extends Program {
+
+    private Flow(Application application, String id) {
+      super(application, ProgramType.FLOW, id);
+    }
+
+    public static Flow from(Application application, String flowId) {
+      return new Flow(application, flowId);
+    }
+
+    public static Flow from(String appId, String flowId) {
+      return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
+    }
+
+    /**
+     * Uniquely identifies a Flowlet.
+     */
+    public static class Flowlet extends NamespacedId {
+
+      private final Flow flow;
+      private final String id;
+
+      private Flowlet(Flow flow, String id) {
+        Preconditions.checkArgument(flow != null, "flow cannot be null");
+        Preconditions.checkArgument(id != null, "id cannot be null");
+        this.flow = flow;
+        this.id = id;
+      }
+
+      public static Flowlet from(Flow flow, String id) {
+        return new Flowlet(flow, id);
+      }
+
+      public static Flowlet from(Application app, String flowId, String id) {
+        return new Flowlet(new Flow(app, flowId), id);
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return flow.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return flow;
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+    }
+  }
+
+  /**
+   * Uniquely identifies a Procedure.
+   */
+  public static class Procedure extends Program {
+
+    private Procedure(Application application, String id) {
+      super(application, ProgramType.PROCEDURE, id);
+    }
+
+    public static Procedure from(Application application, String id) {
+      return new Procedure(application, id);
+    }
+
+    public static Procedure from(String appId, String procedureId) {
+      return new Procedure(Id.Application.from(Namespace.DEFAULT, appId), procedureId);
+    }
+
+    /**
+     * Uniquely identifies a Procedure Handler.
+     */
+    public static class Method extends NamespacedId {
+
+      private final Procedure procedure;
+      private final String id;
+
+      private Method(Procedure procedure, String id) {
+        Preconditions.checkArgument(procedure != null, "procedure cannot be null");
+        Preconditions.checkArgument(id != null, "id cannot be null");
+        this.procedure = procedure;
+        this.id = id;
+      }
+
+      public static Method from(Procedure procedure, String id) {
+        return new Method(procedure, id);
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return procedure.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return procedure;
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+    }
+  }
+
+  /**
+   * Represents ID of a Schedule.
+   */
+  public static class Schedule extends NamespacedId {
+
+    private final Application application;
+    private final String id;
+
+    private Schedule(Application application, String id) {
+      Preconditions.checkArgument(application != null, "application cannot be null.");
+      Preconditions.checkArgument(id != null && !id.isEmpty(), "id cannot be null or empty.");
+      this.application = application;
+      this.id = id;
+    }
+
+    @Override
+    public Id getParent() {
+      return application;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return application.getNamespace();
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("application", application)
+        .add("id", id).toString();
+    }
+
+    public static Schedule from(Application application, String id) {
+      return new Schedule(application, id);
+    }
+
+    public static Schedule from(Namespace namespace, String appId, String id) {
+      return new Schedule(Id.Application.from(namespace, appId), id);
+    }
   }
 
   /**
    * Represents ID of a Notification feed.
    */
-  public static class NotificationFeed {
+  public static class NotificationFeed extends NamespacedId {
 
     private final Namespace namespace;
     private final String category;
@@ -300,7 +805,8 @@ public final class Id  {
     private NotificationFeed(String namespace, String category, String name, String description) {
       Preconditions.checkArgument(namespace != null && !namespace.isEmpty(),
                                   "Namespace value cannot be null or empty.");
-      Preconditions.checkArgument(category != null && !category.isEmpty(), "Category value cannot be null or empty.");
+      Preconditions.checkArgument(category != null && !category.isEmpty(),
+                                  "Category value cannot be null or empty.");
       Preconditions.checkArgument(name != null && !name.isEmpty(), "Name value cannot be null or empty.");
       Preconditions.checkArgument(isId(namespace) && isId(category) && isId(name),
                                   "Namespace, category or name has a wrong format.");
@@ -315,7 +821,18 @@ public final class Id  {
       return category;
     }
 
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return namespace;
+    }
+
+    @Override
     public String getId() {
+      return name;
+    }
+
+    public String getFeedId() {
       return String.format("%s.%s.%s", namespace.getId(), category, name);
     }
 
@@ -329,6 +846,11 @@ public final class Id  {
 
     public String getDescription() {
       return description;
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return namespace;
     }
 
     /**
@@ -414,7 +936,7 @@ public final class Id  {
   /**
    * Id.Stream uniquely identifies a stream.
    */
-  public static final class Stream {
+  public static final class Stream extends NamespacedId {
     private final Namespace namespace;
     private final String streamName;
     private transient int hashCode;
@@ -426,14 +948,21 @@ public final class Id  {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(streamName),
-                                  "Stream name can only contains alphanumeric, '-' and '_' characters only.");
+      Preconditions.checkArgument(isId(streamName), "Stream name can only contain alphanumeric, " +
+                                    "'-' and '_' characters: %s", streamName);
 
       this.namespace = namespace;
       this.streamName = streamName;
     }
 
+    @Override
     public Namespace getNamespace() {
+      return namespace;
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
       return namespace;
     }
 
@@ -441,7 +970,8 @@ public final class Id  {
       return namespace.getId();
     }
 
-    public String getName() {
+    @Override
+    public String getId() {
       return streamName;
     }
 
@@ -513,7 +1043,7 @@ public final class Id  {
   /**
    * Dataset Type Id identifies a given dataset module.
    */
-  public static final class DatasetType {
+  public static final class DatasetType extends NamespacedId {
     private final Namespace namespace;
     private final String typeName;
 
@@ -526,6 +1056,7 @@ public final class Id  {
       this.typeName = typeName;
     }
 
+    @Override
     public Namespace getNamespace() {
       return namespace;
     }
@@ -571,12 +1102,23 @@ public final class Id  {
     public static DatasetType from(String namespaceId, String typeId) {
       return new DatasetType(Namespace.from(namespaceId), typeId);
     }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return namespace;
+    }
+
+    @Override
+    public String getId() {
+      return typeName;
+    }
   }
 
   /**
    * Dataset Module Id identifies a given dataset module.
    */
-  public static final class DatasetModule {
+  public static final class DatasetModule extends NamespacedId {
     private final Namespace namespace;
     private final String moduleId;
 
@@ -589,12 +1131,19 @@ public final class Id  {
       this.moduleId = moduleId;
     }
 
+    @Override
     public Namespace getNamespace() {
       return namespace;
     }
 
     public String getNamespaceId() {
       return namespace.getId();
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return namespace;
     }
 
     public String getId() {
@@ -639,7 +1188,7 @@ public final class Id  {
   /**
    * Dataset Instance Id identifies a given dataset instance.
    */
-  public static final class DatasetInstance {
+  public static final class DatasetInstance extends NamespacedId {
     private final Namespace namespace;
     private final String instanceId;
 
@@ -652,12 +1201,19 @@ public final class Id  {
       this.instanceId = instanceId;
     }
 
+    @Override
     public Namespace getNamespace() {
       return namespace;
     }
 
     public String getNamespaceId() {
       return namespace.getId();
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return namespace;
     }
 
     public String getId() {

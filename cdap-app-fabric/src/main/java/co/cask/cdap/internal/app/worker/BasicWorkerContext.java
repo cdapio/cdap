@@ -69,7 +69,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * Default implementation of {@link WorkerContext}
  */
 public class BasicWorkerContext extends AbstractContext implements WorkerContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BasicServiceWorkerContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
   private final Set<String> datasets;
@@ -104,16 +104,16 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.runtimeArgs = runtimeArgs.asMap();
     this.streamWriter = new DefaultStreamWriter(program.getNamespaceId(), getDiscoveryServiceClient());
 
-    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 minutes.
+    // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
     // the same instance is always returned.
     long cacheExpiryTimeout =
-      Math.max(2, 2 * TimeUnit.SECONDS.toMinutes(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
-                                                              TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
+      Math.max(2, 2 * TimeUnit.SECONDS.toHours(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
+                                                            TxConstants.Manager.DEFAULT_TX_TIMEOUT)));
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.MINUTES)
+      .expireAfterAccess(cacheExpiryTimeout, TimeUnit.HOURS)
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
@@ -144,7 +144,9 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   }
 
   public LoggingContext getLoggingContext() {
-    return new WorkerLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getId().getId());
+    //TODO: Add adapter name if present later
+    return new WorkerLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getId().getId(),
+                                    null);
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
@@ -168,7 +170,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     try {
       context.start();
       runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
-                                             getProgram().getClassLoader(), datasets, runtimeArgs) {
+                                             getProgram().getClassLoader(), null, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
           return datasetsCache;

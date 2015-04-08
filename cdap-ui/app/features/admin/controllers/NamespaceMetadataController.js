@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceMetadataController',
-function ($scope, $state, $alert, MyDataSource, myNamespace) {
+function ($scope, $state, myAlert, MyDataSource, myNamespace) {
 
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
   var data = new MyDataSource($scope);
@@ -13,7 +13,7 @@ function ($scope, $state, $alert, MyDataSource, myNamespace) {
     });
 
   $scope.doSave = function () {
-    $alert({
+    myAlert({
       title: 'it doesn\'t work yet!',
       content: 'there is no content yet',
       type: 'warning'

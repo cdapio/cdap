@@ -16,6 +16,15 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
@@ -23,21 +32,12 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.cube.Aggregation;
-import co.cask.cdap.metrics.store.cube.Cube;
-import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.cube.CubeFact;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
 import co.cask.cdap.metrics.store.cube.DefaultAggregation;
 import co.cask.cdap.metrics.store.cube.DefaultCube;
 import co.cask.cdap.metrics.store.cube.FactTableSupplier;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -49,18 +49,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *
+ * Default implementation of {@link MetricStore}.
  */
 public class DefaultMetricStore implements MetricStore {
+  public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
+  private final int resolutions[];
   private final Supplier<Cube> cube;
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
-    this(dsFactory, new int[] {1, 60, 3600, Integer.MAX_VALUE});
+    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
   }
 
   // NOTE: should never be used apart from data migration during cdap upgrade
   public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
+    this.resolutions = resolutions;
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int ignoredRollTime) {
@@ -179,13 +182,22 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public void add(MetricValue metricValue) throws Exception {
-    String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
-    String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+    add(ImmutableList.of(metricValue));
+  }
 
-    CubeFact fact = new CubeFact(metricValue.getTags(),
-                                 toMeasureType(metricValue.getType()), measureName,
-                                 new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
-    cube.get().add(fact);
+  @Override
+  public void add(Collection<? extends MetricValue> metricValues) throws Exception {
+    List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
+    for (MetricValue metricValue : metricValues) {
+      String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
+      String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+
+      CubeFact fact = new CubeFact(metricValue.getTags(),
+                                   toMeasureType(metricValue.getType()), measureName,
+                                   new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
+      facts.add(fact);
+    }
+    cube.get().add(facts);
   }
 
   @Override
@@ -201,18 +213,21 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getMetricName(),
-                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags());
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricName(),
+                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
   @Override
   public void deleteBefore(long timestamp) throws Exception {
-    // delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
-    // note: We are using 1 as start ts, so that we do not delete data from "totals". This method is applied in
-    //       in-memory and standalone modes, so it is fine to keep totals in these cases during TTL
-    //       todo: Cube and FactTable must use resolution when applying time range conditions
-    CubeDeleteQuery query = new CubeDeleteQuery(1, timestamp, null, Maps.<String, String>newHashMap());
-    cube.get().delete(query);
+    // Delete all data before the timestamp. null for MeasureName indicates match any MeasureName.
+    for (int resolution : resolutions) {
+      // NOTE: we do not purge on TTL the "totals" currently, as there might be system components dependent on it
+      if (TOTALS_RESOLUTION == resolution) {
+        continue;
+      }
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
+      cube.get().delete(query);
+    }
   }
 
   @Override
@@ -220,9 +235,20 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().delete(buildCubeDeleteQuery(query));
   }
 
+  @Override
+  public void deleteAll() throws Exception {
+    // this will delete all aggregates metrics data
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+                                             Maps.<String, String>newHashMap()));
+    // this will delete all timeseries data
+    deleteBefore(System.currentTimeMillis() / 1000);
+  }
+
   private CubeDeleteQuery buildCubeDeleteQuery(MetricDeleteQuery query) {
-    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(),
-                               query.getMetricName(), query.getSliceByTags());
+    // note: delete query currently usually executed synchronously,
+    //       so we only attempt to delete totals, to avoid timeout
+    return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
+                               query.getSliceByTags(), query.getMetricName());
   }
 
   @Override

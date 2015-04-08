@@ -33,13 +33,20 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
+import co.cask.cdap.data2.queue.DequeueResult;
+import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
+import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
@@ -52,6 +59,7 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
@@ -60,9 +68,14 @@ import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -75,7 +88,9 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -88,7 +103,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Map;
+import java.util.List;
 
 /**
  * HBase queue tests.
@@ -102,6 +117,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
+  private static Injector injector;
 
   protected static HBaseTestBase testHBase;
   protected static HBaseTableUtil tableUtil;
@@ -126,7 +142,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
 
     Module dataFabricModule = new DataFabricDistributedModule();
-    final Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       dataFabricModule,
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -151,9 +167,6 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       })
     );
-
-    // create base location
-//    injector.getInstance(LocationFactory.class).create("/").mkdirs();
 
     //create HBase namespace
     tableUtil = injector.getInstance(HBaseTableUtil.class);
@@ -182,7 +195,6 @@ public abstract class HBaseQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
@@ -191,17 +203,18 @@ public abstract class HBaseQueueTest extends QueueTest {
   public void testQueueTableNameFormat() throws Exception {
     QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
                                                 "output1");
-    TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
+    TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
-    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
     String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
     queueName = QueueName.fromFlowlet("testNamespace", "application1", "flow1", "flowlet1", "output1");
-    tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
+    tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
-    Assert.assertEquals("system.queue.application1.flow1", tableId.getTableName());
+    Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
     tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
@@ -220,7 +233,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     }
     HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
-                        QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                        cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
   }
 
@@ -228,28 +241,82 @@ public abstract class HBaseQueueTest extends QueueTest {
   public void configTest() throws Exception {
     final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
                                                       "app", "flow", "flowlet", "configure");
-    // Set a group info
-    final Map<Long, Integer> groupInfo = ImmutableMap.of(1L, 1, 2L, 2, 3L, 3);
-    configureGroups(queueName, groupInfo);
+    queueAdmin.create(queueName);
+
+    final List<ConsumerGroupConfig> groupConfigs = ImmutableList.of(
+      new ConsumerGroupConfig(1L, 1, DequeueStrategy.FIFO, null),
+      new ConsumerGroupConfig(2L, 2, DequeueStrategy.FIFO, null),
+      new ConsumerGroupConfig(3L, 3, DequeueStrategy.FIFO, null)
+    );
 
     final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
     try {
       TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, stateStore);
+      // Intentionally set a row state for group 2, instance 0. It's for testing upgrade of config.
       txExecutor.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          byte[] minStartRow = QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0);
-          for (Map.Entry<Long, Integer> entry : groupInfo.entrySet()) {
-            long groupId = entry.getKey();
-            for (int instanceId = 0; instanceId < entry.getValue(); instanceId++) {
-              // All consumers should have empty start rows
-              Assert.assertTrue(
-                Bytes.compareTo(minStartRow, stateStore.getState(groupId, instanceId).getStartRow()) == 0);
+          stateStore.updateState(2L, 0, QueueEntryRow.getQueueEntryRowKey(queueName, 10L, 0));
+        }
+      });
+
+      // Set the group info
+      configureGroups(queueName, groupConfigs);
+
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          for (ConsumerGroupConfig groupConfig : groupConfigs) {
+            long groupId = groupConfig.getGroupId();
+            List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(groupId);
+            Assert.assertEquals(1, queueBarriers.size());
+
+            for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
+              HBaseConsumerState state = stateStore.getState(groupId, instanceId);
+
+              if (groupId == 2L && instanceId == 0) {
+                // For group 1L, the start row shouldn't be changed. End row should be the same as the first barrier
+                Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
+                                                       QueueEntryRow.getQueueEntryRowKey(queueName, 10L, 0)));
+                Assert.assertEquals(0, Bytes.compareTo(state.getNextBarrier(),
+                                                       queueBarriers.get(0).getStartRow()));
+              } else {
+                // For other group, they should have the start row the same as the first barrier info
+                Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
+                                                       queueBarriers.get(0).getStartRow()));
+              }
             }
           }
-          // Update the startRow of group 2.
-          stateStore.updateState(2L, 0, Bytes.toBytes(4));
-          stateStore.updateState(2L, 1, Bytes.toBytes(5));
+        }
+      });
+
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // Check consumers are all processed up to the barrier boundary
+          for (long groupId = 1L; groupId <= 3L; groupId++) {
+            List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(groupId);
+            boolean allConsumed = stateStore.isAllConsumed(groupId, queueBarriers.get(0).getStartRow());
+            // For group 2, instance 0 is not consumed up to the boundary yet
+            Assert.assertTrue(groupId == 2L ? !allConsumed : allConsumed);
+
+            if (groupId == 2L) {
+              // Mark group 2, instance 0 as completed the barrier.
+              stateStore.completed(groupId, 0);
+            }
+          }
+        }
+      });
+
+      txExecutor.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // After group 2, instance 0 completed the current barrier, all consumers in group 2 should be able to
+          // proceed
+          List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(2L);
+          byte[] startRow = stateStore.getState(2L, 0).getStartRow();
+          Assert.assertEquals(0, Bytes.compareTo(startRow, queueBarriers.get(0).getStartRow()));
+          Assert.assertTrue(stateStore.isAllConsumed(2L, startRow));
         }
       });
 
@@ -261,50 +328,296 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
 
-      // All instances should have startRow == smallest of old instances
       txExecutor.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          for (int instanceId = 0; instanceId < 3; instanceId++) {
-            int startRow = Bytes.toInt(stateStore.getState(2L, instanceId).getStartRow());
-            Assert.assertEquals(4, startRow);
+          List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(2L);
+          Assert.assertEquals(2, queueBarriers.size());
+
+          // For existing instances, the start row shouldn't changed.
+          for (int instanceId = 0; instanceId < 2; instanceId++) {
+            HBaseConsumerState state = stateStore.getState(2L, instanceId);
+            Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(), queueBarriers.get(0).getStartRow()));
+            Assert.assertEquals(0, Bytes.compareTo(state.getNextBarrier(), queueBarriers.get(1).getStartRow()));
+
+            // Complete the existing instance
+            stateStore.completed(2L, instanceId);
           }
-          // Advance startRow of group 2 instance 0.
-          stateStore.updateState(2L, 0, Bytes.toBytes(7));
+
+          // For new instances, the start row should be the same as the new barrier
+          HBaseConsumerState state = stateStore.getState(2L, 2);
+          Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(), queueBarriers.get(1).getStartRow()));
+          Assert.assertNull(state.getNextBarrier());
+
+          // All instances should be consumed up to the beginning of the last barrier info
+          Assert.assertTrue(stateStore.isAllConsumed(2L, queueBarriers.get(1).getStartRow()));
         }
       });
 
       // Reduce instances of group 2 through group reconfiguration, remove group 1 and 3, add group 4.
-      configureGroups(queueName, ImmutableMap.of(2L, 1, 4L, 1));
+      configureGroups(queueName, ImmutableList.of(new ConsumerGroupConfig(2L, 1, DequeueStrategy.FIFO, null),
+                                                  new ConsumerGroupConfig(4L, 1, DequeueStrategy.FIFO, null))
+      );
 
-      // The remaining instance should have startRow == smallest of all before reduction.
       txExecutor.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          int startRow = Bytes.toInt(stateStore.getState(2L, 0).getStartRow());
-          Assert.assertEquals(4, startRow);
+          // States and barrier info for removed groups should be gone
+          try {
+            // There should be no barrier info for group 1
+            List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(1L);
+            Assert.assertTrue(queueBarriers.isEmpty());
+            stateStore.getState(1L, 0);
+            Assert.fail("Not expected to get state for group 1");
+          } catch (Exception e) {
+            // Expected
+          }
+          try {
+            // There should be no barrier info for group 3
+            List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(3L);
+            Assert.assertTrue(queueBarriers.isEmpty());
+            stateStore.getState(3L, 0);
+            Assert.fail("Not expected to get state for group 3");
+          } catch (Exception e) {
+            // Expected
+          }
+          // For group 2, there should be three barrier infos
+          List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(2L);
+          Assert.assertEquals(3, queueBarriers.size());
 
-          // All instances of group 1 and 3 should be gone
-          for (long groupId : new long[]{1L, 3L}) {
-            for (int instanceId = 0; instanceId < groupInfo.get(groupId); instanceId++) {
-              try {
-                stateStore.getState(groupId, instanceId);
-                Assert.fail("Not expect to get state for group " + groupId + ", instance " + instanceId);
-              } catch (Exception e) {
-                // expected
-              }
-            }
+          // Make all consumers (3 of them before reconfigure) in group 2 consumes everything
+          for (int instanceId = 0; instanceId < 3; instanceId++) {
+            stateStore.completed(2L, instanceId);
           }
 
-          startRow = Bytes.toInt(stateStore.getState(4L, 0).getStartRow());
-          Assert.assertEquals(4, startRow);
+          // For the remaining consumer, it should start consuming from the latest barrier
+          HBaseConsumerState state = stateStore.getState(2L, 0);
+          Assert.assertEquals(0, Bytes.compareTo(state.getStartRow(),
+                                                 queueBarriers.get(2).getStartRow()));
+          Assert.assertNull(state.getNextBarrier());
+
+          // For removed instances, they should throw exception when retrieving their states
+          for (int i = 1; i < 3; i++) {
+            try {
+              stateStore.getState(2L, i);
+              Assert.fail("Not expected to get state for group 2, instance " + i);
+            } catch (Exception e) {
+              // Expected
+            }
+          }
         }
       });
-
     } finally {
       stateStore.close();
       queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
     }
+  }
+
+  // This test upgrade from old queue (salted base) to new queue (sharded base)
+  @Test (timeout = 30000L)
+  public void testQueueUpgrade() throws Exception {
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "upgrade");
+    HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
+    HBaseQueueClientFactory hBaseQueueClientFactory = (HBaseQueueClientFactory) queueClientFactory;
+
+    // Create the old queue table explicitly
+    HBaseQueueAdmin oldQueueAdmin = new HBaseQueueAdmin(hConf, cConf, injector.getInstance(LocationFactory.class),
+                                                        injector.getInstance(HBaseTableUtil.class),
+                                                        injector.getInstance(DatasetFramework.class),
+                                                        injector.getInstance(TransactionExecutorFactory.class),
+                                                        QueueConstants.QueueType.QUEUE);
+    oldQueueAdmin.create(queueName);
+
+    int buckets = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
+    final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
+      oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
+      QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), ImmutableList.<ConsumerGroupConfig>of());
+    try {
+      // Enqueue 10 items to old queue table
+      Transactions.createTransactionExecutor(executorFactory, oldProducer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            for (int i = 0; i < 10; i++) {
+              oldProducer.enqueue(new QueueEntry("key", i, Bytes.toBytes("Message " + i)));
+            }
+          }
+        });
+    } finally {
+      oldProducer.close();
+    }
+
+    // Configure the consumer
+    final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
+    final QueueConfigurer configurer = queueAdmin.getQueueConfigurer(queueName);
+    try {
+      Transactions.createTransactionExecutor(executorFactory, configurer).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          configurer.configureGroups(ImmutableList.of(consumerConfig));
+        }
+      });
+    } finally {
+      configurer.close();
+    }
+
+    // explicit set the consumer state to be the lowest start row
+    final HBaseConsumerStateStore stateStore = hbaseQueueAdmin.getConsumerStateStore(queueName);
+    try {
+      Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(),
+                                 QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0));
+        }
+      });
+    } finally {
+      stateStore.close();
+    }
+
+    // Enqueue 10 more items to new queue table
+    createEnqueueRunnable(queueName, 10, 1, null).run();
+
+    // Verify both old and new table have 10 rows each
+    Assert.assertEquals(10, countRows(hbaseQueueAdmin.getDataTableId(queueName,
+                                                                     QueueConstants.QueueType.QUEUE)));
+    Assert.assertEquals(10, countRows(hbaseQueueAdmin.getDataTableId(queueName,
+                                                                     QueueConstants.QueueType.SHARDED_QUEUE)));
+
+    // Create a consumer. It should see all 20 items
+    final List<String> messages = Lists.newArrayList();
+    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+    try {
+      while (messages.size() != 20) {
+        Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              DequeueResult<byte[]> result = consumer.dequeue(20);
+              for (byte[] data : result) {
+                messages.add(Bytes.toString(data));
+              }
+            }
+          });
+      }
+    } finally {
+      configurer.close();
+    }
+
+    verifyQueueIsEmpty(queueName, ImmutableList.of(consumerConfig));
+  }
+
+  @Test (timeout = 30000L)
+  public void testReconfigure() throws Exception {
+    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+                                                      "app", "flow", "flowlet", "changeinstances");
+    ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
+    configureGroups(queueName, ImmutableList.of(groupConfig));
+
+    // Enqueue 10 items
+    createEnqueueRunnable(queueName, 10, 1, null).run();
+
+    // Map from instance id to items dequeued
+    final Multimap<Integer, Integer> dequeued = ArrayListMultimap.create();
+
+    // Consume 2 items for each consumer instances
+    for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
+      final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
+      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+      try {
+        Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              DequeueResult<byte[]> result = consumer.dequeue(2);
+              Assert.assertEquals(2, result.size());
+              for (byte[] data : result) {
+                dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+              }
+            }
+          });
+      } finally {
+        consumer.close();
+      }
+    }
+
+    // Increase number of instances to 3
+    changeInstances(queueName, 0L, 3);
+
+    // Enqueue 10 more items
+    createEnqueueRunnable(queueName, 10, 1, null).run();
+
+    groupConfig = new ConsumerGroupConfig(0L, 3, DequeueStrategy.HASH, "key");
+
+    // Dequeue everything
+    while (dequeued.size() != 20) {
+      for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
+        final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
+        final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+        try {
+          Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+            .execute(new TransactionExecutor.Subroutine() {
+              @Override
+              public void apply() throws Exception {
+                for (byte[] data : consumer.dequeue(20)) {
+                  dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+                }
+              }
+            });
+        } finally {
+          consumer.close();
+        }
+      }
+    }
+
+    // Instance 0 should see all evens before change instances
+    Assert.assertEquals(ImmutableList.of(0, 2, 4, 6, 8, 0, 3, 6, 9), dequeued.get(0));
+    // Instance 1 should see all odds before change instances
+    Assert.assertEquals(ImmutableList.of(1, 3, 5, 7, 9, 1, 4, 7), dequeued.get(1));
+    // Instance 2 should only see entries after change instances
+    Assert.assertEquals(ImmutableList.of(2, 5, 8), dequeued.get(2));
+
+    // All consumers should have empty dequeue now
+    for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
+      final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
+      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+      try {
+        Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              DequeueResult<byte[]> result = consumer.dequeue(20);
+              Assert.assertTrue(result.isEmpty());
+            }
+          });
+      } finally {
+        consumer.close();
+      }
+    }
+
+    // Enqueue 6 more items for the 3 instances
+    createEnqueueRunnable(queueName, 6, 1, null).run();
+
+    // Reduce to 1 consumer
+    changeInstances(queueName, 0L, 1);
+
+    // The consumer 0 should be able to consume all 10 new items
+    dequeued.clear();
+    final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
+    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
+    while (dequeued.size() != 6) {
+      Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            for (byte[] data : consumer.dequeue(1)) {
+              dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+            }
+          }
+        });
+    }
+
+    Assert.assertEquals(ImmutableList.of(0, 1, 2, 3, 4, 5), dequeued.get(0));
   }
 
   @Override
@@ -329,6 +642,24 @@ public abstract class HBaseQueueTest extends QueueTest {
       }
     }
   }
+
+  /**
+   * Count how many rows are there in the given HBase table.
+   */
+  private int countRows(TableId tableId) throws Exception {
+    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    try {
+      ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY);
+      try {
+        return Iterables.size(scanner);
+      } finally {
+        scanner.close();
+      }
+    } finally {
+      hTable.close();
+    }
+  }
+
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
@@ -419,33 +750,51 @@ public abstract class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void configureGroups(QueueName queueName, final Map<Long, Integer> groupInfo) throws Exception {
-    if (queueName.isQueue()) {
-      final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
-      try {
-        Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
-          .execute(new TransactionExecutor.Subroutine() {
-            @Override
-            public void apply() throws Exception {
-              queueConfigurer.configureGroups(groupInfo);
-            }
-          });
-      } finally {
-        Closeables.closeQuietly(queueConfigurer);
-      }
-    } else {
-      streamAdmin.configureGroups(queueName.toStreamId(), groupInfo);
+  protected void configureGroups(QueueName queueName,
+                                 final Iterable<? extends ConsumerGroupConfig> groupConfigs) throws Exception {
+    Preconditions.checkArgument(queueName.isQueue(), "Only support queue configuration in queue test.");
+
+    final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
+    try {
+      Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            queueConfigurer.configureGroups(groupConfigs);
+          }
+        });
+    } finally {
+      Closeables.closeQuietly(queueConfigurer);
     }
   }
 
+  private void changeInstances(QueueName queueName, final long groupId, final int instances) throws Exception {
+    Preconditions.checkArgument(queueName.isQueue(), "Only support queue configuration in queue test.");
+    final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
+    try {
+      Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            queueConfigurer.configureInstances(groupId, instances);
+          }
+        });
+    } finally {
+      Closeables.closeQuietly(queueConfigurer);
+    }
+
+  }
+
   @Override
-  protected void resetConsumerState(QueueName queueName, final ConsumerConfig consumerConfig) throws Exception {
+  protected void resetConsumerState(final QueueName queueName, final ConsumerConfig consumerConfig) throws Exception {
     final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
     try {
+      // Reset consumer to the beginning of the first barrir
       Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), Bytes.EMPTY_BYTE_ARRAY);
+          byte[] startRow = stateStore.getAllBarriers(consumerConfig.getGroupId()).get(0).getStartRow();
+          stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
         }
       });
     } finally {

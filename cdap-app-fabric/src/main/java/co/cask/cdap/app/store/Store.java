@@ -18,20 +18,20 @@ package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -61,7 +61,7 @@ public interface Store {
    *
    * @param id        Info about program
    * @param pid       run id
-   * @param startTime start timestamp
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
   void setStart(Id.Program id, String pid, long startTime);
 
@@ -70,10 +70,24 @@ public interface Store {
    *
    * @param id      id of program
    * @param pid     run id
-   * @param endTime end timestamp
+   * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs suspend of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setSuspend(Id.Program id, String pid);
+
+  /**
+   * Logs resume of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setResume(Id.Program id, String pid);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -81,13 +95,22 @@ public interface Store {
    *
    * @param id        program id.
    * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime.
-   * @param endTime   fetch run history that has started before the endTime.
-   * @param limit     max number of entries to fetch for this history call.
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
                           long startTime, long endTime, int limit);
+
+  /**
+   * Fetches the run record for particular run of a program.
+   *
+   * @param id        program id
+   * @param runid     run id of the program
+   * @return          run record for the specified program and runid, null if not found
+   */
+  RunRecord getRun(Id.Program id, String runid);
 
   /**
    * Creates a new stream if it does not exist.
@@ -162,8 +185,9 @@ public interface Store {
    * @param id flow id
    * @param flowletId flowlet id
    * @param count new number of instances
+   * @return The {@link FlowSpecification} before the instance change
    */
-  void setFlowletInstances(Id.Program id, String flowletId, int count);
+  FlowSpecification setFlowletInstances(Id.Program id, String flowletId, int count);
 
   /**
    * Gets number of instances of specific flowlet.
@@ -356,7 +380,7 @@ public interface Store {
   List<NamespaceMeta> listNamespaces();
 
   /**
-   * Adds adapter spec to the store, with status = {@link AdapterStatus.STARTED}. Will overwrite the existing spec.
+   * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
    *
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added

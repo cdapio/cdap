@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -107,6 +107,8 @@ public abstract class MetricsSuiteTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
 
+  protected static MetricStore metricStore;
+
   private static Injector injector;
 
   @BeforeClass
@@ -125,9 +127,10 @@ public abstract class MetricsSuiteTestBase {
 
     injector = startMetricsService(conf);
 
-    StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
-    store = storeFactory.create();
+    store = injector.getInstance(Store.class);
     locationFactory = injector.getInstance(LocationFactory.class);
+    metricStore = injector.getInstance(MetricStore.class);
+
     tmpFolder.create();
     dataDir = tmpFolder.newFolder();
     initialize();
@@ -150,7 +153,7 @@ public abstract class MetricsSuiteTestBase {
 
   @After
   public void after() throws Exception {
-    doDelete("/v2/metrics/");
+    metricStore.deleteAll();
   }
 
   public static void initialize() throws IOException {

@@ -1,32 +1,69 @@
 <div ng-hide="welcomeIsHidden">
-  <div class="panel panel-default">
+  <div class="panel panel-message">
     <div class="panel-heading clearfix">
-      <button class="pull-right btn btn-default btn-xs" ng-click="hideWelcome()">
+      <a class="btn-close pull-right" ng-click="hideWelcome()">
         <span class="fa fa-close"></span>
         <span class="sr-only"> Hide Welcome Message </span>
-      </button>
-      <h3>
-        Welcome!
-        <small> Your Cask Data Application Platform is designed to meet your needs, whether you are a developer, operator, or admin. </small>
-      </h3>
+      </a>
+        <h2 class="text-uppercase"> Welcome! </h2>
+        <p> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </p>
+    </div>
+    <div class="panel-body text-center">
+      <div class="col-sm-4">
+        <img class="center-block" src="assets/img/ico_simplify.png" />
+        <h3 class="text-uppercase"> Simplify... </h3>
+        <p>
+          your way to actionable <br />
+          insights with Hadoop
+        </p>
+      </div>
+      <div class="col-sm-4">
+      <img src="assets/img/ico_innovate.png" />
+        <h3 class="text-uppercase"> Innovate... </h3>
+        <p>
+          with your existing talent and <br />
+          domain experts on Hadoop
+        </p>
+      </div>
+      <div class="col-sm-4">
+      <img src="assets/img/ico_accelerate.png" />
+        <h3 class="text-uppercase"> Accelerate... </h3>
+        <p>
+          Time-to-Market and <br />
+          Time-to-Value with Hadoop
+        </p>
+      </div>
     </div>
   </div>
 </div>
 
-<div ng-show="isEnterprise">
-  <hr />
-  <h3> CDAP Health </h3>
-  <p>This is a section for Enterprise users.</p>
-  <hr />
-</div>
+<section class="cdap-health"> <!-- ng-show="isEnterprise" -->
+  <h2> CDAP Health </h2>
+  <div class="row">
+    <div class="col-xs-12 col-lg-4">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+          <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="yellow" />
+        </svg>
+        <p> 3.0 upgrade started 11:00 am </p>
+      </div>
+    </div>
+
+    <div class="col-xs-12 col-lg-8">
+      <div>
+        <p class="text-left"> Errors last hour </p>
+        <img src="assets/img/health_graph.png" alt="" />
+        <p class="text-center"> System </p>
+      </div>
+      <div>
+        <br />
+        <img src="assets/img/health_graph.png" alt="" />
+        <p class="text-center"> App </p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="data-apps">
-  <div class="row">
-    <div class="col-xs-6">
-      <div ng-include="appsTemplate"> </div>
-    </div>
-    <div class="col-xs-6">
-      <div ng-include="dataTemplate"> </div>
-    </div>
-  </div>
+  <div ng-include="'/assets/features/overview/templates/data-apps.html'"> </div>
 </section>

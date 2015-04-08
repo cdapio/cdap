@@ -24,6 +24,156 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
+=============================================================
+
+General
+-------
+
+- The :ref:`HTTP RESTful API v2 <http-restful-api-v2>` is deprecated, replaced with the
+  :ref:`namespaced HTTP RESTful API v3 <http-restful-api-v3>`.
+
+- Added log rotation for CDAP programs running in YARN containers
+  (`CDAP-1295 <https://issues.cask.co/browse/CDAP-1295>`__).
+
+- Added the ability to submit to non-default YARN queues to provide 
+  :ref:`resource guarantees <resource-guarantees>`
+  for CDAP Master Services, CDAP Programs, and Explore Queries
+  (`CDAP-1417 <https://issues.cask.co/browse/CDAP-1417>`__).
+
+- Added the ability to :ref:`prune invalid transactions <tx-maintenance>`
+  (`CDAP-1540 <https://issues.cask.co/browse/CDAP-1540>`__).
+
+- Added the ability to specify 
+  :ref:`custom logback file for CDAP programs <application-logback>`
+  (`CDAP-1100 <https://issues.cask.co/browse/CDAP-1100>`__).
+
+- System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.
+
+New Features
+------------
+
+- **Command Line Interface (CLI)**
+
+  - CLI can now directly connect to a CDAP instance of your choice at startup by using
+    ``cdap-cli.sh --uri <uri>``.
+  - Support for runtime arguments, which can be listed by running ``"cdap-cli.sh --help"``.
+  - Table rendering can be configured using ``"cli render as <alt|csv>"``. 
+    The option ``"alt"`` is the default, with ``"csv"`` available for copy & pasting.
+  - Stream statistics can be computed using ``"get stream-stats <stream-id>"``.
+  
+- **Datasets**
+
+  - Added an ObjectMappedTable Dataset that maps object fields to table columns and that is also explorable.
+  - Added a PartitionedFileSet Dataset that allows addressing files by meta data and that is also explorable.  
+  - Table Datasets now support a multi-get operation for batched reads.
+  - Allow an unchecked Dataset upgrade upon application deployment
+    (`CDAP-1574 <https://issues.cask.co/browse/CDAP-1574>`__).
+
+- **Metrics**
+
+  - Added new APIs for exploring available metrics, including drilling down into the context of emitted metrics
+  - Added the ability to explore (search) all metrics; previously, this was restricted to custom user metrics
+  - There are new APIs for querying metrics
+  - New capability to break down a metrics time series using the values of one or more tags in its context
+  
+- **Namespaces**
+
+  - Applications and Programs are now managed within namespaces.
+  - Application logs are available within namespaces.
+  - Metrics are now collected and queried within namespaces.
+  - Datasets can now created and managed within namespaces.
+  - Streams are now namespaced for ingestion, fetching, and consuming by programs.
+  - Explore operations are now namespaced.
+  
+- **Preferences**
+
+  - Users can store preferences (a property map) at the instance, namespace, application, 
+    or program level.
+  
+- **Spark**
+
+  - Spark now uses a configurer-style API for specifying
+    (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  
+- **Workflows**
+
+  - Users can schedule a Workflow based on increments of data being ingested into a Stream.
+  - Workflows can be stopped.
+  - The execution of a Workflow can be forked into parallelized branches.
+  - The runtime arguments for Workflow can be scoped.
+  
+- **Workers**
+
+  - Added :ref:`Worker <workers>`, a new Program type that can be added to CDAP Applications, 
+    used to run background processes and (beta feature) can write to Streams through the
+    WorkerContext.
+    
+- **Upgrade and Data Migration Tool**
+
+  - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
+    2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+    Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
+    please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
+  - Added a metric migration tool which migrates old metrics to the new 2.8 format.
+
+
+Improvement
+-----------
+
+- Improved Flow performance and scalability with a new distributed queue implementation.
+
+
+API Changes
+-----------
+
+- The endpoint (``GET <base-url>/data/explore/datasets/<dataset-name>/schema``) that
+  retrieved the schema of a Dataset's underlying Hive table has been removed
+  (`CDAP-1603 <https://issues.cask.co/browse/CDAP-1603>`__).
+- Endpoints have been added to retrieve the CDAP version and the current configurations of
+  CDAP and HBase (:ref:`Configuration HTTP RESTful API <http-restful-api-configuration>`).
+
+
+.. _known-issues-280:
+
+Known Issues
+------------
+
+- See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
+- If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
+  Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
+  <install-starting-services>`, which will restart all services 
+  (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+- User datasets with names starting with ``"system"`` can potentially cause conflicts
+  (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
+- Scaling the number of metrics processor instances doesn't automatically distribute the
+  processing load to the newer instances of the metrics processor. The CDAP Master needs to be
+  restarted to effectively distribute the processing across all metrics processor instances
+  (`CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__).
+- Creating a dataset in a non-existent namespace manifests in the RESTful API with an
+  incorrect error message (`CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__).
+- Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
+  the request body that enumerates the name and attributes for each metric |---| is currently not
+  supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
+  Instead, use the :ref:`v2 API <http-restful-api-v2-metrics-multiple>`. It will be
+  supported in a future release.
+- Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
+  any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the Dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked Dataset upgrades*.
+  Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
+  runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
+
+  You can allow *unchecked Dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that Datasets are upgraded when the Application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
+  all Applications that are using the Dataset before deploying the new version of the Application.
+  This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
+  When Datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
+  other Applications that are using the Dataset can work with the new changes.
+
+
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
 =============================================================
 
@@ -33,13 +183,12 @@ API Changes
    ``security.auth.server.bind.address`` (`CDAP-639 <https://issues.cask.co/browse/CDAP-639>`__,
    `CDAP-1078 <https://issues.cask.co/browse/CDAP-1078>`__).
 
-
 New Features
 ------------
 
 - **Spark**
 
-  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-1134>`__).
+  - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-382>`__).
   - Spark can now run as a part of a Workflow (`CDAP-465 <https://issues.cask.co/browse/CDAP-465>`__).
 
 - **Security**
@@ -66,6 +215,8 @@ New Features
   - Schedules are now at the application level and properties can be specified for
     Schedules; these properties will be passed to the scheduled program as runtime
     arguments (`CDAP-1148 <https://issues.cask.co/browse/CDAP-1148>`__).
+
+.. _known-issues-271:
 
 Known Issues
 ------------

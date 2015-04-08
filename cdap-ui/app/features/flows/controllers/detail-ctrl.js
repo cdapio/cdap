@@ -1,39 +1,24 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('FlowsDetailController', function($scope, MyDataSource, $state, FlowDiagramData) {
     var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' +
-            $state.params.appId +
-            '/flows/' +
-            $state.params.programId;
+        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
-    $scope.activeRuns = 0;
-    $scope.runs = null;
-
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
-    }, function(res) {
-        $scope.runs = res;
-        var count = 0;
-        angular.forEach(res, function(runs) {
-          if (runs.status === 'RUNNING') {
-            count += 1;
-          }
-        });
-        $scope.activeRuns = count;
+    FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
+      .then(function(data) {
+        $scope.data = data;
       });
 
+    console.info("Polling on active Runs");
     dataSrc.poll({
-      _cdapNsPath: basePath + '/status'
+      _cdapNsPath: basePath + '/runs?status=running'
     }, function(res) {
-      $scope.status = res.status;
-    });
+        $scope.activeRuns = res.length;
+      });
 
-    $scope.toggleFlow = function(action) {
-      $scope.status = action;
+    $scope.do = function(action) {
       dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
-      });
-    };
-
-});
+        _cdapNsPath: basePath + '/' + action,
+        method: 'POST'
+      })
+    }
+  });

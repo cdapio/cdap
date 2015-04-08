@@ -18,104 +18,54 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
-import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.proto.Id;
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
  * Upgrades queue.config table
  */
-public class QueueConfigUpgrader extends AbstractUpgrader {
+public class QueueConfigUpgrader extends AbstractQueueUpgrader {
   private static final Logger LOG = LoggerFactory.getLogger(QueueConfigUpgrader.class);
-  private final HBaseTableUtil tableUtil;
-  private final Configuration conf;
+  private final QueueAdmin queueAdmin;
 
   @Inject
-  public QueueConfigUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil, Configuration conf) {
-    super(locationFactory);
-    this.tableUtil = tableUtil;
-    this.conf = conf;
+  public QueueConfigUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                             HBaseTableUtil tableUtil, Configuration conf, QueueAdmin queueAdmin) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf);
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
   void upgrade() throws Exception {
+    super.upgrade();
+    queueAdmin.upgrade();
+  }
+
+  @Override
+  protected TableId getTableId() {
     String dsName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, QueueConstants.QUEUE_CONFIG_TABLE_NAME);
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
-    TableId queueConfigTableId = TableId.from(datasetId.getNamespaceId(), dsName);
-    if (!tableUtil.tableExists(new HBaseAdmin(conf), queueConfigTableId)) {
-      LOG.info("Queue config table does not exist: {}. No upgrade necessary.", queueConfigTableId);
-      return;
-    }
-    HTable queueConfigTable = tableUtil.createHTable(conf, queueConfigTableId);
-    LOG.info("Starting upgrade for queue config table {}", Bytes.toString(queueConfigTable.getTableName()));
-    try {
-      Scan scan = new Scan();
-      scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
-      scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
-      scan.setMaxVersions(1); // we only need to see one version of each row
-      List<Mutation> mutations = Lists.newArrayList();
-      Result result;
-      ResultScanner resultScanner = queueConfigTable.getScanner(scan);
-      try {
-        while ((result = resultScanner.next()) != null) {
-          byte[] row = result.getRow();
-          String rowKey = Bytes.toStringBinary(row);
-          LOG.debug("Processing queue config for  {}", rowKey);
-          NavigableMap<byte[], byte[]> columnsMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-          QueueName queueName = fromRowKey(row);
-          if (queueName != null) {
-            Put put = new Put(queueName.toBytes());
-            LOG.debug("Upgrading queue name: {}", queueName);
-            for (NavigableMap.Entry<byte[], byte[]> entry : columnsMap.entrySet()) {
-              LOG.debug("Adding entry {} -> {} for upgrade",
-                        Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
-              put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
-              mutations.add(put);
-            }
-            LOG.debug("Marking old key {} for deletion", rowKey);
-            mutations.add(new Delete(row));
-          }
-          LOG.info("Finished processing queue config for {}", rowKey);
-        }
-      } finally {
-        resultScanner.close();
-      }
+    return TableId.from(Constants.DEFAULT_NAMESPACE, dsName);
+  }
 
-      queueConfigTable.batch(mutations);
-
-      LOG.info("Successfully completed upgrade for queue config table {}",
-               Bytes.toString(queueConfigTable.getTableName()));
-    } catch (Exception e) {
-      LOG.error("Error while upgrading queue config table: {}", datasetId, e);
-      throw Throwables.propagate(e);
-    } finally {
-      queueConfigTable.close();
-    }
+  @Nullable
+  @Override
+  protected byte[] processRowKey(byte[] oldRowKey) {
+    LOG.debug("Processing queue config for: {}", Bytes.toString(oldRowKey));
+    QueueName queueName = fromRowKey(oldRowKey);
+    LOG.debug("Processing row key for  queue name: {}", queueName);
+    return queueName == null ? null : queueName.toBytes();
   }
 
   @Nullable

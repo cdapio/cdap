@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.file.ReadFilter;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -37,11 +37,12 @@ import java.util.concurrent.TimeUnit;
 final class StreamRecordReader<K, V> extends RecordReader<K, V> {
 
   private final StreamEventDecoder<K, V> decoder;
-  private final List<StreamEvent> events;
+  private final List<PositionStreamEvent> events;
 
   private StreamDataFileReader reader;
   private StreamInputSplit inputSplit;
   private StreamEventDecoder.DecodeResult<K, V> currentEntry;
+  private ReadFilter readFilter;
 
   /**
    * Construct a {@link StreamRecordReader} with a given {@link StreamEventDecoder}.
@@ -59,27 +60,19 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
     inputSplit = (StreamInputSplit) split;
     reader = createReader(FileSystem.get(context.getConfiguration()), inputSplit);
     reader.initialize();
+    readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    StreamEvent streamEvent;
-    do {
-      if (reader.getPosition() - inputSplit.getStart() >= inputSplit.getLength()) {
-        return false;
-      }
-
-      events.clear();
-      if (reader.read(events, 1, 0, TimeUnit.SECONDS) <= 0) {
-        return false;
-      }
-      streamEvent = events.get(0);
-    } while (streamEvent.getTimestamp() < inputSplit.getStartTime());
-
-    if (streamEvent.getTimestamp() >= inputSplit.getEndTime()) {
+    events.clear();
+    if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {
       return false;
     }
-
+    PositionStreamEvent streamEvent = events.get(0);
+    if (streamEvent.getStart() - inputSplit.getStart() >= inputSplit.getLength()) {
+      return false;
+    }
     currentEntry = decoder.decode(streamEvent, currentEntry);
     return true;
   }

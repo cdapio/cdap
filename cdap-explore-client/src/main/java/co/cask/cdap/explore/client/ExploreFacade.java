@@ -63,7 +63,7 @@ public class ExploreFacade {
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream);
-    handleExploreFuture(futureSuccess, "enable", "stream", stream.getName());
+    handleExploreFuture(futureSuccess, "enable", "stream", stream.getId());
   }
 
   /**
@@ -77,7 +77,7 @@ public class ExploreFacade {
     }
 
     ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream);
-    handleExploreFuture(futureSuccess, "disable", "stream", stream.getName());
+    handleExploreFuture(futureSuccess, "disable", "stream", stream.getId());
   }
 
   /**
@@ -85,7 +85,7 @@ public class ExploreFacade {
    * @param datasetInstance dataset instance id.
    */
   public void enableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
+    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
@@ -98,7 +98,7 @@ public class ExploreFacade {
    * @param datasetInstance dataset instance id.
    */
   public void disableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
+    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
@@ -142,6 +142,10 @@ public class ExploreFacade {
 
     ListenableFuture<ExploreExecutionResult> futureSuccess = exploreClient.removeNamespace(namespace);
     handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getId());
+  }
+
+  private boolean isDatasetExplorable(Id.DatasetInstance datasetInstance) {
+    return !datasetInstance.getNamespace().equals(Constants.SYSTEM_NAMESPACE_ID);
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.

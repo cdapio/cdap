@@ -17,10 +17,17 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.RESTMigrationUtils;
@@ -40,11 +47,19 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -52,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -100,6 +116,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final WorkflowHttpHandler workflowHttpHandler;
   private final AppFabricDataHttpHandler appFabricDataHttpHandler;
   private final TransactionHttpHandler transactionHttpHandler;
 
@@ -109,20 +126,20 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              StoreFactory storeFactory,
-                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
+                              Store store, ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
                               DatasetFramework dsFramework, AppLifecycleHttpHandler appLifecycleHttpHandler,
                               ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                               AppFabricDataHttpHandler appFabricDataHttpHandler,
                               PreferencesStore preferencesStore, ConsoleSettingsStore consoleSettingsStore,
-                              NamespaceAdmin namespaceAdmin, TransactionHttpHandler transactionHttpHandler) {
+                              NamespaceAdmin namespaceAdmin, TransactionHttpHandler transactionHttpHandler,
+                              WorkflowHttpHandler workflowHttpHandler) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.namespaceAdmin = namespaceAdmin;
-    this.store = storeFactory.create();
+    this.store = store;
     this.dsFramework = dsFramework;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
@@ -130,6 +147,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.transactionHttpHandler = transactionHttpHandler;
     this.preferencesStore = preferencesStore;
     this.consoleSettingsStore = consoleSettingsStore;
+    this.workflowHttpHandler = workflowHttpHandler;
   }
 
   /**
@@ -493,25 +511,31 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
    * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
    * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
-   *
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1"},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1"}]
-   *
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
    * as well as 3 fields:
-   * "provisioned" which maps to the number of instances actually provided for the input runnable,
-   * "requested" which maps to the number of instances the user has requested for the input runnable,
-   * "statusCode" which maps to the http status code for the data in that JsonObjects. (200, 400, 404)
+   * </p><ul>
+   * <li>"provisioned" which maps to the number of instances actually provided for the input runnable,</li>
+   * <li>"requested" which maps to the number of instances the user has requested for the input runnable,</li>
+   * <li>"statusCode" which maps to the http status code for the data in that JsonObjects (200, 400, 404).</li>
+   * </p><p>
    * If an error occurs in the input (i.e. in the example above, Flowlet1 does not exist), then all JsonObjects for
    * which the parameters have a valid instances will have the provisioned and requested fields status code fields
    * but all JsonObjects for which the parameters are not valid will have an error message and statusCode.
-   *
-   * E.g. given the above data, if there is no Flowlet1, then the response would be 200 OK with following possible data:
+   * </p><p>
+   * For example, if there is no Flowlet1 in the above data, then the response could be 200 OK with the following data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
    *   "statusCode": 200, "provisioned": 2, "requested": 2},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2", "statusCode": 200, "provisioned": 1,
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "provisioned": 1,
    *   "requested": 3},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Runnable": Flowlet1 not found"}]
@@ -527,23 +551,33 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the status for all programs that are passed into the data. The data is an array of Json objects
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
-   * <p/>
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
    * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
-   * <p/>
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
-   * as well as 2 fields, "status" which maps to the status of the program and "statusCode" which maps to the
-   * status code for the data in that JsonObjects. If an error occurs in the
+   * as well as 2 fields:
+   * <ul>
+   * <li>"status" which maps to the status of the program and </li>
+   * <li>"statusCode" which maps to the status code for the data in that JsonObjects.</li>
+   * </ul>
+   * </p><p>
+   * If an error occurs in the
    * input (i.e. in the example above, App2 does not exist), then all JsonObjects for which the parameters
    * have a valid status will have the status field but all JsonObjects for which the parameters do not have a valid
    * status will have an error message and statusCode.
-   * <p/>
-   * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * </p><p>
+   * For example, if there is no App2 in the data above, then the response could be 200 OK with the following data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "status": "STOPPED"},
    * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * </code></pre>
    */
   @POST
   @Path("/status")
@@ -633,7 +667,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") String appId,
                                   @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getScheduledRunTime(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    workflowHttpHandler.getScheduledRunTime(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                     Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
@@ -645,7 +679,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    programLifecycleHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+    workflowHttpHandler.getWorkflowSchedules(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                      Constants.DEFAULT_NAMESPACE, appId, workflowId);
   }
 
@@ -756,9 +790,62 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                     Constants.DEFAULT_NAMESPACE,
-                                                     appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
+    getWorkflowSpecification(responder, appId, Constants.DEFAULT_NAMESPACE, workflowId);
+  }
+
+  private void getWorkflowSpecification(HttpResponder responder, String appId, String namespaceId, String workflowId) {
+    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
+    ApplicationSpecification appSpec = store.getApplication(id.getApplication());
+    if (appSpec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
+    if (workflowSpec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    List<ScheduleProgramInfo> actions = Lists.newArrayList();
+    Map<String, WorkflowActionSpecification> customActionMap = Maps.newHashMap();
+
+    for (WorkflowNode node : workflowSpec.getNodes()) {
+      if (node.getType() == WorkflowNodeType.ACTION) {
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        actions.add(actionNode.getProgram());
+        if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+          WorkflowActionSpecification actionSpecification = actionNode.getActionSpecification();
+          if (actionSpecification != null) {
+            customActionMap.put(actionSpecification.getName(), actionNode.getActionSpecification());
+          }
+        }
+      }
+    }
+
+    Gson gson = new GsonBuilder()
+      .registerTypeAdapter(WorkflowActionSpecification.class,
+                           new WorkflowActionSpecificationCodec())
+      .create();
+
+    JsonObject jsonObj = new JsonObject();
+
+    jsonObj.add("className", new JsonPrimitive(workflowSpec.getClassName()));
+    jsonObj.add("name", new JsonPrimitive(workflowSpec.getName()));
+    jsonObj.add("description", new JsonPrimitive(workflowSpec.getDescription()));
+
+    Type mapType = new TypeToken<Map<String, WorkflowActionSpecification>>() { }.getType();
+    JsonElement mapTree = gson.toJsonTree(customActionMap, mapType);
+    jsonObj.add("customActionMap", mapTree);
+
+    Type actionType = new TypeToken<List<ScheduleProgramInfo>>() { }.getType();
+    JsonElement actionTree = gson.toJsonTree(actions, actionType);
+    jsonObj.add("actions", actionTree);
+
+    JsonElement propertyTree = gson.toJsonTree(workflowSpec.getProperties(), Map.class);
+    jsonObj.add("properties", propertyTree);
+
+    responder.sendJson(HttpResponseStatus.OK, jsonObj);
   }
 
   @GET
@@ -832,14 +919,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, ProgramType.WORKFLOW, workflowName);
-      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, Long.MIN_VALUE, Long.MAX_VALUE,
-                                                    100);
+      List<RunRecord> runRecordList = store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100);
       if (runRecordList.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
       String runId = runRecordList.get(0).getPid();
-      programLifecycleHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
+      workflowHttpHandler.workflowStatus(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                  Constants.DEFAULT_NAMESPACE, appId, workflowName, runId);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -1100,9 +1186,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // remove all data in console settings
       consoleSettingsStore.delete();
-
-      // todo: do efficiently and also remove timeseries metrics as well: CDAP-1125
-      appLifecycleHttpHandler.deleteMetrics(Constants.DEFAULT_NAMESPACE, null);
 
       LOG.info("All data for namespace '{}' deleted.", Constants.DEFAULT_NAMESPACE);
       responder.sendStatus(HttpResponseStatus.OK);

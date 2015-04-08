@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 
 import java.util.List;
 
@@ -112,7 +113,7 @@ public interface Scheduler {
    * @param program the program for which schedule needs to be updated
    * @param programType the type of the program
    * @param schedule the new schedule. The schedule with the same name will be replaced
-   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program} 
+   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
@@ -141,6 +142,14 @@ public interface Scheduler {
    */
   public void deleteSchedules(Id.Program programId, SchedulableProgramType programType)
     throws SchedulerException;
+
+  /**
+   * Deletes all schedules associated with the given namespace.
+   *
+   * @param namespaceId Id of the namespace
+   * @throws SchedulerException on unforeseen error
+   */
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException;
 
   /**
    * Get state of a particular schedule.

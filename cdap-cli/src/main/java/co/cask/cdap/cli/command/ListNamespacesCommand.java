@@ -54,7 +54,7 @@ public class ListNamespacesCommand extends AbstractCommand {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -64,6 +64,6 @@ public class ListNamespacesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.NAMESPACE.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.NAMESPACE.getTitleNamePlural());
   }
 }

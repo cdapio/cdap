@@ -27,12 +27,12 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -65,25 +65,30 @@ public class CLIMain {
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
 
-  private static final Option HELP_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option HELP_OPTION = new Option(
     "h", "help", false, "Print the usage message.");
 
-  private static final Option URI_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
-    " Defaults to \"" + getDefaultURI() + "\".");
+    " Defaults to \"" + getDefaultURI().toString() + "\".");
 
-  private static final Option VERIFY_SSL_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option VERIFY_SSL_OPTION = new Option(
     "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
-  private static final Option AUTOCONNECT_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option AUTOCONNECT_OPTION = new Option(
     "a", "autoconnect", true, "If \"true\", try provided connection" +
     " (from " + URI_OPTION.getLongOpt() + ")" +
     " upon launch or try default connection if none provided." +
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
-  private static final Option DEBUG_OPTION = new Option(
+  @VisibleForTesting
+  public static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
 
   private final CLI cli;
@@ -113,8 +118,8 @@ public class CLIMain {
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
       new CommandSet<Command>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier()),
-        new SearchCommandsCommand(getCommandsSupplier())
+        new HelpCommand(getCommandsSupplier(), cliConfig),
+        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
@@ -167,16 +172,8 @@ public class CLIMain {
     }
   }
 
-  public static String getDefaultURI() {
-    CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    String hostname = cConf.get(Constants.Router.ADDRESS);
-    int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-      cConf.getInt(Constants.Router.ROUTER_PORT);
-    String namespace = Constants.DEFAULT_NAMESPACE;
-
-    return sslEnabled ? "https" : "http" + "://" + hostname + ":" + port + "/" + namespace;
+  public static URI getDefaultURI() {
+    return ConnectionConfig.DEFAULT.getURI();
   }
 
   private String limit(String string, int maxLength) {
@@ -223,22 +220,24 @@ public class CLIMain {
     final PrintStream output = System.out;
 
     Options options = getOptions();
+    CLIMainArgs cliMainArgs = CLIMainArgs.parse(args, options);
+
     CommandLineParser parser = new BasicParser();
     try {
-      CommandLine command = parser.parse(options, args);
+      CommandLine command = parser.parse(options, cliMainArgs.getOptionTokens());
       if (command.hasOption(HELP_OPTION.getOpt())) {
         usage();
         System.exit(0);
       }
 
       LaunchOptions launchOptions = LaunchOptions.builder()
-        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI()))
+        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
         .build();
 
-      String[] commandArgs = command.getArgs();
+      String[] commandArgs = cliMainArgs.getCommandTokens();
 
       try {
         ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(null).build();
@@ -268,7 +267,8 @@ public class CLIMain {
     return "true".equals(value);
   }
 
-  private static Options getOptions() {
+  @VisibleForTesting
+  public static Options getOptions() {
     Options options = new Options();
     addOptionalOption(options, HELP_OPTION);
     addOptionalOption(options, URI_OPTION);
@@ -296,4 +296,5 @@ public class CLIMain {
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
+
 }

@@ -70,15 +70,6 @@ public interface StreamAdmin {
   void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException;
 
   /**
-   * Get the size of the data persisted for the stream with config {@code streamConfig}.
-   *
-   * @param streamConfig configuration of the stream to get the size of data for
-   * @return the size of the data persisted for the stream which config is the {@code streamId}
-   * @throws IOException in case of any error in fetching the size
-   */
-  long fetchStreamSize(StreamConfig streamConfig) throws IOException;
-
-  /**
    * @param streamId Id of the stream.
    * @return true if stream with given Id exists, otherwise false
    * @throws Exception if check fails

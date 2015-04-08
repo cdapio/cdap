@@ -81,7 +81,7 @@ events as partitioned Avro files. With this adapter running, you will be able to
 over the output fileset, which will contain the ``ts``, ``ticker``, ``trades``, and ``price`` fields as well
 as the partition fields::
 
-  cdap (http://127.0.0.1:10000)> execute 'describe cdap_user_tickers_converted'
+  cdap (http://127.0.0.1:10000)> execute 'describe dataset_tickers_converted'
   +=======================================================================+
   | col_name: STRING        | data_type: STRING    | comment: STRING      |
   +=======================================================================+
@@ -130,7 +130,7 @@ your manifest file contains these properties:
 
 You can look at the cdap-adapters module in the CDAP project as an example.
 Once you have built your application jar, you must place it in the directory specified
-by the ``app.adapter.dir`` configuration setting.
+by the ``app.template.dir`` configuration setting.
 This setting defaults to ``/opt/cdap/master/plugins`` for distributed CDAP, and ``plugins``
 for CDAP Standalone. Note that the jar must be present on all CDAP masters. 
 

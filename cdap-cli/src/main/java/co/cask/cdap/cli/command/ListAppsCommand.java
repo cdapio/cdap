@@ -53,7 +53,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getDescription());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -63,6 +63,6 @@ public class ListAppsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.APP.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.APP.getTitleNamePlural());
   }
 }

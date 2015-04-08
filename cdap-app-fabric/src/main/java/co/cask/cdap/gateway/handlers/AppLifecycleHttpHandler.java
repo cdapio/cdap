@@ -20,6 +20,8 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -29,13 +31,10 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -49,44 +48,30 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterTypeInfo;
-import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterConfig;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -100,9 +85,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -120,30 +103,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
-  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
-
-  /**
-   * Factory for handling the location - can do both in either Distributed or Local mode.
-   */
-  private final LocationFactory locationFactory;
-
-  private final Scheduler scheduler;
-
-  /**
    * Runtime program service for running and managing programs.
    */
   private final ProgramRuntimeService runtimeService;
@@ -153,34 +112,38 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
+  private final CConfiguration configuration;
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
+  private final Scheduler scheduler;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final PreferencesStore preferencesStore;
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
+  private final MetricStore metricStore;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                 LocationFactory locationFactory, Scheduler scheduler,
-                                 ProgramRuntimeService runtimeService, StoreFactory storeFactory,
+                                 Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 DiscoveryServiceClient discoveryServiceClient, PreferencesStore preferencesStore,
-                                 AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
+                                 PreferencesStore preferencesStore, AdapterService adapterService,
+                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore,
+                                 NamespacedLocationFactory namespacedLocationFactory) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
-    this.locationFactory = locationFactory;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
-    this.store = storeFactory.create();
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.store = store;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
+    this.metricStore = metricStore;
   }
 
   /**
@@ -251,10 +214,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Application id = Id.Application.from(namespaceId, appId);
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (adapterService.getAdapterTypeInfo(appId) != null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Cannot delete Application %s." +
-                                             " An AdapterType exists with a conflicting name.", appId));
+      if (adapterService.getApplicationTemplateInfo(appId) != null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
 
         return;
       }
@@ -292,173 +254,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * Retrieves all adapters in a given namespace.
-   */
-  @GET
-  @Path("/adapters")
-  public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Namespace '%s' does not exist.", namespaceId));
-      return;
-    }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(namespaceId));
-  }
-
-  /**
-   * Retrieves an adapter
-   */
-  @GET
-  @Path("/adapters/{adapter-id}")
-  public void getAdapter(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-id") String adapterName) {
-    try {
-      AdapterSpecification adapterSpec = adapterService.getAdapter(namespaceId, adapterName);
-      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
-  }
-
-  /**
-   * Starts/stops an adapter
-   */
-  @POST
-  @Path("/adapters/{adapter-id}/{action}")
-  public void startStopAdapter(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId,
-                               @PathParam("action") String action) {
-    try {
-      if ("start".equals(action)) {
-        adapterService.startAdapter(namespaceId, adapterId);
-      } else if ("stop".equals(action)) {
-        adapterService.stopAdapter(namespaceId, adapterId);
-      } else {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             String.format("Invalid adapter action: %s. Possible actions: ['start', 'stop'].", action));
-        return;
-      }
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (InvalidAdapterOperationException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (SchedulerException e) {
-      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterId, action, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Retrieves the status of an adapter
-   */
-  @GET
-  @Path("/adapters/{adapter-id}/status")
-  public void getAdapterStatus(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId) {
-    try {
-      responder.sendString(HttpResponseStatus.OK, adapterService.getAdapterStatus(namespaceId, adapterId).toString());
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
-  }
-
-  /**
-   * Deletes an adapter
-   */
-  @DELETE
-  @Path("/adapters/{adapter-id}")
-  public void deleteAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
-    try {
-      adapterService.removeAdapter(namespaceId, adapterName);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (SchedulerException e) {
-      LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Create an adapter.
-   */
-  @POST
-  @Path("/adapters/{adapter-id}")
-  public void createAdapter(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
-
-    try {
-      if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
-        return;
-      }
-
-      AdapterConfig config = parseBody(request, AdapterConfig.class);
-      if (config == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Insufficient parameters to create adapter");
-        return;
-      }
-
-      // Validate the adapter
-      String adapterType = config.getType();
-      AdapterTypeInfo adapterTypeInfo = adapterService.getAdapterTypeInfo(adapterType);
-      if (adapterTypeInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Adapter type %s not found", adapterType));
-        return;
-      }
-
-      AdapterSpecification spec = convertToSpec(adapterName, config, adapterTypeInfo);
-      adapterService.createAdapter(namespaceId, spec);
-      responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (AdapterAlreadyExistsException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (Throwable th) {
-      LOG.error("Failed to deploy adapter", th);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
-    }
-  }
-
-  private AdapterSpecification convertToSpec(String name, AdapterConfig config, AdapterTypeInfo typeInfo) {
-    Map<String, String> sourceProperties = Maps.newHashMap(typeInfo.getDefaultSourceProperties());
-    if (config.source.properties != null) {
-      sourceProperties.putAll(config.source.properties);
-    }
-    Set<Source> sources = ImmutableSet.of(
-      new Source(config.source.name, typeInfo.getSourceType(), sourceProperties));
-    Map<String, String> sinkProperties = Maps.newHashMap(typeInfo.getDefaultSinkProperties());
-    if (config.sink.properties != null) {
-      sinkProperties.putAll(config.sink.properties);
-    }
-    Set<Sink> sinks = ImmutableSet.of(
-      new Sink(config.sink.name, typeInfo.getSinkType(), sinkProperties));
-    Map<String, String> adapterProperties = Maps.newHashMap(typeInfo.getDefaultAdapterProperties());
-    if (config.properties != null) {
-      adapterProperties.putAll(config.properties);
-    }
-    return new AdapterSpecification(name, config.getType(), adapterProperties, sources, sinks);
-  }
-
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
                                          final String archiveName) throws IOException {
@@ -470,7 +265,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation.toURI().getPath(), namespaceId);
@@ -487,8 +282,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     // Store uploaded content to a local temp file
-    String tempBase = String.format("%s/%s", configuration.get(Constants.CFG_LOCAL_DATA_DIR), namespaceId);
-    File tempDir = new File(tempBase, configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
+    File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(localDataDir, namespacesDir);
+    File tempDir = new File(new File(namespaceBase, namespaceId),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
@@ -691,7 +489,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
    * the reset API has a v3 version
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws IOException {
+  protected void deleteMetrics(String namespaceId, String applicationId) throws Exception {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -700,47 +498,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         (new Id.Application(new Id.Namespace(namespaceId), applicationId));
       applications.add(spec);
     }
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
-                                                                            TimeUnit.SECONDS);
 
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
     for (ApplicationSpecification application : applications) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.API_VERSION_2,
-                                 "ignored",
-                                 application.getName());
-      sendMetricsDelete(url);
-    }
-
-    if (applicationId == null) {
-      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
-      sendMetricsDelete(url);
+      // add or replace application name in the tagMap
+      tags.put(Constants.Metrics.Tag.APP, application.getName());
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      metricStore.delete(deleteQuery);
     }
   }
 
-  private void sendMetricsDelete(String url) {
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
-
-    try {
-      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
-  }
 
   private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
@@ -766,7 +535,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
-        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
         location.delete();
       } catch (FileNotFoundException e) {
         LOG.warn("Program jar for program {} not found.", programId.toString(), e);
@@ -778,7 +547,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
                                              ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
+      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
+                                                   ProgramType.WEBAPP);
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.
@@ -843,6 +613,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getDescription(), streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), streams, datasets, programs);
   }
 }

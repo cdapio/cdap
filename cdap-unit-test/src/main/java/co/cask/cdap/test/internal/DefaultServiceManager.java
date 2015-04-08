@@ -68,30 +68,30 @@ public class DefaultServiceManager extends AbstractServiceManager {
   }
 
   @Override
-  public void setRunnableInstances(String runnableName, int instances) {
+  public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
+      appFabricClient.setServiceInstances(namespace, applicationId, serviceName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public int getRequestedInstances(String runnableName) {
-    ServiceInstances instances = getRunnableInstances(runnableName);
+  public int getRequestedInstances() {
+    ServiceInstances instances = getInstances();
     return instances.getRequested();
   }
 
   @Override
-  public int getProvisionedInstances(String runnableName) {
-    ServiceInstances instances = getRunnableInstances(runnableName);
+  public int getProvisionedInstances() {
+    ServiceInstances instances = getInstances();
     return instances.getProvisioned();
   }
 
-  private ServiceInstances getRunnableInstances(String runnableName) {
+  private ServiceInstances getInstances() {
     try {
-      return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
+      return appFabricClient.getServiceInstances(namespace, applicationId, serviceName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

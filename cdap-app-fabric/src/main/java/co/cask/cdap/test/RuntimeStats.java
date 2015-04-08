@@ -16,20 +16,20 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -55,7 +55,7 @@ public final class RuntimeStats {
   }
 
   public static void resetAll() throws Exception {
-    metricStore.deleteBefore(System.currentTimeMillis() / 1000);
+    metricStore.deleteAll();
   }
 
   public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
@@ -164,7 +164,7 @@ public final class RuntimeStats {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached.");
+          throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
         }
       }
 

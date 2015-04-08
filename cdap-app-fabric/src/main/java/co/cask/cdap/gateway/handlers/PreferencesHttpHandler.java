@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -52,10 +51,10 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public PreferencesHttpHandler(Authenticator authenticator, PreferencesStore preferencesStore,
-                                StoreFactory storeFactory) {
+                                Store store) {
     super(authenticator);
     this.preferencesStore = preferencesStore;
-    this.store = storeFactory.create();
+    this.store = store;
   }
 
   //Instance Level Properties

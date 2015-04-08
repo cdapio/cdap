@@ -26,6 +26,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -50,6 +51,7 @@ import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHandlerV2;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -66,9 +68,12 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceCannotBeDeletedException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.MetricsConstants;
@@ -78,6 +83,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -154,6 +160,16 @@ public class ConfigurableTestBase {
   private static TestManager getTestManager() {
     Preconditions.checkState(testManager != null, "Test framework is not yet running");
     return testManager;
+  }
+
+  /**
+   * Creates a Namespace.
+   *
+   * @param namespace the namespace to create
+   * @throws Exception
+   */
+  protected static void createNamespace(Id.Namespace namespace) throws Exception {
+    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   @Before
@@ -277,9 +293,15 @@ public class ConfigurableTestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
-    ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
+    appFabricClient = new AppFabricClient(httpHandler, locationFactory,
+                                          injector.getInstance(AppLifecycleHttpHandler.class),
+                                          injector.getInstance(ProgramLifecycleHttpHandler.class),
+                                          injector.getInstance(NamespaceHttpHandler.class),
+                                          injector.getInstance(NamespaceAdmin.class),
+                                          injector.getInstance(StreamAdmin.class),
+                                          injector.getInstance(StreamMetaStore.class),
+                                          injector.getInstance(WorkflowHttpHandler.class));
     datasetFramework = injector.getInstance(DatasetFramework.class);
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
@@ -291,7 +313,8 @@ public class ConfigurableTestBase {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
     testManager = new UnitTestManager(appFabricClient, datasetFramework, txSystemClient, discoveryClient,
-                                      injector.getInstance(ApplicationManagerFactory.class));
+                                      injector.getInstance(ApplicationManagerFactory.class),
+                                      injector.getInstance(NamespaceAdmin.class));
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);

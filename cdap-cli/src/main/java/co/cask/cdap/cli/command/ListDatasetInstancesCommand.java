@@ -55,7 +55,7 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName(), object.getType());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -65,6 +65,6 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.DATASET.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.DATASET.getTitleNamePlural());
   }
 }

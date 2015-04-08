@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.api.metrics.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
@@ -323,10 +323,12 @@ final class MetricQueryParser {
       throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
     }
 
-    if (!pathParts.hasNext()) {
-      return;
+    if (pathParts.hasNext()) {
+      tagValues.put(programType.getTagName(), pathParts.next());
+    } else {
+      // given program type, match any type name under the type
+      tagValues.put(programType.getTagName(), null);
     }
-    tagValues.put(programType.getTagName(), pathParts.next());
 
     if (!pathParts.hasNext()) {
       return;
@@ -475,7 +477,11 @@ final class MetricQueryParser {
       } else {
         resolution = Resolution.SECOND.getResolution();
       }
-      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      if (queryParams.containsKey(COUNT)) {
+        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      } else {
+        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      }
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
@@ -507,9 +513,9 @@ final class MetricQueryParser {
   }
 
   private static Resolution getResolution(long difference) {
-    if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
+    if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
       return  Resolution.HOUR;
-    } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
+    } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
       return Resolution.MINUTE;
     } else {
       return Resolution.SECOND;

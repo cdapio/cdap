@@ -433,7 +433,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
       eventInput.seek(position);
       readDataBlock(ReadFilter.ALWAYS_ACCEPT);
       while (position < positionBound) {
-        if (condition.apply(position, timestamp)) {
+        if (condition.apply(streamEventBuffer.getPosition(), timestamp)) {
           break;
         }
         nextStreamEvent(ReadFilter.ALWAYS_REJECT_OFFSET);
@@ -482,11 +482,9 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
       return;
     }
 
-    filter.reset();
-
     // Use the template timestamp if available
     timestamp = eventTemplate.getTimestamp() >= 0 ? eventTemplate.getTimestamp() : timestamp;
-    if (filter.acceptTimestamp(timestamp)) {
+    if (acceptTimestamp(filter, timestamp)) {
       streamEventBuffer.fillBuffer(eventInput, readLength());
       this.timestamp = timestamp;
       return;
@@ -502,7 +500,6 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     if (nextTimestamp > timestamp) {
       eventInput.seek(position);
       initByTime(nextTimestamp);
-      readDataBlock(filter);
       return;
     }
 
@@ -522,7 +519,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
   private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
-    while (!eof && !streamEventBuffer.hasEvent()) {
+    while (!eof && !(streamEventBuffer.hasEvent() && acceptTimestamp(filter, timestamp))) {
       readDataBlock(filter);
     }
     if (eof) {
@@ -532,6 +529,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     PositionStreamEvent event = streamEventBuffer.nextEvent(timestamp, eventTemplate.getHeaders(), filter);
     position = streamEventBuffer.getPosition();
     return event;
+  }
+
+  private boolean acceptTimestamp(ReadFilter filter, long timestamp) {
+    filter.reset();
+    return filter.acceptTimestamp(timestamp);
   }
 
   private interface SkipCondition {

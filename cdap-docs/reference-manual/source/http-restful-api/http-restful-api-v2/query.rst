@@ -65,7 +65,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/explore/queries``
    * - HTTP Body
-     - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
+     - ``{"query":"SELECT * FROM dataset_mydataset LIMIT 5"}``
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
@@ -179,8 +179,8 @@ Example
    * - HTTP Request
      - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
    * - HTTP Response
-     - ``[{"name":"cdap_user_mydataset.key","type":"array<tinyint>","position":1},``
-       ``{"name":"cdap_user_mydataset.value","type":"array<tinyint>","position":2}]``
+     - ``[{"name":"dataset_mydataset.key","type":"array<tinyint>","position":1},``
+       ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
    * - Description
      - Retrieve the schema of the result of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
@@ -347,7 +347,7 @@ Example
    * - HTTP Response
      - ``[{``
        ``   "timestamp": 1411266478717,``
-       ``   "statement": "SELECT * FROM cdap_user_mydataset",``
+       ``   "statement": "SELECT * FROM dataset_mydataset",``
        ``   "status": "FINISHED",``
        ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
        ``   "has_results": true,
@@ -392,42 +392,3 @@ HTTP Responses
      - The query handle does not match any current query
    * - ``409 Conflict``
      - The query results were already downloaded
-
-Hive Table Schema
------------------
-You can obtain the schema of the underlying Hive Table with::
-
-  GET <base-url>/data/explore/datasets/<dataset-name>/schema
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<dataset-name>``
-     - Name of the Dataset whose schema is to be retrieved
-
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The HTTP call was successful
-   * - ``404 Not Found``
-     - The dataset was not found
-     
-Comments
-........
-The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
-``value`` containing the column types of the underlying table::
-
-  {
-    "key": "array<tinyint>",
-    "value": "array<tinyint>"
-  }
-

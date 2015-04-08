@@ -53,7 +53,7 @@ public class ListStreamsCommand extends AbstractAuthCommand {
           return Lists.newArrayList(object.getName());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -63,6 +63,6 @@ public class ListStreamsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.STREAM.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.STREAM.getTitleNamePlural());
   }
 }

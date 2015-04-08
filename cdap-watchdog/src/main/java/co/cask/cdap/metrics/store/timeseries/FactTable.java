@@ -16,9 +16,10 @@
 package co.cask.cdap.metrics.store.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -116,6 +117,7 @@ public final class FactTable {
     NavigableMap<byte[], NavigableMap<byte[], Long>> convertedGaugesTable =
       Maps.transformValues(gaugesTable, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
+    // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(convertedGaugesTable);
     timeSeriesTable.increment(convertedIncrementsTable);
   }

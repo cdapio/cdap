@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
@@ -97,6 +98,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
 
+  /**
+   * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
+   * AM in secure mode.
+   */
+  private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo dummy;
+
   // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
   private static final String PROGRAMMATIC_SOURCE = "programmatically";
 
@@ -138,6 +145,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     final Job job = Job.getInstance(new Configuration(hConf));
+    job.setJobName(getJobName(context));
     Configuration mapredConf = job.getConfiguration();
 
     // Prefer our job jar in the classpath
@@ -147,9 +155,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // If runs in secure cluster, this program runner is running in a yarn container, hence not able
-      // to get authenticated with the history and MR-AM.
+      // to get authenticated with the history.
       mapredConf.unset("mapreduce.jobhistory.address");
-      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, true);
+      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, false);
 
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
@@ -383,7 +391,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public void apply() throws Exception {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.onFinish(succeeded, context);
+          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          boolean success = succeeded;
+          Dataset outputDataset = context.getOutputDataset();
+          if (outputDataset != null && outputDataset instanceof DatasetOutputCommitter) {
+            try {
+              if (succeeded) {
+                ((DatasetOutputCommitter) outputDataset).onSuccess();
+              } else {
+                ((DatasetOutputCommitter) outputDataset).onFailure();
+              }
+            } catch (Throwable t) {
+              LOG.error(String.format("Error from %s method of output dataset %s.",
+                        succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
+              success = false;
+            }
+          }
+          mapReduce.onFinish(success, context);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -583,6 +607,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } catch (IllegalArgumentException e) {
       throw new IOException("Type not support for consuming StreamEvent from " + type, e);
     }
+  }
+
+  private String getJobName(BasicMapReduceContext context) {
+    Id.Program programId = context.getProgram().getId();
+    // MRJobClient expects the following format (for RunId to be the first component)
+    return String.format("%s.%s.%s.%s.%s",
+                         context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
+                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   /**

@@ -26,6 +26,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+wise_version = "0.3.0"
+
 import sys
 import os
 import os.path
@@ -63,7 +65,7 @@ def print_sdk_version():
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+#needs_sphinx = '1.3.1'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -119,20 +121,11 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # is read. This is the right place to add substitutions that should be available in every
 # file. 
 rst_epilog = """
-.. |bold-version| replace:: **%(version)s**
-
-.. |italic-version| replace:: *%(version)s*
-
-.. |short-version| replace:: %(short_version)s
-
-.. |literal-version| replace:: ``%(version)s``
-
-.. |literal-release| replace:: ``%(release)s``
-
 .. role:: gp
 .. |$| replace:: :gp:`$`
 
 .. |http:| replace:: http:
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
@@ -140,17 +133,39 @@ rst_epilog = """
 .. |(R)| unicode:: U+00AE .. registered trademark sign
    :ltrim:
 
-.. |copyright| replace:: %(copyright)s
-
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
+"""
 
-""" % {'version': version, 
-       'short_version': short_version, 
-       'release': release,
-       'copyright': copyright,
-       }
+if version:
+    rst_epilog = rst_epilog + """
+.. |bold-version| replace:: **%(version)s**
+
+.. |italic-version| replace:: *%(version)s*
+
+.. |literal-version| replace:: ``%(version)s``
+""" % {'version': version}
+
+if short_version:
+    rst_epilog = rst_epilog + """
+.. |short-version| replace:: %(short_version)s
+""" % {'short_version': short_version}
+
+if release:
+    rst_epilog = rst_epilog + """
+.. |literal-release| replace:: ``%(release)s``
+""" % {'release': release}
+
+if copyright:
+    rst_epilog = rst_epilog + """
+.. |copyright| replace:: %(copyright)s
+""" % {'copyright': copyright}
+
+if wise_version:
+    rst_epilog = rst_epilog + """
+.. |wise-version| replace:: %(wise-version)s
+""" % {'wise-version': wise_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

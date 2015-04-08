@@ -1,0 +1,323 @@
+@import "../../variables.less";
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+
+  //
+  // Alerts
+  // --------------------------------------------------
+
+  // Common styles
+  .alert {
+    text-shadow: 0 1px 0 rgba(255,255,255,.2);
+    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+    .box-shadow(@shadow);
+  }
+
+  // Mixin for generating new styles
+  .alert-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 7.5%));
+    border-color: darken(@color, 15%);
+  }
+
+  // Apply the mixin to the alerts
+  .alert-success    { .alert-styles(@alert-success-bg); }
+  .alert-info       { .alert-styles(@alert-info-bg); }
+  .alert-warning    { .alert-styles(@alert-warning-bg); }
+  .alert-danger     { .alert-styles(@alert-danger-bg); }
+
+
+  //
+  // Progress bars
+  // --------------------------------------------------
+
+  // Give the progress background some depth
+  .progress {
+    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg)
+  }
+
+  // Mixin for generating new styles
+  .progress-bar-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 10%));
+  }
+
+  // Apply the mixin to the progress bars
+  .progress-bar            { .progress-bar-styles(@progress-bar-bg); }
+  .progress-bar-success    { .progress-bar-styles(@progress-bar-success-bg); }
+  .progress-bar-info       { .progress-bar-styles(@progress-bar-info-bg); }
+  .progress-bar-warning    { .progress-bar-styles(@progress-bar-warning-bg); }
+  .progress-bar-danger     { .progress-bar-styles(@progress-bar-danger-bg); }
+
+  // Reset the striped class because our mixins don't do multiple gradients and
+  // the above custom styles override the new `.progress-bar-striped` in v3.2.0.
+  .progress-bar-striped {
+    #gradient > .striped();
+  }
+
+  //
+  // Tables
+  // --------------------------------------------------
+
+  .table[cask-sortable] {
+    background-color: @table-bg;
+    border: 1px solid lightgray;
+    td, th {
+      padding: 20px;
+      &:not(:last-child) {
+        border-right: 1px solid lightgray;
+      }
+      &:hover, &:focus { outline: none; }
+    }
+    th {
+      &:hover, &:focus {
+        background-color: lightgray;
+        cursor: pointer;
+      }
+    }
+    thead {
+      color: @cdap-header;
+    }
+    tbody {
+      color: @cdap-bluegray;
+      a {
+        color: @cdap-bluegray;
+        &:hover, &:focus {
+          text-decoration: underline;
+        }
+        &.btn-danger {
+          .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0);
+          font-size: 18px;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  //
+  // List groups
+  // --------------------------------------------------
+
+  .list-group {
+    .border-radius(@border-radius-base);
+    .box-shadow(0 0px 0px rgba(0,0,0,.075));
+  }
+  .list-group-item.active,
+  .list-group-item.active:hover,
+  .list-group-item.active:focus {
+    text-shadow: 0 -1px 0 darken(@list-group-active-bg, 10%);
+    #gradient > .vertical(@start-color: @list-group-active-bg; @end-color: darken(@list-group-active-bg, 7.5%));
+    border-color: darken(@list-group-active-border, 7.5%);
+    .badge { text-shadow: none; }
+  }
+
+  //
+  // Panels
+  // --------------------------------------------------
+
+// Message panel (appears on Dev + Management start screens)
+  .panel-message {
+    background: white;
+    border: 1px solid lightgray;
+    margin-bottom: 20px;
+    padding: 10px;
+    .border-radius(8px);
+    .box-shadow(0 8px 6px -6px @cdap-darkness);
+    p { margin-bottom: 0; }
+    .btn-close {
+      .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
+      cursor: pointer;
+      line-height: 0;
+      .fa-close {
+        color: white;
+        font-size: 16px;
+        padding: 8px 10px;
+        vertical-align: text-top;
+      }
+    }
+  }
+
+  .panel-explore {
+    background-color: transparent;
+    color: @cdap-header;
+    .box-shadow(none);
+    > .panel-heading {
+      background: white;
+      border: 1px solid lightgray;
+      padding: 20px;
+      .border-radius(8px);
+      .fa {
+        color: white;
+        font-size: 13px;
+        margin-right: 10px;
+        vertical-align: top;
+      }
+      .fa-caret-right { .cdap-caret(); }
+      .fa-caret-down { .cdap-caret(@background: @cdap-gray); }
+    }
+    > .panel-collapse {
+      > .panel-body {
+        border-top: 0;
+        padding-right: 0;
+        padding-left: 0;
+        pre {
+          background-color: #dcdce4;
+          color: @cdap-header;
+          .border-radius(8px);
+        }
+        table {
+          thead { background-color: @cdap-header; color: white; }
+          tbody { background-color: @cdap-gray; color: @cdap-header; }
+        }
+      }
+    }
+  }
+  // Mixin for generating new styles
+  .panel-heading-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 5%));
+  }
+
+  // Apply the mixin to the panel headings only
+  .panel-default > .panel-heading   { background: @cdap-lightgray; border: 0; }
+  .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
+  .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
+  .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }
+  .panel-warning > .panel-heading   { .panel-heading-styles(@panel-warning-heading-bg); }
+  .panel-danger > .panel-heading    { .panel-heading-styles(@panel-danger-heading-bg); }
+
+
+  //
+  // Wells
+  // --------------------------------------------------
+
+  .well {
+    #gradient > .vertical(@start-color: darken(@well-bg, 5%); @end-color: @well-bg);
+    border-color: darken(@well-bg, 10%);
+    @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
+    .box-shadow(@shadow);
+  }
+
+  //
+  // Breadcrumbs
+  // --------------------------------------------------
+
+  .breadcrumb {
+    background-color: transparent;
+    padding-left: 0px;
+    > li {
+      color: @cdap-gray;
+      a { color: @cdap-header; }
+      + li:before {
+        content: ">";
+        padding: 0 10px;
+        color: @cdap-gray;
+        font-weight: bold;
+      }
+    }
+  }
+
+  //
+  // Modals
+  // --------------------------------------------------
+  .modal {
+    // Styling for all modals
+    .modal-header {
+      border-bottom: 0;
+      .modal-title {
+        color: white;
+        font-weight: bold;
+      }
+    }
+    .modal-dialog { .border-radius(8px); }
+    .modal-footer {
+      border-top: 0;
+      .btn-default { .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 10px 20px); }
+    }
+    label {
+      color: white;
+      font-size: 21px;
+    }
+    .form-control {
+      border: 0;
+      .border-radius(8px);
+      .box-shadow(none);
+      font-size: 18px;
+      height: 50px;
+      text-indent: 5px;
+      &:focus {
+        border-color: transparent;
+        .box-shadow(none);
+      }
+      &:disabled { background-color: #B9C4E2; }
+    }
+    textarea.form-control { min-height: 100px; }
+    select.form-control {
+      background-color: @cdap-darkness;
+      color: white;
+      height: 50px;
+    }
+
+    // caskConfirm modal styling (no modal-lg or modal-sm class present)
+    &.center {
+      h4 { font-weight: bold; }
+      .close { display: none; }
+      .modal-content, .modal-footer { text-align: center; }
+      .modal-content { .box-shadow(none); }
+      .modal-content {
+        background-color: fade(#3A3E47, 90%);
+        border: 0;
+        color: white;
+      }
+      .modal-footer {
+        .btn-primary { .cask-btn(@color: white, @background: @brand-danger, @border: 0, @padding: 10px 20px); }
+      }
+    }
+    .modal-dialog {
+      .modal-header {
+        .btn {
+          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 10px);
+          font-size: 24px;
+          line-height: 1;
+        }
+      }
+      // Small and large modal styling
+      &.modal-sm, &.modal-lg {
+        color: white;
+        .modal-footer {
+          .btn-primary, .btn-success {
+            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
+            margin-left: 30px;
+          }
+        }
+      }
+      // Small modal styling
+      &.modal-sm {
+        text-align: center;
+        .modal-footer { text-align: center; }
+      }
+      // Large modal styling
+      &.modal-lg {
+        background-color: fade(#343841, 85%);
+        margin: 0;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        .border-radius(0);
+        .modal-content {
+          background-color: transparent;
+          border: 0;
+          margin: 40px auto 0;
+          width: 80%;
+          .box-shadow(none);
+          .fa-plus { .cask-btn(@color: white, @background: @brand-primary, @border: 0, @padding: 15px 35px); }
+          a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
+        }
+        .modal-footer { text-align: right; }
+      }
+    }
+
+  }
+
+}

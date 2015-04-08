@@ -22,7 +22,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterDetail;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -48,20 +48,18 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<AdapterSpecification> list = adapterClient.list();
+    List<AdapterDetail> list = adapterClient.list();
 
     Table table = Table.builder()
-      .setHeader("name", "type", "sources", "sinks", "properties")
-      .setRows(list, new RowMaker<AdapterSpecification>() {
+      .setHeader("name", "description", "template", "config")
+      .setRows(list, new RowMaker<AdapterDetail>() {
         @Override
-        public List<?> makeRow(AdapterSpecification object) {
-          return Lists.newArrayList(object.getName(), object.getType(),
-                                    GSON.toJson(object.getSources()),
-                                    GSON.toJson(object.getSinks()),
-                                    GSON.toJson(object.getProperties()));
+        public List<?> makeRow(AdapterDetail object) {
+          return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
+                                    GSON.toJson(object.getConfig()));
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
@@ -71,6 +69,6 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.ADAPTER.getPluralPrettyName());
+    return String.format("Lists all %s.", ElementType.ADAPTER.getTitleNamePlural());
   }
 }

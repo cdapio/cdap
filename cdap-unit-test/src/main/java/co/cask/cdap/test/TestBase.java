@@ -16,12 +16,10 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.app.Application;
 import org.junit.BeforeClass;
 
 /**
- * Base class to inherit from, provides testing functionality for {@link Application}.
- * To clean App Fabric state, you can use the {@link #clear} method.
+ *
  */
 public class TestBase extends ConfigurableTestBase {
 
@@ -29,5 +27,4 @@ public class TestBase extends ConfigurableTestBase {
   public static void init() throws Exception {
     initTestBase(null);
   }
-
 }

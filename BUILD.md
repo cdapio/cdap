@@ -34,10 +34,13 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
 
 ### Build the complete set of Javadocs, for all modules
-    mvn clean site -DskipTests
+    MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=1024m -DskipTests
     
 ### Build distributions (rpm, deb, tgz)
     mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
+
+### Build Cloudera Manager parcel
+    mvn package -DskipTests -P dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 ### Show dependency tree
     mvn package dependency:tree -DskipTests

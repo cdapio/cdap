@@ -36,6 +36,7 @@ final class FlowletProgramController extends AbstractProgramController {
 
   private final BasicFlowletContext flowletContext;
   private final FlowletRuntimeService driver;
+  private final Collection<ProducerSupplier> producerSuppliers;
   private final Collection<ConsumerSupplier<?>> consumerSuppliers;
 
   /**
@@ -43,10 +44,12 @@ final class FlowletProgramController extends AbstractProgramController {
    */
   FlowletProgramController(String programName, String flowletName,
                            BasicFlowletContext flowletContext, FlowletRuntimeService driver,
+                           Collection<ProducerSupplier> producerSuppliers,
                            Collection<ConsumerSupplier<?>> consumerSuppliers) {
     super(programName + ":" + flowletName, flowletContext.getRunId());
     this.flowletContext = flowletContext;
     this.driver = driver;
+    this.producerSuppliers = producerSuppliers;
     this.consumerSuppliers = consumerSuppliers;
     listenDriveState(driver);
   }
@@ -55,6 +58,10 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doSuspend() throws Exception {
     LOG.info("Suspending flowlet: " + flowletContext);
     driver.suspend();
+    // Close all producers
+    for (ProducerSupplier producerSupplier : producerSuppliers) {
+      producerSupplier.close();
+    }
     // Close all consumers
     for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
       consumerSupplier.close();
@@ -65,6 +72,10 @@ final class FlowletProgramController extends AbstractProgramController {
   @Override
   protected void doResume() throws Exception {
     LOG.info("Resuming flowlet: " + flowletContext);
+    // Open producers
+    for (ProducerSupplier producerSupplier : producerSuppliers) {
+      producerSupplier.open();
+    }
     // Open consumers
     for (ConsumerSupplier consumerSupplier : consumerSuppliers) {
       consumerSupplier.open(flowletContext.getInstanceCount());

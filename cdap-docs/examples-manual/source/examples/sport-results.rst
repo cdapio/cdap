@@ -16,14 +16,14 @@ Overview
 
 This Application demonstrates the use of the PartitionedFileSet dataset:
 
-   - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
-     and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
-     for example, the 2014 season of the NFL (National Football League).
-   - Results are uploaded into the file set using the ``UploadService``.
-   - The ``ScoreCounter`` MapReduce program reads game results for a given league and
-     aggregates total counts such as games won and lost, or points scored and conceded, across all
-     seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
-   - Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
+- Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
+  and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
+  for example, the 2014 season of the NFL (National Football League).
+- Results are uploaded into the file set using the ``UploadService``.
+- The ``ScoreCounter`` MapReduce program reads game results for a given league and
+  aggregates total counts such as games won and lost, or points scored and conceded, across all
+  seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
+- Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
 
 Let's look at some of these components, and then run the Application and see the results.
 
@@ -64,7 +64,8 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 57-60
+    :lines: 58-61
+    :dedent: 2
 
 Let's take a closer look at the upload method:
 
@@ -81,6 +82,7 @@ Let's take a closer look at the upload method:
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
     :lines: 88-118
+    :dedent: 4
 
 MapReduce over File Partitions
 ==============================
@@ -96,16 +98,8 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 60-86
-
-After the MapReduce has completed, the ``onFinish()`` method finalizes the addition of the new partition.
-Note that this is only needed due to a current limitation in the ``PartitionedFileSet`` implementation:
-the partition should be added by the output committer of the dataset's output format (this will be
-addressed in a future CDAP release):
-
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
-    :language: java
-    :lines: 88-94
+    :lines: 58-84
+    :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
@@ -143,30 +137,30 @@ Once the application is deployed:
 
 - Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; or
+  Service detail page, then click the *Start* button;
 - Or use the Command Line Interface::
 
-    cdap-cli.sh start service SportResults.UploadService
+    $ cdap-cli.sh start service SportResults.UploadService
 
 Uploading Game Results
 ----------------------
 
-First, we will upload some CSV files into the ``results`` dataset. For example, to upload the results
-for the 2012 season of the NFL. From the examples ::
+Begin by uploading some CSV files into the ``results`` dataset. For example, to upload the results
+for the 2012 season of the NFL (National Football League)::
 
-  cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
 
 Feel free to add more seasons and sport leagues::
 
-  cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv
-  cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv
 
 Starting the MapReduce
 ----------------------
 
 To run the ``ScoreCounter`` over all seasons of the NFL::
 
-  cdap-cli.sh start mapreduce SportResults.ScoreCounter \"league=nfl\"
+  $ cdap-cli.sh start mapreduce SportResults.ScoreCounter \"league=nfl\"
 
 Exploring with Ad-hoc SQL
 -------------------------
@@ -174,20 +168,20 @@ Exploring with Ad-hoc SQL
 Both of the partitioned file sets are registered as external tables in Hive and can be explored with SQL. To
 see the existing partitions of a dataset, use the ``show partitions`` query::
 
-  cdap-cli.sh execute \"show partitions results\"
+  $ cdap-cli.sh execute \"show partitions results\"
 
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
 seasons (that have been uploaded), and for all seasons of all sport leagues::
 
-  cdap-cli.sh execute "\"select * from results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
-  cdap-cli.sh execute "\"select * from results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
-  cdap-cli.sh execute "\"select * from results order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap-cli.sh execute "\"select * from results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap-cli.sh execute "\"select * from results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap-cli.sh execute "\"select * from results order by winnerpoints-loserpoints desc limit 3\""
 
 You can also explore the ``totals`` dataset. For example, to find the NFL teams team that, over their history,
 have scored the least points compared to the points they conceded::
 
-  cdap-cli.sh execute "\"select * from totals where league = 'nfl' order by conceded - scored desc limit 3\""
+  $ cdap-cli.sh execute "\"select * from totals where league = 'nfl' order by conceded - scored desc limit 3\""
 
 Stopping the Application
 ------------------------
@@ -201,5 +195,5 @@ Once done, you can stop the application as described above in `Stopping an Appli
   Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    cdap-cli.sh stop service SportResults.UploadService``
+    $ cdap-cli.sh stop service SportResults.UploadService``
 

@@ -16,16 +16,23 @@
 
 package co.cask.cdap.metrics.store.cube;
 
-import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.metrics.store.timeseries.Fact;
 import co.cask.cdap.metrics.store.timeseries.FactScan;
 import co.cask.cdap.metrics.store.timeseries.FactScanResult;
 import co.cask.cdap.metrics.store.timeseries.FactScanner;
 import co.cask.cdap.metrics.store.timeseries.FactTable;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -45,13 +52,14 @@ import java.util.SortedSet;
 import javax.annotation.Nullable;
 
 /**
- * Default implementation of {@link Cube}.
+ * Default implementation of {@link co.cask.cdap.api.dataset.lib.cube.Cube}.
  */
 public class DefaultCube implements Cube {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
 
   private static final TagValueComparator TAG_VALUE_COMPARATOR = new TagValueComparator();
-
+  // hard-limit on max records to scan
+  private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
 
   private final Collection<? extends Aggregation> aggregations;
@@ -67,19 +75,26 @@ public class DefaultCube implements Cube {
 
   @Override
   public void add(CubeFact fact) throws Exception {
-    List<Fact> facts = Lists.newArrayList();
-    for (Aggregation agg : aggregations) {
-      if (agg.accept(fact)) {
-        List<TagValue> tagValues = Lists.newArrayList();
-        for (String tagName : agg.getTagNames()) {
-          tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+    add(ImmutableList.of(fact));
+  }
+
+  @Override
+  public void add(Collection<? extends CubeFact> facts) throws Exception {
+    List<Fact> toWrite = Lists.newArrayList();
+    for (CubeFact fact : facts) {
+      for (Aggregation agg : aggregations) {
+        if (agg.accept(fact)) {
+          List<TagValue> tagValues = Lists.newArrayList();
+          for (String tagName : agg.getTagNames()) {
+            tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+          }
+          toWrite.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
         }
-        facts.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
       }
     }
 
     for (FactTable table : resolutionToFactTable.values()) {
-      table.add(facts);
+      table.add(toWrite);
     }
   }
 
@@ -155,10 +170,9 @@ public class DefaultCube implements Cube {
         for (String tagName : agg.getTagNames()) {
           tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
         }
-        for (FactTable factTable : resolutionToFactTable.values()) {
-          FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
-          factTable.delete(scan);
-        }
+        FactTable factTable = resolutionToFactTable.get(query.getResolution());
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+        factTable.delete(scan);
       }
     }
   }
@@ -233,6 +247,7 @@ public class DefaultCube implements Cube {
   private Table<Map<String, String>, Long, Long> getTimeSeries(CubeQuery query, FactScanner scanner) {
     // tag values -> time -> values
     Table<Map<String, String>, Long, Long> resultTable = HashBasedTable.create();
+    int count = 0;
     while (scanner.hasNext()) {
       FactScanResult next = scanner.next();
 
@@ -276,6 +291,9 @@ public class DefaultCube implements Cube {
           throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
         }
       }
+      if (++count >= MAX_RECORDS_TO_SCAN) {
+        break;
+      }
     }
     return resultTable;
   }
@@ -284,6 +302,7 @@ public class DefaultCube implements Cube {
                                                       Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
     List<TimeSeries> result = Lists.newArrayList();
     for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
+      int count = 0;
       List<TimeValue> timeValues = Lists.newArrayList();
       for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
         timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
@@ -295,6 +314,9 @@ public class DefaultCube implements Cube {
       while (timeValueItor.hasNext()) {
         TimeValue timeValue = timeValueItor.next();
         resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+        if (++count >= query.getLimit()) {
+          break;
+        }
       }
       result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
     }

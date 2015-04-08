@@ -1,0 +1,40 @@
+<!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+{#
+    Code to hide table-of-contents on pages, by setting in the field list at the top
+:hide-global-toc: true
+#}
+{%- set hideglobaltoc = '' %}
+{%- set hideglobaltoc_key = 'hide-global-toc' %}
+{%- if meta is defined %}
+    {%- if hideglobaltoc_key in meta.viewkeys() %}
+      {%- set hideglobaltoc = meta.get(hideglobaltoc_key) %}
+    {%- endif %}
+{%- endif %}
+{%- if not hideglobaltoc %}
+  {%- if html_short_title_toc|length == 0 %}
+    {% set title_br = '' %}
+  {%- elif html_short_title_toc|length >= 20 %}
+    {% set title_br = ':<br>' %}
+  {%- else %}
+    {% set title_br = ':' %}
+  {%- endif %}
+<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+{{ toctree() }}
+</nav>
+{%- endif %}

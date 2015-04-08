@@ -22,18 +22,19 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -67,7 +68,8 @@ public abstract class AbstractMapReduceContextBuilder {
                                      Program mrProgram,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
-                                     @Nullable String outputDataSetName) {
+                                     @Nullable String outputDataSetName,
+                                     @Nullable String adapterName) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -91,14 +93,21 @@ public abstract class AbstractMapReduceContextBuilder {
       (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    Set<String> datasets = Sets.newHashSet(programSpec.getDatasets().keySet());
+    if (inputDataSetName != null) {
+      datasets.add(inputDataSetName);
+    }
+
+    if (outputDataSetName != null) {
+      datasets.add(outputDataSetName);
+    }
 
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId,
-                                runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
-                                workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework);
+      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
+                                logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                datasetFramework, adapterName);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

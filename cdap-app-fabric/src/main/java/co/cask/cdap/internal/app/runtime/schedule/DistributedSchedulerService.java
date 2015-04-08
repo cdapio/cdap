@@ -17,22 +17,16 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Scheduler service to run in Distributed CDAP. Waits for Dataset service to be available.
@@ -40,52 +34,45 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class DistributedSchedulerService extends AbstractSchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final AtomicBoolean schedulerStarted = new AtomicBoolean(false);
-  private Cancellable cancellable;
+  private Thread startSchedulerThread;
 
   @Inject
-  public DistributedSchedulerService(Supplier<Scheduler> schedulerSupplier,
-                                     StreamSizeScheduler streamSizeScheduler, StoreFactory storeFactory,
-                                     ProgramRuntimeService programRuntimeService,
-                                     DiscoveryServiceClient discoveryServiceClient,
-                                     PreferencesStore preferencesStore, CConfiguration cConf) {
-    super(schedulerSupplier, streamSizeScheduler, storeFactory, programRuntimeService, preferencesStore, cConf);
-    this.discoveryServiceClient = discoveryServiceClient;
+  public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
+                                     CConfiguration cConf, Store store) {
+    super(timeScheduler, streamSizeScheduler, cConf, store);
   }
 
   @Override
   protected void startUp() throws Exception {
-    // Wait till DatasetService is discovered then start the scheduler.
-    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER);
-    cancellable = discover.watchChanges(
-      new ServiceDiscovered.ChangeListener() {
-        @Override
-        public void onChange(ServiceDiscovered serviceDiscovered) {
-          if (!Iterables.isEmpty(serviceDiscovered) && !schedulerStarted.get()) {
-            LOG.info("Starting scheduler, Discovered {} dataset service(s)",
-                     Iterables.size(serviceDiscovered));
+    LOG.info("Starting scheduler.");
+    startSchedulerThread = new Thread("Scheduler-Start-Up") {
+      @Override
+      public void run() {
+        boolean started = false;
+        while (!started && !isInterrupted()) {
+          try {
+            startSchedulers();
+            started = true;
+            LOG.info("Scheduler started successfully.");
+          } catch (Throwable t) {
+            LOG.error("Error starting scheduler {}", t.getMessage());
             try {
-              startScheduler();
-              schedulerStarted.set(true);
-            } catch (Throwable t) {
-              LOG.error("Exception when starting scheduler.", t);
+              TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException ie) {
+              break;
             }
           }
         }
-      }, MoreExecutors.sameThreadExecutor());
+      }
+    };
+    startSchedulerThread.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    try {
-      LOG.info("Stopping scheduler");
-      stopScheduler();
-    } finally {
-      schedulerStarted.set(false);
-      if (cancellable != null) {
-        cancellable.cancel();
-      }
-    }
+    LOG.info("Stopping scheduler.");
+    startSchedulerThread.interrupt();
+    startSchedulerThread.join();
+    stopScheduler();
   }
 }

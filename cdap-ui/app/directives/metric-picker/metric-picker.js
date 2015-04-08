@@ -97,6 +97,8 @@ angular.module(PKG.name + '.commons')
                 '&context=' + encodeURIComponent(context)
             },
             function (res) {
+              // 'Add All' option to add all metrics in current context.
+              res.unshift('Add All');
               scope.available.names = res;
             }
           );
@@ -108,7 +110,6 @@ angular.module(PKG.name + '.commons')
         elem.find('input').on('blur', onBlurHandler);
 
         scope.$watchCollection('metric', function (newVal, oldVal) {
-
           ngModel.$validate();
 
           if(newVal.type !== oldVal.type) {
@@ -124,10 +125,20 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.context && newVal.name) {
-            ngModel.$setViewValue({
-              context: getBaseContext() + '.' + newVal.context,
-              name: newVal.name
-            });
+            if (newVal.name === 'Add All') {
+              ngModel.$setViewValue({
+                addAll: true,
+                allMetrics: scope.available.names.splice(1), // Remove 'Add All' option
+                context: getBaseContext() + '.' + newVal.context,
+                name: newVal.name
+              });
+              return;
+            } else {
+              ngModel.$setViewValue({
+                context: getBaseContext() + '.' + newVal.context,
+                name: newVal.name
+              });
+            }
           }
           else {
             if(ngModel.$dirty) {

@@ -1,0 +1,57 @@
+//
+// Mixins
+// --------------------------------------------------
+
+.border-radius (@radius) {
+  -webkit-border-radius: @radius;
+  -moz-border-radius:    @radius;
+  border-radius:         @radius;
+
+  -moz-background-clip:    padding;
+  -webkit-background-clip: padding-box;
+  background-clip:         padding-box;
+}
+
+.cask-btn(@background: white, @border: 1px solid #CCC, @border-radius: 4px, @color: @btn-default-color, @padding: 6px 24px) {
+  background: @background;
+  border: @border;
+  .border-radius(@border-radius);
+  color: @color;
+  outline: none;
+  padding: @padding;
+  white-space: normal;
+  &:hover, &:focus { text-decoration: none; }
+}
+
+.dropdown() {
+  border: 0;
+  border-radius: 0 8px 8px 8px;
+  background-color: @cdap-header;
+  margin: 0;
+  padding: 0;
+  > li {
+    margin: 0;
+    &:not(.divider) {
+      .border-radius(0 8px 8px 8px);
+      padding: 10px 0;
+      &:hover, &:focus { background-color: @cdap-lightgray; }
+    }
+    > a {
+      color: white;
+      padding: 3px 10px 3px 15px;
+      &:hover, &:focus {
+        background-color: transparent;
+        outline: none;
+      }
+    }
+  }
+}
+
+.cdap-caret(@background: #252831, @height: 18px, @width: 18px, @line-height: 18px) {
+  background-color: @background;
+  height: @height;
+  width: @width;
+  text-align: center;
+  .border-radius(10px);
+  &:before { line-height: @line-height; }
+}

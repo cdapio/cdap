@@ -19,11 +19,8 @@ package co.cask.cdap.data2.dataset2.lib;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
@@ -43,11 +40,9 @@ public class FileSetTest extends AbstractDatasetTest {
   static FileSet fileSet1;
   static FileSet fileSet2;
   private static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("yourspace");
-  private static final DatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-  private static final Id.DatasetInstance testFileSetInstance1 =
-    dsNamespace.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "testFileSet"));
+  private static final Id.DatasetInstance testFileSetInstance1 = Id.DatasetInstance.from(NAMESPACE_ID, "testFileSet");
   private static final Id.DatasetInstance testFileSetInstance2 =
-    dsNamespace.namespace(Id.DatasetInstance.from(OTHER_NAMESPACE, "testFileSet"));
+    Id.DatasetInstance.from(OTHER_NAMESPACE, "testFileSet");
 
   @BeforeClass
   public static void beforeClass() throws Exception {

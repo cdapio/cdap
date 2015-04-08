@@ -34,7 +34,6 @@ import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -66,7 +65,6 @@ import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
@@ -222,15 +220,17 @@ public class DistributedStreamService extends AbstractStreamService {
         continue;
       }
 
-      StreamConfig config;
-      long eventsSize;
       while (true) {
         try {
-          config = streamAdmin.getConfig(streamId);
-          eventsSize = getStreamEventsSize(streamId);
+          if (!streamAdmin.exists(streamId)) {
+            break;
+          }
+          int threshold = streamAdmin.getConfig(streamId).getNotificationThresholdMB();
+          long eventsSize = getStreamEventsSize(streamId);
+          createSizeAggregator(streamId, eventsSize, threshold);
           LOG.debug("Size of the events ingested in stream {}: {}", streamId, eventsSize);
           break;
-        } catch (IOException e) {
+        } catch (Exception e) {
           LOG.info("Could not compute sizes of files for stream {}. Retrying in 1 sec.", streamId);
           try {
             TimeUnit.SECONDS.sleep(1);
@@ -240,7 +240,6 @@ public class DistributedStreamService extends AbstractStreamService {
           }
         }
       }
-      createSizeAggregator(streamId, eventsSize, config.getNotificationThresholdMB());
     }
 
     // Stop aggregating the heartbeats we used to listen to before the call to that method,
@@ -559,7 +558,7 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getName()))
+        .setName(String.format("%sSize", streamId.getId()))
         .build();
     }
 
@@ -629,7 +628,7 @@ public class DistributedStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
+        LOG.warn("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
       }
     }
   }

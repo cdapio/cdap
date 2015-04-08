@@ -40,9 +40,9 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
   private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
   private static final Id.Stream STREAM_ID = Id.Stream.from(NAMESPACE, "stream");
   private static final StreamSizeSchedule STREAM_SCHEDULE_1 = new StreamSizeSchedule("Schedule1", "Every 1M",
-                                                                                     STREAM_ID.getName(), 1);
+                                                                                     STREAM_ID.getId(), 1);
   private static final StreamSizeSchedule STREAM_SCHEDULE_2 = new StreamSizeSchedule("Schedule2", "Every 10M",
-                                                                                     STREAM_ID.getName(), 10);
+                                                                                     STREAM_ID.getId(), 10);
   private static final String SCHEDULE_NAME_1 = "Schedule1";
   private static final String SCHEDULE_NAME_2 = "Schedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;

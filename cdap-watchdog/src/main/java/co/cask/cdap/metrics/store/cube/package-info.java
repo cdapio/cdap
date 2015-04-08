@@ -15,6 +15,7 @@
  */
 
 /**
- * This package contains {@link Cube} that stores {@link CubeFact}s and allows querying its data.
+ * This package contains {@link co.cask.cdap.api.dataset.lib.cube.Cube} implementation that stores
+ * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}s and allows querying its data.
  */
 package co.cask.cdap.metrics.store.cube;

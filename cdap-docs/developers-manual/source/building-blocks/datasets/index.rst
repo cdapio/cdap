@@ -28,9 +28,11 @@ higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
 The core Datasets of CDAP are Tables and FileSets:
+
 - Unlike relational database systems, CDAP **tables** are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
+  
 - CDAP **file sets** provide an abstraction over the raw file system, and associate properties such as
   the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
@@ -81,6 +83,24 @@ You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
 :ref:`Purchase Example<examples-purchase>` for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets. <custom-datasets>`
+
+.. rubric::  Dataset Time-To-Live (TTL)
+
+Datasets, like :ref:`Streams <streams>`, can have a Time-To-Live (TTL) property that
+governs how long data will be persisted in a specific Dataset. TTL is configured as the
+maximum age (in milliseconds) that data should be retained.
+
+When you create a Dataset, you can configure its TTL as part of the creation::
+
+  public void configure() {
+      createDataset("myCounters", Table.class, 
+                    DatasetProperties.builder().add(Table.PROPERTY_TTL, 
+                                                    "<age in milliseconds>").build());
+      ...
+  }
+
+The default TTL for all Datasets is infinite, meaning that data will never expire. The TTL
+property of an existing Dataset can be changed using the :ref:`http-restful-api-dataset`.
 
 .. rubric:: Types of Datasets
 

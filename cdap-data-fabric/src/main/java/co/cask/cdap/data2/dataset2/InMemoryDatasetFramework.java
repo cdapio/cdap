@@ -55,6 +55,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 
 /**
@@ -73,6 +76,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   // and delete all instances in a namespace, so we keep it as a separate key
   private final Table<Id.Namespace, Id.DatasetInstance, DatasetSpecification> instances;
   private final Table<Id.Namespace, Id.DatasetModule, String> moduleClasses;
+
+  private final Lock readLock;
+  private final Lock writeLock;
 
   private final boolean allowDatasetUncheckedUpgrade;
 
@@ -122,108 +128,158 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       moduleClasses.put(Constants.SYSTEM_NAMESPACE_ID, moduleId, moduleClassName);
     }
     registries.put(Constants.SYSTEM_NAMESPACE_ID, systemRegistry);
+
+    ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    readLock = readWriteLock.readLock();
+    writeLock = readWriteLock.writeLock();
   }
 
   @Override
-  public synchronized void addModule(Id.DatasetModule moduleId,
-                                     DatasetModule module) throws ModuleConflictException {
-    if (moduleClasses.contains(moduleId.getNamespace(), moduleId)) {
-      throw new ModuleConflictException("Cannot add module " + moduleId + ": it already exists.");
-    }
-
-    DatasetDefinitionRegistry registry = registries.get(moduleId.getNamespace());
-    if (registry == null) {
-      registry = registryFactory.create();
-      registries.put(moduleId.getNamespace(), registry);
-    }
-    TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
-    module.register(trackingRegistry);
-    String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
-    moduleClasses.put(moduleId.getNamespace(), moduleId, moduleClassName);
-    nonDefaultTypes.putAll(moduleId.getNamespace(), trackingRegistry.getTypes());
-  }
-
-  @Override
-  public synchronized void deleteModule(Id.DatasetModule moduleId) {
-    // todo: check if existing datasets or modules use this module
-    moduleClasses.remove(moduleId.getNamespace(), moduleId);
-    LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(moduleId.getNamespace());
-    // this will cleanup types
-    DatasetDefinitionRegistry registry = createRegistry(availableModuleClasses, registries.getClass().getClassLoader());
-    registries.put(moduleId.getNamespace(), registry);
-  }
-
-  @Override
-  public synchronized void deleteAllModules(Id.Namespace namespaceId) throws ModuleConflictException {
-    // check if there are any datasets that use types from the namespace from which we want to remove all modules
-    Set<String> typesInNamespace = nonDefaultTypes.get(namespaceId);
-    for (DatasetSpecification spec : instances.row(namespaceId).values()) {
-      if (typesInNamespace.contains(spec.getType())) {
-        throw new ModuleConflictException("Cannot delete all modules, some datasets use them");
+  public void addModule(Id.DatasetModule moduleId,
+                        DatasetModule module) throws ModuleConflictException {
+    writeLock.lock();
+    try {
+      if (moduleClasses.contains(moduleId.getNamespace(), moduleId)) {
+        throw new ModuleConflictException(String.format("Cannot add module '%s', it already exists.", moduleId));
       }
+
+      DatasetDefinitionRegistry registry = registries.get(moduleId.getNamespace());
+      if (registry == null) {
+        registry = registryFactory.create();
+        registries.put(moduleId.getNamespace(), registry);
+      }
+      TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
+      module.register(trackingRegistry);
+      String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
+      moduleClasses.put(moduleId.getNamespace(), moduleId, moduleClassName);
+      nonDefaultTypes.putAll(moduleId.getNamespace(), trackingRegistry.getTypes());
+    } finally {
+      writeLock.unlock();
     }
-    moduleClasses.row(namespaceId).clear();
-    nonDefaultTypes.removeAll(namespaceId);
-    registries.put(namespaceId, registryFactory.create());
   }
 
   @Override
-  public synchronized void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
+  public void deleteModule(Id.DatasetModule moduleId) {
+    // todo: check if existing datasets or modules use this module
+    writeLock.lock();
+    try {
+      moduleClasses.remove(moduleId.getNamespace(), moduleId);
+      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(moduleId.getNamespace());
+      // this will cleanup types
+      DatasetDefinitionRegistry registry = createRegistry(availableModuleClasses,
+                                                          registries.getClass().getClassLoader());
+      registries.put(moduleId.getNamespace(), registry);
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @Override
+  public void deleteAllModules(Id.Namespace namespaceId) throws ModuleConflictException {
+    writeLock.lock();
+    try {
+      // check if there are any datasets that use types from the namespace from which we want to remove all modules
+      Set<String> typesInNamespace = nonDefaultTypes.get(namespaceId);
+      for (DatasetSpecification spec : instances.row(namespaceId).values()) {
+        if (typesInNamespace.contains(spec.getType())) {
+          throw new ModuleConflictException(
+            String.format("Cannot delete all modules in namespace '%s', some datasets use them", namespaceId));
+        }
+      }
+      moduleClasses.row(namespaceId).clear();
+      nonDefaultTypes.removeAll(namespaceId);
+      registries.put(namespaceId, registryFactory.create());
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @Override
+  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
                                        DatasetProperties props) throws DatasetManagementException, IOException {
-    if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
-      throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceId);
-    }
+    writeLock.lock();
+    try {
+      if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
+        throw new InstanceConflictException(String.format("Dataset instance '%s' already exists.", datasetInstanceId));
+      }
 
-    DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-    if (registry == null) {
-      throw new DatasetManagementException("Dataset type '" + datasetType + "' is not registered");
+      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
+      if (registry == null) {
+        throw new DatasetManagementException(
+          String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                        datasetType, datasetInstanceId.getNamespaceId()));
+      }
+      DatasetDefinition def = registry.get(datasetType);
+      DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
+      instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
+      LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
+    } finally {
+      writeLock.unlock();
     }
-    DatasetDefinition def = registry.get(datasetType);
-    DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
-    def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).create();
-    instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
-    LOG.info("Created dataset {} of type {}", datasetInstanceId, datasetType);
   }
 
   @Override
-  public synchronized void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    DatasetSpecification oldSpec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
-    if (oldSpec == null) {
-      throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceId);
+    writeLock.lock();
+    try {
+      DatasetSpecification oldSpec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      if (oldSpec == null) {
+        throw new InstanceConflictException(String.format("Dataset instance '%s' does not exist.", datasetInstanceId));
+      }
+      String datasetType = oldSpec.getType();
+      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
+      if (registry == null) {
+        throw new DatasetManagementException(
+          String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                        datasetType, datasetInstanceId.getNamespaceId()));
+      }
+      DatasetDefinition def = registry.get(datasetType);
+      DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
+      instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
+      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
+    } finally {
+      writeLock.unlock();
     }
-    String datasetType = oldSpec.getType();
-    DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-    if (registry == null) {
-      throw new DatasetManagementException("Dataset type '" + datasetType + "' is not registered");
-    }
-    DatasetDefinition def = registry.get(datasetType);
-    DatasetSpecification spec = def.configure(datasetInstanceId.getId(), props);
-    instances.put(datasetInstanceId.getNamespace(), datasetInstanceId, spec);
-    def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).upgrade();
   }
 
   @Override
-  public synchronized Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) {
-    // don't expect this to be called a lot.
-    // might be better to maintain this collection separately and just return it, but seems like its not worth it.
-    Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
-    ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
-    for (DatasetSpecification spec : specs) {
-      specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) {
+    readLock.lock();
+    try {
+      // don't expect this to be called a lot.
+      // might be better to maintain this collection separately and just return it, but seems like its not worth it.
+      Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
+      ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
+      for (DatasetSpecification spec : specs) {
+        specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
+      }
+      return specSummaries.build();
+    } finally {
+      readLock.unlock();
     }
-    return specSummaries.build();
   }
 
   @Nullable
   @Override
-  public synchronized DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) {
-    return instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) {
+    readLock.lock();
+    try {
+      return instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+    } finally {
+      readLock.unlock();
+    }
   }
 
   @Override
-  public synchronized boolean hasInstance(Id.DatasetInstance datasetInstanceId) {
-    return instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId);
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) {
+    readLock.lock();
+    try {
+      return instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId);
+    } finally {
+      readLock.unlock();
+    }
   }
 
   @Override
@@ -239,76 +295,109 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void deleteInstance(Id.DatasetInstance datasetInstanceId)
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException {
-    DatasetSpecification spec = instances.remove(datasetInstanceId.getNamespace(), datasetInstanceId);
-    String datasetType = spec.getType();
-    DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
-    if (registry == null) {
-      throw new DatasetManagementException("Dataset type '" + datasetType + "' is not registered");
-    }
-    DatasetDefinition def = registry.get(datasetType);
-    def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).drop();
-  }
-
-  @Override
-  public synchronized void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-    for (DatasetSpecification spec : instances.row(namespaceId).values()) {
+    writeLock.lock();
+    try {
+      DatasetSpecification spec = instances.remove(datasetInstanceId.getNamespace(), datasetInstanceId);
       String datasetType = spec.getType();
-      DatasetDefinitionRegistry registry = getRegistryForType(namespaceId, datasetType);
+      DatasetDefinitionRegistry registry = getRegistryForType(datasetInstanceId.getNamespace(), datasetType);
       if (registry == null) {
-        throw new DatasetManagementException("Dataset type '" + datasetType + "' is not registered");
+        throw new DatasetManagementException(
+          String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                        datasetType, datasetInstanceId.getNamespaceId()));
       }
-      DatasetDefinition def = registry.get(spec.getType());
-      def.getAdmin(DatasetContext.from(namespaceId.getId()), spec, null).drop();
+      DatasetDefinition def = registry.get(datasetType);
+      def.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, null).drop();
+    } finally {
+      writeLock.unlock();
     }
-    instances.row(namespaceId).clear();
   }
 
   @Override
-  public synchronized <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
+    writeLock.lock();
+    try {
+      for (DatasetSpecification spec : instances.row(namespaceId).values()) {
+        String datasetType = spec.getType();
+        DatasetDefinitionRegistry registry = getRegistryForType(namespaceId, datasetType);
+        if (registry == null) {
+          throw new DatasetManagementException(
+            String.format("Dataset type '%s' is neither registered in the '%s' namespace nor in the system namespace",
+                          datasetType, namespaceId));
+        }
+        DatasetDefinition def = registry.get(spec.getType());
+        def.getAdmin(DatasetContext.from(namespaceId.getId()), spec, null).drop();
+      }
+      instances.row(namespaceId).clear();
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
                                                           @Nullable ClassLoader classLoader) throws IOException {
-    DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
-    if (spec == null) {
-      return null;
+    readLock.lock();
+    try {
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      if (spec == null) {
+        return null;
+      }
+      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition impl = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
+      return (T) impl.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, classLoader);
+    } finally {
+      readLock.unlock();
     }
-    LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
-    DatasetDefinition impl = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-    return (T) impl.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, classLoader);
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                                        Map<String, String> arguments,
                                                        @Nullable ClassLoader classLoader) throws IOException {
-
-    DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
-    if (spec == null) {
-      return null;
+    readLock.lock();
+    try {
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      if (spec == null) {
+        return null;
+      }
+      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
+      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                                 spec, arguments, classLoader));
+    } finally {
+      readLock.unlock();
     }
-    LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
-    DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-    return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec, arguments, classLoader));
   }
 
   @Override
-  public synchronized void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    if (namespaces.contains(namespaceId)) {
-      throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceId.getId()));
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    writeLock.lock();
+    try {
+      if (!namespaces.add(namespaceId)) {
+        throw new DatasetManagementException(String.format("Namespace %s already exists.", namespaceId.getId()));
+      }
+    } finally {
+      writeLock.unlock();
     }
-    namespaces.add(namespaceId);
   }
 
   @Override
-  public synchronized void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    Preconditions.checkArgument(!Constants.SYSTEM_NAMESPACE_ID.equals(namespaceId), "Cannot delete system namespace.");
-    if (!namespaces.contains(namespaceId)) {
-      throw new DatasetManagementException(String.format("Namespace %s does not exist", namespaceId.getId()));
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    writeLock.lock();
+    try {
+      Preconditions.checkArgument(!Constants.SYSTEM_NAMESPACE_ID.equals(namespaceId),
+                                  "Cannot delete system namespace.");
+      if (!namespaces.remove(namespaceId)) {
+        throw new DatasetManagementException(String.format("Namespace %s does not exist", namespaceId.getId()));
+      }
+      instances.row(namespaceId).clear();
+      moduleClasses.row(namespaceId).clear();
+      registries.remove(namespaceId);
+    } finally {
+      writeLock.unlock();
     }
-    namespaces.remove(namespaceId);
-    instances.row(namespaceId).clear();
-    moduleClasses.row(namespaceId).clear();
-    registries.remove(namespaceId);
   }
 
   // because there may be dependencies between modules, it is important that they are ordered correctly.

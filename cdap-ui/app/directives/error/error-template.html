@@ -1,0 +1,16 @@
+<div class="nav navbar-nav navbar-right error-button">
+  <button class="btn btn-danger"
+        ng-if="!emptyError()"
+        data-placement="bottom"
+        data-auto-close="1"
+        data-template="error/error-popover.html"
+        bs-popover>
+    <span>
+      <span class="badge">{{ errorCount() }}</span>
+      <span class="error-text hidden-sm">
+        <ng-pluralize data-count="errorCount()"
+            data-when="{'one': 'Error', 'other': 'Errors'}"></ng-pluralize>
+      </span>
+    </span>
+  </button>
+</div>

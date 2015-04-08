@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -45,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -239,6 +241,15 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
+  /**
+   * Returns {@code true} if service error is propagated as error for this controller state.
+   * If this method returns {@code false}, service error is just getting logged and state will just change
+   * to {@link ProgramController.State#KILLED}. This method returns {@code true} by default.
+   */
+  protected boolean propagateServiceError() {
+    return true;
+  }
+
   @Override
   public void run() {
     LOG.info("Starting metrics service");
@@ -275,7 +286,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.warn("Program interrupted.", e);
     } catch (ExecutionException e) {
       LOG.error("Program execution failed.", e);
-      throw Throwables.propagate(Throwables.getRootCause(e));
+      if (propagateServiceError()) {
+        throw Throwables.propagate(Throwables.getRootCause(e));
+      }
     }
   }
 
@@ -366,6 +379,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
             }
           });
 
+          bind(Store.class).to(DefaultStore.class);
         }
       }
     );

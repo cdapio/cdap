@@ -91,7 +91,7 @@ public class LocalStreamService extends AbstractStreamService {
     for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
       Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamId);
-      if (streamSizeAggregator == null) {
+      if (streamSizeAggregator == null && streamAdmin.exists(streamId)) {
         // First time that we see this Stream here
         StreamConfig config = streamAdmin.getConfig(streamId);
         streamSizeAggregator = createSizeAggregator(streamId, 0, config.getNotificationThresholdMB());
@@ -153,7 +153,7 @@ public class LocalStreamService extends AbstractStreamService {
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getName()))
+        .setName(String.format("%sSize", streamId.getId()))
         .build();
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }
@@ -198,7 +198,7 @@ public class LocalStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
+        LOG.warn("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
       }
     }
   }

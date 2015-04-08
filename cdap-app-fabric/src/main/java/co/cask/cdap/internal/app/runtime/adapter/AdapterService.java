@@ -16,67 +16,60 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.proto.AdapterSpecification;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.quartz.DateBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -84,39 +77,39 @@ import javax.annotation.Nullable;
  */
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final String DATASET_CLASS = "dataset.class";
-  private final LocationFactory locationFactory;
-  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory;
+  private final ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory;
   private final CConfiguration configuration;
-  private final DatasetFramework datasetFramework;
-  private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
   private final Store store;
-  private final PreferencesStore preferencesStore;
-  private Map<String, AdapterTypeInfo> adapterTypeInfos;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  // template name to template info mapping
+  private Map<String, ApplicationTemplateInfo> appTemplateInfos;
+  // jar file name to template info mapping
+  private Map<String, ApplicationTemplateInfo> fileToTemplateMap;
 
   @Inject
-  public AdapterService(CConfiguration configuration, DatasetFramework datasetFramework, Scheduler scheduler,
-                        StreamAdmin streamAdmin, StoreFactory storeFactory, LocationFactory locationFactory,
-                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
-                        PreferencesStore preferencesStore) {
+  public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
+                        @Named("templates")
+                        ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
+                        @Named("adapters")
+                        ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
+                        NamespacedLocationFactory namespacedLocationFactory) {
     this.configuration = configuration;
-    this.datasetFramework = datasetFramework;
     this.scheduler = scheduler;
-    this.streamAdmin = streamAdmin;
-    this.store = storeFactory.create();
-    this.locationFactory = locationFactory;
-    this.managerFactory = managerFactory;
-    this.adapterTypeInfos = Maps.newHashMap();
-    this.preferencesStore = preferencesStore;
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.store = store;
+    this.templateManagerFactory = templateManagerFactory;
+    this.adapterManagerFactory = adapterManagerFactory;
+    this.appTemplateInfos = Maps.newHashMap();
+    this.fileToTemplateMap = Maps.newHashMap();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting AdapterService");
-    registerAdapters();
+    registerTemplates();
   }
 
   @Override
@@ -125,28 +118,49 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Get the {@link AdapterTypeInfo} for a given adapter type.
+   * Deploy the given application template in the given namespace.
    *
-   * @param adapterType adapter type
-   * @return instance of {@link AdapterTypeInfo} if available, null otherwise
+   * @param namespace the namespace to deploy in
+   * @param templateName the name of the template to deploy
+   * @throws NotFoundException if the template was not found
+   * @throws IllegalArgumentException if the template is invalid
+   * @throws IOException if there was an error reading the template jar
+   * @throws TimeoutException if there was a timeout examining the template jar
    */
-  @Nullable
-  public AdapterTypeInfo getAdapterTypeInfo(String adapterType) {
-    return this.adapterTypeInfos.get(adapterType);
+  public void deployTemplate(Id.Namespace namespace, String templateName)
+    throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
+    ApplicationTemplateInfo templateInfo = appTemplateInfos.get(templateName);
+    if (templateInfo == null) {
+      throw new NotFoundException(Id.ApplicationTemplate.from(templateName));
+    }
+    // make sure we're up to date on template info
+    registerTemplates();
+    deployTemplate(namespace, templateInfo);
   }
 
   /**
-   * Retrieves the {@link AdapterSpecification} specified by the name in a given namespace.
+   * Get the {@link ApplicationTemplateInfo} for a given application template.
+   *
+   * @param templateName the template name
+   * @return instance of {@link ApplicationTemplateInfo} if available, null otherwise
+   */
+  @Nullable
+  public ApplicationTemplateInfo getApplicationTemplateInfo(String templateName) {
+    return appTemplateInfos.get(templateName);
+  }
+
+  /**
+   * Retrieves the {@link AdapterConfig} specified by the name in a given namespace.
    *
    * @param namespace namespace to lookup the adapter
    * @param adapterName name of the adapter
-   * @return requested {@link AdapterSpecification} or null if no such AdapterInfo exists
+   * @return requested {@link AdapterConfig} or null if no such AdapterInfo exists
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterSpecification getAdapter(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = store.getAdapter(Id.Namespace.from(namespace), adapterName);
+  public AdapterSpecification getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterSpecification adapterSpec = store.getAdapter(namespace, adapterName);
     if (adapterSpec == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return adapterSpec;
   }
@@ -159,10 +173,10 @@ public class AdapterService extends AbstractIdleService {
    * @return requested Adapter's status
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterStatus getAdapterStatus(String namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterStatus adapterStatus = store.getAdapterStatus(Id.Namespace.from(namespace), adapterName);
+  public AdapterStatus getAdapterStatus(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterStatus adapterStatus = store.getAdapterStatus(namespace, adapterName);
     if (adapterStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return adapterStatus;
   }
@@ -175,11 +189,11 @@ public class AdapterService extends AbstractIdleService {
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public AdapterStatus setAdapterStatus(String namespace, String adapterName, AdapterStatus status)
+  public AdapterStatus setAdapterStatus(Id.Namespace namespace, String adapterName, AdapterStatus status)
     throws AdapterNotFoundException {
-    AdapterStatus existingStatus = store.setAdapterStatus(Id.Namespace.from(namespace), adapterName, status);
+    AdapterStatus existingStatus = store.setAdapterStatus(namespace, adapterName, status);
     if (existingStatus == null) {
-      throw new AdapterNotFoundException(adapterName);
+      throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
     return existingStatus;
   }
@@ -187,27 +201,27 @@ public class AdapterService extends AbstractIdleService {
   /**
    * Get all adapters in a given namespace.
    *
-   * @param namespace namespace to look up the adapters
-   * @return {@link Collection} of {@link AdapterSpecification}
+   * @param namespace the namespace to look up the adapters
+   * @return {@link Collection} of {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(String namespace) {
-    return store.getAllAdapters(Id.Namespace.from(namespace));
+  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace) {
+    return store.getAllAdapters(namespace);
   }
 
   /**
-   * Retrieves an Iterable of {@link AdapterSpecification} specified by the adapterType in a given namespace.
+   * Retrieves an Collection of {@link AdapterConfig} in a given namespace that use the given template.
    *
    * @param namespace namespace to lookup the adapter
-   * @param adapterType type of requested adapters
-   * @return Iterable of requested {@link AdapterSpecification}
+   * @param template the template of requested adapters
+   * @return Collection of requested {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(String namespace, final String adapterType) {
+  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace, final String template) {
     // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
     // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
     List<AdapterSpecification> adaptersByType = Lists.newArrayList();
-    Collection<AdapterSpecification> adapters = getAdapters(namespace);
+    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespace);
     for (AdapterSpecification adapterSpec : adapters) {
-      if (adapterSpec.getType().equals(adapterType)) {
+      if (adapterSpec.getTemplate().equals(template)) {
         adaptersByType.add(adapterSpec);
       }
     }
@@ -215,34 +229,33 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Creates the adapter
-   * @param namespaceId namespace to create the adapter
-   * @param adapterSpec specification of the adapter to create
+   * Creates an adapter.
+   *
+   * @param namespace namespace to create the adapter
+   * @param adapterName name of the adapter to create
+   * @param adapterConfig config for the adapter to create
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
    * @throws IllegalArgumentException on other input errors.
-   * @throws SchedulerException on errors related to scheduling.
    */
-  public void createAdapter(String namespaceId, AdapterSpecification adapterSpec)
-    throws IllegalArgumentException, AdapterAlreadyExistsException, SchedulerException {
+  public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
+    throws IllegalArgumentException, AdapterAlreadyExistsException {
 
-    AdapterTypeInfo adapterTypeInfo = adapterTypeInfos.get(adapterSpec.getType());
-    Preconditions.checkArgument(adapterTypeInfo != null, "Adapter type %s not found", adapterSpec.getType());
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    String adapterName = adapterSpec.getName();
-    AdapterSpecification existingAdapter = store.getAdapter(namespace, adapterName);
-    if (existingAdapter != null) {
+    ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterConfig.getTemplate());
+    Preconditions.checkArgument(applicationTemplateInfo != null,
+                                "Applicaiton template %s not found", adapterConfig.getTemplate());
+
+    if (store.getAdapter(namespace, adapterName) != null) {
       throw new AdapterAlreadyExistsException(adapterName);
     }
 
-    ApplicationSpecification appSpec = deployApplication(namespaceId, adapterTypeInfo);
+    // if the template has not been deployed, deploy it first
+    Id.Application templateId = Id.Application.from(namespace, applicationTemplateInfo.getName());
+    ApplicationSpecification appSpec = store.getApplication(templateId);
+    if (appSpec == null) {
+      appSpec = deployTemplate(namespace, applicationTemplateInfo);
+    }
 
-    validateSources(namespaceId, adapterName, adapterSpec.getSources());
-    createSinks(Id.Namespace.from(namespaceId), adapterTypeInfo, adapterSpec.getSinks());
-
-    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
-    preferencesStore.setProperties(namespaceId, appSpec.getName(), properties);
-    schedule(namespaceId, appSpec, adapterTypeInfo, adapterSpec);
-    store.addAdapter(namespace, adapterSpec);
+    deployAdapter(namespace, adapterName, applicationTemplateInfo, appSpec, adapterConfig);
   }
 
   /**
@@ -251,45 +264,64 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace namespace id
    * @param adapterName adapter name
    * @throws AdapterNotFoundException if the adapter to be removed is not found.
-   * @throws SchedulerException on errors related to scheduling.
+   * @throws CannotBeDeletedException if the adapter is not stopped.
    */
-  public void removeAdapter(String namespace, String adapterName) throws NotFoundException, SchedulerException {
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, adapterSpec.getType()));
-    unschedule(namespace, appSpec, adapterTypeInfos.get(adapterSpec.getType()), adapterSpec);
-    store.removeAdapter(namespaceId, adapterName);
+  public void removeAdapter(Id.Namespace namespace, String adapterName)
+    throws NotFoundException, CannotBeDeletedException {
+
+    AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    if (adapterStatus != AdapterStatus.STOPPED) {
+      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
+    }
+    store.removeAdapter(namespace, adapterName);
 
     // TODO: Delete the application if this is the last adapter
   }
 
-  // Suspends all schedules for this adapter
-  public void stopAdapter(String namespace, String adapterName)
+  /**
+   * Stop the given adapter. Deletes the schedule for a workflow adapter and stops the worker for a worker
+   * adapter.
+   *
+   * @param namespace the namespace the adapter is deployed in
+   * @param adapterName the name of the adapter
+   * @throws NotFoundException if the adapter could not be found
+   * @throws InvalidAdapterOperationException if the adapter is already stopped
+   * @throws SchedulerException if there was some error deleting the schedule for the adapter
+   */
+  public void stopAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
+
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
-      scheduler.suspendSchedule(programId, SchedulableProgramType.WORKFLOW,
-                                constructScheduleName(programId, adapterName));
+    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    if (programType == ProgramType.WORKFLOW) {
+      stopWorkflowAdapter(namespace, adapterSpec);
+    } else if (programType == ProgramType.WORKER) {
+      stopWorkerAdapter(namespace, adapterSpec);
+    } else {
+      // this should never happen
+      LOG.warn("Invalid program type {}.", programType);
+      throw new InvalidAdapterOperationException("Invalid program type " + programType);
     }
 
     setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
   }
 
-  // Resumes all schedules for this adapter
-  public void startAdapter(String namespace, String adapterName)
+  /**
+   * Start the given adapter. Creates a schedule for a workflow adapter and starts the worker for a worker adapter.
+   *
+   * @param namespace the namespace the adapter is deployed in
+   * @param adapterName the name of the adapter
+   * @throws NotFoundException if the adapter could not be found
+   * @throws InvalidAdapterOperationException if the adapter is already started
+   * @throws SchedulerException if there was some error creating the schedule for the adapter
+   */
+  public void startAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
@@ -297,295 +329,181 @@ public class AdapterService extends AbstractIdleService {
     }
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getType()));
 
-    ProgramType programType = adapterTypeInfos.get(adapterSpec.getType()).getProgramType();
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = appSpec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespace, appSpec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
-      scheduler.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
-                               constructScheduleName(programId, adapterName));
+    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    if (programType == ProgramType.WORKFLOW) {
+      startWorkflowAdapter(namespace, adapterSpec);
+    } else if (programType == ProgramType.WORKER) {
+      startWorkerAdapter(namespace, adapterSpec);
+    } else {
+      // this should never happen
+      LOG.warn("Invalid program type {}.", programType);
+      throw new InvalidAdapterOperationException("Invalid program type " + programType);
     }
 
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
-  // Deploys adapter application if it is not already deployed.
-  private ApplicationSpecification deployApplication(String namespaceId, AdapterTypeInfo adapterTypeInfo) {
-    try {
-      ApplicationSpecification spec = store.getApplication(Id.Application.from(namespaceId, adapterTypeInfo.getType()));
-      // Application is already deployed.
-      if (spec != null) {
-        return spec;
-      }
+  private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+    throws NotFoundException, SchedulerException {
+    String workflowName = adapterSpec.getScheduleSpec().getProgram().getProgramName();
+    Id.Program workflowId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
+                                            ProgramType.WORKFLOW, workflowName);
 
-      Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+    ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
+
+    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    //TODO: Scheduler API should also manage the MDS.
+    store.addSchedule(workflowId, scheduleSpec);
+  }
+
+  private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+    throws NotFoundException, SchedulerException {
+    String workflowName = adapterSpec.getScheduleSpec().getProgram().getProgramName();
+    Id.Program workflowId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
+                                            ProgramType.WORKFLOW, workflowName);
+
+    String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
+    scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+    //TODO: Scheduler API should also manage the MDS.
+    store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+  }
+
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
+    // TODO: implement
+  }
+
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
+    // TODO: implement
+  }
+
+  // deploys an adapter. This will call configureAdapter() on the adapter's template. It may create
+  // datasets and streams. At the end it will write to the store with the adapter spec.
+  private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
+                                             ApplicationTemplateInfo applicationTemplateInfo,
+                                             ApplicationSpecification templateSpec, AdapterConfig adapterConfig) {
+
+    Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
+      new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
           // no-op
         }
       });
 
-      Location namespaceHomeLocation = locationFactory.create(namespaceId);
+    try {
+      AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
+        adapterConfig, applicationTemplateInfo, templateSpec);
+      Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
       if (!namespaceHomeLocation.exists()) {
         String msg = String.format("Home directory %s for namespace %s not found",
-                                   namespaceHomeLocation.toURI().getPath(), namespaceId);
+                                   namespaceHomeLocation.toURI().getPath(), namespace);
         LOG.error(msg);
         throw new FileNotFoundException(msg);
       }
 
-      String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-      Location destination = namespaceHomeLocation.append(appFabricDir)
-        .append(Constants.ARCHIVE_DIR).append(adapterTypeInfo.getFile().getName());
-      DeploymentInfo deploymentInfo = new DeploymentInfo(adapterTypeInfo.getFile(), destination,
-                                                         ApplicationDeployScope.SYSTEM);
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(Id.Namespace.from(namespaceId), adapterTypeInfo.getType(), deploymentInfo).get();
-      return applicationWithPrograms.getSpecification();
+      return manager.deploy(namespace, adapterName, deploymentInfo).get();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  // Schedule all the programs needed for the adapter. Currently, only scheduling of workflow is supported.
-  private void schedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                        AdapterSpecification adapterSpec) throws SchedulerException {
-    ProgramType programType = adapterTypeInfo.getProgramType();
-    // Only Workflows are supported to be scheduled in the current implementation
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, spec.getName(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
-      addSchedule(programId, SchedulableProgramType.WORKFLOW, adapterSpec);
-    }
-  }
-
-  // Unschedule all the programs needed for the adapter. Currently, only unscheduling of workflow is supported.
-  private void unschedule(String namespaceId, ApplicationSpecification spec, AdapterTypeInfo adapterTypeInfo,
-                          AdapterSpecification adapterSpec) throws NotFoundException, SchedulerException {
-    // Only Workflows are supported to be scheduled in the current implementation
-    ProgramType programType = adapterTypeInfo.getProgramType();
-    Preconditions.checkArgument(programType.equals(ProgramType.WORKFLOW),
-                                String.format("Unsupported program type %s for adapter", programType.toString()));
-    Map<String, WorkflowSpecification> workflowSpecs = spec.getWorkflows();
-    for (Map.Entry<String, WorkflowSpecification> entry : workflowSpecs.entrySet()) {
-      Id.Program programId = Id.Program.from(namespaceId, adapterSpec.getType(), ProgramType.WORKFLOW,
-                                             entry.getValue().getName());
-      deleteSchedule(programId, SchedulableProgramType.WORKFLOW,
-                     constructScheduleName(programId, adapterSpec.getName()));
-    }
-  }
-
-  // Adds a schedule to the scheduler as well as to the appspec
-  private void addSchedule(Id.Program programId, SchedulableProgramType programType, AdapterSpecification adapterSpec)
-    throws SchedulerException {
-    String frequency = adapterSpec.getProperties().get("frequency");
-    Preconditions.checkArgument(frequency != null,
-                                "Frequency of running the adapter is missing from adapter properties." +
-                                  " Cannot schedule program.");
-    String cronExpr = toCronExpr(frequency);
-    String adapterName = adapterSpec.getName();
-    Schedule schedule = Schedules.createTimeSchedule(constructScheduleName(programId, adapterName),
-                                                     getScheduleDescription(adapterName), cronExpr);
-    ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule,
-                                           new ScheduleProgramInfo(programType, programId.getId()),
-                                           adapterSpec.getProperties());
-
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
-    //TODO: Scheduler API should also manage the MDS.
-    store.addSchedule(programId, scheduleSpec);
-  }
-
-  // Deletes schedule from the scheduler as well as from the app spec
-  private void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException {
-    scheduler.deleteSchedule(programId, programType, scheduleName);
-    //TODO: Scheduler API should also manage the MDS.
-    store.deleteSchedule(programId, programType, scheduleName);
-  }
-
-  // Sources for all adapters should exists before creating the adapters.
-  private void validateSources(String namespaceId, String adapterName,
-                               Set<Source> sources) throws IllegalArgumentException {
-    // Ensure all sources exist
-    for (Source source : sources) {
-      Preconditions.checkArgument(Source.Type.STREAM.equals(source.getType()),
-                                  String.format("Unknown Source type: %s", source.getType()));
-      Id.Stream streamId = Id.Stream.from(namespaceId, source.getName());
-      Preconditions.checkArgument(streamExists(streamId),
-                                  String.format("Stream %s must exist during create of adapter: %s",
-                                                source.getName(), adapterName));
-    }
-  }
-
-  private boolean streamExists(Id.Stream streamId) {
+  // Deploys adapter application
+  private ApplicationSpecification deployTemplate(Id.Namespace namespace,
+                                                  ApplicationTemplateInfo applicationTemplateInfo) {
     try {
-      return streamAdmin.exists(streamId);
+
+      Manager<DeploymentInfo, ApplicationWithPrograms> manager = templateManagerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+          // no-op
+        }
+      });
+
+      DeploymentInfo deploymentInfo = new DeploymentInfo(
+        applicationTemplateInfo.getFile(),
+        getTemplateTempLoc(namespace, applicationTemplateInfo),
+        ApplicationDeployScope.SYSTEM);
+      ApplicationWithPrograms appWithPrograms =
+        manager.deploy(namespace, applicationTemplateInfo.getName(), deploymentInfo).get();
+      return appWithPrograms.getSpecification();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  // create the required sinks for the adapters. Currently only DATASET sink type is supported.
-  private void createSinks(Id.Namespace namespaceId, AdapterTypeInfo adapterTypeInfo, Set<Sink> sinks) {
-    // create sinks if it does not exist
-    for (Sink sink : sinks) {
-      Preconditions.checkArgument(Sink.Type.DATASET.equals(sink.getType()),
-                                  String.format("Unknown Sink type: %s", sink.getType()));
-      // add all properties that were defined in the manifest (default sink properties), override that with sink
-      // properties passed while creating the sinks.
-      DatasetProperties properties = DatasetProperties.builder()
-        .addAll(adapterTypeInfo.getDefaultSinkProperties())
-        .addAll(sink.getProperties())
-        .build();
+  private Location getTemplateTempLoc(Id.Namespace namespace, ApplicationTemplateInfo templateInfo) throws IOException {
 
-      String datasetClass = properties.getProperties().get(DATASET_CLASS);
-      Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null");
-      Id.DatasetInstance sinkInstanceId = Id.DatasetInstance.from(namespaceId, sink.getName());
-      createDataset(sinkInstanceId, datasetClass, properties);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespace);
+      LOG.error(msg);
+      throw new FileNotFoundException(msg);
     }
-  }
-
-  private void createDataset(Id.DatasetInstance datasetInstanceId, String datasetClass, DatasetProperties properties) {
-    try {
-      if (!datasetFramework.hasInstance(datasetInstanceId)) {
-        datasetFramework.addInstance(datasetClass, datasetInstanceId, properties);
-        LOG.debug("Dataset instance {} created with properties: {}.", datasetInstanceId, properties);
-      } else {
-        LOG.debug("Dataset instance {} already exists; not creating a new one.", datasetInstanceId);
-      }
-    } catch (DatasetManagementException e) {
-      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      LOG.error("Error while creating dataset {}", datasetInstanceId, e);
-      throw new RuntimeException(e);
-    }
+    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    Location destination = namespaceHomeLocation.append(appFabricDir)
+      .append(Constants.ARCHIVE_DIR).append(templateInfo.getFile().getName());
+    return destination;
   }
 
   // Reads all the jars from the adapter directory and sets up required internal structures.
   @VisibleForTesting
-  void registerAdapters() {
+  void registerTemplates() {
     try {
-      File baseDir = new File(configuration.get(Constants.AppFabric.ADAPTER_DIR));
+      // generate a completely new map in case some templates were removed
+      Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();
+      Map<String, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
+
+      File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
       Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
       for (File file : files) {
         try {
-          Manifest manifest = new JarFile(file.getAbsolutePath()).getManifest();
-          AdapterTypeInfo adapterTypeInfo = createAdapterTypeInfo(file, manifest);
-          if (adapterTypeInfo != null) {
-            adapterTypeInfos.put(adapterTypeInfo.getType(), adapterTypeInfo);
-          } else {
-            LOG.warn("Missing required information to create adapter {}", file.getAbsolutePath());
-          }
-        } catch (IOException e) {
-          LOG.warn(String.format("Unable to read adapter jar %s", file.getAbsolutePath()));
+          ApplicationTemplateInfo info = getTemplateInfo(file);
+          newInfoMap.put(info.getName(), info);
+          newFileTemplateMap.put(info.getFile().getName(), info);
+        } catch (IllegalArgumentException e) {
+          LOG.error("Application template from file {} in invalid. Skipping it.", file.getName(), e);
         }
       }
+      appTemplateInfos = newInfoMap;
+      fileToTemplateMap = newFileTemplateMap;
     } catch (Exception e) {
       LOG.warn("Unable to read the plugins directory");
     }
   }
 
-
-  private AdapterTypeInfo createAdapterTypeInfo(File file, Manifest manifest) {
-    if (manifest != null) {
-      Attributes mainAttributes = manifest.getMainAttributes();
-
-      String adapterType = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_TYPE);
-      String adapterProgramType = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_PROGRAM_TYPE);
-      String defaultAdapterProperties = mainAttributes.getValue(AdapterManifestAttributes.ADAPTER_PROPERTIES);
-
-      String sourceType = mainAttributes.getValue(AdapterManifestAttributes.SOURCE_TYPE);
-      String sinkType = mainAttributes.getValue(AdapterManifestAttributes.SINK_TYPE);
-      String defaultSourceProperties = mainAttributes.getValue(AdapterManifestAttributes.SOURCE_PROPERTIES);
-      String defaultSinkProperties = mainAttributes.getValue(AdapterManifestAttributes.SINK_PROPERTIES);
-
-      if (adapterType != null && sourceType != null && sinkType != null && adapterProgramType != null) {
-        return new AdapterTypeInfo(file, adapterType, Source.Type.valueOf(sourceType.toUpperCase()),
-                                   Sink.Type.valueOf(sinkType.toUpperCase()),
-                                   propertiesFromString(defaultSourceProperties),
-                                   propertiesFromString(defaultSinkProperties),
-                                   propertiesFromString(defaultAdapterProperties),
-                                   ProgramType.valueOf(adapterProgramType.toUpperCase()));
-      }
+  private ApplicationTemplateInfo getTemplateInfo(File jarFile)
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    ApplicationTemplateInfo existing = fileToTemplateMap.get(jarFile.getAbsolutePath());
+    HashCode fileHash = Files.hash(jarFile, Hashing.md5());
+    // if the file is the same, just return
+    if (existing != null && fileHash.equals(existing.getFileHash())) {
+      return existing;
     }
-    return null;
-  }
 
-  protected Map<String, String> propertiesFromString(String gsonEncodedMap) {
-    Map<String, String> properties = GSON.fromJson(gsonEncodedMap, STRING_STRING_MAP_TYPE);
-    return properties == null ? Maps.<String, String>newHashMap() : properties;
-  }
+    // instantiate the template application and call configure() on it to determine it's specification
+    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()));
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(2, TimeUnit.MINUTES);
+    ApplicationSpecification spec = GSON.fromJson(response.get(), ApplicationSpecification.class);
 
-  private static class AdapterManifestAttributes {
-    private static final String ADAPTER_TYPE = "CDAP-Adapter-Type";
-    private static final String ADAPTER_PROPERTIES = "CDAP-Adapter-Properties";
-    private static final String ADAPTER_PROGRAM_TYPE = "CDAP-Adapter-Program-Type";
-    private static final String SOURCE_TYPE = "CDAP-Source-Type";
-    private static final String SINK_TYPE = "CDAP-Sink-Type";
-    private static final String SOURCE_PROPERTIES = "CDAP-Source-Properties";
-    private static final String SINK_PROPERTIES = "CDAP-Sink-Properties";
-  }
+    // verify that the name is ok
+    Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
 
-  /**
-   * @return construct a name of a schedule, given a programId and adapterName
-   */
-  public String constructScheduleName(Id.Program programId, String adapterName) {
-    // For now, simply schedule the adapter's program with the name of the program being scheduled + name of the adapter
-    return String.format("%s.%s", adapterName, programId.getId());
-  }
-
-  /**
-   * @return description of the schedule, given an adapterName.
-   */
-  public String getScheduleDescription(String adapterName) {
-    return String.format("Schedule for adapter: %s", adapterName);
-  }
-
-  /**
-   * Converts a frequency expression into cronExpression that is usable by quartz.
-   * Supports frequency expressions with the following resolutions: minutes, hours, days.
-   * Example conversions:
-   * '10m' -> '*{@literal /}10 * * * ?'
-   * '3d' -> '0 0 *{@literal /}3 * ?'
-   *
-   * @return a cron expression
-   */
-  private String toCronExpr(String frequency) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequency));
-    // remove all whitespace
-    frequency = frequency.replaceAll("\\s+", "");
-    Preconditions.checkArgument(frequency.length() >= 0);
-
-    frequency = frequency.toLowerCase();
-
-    String value = frequency.substring(0, frequency.length() - 1);
-    try {
-      int parsedValue = Integer.parseInt(value);
-      Preconditions.checkArgument(parsedValue > 0);
-      // TODO: Check for regular frequency.
-      String everyN = String.format("*/%s", value);
-      char lastChar = frequency.charAt(frequency.length() - 1);
-      switch (lastChar) {
-        case 'm':
-          DateBuilder.validateMinute(parsedValue);
-          return String.format("%s * * * ?", everyN);
-        case 'h':
-          DateBuilder.validateHour(parsedValue);
-          return String.format("0 %s * * ?", everyN);
-        case 'd':
-          DateBuilder.validateDayOfMonth(parsedValue);
-          return String.format("0 0 %s * ?", everyN);
-      }
-      throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Could not parse the frequency");
+    // determine the program type of the template
+    ProgramType programType;
+    int numWorkflows = spec.getWorkflows().size();
+    int numWorkers = spec.getWorkers().size();
+    if (numWorkers == 0 && numWorkflows == 1) {
+      programType = ProgramType.WORKFLOW;
+    } else if (numWorkers == 1 && numWorkflows == 0) {
+      programType = ProgramType.WORKER;
+    } else {
+      throw new IllegalArgumentException("An application template must contain exactly one worker or one workflow.");
     }
+
+    return new ApplicationTemplateInfo(jarFile, spec.getName(), spec.getDescription(), programType, fileHash);
   }
+
 }

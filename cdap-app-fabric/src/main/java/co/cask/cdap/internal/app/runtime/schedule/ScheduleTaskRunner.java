@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
@@ -92,8 +93,9 @@ public final class ScheduleTaskRunner {
       userArgs.putAll(spec.getProperties());
 
       Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),
-                                                        programId.getApplicationId(), programType.getCategoryName(),
-                                                        programId.getId());
+                                                                               programId.getApplicationId(),
+                                                                               programType.getCategoryName(),
+                                                                               programId.getId());
 
       userArgs.putAll(runtimeArgs);
 
@@ -146,7 +148,13 @@ public final class ScheduleTaskRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
-        store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        // Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        }
+        store.setStart(programId, runId, startTimeInSeconds);
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -157,8 +165,7 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void completed() {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
@@ -167,14 +174,27 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void error(Throwable cause) {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
 
         latch.countDown();
+      }
+
+      @Override
+      public void suspended() {
+        LOG.debug("Suspending Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
+                  program.getId(), runId);
+        store.setSuspend(programId, runId);
+      }
+
+      @Override
+      public void resuming() {
+        LOG.debug("Resuming Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
+                  program.getId(), runId);
+        store.setResume(programId, runId);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 

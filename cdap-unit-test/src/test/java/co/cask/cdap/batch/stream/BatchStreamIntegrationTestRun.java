@@ -63,8 +63,8 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
     submitAndVerifyStreamBatchJob(NoMapperApp.class, "nomapper", "NoMapperMapReduce", 120);
   }
 
-  private void submitAndVerifyStreamBatchJob(Class<? extends AbstractApplication> appClass, String streamWriter, String
-    mapReduceName, int timeout) throws Exception {
+  private void submitAndVerifyStreamBatchJob(Class<? extends AbstractApplication> appClass,
+                                             String streamWriter, String mapReduceName, int timeout) throws Exception {
     ApplicationManager applicationManager = deployApplication(appClass);
     StreamWriter writer = applicationManager.getStreamWriter(streamWriter);
     for (int i = 0; i < 50; i++) {

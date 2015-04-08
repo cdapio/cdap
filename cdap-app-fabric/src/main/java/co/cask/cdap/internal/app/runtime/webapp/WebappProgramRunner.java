@@ -20,8 +20,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Networks;
@@ -43,7 +45,6 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +117,7 @@ public class WebappProgramRunner implements ProgramRunner {
         final String sname = ProgramType.WEBAPP.name().toLowerCase() + "/" + hname;
 
         LOG.info("Webapp {} running on address {} registering as {}", program.getApplicationId(), address, sname);
-        cancellables.add(discoveryService.register(new Discoverable() {
+        cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
           @Override
           public String getName() {
             return sname;
@@ -126,7 +127,7 @@ public class WebappProgramRunner implements ProgramRunner {
           public InetSocketAddress getSocketAddress() {
             return address;
           }
-        }));
+        })));
       }
 
       return new WebappProgramController(program.getName(), runId, httpService, new Cancellable() {

@@ -18,6 +18,8 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
@@ -71,7 +73,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
                                     object.getRuntime(), object.getYarnAppId());
         }
       }).build();
-    cliConfig.getTableRenderer().render(output, table);
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     if (liveInfo.getContainers() != null) {
       Table containersTable = Table.builder()
@@ -83,7 +85,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
               object.getMemory(), object.getVirtualCores(), object.getDebugPort());
           }
         }).build();
-      cliConfig.getTableRenderer().render(output, containersTable);
+      cliConfig.getTableRenderer().render(cliConfig, output, containersTable);
     }
   }
 
@@ -94,6 +96,6 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the live info of a %s.", elementType.getPrettyName());
+    return String.format("Gets the live info of %s.", Fragment.of(Article.A, elementType.getTitleName()));
   }
 }

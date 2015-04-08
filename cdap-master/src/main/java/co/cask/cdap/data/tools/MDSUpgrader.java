@@ -23,13 +23,14 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
@@ -44,19 +45,15 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -67,43 +64,36 @@ import java.util.Set;
 public class MDSUpgrader extends AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(MDSUpgrader.class);
-  private final Transactional<AppMDS, MetadataStoreDataset> appMDS;
-  private final CConfiguration cConf;
-  private final Store store;
-  private final Set<String> appStreams;
-  private static final Gson GSON;
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
-  static {
-    GsonBuilder builder = new GsonBuilder();
-    ApplicationSpecificationAdapter.addTypeAdapters(builder);
-    GSON = builder.create();
-  }
+  private final Transactional<AppMDS, MetadataStoreDataset> appMDS;
+  private final Store store;
+  private final TableId appMetaTableId;
 
   @Inject
-  private MDSUpgrader(LocationFactory locationFactory, TransactionExecutorFactory executorFactory,
-                      @Named("dsFramework") final DatasetFramework dsFramework, CConfiguration cConf,
+  private MDSUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory,
+                      TransactionExecutorFactory executorFactory, final DatasetFramework dsFramework,
                       @Named("defaultStore") final Store store) {
-    super(locationFactory);
-    this.cConf = cConf;
+    super(locationFactory, namespacedLocationFactory);
     this.store = store;
+    final String appMetaTableName = Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE);
     this.appMDS = Transactional.of(executorFactory, new Supplier<AppMDS>() {
       @Override
       public AppMDS get() {
         try {
-          Table table = DatasetsUtil.getOrCreateDataset(dsFramework, Id.DatasetInstance.from
-                                                          (Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(
-                                                            Constants.SYSTEM_NAMESPACE, DefaultStore.APP_META_TABLE)),
+          Table table = DatasetsUtil.getOrCreateDataset(dsFramework,
+                                                        Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID,
+                                                                                appMetaTableName),
                                                         "table", DatasetProperties.EMPTY,
                                                         DatasetDefinition.NO_ARGUMENTS, null);
           return new AppMDS(new AppMetadataStoreDataset(table));
         } catch (Exception e) {
-          LOG.error("Failed to access {} table", Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                     DefaultStore.APP_META_TABLE), e);
+          LOG.error("Failed to access {} table", appMetaTableName, e);
           throw Throwables.propagate(e);
         }
       }
     });
-    appStreams = Sets.newHashSet();
+    this.appMetaTableId = TableId.from(Constants.DEFAULT_NAMESPACE_ID, appMetaTableName);
   }
 
   @Override
@@ -116,7 +106,6 @@ public class MDSUpgrader extends AbstractUpgrader {
         List<ApplicationMeta> appsMeta = appMetaStore.mds.list(appMetaRecordPrefix, ApplicationMeta.class);
         for (ApplicationMeta curAppMeta : appsMeta) {
           handleAppSpec(curAppMeta.getId(), curAppMeta.getSpec());
-          upgradeAppMeta(curAppMeta);
         }
         return null;
       }
@@ -130,12 +119,7 @@ public class MDSUpgrader extends AbstractUpgrader {
         MDSKey streamRecordPrefix = new MDSKey.Builder().add(AppMetadataStore.TYPE_STREAM).build();
         List<StreamSpecification> streamsSpec = appMetaStore.mds.list(streamRecordPrefix, StreamSpecification.class);
         for (StreamSpecification curStreamSpec : streamsSpec) {
-          // Streams which are a part of an application gets upgraded when we upgrade the application meta
-          // if this stream was not a part of any application then this stream meta was not upgraded so upgrade it
-          // separately
-          if (!appStreams.contains(curStreamSpec.getName())) {
-            store.addStream(Id.Namespace.from(Constants.DEFAULT_NAMESPACE), curStreamSpec);
-          }
+          store.addStream(Id.Namespace.from(Constants.DEFAULT_NAMESPACE), curStreamSpec);
         }
         return null;
       }
@@ -181,7 +165,7 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleProgramArgs(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, DEVELOPER_ACCOUNT,
+    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_PROGRAM_ARGS, Constants.DEVELOPER_ACCOUNT,
                                                        appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
@@ -204,8 +188,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    * @param programType the {@link ProgramType} of the program
    */
   private void handleRunRecordStarted(final String appId, final String programId, final ProgramType programType) {
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_STARTED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {
@@ -228,8 +213,9 @@ public class MDSUpgrader extends AbstractUpgrader {
    */
   private void handleRunRecordCompleted(final String appId, final String programId, final ProgramType programType) {
 
-    final MDSKey partialKey = new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, DEVELOPER_ACCOUNT,
-                                                       appId, programId).build();
+    final MDSKey partialKey =
+      new MDSKey.Builder().add(AppMetadataStore.TYPE_RUN_RECORD_COMPLETED, Constants.DEVELOPER_ACCOUNT,
+                               appId, programId).build();
     appMDS.executeUnchecked(new TransactionExecutor.Function<AppMDS, Void>() {
       @Override
       public Void apply(AppMDS appMetaStore) throws Exception {
@@ -261,35 +247,7 @@ public class MDSUpgrader extends AbstractUpgrader {
   private void writeTempRunRecordStart(String appId, ProgramType programType, String programId, String pId,
                                        long startTs) {
     store.setStart(Id.Program.from(Id.Application.from(Constants.DEFAULT_NAMESPACE, appId), programType, programId),
-                   pId, Long.MAX_VALUE - startTs);
-  }
-
-  /**
-   * Writes the updated application metadata through the {@link DefaultStore}
-   *
-   * @param appMeta the {@link ApplicationMeta} of the app
-   * @throws URISyntaxException if failed to create {@link URI} from the archive location in metadata
-   */
-  private void upgradeAppMeta(ApplicationMeta appMeta) throws URISyntaxException, IOException {
-    store.addApplication(Id.Application.from(Constants.DEFAULT_NAMESPACE, appMeta.getId()), appMeta.getSpec(),
-                         updateAppArchiveLocation(appMeta.getId(), new URI(appMeta.getArchiveLocation())));
-    // store the stream names which belongs to this app as we want to filter out streams which do not belong to any app
-    // later
-    appStreams.addAll(appMeta.getSpec().getStreams().keySet());
-  }
-
-  /**
-   * Creates the new archive location for application with namespace
-   *
-   * @param appId : the application id
-   * @param archiveLocation : the application archive location
-   * @return {@link Location} for the new archive location with namespace
-   */
-  private Location updateAppArchiveLocation(String appId, URI archiveLocation) throws IOException {
-    String archiveFilename = locationFactory.create(archiveLocation).getName();
-
-    return locationFactory.create(Constants.DEFAULT_NAMESPACE).append(
-      cConf.get(Constants.AppFabric.OUTPUT_DIR)).append(appId).append(Constants.ARCHIVE_DIR).append(archiveFilename);
+                   pId, startTs);
   }
 
   private static final class AppMDS implements Iterable<MetadataStoreDataset> {
@@ -305,6 +263,10 @@ public class MDSUpgrader extends AbstractUpgrader {
     }
   }
 
+  public TableId getOldAppMetaTableId() {
+    return appMetaTableId;
+  }
+
   /**
    * Extends {@link MetadataStoreDataset} to provide a custom {@link Gson} which has adapters for
    * {@link ApplicationSpecification} needed for deserialization.
@@ -315,8 +277,8 @@ public class MDSUpgrader extends AbstractUpgrader {
     }
 
     @Override
-    protected <T> T deserialize(byte[] serialized, Class<T> classOfT) {
-      return GSON.fromJson(Bytes.toString(serialized), classOfT);
+    protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+      return GSON.fromJson(Bytes.toString(serialized), typeOfT);
     }
   }
 }

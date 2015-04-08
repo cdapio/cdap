@@ -21,7 +21,7 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import com.clearspring.analytics.util.Lists;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 
