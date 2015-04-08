@@ -32,7 +32,7 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
    */
   $scope.getInstances = function(nodeId) {
     return $scope.instanceMap[nodeId].instances ? $scope.instanceMap[nodeId].instances : 0;
-  }
+  };
 
   $scope.$watch('model', update);
   $scope.$watchCollection('model.metrics', update);
@@ -180,7 +180,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
         var base = radius;
         var extra = (instances.toString().length - 1) * base / 2;
         return base + extra;
-      }
+      };
 
     }
   }, baseDirective);
@@ -397,7 +397,6 @@ function genericRender(scope, $filter) {
    * Handles showing tooltip on mouseover of node name.
    */
   scope.handleShowTip = function(nodeId) {
-    console.log('test');
     tip
       .html(function(d) {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
