@@ -59,12 +59,6 @@ Glossary
       processing beyond the CDAP processing paradigms. Examples could include running an
       IP-to-Geo lookup and serving user-profiles.      
 
-   Procedure (deprecated)
-      Procedures are used to query CDAP and its Datasets and retrieve results, making
-      synchronous calls into CDAP from an external system and perform server-side
-      processing on-demand. They are similar to a stored procedure in a traditional
-      database system. Procedures are typically used to post-process data at query time.
-
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
       Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or

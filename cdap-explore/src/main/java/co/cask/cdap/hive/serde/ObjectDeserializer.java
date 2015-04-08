@@ -24,7 +24,6 @@ import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -33,7 +32,6 @@ import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
 import java.lang.reflect.Array;
@@ -321,9 +319,6 @@ public class ObjectDeserializer {
     throws NoSuchFieldException, IllegalAccessException {
     if (record instanceof StructuredRecord) {
       return ((StructuredRecord) record).get(fieldName);
-    }
-    if (record instanceof GenericRecord) {
-      return ((GenericRecord) record).get(fieldName);
     }
     Class recordClass = record.getClass();
     Field field = recordClass.getDeclaredField(fieldName);

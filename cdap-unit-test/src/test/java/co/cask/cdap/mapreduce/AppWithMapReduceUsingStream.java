@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -27,7 +28,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -81,15 +81,15 @@ public class AppWithMapReduceUsingStream extends AbstractApplication {
 
   // reads input from the stream as avro and calculates the total prices of all stocks traded
   public static class TickerMapper extends
-    Mapper<LongWritable, GenericStreamEventData<GenericRecord>, Text, FloatWritable> {
+    Mapper<LongWritable, GenericStreamEventData<StructuredRecord>, Text, FloatWritable> {
 
     @Override
-    public void map(LongWritable key, GenericStreamEventData<GenericRecord> eventData, Context context)
+    public void map(LongWritable key, GenericStreamEventData<StructuredRecord> eventData, Context context)
       throws IOException, InterruptedException {
-      GenericRecord body = eventData.getBody();
+      StructuredRecord body = eventData.getBody();
       String ticker = body.get("ticker").toString();
-      Integer numTraded = (Integer) body.get("num_traded");
-      Float price = (Float) body.get("price");
+      Integer numTraded = body.get("num_traded");
+      Float price = body.get("price");
       context.write(new Text(ticker), new FloatWritable(numTraded * price));
     }
   }

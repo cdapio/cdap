@@ -147,7 +147,7 @@ accessed—by other programs.
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the Service are automatically obtained.
 
-The Service can then be discovered in a Flow, Procedure, MapReduce, Spark, or other Service using
+The Service can then be discovered in a Flow, MapReduce, Spark, or other Service using
 the appropriate program context. You may also access a Service in a different Application
 by specifying the Application name in the ``getServiceURL`` call.
 
