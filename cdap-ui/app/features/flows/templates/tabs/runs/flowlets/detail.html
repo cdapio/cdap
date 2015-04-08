@@ -27,9 +27,9 @@
     <a role="tab">Input</a>
   </li>
 
-  <li role="presentation" ng-class="{active: activeTab === 1}" ng-click="activeTab=1">
+  <!-- <li role="presentation" ng-class="{active: activeTab === 1}" ng-click="activeTab=1">
     <a role="tab">Process</a>
-  </li>
+  </li> -->
 
   <li role="presentation" ng-class="{active: activeTab === 2}" ng-click="activeTab=2">
     <a role="tab">Data</a>
@@ -51,22 +51,21 @@
     </thead>
     <tbody>
       <tr ng-repeat="input in inputs track by $index">
+        <td ng-bind="input.name"></td>
         <td>
-          {{input}}
+          <strong ng-bind="input.total | myNumber: 1"></strong> events/s
         </td>
-        <td>
-          <strong>{{ total | myNumber: 1 }}</strong> events/s
-        </td>
-        <td>
+        <td class="table-graph">
           <epoch-line
-            data-history="inputHistory"
-            data-stream="inputStream"
+            data-history="input.history"
+            data-stream="input.stream"
             chart-height="100"
-            chart-width="400"
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
-        <td></td>
+        <td>
+          {{ input.max }}
+        </td>
       </tr>
     </tbody>
   </table>
@@ -84,24 +83,24 @@
 
 
 <!-- DATA -->
-<div ng-if="activeTab === 2">
+<div ng-if="activeTab === 2" ng-controller="FlowletDetailDataController">
   <table class="table table-responsive" ng-if="datasets.length > 0" cask-sortable>
     <thead>
       <th>Dataset</th>
       <th>Reads</th>
       <th>Writes</th>
-      <th>Distribution of ops vs. instances</th>
-      <th>Skew</th>
     </thead>
     <tbody>
       <tr ng-repeat="dataset in datasets">
         <td>
-          {{dataset}}
+          {{ dataset.name }}
         </td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>
+          {{ dataset.reads | myNumber:1 }}
+        </td>
+        <td>
+          {{ dataset.writes | myNumber:1 }}
+        </td>
       </tr>
     </tbody>
   </table>
@@ -122,12 +121,11 @@
     </thead>
     <tbody>
       <tr ng-repeat="output in outputs track by $index">
-        <td>
+        <td class="table-graph">
           <epoch-line
             data-history="outputHistory"
             data-stream="outputStream"
             chart-height="100"
-            chart-width="400"
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
