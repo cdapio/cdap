@@ -51,18 +51,15 @@
     </thead>
     <tbody>
       <tr ng-repeat="input in inputs track by $index">
+        <td ng-bind="input.name"></td>
         <td>
-          {{ input.name }}
+          <strong ng-bind="input.total | myNumber: 1"></strong> events/s
         </td>
-        <td>
-          <strong>{{ input.total | myNumber: 1 }}</strong> events/s
-        </td>
-        <td>
+        <td class="table-graph">
           <epoch-line
             data-history="input.history"
             data-stream="input.stream"
             chart-height="100"
-            chart-width="400"
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
@@ -124,12 +121,11 @@
     </thead>
     <tbody>
       <tr ng-repeat="output in outputs track by $index">
-        <td>
+        <td class="table-graph">
           <epoch-line
             data-history="outputHistory"
             data-stream="outputStream"
             chart-height="100"
-            chart-width="400"
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
