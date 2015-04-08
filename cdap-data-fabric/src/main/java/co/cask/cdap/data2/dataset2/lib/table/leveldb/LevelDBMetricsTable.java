@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
@@ -62,7 +61,7 @@ public class LevelDBMetricsTable implements MetricsTable {
 
   @Override
   public byte[] get(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][] { column }, null, null, -1, null);
+    NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][]{column}, null, null, -1, null);
     if (!result.isEmpty()) {
       return result.get(column);
     }
@@ -97,16 +96,6 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void deleteAll(byte[] prefix) throws Exception {
-    core.deleteRows(prefix);
-  }
-
-  @Override
-  public void delete(Collection<byte[]> rows) throws Exception {
-    core.deleteRows(rows);
-  }
-
-  @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
     for (byte[] column : columns) {
       core.deleteColumn(row, column);
@@ -114,15 +103,9 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
-                          @Nullable FuzzyRowFilter filter) throws IOException {
-    core.deleteRange(start, stop, filter, columns);
-  }
-
-  @Override
-  public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
+  public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
                       @Nullable FuzzyRowFilter filter) throws IOException {
-    return core.scan(start, stop, filter, columns, null);
+    return core.scan(start, stop, filter, null, null);
   }
 
   @Override
