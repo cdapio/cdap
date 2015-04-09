@@ -34,11 +34,9 @@ the License.
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- TODO: remove when FakeSpark doesn't need -->
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>

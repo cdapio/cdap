@@ -21,20 +21,19 @@ import co.cask.cdap.DummyTemplate;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.templates.AdapterSpecification;
-import co.cask.cdap.test.internal.AppFabricClient;
 import com.google.common.io.Files;
-import org.apache.http.HttpResponse;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -44,8 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 /**
  * AdapterService life cycle tests.
@@ -166,13 +163,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertEquals(expected.getConfig(), actual.getConfig());
   }
 
-  private static Attributes generateRequiredAttributes(Class<?> clz) {
-    Attributes attributes = new Attributes();
-    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
-    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    return attributes;
-  }
-
   private static void setupAdapters() throws IOException {
     setupAdapter(DummyTemplate.class);
     setupAdapter(DummyTemplate1.class);
@@ -182,14 +172,9 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {
-    Attributes attributes = generateRequiredAttributes(clz);
-
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().putAll(attributes);
-
-    File adapterJar = AppFabricClient.createDeploymentJar(locationFactory, clz, manifest);
+    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz);
     File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-    Files.copy(adapterJar, destination);
+    Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 
   public static class DummyTemplate1 extends DummyTemplate {

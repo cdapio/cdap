@@ -41,14 +41,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricClient;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -60,6 +60,8 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -514,16 +516,20 @@ public class CLIMainTest extends StandaloneTestBase {
 
     File tempDir = TMP_FOLDER.newFolder();
     try {
-      File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
+      Location adapterJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-      Files.copy(adapterJar, destination);
+      Files.copy(Locations.newInputSupplier(adapterJar), destination);
     } finally {
       DirUtils.deleteDirectoryContents(tempDir);
     }
   }
 
-  private static File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+  private static File createAppJarFile(Class<?> cls) throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    File appJarFile = TMP_FOLDER.newFile();
+    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    return appJarFile;
   }
 
   private static void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {

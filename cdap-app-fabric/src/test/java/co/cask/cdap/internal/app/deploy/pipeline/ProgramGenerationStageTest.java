@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,13 +21,13 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -54,8 +54,8 @@ public class ProgramGenerationStageTest {
     // in real scenarios, the namespace directory would already be created
     Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespaceId());
     Locations.mkdirsIfNotExists(namespaceLocation);
-    LocationFactory rootLf = new LocalLocationFactory();
-    Location appArchive = rootLf.create(JarFinder.getJar(ToyApp.class));
+    LocationFactory jarLf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    Location appArchive = AppJarHelper.createDeploymentJar(jarLf, ToyApp.class);
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
