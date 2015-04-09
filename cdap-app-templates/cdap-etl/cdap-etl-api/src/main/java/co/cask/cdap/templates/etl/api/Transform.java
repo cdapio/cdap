@@ -17,7 +17,9 @@
 package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 
 /**
@@ -29,6 +31,47 @@ import javax.annotation.Nullable;
  * @param <VALUE_OUT> Type of ValueOutput object
  */
 public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements ProgramLifecycle<TransformContext> {
+
+  private final TypeToken<KEY_IN> keyInTypeToken = new TypeToken<KEY_IN>(getClass()) { };
+  private final TypeToken<VALUE_IN> valueInTypeToken = new TypeToken<VALUE_IN>(getClass()) { };
+  private final TypeToken<KEY_OUT> keyOutTypeToken = new TypeToken<KEY_OUT>(getClass()) { };
+  private final TypeToken<VALUE_OUT> valueOutTypeToken = new TypeToken<VALUE_OUT>(getClass()) { };
+
+  /**
+   * Get the Type of {@link KEY_IN}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getKeyInType() {
+    return keyInTypeToken.getType();
+  }
+
+  /**
+   * Get the Type of {@link VALUE_IN}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getValueInType() {
+    return valueInTypeToken.getType();
+  }
+
+  /**
+   * Get the Type of {@link KEY_OUT}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getKeyOutType() {
+    return keyOutTypeToken.getType();
+  }
+
+  /**
+   * Get the Typf of {@link VALUE_OUT}
+   *
+   * @return {@link Type}
+   */
+  public final Type getValueOutType() {
+    return valueOutTypeToken.getType();
+  }
 
   private TransformContext context;
 

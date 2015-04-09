@@ -17,6 +17,9 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import com.google.common.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline.
@@ -25,6 +28,27 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
  * @param <VALUE> Batch Input Value class
  */
 public abstract class BatchSource<KEY, VALUE> {
+
+  private final TypeToken<KEY> keyTypeToken = new TypeToken<KEY>(getClass()) { };
+  private final TypeToken<VALUE> valueTypeToken = new TypeToken<VALUE>(getClass()) { };
+
+  /**
+   * Get the Type of {@link KEY}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getKeyType() {
+    return keyTypeToken.getType();
+  }
+
+  /**
+   * Get the Type of {@link VALUE}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getValueType() {
+    return valueTypeToken.getType();
+  }
 
   /**
    * Configure the Batch Source stage.

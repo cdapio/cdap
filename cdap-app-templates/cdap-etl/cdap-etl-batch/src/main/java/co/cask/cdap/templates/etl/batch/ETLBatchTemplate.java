@@ -91,13 +91,69 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     configureSink(sink, configurer);
     configureTransforms(transform, configurer);
 
-    //TODO: Validate if source, transforms, sink can be tied together
+    // Validate Adapter by making source the key-value types match.
+    validateAdapter(source, sink, transform);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                             String.format("Schedule for %s Adapter", adapterName),
                                             cronEntry));
+  }
+
+  private void validateAdapter(ETLStage source, ETLStage sink, List<ETLStage> transform) throws Exception {
+    String sourceName = source.getName();
+    String sinkName = sink.getName();
+    String sourceClassName = sourceClassMap.get(sourceName);
+    String sinkClassName = sinkClassMap.get(sinkName);
+
+    BatchSource batchSource = (BatchSource) Class.forName(sourceClassName).newInstance();
+    BatchSink batchSink = (BatchSink) Class.forName(sinkClassName).newInstance();
+
+    if (transform.size() == 0) {
+      // No transforms. Check only source and sink.
+      Preconditions.checkArgument(batchSink.getKeyType().getClass().isAssignableFrom(
+        batchSource.getKeyType().getClass()));
+      Preconditions.checkArgument(batchSink.getValueType().getClass().isAssignableFrom(
+        batchSource.getValueType().getClass()));
+    } else {
+      // Check the first and last transform with source and sink.
+      String firstTransformClassName = transformClassMap.get(transform.get(0).getName());
+      String lastTransformClassName = transformClassMap.get(transform.get(transform.size() - 1).getName());
+      Transform firstTransform = (Transform) Class.forName(firstTransformClassName).newInstance();
+      Transform lastTransform = (Transform) Class.forName(lastTransformClassName).newInstance();
+
+      Preconditions.checkArgument(firstTransform.getKeyInType().getClass().isAssignableFrom(
+        batchSource.getKeyType().getClass()));
+      Preconditions.checkArgument(firstTransform.getValueInType().getClass().isAssignableFrom(
+        batchSource.getValueType().getClass()));
+      Preconditions.checkArgument(lastTransform.getKeyOutType().getClass().isAssignableFrom(
+        batchSink.getKeyType().getClass()));
+      Preconditions.checkArgument(lastTransform.getValueOutType().getClass().isAssignableFrom(
+        batchSink.getValueType().getClass()));
+      if (transform.size() > 1) {
+        // Check transform stages.
+        validateTransforms(transform);
+      }
+    }
+  }
+
+  private void validateTransforms(List<ETLStage> transform) throws Exception {
+    for (int i = 0; i < transform.size() - 1; i++) {
+      String transform1 = transformClassMap.get(transform.get(i).getName());
+      String transform2 = transformClassMap.get(transform.get(i + 1).getName());
+      Transform firstTransform = (Transform) Class.forName(transform1).newInstance();
+      Transform secondTransform = (Transform) Class.forName(transform2).newInstance();
+
+      Preconditions.checkArgument(secondTransform.getKeyInType().getClass().isAssignableFrom(
+        firstTransform.getKeyInType().getClass()));
+      Preconditions.checkArgument(secondTransform.getValueInType().getClass().isAssignableFrom(
+        firstTransform.getValueInType().getClass()));
+      Preconditions.checkArgument(secondTransform.getKeyOutType().getClass().isAssignableFrom(
+        firstTransform.getKeyOutType().getClass()));
+      Preconditions.checkArgument(secondTransform.getValueOutType().getClass().isAssignableFrom(
+        firstTransform.getValueOutType().getClass()));
+    }
   }
 
   private void configureSource(ETLStage source, AdapterConfigurer configurer) throws Exception {
