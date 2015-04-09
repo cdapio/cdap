@@ -160,7 +160,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       job.getCredentials().addAll(credentials);
     }
 
-    ClassLoader classLoader = new ApplicationClassLoader(context.getProgram().getClassLoader());
+    ClassLoader classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
     ClassLoaders.setContextClassLoader(classLoader);
 
     job.getConfiguration().setClassLoader(classLoader);

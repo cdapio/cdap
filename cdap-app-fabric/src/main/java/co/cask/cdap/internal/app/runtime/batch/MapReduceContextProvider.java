@@ -27,7 +27,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -47,6 +46,7 @@ public final class MapReduceContextProvider {
   private final TaskAttemptContext taskContext;
   private final MapReduceMetrics.TaskType type;
   private final MapReduceContextConfig contextConfig;
+  private final LocationFactory locationFactory;
   private BasicMapReduceContext context;
   private AbstractMapReduceContextBuilder contextBuilder;
 
@@ -54,6 +54,7 @@ public final class MapReduceContextProvider {
     this.taskContext = context;
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
+    this.locationFactory = new LocalLocationFactory();
     this.contextBuilder = null;
   }
 
@@ -105,7 +106,6 @@ public final class MapReduceContextProvider {
   }
 
   private Program createProgram(MapReduceContextConfig contextConfig) {
-    LocationFactory locationFactory = new LocalLocationFactory();
     Location programLocation;
     if (isLocal(contextConfig.getConfiguration())) {
       // Just create a local location factory. It's for temp usage only as the program location is always absolute.
@@ -128,14 +128,14 @@ public final class MapReduceContextProvider {
 
   /**
    * Returns the {@link ClassLoader} for the MapReduce program. The ClassLoader for MapReduce job is always
-   * an {@link ApplicationClassLoader}, which set by {@link MapReduceRuntimeService} in local mode and created by MR
+   * an {@link MapReduceClassLoader}, which set by {@link MapReduceRuntimeService} in local mode and created by MR
    * framework in distributed mode.
    */
   static ClassLoader getProgramClassLoader(Configuration hConf) {
     ClassLoader classLoader = hConf.getClassLoader();
-    if (!(classLoader instanceof ApplicationClassLoader)) {
+    if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an ApplicationClassLoader");
     }
-    return ((ApplicationClassLoader) classLoader).getProgramClassLoader();
+    return ((MapReduceClassLoader) classLoader).getProgramClassLoader();
   }
 }
