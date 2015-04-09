@@ -17,9 +17,12 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.common.config.ETLStage;
+import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.templates.etl.api.config.ETLConfig;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -41,10 +44,19 @@ public class ETLMapReduceTest extends TestBase {
 
   @Test
   public void testConfig() throws Exception {
-    addDatasetInstance("keyValueTable", "table1").create();
-    addDatasetInstance("keyValueTable", "table2").create();
 
+    // simulate template deployment
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
+
+    // simulate pipeline creation
+    ApplicationTemplate<ETLConfig> appTemplate = new ETLBatchTemplate();
+    ETLConfig adapterConfig = constructETLBatchConfig();
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
+    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
+
+    // add dataset instances that the source and sink added
+    addDatasetInstances(adapterConfigurer);
+    // add some data to the input table
     DataSetManager<KeyValueTable> table1 = getDataset("table1");
     KeyValueTable inputTable = table1.get();
     for (int i = 0; i < 10000; i++) {
@@ -52,10 +64,7 @@ public class ETLMapReduceTest extends TestBase {
     }
     table1.flush();
 
-    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
-    ETLBatchConfig adapterConfig = constructETLBatchConfig();
-    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
+    // add the runtime args that CDAP would normally add to the mapreduce job
     Map<String, String> mapReduceArgs = Maps.newHashMap();
     for (Map.Entry<String, String> entry : adapterConfigurer.getArguments().entrySet()) {
       mapReduceArgs.put(entry.getKey(), entry.getValue());
@@ -70,12 +79,22 @@ public class ETLMapReduceTest extends TestBase {
     }
   }
 
-  private ETLBatchConfig constructETLBatchConfig() {
+  private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
+    for (Map.Entry<String, ImmutablePair<String, DatasetProperties>> entry :
+      configurer.getDatasetInstances().entrySet()) {
+      String typeName = entry.getValue().getFirst();
+      DatasetProperties properties = entry.getValue().getSecond();
+      String instanceName = entry.getKey();
+      addDatasetInstance(typeName, instanceName, properties);
+    }
+  }
+
+  private ETLConfig constructETLBatchConfig() {
     ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(transform);
-    return new ETLBatchConfig("", source, sink, transformList);
+    return new ETLConfig("", source, sink, transformList);
   }
 }

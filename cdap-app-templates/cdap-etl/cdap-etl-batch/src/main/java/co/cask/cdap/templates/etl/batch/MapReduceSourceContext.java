@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.common.config.ETLStage;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
 import java.util.Map;
