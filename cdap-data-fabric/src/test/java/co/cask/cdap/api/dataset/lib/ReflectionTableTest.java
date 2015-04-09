@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.internal.io.ReflectionPutWriter;
 import co.cask.cdap.internal.io.ReflectionRowReader;
 import co.cask.cdap.internal.io.ReflectionRowRecordReader;
@@ -34,6 +34,7 @@ import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -42,8 +43,12 @@ import java.util.Arrays;
 /**
  *
  */
-public class ReflectionTableTest extends AbstractDatasetTest {
-  private static final Id.DatasetInstance users = Id.DatasetInstance.from(NAMESPACE_ID, "users");
+public class ReflectionTableTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance users =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "users");
   private static final User SAMUEL = new User(
     "Samuel L.", "Jackson",
     123,
@@ -142,35 +147,35 @@ public class ReflectionTableTest extends AbstractDatasetTest {
 
   @Test
   public void testPutAndGet() throws Exception {
-    createInstance("table", users, DatasetProperties.builder().build());
+    dsFrameworkUtil.createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance(users);
+      final Table usersTable = dsFrameworkUtil.getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
       assertGetAndPut(usersTable, rowKey, SAMUEL, schema);
     } finally {
-      deleteInstance(users);
+      dsFrameworkUtil.deleteInstance(users);
     }
   }
 
   @Test
   public void testNullFields() throws Exception {
-    createInstance("table", users, DatasetProperties.builder().build());
+    dsFrameworkUtil.createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance(users);
+      final Table usersTable = dsFrameworkUtil.getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
       assertGetAndPut(usersTable, rowKey, SAMUEL, schema);
     } finally {
-      deleteInstance(users);
+      dsFrameworkUtil.deleteInstance(users);
     }
   }
 
   @Test
   public void testTypeProjection() throws Exception {
-    createInstance("table", users, DatasetProperties.builder().build());
+    dsFrameworkUtil.createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance(users);
+      final Table usersTable = dsFrameworkUtil.getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final User2 projected = new User2("Samuel L.", 123L, ((Float) 50000000.02f).doubleValue(), Double.MAX_VALUE,
                                         ByteBuffer.wrap(new byte[]{0, 1, 2}));
@@ -178,7 +183,7 @@ public class ReflectionTableTest extends AbstractDatasetTest {
       final Schema projSchema = new ReflectionSchemaGenerator().generate(User2.class);
 
       // TableDataset is not accessible here, but we know that's the underlying implementation...
-      TransactionExecutor tx = newTransactionExecutor((TransactionAware) usersTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor((TransactionAware) usersTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -193,20 +198,20 @@ public class ReflectionTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance(users);
+      dsFrameworkUtil.deleteInstance(users);
     }
   }
 
   @Test
   public void testStructuredRecordRepresentation() throws Exception {
-    createInstance("table", users, DatasetProperties.builder().build());
+    dsFrameworkUtil.createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance(users);
+      final Table usersTable = dsFrameworkUtil.getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
 
       // TableDataset is not accessible here, but we know that's the underlying implementation...
-      TransactionExecutor tx = newTransactionExecutor((TransactionAware) usersTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor((TransactionAware) usersTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -221,15 +226,15 @@ public class ReflectionTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance(users);
+      dsFrameworkUtil.deleteInstance(users);
     }
   }
 
   @Test
   public void testStructuredRecordProjection() throws Exception {
-    createInstance("table", users, DatasetProperties.builder().build());
+    dsFrameworkUtil.createInstance("table", users, DatasetProperties.builder().build());
     try {
-      final Table usersTable = getInstance(users);
+      final Table usersTable = dsFrameworkUtil.getInstance(users);
       final byte[] rowKey = Bytes.toBytes(123);
       final User2 projected = new User2("Samuel L.", 123L, ((Float) 50000000.02f).doubleValue(), Double.MAX_VALUE,
                                         ByteBuffer.wrap(new byte[]{0, 1, 2}));
@@ -237,7 +242,7 @@ public class ReflectionTableTest extends AbstractDatasetTest {
       final Schema projSchema = new ReflectionSchemaGenerator().generate(User2.class);
 
       // TableDataset is not accessible here, but we know that's the underlying implementation...
-      TransactionExecutor tx = newTransactionExecutor((TransactionAware) usersTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor((TransactionAware) usersTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -252,14 +257,14 @@ public class ReflectionTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance(users);
+      dsFrameworkUtil.deleteInstance(users);
     }
   }
 
   private void assertGetAndPut(final Table table, final byte[] rowKey, final User obj,
                                final Schema schema) throws Exception {
     // TableDataset is not accessible here, but we know that's the underlying implementation...
-    TransactionExecutor tx = newTransactionExecutor((TransactionAware) table);
+    TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor((TransactionAware) table);
     tx.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

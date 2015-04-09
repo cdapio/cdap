@@ -18,13 +18,14 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -33,9 +34,12 @@ import java.util.List;
 /**
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
-public class IndexedObjectStoreTest extends AbstractDatasetTest {
+public class IndexedObjectStoreTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance index = Id.DatasetInstance.from(NAMESPACE_ID, "index");
+  private static final Id.DatasetInstance index =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "index");
 
   @Before
   public void createDataset() throws Exception {
@@ -44,13 +48,13 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @After
   public void deleteDataset() throws Exception {
-    deleteInstance(index);
+    dsFrameworkUtil.deleteInstance(index);
   }
 
   @Test
   public void testLookupByIndex() throws Exception {
-    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -81,8 +85,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexRewrites() throws Exception {
-    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -119,8 +123,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexPruning() throws Exception {
-    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -143,7 +147,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexNoSecondaryKeyChanges() throws Exception {
-    IndexedObjectStore<Feed> indexedFeed = getInstance(index);
+    IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
 
     List<String> categories = ImmutableList.of("C++", "C#");
 
@@ -172,8 +176,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexUpdates() throws Exception {
-    final IndexedObjectStore<Feed> indexedFeed = getInstance(index);
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -197,8 +201,8 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
   }
 
   protected void createIndexedObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
-    createInstance("indexedObjectStore", datasetInstanceId,
-                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+    dsFrameworkUtil.createInstance("indexedObjectStore", datasetInstanceId,
+                                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 
   private byte[][] getCategories(List<String> categories) {

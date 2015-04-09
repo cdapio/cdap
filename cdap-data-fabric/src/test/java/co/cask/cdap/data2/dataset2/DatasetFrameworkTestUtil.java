@@ -38,25 +38,19 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public class AbstractDatasetTest {
+public class DatasetFrameworkTestUtil extends ExternalResource {
+  public static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
-
-  protected static DatasetFramework framework;
   private static final Id.DatasetModule inMemory = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
   private static final Id.DatasetModule core = Id.DatasetModule.from(NAMESPACE_ID, "core");
   private static final Id.DatasetModule fileSet = Id.DatasetModule.from(NAMESPACE_ID, "fileSet");
@@ -64,9 +58,13 @@ public class AbstractDatasetTest {
   private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
   private static final Id.DatasetModule omt = Id.DatasetModule.from(NAMESPACE_ID, "objectMappedTable");
 
-  @BeforeClass
-  public static void init() throws Exception {
+  private TemporaryFolder tmpFolder;
+  private DatasetFramework framework;
 
+  @Override
+  protected void before() throws Throwable {
+    this.tmpFolder = new TemporaryFolder();
+    tmpFolder.create();
     File localDataDir = tmpFolder.newFolder();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
@@ -91,51 +89,63 @@ public class AbstractDatasetTest {
     framework.addModule(omt, new ObjectMappedTableModule());
   }
 
-  @AfterClass
-  public static void destroy() throws Exception {
-    framework.deleteModule(omt);
-    framework.deleteModule(pfs);
-    framework.deleteModule(tpfs);
-    framework.deleteModule(fileSet);
-    framework.deleteModule(core);
-    framework.deleteModule(inMemory);
+  @Override
+  protected void after() {
+    Exception error = null;
+    try {
+      if (framework != null) {
+        framework.deleteModule(omt);
+        framework.deleteModule(pfs);
+        framework.deleteModule(tpfs);
+        framework.deleteModule(fileSet);
+        framework.deleteModule(core);
+        framework.deleteModule(inMemory);
+      }
+    } catch (Exception e) {
+      error = e;
+    }
+    if (tmpFolder != null) {
+      tmpFolder.delete();
+    }
+    if (error != null) {
+      throw Throwables.propagate(error);
+    }
   }
 
-  protected static void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
     framework.addModule(moduleId, module);
   }
 
-  protected static void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
     framework.deleteModule(moduleId);
   }
 
-  protected static void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
+  public void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
     throws IOException, DatasetManagementException {
 
     framework.addInstance(type, datasetInstanceId, properties);
   }
 
-  protected static void deleteInstance(Id.DatasetInstance datasetInstanceId)
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId)
     throws IOException, DatasetManagementException {
     framework.deleteInstance(datasetInstanceId);
   }
 
-  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
+  public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException {
     return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
-  protected static <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId,
-                                                     Map<String, String> arguments)
+  public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments)
     throws DatasetManagementException, IOException {
     return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
-  protected DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 
-  protected static TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
+  public TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
     Preconditions.checkArgument(tables != null);
     return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
   }
