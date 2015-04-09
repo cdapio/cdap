@@ -66,15 +66,19 @@ public class ProgramLifecycleService extends AbstractIdleService {
     LOG.info("Shutting down ProgramLifecycleService");
   }
 
-  public ProgramRuntimeService.RuntimeInfo startProgram(final Id.Program id, final ProgramType programType,
-                                                        Map<String, String> systemArgs, Map<String, String> userArgs,
-                                                        boolean debug)
-    throws IOException {
+  private Program getProgram(Id.Program id, ProgramType programType) throws IOException {
     Program program = store.loadProgram(id, programType);
     if (program == null) {
       throw new FileNotFoundException(String.format("Program not found: Id = %s; Type = %s", id, programType));
     }
+    return program;
+  }
 
+  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final ProgramType programType,
+                                                 Map<String, String> systemArgs, Map<String, String> userArgs,
+                                                 boolean debug)
+    throws IOException {
+    Program program = getProgram(id, programType);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, new SimpleProgramOptions(

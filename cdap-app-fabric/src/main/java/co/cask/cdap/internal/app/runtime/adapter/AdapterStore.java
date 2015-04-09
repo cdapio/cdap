@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.ConfigStore;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Store for Adapter related information.
  */
+//TODO: Combine simple ConfigStore abstractions together.
 public class AdapterStore {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterStore.class);
   private static final String CONFIG_TYPE = "adapter";
@@ -49,12 +51,7 @@ public class AdapterStore {
   public RunId getRunId(Id.Adapter adapter) {
     try {
       final Config adapterConfig = configStore.get(adapter.getNamespaceId(), CONFIG_TYPE, adapter.getId());
-      return new RunId() {
-        @Override
-        public String getId() {
-          return adapterConfig.getProperties().get(RUN_ID);
-        }
-      };
+      return RunIds.fromString(adapterConfig.getProperties().get(RUN_ID));
     } catch (ConfigNotFoundException e) {
       return null;
     }

@@ -193,5 +193,6 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
       templateWorkerSpec.getClassName(), templateWorkerSpec.getName(), templateWorkerSpec.getDescription(),
       runtimeArgs, dataSetInstances.keySet(), resources, instances);
     builder.setWorkerSpec(adapterWorkerSpec);
+    builder.setInstances(instances);
   }
 }

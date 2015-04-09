@@ -114,7 +114,7 @@ public final class ScheduleTaskRunner {
    */
   private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Map<String, String> sysArgs,
                                       Map<String, String> userArgs) throws IOException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(id, type, sysArgs, userArgs, false);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
 
     final ProgramController controller = runtimeInfo.getController();
     final CountDownLatch latch = new CountDownLatch(1);

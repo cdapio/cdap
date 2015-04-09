@@ -390,8 +390,9 @@ public class AdapterService extends AbstractIdleService {
       Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getWorkerSpec().getProperties());
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(workerId, ProgramType.WORKER,
-                                                                                    sysArgs, userArgs, false);
+      store.setWorkerInstances(workerId, adapterSpec.getWorkerSpec().getInstances());
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
+                                                                             sysArgs, userArgs, false);
       adapterStore.setRunId(adapterId, runtimeInfo.getController().getRunId());
     } catch (Throwable t) {
       if (t instanceof FileNotFoundException) {

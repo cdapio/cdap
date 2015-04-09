@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AppWithServices;
-import co.cask.cdap.DummyTemplate;
+import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -61,7 +61,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     CConfiguration conf = getInjector().getInstance(CConfiguration.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    setupAdapter(DummyTemplate.class);
+    setupAdapter(DummyBatchTemplate.class);
     adapterService = getInjector().getInstance(AdapterService.class);
     // this is called here because the service is already started by the test base at this po
     adapterService.registerTemplates();
@@ -76,8 +76,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   public void testAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterName = "myStreamConverter";
-    DummyTemplate.Config config = new DummyTemplate.Config("somesource", "0 0 1 1 *");
-    AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
 
     HttpResponse response = createAdapter(namespaceId, adapterName, adapterConfig);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -100,7 +100,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     List<JsonObject> deployedApps = getAppList(namespaceId);
     Assert.assertEquals(1, deployedApps.size());
     JsonObject deployedApp = deployedApps.get(0);
-    Assert.assertEquals(DummyTemplate.NAME, deployedApp.get("id").getAsString());
+    Assert.assertEquals(DummyBatchTemplate.NAME, deployedApp.get("id").getAsString());
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -140,7 +140,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testRestrictUserApps() throws Exception {
     // Testing that users can not deploy an application
-    HttpResponse response = deploy(AppWithServices.class, DummyTemplate.NAME);
+    HttpResponse response = deploy(AppWithServices.class, DummyBatchTemplate.NAME);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
@@ -148,7 +148,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
 
     // Users can not delete adapter applications
-    response = doDelete(getVersionedAPIPath(String.format("apps/%s", DummyTemplate.NAME),
+    response = doDelete(getVersionedAPIPath(String.format("apps/%s", DummyBatchTemplate.NAME),
                                             Constants.Gateway.API_VERSION_3_TOKEN,
                                             Constants.DEFAULT_NAMESPACE));
     responseString = readResponse(response);
@@ -190,14 +190,14 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   public void testDeployTemplate() throws Exception {
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/templates/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
     response = doPut(
       String.format("%s/namespaces/%s/templates/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyTemplate.NAME), "{}");
+                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyTemplate.NAME);
+    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
   }
 

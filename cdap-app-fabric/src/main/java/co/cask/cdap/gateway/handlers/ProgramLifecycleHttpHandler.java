@@ -1412,7 +1412,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         userArgs.putAll(overrides);
       }
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(id, type, sysArgs, userArgs, debug);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, debug);
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);

@@ -30,7 +30,7 @@ import java.util.UUID;
 /**
  * App Template to test adapter lifecycle.
  */
-public class DummyTemplate extends ApplicationTemplate<DummyTemplate.Config> {
+public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.Config> {
   public static final String NAME = "DummyTemplate";
 
   public static class Config {
