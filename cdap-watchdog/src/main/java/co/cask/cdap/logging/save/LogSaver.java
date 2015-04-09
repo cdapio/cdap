@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
@@ -83,11 +84,15 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   private Map<Integer, Cancellable> kafkaCancelMap;
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
+  private Set<LogMessageProcessor> messageProcessors;
+
 
   @Inject
   public LogSaver(CConfiguration cConf, CheckpointManager checkpointManager,
                   FileMetaDataManager fileMetaDataManager, KafkaClientService kafkaClient,
-                  CConfiguration cConfig, LocationFactory locationFactory) throws Exception {
+                  CConfiguration cConfig, LocationFactory locationFactory,
+                  @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<LogMessageProcessor> messageProcessors)
+                  throws Exception {
     LOG.info("Initializing LogSaver...");
 
     this.topic = KafkaTopic.getTopic();
@@ -165,6 +170,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
     this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
+    this.messageProcessors = messageProcessors;
   }
 
   @Override
@@ -262,9 +268,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
       kafkaCancelCallbackLatchMap.put(part, new CountDownLatch(1));
       kafkaCancelMap.put(part, preparer.consume(
-        new LogCollectorCallback(messageTable, serializer,
-                                 eventBucketIntervalMs, maxNumberOfBucketsInTable,
-                                 kafkaCancelCallbackLatchMap.get(part), logBaseDir)));
+        new KafkaMessageCallback(kafkaCancelCallbackLatchMap.get(part), messageProcessors)));
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
