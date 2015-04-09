@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardAddWdgtCtrl',
-function ($scope, caskFocusManager, Widget) {
+function ($scope, $modalInstance, caskFocusManager, Widget) {
 
   function generateHash (str){
     var hash = 0;
@@ -72,6 +72,10 @@ function ($scope, caskFocusManager, Widget) {
       $scope.currentDashboard.addWidget($scope.model);
     }
     $scope.$close();
+  };
+
+  $scope.closeModal = function() {
+    $modalInstance.close();
   };
 
 });
