@@ -27,7 +27,6 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -36,11 +35,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -180,41 +177,6 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void deleteAll(byte[] prefix) throws Exception {
-    final int deletesPerRound = 1024; // todo make configurable
-    List<Delete> deletes = Lists.newArrayListWithCapacity(deletesPerRound);
-    // repeatedly scan a batch rows to detect their row keys, then delete all in a single call.
-    Scan scan = new Scan();
-    scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
-    scan.setMaxVersions(1); // we only need to see one version of each row
-    scan.setFilter(new FirstKeyOnlyFilter()); // we only need to see the first column (=key) of each row
-    scan.setStartRow(prefix);
-    ResultScanner scanner = this.hTable.getScanner(scan);
-    try {
-      Result result;
-      while ((result = scanner.next()) != null) {
-        byte[] rowKey = result.getRow();
-        if (!Bytes.startsWith(rowKey, prefix)) {
-          break;
-        }
-        deletes.add(new Delete(rowKey));
-        // every 1024 iterations we perform the outstanding deletes
-        if (deletes.size() >= deletesPerRound) {
-          hTable.delete(deletes);
-          deletes.clear();
-        }
-      }
-      // perform any outstanding deletes
-      if (deletes.size() > 0) {
-        hTable.delete(deletes);
-      }
-      hTable.flushCommits();
-    } finally {
-      scanner.close();
-    }
-  }
-
-  @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
@@ -224,63 +186,16 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void delete(Collection<byte[]> rows) throws Exception {
-    List<Delete> deletes = Lists.newArrayList();
-    for (byte[] row : rows) {
-      deletes.add(new Delete(row));
-    }
-    hTable.delete(deletes);
-  }
-
-
-  @Override
-  public void deleteRange(@Nullable byte[] startRow, @Nullable byte[] stopRow,
-                          @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) throws IOException {
-    final int deletesPerRound = 1024; // todo make configurable
-    List<Delete> deletes = Lists.newArrayListWithCapacity(deletesPerRound);
-    // repeatedly scan a batch rows to detect their row keys, then delete all in a single call.
-    Scan scan = new Scan();
-    scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
-    configureRangeScan(scan, startRow, stopRow, columns, filter);
-    ResultScanner scanner = this.hTable.getScanner(scan);
-    try {
-      Result result;
-      while ((result = scanner.next()) != null) {
-        byte[] rowKey = result.getRow();
-        Delete delete = new Delete(rowKey);
-        if (columns != null) {
-          for (byte[] column : columns) {
-            delete.deleteColumns(columnFamily, column);
-          }
-        }
-        deletes.add(delete);
-        // every 1024 iterations we perform the outstanding deletes
-        if (deletes.size() >= deletesPerRound) {
-          hTable.delete(deletes);
-          deletes.clear();
-        }
-      }
-      // perform any outstanding deletes
-      if (deletes.size() > 0) {
-        hTable.delete(deletes);
-      }
-      hTable.flushCommits();
-    } finally {
-      scanner.close();
-    }
-  }
-
-  @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
-                      @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) throws IOException {
+                      @Nullable FuzzyRowFilter filter) throws IOException {
     Scan scan = new Scan();
-    configureRangeScan(scan, startRow, stopRow, columns, filter);
+    configureRangeScan(scan, startRow, stopRow, filter);
     ResultScanner resultScanner = hTable.getScanner(scan);
     return new HBaseScanner(resultScanner, columnFamily);
   }
 
   private Scan configureRangeScan(Scan scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
-                                  @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) {
+                                  @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
 
@@ -290,13 +205,7 @@ public class HBaseMetricsTable implements MetricsTable {
     if (stopRow != null) {
       scan.setStopRow(stopRow);
     }
-    if (columns != null) {
-      for (byte[] column : columns) {
-        scan.addColumn(columnFamily, column);
-      }
-    } else {
-      scan.addFamily(columnFamily);
-    }
+    scan.addFamily(columnFamily);
     if (filter != null) {
       List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(filter.getFuzzyKeysData().size());
       for (ImmutablePair<byte[], byte[]> pair : filter.getFuzzyKeysData()) {
