@@ -14,26 +14,18 @@ angular.module(PKG.name + '.feature.etlapps')
 
         .state('etlapps.list', {
           url: '',
-          templateUrl: '/assets/features/etlapps/templates/list.html'
+          templateUrl: '/assets/features/etlapps/templates/list.html',
+          controller: 'EtlAppsListController'
         })
 
-        .state('etlapps.list.create', {
+        .state('etlapps.create', {
           url: '/create',
-          onEnter: function($bootstrapModal, $state) {
-            $bootstrapModal.open({
-              templateUrl: '/assets/features/etlapps/templates/create.html',
-              size: 'lg',
-              backdrop: true,
-              keyboard: true,
-              controller: 'ETLAppsCreateController'
-            }).result.finally(function() {
-              $state.go('etlapps.list');
-            });
-          }
+          templateUrl: '/assets/features/etlapps/templates/create.html',
+          controller: 'ETLAppsCreateController'
         })
 
         .state('etlapps.detail', {
-          url: '',
+          url: '/:etlappid',
           template: '<h2> EtlApps detail</h2>'
         })
 
