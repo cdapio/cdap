@@ -14,25 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.
+package co.cask.cdap.client;
 
-
-  client;
-
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -43,8 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 /**
  * Test for {@link AdapterClient}.
@@ -56,7 +52,6 @@ import java.util.jar.Manifest;
 public class AdapterClientTest extends ClientTestBase {
 
   private AdapterClient adapterClient;
-  private ApplicationClient applicationClient;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -75,7 +70,6 @@ public class AdapterClientTest extends ClientTestBase {
     super.setUp();
     clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
     adapterClient = new AdapterClient(clientConfig);
-    applicationClient = new ApplicationClient(clientConfig);
   }
 
   @Test
@@ -120,19 +114,11 @@ public class AdapterClientTest extends ClientTestBase {
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {
-
-    Attributes attributes = new Attributes();
-    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
-    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().putAll(attributes);
-
     File tempDir = TMP_FOLDER.newFolder();
     try {
-      File adapterJar = AppFabricClient.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
+      Location adapterJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tempDir), clz);
       File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-      Files.copy(adapterJar, destination);
+      Files.copy(Locations.newInputSupplier(adapterJar), destination);
     } finally {
       DirUtils.deleteDirectoryContents(tempDir);
     }

@@ -4,9 +4,9 @@
     <thead>
       <tr ng-class="{'sort-enabled': services.length>0}">
         <th data-predicate="name" data-predicate-default="reverse">Name</th>
-        <th>Status</th>
-        <th>Instances Provisioned</th>
-        <th>Instances Requested</th>
+        <th data-predicate="status">Status</th>
+        <th data-predicate="provisioned">Instances Provisioned</th>
+        <th data-predicate="requested">Instances Requested</th>
       </tr>
     </thead>
     <tbody>

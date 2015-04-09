@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -26,8 +25,9 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.http.AbstractHttpHandler;
@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import com.google.common.io.ByteStreams;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -58,6 +58,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -67,12 +70,12 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -82,7 +85,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.jar.Manifest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -112,6 +114,9 @@ public class NettyRouterPipelineTests {
 
   public static final ServerResource GATEWAY_SERVER = new ServerResource(hostname, discoveryService,
                                                                          gatewayServiceSupplier);
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @SuppressWarnings("UnusedDeclaration")
   @ClassRule
@@ -176,13 +181,11 @@ public class NettyRouterPipelineTests {
     String path = String.format("http://%s:%d/v1/deploy",
                                 hostname,
                                 ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, AllProgramsApp.class.getName());
 
-    String appPath = JarFinder.getJar(AllProgramsApp.class, manifest);
-    File file = new File(appPath);
-    applicationJarInBytes = Files.toByteArray(file);
+    LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location programJar = AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class);
+
+    applicationJarInBytes = ByteStreams.toByteArray(Locations.newInputSupplier(programJar));
     for (int i = 0; i < num; i++) {
       LOG.info("Deploying {}/{}", i, num);
       URL url = new URL(path);
@@ -192,7 +195,7 @@ public class NettyRouterPipelineTests {
       urlConn.setDoOutput(true);
       urlConn.setDoInput(true);
 
-      Files.copy(file, urlConn.getOutputStream());
+      ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
       urlConn.disconnect();
     }

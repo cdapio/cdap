@@ -303,7 +303,7 @@ public class MetricsDataMigrator {
     Row row;
     long rowCount = 0;
     try {
-      Scanner scanner = metricsTable.scan(null, null, null, null);
+      Scanner scanner = metricsTable.scan(null, null, null);
       while ((row = scanner.next()) != null) {
         byte[] rowKey = row.getRow();
         int offset = 0;

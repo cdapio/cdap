@@ -148,7 +148,7 @@ public final class FactTable {
                 timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
     }
 
-    return timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+    return timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
   }
 
   /**
@@ -178,6 +178,7 @@ public final class FactTable {
           columns.add(column);
         }
 
+        // todo: do deletes efficiently, in batches, not one-by-one
         timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]));
 
         if (exhausted) {
@@ -240,7 +241,7 @@ public final class FactTable {
     byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, allTags), startRow);
-    Scanner scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+    Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     scans++;
     try {
       Row rowResult;
@@ -286,7 +287,7 @@ public final class FactTable {
             break;
           }
           startRow = codec.getNextRowKey(rowResult.getRow(), filledIndex);
-          scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+          scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
         }
       }
     } finally {
@@ -326,7 +327,7 @@ public final class FactTable {
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
     // todo: make configurable
-    Scanner scanner = timeSeriesTable.scan(startRow, endRow, null, fuzzyRowFilter);
+    Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     try {
       Row rowResult;
       while ((rowResult = scanner.next()) != null) {
