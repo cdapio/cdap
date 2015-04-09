@@ -158,5 +158,3 @@ def merger(dict1, dict2, offset):
         
         dict1[term]=new_files
     return dict1
-
- 
