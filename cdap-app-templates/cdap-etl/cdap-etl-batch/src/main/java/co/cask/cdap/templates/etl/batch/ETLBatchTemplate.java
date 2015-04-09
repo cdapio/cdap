@@ -29,6 +29,7 @@ import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.common.config.ETLStage;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -53,7 +54,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
     //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
     //plugins management is completed.
-    initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class));
+    initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class,
+                                        StructuredRecordToGenericRecordTransform.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
@@ -112,10 +114,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
     if (transform.size() == 0) {
       // No transforms. Check only source and sink.
-      Preconditions.checkArgument(batchSink.getKeyType().getClass().isAssignableFrom(
-        batchSource.getKeyType().getClass()));
-      Preconditions.checkArgument(batchSink.getValueType().getClass().isAssignableFrom(
-        batchSource.getValueType().getClass()));
+      Preconditions.checkArgument(batchSink.getKeyType().equals(batchSource.getKeyType()));
+      Preconditions.checkArgument(batchSink.getValueType().equals(batchSource.getValueType()));
     } else {
       // Check the first and last transform with source and sink.
       String firstTransformClassName = transformClassMap.get(transform.get(0).getName());
@@ -123,14 +123,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = (Transform) Class.forName(firstTransformClassName).newInstance();
       Transform lastTransform = (Transform) Class.forName(lastTransformClassName).newInstance();
 
-      Preconditions.checkArgument(firstTransform.getKeyInType().getClass().isAssignableFrom(
-        batchSource.getKeyType().getClass()));
-      Preconditions.checkArgument(firstTransform.getValueInType().getClass().isAssignableFrom(
-        batchSource.getValueType().getClass()));
-      Preconditions.checkArgument(lastTransform.getKeyOutType().getClass().isAssignableFrom(
-        batchSink.getKeyType().getClass()));
-      Preconditions.checkArgument(lastTransform.getValueOutType().getClass().isAssignableFrom(
-        batchSink.getValueType().getClass()));
+      Preconditions.checkArgument(firstTransform.getKeyInType().equals(batchSource.getKeyType()));
+      Preconditions.checkArgument(firstTransform.getValueInType().equals(batchSource.getValueType()));
+      Preconditions.checkArgument(lastTransform.getKeyOutType().equals(batchSink.getKeyType()));
+      Preconditions.checkArgument(lastTransform.getValueOutType().equals(batchSink.getValueType()));
       if (transform.size() > 1) {
         // Check transform stages.
         validateTransforms(transform);
@@ -145,14 +141,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = (Transform) Class.forName(transform1).newInstance();
       Transform secondTransform = (Transform) Class.forName(transform2).newInstance();
 
-      Preconditions.checkArgument(secondTransform.getKeyInType().getClass().isAssignableFrom(
-        firstTransform.getKeyInType().getClass()));
-      Preconditions.checkArgument(secondTransform.getValueInType().getClass().isAssignableFrom(
-        firstTransform.getValueInType().getClass()));
-      Preconditions.checkArgument(secondTransform.getKeyOutType().getClass().isAssignableFrom(
-        firstTransform.getKeyOutType().getClass()));
-      Preconditions.checkArgument(secondTransform.getValueOutType().getClass().isAssignableFrom(
-        firstTransform.getValueOutType().getClass()));
+      Preconditions.checkArgument(secondTransform.getKeyInType().equals(firstTransform.getKeyInType()));
+      Preconditions.checkArgument(secondTransform.getValueInType().equals(firstTransform.getValueInType()));
+      Preconditions.checkArgument(secondTransform.getKeyOutType().equals(firstTransform.getKeyOutType()));
+      Preconditions.checkArgument(secondTransform.getValueOutType().equals(firstTransform.getValueOutType()));
     }
   }
 
