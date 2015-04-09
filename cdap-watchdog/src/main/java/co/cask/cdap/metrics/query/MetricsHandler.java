@@ -216,17 +216,13 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private void executeBatchQueries(HttpRequest request, HttpResponder responder) {
     if (HttpHeaders.getContentLength(request) > 0) {
       String json = request.getContent().toString(Charsets.UTF_8);
-      Map<String, List<QueryRequest>> queries =
-        GSON.fromJson(json, new TypeToken<Map<String, List<QueryRequest>>>() { }.getType());
+      Map<String, QueryRequest> queries =
+        GSON.fromJson(json, new TypeToken<Map<String, QueryRequest>>() { }.getType());
       LOG.trace("Received Queries {}", queries);
 
-      Map<String, List<MetricQueryResult>> queryFinalResponse = Maps.newHashMap();
-      for (Map.Entry<String, List<QueryRequest>> query : queries.entrySet()) {
-        List<MetricQueryResult> queryResults = Lists.newArrayList();
-        for (QueryRequest queryRequest : query.getValue()) {
-          queryResults.add(executeQuery(queryRequest));
-        }
-        queryFinalResponse.put(query.getKey(), queryResults);
+      Map<String, MetricQueryResult> queryFinalResponse = Maps.newHashMap();
+      for (Map.Entry<String, QueryRequest> query : queries.entrySet()) {
+        queryFinalResponse.put(query.getKey(), executeQuery(query.getValue()));
       }
       responder.sendJson(HttpResponseStatus.OK, queryFinalResponse);
     } else {

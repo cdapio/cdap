@@ -385,8 +385,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testAggregateQueryBatch() throws Exception {
 
-    Map<String, List<QueryRequest>> batchQueryInput = Maps.newHashMap();
-
     QueryRequest query1 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
                                                          "flowlet", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
@@ -408,39 +406,30 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                            ImmutableList.of("system.reads", "system.writes"),
                                            ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
 
-    // test batching of multiple queries under a single query-id
-    batchQueryInput.put("testBatch", ImmutableList.of(query1, query2));
-    ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
-      ImmutableMap.of("testBatch", ImmutableList.<ImmutableList<QueryResult>>of(
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
-        ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1))));
+    // test batching of multiple queries
 
-    batchTest(batchQueryInput, expected);
+    ImmutableMap<String, ImmutableList<QueryResult>> expected =
+      ImmutableMap.of("testQuery1",
+                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+                      "testQuery2",
+                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
 
-    // test batching of multiple queries under a single query-id, with one query having multiple metrics
-    batchQueryInput.clear();
-    batchQueryInput.put("testBatch2", ImmutableList.of(query3, query4));
-    expected = ImmutableMap.of("testBatch2", ImmutableList.<ImmutableList<QueryResult>>of(
-      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 4)),
-      ImmutableList.<QueryResult>of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
-                                    new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2))
-    ));
+    batchTest(ImmutableMap.of("testQuery1", query1, "testQuery2", query2), expected);
 
-    batchTest(batchQueryInput, expected);
+    // test batching of multiple queries, with one query having multiple metrics to query
 
-    // test batching with multiple query-id
-    batchQueryInput.clear();
-    batchQueryInput.put("testBatch1", ImmutableList.of(query3));
-    batchQueryInput.put("testBatch2", ImmutableList.of(query4));
-    expected = ImmutableMap.of("testBatch1", ImmutableList.of(
-                                 ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
-                                                                  "system.reads", 1, 4))),
-                               "testBatch2", ImmutableList.of(
-        ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
-                         new QueryResult(ImmutableMap.<String, String>of(), "system.writes", 1, 2)))
+    expected = ImmutableMap.of("testQuery3",
+                               ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
+                                                                "system.reads", 1, 4)),
+                               "testQuery4",
+                               ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
+                                                                "system.reads", 1, 2),
+                                                new QueryResult(ImmutableMap.<String, String>of(),
+                                                                "system.writes", 1, 2))
     );
 
-    batchTest(batchQueryInput, expected);
+    batchTest(ImmutableMap.of("testQuery3", query3, "testQuery4", query4), expected);
+
 
     // test invalid request - query without any query Params and body content
     HttpResponse response = doPost("/v3/metrics/query", null);
@@ -471,18 +460,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                            ImmutableList.of("flowlet"),
                                            ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
 
-    ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected =
-      ImmutableMap.of("timeRangeBatch", ImmutableList.of(
-        ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
-        ImmutableList.of(new QueryResult(ImmutableMap.of("flowlet", "counter"),
-                                         "system.reads", 1, 1),
-                         new QueryResult(ImmutableMap.of("flowlet", "splitter"),
-                                         "system.reads", 2, 3)
-        )));
+    ImmutableMap<String, ImmutableList<QueryResult>> expected =
+      ImmutableMap.of("timeRangeQuery1",
+                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+                      "timeRangeQuery2",
+                      ImmutableList.of(new QueryResult(ImmutableMap.of("flowlet", "counter"), "system.reads", 1, 1),
+                                       new QueryResult(ImmutableMap.of("flowlet", "splitter"), "system.reads", 2, 3)
+                      ));
 
-    List<QueryRequest> queryRequests = ImmutableList.of(query1, query2);
-    Map<String, List<QueryRequest>> batchQueries = ImmutableMap.<String, List<QueryRequest>>of("timeRangeBatch",
-                                                                                       queryRequests);
+    Map<String, QueryRequest> batchQueries = ImmutableMap.of("timeRangeQuery1", query1, "timeRangeQuery2", query2);
     batchTest(batchQueries, expected);
   }
 
@@ -830,24 +816,18 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private  void batchTest(Map<String, List<QueryRequest>> jsonBatch,
-                          ImmutableMap<String, ImmutableList<ImmutableList<QueryResult>>> expected) throws Exception {
+  private  void batchTest(Map<String, QueryRequest> jsonBatch,
+                          ImmutableMap<String, ImmutableList<QueryResult>> expected) throws Exception {
     String url = "/v3/metrics/query";
-    Map<String, List<MetricQueryResult>> results =
-      post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, List<MetricQueryResult>>>() {
-      }.getType());
+    Map<String, MetricQueryResult> results =
+      post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, MetricQueryResult>>() { }.getType());
 
     // check we have all the keys
     Assert.assertEquals(expected.keySet(), results.keySet());
-    for (Map.Entry<String, List<MetricQueryResult>> entry : results.entrySet()) {
-      ImmutableList<ImmutableList<QueryResult>> expectedQueryResult = expected.get(entry.getKey());
-      List<MetricQueryResult> actualQueryResult = entry.getValue();
-      // check list length size
-      Assert.assertEquals(expectedQueryResult.size(), actualQueryResult.size());
-
-      for (int i = 0; i < actualQueryResult.size(); i++) {
-        compareQueryResults(expectedQueryResult.get(i), actualQueryResult.get(i));
-      }
+    for (Map.Entry<String, MetricQueryResult> entry : results.entrySet()) {
+      ImmutableList<QueryResult> expectedQueryResult = expected.get(entry.getKey());
+      MetricQueryResult actualQueryResult = entry.getValue();
+      compareQueryResults(expectedQueryResult, actualQueryResult);
     }
   }
 
