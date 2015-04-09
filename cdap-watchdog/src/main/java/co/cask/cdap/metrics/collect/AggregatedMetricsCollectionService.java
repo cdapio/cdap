@@ -19,6 +19,7 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -62,8 +63,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(new CacheLoader<EmitterKey, AggregatedMetricsEmitter>() {
         @Override
         public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getTags(),
-                                              key.getMetric());
+          return new AggregatedMetricsEmitter(key.getTags(), key.getMetric());
         }
       });
   }
@@ -79,16 +79,33 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    */
   protected abstract void publish(Iterator<MetricValue> metrics) throws Exception;
 
+  /**
+   * @return true if we want to publish metrics about
+   *              the received metrics in {@link #publish(java.util.Iterator)}.
+   */
+  protected boolean isPublishMetaMetrics() {
+    return true;
+  }
+
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
-    Iterator<MetricValue> metricsItor = getMetrics(timestamp);
+
+    final MetricsCollectorIterator metricsItor = new MetricsCollectorIterator(getMetrics(timestamp));
 
     try {
       publish(metricsItor);
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+    }
+
+    if (isPublishMetaMetrics()) {
+      try {
+        publish(metricsItor.getMetaMetrics());
+      } catch (Throwable t) {
+        LOG.error("Failed in publishing meta metrics for timestamp {}.", timestamp, t);
+      }
     }
 
     // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.

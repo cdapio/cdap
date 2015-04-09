@@ -61,6 +61,11 @@ public class AggregatedMetricsCollectionServiceTest {
       protected Scheduler scheduler() {
         return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
       }
+
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
     };
 
     service.startAndWait();

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package co.cask.cdap.archive;
 
 import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.lang.jar.JarResources;
+import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -27,7 +27,9 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Enumeration;
@@ -41,9 +43,12 @@ import java.util.jar.Manifest;
  */
 public class ArchiveBundlerTest {
 
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
   @Test
   public void testBundler() throws Exception {
-    LocationFactory lf = new LocalLocationFactory();
+    LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location out = lf.create(File.createTempFile("testBundler", ".jar").toURI());
 
     try {
@@ -54,10 +59,10 @@ public class ArchiveBundlerTest {
       manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, "META-INF/specification/application.json");
 
       // Create a JAR file based on the class.
-      Location jarfile = lf.create(JarFinder.getJar(WebCrawlApp.class));
+      Location jarFile = AppJarHelper.createDeploymentJar(lf, WebCrawlApp.class);
 
       // Create a bundler.
-      ArchiveBundler bundler = new ArchiveBundler(jarfile);
+      ArchiveBundler bundler = new ArchiveBundler(jarFile);
 
       // Create a bundle with modified manifest and added application.json.
 
@@ -75,7 +80,7 @@ public class ArchiveBundlerTest {
       Assert.assertTrue(newManifest.getMainAttributes().get(ManifestFields.SPEC_FILE)
                           .equals("META-INF/specification/application.json"));
 
-      JarResources oldJar = new JarResources(jarfile);
+      JarResources oldJar = new JarResources(jarFile);
 
       boolean foundAppJson = false;
       while (entries.hasMoreElements()) {

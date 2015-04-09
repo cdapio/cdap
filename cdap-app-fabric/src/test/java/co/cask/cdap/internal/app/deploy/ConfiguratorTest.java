@@ -22,12 +22,15 @@ import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
-import co.cask.cdap.test.internal.DefaultId;
+import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -40,9 +43,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConfiguratorTest {
 
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
   @Test
   public void testInMemoryConfigurator() throws Exception {
-    Location appJar = AppFabricTestHelper.createAppJar(WordCountApp.class);
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(appJar);
