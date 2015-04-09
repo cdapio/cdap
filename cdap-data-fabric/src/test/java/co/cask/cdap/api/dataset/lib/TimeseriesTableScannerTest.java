@@ -18,7 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +30,7 @@ import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,8 +44,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Defines a class to test EntryScanner in TimeseriesTable
  */
-public class TimeseriesTableScannerTest extends AbstractDatasetTest {
-  private static final Id.DatasetInstance facts = Id.DatasetInstance.from(NAMESPACE_ID, "facts");
+public class TimeseriesTableScannerTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance facts =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "facts");
   private static final byte[] ALL_KEY = Bytes.toBytes("a");
   private static final String SRC_TAG = "src";
   private static final String DST_TAG = "dst";
@@ -54,13 +59,13 @@ public class TimeseriesTableScannerTest extends AbstractDatasetTest {
   private static TimeseriesTable table = null;
   @BeforeClass
   public static void setup() throws Exception {
-    createInstance("timeseriesTable", facts, DatasetProperties.EMPTY);
-    table = getInstance(facts);
+    dsFrameworkUtil.createInstance("timeseriesTable", facts, DatasetProperties.EMPTY);
+    table = dsFrameworkUtil.getInstance(facts);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    deleteInstance(facts);
+    dsFrameworkUtil.deleteInstance(facts);
   }
 
   @Test
