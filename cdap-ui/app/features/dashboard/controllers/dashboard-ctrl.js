@@ -52,7 +52,8 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {
-      $state.go($state.current, {tab: 0}, {reload: true});
+      var tabDest = rDashboardsModel.data.length - 1;
+      $state.go('dashboard.user', {tab: tabDest}, {reload: true});
     });
   };
 
