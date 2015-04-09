@@ -44,10 +44,12 @@
 <div ng-if="activeTab === 0" ng-controller="FlowletDetailInputController">
   <table class="table table-responsive" ng-if="inputs.length > 0" cask-sortable>
     <thead>
-      <th>Source</th>
-      <th>Arrival Rate</th>
-      <th>Pending Events</th>
-      <th>Max Pending</th>
+      <tr ng-class="{'sort-enabled': inputs.length>0}">
+        <th data-predicate="name">Source</th>
+        <th data-predicate="total">Arrival Rate</th>
+        <th>Pending Events</th>
+        <th data-predicate="max">Max Pending</th>
+      </tr>
     </thead>
     <tbody>
       <tr ng-repeat="input in inputs track by $index">
@@ -86,9 +88,11 @@
 <div ng-if="activeTab === 2" ng-controller="FlowletDetailDataController">
   <table class="table table-responsive" ng-if="datasets.length > 0" cask-sortable>
     <thead>
-      <th>Dataset</th>
-      <th>Reads</th>
-      <th>Writes</th>
+      <tr ng-class="{'sort-enabled': datasets.length>0}">
+        <th data-predicate="name">Dataset</th>
+        <th data-predicate="reads">Reads</th>
+        <th data-predicate="writes">Writes</th>
+      </tr>
     </thead>
     <tbody>
       <tr ng-repeat="dataset in datasets">
@@ -115,9 +119,11 @@
 <div ng-if="activeTab === 3" ng-controller="FlowletDetailOutputController">
   <table class="table table-responsive" ng-if="outputs.length > 0" cask-sortable>
     <thead>
-      <th>Rate</th>
-      <th>Total</th>
-      <th>Target</th>
+      <tr ng-class="{'sort-enabled': outputs.length>0}">
+        <th>Rate</th>
+        <th data-predicate="total">Total</th>
+        <th data-predicate="output">Target</th>
+      </tr>
     </thead>
     <tbody>
       <tr ng-repeat="output in outputs track by $index">
