@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -154,10 +155,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         while (iterator.hasNext()) {
           Map.Entry<EmitterKey, AggregatedMetricsEmitter> entry = iterator.next();
           MetricValue metricValue = entry.getValue().emit(timestamp);
-          if (metricValue.getValue() != 0) {
-            LOG.trace("Emit metric {}", metricValue);
-            return metricValue;
+
+          if (metricValue.getValue() == 0 && MetricType.COUNTER == metricValue.getType()) {
+            // Ignore 0 values only for COUNTER Metric Type.
+            continue;
           }
+          LOG.trace("Emit metric {}", metricValue);
+          return metricValue;
         }
         return endOfData();
       }
