@@ -141,10 +141,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = (Transform) Class.forName(transform1).newInstance();
       Transform secondTransform = (Transform) Class.forName(transform2).newInstance();
 
-      Preconditions.checkArgument(secondTransform.getKeyInType().equals(firstTransform.getKeyInType()));
-      Preconditions.checkArgument(secondTransform.getValueInType().equals(firstTransform.getValueInType()));
-      Preconditions.checkArgument(secondTransform.getKeyOutType().equals(firstTransform.getKeyOutType()));
-      Preconditions.checkArgument(secondTransform.getValueOutType().equals(firstTransform.getValueOutType()));
+      Preconditions.checkArgument(secondTransform.getKeyInType().equals(firstTransform.getKeyOutType()));
+      Preconditions.checkArgument(secondTransform.getValueInType().equals(firstTransform.getValueOutType()));
     }
   }
 
