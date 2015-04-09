@@ -30,10 +30,10 @@ angular.module(PKG.name + '.feature.flows')
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
                               + '.flowlet.' + input.name
-                              + '&metric=system.process.events.out&start=now-60s&count=60',
+                              + '&metric=system.process.events.out&start=now-60s',
                 streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.stream.' + input.name
-                              + '&metric=system.collect.events&start=now-60s&count=60';
+                              + '&metric=system.collect.events&start=now-60s';
 
             var path = '';
             if (input.sourceType === 'STREAM') {
@@ -45,7 +45,7 @@ angular.module(PKG.name + '.feature.flows')
             // POLLING GRAPH
             dataSrc
               .poll({
-                _cdapPath: path,
+                _cdapPath: path + '&count=60',
                 method: 'POST'
               }, function (res) {
 
@@ -98,11 +98,7 @@ angular.module(PKG.name + '.feature.flows')
             // POLLING ARRIVAL RATE
             dataSrc
               .poll({
-                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.app.' + $state.params.appId
-                              + '.flow.' + $state.params.programId
-                              + '.flowlet.' + input.name
-                              + '&metric=system.process.events.out&start=now-60s&count=1',
+                _cdapPath: path + '&count=1',
                 method: 'POST'
               }, function (res) {
                 if (res.series[0]) {
