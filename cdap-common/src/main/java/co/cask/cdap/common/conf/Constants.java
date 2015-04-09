@@ -471,6 +471,7 @@ public final class Constants {
     public static final String ADDRESS = "log.saver.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
+    public static final String MESSAGE_PROCESSORS =  "log.saver.message.processors";
   }
 
   /**
