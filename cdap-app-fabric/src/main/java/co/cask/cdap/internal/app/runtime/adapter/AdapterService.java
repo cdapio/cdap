@@ -22,6 +22,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -61,6 +63,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -382,7 +385,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
-    Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
+    final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     String workerName = adapterSpec.getWorkerSpec().getName();
     Id.Program workerId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workerName);
     try {
@@ -394,6 +397,29 @@ public class AdapterService extends AbstractIdleService {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
                                                                              sysArgs, userArgs, false);
       adapterStore.setRunId(adapterId, runtimeInfo.getController().getRunId());
+      final ProgramController controller = runtimeInfo.getController();
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void completed() {
+          super.completed();
+          LOG.debug("Adapter {} completed", adapterId);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+
+        @Override
+        public void error(Throwable cause) {
+          super.error(cause);
+          LOG.debug("Adapter {} stopped with error : {}", adapterId, cause);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+
+        @Override
+        public void killed() {
+          super.killed();
+          LOG.debug("Adapter {} killed", adapterId);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
     } catch (Throwable t) {
       if (t instanceof FileNotFoundException) {
         throw new NotFoundException(workerId);
