@@ -64,9 +64,9 @@ public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system",
                                                Constants.Metrics.Tag.COMPONENT, "metrics.processor");
 
-    MetricValue delayAvg = new MetricValue(
-      tags, "processed.delay.avg", currentTimeSec,
-      currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getAverage()), MetricType.COUNTER);
+    MetricValue delaySum = new MetricValue(
+      tags, "processed.delay.sum", currentTimeSec,
+      currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getSum()), MetricType.COUNTER);
 
     MetricValue delayMin = new MetricValue(
       tags, "processed.delay.min", currentTimeSec,
@@ -80,6 +80,6 @@ public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
       tags, "processed.count", currentTimeSec,
       processDelayStats.getCount(), MetricType.COUNTER);
 
-     return ImmutableList.of(delayAvg, delayMin, delayMax, count).iterator();
+     return ImmutableList.of(delaySum, delayMin, delayMax, count).iterator();
   }
 }

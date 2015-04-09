@@ -30,21 +30,21 @@ public class GaugeStatsTest {
 
     stats.gauge(10);
 
-    Assert.assertEquals(10.0f, stats.getAverage(), 1.0f);
+    Assert.assertEquals(10.0f, stats.getSum(), 1.0f);
     Assert.assertEquals(1, stats.getCount());
     Assert.assertEquals(10, stats.getMin(), 1.0f);
     Assert.assertEquals(10, stats.getMax(), 1.0f);
 
     stats.gauge(20);
 
-    Assert.assertEquals(15, stats.getAverage(), 1.0f);
+    Assert.assertEquals(30, stats.getSum(), 1.0f);
     Assert.assertEquals(2, stats.getCount());
     Assert.assertEquals(10, stats.getMin(), 1.0f);
     Assert.assertEquals(20, stats.getMax(), 1.0f);
 
     stats.gauge(30);
 
-    Assert.assertEquals(20.0f, stats.getAverage(), 1.0f);
+    Assert.assertEquals(60.0f, stats.getSum(), 1.0f);
     Assert.assertEquals(3, stats.getCount());
     Assert.assertEquals(10, stats.getMin(), 1.0f);
     Assert.assertEquals(30, stats.getMax(), 1.0f);
