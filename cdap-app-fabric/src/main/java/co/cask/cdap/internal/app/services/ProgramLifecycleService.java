@@ -74,6 +74,17 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return program;
   }
 
+  /**
+   * Start a Program.
+   *
+   * @param id {@link Id.Program}
+   * @param programType {@link ProgramType}
+   * @param systemArgs system arguments
+   * @param userArgs user arguments
+   * @param debug enable debug mode
+   * @return {@link ProgramRuntimeService.RuntimeInfo}
+   * @throws IOException if there is an error starting the program
+   */
   public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final ProgramType programType,
                                                  Map<String, String> systemArgs, Map<String, String> userArgs,
                                                  boolean debug)
@@ -144,6 +155,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return runtimeInfo;
   }
 
+  /**
+   * Stop a Program given its {@link RunId}.
+   *
+   * @param runId {@link RunId} of the program
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
   //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program
   public void stopProgram(RunId runId) throws ExecutionException, InterruptedException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(runId);
@@ -153,6 +171,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Returns runtime information for the given program if it is running,
    * or {@code null} if no instance of it is running.
+   *
+   * @param programId {@link Id.Program}
+   * @param programType {@link ProgramType}
    */
   public ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId, ProgramType programType) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programType).values();

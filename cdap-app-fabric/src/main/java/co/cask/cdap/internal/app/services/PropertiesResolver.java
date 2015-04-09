@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import java.util.Map;
 
 /**
- * Used to resolve properties used while starting a Program.
+ * Used to provide default user and system properties that can be used while starting a Program.
  */
 public class PropertiesResolver {
 
