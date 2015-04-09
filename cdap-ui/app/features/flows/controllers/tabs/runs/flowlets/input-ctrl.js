@@ -17,7 +17,8 @@ angular.module(PKG.name + '.feature.flows')
           if (v.targetName === flowletid) {
             $scope.inputs.push({
               name: v.sourceName,
-              max: 0
+              max: 0,
+              type: v.sourceType
             });
           }
         });
@@ -25,14 +26,26 @@ angular.module(PKG.name + '.feature.flows')
         if ($scope.inputs.length > 0) {
 
           angular.forEach($scope.inputs, function (input) {
-            // POLLING GRAPH
-            dataSrc
-              .poll({
-                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+            var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
                               + '.flowlet.' + input.name
                               + '&metric=system.process.events.out&start=now-60s&count=60',
+                streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
+                              + '.stream.' + input.name
+                              + '&metric=system.collect.events&start=now-60s&count=60';
+
+            var path = '';
+            if (input.sourceType === 'STREAM') {
+              path = streamPath;
+            } else {
+              path = flowletPath;
+            }
+
+            // POLLING GRAPH
+            dataSrc
+              .poll({
+                _cdapPath: path,
                 method: 'POST'
               }, function (res) {
 
@@ -59,6 +72,25 @@ angular.module(PKG.name + '.feature.flows')
                   ];
 
                   input.max = Math.max.apply(Math, v.map(function(o){return o.y;}));
+                } else {
+                  var val = [];
+
+                  for (var i = 60; i > 0; i--) {
+                    val.push({
+                      time: Math.floor((new Date()).getTime()/1000 - (i)),
+                      y: 0
+                    });
+                  }
+
+                  if (input.history) {
+                    input.stream = val.slice(-1);
+                  }
+
+                  input.history = [{
+                    label: 'output',
+                    values: val
+                  }];
+
                 }
 
               });

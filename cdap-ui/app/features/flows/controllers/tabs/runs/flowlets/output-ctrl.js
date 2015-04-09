@@ -32,7 +32,26 @@ angular.module(PKG.name + '.feature.flows')
             }, function(res) {
               if (res.series[0]) {
                 updateOutput(res.series[0].data);
-              }
+              } else {
+                  var val = [];
+
+                  for (var i = 60; i > 0; i--) {
+                    val.push({
+                      time: Math.floor((new Date()).getTime()/1000 - (i)),
+                      y: 0
+                    });
+                  }
+
+                  if ($scope.outputHistory) {
+                    $scope.outputStream = val.slice(-1);
+                  }
+
+                  $scope.outputHistory = [{
+                    label: 'output',
+                    values: val
+                  }];
+
+                }
             });
 
           function updateOutput(newVal) {
