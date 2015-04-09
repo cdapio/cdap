@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -89,6 +90,7 @@ public class AdapterService extends AbstractIdleService {
   private final ProgramLifecycleService lifecycleService;
   private final Store store;
   private final AdapterStore adapterStore;
+  private final PropertiesResolver resolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   // template name to template info mapping
   private Map<String, ApplicationTemplateInfo> appTemplateInfos;
@@ -101,7 +103,8 @@ public class AdapterService extends AbstractIdleService {
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
                         @Named("adapters")
                         ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
-                        NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService) {
+                        NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService,
+                        PropertiesResolver resolver) {
     this.configuration = configuration;
     this.adapterStore = adapterStore;
     this.scheduler = scheduler;
@@ -112,6 +115,7 @@ public class AdapterService extends AbstractIdleService {
     this.adapterManagerFactory = adapterManagerFactory;
     this.appTemplateInfos = Maps.newHashMap();
     this.fileToTemplateMap = Maps.newHashMap();
+    this.resolver = resolver;
   }
 
   @Override
@@ -382,9 +386,12 @@ public class AdapterService extends AbstractIdleService {
     String workerName = adapterSpec.getWorkerSpec().getName();
     Id.Program workerId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workerName);
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
-        workerId, ProgramType.WORKER, Maps.<String, String>newHashMap(), adapterSpec.getWorkerSpec().getProperties(),
-        false);
+      Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
+      Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      // Override resolved preferences with adapter worker spec properties.
+      userArgs.putAll(adapterSpec.getWorkerSpec().getProperties());
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(workerId, ProgramType.WORKER,
+                                                                                    sysArgs, userArgs, false);
       adapterStore.setRunId(adapterId, runtimeInfo.getController().getRunId());
     } catch (Throwable t) {
       if (t instanceof FileNotFoundException) {

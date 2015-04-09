@@ -20,16 +20,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.RunIds;
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -53,13 +49,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
-  private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  public ProgramLifecycleService(Store store, CConfiguration cConf, ProgramRuntimeService runtimeService) {
+  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService) {
     this.store = store;
     this.runtimeService = runtimeService;
-    this.queueResolver = new SchedulerQueueResolver(cConf, store);
   }
 
   @Override
@@ -73,18 +67,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   public ProgramRuntimeService.RuntimeInfo startProgram(final Id.Program id, final ProgramType programType,
-                                                        final Map<String, String> sysArgs,
-                                                        final Map<String, String> userArgs, boolean debug)
+                                                        Map<String, String> systemArgs, Map<String, String> userArgs,
+                                                        boolean debug)
     throws IOException {
     Program program = store.loadProgram(id, programType);
     if (program == null) {
       throw new FileNotFoundException(String.format("Program not found: Id = %s; Type = %s", id, programType));
     }
 
+    BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
-    Map<String, String> basicSystemArgs = getBasicSystemArguments(id.getNamespace());
-    basicSystemArgs.putAll(sysArgs);
-    BasicArguments systemArguments = new BasicArguments(basicSystemArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, new SimpleProgramOptions(
       id.getId(), systemArguments, userArguments, debug));
 
@@ -146,12 +138,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }, Threads.SAME_THREAD_EXECUTOR);
     }
     return runtimeInfo;
-  }
-
-  private Map<String, String> getBasicSystemArguments(Id.Namespace namespaceId) {
-    Map<String, String> systemArgs = Maps.newHashMap();
-    systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(namespaceId));
-    return systemArgs;
   }
 
   //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program

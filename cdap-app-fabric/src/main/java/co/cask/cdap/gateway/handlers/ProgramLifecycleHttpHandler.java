@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -60,7 +61,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -117,6 +117,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final PropertiesResolver propertiesResolver;
   private MRJobClient mrJobClient;
 
   /**
@@ -188,7 +189,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      ProgramLifecycleService lifecycleService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
+                                     PropertiesResolver propertiesResolver) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
@@ -200,6 +202,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobClient = mrJobClient;
+    this.propertiesResolver = propertiesResolver;
   }
 
   /**
@@ -1403,16 +1406,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
-                                                                            type.getCategoryName(), id.getId());
+      Map<String, String> sysArgs = propertiesResolver.getSystemProperties(id, type);
+      Map<String, String> userArgs = propertiesResolver.getUserProperties(id, type);
       if (overrides != null) {
-        for (Map.Entry<String, String> entry : overrides.entrySet()) {
-          userArgs.put(entry.getKey(), entry.getValue());
-        }
+        userArgs.putAll(overrides);
       }
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
-        id, type, Maps.<String, String>newHashMap(), userArgs, debug);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(id, type, sysArgs, userArgs, debug);
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);

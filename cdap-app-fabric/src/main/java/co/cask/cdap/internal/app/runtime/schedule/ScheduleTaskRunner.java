@@ -17,17 +17,15 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -54,14 +52,14 @@ public final class ScheduleTaskRunner {
 
   private final ProgramLifecycleService lifecycleService;
   private final Store store;
-  private final PreferencesStore preferencesStore;
   private final ListeningExecutorService executorService;
+  private final PropertiesResolver propertiesResolver;
 
-  public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService, PreferencesStore preferencesStore,
-                            ListeningExecutorService taskExecutor) {
+  public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
+                            PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor) {
     this.store = store;
     this.lifecycleService = lifecycleService;
-    this.preferencesStore = preferencesStore;
+    this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
   }
 
@@ -70,29 +68,27 @@ public final class ScheduleTaskRunner {
    *
    * @param programId Program Id
    * @param programType Program type.
-   * @param arguments Arguments that would be supplied as system runtime arguments for the program.
+   * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
    * @return a {@link ListenableFuture} object that completes when the program completes
    * @throws TaskExecutionException if program is already running or program is not found.
    * @throws IOException if program failed to start.
    */
-  public ListenableFuture<?> run(Id.Program programId, ProgramType programType, Arguments arguments)
+  public ListenableFuture<?> run(Id.Program programId, ProgramType programType, Map<String, String> systemOverrides)
     throws TaskExecutionException, IOException {
     Map<String, String> userArgs = Maps.newHashMap();
+    Map<String, String> systemArgs = Maps.newHashMap();
     try {
-      String scheduleName = arguments.getOption(ProgramOptionConstants.SCHEDULE_NAME);
+      String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
       Preconditions.checkNotNull(store.getApplication(programId.getApplication()), "Application Not Found");
       ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
       Preconditions.checkNotNull(spec, "Schedule not found");
 
-      userArgs.putAll(spec.getProperties());
-
-      Map<String, String> runtimeArgs = preferencesStore.getResolvedProperties(programId.getNamespaceId(),
-                                                                               programId.getApplicationId(),
-                                                                               programType.getCategoryName(),
-                                                                               programId.getId());
-
       // Schedule properties are overriden by resolved preferences
-      userArgs.putAll(runtimeArgs);
+      userArgs.putAll(spec.getProperties());
+      userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
+
+      systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
+      systemArgs.putAll(systemOverrides);
 
       boolean runMultipleProgramInstances =
         Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
@@ -108,7 +104,7 @@ public final class ScheduleTaskRunner {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
 
-    return execute(programId, programType, arguments, new BasicArguments(userArgs));
+    return execute(programId, programType, systemArgs, userArgs);
   }
 
   /**
@@ -116,10 +112,9 @@ public final class ScheduleTaskRunner {
    *
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Arguments sysArgs,
-                                      Arguments userArgs) throws IOException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(
-      id, type, sysArgs.asMap(), userArgs.asMap(), false);
+  private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Map<String, String> sysArgs,
+                                      Map<String, String> userArgs) throws IOException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.startProgram(id, type, sysArgs, userArgs, false);
 
     final ProgramController controller = runtimeInfo.getController();
     final CountDownLatch latch = new CountDownLatch(1);

@@ -21,10 +21,9 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -63,21 +62,19 @@ final class TimeScheduler implements Scheduler {
   private org.quartz.Scheduler scheduler;
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
   private final ProgramLifecycleService lifecycleService;
-  private final PreferencesStore preferencesStore;
-  private final CConfiguration cConf;
+  private final PropertiesResolver propertiesResolver;
   private ListeningExecutorService taskExecutorService;
   private boolean schedulerStarted;
   private final Store store;
 
   @Inject
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
-                ProgramLifecycleService lifecycleService, PreferencesStore preferencesStore, CConfiguration cConf) {
+                ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver) {
     this.schedulerSupplier = schedulerSupplier;
     this.store = store;
     this.lifecycleService = lifecycleService;
     this.scheduler = null;
-    this.preferencesStore = preferencesStore;
-    this.cConf = cConf;
+    this.propertiesResolver = propertiesResolver;
     this.schedulerStarted = false;
   }
 
@@ -339,8 +336,8 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, lifecycleService, preferencesStore,
-                                                          cConf, taskExecutorService);
+          return new DefaultSchedulerService.ScheduledJob(store, lifecycleService, propertiesResolver,
+                                                          taskExecutorService);
         } else {
           try {
             return jobClass.newInstance();

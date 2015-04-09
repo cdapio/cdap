@@ -16,15 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -50,12 +45,10 @@ public class DefaultSchedulerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
-    private final SchedulerQueueResolver schedulerQueueResolver;
 
-    ScheduledJob(Store store, ProgramLifecycleService lifecycleService, PreferencesStore preferencesStore,
-                 CConfiguration cConf, ListeningExecutorService taskExecutor) {
-      this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
-      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, preferencesStore, taskExecutor);
+    ScheduledJob(Store store, ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
+                 ListeningExecutorService taskExecutor) {
+      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, taskExecutor);
     }
 
     @Override
@@ -75,19 +68,13 @@ public class DefaultSchedulerService {
 
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-
       builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
-      String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
-      if (schedulerQueue != null) {
-        builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-      }
-
-      Arguments args = new BasicArguments(builder.build());
 
       try {
-        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType, args).get();
+        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType,
+                       builder.build()).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       } catch (Throwable t) {

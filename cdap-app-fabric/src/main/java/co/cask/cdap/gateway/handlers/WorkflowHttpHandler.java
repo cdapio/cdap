@@ -31,6 +31,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -71,9 +72,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              Configuration hConf, CConfiguration configuration, ProgramRuntimeService runtimeService,
                              DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin, Scheduler scheduler,
                              PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory,
-                             MRJobClient mrJobClient, ProgramLifecycleService lifecycleService) {
+                             MRJobClient mrJobClient, ProgramLifecycleService lifecycleService,
+                             PropertiesResolver propertiesResolver) {
     super(authenticator, store, configuration, runtimeService, lifecycleService, discoveryServiceClient,
-          queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient);
+          queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient, propertiesResolver);
     this.workflowClient = workflowClient;
   }
 
