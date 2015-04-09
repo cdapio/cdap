@@ -89,3 +89,6 @@ suites:
       - recipe[cdap::web_app_init]
       - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.2' } }
+  - name: sdk
+    run_list:
+      - recipe[cdap::sdk]
