@@ -52,7 +52,7 @@ public class GaugeStats {
   public long getSum() {
     long sum = 0;
     for (Long value : values.elementSet()) {
-      sum += value;
+      sum += value * values.count(value);
     }
 
     return sum;

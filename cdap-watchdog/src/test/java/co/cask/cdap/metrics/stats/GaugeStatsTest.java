@@ -48,6 +48,13 @@ public class GaugeStatsTest {
     Assert.assertEquals(3, stats.getCount());
     Assert.assertEquals(10, stats.getMin(), 1.0f);
     Assert.assertEquals(30, stats.getMax(), 1.0f);
-  }
 
+    stats.gauge(30);
+
+    Assert.assertEquals(90.0f, stats.getSum(), 1.0f);
+    Assert.assertEquals(4, stats.getCount());
+    Assert.assertEquals(10, stats.getMin(), 1.0f);
+    Assert.assertEquals(30, stats.getMax(), 1.0f);
+
+  }
 }
