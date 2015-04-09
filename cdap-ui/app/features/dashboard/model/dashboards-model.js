@@ -282,9 +282,6 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       d.columns.push([]);
     }
 
-    // default widget in first column
-    d.columns[0].push(new Widget({type:'welcome'}));
-
     this.data.push(d);
 
     // save to backend
