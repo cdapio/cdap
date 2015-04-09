@@ -21,6 +21,7 @@
 %w(ark java nodejs).each do |recipe|
   include_recipe recipe
 end
+
 link '/usr/bin/node' do
   to '/usr/local/bin/node'
   action :create
