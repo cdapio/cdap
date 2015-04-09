@@ -53,6 +53,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
+  private static final String HCONF_ATTR_ADAPTER_NAME = "hconf.program.adapter.name";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -70,7 +71,12 @@ public final class MapReduceContextConfig {
                   Transaction tx, String programJarName) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    setWorkflowBatch(context.getWorkflowBatch());
+    if (context.getWorkflowBatch() != null) {
+      setWorkflowBatch(context.getWorkflowBatch());
+    }
+    if (context.getAdapterName() != null) {
+      setAdapterName(context.getAdapterName());
+    }
     setArguments(context.getRuntimeArguments());
     setProgramJarName(programJarName);
     setConf(conf);
@@ -117,15 +123,20 @@ public final class MapReduceContextConfig {
   }
 
   private void setWorkflowBatch(String workflowBatch) {
-    if (workflowBatch != null) {
-      jobContext.getConfiguration().set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
-    }
+    jobContext.getConfiguration().set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
   }
 
   public String getWorkflowBatch() {
     return jobContext.getConfiguration().get(HCONF_ATTR_WORKFLOW_BATCH);
   }
 
+  private void setAdapterName(String adapterName) {
+    jobContext.getConfiguration().set(HCONF_ATTR_ADAPTER_NAME, adapterName);
+  }
+
+  public String getAdapterName() {
+    return jobContext.getConfiguration().get(HCONF_ATTR_ADAPTER_NAME);
+  }
 
   private void setProgramJarName(String programJarName) {
     jobContext.getConfiguration().set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);

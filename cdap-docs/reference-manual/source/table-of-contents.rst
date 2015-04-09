@@ -11,9 +11,9 @@ CDAP Reference Manual Table of Contents
 
     Introduction <index>
     Supported Characters <characters>
-    HTTP RESTful API <http-restful-api/index>
-    Javadocs <javadocs/index>
-    Java Client API <java-client-api>
     Command Line Interface API <cli-api>
+    HTTP RESTful API <http-restful-api/index>
+    Java Client API <java-client-api>
+    Javadocs <javadocs/index>
     Trademarks, Licenses, and Dependencies <licenses/index>
 

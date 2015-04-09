@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 
@@ -23,7 +24,7 @@ import java.util.List;
 
 /**
  * Defines a query to perform Exploration and Search on {@link MetricStore} data.
- * Given a list of {@link TagValue} this explore query can be used
+ * Given a list of {@link co.cask.cdap.api.dataset.lib.cube.TagValue} this explore query can be used
  * to find next set of tags available or the measureNames belonging to this tag list.
  */
 public class MetricSearchQuery {

@@ -94,6 +94,7 @@ public final class Constants {
     public static final String WORKER_THREADS = "app.worker.threads";
     public static final String APP_TEMPLATE_DIR = "app.template.dir";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
+    public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
 
     /**
      * Defaults.

@@ -32,11 +32,13 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -57,17 +59,17 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   protected final Program workflowProgram;
   private final RunId runId;
   private final Arguments userArguments;
-  private final long logicalStartTime;
+  private final Arguments systemArguments;
 
-  public AbstractProgramWorkflowRunner(Arguments runtimeArguments, RunId runId, Program workflowProgram,
-                                       long logicalStartTime, ProgramRunnerFactory programRunnerFactory,
-                                       WorkflowSpecification workflowSpec) {
-    this.userArguments = runtimeArguments;
+  public AbstractProgramWorkflowRunner(RunId runId, Program workflowProgram,
+                                       ProgramRunnerFactory programRunnerFactory,
+                                       WorkflowSpecification workflowSpec, ProgramOptions workflowProgramOptions) {
+    this.userArguments = workflowProgramOptions.getUserArguments();
     this.runId = runId;
     this.workflowProgram = workflowProgram;
-    this.logicalStartTime = logicalStartTime;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowSpec = workflowSpec;
+    this.systemArguments = workflowProgramOptions.getArguments();
   }
 
   @Override
@@ -84,13 +86,13 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
    * @return a {@link Callable} of {@link RuntimeContext} for this {@link Program}
    */
   protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
+    Map<String, String> systemArgumentsMap = Maps.newHashMap();
+    systemArgumentsMap.putAll(systemArguments.asMap());
+    systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
-      new BasicArguments(ImmutableMap.of(
-        ProgramOptionConstants.RUN_ID, runId.getId(),
-        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime),
-        ProgramOptionConstants.WORKFLOW_BATCH, name
-      )),
+      new BasicArguments(ImmutableMap.copyOf(systemArgumentsMap)),
       new BasicArguments(RuntimeArguments.extractScope(Scope.scopeFor(program.getType().getCategoryName()), name,
                                                        userArguments.asMap()))
     );

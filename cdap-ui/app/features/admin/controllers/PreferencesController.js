@@ -18,6 +18,26 @@ angular.module(PKG.name + '.feature.admin')
     $scope.preferences = [];
 
     $scope.loadProperties = function () {
+      if (source !== 'SYSTEM') {
+        dataSrc
+          .request({
+            _cdapPath: '/preferences'
+          })
+          .then(function (res) {
+
+            var arr = [];
+
+            angular.forEach(res, function(v, k) {
+              arr.push({
+                key: k,
+                value: v
+              });
+            });
+
+            $scope.systemPreferences = arr;
+          });
+      }
+
       dataSrc
         .request({
           _cdapPath: path

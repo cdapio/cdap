@@ -28,6 +28,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
@@ -131,6 +132,7 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
+  private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
 
   private static final String adapterFolder = "adapter";
@@ -176,6 +178,7 @@ public abstract class AppFabricTestBase {
     streamService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
+    streamAdmin = injector.getInstance(StreamAdmin.class);
 
     createNamespaces();
   }
@@ -185,11 +188,11 @@ public abstract class AppFabricTestBase {
     deleteNamespaces();
     streamService.stopAndWait();
     appFabricServer.stopAndWait();
+    metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-    metricsCollectionService.stopAndWait();
   }
 
   protected String getAPIVersion() {
@@ -321,22 +324,30 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName);
+    return deploy(application, null, null, appName, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null);
+    return deploy(application, apiVersion, namespace, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                @Nullable String appName) throws Exception {
+    return deploy(application, apiVersion, namespace, appName, null);
   }
 
   /**
-   * Deploys an application with (optionally) a defined app name
+   * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                       @Nullable String appName) throws Exception {
+                                       @Nullable String appName, @Nullable String appVersion) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
+    if (appVersion != null) {
+      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
+    }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
@@ -684,5 +695,13 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
+  }
+
+  protected boolean datasetExists(Id.DatasetInstance datasetID) throws Exception {
+    return dsOpService.exists(datasetID);
+  }
+
+  protected boolean streamExists(Id.Stream streamID) throws Exception {
+    return streamAdmin.exists(streamID);
   }
 }

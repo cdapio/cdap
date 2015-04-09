@@ -7,8 +7,10 @@
         bs-popover>
     <span>
       <span class="badge">{{ errorCount() }}</span>
-      <ng-pluralize data-count="errorCount()"
-          data-when="{'one': 'Error', 'other': 'Errors'}"></ng-pluralize>
+      <span class="error-text hidden-sm">
+        <ng-pluralize data-count="errorCount()"
+            data-when="{'one': 'Error', 'other': 'Errors'}"></ng-pluralize>
+      </span>
     </span>
   </button>
 </div>

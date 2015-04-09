@@ -26,6 +26,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -56,20 +57,34 @@ public final class RunIds {
    * guaranteed to generate at least 10000 unique UUIDs for the millisecond.
    */
   public static RunId generate() {
-    return new TimeBasedRunId(generateUUIDForTime(System.currentTimeMillis()));
-  }
-
-  public static RunId fromString(String id) {
-    return new TimeBasedRunId(UUID.fromString(id));
+    return new RunIdImpl(generateUUIDForTime(System.currentTimeMillis()));
   }
 
   /**
-   * @return time in milliseconds from the UUID if it is a time-based UUID, -1 otherwise.
+   * Converts string representation of run id into {@link RunId}l
    */
-  public static long getTimeMillis(RunId runId) {
+  public static RunId fromString(String id) {
+    return new RunIdImpl(UUID.fromString(id));
+  }
+
+  /**
+   * Returns time-based UUID for given time. This method is recommended to be used only for testing.
+   * @param timeMillis time since epoch
+   * @return time-based UUID.
+   */
+  @VisibleForTesting
+  public static RunId generate(long timeMillis) {
+    return new RunIdImpl(generateUUIDForTime(timeMillis));
+  }
+
+  /**
+   * @return time from the UUID if it is a time-based UUID, -1 otherwise.
+   */
+  public static long getTime(RunId runId, TimeUnit timeUnit) {
     UUID uuid = UUID.fromString(runId.getId());
     if (uuid.version() == 1 && uuid.variant() == 2) {
-      return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
+      long timeInMilliseconds = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
+      return timeUnit.convert(timeInMilliseconds, TimeUnit.MILLISECONDS);
     }
     return -1;
   }
@@ -117,10 +132,10 @@ public final class RunIds {
     return new java.util.UUID(upperLong, lowerLong);
   }
 
-  private static class TimeBasedRunId implements RunId {
+  private static class RunIdImpl implements RunId {
     private final UUID id;
 
-    public TimeBasedRunId(UUID id) {
+    public RunIdImpl(UUID id) {
       this.id = id;
     }
 
@@ -143,7 +158,7 @@ public final class RunIds {
         return false;
       }
 
-      TimeBasedRunId that = (TimeBasedRunId) o;
+      RunIdImpl that = (RunIdImpl) o;
 
       return Objects.equal(this.id, that.id);
     }

@@ -1,5 +1,25 @@
-<h3> {{ heading }}</h3>
+<h2> {{ heading }}</h2>
+<br/>
+<div class="system-preferences" ng-if="systemPreferences.length > 0">
+  <h3>System Preferences:</h3>
 
+  <table class="table table-bordered table-responsive" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': systemPreferences.length>0}">
+        <th data-predicate="key" data-predicate-default="reverse">Key</th>
+        <th data-predicate="value" data-predicate-default="reverse">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="pref in systemPreferences | orderBy:sortable.predicate:sortable.reverse">
+        <td>{{ pref.key }}</td>
+        <td>{{ pref.value }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr/>
 <form>
   <div class="form-group">
     <div class="row">

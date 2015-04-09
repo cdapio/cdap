@@ -50,16 +50,12 @@ public class DefaultSchedulerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskRunner taskRunner;
-    private final CConfiguration cConf;
-    private final Store store;
     private final SchedulerQueueResolver schedulerQueueResolver;
 
     ScheduledJob(Store store, ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore,
                  CConfiguration cConf, ListeningExecutorService taskExecutor) {
-      this.store = store;
-      this.cConf = cConf;
       this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
-      taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore, taskExecutor);
+      this.taskRunner = new ScheduleTaskRunner(store, programRuntimeService, preferencesStore, taskExecutor);
     }
 
     @Override

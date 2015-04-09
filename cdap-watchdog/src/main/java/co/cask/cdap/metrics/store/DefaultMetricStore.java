@@ -16,6 +16,15 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
@@ -23,21 +32,12 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.store.cube.Aggregation;
-import co.cask.cdap.metrics.store.cube.Cube;
-import co.cask.cdap.metrics.store.cube.CubeDeleteQuery;
-import co.cask.cdap.metrics.store.cube.CubeExploreQuery;
-import co.cask.cdap.metrics.store.cube.CubeFact;
-import co.cask.cdap.metrics.store.cube.CubeQuery;
-import co.cask.cdap.metrics.store.cube.DefaultAggregation;
-import co.cask.cdap.metrics.store.cube.DefaultCube;
-import co.cask.cdap.metrics.store.cube.FactTableSupplier;
-import co.cask.cdap.metrics.store.cube.TimeSeries;
-import co.cask.cdap.metrics.store.timeseries.FactTable;
-import co.cask.cdap.metrics.store.timeseries.MeasureType;
+import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
+import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
+import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
+import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -225,7 +225,7 @@ public class DefaultMetricStore implements MetricStore {
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, null, Maps.<String, String>newHashMap());
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
       cube.get().delete(query);
     }
   }
@@ -248,7 +248,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getMetricName(), query.getSliceByTags());
+                               query.getSliceByTags(), query.getMetricName());
   }
 
   @Override

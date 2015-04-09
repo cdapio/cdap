@@ -22,15 +22,13 @@ import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
 import org.apache.twill.filesystem.Location;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
  *
  */
-public class ApplicationWithPrograms implements Closeable {
+public class ApplicationWithPrograms {
   private final Id.Application id;
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpecification;
@@ -75,10 +73,5 @@ public class ApplicationWithPrograms implements Closeable {
 
   public Iterable<Program> getPrograms() {
     return programs;
-  }
-
-  @Override
-  public void close() throws IOException {
-    applicationDeployable.close();
   }
 }

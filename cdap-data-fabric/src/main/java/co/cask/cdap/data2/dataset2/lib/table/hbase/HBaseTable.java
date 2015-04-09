@@ -21,10 +21,13 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
@@ -49,6 +52,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,25 +237,47 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
-    Scan scan = new Scan();
-    scan.addFamily(columnFamily);
+  protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
+    Scan hScan = new Scan();
+    hScan.addFamily(columnFamily);
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
-    scan.setCacheBlocks(false);
-    scan.setCaching(1000);
+    hScan.setCacheBlocks(false);
+    hScan.setCaching(1000);
 
+    byte[] startRow = scan.getStartRow();
+    byte[] stopRow = scan.getStopRow();
     if (startRow != null) {
-      scan.setStartRow(startRow);
+      hScan.setStartRow(startRow);
     }
     if (stopRow != null) {
-      scan.setStopRow(stopRow);
+      hScan.setStopRow(stopRow);
     }
 
-    addToOperation(scan, tx);
+    setFilterIfNeeded(hScan, scan.getFilter());
 
-    ResultScanner resultScanner = hTable.getScanner(scan);
+    addToOperation(hScan, tx);
+
+    ResultScanner resultScanner = hTable.getScanner(hScan);
     return new HBaseScanner(resultScanner, columnFamily);
+  }
+
+  private void setFilterIfNeeded(Scan scan, @Nullable Filter filter) {
+    if (filter == null) {
+      return;
+    }
+
+    if (filter instanceof FuzzyRowFilter) {
+      FuzzyRowFilter fuzzyRowFilter = (FuzzyRowFilter) filter;
+      List<Pair<byte[], byte[]>> fuzzyPairs =
+        Lists.newArrayListWithExpectedSize(fuzzyRowFilter.getFuzzyKeysData().size());
+      for (ImmutablePair<byte[], byte[]> pair : fuzzyRowFilter.getFuzzyKeysData()) {
+        fuzzyPairs.add(Pair.newPair(pair.getFirst(), pair.getSecond()));
+      }
+      scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));
+    } else {
+      throw new IllegalArgumentException("Unsupported filter: " + filter);
+    }
   }
 
   private Get createGet(byte[] row, @Nullable byte[][] columns) {
