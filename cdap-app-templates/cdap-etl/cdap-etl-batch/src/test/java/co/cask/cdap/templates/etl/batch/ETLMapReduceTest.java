@@ -21,8 +21,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.templates.etl.api.config.ETLConfig;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -49,8 +49,8 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
 
     // simulate pipeline creation
-    ApplicationTemplate<ETLConfig> appTemplate = new ETLBatchTemplate();
-    ETLConfig adapterConfig = constructETLBatchConfig();
+    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
+    ETLBatchConfig adapterConfig = constructETLBatchConfig();
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
 
@@ -89,12 +89,12 @@ public class ETLMapReduceTest extends TestBase {
     }
   }
 
-  private ETLConfig constructETLBatchConfig() {
+  private ETLBatchConfig constructETLBatchConfig() {
     ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(transform);
-    return new ETLConfig("", source, sink, transformList);
+    return new ETLBatchConfig("", source, sink, transformList);
   }
 }

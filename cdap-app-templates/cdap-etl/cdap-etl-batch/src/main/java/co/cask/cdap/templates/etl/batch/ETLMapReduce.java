@@ -25,11 +25,11 @@ import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLConfig;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -69,7 +69,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
 
-    ETLConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLConfig.class);
+    ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
     StageSpecification sourceSpec = GSON.fromJson(runtimeArgs.get(Constants.Source.SPECIFICATION),
                                                   StageSpecification.class);
     StageSpecification sinkSpec = GSON.fromJson(runtimeArgs.get(Constants.Sink.SPECIFICATION),

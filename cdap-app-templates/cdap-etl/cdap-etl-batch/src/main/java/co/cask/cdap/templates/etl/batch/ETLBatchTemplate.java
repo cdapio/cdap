@@ -24,8 +24,8 @@ import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
-import co.cask.cdap.templates.etl.api.config.ETLConfig;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.common.Constants;
@@ -43,7 +43,7 @@ import java.util.Map;
 /**
  * ETL Batch Template.
  */
-public class ETLBatchTemplate extends ApplicationTemplate<ETLConfig> {
+public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   private static final Gson GSON = new Gson();
   private final Map<String, String> sourceClassMap;
   private final Map<String, String> sinkClassMap;
@@ -81,14 +81,14 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLConfig> {
   }
 
   @Override
-  public void configureAdapter(String adapterName, ETLConfig etlConfig, AdapterConfigurer adapterConfigurer)
+  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig, AdapterConfigurer adapterConfigurer)
     throws Exception {
     // Get cronEntry string for ETL Batch Adapter
-    String cronEntry = etlConfig.getSchedule();
+    String cronEntry = etlBatchConfig.getSchedule();
 
-    ETLStage sourceConfig = etlConfig.getSource();
-    ETLStage sinkConfig = etlConfig.getSink();
-    List<ETLStage> transformConfigs = etlConfig.getTransforms();
+    ETLStage sourceConfig = etlBatchConfig.getSource();
+    ETLStage sinkConfig = etlBatchConfig.getSink();
+    List<ETLStage> transformConfigs = etlBatchConfig.getTransforms();
 
     // pipeline configurer is just a wrapper around an adapter configurer that limits what can be added,
     // since we don't want sources and sinks setting schedules or anything like that.
@@ -100,7 +100,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLConfig> {
     //TODO: Validate if source, transforms, sink can be tied together
 
     adapterConfigurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
-    adapterConfigurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
+    adapterConfigurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
     adapterConfigurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                                    String.format("Schedule for %s Adapter", adapterName),
                                                    cronEntry));
