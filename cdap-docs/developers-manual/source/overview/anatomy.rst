@@ -54,7 +54,7 @@ As an application developer building a Big Data application, you are primarily c
 - **Data Serving:** The ultimate purpose of processing data is not to store the results, but to make these results
   available to other applications. For example, a web analytics application may find ways to optimize the traffic
   on a website. However, these insights are worthless without a way to feed them back to the actual web application.
-  CDAP allows serving datasets to external clients through procedures and services.
+  CDAP allows serving datasets to external clients through services.
 
 A CDAP application consists of combinations of these components:
 
@@ -62,8 +62,7 @@ A CDAP application consists of combinations of these components:
 - Programs—:ref:`Flows, <flows-flowlets-index>` :ref:`MapReduce, <mapreduce>`
   :ref:`Spark <spark>`—for data processing in realtime or in batch;
 - :ref:`Datasets <datasets-index>` for data storage abstraction; and
-- :ref:`Procedures (deprecated) <procedures>` and :ref:`Services <user-services>`
-  for data serving to external clients.
+- :ref:`Services <user-services>` for data serving to external clients.
 
 This diagram illustrates a typical Big Data application:
 

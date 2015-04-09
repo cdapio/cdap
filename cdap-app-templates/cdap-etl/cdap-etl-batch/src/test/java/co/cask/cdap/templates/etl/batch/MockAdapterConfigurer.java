@@ -65,27 +65,27 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
 
   @Override
   public void addStream(Stream stream) {
-    // no-op
+    //no-op
   }
 
   @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    // no-op
+    //no-op
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    // no-op
+    //no-op
   }
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    // no-op
+    //no-op
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    // no-op
+    //no-op
   }
 
   public Schedule getSchedule() {

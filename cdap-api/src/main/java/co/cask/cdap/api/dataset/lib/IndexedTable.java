@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
@@ -473,6 +474,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow) {
     return table.scan(startRow, stopRow);
+  }
+
+  @Override
+  public Scanner scan(Scan scan) {
+    return table.scan(scan);
   }
 
   /* BatchReadable implementation */

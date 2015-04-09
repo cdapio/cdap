@@ -28,9 +28,8 @@ The log messages emitted by your Application code can be viewed in two different
   The :ref:`Logging HTTP interface <http-restful-api-logging>` details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the CDAP Console
-  by clicking the *Logs* button in the Flow or Procedure screens.
+  by clicking the *Logs* button in the Flow screen.
   This launches the *Log Explorer*.
 
 See the *Flow Log Explorer* of the :ref:`CDAP Console <cdap-console>` for details of using
-it to examine logs in the CDAP. In a similar fashion, *Procedure Logs* can be examined
-from within the CDAP Console.
+it to examine logs in the CDAP.

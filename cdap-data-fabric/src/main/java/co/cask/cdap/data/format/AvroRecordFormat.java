@@ -17,6 +17,7 @@
 package co.cask.cdap.data.format;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -25,8 +26,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.common.io.ByteBufferInputStream;
 import org.apache.avro.SchemaParseException;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 
@@ -38,32 +37,34 @@ import java.util.Map;
 /**
  * Stream record format that interprets the body as avro encoded binary data.
  */
-public class AvroRecordFormat extends StreamEventRecordFormat<GenericRecord> {
+public class AvroRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
   private final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(ByteBuffers.EMPTY_BUFFER);
   private final DecoderFactory decoderFactory = DecoderFactory.get();
 
-  private org.apache.avro.Schema readSchema;
-  private String readSchemaHash;
-  private String writeSchemaHash;
-  private GenericDatumReader<GenericRecord> datumReader;
+  private Schema formatSchema;
+  private org.apache.avro.Schema avroFormatSchema;
+
+  private String formatSchemaHash;
+  private String eventSchemaHash;
+  private StructuredRecordDatumReader datumReader;
   private BinaryDecoder binaryDecoder;
 
   @Override
-  public GenericRecord read(StreamEvent event) {
+  public StructuredRecord read(StreamEvent event) {
     try {
       // Check if the event has different schema then the read schema. If it does update the datumReader
       String eventSchemaStr = event.getHeaders().get(Constants.Stream.Headers.SCHEMA);
       if (eventSchemaStr != null) {
         String eventSchemaHash = event.getHeaders().get(Constants.Stream.Headers.SCHEMA_HASH);
-        if (!this.writeSchemaHash.equals(eventSchemaHash)) {
-          org.apache.avro.Schema writeSchema = new org.apache.avro.Schema.Parser().parse(eventSchemaStr);
-          datumReader.setSchema(writeSchema);
-          writeSchemaHash = eventSchemaHash;
+        if (!this.eventSchemaHash.equals(eventSchemaHash)) {
+          org.apache.avro.Schema eventSchema = new org.apache.avro.Schema.Parser().parse(eventSchemaStr);
+          datumReader.setSchema(eventSchema);
+          this.eventSchemaHash = eventSchemaHash;
         }
       } else {
         // If no schema is available on the event, assume it's the same as read schema
-        datumReader.setSchema(readSchema);
-        writeSchemaHash = readSchemaHash;
+        datumReader.setSchema(avroFormatSchema);
+        eventSchemaHash = formatSchemaHash;
       }
 
       binaryDecoder = decoderFactory.binaryDecoder(byteBufferInput.reset(event.getBody()), binaryDecoder);
@@ -82,7 +83,8 @@ public class AvroRecordFormat extends StreamEventRecordFormat<GenericRecord> {
   protected void validateSchema(Schema desiredSchema) throws UnsupportedTypeException {
     try {
       // rather than check for all inconsistencies, just try to read the schema string as an Avro schema.
-      readSchema = new org.apache.avro.Schema.Parser().parse(desiredSchema.toString());
+      avroFormatSchema = new org.apache.avro.Schema.Parser().parse(desiredSchema.toString());
+      formatSchema = desiredSchema;
     } catch (SchemaParseException e) {
       throw new UnsupportedTypeException("Schema is not a valid avro schema.", e);
     } catch (Exception e) {
@@ -95,10 +97,10 @@ public class AvroRecordFormat extends StreamEventRecordFormat<GenericRecord> {
     try {
       // Not using guava Hashing.md5() here to avoid potential version conflict issue when used in Hive
       MessageDigest md5 = MessageDigest.getInstance("MD5");
-      // Before actually reading any event, we assume the write schema is the same as the read schema
-      readSchemaHash = Bytes.toHexString(md5.digest(Bytes.toBytes(readSchema.toString())));
-      writeSchemaHash = readSchemaHash;
-      datumReader = new GenericDatumReader<GenericRecord>(readSchema);
+      // Before actually reading any event, we assume the event schema is the same as the format schema
+      formatSchemaHash = Bytes.toHexString(md5.digest(Bytes.toBytes(avroFormatSchema.toString())));
+      eventSchemaHash = formatSchemaHash;
+      datumReader = new StructuredRecordDatumReader(formatSchema, avroFormatSchema);
     } catch (NoSuchAlgorithmException e) {
       // This shouldn't happen.
       throw new RuntimeException(e);

@@ -72,12 +72,12 @@ transaction service maintenance, troubleshooting, and introduces the CDAP Consol
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, Procedures, MapReduce programs, Services, Workflows, and Workers can receive **runtime arguments.**
+- |preferences|_ Flows, MapReduce programs, Services, Workflows, and Workers can receive **runtime arguments.**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets.** 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**
 .. _resource-guarantees: operations/resource-guarantees.html

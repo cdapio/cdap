@@ -55,6 +55,23 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   };
 
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
+  $scope.systemStatus = '';
+  dataSrc.poll({
+    _cdapPath: '/system/services/status'
+  }, function(res) {
+    var serviceStatuses = Object.keys(res).map(function(value, i) {
+      return res[value];
+    });
+    if (serviceStatuses.indexOf('NOT OK') > -1) {
+      $scope.systemStatus = 'yellow';
+    }
+    if (serviceStatuses.indexOf('OK') === -1) {
+      $scope.systemStatus = 'red';
+    }
+    if (serviceStatuses.indexOf('NOT OK') === -1) {
+      $scope.systemStatus = 'green';
+    }
+  });
 
   dataSrc.request({
     _cdapNsPath: '/apps'

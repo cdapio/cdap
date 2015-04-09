@@ -34,13 +34,12 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Programs, User Services, Workflows, and Workers
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
 - `StreamClient: <#stream-client>`_ interacting with Streams
 - `DatasetClient: <#dataset-client>`_ interacting with Datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
 - `QueryClient: <#query-client>`_ querying Datasets
-- `ProcedureClient: <#procedure-client>`_ interacting with Procedures
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
@@ -55,8 +54,7 @@ Alphabetical list:
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
 - `PreferencesClient: <#preferences-client>`_ interacting with Preferences
-- `ProcedureClient: <#procedure-client>`_ interacting with Procedures
-- `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Programs, User Services, Workflows, and Workers
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
 - `QueryClient: <#query-client>`_ querying Datasets
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `StreamClient: <#stream-client>`_ interacting with Streams
@@ -163,23 +161,23 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Start a Procedure in the WordCount example
-  programClient.start("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
+  // Start a Service in the WordCount example
+  programClient.start("WordCount", ProgramType.SERVICE, "RetrieveCounts");
 
   // Fetch live information from the HelloWorld example
   // Live info includes the address of an component’s container host and the container’s debug port,
   // formatted in JSON
-  programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
+  programClient.getLiveInfo("HelloWorld", ProgramType.SERVICE, "greet");
 
   // Fetch program logs in the WordCount example
-  programClient.getProgramLogs("WordCount", ProgramType.PROCEDURE, "RetrieveCounts", 0,
+  programClient.getProgramLogs("WordCount", ProgramType.SERVICE, "RetrieveCounts", 0,
                                Long.MAX_VALUE);
 
-  // Scale a Procedure in the HelloWorld example
-  programClient.setProcedureInstances("HelloWorld", "greet", 3);
+  // Scale a Service in the HelloWorld example
+  programClient.setServiceInstances("HelloWorld", "greet", 3);
 
-  // Stop a Procedure in the HelloWorld example
-  programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
+  // Stop a Service in the HelloWorld example
+  programClient.stop("HelloWorld", ProgramType.SERVICE, "greet");
 
   // Start, scale, and stop a Flow in the WordCount example
   programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
@@ -369,26 +367,6 @@ QueryClient
   //
   // End perform an ad-hoc query
   //
-
-
-.. _procedure-client:
-
-ProcedureClient
----------------
-::
-
-  ClientConfig clientConfig;
-
-  // Construct the client used to interact with CDAP
-  ProcedureClient procedureClient = new ProcedureClient(clientConfig);
-
-  // Call a Procedure in the WordCount example
-  String result = procedureClient.call("WordCount", "RetrieveCounts", "getCount",
-                                       ImmutableMap.of("word", "foo"));
-
-  // Stop a Procedure
-  programClient.stop("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
-
 
 .. _service-client:
 
