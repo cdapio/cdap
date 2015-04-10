@@ -1,1 +1,102 @@
-<h3> WIP: Details of run - {{$state.params.runid}}</h3>
+<div class="mapreduce-components">
+
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="run-status-box row">
+        <div class="col-sm-4 item">
+          <div class="title">Status</div>
+          <div class="entry">{{info.state}}</div>
+        </div>
+        <div class="col-sm-4 item">
+          <div class="title">Started</div>
+          <div class="entry">{{info.startTime | date: 'medium'}}</div>
+        </div>
+        <div class="col-sm-4 item">
+          <div class="title">Duration</div>
+          <div class="entry">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4>Mappers</h4>
+  <p>{{ getCompletedPercentage(info.mapTasks) }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
+  <div class="row component-box">
+    <div class="task-item">
+      <div class="title">Completed</div>
+      <div class="entry">{{mapperStats.completed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Running</div>
+      <div class="entry">{{mapperStats.running}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Pending</div>
+      <div class="entry">{{mapperStats.pending}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Killed</div>
+      <div class="entry">{{mapperStats.killed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Failed</div>
+      <div class="entry">{{mapperStats.failed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Records in</div>
+      <div class="entry"></div>
+    </div>
+    <div class="task-item">
+      <div class="title">Bytes in</div>
+      <div class="entry"></div>
+    </div>
+    <div class="task-item">
+      <div class="title">Total</div>
+      <div class="entry">{{mapperStats.total}}</div>
+    </div>
+  </div>
+
+  <h4>Shuffle</h4>
+  
+  <div class="row"></div>
+
+  <h4>Reducers</h4>
+  <p>{{ getCompletedPercentage(info.reduceTasks) }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
+  <div class="row component-box">
+    <div class="task-item">
+      <div class="title">Completed</div>
+      <div class="entry">{{reducerStats.completed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Running</div>
+      <div class="entry">{{reducerStats.running}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Pending</div>
+      <div class="entry">{{reducerStats.pending}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Killed</div>
+      <div class="entry">{{reducerStats.killed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Failed</div>
+      <div class="entry">{{reducerStats.failed}}</div>
+    </div>
+    <div class="task-item">
+      <div class="title">Records in</div>
+      <div class="entry"></div>
+    </div>
+    <div class="task-item">
+      <div class="title">Bytes in</div>
+      <div class="entry"></div>
+    </div>
+    <div class="task-item">
+      <div class="title">Total</div>
+      <div class="entry">{{reducerStats.total}}</div>
+    </div>
+  </div>
+
+	<!-- <p>info = {{info}}</p> -->
+
+</div>
