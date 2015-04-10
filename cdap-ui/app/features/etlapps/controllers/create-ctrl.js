@@ -79,12 +79,8 @@ angular.module(PKG.name + '.feature.etlapps')
         });
     }
 
-    $scope.source = {
-      name: '',
-      properties: {}
-    };
-
-    $scope.$watch('source.name', fetchSourceProperties);
+    fetchSourceProperties
+    fetchSinkProperties
 
     function fetchSourceProperties(etlSource) {
       if (!etlSource) return;
@@ -121,7 +117,7 @@ angular.module(PKG.name + '.feature.etlapps')
       console.log("Transform Collection Watch", newVal);
     })
 
-    $scope.handleSourceDrop = function(id, dropZone) {
+    $scope.handleSourceDrop = function(id, dropZone, sourceName) {
       console.log("Source Dropped", id);
       if (dropZone.indexOf('source') === -1) {
         $alert({
@@ -131,11 +127,13 @@ angular.module(PKG.name + '.feature.etlapps')
       } else {
         $alert({
           type: 'success',
-          content: 'You have dropped a source!'
+          content: 'You have added a Source!!'
         });
+        $scope.source.name = sourceName;
+        fetchSourceProperties(sourceName);
       }
     };
-    $scope.handleTransformDrop = function(id, dropZone) {
+    $scope.handleTransformDrop = function(id, dropZone, transformName) {
       console.log("Transform Dropped", id);
       if (dropZone.indexOf('transform') === -1) {
         $alert({
@@ -147,9 +145,14 @@ angular.module(PKG.name + '.feature.etlapps')
           type: 'success',
           content: 'You have dropped a transform!'
         });
+        $scope.transforms.push({
+          name: transformName,
+          properties: '' // fetchTransformProperties(transformName)
+        });
+        // fetchSourceProperties(sourceName);
       }
     };
-    $scope.handleSinkDrop = function(id, dropZone) {
+    $scope.handleSinkDrop = function(id, dropZone, sinkName) {
       console.log("Sink Dropped", id);
       if (dropZone.indexOf('sink') === -1) {
         $alert({
@@ -161,6 +164,8 @@ angular.module(PKG.name + '.feature.etlapps')
           type: 'success',
           content: 'You have dropped a sink!'
         });
+        $scope.sink.name = sinkName;
+        fetchSinkProperties(sinkName);
       }
     };
   });
