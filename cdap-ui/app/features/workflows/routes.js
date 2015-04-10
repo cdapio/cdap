@@ -85,7 +85,7 @@ angular.module(PKG.name + '.feature.workflows')
               highlightTab: 'development'
             },
             ncyBreadcrumb: {
-              label: 'schedules'
+              label: 'Schedules'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
             controller: 'WorkflowsSchedulesController'
