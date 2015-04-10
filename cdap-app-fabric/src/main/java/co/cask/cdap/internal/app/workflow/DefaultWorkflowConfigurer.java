@@ -16,11 +16,14 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
@@ -35,7 +38,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link WorkflowConfigurer}.
  */
-public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowForkJoiner {
+public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final String className;
   private String name;
@@ -86,6 +89,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
     return new DefaultWorkflowForkConfigurer<DefaultWorkflowConfigurer>(this);
   }
 
+  @Override
+  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<Map<String, String>> predicate) {
+    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate);
+  }
+
   public WorkflowSpecification createSpecification() {
     return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes));
   }
@@ -107,6 +115,9 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
         break;
       case FORK:
         nodeWithId = createForkNodeWithId(node);
+        break;
+      case CONDITION:
+        nodeWithId = createConditionNodeWithId(node);
         break;
       default:
         break;
@@ -135,8 +146,25 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
     return new WorkflowForkNode(forkNodeId, branches);
   }
 
+  private WorkflowNode createConditionNodeWithId(WorkflowNode node) {
+    String conditionNodeId = Integer.toString(nodeIdentifier++);
+    WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
+    List<WorkflowNode> ifbranch = Lists.newArrayList();
+    List<WorkflowNode> elsebranch = Lists.newArrayList();
+    ifbranch.addAll(createNodesWithId(conditionNode.getIfBranch()));
+    elsebranch.addAll(createNodesWithId(conditionNode.getElseBranch()));
+
+    return new WorkflowConditionNode(conditionNodeId, conditionNode.getPredicateClassName(), ifbranch, elsebranch);
+  }
+
   @Override
   public void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
     nodes.add(new WorkflowForkNode(null, branches));
+  }
+
+  @Override
+  public void addWorkflowConditionNode(Predicate<Map<String, String>> predicate, List<WorkflowNode> ifBranch,
+                                       List<WorkflowNode> elseBranch) {
+    nodes.add(new WorkflowConditionNode(null, predicate.getClass().getName(), ifBranch, elseBranch));
   }
 }
