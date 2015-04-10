@@ -30,11 +30,4 @@ public interface Predicate<T> {
    * @return the result of the evaluation of the predicate
    */
   boolean apply(@Nullable T input);
-
-  /**
-   * Indicates whether another object is equal to this predicate.
-   * @param object the object to be compared with this predicate
-   * @return the result of the comparison
-   */
-  boolean equals(@Nullable Object object);
 }

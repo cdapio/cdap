@@ -16,12 +16,10 @@
 
 package co.cask.cdap.internal.app.workflow;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Defines an interface for adding {@link WorkflowConditionNode} to the Workflow.
@@ -29,10 +27,10 @@ import java.util.Map;
 public interface WorkflowConditionAdder {
   /**
    * Adds a {@link WorkflowConditionNode} to the Workflow.
-   * @param predicate the predicate associated with this {@link WorkflowConditionNode}
+   * @param predicateClassName the name of the predicate class associated with this {@link WorkflowConditionNode}
    * @param ifBranch the branch that is executed when the predicate evaluates to the true
    * @param elseBranch the branch that is executed when the predicate evaluates to the false
    */
-  void addWorkflowConditionNode(Predicate<Map<String, String>> predicate, List<WorkflowNode> ifBranch,
+  void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
                                 List<WorkflowNode> elseBranch);
 }

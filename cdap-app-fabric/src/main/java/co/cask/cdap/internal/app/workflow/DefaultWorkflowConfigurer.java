@@ -91,7 +91,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<Map<String, String>> predicate) {
-    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate);
+    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate.getClass().getName());
   }
 
   public WorkflowSpecification createSpecification() {
@@ -163,8 +163,8 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   }
 
   @Override
-  public void addWorkflowConditionNode(Predicate<Map<String, String>> predicate, List<WorkflowNode> ifBranch,
+  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    nodes.add(new WorkflowConditionNode(null, predicate.getClass().getName(), ifBranch, elseBranch));
+    nodes.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
   }
 }
