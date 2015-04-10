@@ -89,7 +89,7 @@ public class ETLMapReduceTest extends TestBase {
     }
   }
 
-  @Test(expected = Exception.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testSourceTransformTypeMismatchConfig() throws Exception {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructTypeMismatchConfig();

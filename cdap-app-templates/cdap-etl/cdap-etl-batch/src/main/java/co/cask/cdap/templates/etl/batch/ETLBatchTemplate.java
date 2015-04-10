@@ -34,6 +34,7 @@ import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -96,7 +97,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     ETLStage sinkConfig = etlBatchConfig.getSink();
     List<ETLStage> transformConfigs = etlBatchConfig.getTransforms();
 
-    // Validate Adapter by making sure the key-value types match.
+    // Instantiate Source, Transform, Sink Stages.
+    instantiateStages(sourceConfig, sinkConfig, transformConfigs);
+
+    // Validate Adapter by making sure the key-value types of stages match.
     validateAdapter(sourceConfig, sinkConfig, transformConfigs);
 
     // pipeline configurer is just a wrapper around an adapter configurer that limits what can be added,
@@ -113,38 +117,50 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                                    cronEntry));
   }
 
-  private void validateAdapter(ETLStage source, ETLStage sink, List<ETLStage> transformList) throws Exception {
-    String sourceClassName = sourceClassMap.get(source.getName());
-    String sinkClassName = sinkClassMap.get(sink.getName());
-    batchSource = (BatchSource) Class.forName(sourceClassName).newInstance();
-    batchSink = (BatchSink) Class.forName(sinkClassName).newInstance();
+  private void instantiateStages(ETLStage source, ETLStage sink, List<ETLStage> transformList)
+    throws InstantiationException, IllegalAccessException {
+    try {
+      String sourceClassName = sourceClassMap.get(source.getName());
+      String sinkClassName = sinkClassMap.get(sink.getName());
+      batchSource = (BatchSource) Class.forName(sourceClassName).newInstance();
+      batchSink = (BatchSink) Class.forName(sinkClassName).newInstance();
 
+      for (ETLStage etlStage : transformList) {
+        String transformName = transformClassMap.get(etlStage.getName());
+        Transform transformObj = (Transform) Class.forName(transformName).newInstance();
+        transforms.add(transformObj);
+      }
+    } catch (ClassNotFoundException e) {
+      throw new IllegalArgumentException(String.format("Unable to load class. Check stage names. %s", e));
+    }
+  }
+
+  private void validateAdapter(ETLStage source, ETLStage sink, List<ETLStage> transformList)
+    throws IllegalArgumentException {
     if (transformList.size() == 0) {
       // No transforms. Check only source and sink.
       if (!(batchSink.getKeyType().equals(batchSource.getKeyType()) &&
         batchSink.getValueType().equals(batchSource.getValueType()))) {
-        throw new Exception(String.format("Source %s and Sink %s Types doesn't match",
-                                          source.getName(), sink.getName()));
+        throw new IllegalArgumentException(String.format("Source %s and Sink %s Types don't match",
+                                                         source.getName(), sink.getName()));
       }
     } else {
       // Check the first and last transform with source and sink.
-      ETLStage firstStage = transformList.get(0);
-      ETLStage lastStage = transformList.get(transformList.size() - 1);
-      String firstTransformClassName = transformClassMap.get(firstStage.getName());
-      String lastTransformClassName = transformClassMap.get(lastStage.getName());
-      Transform firstTransform = (Transform) Class.forName(firstTransformClassName).newInstance();
-      Transform lastTransform = (Transform) Class.forName(lastTransformClassName).newInstance();
+      ETLStage firstStage = Iterables.getFirst(transformList, null);
+      ETLStage lastStage = Iterables.getLast(transformList);
+      Transform firstTransform = Iterables.getFirst(transforms, null);
+      Transform lastTransform = Iterables.getLast(transforms);
 
       if (!(firstTransform.getKeyInType().equals(batchSource.getKeyType()) &&
         firstTransform.getValueInType().equals(batchSource.getValueType()))) {
-        throw new Exception(String.format("Source %s and Transform %s Types doesn't match",
-                                          source.getName(), firstStage.getName()));
+        throw new IllegalArgumentException(String.format("Source %s and Transform %s Types don't match",
+                                                         source.getName(), firstStage.getName()));
       }
 
       if (!(lastTransform.getKeyOutType().equals(batchSink.getKeyType()) &&
         lastTransform.getValueOutType().equals(batchSink.getValueType()))) {
-        throw new Exception(String.format("Sink %s and Transform %s Types doesn't match",
-                                          sink.getName(), lastStage.getName()));
+        throw new IllegalArgumentException(String.format("Sink %s and Transform %s Types don't match",
+                                                         sink.getName(), lastStage.getName()));
       }
 
       if (transformList.size() > 1) {
@@ -156,13 +172,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     }
   }
 
-  private void validateTransforms(List<ETLStage> transformList) throws Exception {
-    for (ETLStage etlStage : transformList) {
-      String transformName = transformClassMap.get(etlStage.getName());
-      Transform transformObj = (Transform) Class.forName(transformName).newInstance();
-      transforms.add(transformObj);
-    }
-
+  private void validateTransforms(List<ETLStage> transformList) throws IllegalArgumentException {
     for (int i = 0; i < transformList.size() - 1; i++) {
       ETLStage currStage = transformList.get(i);
       ETLStage nextStage = transformList.get(i + 1);
@@ -171,8 +181,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
       if (!(secondTransform.getKeyInType().equals(firstTransform.getKeyOutType()) &&
         secondTransform.getValueInType().equals(firstTransform.getValueOutType()))) {
-        throw new Exception(String.format("Transform %s and Transform %s Types doesn't match",
-                                          currStage.getName(), nextStage.getName()));
+        throw new IllegalArgumentException(String.format("Transform %s and Transform %s Types don't match",
+                                                         currStage.getName(), nextStage.getName()));
       }
     }
   }
