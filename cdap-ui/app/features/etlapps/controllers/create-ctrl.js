@@ -2,23 +2,19 @@ angular.module(PKG.name + '.feature.etlapps')
   .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
+
+    // Loading flag to indicate source & sinks have
+    // not been loaded yet (after/before choosing an etl template)
     $scope.loadingEtlSourceProps = false;
     $scope.loadingEtlSinkProps = false;
+
+    // List of ETL Sources, Sinks & Transforms
+    // for a particular etl template type fetched from backend.
     $scope.etlSources = [];
     $scope.etlSinks = [];
     $scope.etlTransforms = [];
-    $scope.addProperty = function(type) {
-      if ($scope[type]) {
-        $scope[type].properties[type + '-' + Date.now()] = '';
-      }
-    };
 
-    $scope.remoteProperty = function(type, propertyName) {
-      if ($scope[type] && $scope[type].properties[propertyName]) {
-        delete $scope[type].properties[propertyName];
-      }
-    };
-
+    // Default ETL Templates
     $scope.etlTypes = [
       {
         name: 'Etl Batch',
@@ -29,11 +25,26 @@ angular.module(PKG.name + '.feature.etlapps')
         type: 'realtime'
       }
     ];
+
+    // Metadata Model
     $scope.metadata = {
         name: '',
         description: '',
         type: ''
     };
+
+    // Source, Sink and Transform Models
+    $scope.source = {
+      name: '',
+      properties: {}
+    };
+
+    $scope.sink = {
+      name: '',
+      properties: {}
+    };
+
+    $scope.transforms = [];
 
     $scope.$watch('metadata.type',fetchSources);
 
@@ -90,13 +101,6 @@ angular.module(PKG.name + '.feature.etlapps')
       $scope.loadingEtlSourceProps = etlSource || false;
     }
 
-    $scope.sink = {
-      name: '',
-      properties: {}
-    };
-
-    $scope.$watch('sink.name', fetchSinkProperties);
-
     function fetchSinkProperties(etlSink){
       if (!etlSink) return;
       console.log("Sink: ", etlSink);
@@ -112,8 +116,6 @@ angular.module(PKG.name + '.feature.etlapps')
         });
       $scope.loadingEtlSinkProps = etlSink || false;
     }
-
-    $scope.transforms = [];
 
     $scope.$watchCollection('transforms', function(newVal) {
       console.log("Transform Collection Watch", newVal);
