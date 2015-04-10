@@ -17,12 +17,13 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -30,30 +31,34 @@ import java.util.Collections;
 /**
  * Tests dataset instantiation with arguments.
  */
-public class DatasetWithArgumentsTest extends AbstractDatasetTest {
+public class DatasetWithArgumentsTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetModule prefix = Id.DatasetModule.from(NAMESPACE_ID, "prefix");
-  private static final Id.DatasetInstance pret = Id.DatasetInstance.from(NAMESPACE_ID, "pret");
+  private static final Id.DatasetModule prefix =
+    Id.DatasetModule.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "prefix");
+  private static final Id.DatasetInstance pret =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pret");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    addModule(prefix, new PrefixedTableModule());
-    createInstance("prefixedTable", pret, DatasetProperties.EMPTY);
+    dsFrameworkUtil.addModule(prefix, new PrefixedTableModule());
+    dsFrameworkUtil.createInstance("prefixedTable", pret, DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance(pret);
-    deleteModule(prefix);
+    dsFrameworkUtil.deleteInstance(pret);
+    dsFrameworkUtil.deleteModule(prefix);
   }
 
   @Test
   public void testPrefixTable() throws Exception {
-    final PrefixedTable table = getInstance(pret, null);
-    final PrefixedTable aTable = getInstance(pret, Collections.singletonMap("prefix", "a"));
-    final PrefixedTable bTable = getInstance(pret, Collections.singletonMap("prefix", "b"));
+    final PrefixedTable table = dsFrameworkUtil.getInstance(pret, null);
+    final PrefixedTable aTable = dsFrameworkUtil.getInstance(pret, Collections.singletonMap("prefix", "a"));
+    final PrefixedTable bTable = dsFrameworkUtil.getInstance(pret, Collections.singletonMap("prefix", "b"));
 
-    TransactionExecutor txnl = newTransactionExecutor(aTable, bTable, table);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(aTable, bTable, table);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override

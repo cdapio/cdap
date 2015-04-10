@@ -17,13 +17,14 @@
       </tr>
     </tbody>
   </table>
+  <hr/>
 </div>
 
-<hr/>
+
 <form>
   <div class="form-group">
     <div class="row">
-      <div class="col-sm-10" ng-show="preferences.length > 0">
+      <div class="col-sm-11" ng-show="preferences.length > 0">
         <div ng-repeat="preference in preferences" class="h4">
           <div class="row">
             <div class="col-sm-4">
@@ -34,21 +35,21 @@
 
             </div>
             <div class="col-sm-2">
-              <a href="" class="btn btn-danger btn-xs" ng-click="removePreference(preference)">
+              <a href="" class="btn btn-danger" ng-click="removePreference(preference)">
                 <span class="fa fa-fw fa-trash"> </span>
               </a>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-sm-10" ng-show="preferences.length === 0">
+      <div class="col-sm-11" ng-show="preferences.length === 0">
         <div class="well well-sm text-center h4">
           <p> No Preference </p>
         </div>
       </div>
 
-      <div class="col-sm-2 h4">
-        <button class="btn btn-default" ng-click="addPreference()">
+      <div class="col-sm-1 h4">
+        <button class="btn btn-primary" ng-click="addPreference()">
           <span class="fa fa-fw fa-plus"></span>
         </button>
       </div>
@@ -58,8 +59,8 @@
 
 <div>
   <button class="btn btn-default" ng-click="loadProperties()">Reset</button>
-  <button class="btn btn-default" ng-click="save()" >Save</button>
+  <button class="btn btn-success" ng-click="save()" >Save</button>
   <div class="pull-right">
-    <button class="btn btn-default" ng-click="deletePreferences()">Delete</button>
+    <button class="btn btn-danger" ng-click="deletePreferences()">Delete All</button>
   </div>
 </div>

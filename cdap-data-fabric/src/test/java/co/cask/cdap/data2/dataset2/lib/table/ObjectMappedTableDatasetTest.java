@@ -21,10 +21,11 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -34,15 +35,19 @@ import java.util.UUID;
 /**
  * Test for {@link ObjectMappedTableDataset}.
  */
-public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
-  private static final Id.DatasetInstance RECORDS_ID = Id.DatasetInstance.from(NAMESPACE_ID, "records");
+public class ObjectMappedTableDatasetTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance RECORDS_ID =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "records");
 
   @Test
   public void testGetPutDelete() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
-                   ObjectMappedTableProperties.builder().setType(Record.class).build());
+    dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
+                                   ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
-      ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
+      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
       Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
                                  Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       records.write("123", record);
@@ -51,16 +56,16 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
       records.delete("123");
       Assert.assertNull(records.read("123"));
     } finally {
-      deleteInstance(RECORDS_ID);
+      dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }
   }
 
   @Test
   public void testScan() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
-                   ObjectMappedTableProperties.builder().setType(Record.class).build());
+    dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
+                                   ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
-      ObjectMappedTableDataset<Record> records = getInstance(RECORDS_ID);
+      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
       Record record1 = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
                                   Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       Record record2 = new Record(Integer.MIN_VALUE, Long.MIN_VALUE, Float.MIN_VALUE, Double.MIN_VALUE, "baz",
@@ -108,22 +113,24 @@ public class ObjectMappedTableDatasetTest extends AbstractDatasetTest {
       Assert.assertFalse(results.hasNext());
       results.close();
     } finally {
-      deleteInstance(RECORDS_ID);
+      dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTypeFails() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "custom"),
-                   ObjectMappedTableProperties.builder().setType(Custom.class).build());
+    dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(),
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "custom"),
+                                   ObjectMappedTableProperties.builder().setType(Custom.class).build());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testRowKeyConflict() throws Exception {
-    createInstance(ObjectMappedTable.class.getName(), Id.DatasetInstance.from(NAMESPACE_ID, "record"),
-                   ObjectMappedTableProperties.builder()
-                     .setType(Record.class)
-                     .setRowKeyExploreName("intfield")
-                     .build());
+    dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(),
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "record"),
+                                   ObjectMappedTableProperties.builder()
+                                     .setType(Record.class)
+                                     .setRowKeyExploreName("intfield")
+                                     .build());
   }
 }

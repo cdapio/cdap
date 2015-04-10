@@ -16,10 +16,15 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
+import com.google.common.base.Preconditions;
 
 /**
  * CDAP Table Dataset Batch Source.
@@ -32,6 +37,13 @@ public class KVTableSource extends BatchSource<byte[], byte[]> {
     configurer.setName("KVTableSource");
     configurer.setDescription("CDAP KeyValue Table Dataset Batch Source");
     configurer.addProperty(new Property(TABLE_NAME, "Dataset Name", true));
+  }
+
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    String tableName = stageConfig.getProperties().get(TABLE_NAME);
+    Preconditions.checkArgument(tableName != null && !tableName.isEmpty(), "Table name must be given.");
+    pipelineConfigurer.createDataset(tableName, KeyValueTable.class.getName(), DatasetProperties.EMPTY);
   }
 
   @Override

@@ -1,40 +1,40 @@
 @import "../../styles/variables.less";
 
 body.state-flows {
-	textarea.flow-injector-input {
-		width: 616px;
-		max-width: 616px;
-		height: 100px;
-	}
+  textarea.flow-injector-input {
+    width: 100%;
+    height: 100px;
+    color: black; // Because we have a dark background and a white text
+  }
 
-	div.modal-dialog.lrg-modal {
-		width: 50%;
-		min-width: 706px;
-	}
+  div.modal-dialog.lrg-modal {
+    width: 50%;
+    min-width: 706px;
+  }
 
-	.stream-title {
-		text-transform: uppercase;
-	}
+  .stream-title {
+    text-transform: uppercase;
+  }
 
-	div.instances {
-	  table > tbody > tr > td {
-	    vertical-align: middle;
-	  }
-	}
+  div.instances {
+    table > tbody > tr > td {
+      vertical-align: middle;
+    }
+  }
 }
 body.state-flows{
-	.panel-group {
-		.panel.panel-default {
-			> .panel-heading {
-				> a {
-					&:hover {
-						text-decoration: none;
-					}
-					color: white;
-				}
-			}
-		}
-	}
+  .panel-group {
+    .panel.panel-default {
+      > .panel-heading {
+        > a {
+          &:hover {
+            text-decoration: none;
+          }
+          color: white;
+        }
+      }
+    }
+  }
 }
 
 /**
