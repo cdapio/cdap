@@ -36,6 +36,7 @@
                 id="source-{{source.name}}"
                 data-model="{{source.name}}"
                 data-drop-zone="sourceDropZone"
+                data-drag-type="source"
                 draggable>
               {{source.name}}
             </li>
@@ -59,6 +60,7 @@
                 id="sink-{{sink.name}}"
                 data-model="{{sink.name}}"
                 data-drop-zone="sinkDropZone"
+                data-drag-type="sink"
                 draggable>
               {{sink.name}}
             </li>
@@ -82,6 +84,7 @@
                 id="transform-{{transform.name}}"
                 data-model="{{transform.name}}"
                 data-drop-zone="transformDropZone"
+                data-drag-type="transform"
                 draggable>
               {{transform.name}}
             </li>
@@ -102,6 +105,7 @@
           <div class="sourceDropZone text-center"
                drop="handleSourceDrop"
                id="sourceDropZone"
+               data-drop-type="source"
                ng-click="editSourceProperties()"
                droppable>
             <div ng-if="source.name === ''" class="dropZoneEmptyMessage">
@@ -118,6 +122,7 @@
           <div class="transformDropZone text-center"
                 drop="handleTransformDrop"
                 id="transformDropZone"
+                data-drop-type="transform"
                 ng-click="editTransformProperties()"
                 droppable>
             <div ng-if="transforms.length === 0" class="dropZoneEmptyMessage">
@@ -134,6 +139,7 @@
           <div class="sinkDropZone text-center"
                 drop="handleSinkDrop"
                 id="sinkDropZone"
+                data-drop-type="sink"
                 ng-click="editSinkProperties()"
                 droppable>
             <div ng-if="sink.name === ''" class="dropZoneEmptyMessage">

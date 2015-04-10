@@ -3,7 +3,9 @@ angular.module(PKG.name + '.commons')
     return function(scope, element, attrs) {
       var el = element[0];
       var dropZone = attrs.dropZone,
-          data = attrs.model;
+          // The actual data being transferred.
+          data = attrs.model,
+          dragType = attrs.dragType;
        el.draggable = true;
 
        el.addEventListener(
@@ -11,8 +13,13 @@ angular.module(PKG.name + '.commons')
            function(e) {
                e.dataTransfer.effectAllowed = 'copy';
                e.dataTransfer.setData('Id', this.id);
+               // Used when a drop has happend. To check if the draggable
+               // is valid in the current drop zone.
                e.dataTransfer.setData('DropZone', dropZone);
                e.dataTransfer.setData('Data', data);
+               // Used in dragover event to check if the drag is
+               // droppable in a drop target
+               e.dataTransfer.setData(dragType, true);
                this.classList.add('drag');
                return false;
            },
@@ -42,9 +49,23 @@ angular.module(PKG.name + '.commons')
             'dragover',
             function(e) {
                 e.dataTransfer.dropEffect = 'copy';
-                // allows us to drop
+                // Visual indicator to show if the current draggable is valid
+                // in the dragover drop zone.
+                // If I drag a 'source' in an etl template and dragover
+                // a container that is supposed to hold transforms then it
+                // should show visually that this is not a valid drop place for a source.
+                var dropType = e.target.getAttribute('data-drop-type') ||
+                               e.target.parentElement.getAttribute('data-drop-type');
+
+                if (e.dataTransfer.types.indexOf(dropType) > -1) {
+                  this.classList.add('over');
+                  this.classList.add('green');
+                } else {
+                  this.classList.add('over');
+                  this.classList.add('red');
+                }
+
                 if (e.preventDefault) e.preventDefault();
-                this.classList.add('over');
                 return false;
             },
             false
@@ -63,6 +84,8 @@ angular.module(PKG.name + '.commons')
             'dragleave',
             function(e) {
                 this.classList.remove('over');
+                this.classList.remove('green');
+                this.classList.remove('red');
                 return false;
             },
             false
@@ -75,6 +98,8 @@ angular.module(PKG.name + '.commons')
                     if (e.stopPropagation) e.stopPropagation();
 
                     this.classList.remove('over');
+                    this.classList.remove('green');
+                    this.classList.remove('red');
                     var id = e.dataTransfer.getData('Id'),
                         dropZone = e.dataTransfer.getData('DropZone'),
                         data = e.dataTransfer.getData('Data');
