@@ -28,6 +28,7 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     String streamName = stageConfig.getProperties().get(STREAM_NAME);
-    Preconditions.checkArgument(streamName != null && !streamName.isEmpty(), "Stream name must be given.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(streamName), "Stream name must be given.");
     pipelineConfigurer.addStream(new Stream(streamName));
   }
 
@@ -66,8 +67,6 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
     Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
     // TODO: This is not clean.
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime,
-                                             "co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder")
-                       .toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString());
   }
 }
