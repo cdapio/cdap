@@ -138,6 +138,9 @@ public class AggregatedMetricsCollectionServiceTest {
       // gauge just updates the value, so polling should return the most recent value written
       verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
       verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
+
+      flowletInstanceCollector.gauge(METRIC, 0);
+      verifyMetricsValue(published.poll(10, TimeUnit.SECONDS), 0L);
     } finally {
       service.stopAndWait();
     }
@@ -169,5 +172,10 @@ public class AggregatedMetricsCollectionServiceTest {
     } else {
       Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
     }
+  }
+
+  private void verifyMetricsValue(MetricValue metricValue, long expected) {
+    Assert.assertNotNull(metricValue);
+    Assert.assertEquals(expected, metricValue.getValue());
   }
 }
