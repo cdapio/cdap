@@ -18,6 +18,8 @@ package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.logging.save.LogMessageProcessor;
+import co.cask.cdap.logging.save.LogMessageProcessorPlugin;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
