@@ -268,9 +268,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private void contextQuerying(HttpRequest request, HttpResponder responder,
-                               @QueryParam("context") String context,
-                               @QueryParam("metric") String metric,
-                               @QueryParam("groupBy") String groupBy) {
+                               String context, String metric, String groupBy) {
     try {
       List<String> groupByTags = parseGroupBy(groupBy);
       MetricQueryResult queryResult = executeQuery(request, parseTagValuesAsMap(context),
