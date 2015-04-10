@@ -41,7 +41,6 @@ user node['cdap']['sdk']['user'] do
   comment 'CDAP SDK Service Account'
   home node['cdap']['sdk']['install_path']
   shell '/bin/bash'
-  supports :manage_home => true
   system true
   action :create
 end
