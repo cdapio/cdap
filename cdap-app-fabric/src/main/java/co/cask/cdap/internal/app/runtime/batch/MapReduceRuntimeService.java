@@ -26,6 +26,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -68,7 +69,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -582,23 +582,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Optionally sets the {@link StreamEventDecoder}.
    *
-   * @throws IOException If not able to determine what {@link StreamEventDecoder} class should use.
+   * @throws IOException If the type is an instance of {@link ParameterizedType} and is not able to determine
+   * what {@link StreamEventDecoder} class should use.
    *
    * @param <V> type of the super class
    */
   private <V> void setStreamEventDecoder(Job job, TypeToken<V> type) throws IOException {
     // The super type must be a parameterized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
     if (!(type.getType() instanceof ParameterizedType)) {
-      throw new IOException("Failed to determine decoder for consuming StreamEvent from " + type);
-    }
-
-    try {
-      // Try to determine the decoder to use from the first input types
-      // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
-      Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
-      StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
-    } catch (IllegalArgumentException e) {
-      throw new IOException("Type not support for consuming StreamEvent from " + type, e);
+      // Assume to be StreamEvent
+      StreamInputFormat.inferDecoderClass(job.getConfiguration(), StreamEvent.class);
+    } else {
+      try {
+        // Try to determine the decoder to use from the first input types
+        // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
+        Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
+        StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
+      } catch (IllegalArgumentException e) {
+        throw new IOException("Type not support for consuming StreamEvent from " + type, e);
+      }
     }
   }
 
