@@ -591,15 +591,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // The super type must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
     Type valueType = StreamEvent.class;
     if ((type.getType() instanceof ParameterizedType)) {
-      try {
-        // Try to determine the decoder to use from the first input types
-        // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
-        valueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
-      } catch (IllegalArgumentException e) {
-        throw new IOException("Type not support for consuming StreamEvent from " + type, e);
-      }
+      // Try to determine the decoder to use from the first input types
+      // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
+      valueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
     }
-    StreamInputFormat.inferDecoderClass(job.getConfiguration(), valueType);
+    try {
+      StreamInputFormat.inferDecoderClass(job.getConfiguration(), valueType);
+    } catch (IllegalArgumentException e) {
+      throw new IOException("Type not support for consuming StreamEvent from " + type, e);
+    }
   }
 
   private String getJobName(BasicMapReduceContext context) {
