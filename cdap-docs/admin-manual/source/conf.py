@@ -10,6 +10,10 @@ import os
 sys.path.insert(0, os.path.abspath('../../_common'))
 from common_conf import * 
 
+print_sdk_version()
+
+print get_sdk_version()
+
 # Override the common config
 
 html_short_title_toc = manuals_dict["admin-manual"]
