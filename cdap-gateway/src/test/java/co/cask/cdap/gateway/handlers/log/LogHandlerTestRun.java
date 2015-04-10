@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.log;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
+import co.cask.cdap.logging.read.LogOffset;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -28,7 +29,9 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -37,6 +40,7 @@ import javax.annotation.Nullable;
  */
 public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
+  private static final Gson GSON = new Gson();
 
   @Test
   public void testFlowNext() throws Exception {
@@ -266,6 +270,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       testBatchAdapterLogs(Constants.DEFAULT_NAMESPACE, "testApp3", "testMapReduce1", "testAdapter1");
       Assert.fail();
     } catch (AssertionError e) {
+      // Expected exception
     }
   }
 
@@ -329,16 +334,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void testNext(String appId, String entityType, String entityId, boolean escape, @Nullable String version,
                         @Nullable String namespace) throws Exception {
     String img = escape ? "&lt;img&gt;" : "<img>";
-    String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s", appId, entityType, entityId,
-                                   escape);
+    String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s",
+                                   appId, entityType, entityId, getOffset(5), escape);
     HttpResponse response = doGet(getVersionedAPIPath(nextUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(10, logLines.size());
     int expected = 5;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + img + "-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -348,15 +353,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testNextNoMax(String appId, String entityType, String entityId, @Nullable String version,
                              @Nullable String namespace) throws Exception {
-    String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=10", appId, entityType, entityId);
+    String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s",
+                                        appId, entityType, entityId, getOffset(10));
     HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(50, logLines.size());
     int expected = 10;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -366,16 +372,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testNextFilter(String appId, String entityType, String entityId, @Nullable String version,
                               @Nullable String namespace) throws Exception {
-    String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=12&max=16&filter=loglevel=EVEN", appId,
-                                         entityType, entityId);
+    String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=EVEN",
+                                         appId, entityType, entityId, getOffset(12));
     HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(8, logLines.size());
     int expected = 12;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -389,11 +395,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(50, logLines.size());
     int expected = 30;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -403,15 +409,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testPrev(String appId, String entityType, String entityId, @Nullable String version,
                         @Nullable String namespace) throws Exception {
-    String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=25&max=10", appId, entityType, entityId);
+    String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10",
+                                   appId, entityType, entityId, getOffset(25));
     HttpResponse response = doGet(getVersionedAPIPath(prevUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(10, logLines.size());
     int expected = 15;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -433,15 +440,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testPrevNoMax(String appId, String entityType, String entityId, @Nullable String version,
                              @Nullable String namespace) throws Exception {
-    String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=70", appId, entityType, entityId);
+    String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s",
+                                        appId, entityType, entityId, getOffset(70));
     HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(50, logLines.size());
     int expected = 20;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -451,16 +459,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testPrevFilter(String appId, String entityType, String entityId, @Nullable String version,
                               @Nullable String namespace) throws Exception {
-    String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=41&max=16&filter=loglevel=EVEN", appId,
-                                      entityType, entityId);
+    String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=EVEN",
+                                         appId, entityType, entityId, getOffset(41));
     HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(8, logLines.size());
     int expected = 26;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -474,11 +482,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(prevNoFrom, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
     Assert.assertEquals(50, logLines.size());
     int expected = 30;
     for (LogLine logLine : logLines) {
-      Assert.assertEquals(expected, logLine.getOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -537,5 +545,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
     }
+  }
+
+  private String getOffset(long offset) throws UnsupportedEncodingException {
+    return URLEncoder.encode(GSON.toJson(new LogOffset(offset, offset)), "utf-8");
   }
 }
