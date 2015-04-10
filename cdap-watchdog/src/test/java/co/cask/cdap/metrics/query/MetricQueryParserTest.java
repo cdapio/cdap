@@ -58,7 +58,7 @@ public class MetricQueryParserTest {
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(60, query.getResolution());
     // todo: support interpolator
-//    Assert.assertNull(query.getInterpolator());
+//    Assert.assertNull(query.getInterpolate());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?start=1&end=61&resolution=60m"));
@@ -66,21 +66,21 @@ public class MetricQueryParserTest {
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(3600, query.getResolution());
     // todo: support interpolator
-//    Assert.assertNull(query.getInterpolator());
+//    Assert.assertNull(query.getInterpolate());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=step"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Step);
+//    Assert.assertTrue(query.getInterpolate() instanceof Interpolators.Step);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=linear"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Linear);
+//    Assert.assertTrue(query.getInterpolate() instanceof Interpolators.Linear);
   }
 
   @Test

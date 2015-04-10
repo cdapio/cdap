@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
@@ -71,16 +72,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final Gson GSON = new Gson();
 
   // constants used for request query parsing
-  private static final String COUNT = "count";
-  private static final String START_TIME = "start";
-  private static final String RESOLUTION = "resolution";
-  private static final String END_TIME = "end";
-  private static final String INTERPOLATE = "interpolate";
-  private static final String STEP_INTERPOLATOR = "step";
-  private static final String LINEAR_INTERPOLATOR = "linear";
-  private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
-  private static final String AGGREGATE = "aggregate";
-  private static final String AUTO_RESOLUTION = "auto";
+  private static final String PARAM_COUNT = "count";
+  private static final String PARAM_START_TIME = "start";
+  private static final String PARAM_RESOLUTION = "resolution";
+  private static final String PARAM_END_TIME = "end";
+  private static final String PARAM_INTERPOLATE = "interpolate";
+  private static final String PARAM_STEP_INTERPOLATOR = "step";
+  private static final String PARAM_LINEAR_INTERPOLATOR = "linear";
+  private static final String PARAM_MAX_INTERPOLATE_GAP = "maxInterpolateGap";
+  private static final String PARAM_AGGREGATE = "aggregate";
+  private static final String PARAM_AUTO_RESOLUTION = "auto";
 
   public static final String ANY_TAG_VALUE = "*";
   public static final String TAG_DELIM = ".";
@@ -215,19 +216,42 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private void executeBatchQueries(HttpRequest request, HttpResponder responder) {
     if (HttpHeaders.getContentLength(request) > 0) {
-      String json = request.getContent().toString(Charsets.UTF_8);
-      Map<String, QueryRequest> queries =
-        GSON.fromJson(json, new TypeToken<Map<String, QueryRequest>>() { }.getType());
-      LOG.trace("Received Queries {}", queries);
+      try {
+        String json = request.getContent().toString(Charsets.UTF_8);
+        Map<String, QueryRequestFormat> queries =
+          GSON.fromJson(json, new TypeToken<Map<String, QueryRequestFormat>>() { }.getType());
 
-      Map<String, MetricQueryResult> queryFinalResponse = Maps.newHashMap();
-      for (Map.Entry<String, QueryRequest> query : queries.entrySet()) {
-        queryFinalResponse.put(query.getKey(), executeQuery(query.getValue()));
+        LOG.trace("Received Queries {}", queries);
+
+        Map<String, MetricQueryResult> queryFinalResponse = Maps.newHashMap();
+        for (Map.Entry<String, QueryRequestFormat> query : queries.entrySet()) {
+          QueryRequest queryRequest = setTimeRangeInQueryRequest(query.getValue());
+          queryFinalResponse.put(query.getKey(), executeQuery(queryRequest));
+        }
+        responder.sendJson(HttpResponseStatus.OK, queryFinalResponse);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Invalid request", e);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      } catch (Exception e) {
+        LOG.error("Exception querying metrics ", e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
       }
-      responder.sendJson(HttpResponseStatus.OK, queryFinalResponse);
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
     }
+  }
+
+  private QueryRequest setTimeRangeInQueryRequest(QueryRequestFormat queryRequestFormat) {
+    Map<String, List<String>> queryParams = Maps.newHashMap();
+
+    for (Map.Entry<String, String> entry : queryRequestFormat.getTimeRange().entrySet()) {
+      queryParams.put(entry.getKey(), ImmutableList.of(entry.getValue()));
+    }
+
+    QueryRequest queryRequest = new QueryRequest(queryRequestFormat.getTags(),
+                                                 queryRequestFormat.getMetrics(), queryRequestFormat.getGroupBy());
+    setTimeRangeInQueryRequest(queryRequest, queryParams);
+    return queryRequest;
   }
 
   private void tagsQuerying(HttpRequest request, HttpResponder responder, List<String> tags, List<String> metrics,
@@ -264,9 +288,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private MetricQueryResult executeQuery(HttpRequest request, Map<String, String> sliceByTags,
                                          List<String> groupByTags, List<String> metrics) {
     try {
-      Map<String, String> timeRange =
-        getTimeRangeFromQueryParam(new QueryStringDecoder(request.getUri()).getParameters());
-      return executeQuery(new QueryRequest(sliceByTags, metrics, groupByTags, timeRange));
+      QueryRequest queryRequest = new QueryRequest(sliceByTags, metrics, groupByTags);
+      setTimeRangeInQueryRequest(queryRequest, new QueryStringDecoder(request.getUri()).getParameters());
+      return executeQuery(queryRequest);
     } catch (IllegalArgumentException e) {
       throw Throwables.propagate(e);
     } catch (Exception e) {
@@ -274,48 +298,106 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Map<String, String> getTimeRangeFromQueryParam(Map<String, List<String>> queryTimeParams) {
-    Map<String, String> timeRange = Maps.newHashMap();
-    List<String> paramToCheck = ImmutableList.of(START_TIME, END_TIME, COUNT, INTERPOLATE,
-                                                 MAX_INTERPOLATE_GAP, RESOLUTION, AGGREGATE);
+  private void setTimeRangeInQueryRequest(QueryRequest request, Map<String, List<String>> queryTimeParams) {
+    Long start =
+      queryTimeParams.containsKey(PARAM_START_TIME) ?
+        TimeMathParser.parseTime(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+    Long end =
+      queryTimeParams.containsKey(PARAM_END_TIME) ?
+        TimeMathParser.parseTime(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+    Integer count = null;
 
-    for (String queryParam : paramToCheck) {
-      if (queryTimeParams.containsKey(queryParam) && queryTimeParams.get(queryParam).size() > 0) {
-        timeRange.put(queryParam, queryTimeParams.get(queryParam).get(0));
-      }
+    boolean aggregate =
+      queryTimeParams.containsKey(PARAM_AGGREGATE) && queryTimeParams.get(PARAM_AGGREGATE).get(0).equals("true") ||
+        ((start == null) && (end == null));
+
+    Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
+      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : 1;
+
+    Interpolator interpolator = null;
+    if (queryTimeParams.containsKey(PARAM_INTERPOLATE)) {
+      long timeLimit = queryTimeParams.containsKey(PARAM_MAX_INTERPOLATE_GAP) ?
+        Long.parseLong(queryTimeParams.get(PARAM_MAX_INTERPOLATE_GAP).get(0)) : Long.MAX_VALUE;
+      interpolator = getInterpolator(queryTimeParams.get(PARAM_INTERPOLATE).get(0), timeLimit);
     }
-    return timeRange;
+
+    if (queryTimeParams.containsKey(PARAM_COUNT)) {
+      count = Integer.valueOf(queryTimeParams.get(PARAM_COUNT).get(0));
+      if (start == null && end != null) {
+        start = end - count * resolution;
+      } else if (start != null && end == null) {
+        end = start + count * resolution;
+      }
+    } else if (start != null && end != null) {
+      count = (int) (((end / resolution * resolution) - (start / resolution * resolution)) / resolution + 1);
+    } else if (!aggregate) {
+      throw new IllegalArgumentException("At least two of count/start/end parameters " +
+                                           "are required for time-range queries ");
+    }
+
+    if (aggregate) {
+      request.setTimeRange(0L, 0L, 1, Integer.MAX_VALUE, null);
+    } else {
+      request.setTimeRange(start, end, count, resolution, interpolator);
+    }
   }
 
+  private Interpolator getInterpolator(String interpolator, long timeLimit) {
+    if (PARAM_STEP_INTERPOLATOR.equals(interpolator)) {
+      return new Interpolators.Step(timeLimit);
+    } else if (PARAM_LINEAR_INTERPOLATOR.equals(interpolator)) {
+      return new Interpolators.Linear(timeLimit);
+    }
+    return null;
+  }
+
+  private Integer getResolution(String resolution, Long start, Long end) {
+    if (resolution.equals(PARAM_AUTO_RESOLUTION)) {
+      if (start != null && end != null) {
+        long difference = end - start;
+        if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
+          return 3600;
+        } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
+          return 60;
+        } else {
+          return 1;
+        }
+      } else {
+        throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
+                                             "should be provided to determine resolution");
+      }
+    } else {
+      // if not auto, check if the given resolution matches available resolutions that we support.
+      int resolutionInterval = TimeMathParser.resolutionInSeconds(resolution);
+      if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600) ||
+        (resolutionInterval == 60) || (resolutionInterval == 1))) {
+        throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
+                                             "1 hour resolutions are supported currently");
+      }
+      return resolutionInterval;
+    }
+  }
 
   private MetricQueryResult executeQuery(QueryRequest queryRequest) {
     try {
-      // todo: refactor parsing time range params
-      // sets time range, query type, etc.
-      MetricQueryParser.MetricDataQueryBuilder builder = new MetricQueryParser.MetricDataQueryBuilder();
-      builder.setSliceByTagValues(Maps.<String, String>newHashMap());
-      parseTimeRange(queryRequest.getTimeRange(), builder);
-      MetricDataQuery queryTimeParams = builder.build();
-
       Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
-      long startTs = queryTimeParams.getStartTs();
-      long endTs = queryTimeParams.getEndTs();
-
       Collection<MetricTimeSeries> queryResult = Lists.newArrayList();
+      QueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
       for (String metric : queryRequest.getMetrics()) {
-        MetricDataQuery query = new MetricDataQuery(startTs, endTs, queryTimeParams.getResolution(),
-                                                    queryTimeParams.getLimit(), metric,
+        MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
+                                                    timeRange.getResolutionInSeconds(),
+                                                    timeRange.getCount(), metric,
                                                     // todo: figure out MetricType
                                                     MetricType.COUNTER, tagsSliceBy,
                                                     transformGroupByTags(queryRequest.getGroupBy()),
-                                                    queryTimeParams.getInterpolator());
+                                                    timeRange.getInterpolate());
         Collection<MetricTimeSeries> timeSerieses = metricStore.query(query);
 
         queryResult.addAll(timeSerieses);
       }
 
-      MetricQueryResult result = decorate(queryResult, startTs, endTs);
+      MetricQueryResult result = decorate(queryResult, timeRange.getStart(), timeRange.getEnd());
       return result;
     } catch (IllegalArgumentException e) {
       throw Throwables.propagate(e);
@@ -347,134 +429,10 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       }
     });
   }
-  private boolean isAggregateQuery(Map<String, String> timeRange) {
-    // if aggregate=true is present, or if no time range parameters {start, end, count} is available we return true.
-    if ((timeRange.containsKey(AGGREGATE) && timeRange.get(AGGREGATE).equals("true")) ||
-         !(timeRange.containsKey(START_TIME) || timeRange.containsKey(END_TIME) || timeRange.containsKey(COUNT))) {
-      return true;
-    }
-    return false;
-  }
-  private void parseTimeRange(Map<String, String> timeRange, MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
-
-    if (isAggregateQuery(timeRange)) {
-        queryTimeParams.setStartTs(0);
-        queryTimeParams.setEndTs(0);
-        queryTimeParams.setResolution(Integer.MAX_VALUE);
-        queryTimeParams.setLimit(1);
-        return;
-    }
-
-    parseInterpolateParam(timeRange, queryTimeParams);
-
-    if (timeRange.containsKey(START_TIME)) {
-      queryTimeParams.setStartTs(TimeMathParser.parseTime(timeRange.get("start")));
-    }
-    if (timeRange.containsKey(END_TIME)) {
-      queryTimeParams.setEndTs(TimeMathParser.parseTime(timeRange.get("end")));
-    }
-    int resolutionInterval = parseResolutionParam(timeRange, queryTimeParams);
-    parseCountParam(timeRange, queryTimeParams, resolutionInterval);
-  }
-
-  /**
-   * parse and set interpolator based on timeRange parameters
-   */
-  private void parseInterpolateParam(Map<String, String> timeRange,
-                                     MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
-
-    if (timeRange.containsKey(INTERPOLATE)) {
-      String interpolatorType = timeRange.get(INTERPOLATE);
-      // timeLimit used in case there is a big gap in the data and we don't want to interpolate points.
-      // the limit defines how big the gap has to be in seconds before we just say they're all zeroes.
-      long timeLimit = timeRange.containsKey(MAX_INTERPOLATE_GAP)
-        ? Long.parseLong(timeRange.get(MAX_INTERPOLATE_GAP))
-        : Long.MAX_VALUE;
-
-      if (STEP_INTERPOLATOR.equals(interpolatorType)) {
-        queryTimeParams.setInterpolator(new Interpolators.Step(timeLimit));
-      } else if (LINEAR_INTERPOLATOR.equals(interpolatorType)) {
-        queryTimeParams.setInterpolator(new Interpolators.Linear(timeLimit));
-      }
-    }
-  }
-
-  /**
-   * determines and sets resolution based on timeRange parameters
-   */
-  private int parseResolutionParam(Map<String, String> timeRange,
-                                   MetricQueryParser.MetricDataQueryBuilder queryTimeParams) {
-    int resolutionInterval = 1;
-    // if resolution is present, if auto -> check if start and end time are available, if not throw an exception
-    // if available based on time difference we select a resolution
-    if (timeRange.containsKey(RESOLUTION)) {
-      if (timeRange.get(RESOLUTION).equals(AUTO_RESOLUTION)) {
-        if (!timeRange.containsKey(START_TIME) || !timeRange.containsKey(END_TIME)) {
-          throw new IllegalArgumentException("Need start and end timestamp for auto resolution determination");
-        }
-        long difference = Long.parseLong(timeRange.get(END_TIME)) - Long.parseLong(timeRange.get(START_TIME));
-        if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
-          queryTimeParams.setResolution(3600);
-        } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
-          queryTimeParams.setResolution(60);
-        } else {
-          queryTimeParams.setResolution(1);
-        }
-      } else {
-        // if not auto, check if the given resolution matches available resolutions that we support.
-        resolutionInterval = TimeMathParser.resolutionInSeconds(timeRange.get(RESOLUTION));
-        if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600) ||
-          (resolutionInterval == 60) || (resolutionInterval == 1))) {
-          throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
-                                               "1 hour resolutions are supported currently");
-        }
-        queryTimeParams.setResolution(resolutionInterval);
-      }
-    } else {
-      // if no resolution is available, use 1 second as default
-      queryTimeParams.setResolution(resolutionInterval);
-    }
-    return resolutionInterval;
-  }
-
-  /**
-   * parses and sets count of returned results or sets start or end time based on count
-   */
-  private void parseCountParam(Map<String, String> timeRange,
-                               MetricQueryParser.MetricDataQueryBuilder queryTimeParams, int resolutionInterval) {
-
-    // if count is available, we set count , and if only one of the startTime or endTime parameter is available,
-    // we determine the other based on count and resolution
-    if (timeRange.containsKey(COUNT)) {
-      queryTimeParams.setLimit((int) TimeMathParser.parseTime(timeRange.get(COUNT)));
-      if (timeRange.containsKey(START_TIME) && !timeRange.containsKey(END_TIME)) {
-        long endTs = Long.parseLong(timeRange.get(START_TIME)) +
-          Integer.parseInt(timeRange.get(COUNT)) * resolutionInterval;
-        queryTimeParams.setEndTs(endTs);
-      } else  if (timeRange.containsKey(END_TIME) && !timeRange.containsKey(START_TIME)) {
-        long endTs = Long.parseLong(timeRange.get(END_TIME)) -
-          Integer.parseInt(timeRange.get(COUNT)) * resolutionInterval;
-        queryTimeParams.setEndTs(endTs);
-      }
-    } else {
-      // if count is not available, we need start and end times to determine count otherwise we throw exception
-      if (timeRange.containsKey(START_TIME) && timeRange.containsKey(END_TIME)) {
-        long endTime = TimeMathParser.parseTime(timeRange.get(END_TIME));
-        long startTime = TimeMathParser.parseTime(timeRange.get(START_TIME));
-
-        int count = (int) (((endTime / resolutionInterval * resolutionInterval) -
-          (startTime / resolutionInterval * resolutionInterval)) / resolutionInterval + 1);
-        queryTimeParams.setLimit(count);
-      } else {
-        throw new IllegalArgumentException("At least two of count/start/end parameters " +
-                                             "are required for time-range queries ");
-      }
-    }
-  }
 
   private List<String> parseGroupBy(String groupBy) {
     // groupBy tags are comma separated
-    return  (groupBy == null) ? Lists.<String>newArrayList() :
+    return (groupBy == null) ? Lists.<String>newArrayList() :
       humanToTagNamesGroupBy(Lists.newArrayList(Splitter.on(",").split(groupBy).iterator()));
   }
 
@@ -599,7 +557,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
       String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
       String name = tagNameToHuman(tag);
-      String tagValue = encodeTag(name)  + TAG_DELIM + encodeTag(value);
+      String tagValue = encodeTag(name) + TAG_DELIM + encodeTag(value);
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
     }
@@ -701,37 +659,17 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Format for metrics query in batched queries
+   * Helper class to Deserialize Query requests and based on this
+   * {@link co.cask.cdap.proto.QueryRequest} will be constructed
    */
-  /*class QueryRequest {
+  private class QueryRequestFormat {
     Map<String, String> tags;
     List<String> metrics;
     List<String> groupBy;
     Map<String, String> timeRange;
 
-    QueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy,
-                 Map<String, String> timeRange) {
-      this.tags = tags;
-      this.metrics = metrics;
-      this.groupBy = groupBy;
-      this.timeRange = timeRange;
-    }
-
-    private Map<String, String> parseTags(Map<String, String> tags) {
-      return Maps.transformValues(tags, new Function<String, String>() {
-        @Override
-        public String apply(String value) {
-          if (ANY_TAG_VALUE.equals(value)) {
-            return null;
-          } else {
-            return value;
-          }
-        }
-      });
-    }
-
     public Map<String, String> getTags() {
-      return parseTags(tags);
+      return tags;
     }
 
     public List<String> getMetrics() {
@@ -739,18 +677,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
 
     public List<String> getGroupBy() {
-      return Lists.transform(groupBy, new Function<String, String>() {
-        @Nullable
-        @Override
-        public String apply(@Nullable String input) {
-            String replacement = humanToTagName.get(input);
-            return replacement != null ? replacement : input;
-        }
-      });
+      return groupBy;
     }
 
     public Map<String, String> getTimeRange() {
       return timeRange;
     }
-  }*/
+  }
 }

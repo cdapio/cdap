@@ -25,7 +25,6 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.QueryRequest;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -385,46 +384,51 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testAggregateQueryBatch() throws Exception {
 
-    QueryRequest query1 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                         "flowlet", "splitter"),
+    QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
                                            ImmutableMap.of("aggregate", "true"));
 
     // empty time range should default to aggregate=true
-    QueryRequest query2 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                         "flowlet", "counter"),
+    QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "counter"),
                                            ImmutableList.of("system.reads"),
-                                           ImmutableList.<String>of(), ImmutableMap.<String, String>of());
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
 
-    QueryRequest query3 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1", "flow", "WCounter",
-                                                         "flowlet", "*"),
+
+    QueryRequestFormat query3 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "*"),
                                            ImmutableList.of("system.reads"),
-                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
 
-    QueryRequest query4 = new QueryRequest(ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "flow",
-                                                           "WordCounter", "flowlet", "splitter"),
+
+    QueryRequestFormat query4 = new QueryRequestFormat(ImmutableMap.of("namespace", "myspace", "app", "WordCount1",
+                                                                       "flow", "WordCounter", "flowlet", "splitter"),
                                            ImmutableList.of("system.reads", "system.writes"),
-                                           ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
 
     // test batching of multiple queries
 
-    ImmutableMap<String, ImmutableList<QueryResult>> expected =
+    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
       ImmutableMap.of("testQuery1",
-                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
                       "testQuery2",
-                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
 
     batchTest(ImmutableMap.of("testQuery1", query1, "testQuery2", query2), expected);
 
     // test batching of multiple queries, with one query having multiple metrics to query
 
     expected = ImmutableMap.of("testQuery3",
-                               ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
+                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
                                                                 "system.reads", 1, 4)),
                                "testQuery4",
-                               ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(),
+                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
                                                                 "system.reads", 1, 2),
-                                                new QueryResult(ImmutableMap.<String, String>of(),
+                                                new TimeSeriesSummary(ImmutableMap.<String, String>of(),
                                                                 "system.writes", 1, 2))
     );
 
@@ -436,12 +440,31 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
-  private Map<String, String> getContextMap(String... entries) {
-    Map<String, String> contextMap = Maps.newHashMap();
+  private Map<String, String> getTagsMap(String... entries) {
+    Map<String, String> tagsMap = Maps.newHashMap();
     for (int i = 0; i < entries.length; i += 2) {
-      contextMap.put(entries[i], entries[i + 1]);
+      tagsMap.put(entries[i], entries[i + 1]);
     }
-    return contextMap;
+    return tagsMap;
+  }
+
+
+  /**
+   * Helper class to construct json for QueryRequest for batch queries
+   */
+  private class QueryRequestFormat {
+    Map<String, String> tags;
+    List<String> metrics;
+    List<String> groupBy;
+    Map<String, String> timeRange;
+
+    QueryRequestFormat(Map<String, String> tags, List<String> metrics, List<String> groupBy,
+                       Map<String, String> timeRange) {
+      this.tags = tags;
+      this.metrics = metrics;
+      this.groupBy = groupBy;
+      this.timeRange = timeRange;
+    }
   }
 
   @Test
@@ -449,39 +472,37 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
+    int count = 120;
 
-    QueryRequest query1 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1",
-                                                         "flow", "WCounter", "flowlet", "splitter"),
+    QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                      "flow", "WCounter", "flowlet", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                           ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
+                                           ImmutableMap.of("start", String.valueOf(start),
+                                                           "end", String.valueOf(end)));
 
-    QueryRequest query2 = new QueryRequest(getContextMap("namespace", "yourspace", "app", "WCount1",
-                                                         "flow", "WCounter"), ImmutableList.of("system.reads"),
+    QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                      "flow", "WCounter"), ImmutableList.of("system.reads"),
                                            ImmutableList.of("flowlet"),
-                                           ImmutableMap.of("start", String.valueOf(start), "end", String.valueOf(end)));
+                                           ImmutableMap.of("start", String.valueOf(start),
+                                                           "count", String.valueOf(count)));
 
-    ImmutableMap<String, ImmutableList<QueryResult>> expected =
+    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
       ImmutableMap.of("timeRangeQuery1",
-                      ImmutableList.of(new QueryResult(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
                       "timeRangeQuery2",
-                      ImmutableList.of(new QueryResult(ImmutableMap.of("flowlet", "counter"), "system.reads", 1, 1),
-                                       new QueryResult(ImmutableMap.of("flowlet", "splitter"), "system.reads", 2, 3)
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"),
+                                                             "system.reads", 1, 1),
+                                       new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"),
+                                                             "system.reads", 2, 3)
                       ));
 
-    Map<String, QueryRequest> batchQueries = ImmutableMap.of("timeRangeQuery1", query1, "timeRangeQuery2", query2);
+    Map<String, QueryRequestFormat> batchQueries = ImmutableMap.of("timeRangeQuery1", query1,
+                                                                   "timeRangeQuery2", query2);
     batchTest(batchQueries, expected);
   }
 
   @Test
   public void testMultipleMetricsSingleContext() throws Exception {
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
-        "&metric=system.reads&aggregate=true", 2L);
-
-    verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
-        "&metric=system.reads&aggregate=true", 2L);
-
     verifyAggregateQueryResult(
       "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
         "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.<Long>of(2L, 2L));
@@ -786,13 +807,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   /**
    * Used to test time range queries when requests are batched
    */
-  class QueryResult {
+  class TimeSeriesSummary {
     Map<String, String> grouping;
     String metricName;
     long numPoints;
     long totalSum;
 
-    public QueryResult(Map<String, String> grouping, String metricName, long numPoints, long totalSum) {
+    public TimeSeriesSummary(Map<String, String> grouping, String metricName, long numPoints, long totalSum) {
       this.grouping = grouping;
       this.metricName = metricName;
       this.numPoints = numPoints;
@@ -816,8 +837,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private  void batchTest(Map<String, QueryRequest> jsonBatch,
-                          ImmutableMap<String, ImmutableList<QueryResult>> expected) throws Exception {
+  private  void batchTest(Map<String, QueryRequestFormat> jsonBatch,
+                          ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected) throws Exception {
     String url = "/v3/metrics/query";
     Map<String, MetricQueryResult> results =
       post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, MetricQueryResult>>() { }.getType());
@@ -825,19 +846,19 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // check we have all the keys
     Assert.assertEquals(expected.keySet(), results.keySet());
     for (Map.Entry<String, MetricQueryResult> entry : results.entrySet()) {
-      ImmutableList<QueryResult> expectedQueryResult = expected.get(entry.getKey());
+      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey());
       MetricQueryResult actualQueryResult = entry.getValue();
-      compareQueryResults(expectedQueryResult, actualQueryResult);
+      compareQueryResults(expectedTimeSeriesSummary, actualQueryResult);
     }
   }
 
-  private void compareQueryResults(ImmutableList<QueryResult> expected, MetricQueryResult actual) {
+  private void compareQueryResults(ImmutableList<TimeSeriesSummary> expected, MetricQueryResult actual) {
 
     MetricQueryResult.TimeSeries[] actualTimeSeries = actual.getSeries();
     for (int i = 0; i < actualTimeSeries.length; i++) {
 
-      QueryResult expectedQueryResult = findExpectedQueryResult(expected, actualTimeSeries[i]);
-      Assert.assertNotNull(expectedQueryResult);
+      TimeSeriesSummary expectedTimeSeriesSummary = findExpectedQueryResult(expected, actualTimeSeries[i]);
+      Assert.assertNotNull(expectedTimeSeriesSummary);
       MetricQueryResult.TimeValue[] values = actualTimeSeries[i].getData();
       long numPoints = 0;
       long totalSum = 0;
@@ -845,14 +866,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         numPoints++;
         totalSum += tv.getValue();
       }
-      Assert.assertEquals(expectedQueryResult.getNumPoints(), numPoints);
-      Assert.assertEquals(expectedQueryResult.getTotalSum(), totalSum);
+      Assert.assertEquals(expectedTimeSeriesSummary.getNumPoints(), numPoints);
+      Assert.assertEquals(expectedTimeSeriesSummary.getTotalSum(), totalSum);
     }
   }
 
-  private QueryResult findExpectedQueryResult(ImmutableList<QueryResult> expected,
+  private TimeSeriesSummary findExpectedQueryResult(ImmutableList<TimeSeriesSummary> expected,
                                               MetricQueryResult.TimeSeries actualTimeSeries) {
-    for (QueryResult result : expected) {
+    for (TimeSeriesSummary result : expected) {
       if (result.getGrouping().equals(actualTimeSeries.getGrouping()) &&
         result.getMetricName().equals(actualTimeSeries.getMetricName())) {
         return result;
@@ -975,8 +996,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-    List<Map<String, String>> reply = GSON.fromJson(result,
-                                                          new TypeToken<List<Map<String, String>>>() { }.getType());
+    List<Map<String, String>> reply = GSON.fromJson(result, new TypeToken<List<Map<String, String>>>() { }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
 
