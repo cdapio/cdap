@@ -70,10 +70,10 @@ public class ETLMapReduceTest extends TestBase {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testInvalidConfig() throws Exception {
+  @Test(expected = Exception.class)
+  public void testSourceTransformTypeMismatchConfig() throws Exception {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
-    ETLBatchConfig adapterConfig = constructInvalidConfig();
+    ETLBatchConfig adapterConfig = constructTypeMismatchConfig();
     MockAdapterConfigurer mockAdapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, mockAdapterConfigurer);
   }
@@ -85,7 +85,7 @@ public class ETLMapReduceTest extends TestBase {
     return new ETLBatchConfig("", source, sink, transformList);
   }
 
-  private ETLBatchConfig constructInvalidConfig() {
+  private ETLBatchConfig constructTypeMismatchConfig() {
     ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("StructuredRecordToGenericRecordTransform", ImmutableMap.<String, String>of());
