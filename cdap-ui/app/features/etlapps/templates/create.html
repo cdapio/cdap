@@ -26,7 +26,9 @@
         </div>
         <div class="panel-body" ng-if="ETLSourceTabOpen">
           <ul class="list-group" ng-if="etlSources.length > 0">
-            <li class="list-group-item" ng-repeat="source in etlSources">
+            <li class="list-group-item"
+                ng-repeat="source in etlSources"
+                id="source-{{source.name}}" draggable data-drop-zone="sourceDropZone">
               {{source.name}}
             </li>
           </ul>
@@ -44,7 +46,11 @@
         </div>
         <div class="panel-body" ng-if="ETLSinkTabOpen">
           <ul class="list-group" ng-if="etlSinks.length > 0">
-            <li class="list-group-item" ng-repeat="sink in etlSinks">
+            <li class="list-group-item"
+                ng-repeat="sink in etlSinks"
+                id="sink-{{sink.name}}"
+                data-drop-zone="sinkDropZone"
+                draggable>
               {{sink.name}}
             </li>
           </ul>
@@ -62,7 +68,11 @@
         </div>
         <div class="panel-body" ng-if="ETLTransformTabOpen">
           <ul class="list-group" ng-if="etlTransforms.length > 0">
-            <li class="list-group-item" ng-repeat="transform in etlTransforms">
+            <li class="list-group-item"
+                ng-repeat="transform in etlTransforms"
+                id="transform-{{transform.name}}"
+                data-drop-zone="transformDropZone"
+                draggable>
               {{transform.name}}
             </li>
           </ul>
@@ -78,17 +88,26 @@
   <div class="col-lg-8 col-md-8 col-sm-12">
     <div class="etlflowcontainer row">
       <div class="col-xs-4">
-        <div class="sourceDropZone">
+        <div class="sourceDropZone"
+             drop="handleSourceDrop"
+             id="sourceDropZone"
+             droppable>
 
         </div>
       </div>
       <div class="col-xs-4">
-        <div class="transformDropZone">
+        <div class="transformDropZone"
+              drop="handleTransformDrop"
+              id="transformDropZone"
+              droppable>
 
         </div>
       </div>
       <div class="col-xs-4">
-        <div class="sinkDropZone">
+        <div class="sinkDropZone"
+              drop="handleSinkDrop"
+              id="sinkDropZone"
+              droppable>
 
         </div>
       </div>

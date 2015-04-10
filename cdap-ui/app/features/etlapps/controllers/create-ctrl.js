@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter) {
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
     $scope.loadingEtlSourceProps = false;
@@ -119,4 +119,46 @@ angular.module(PKG.name + '.feature.etlapps')
       console.log("Transform Collection Watch", newVal);
     })
 
+    $scope.handleSourceDrop = function(id, dropZone) {
+      console.log("Source Dropped", id);
+      if (dropZone.indexOf('source') === -1) {
+        $alert({
+          type: 'danger',
+          content: 'Boink! You are not adding a source to a Source!'
+        });
+      } else {
+        $alert({
+          type: 'success',
+          content: 'You have dropped a source!'
+        });
+      }
+    };
+    $scope.handleTransformDrop = function(id, dropZone) {
+      console.log("Transform Dropped", id);
+      if (dropZone.indexOf('transform') === -1) {
+        $alert({
+          type: 'danger',
+          content: 'Boink! You are not adding a source to a Transform!'
+        });
+      } else {
+        $alert({
+          type: 'success',
+          content: 'You have dropped a transform!'
+        });
+      }
+    };
+    $scope.handleSinkDrop = function(id, dropZone) {
+      console.log("Sink Dropped", id);
+      if (dropZone.indexOf('sink') === -1) {
+        $alert({
+          type: 'danger',
+          content: 'Boink! You are not adding a source to a Sink!'
+        });
+      } else {
+        $alert({
+          type: 'success',
+          content: 'You have dropped a sink!'
+        });
+      }
+    };
   });
