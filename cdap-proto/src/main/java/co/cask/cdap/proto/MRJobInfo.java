@@ -18,22 +18,23 @@ package co.cask.cdap.proto;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Simplified (filtered) representation of a MapReduce Job.
  */
 public class MRJobInfo {
   private final String state;
-  private final long startTime;
-  private final long finishTime;
-  private final float mapProgress;
-  private final float reduceProgress;
+  private final Long startTime;
+  private final Long finishTime;
+  private final Float mapProgress;
+  private final Float reduceProgress;
   private final Map<String, Long> counters;
   private final List<MRTaskInfo> mapTasks;
   private final List<MRTaskInfo> reduceTasks;
 
-  public MRJobInfo(String state, long startTime, long finishTime,
-                   float mapProcess, float reduceProgress,
+  public MRJobInfo(@Nullable String state, @Nullable Long startTime, @Nullable Long finishTime,
+                   Float mapProcess, Float reduceProgress,
                    Map<String, Long> counters,
                    List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks) {
     this.state = state;
@@ -46,23 +47,26 @@ public class MRJobInfo {
     this.reduceTasks = reduceTasks;
   }
 
+  @Nullable
   public String getState() {
     return state;
   }
 
-  public long getStartTime() {
+  @Nullable
+  public Long getStartTime() {
     return startTime;
   }
 
-  public long getFinishTime() {
+  @Nullable
+  public Long getFinishTime() {
     return finishTime;
   }
 
-  public float getMapProgress() {
+  public Float getMapProgress() {
     return mapProgress;
   }
 
-  public float getReduceProgress() {
+  public Float getReduceProgress() {
     return reduceProgress;
   }
 
