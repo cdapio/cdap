@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.batch.config;
 
-import co.cask.cdap.templates.etl.common.config.ETLStage;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.base.Objects;
 
 import java.util.List;
 
 /**
- * ETL Batch Adapter Configuration.
+ * ETL Adapter Configuration.
  */
-public class ETLBatchConfig {
+public final class ETLBatchConfig {
   private final String schedule;
   private final ETLStage source;
   private final ETLStage sink;
@@ -51,23 +51,5 @@ public class ETLBatchConfig {
 
   public List<ETLStage> getTransforms() {
     return transforms;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || o.getClass() != this.getClass()) {
-      return false;
-    }
-
-    ETLBatchConfig other = (ETLBatchConfig) o;
-    return Objects.equal(this.schedule, other.schedule) &&
-      Objects.equal(this.source, other.source) &&
-      Objects.equal(this.sink, other.sink) &&
-      Objects.equal(this.transforms, other.transforms);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(schedule, source, sink, transforms);
   }
 }

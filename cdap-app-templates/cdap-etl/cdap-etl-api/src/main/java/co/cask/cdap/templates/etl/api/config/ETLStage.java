@@ -14,16 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.common.config;
-
-import com.google.common.base.Objects;
+package co.cask.cdap.templates.etl.api.config;
 
 import java.util.Map;
 
 /**
  * ETL Stage Configuration.
  */
-public class ETLStage {
+public final class ETLStage {
   private final String name;
   private final Map<String, String> properties;
 
@@ -38,20 +36,5 @@ public class ETLStage {
 
   public Map<String, String> getProperties() {
     return properties;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || o.getClass() != this.getClass()) {
-      return false;
-    }
-
-    ETLStage other = (ETLStage) o;
-    return Objects.equal(this.name, other.name) && Objects.equal(this.properties, other.properties);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(name, properties);
   }
 }
