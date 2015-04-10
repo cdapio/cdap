@@ -1,67 +1,77 @@
-<h3> Create ETL Adapter</h3>
-<form class="form-horizontal">
-  <section class="panel-group" bs-collapse>
-    <div class="panel panel-default">
-      <div class="panel-heading" bs-collapse-toggle>
-        <h4 class="panel-title">
-          <span
-            ng-class="{'fa-chevron-right': activePanel!==0,
-                       'fa-chevron-down': activePanel===0}"
-            class="fa fa-fw"
-          ></span>Metadata
-        </h4>
-      </div>
-      <div class="panel-collapse" bs-collapse-target>
-        <div class="panel-body">
-          <div ng-include="'/assets/features/etlapps/templates/create/metadata.html'"></div>
+<div class="row">
+  <div class="col-lg-4">
+
+  </div>
+  <div class="col-lg-4 col-md-4 col-xs-12">
+    <label for="etlAdapaterType"> Choose an ETL Template</label>
+    <select
+      id="etlAdapaterType"
+      name="etlAdaptertype"
+      class="form-control"
+      ng-model="metadata.type"
+      ng-options="etltype.type as etltype.name for etltype in etlTypes" required></select>
+  </div>
+  <div class="col-lg-4">
+
+  </div>
+</div>
+<br/>
+<div class="row">
+
+  <div class="col-lg-4 col-md-4 col-sm-12">
+    <div class="panel-group">
+      <div class="panel panel-default" id="ETLsourceTab">
+        <div class="panel-heading" ng-click="ETLSourceTabOpen=!ETLSourceTabOpen">
+          <span> ETL Sources</span>
+        </div>
+        <div class="panel-body" ng-if="ETLSourceTabOpen">
+          <h4> Source Blah!</h4>
         </div>
       </div>
-
-      <div class="panel-heading" bs-collapse-toggle>
-        <h4 class="panel-title">
-          <span
-            ng-class="{'fa-chevron-right': activePanel!==0,
-                       'fa-chevron-down': activePanel===0}"
-            class="fa fa-fw"
-          ></span>Input
-        </h4>
-      </div>
-      <div class="panel-collapse" bs-collapse-target>
-        <div class="panel-body">
-          <div ng-include="'/assets/features/etlapps/templates/create/source.html'"></div>
-        </div>
-      </div>
-
-      <div class="panel-heading" bs-collapse-toggle>
-        <h4 class="panel-title">
-          <span
-            ng-class="{'fa-chevron-right': activePanel!==0,
-                       'fa-chevron-down': activePanel===0}"
-            class="fa fa-fw"
-          ></span>Output
-        </h4>
-      </div>
-      <div class="panel-collapse" bs-collapse-target>
-        <div class="panel-body">
-          <div ng-include="'/assets/features/etlapps/templates/create/sink.html'"></div>
-        </div>
-      </div>
-
-      <div class="panel-heading" bs-collapse-toggle>
-        <h4 class="panel-title">
-          <span
-            ng-class="{'fa-chevron-right': activePanel!==0,
-                       'fa-chevron-down': activePanel===0}"
-            class="fa fa-fw"
-          ></span>Transformation
-        </h4>
-      </div>
-      <div class="panel-collapse" bs-collapse-target>
-        <div class="panel-body">
-          <div ng-include="'/assets/features/etlapps/templates/create/transforms.html'"></div>
-        </div>
-      </div>
-
     </div>
-  </section>
-</form>
+
+    <div class="panel-group">
+      <div class="panel panel-default" id="ETLsinkTab">
+        <div class="panel-heading" ng-click="ETLSinkTabOpen=!ETLSinkTabOpen">
+          <span> ETL Sinks</span>
+        </div>
+        <div class="panel-body" ng-if="ETLSinkTabOpen">
+          <h4> Sinks Blah!</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-group">
+      <div class="panel panel-default" id="ETLtransformsTab">
+        <div class="panel-heading" ng-click="ETLTransformTabOpen=!ETLTransformTabOpen">
+          <span> ETL Transforms</span>
+        </div>
+        <div class="panel-body" ng-if="ETLTransformTabOpen">
+          <h4> Transforms Blah!</h4>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-lg-8 col-md-8 col-sm-12">
+    <div class="etlflowcontainer row">
+      <div class="col-xs-4">
+        <div class="sourceDropZone">
+
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="transformDropZone">
+
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="sinkDropZone">
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
