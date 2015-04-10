@@ -1,3 +1,4 @@
+@border-color: #d0d0dd;
 
 body.state-workflows{
   .panel-group {
@@ -9,6 +10,60 @@ body.state-workflows{
           }
           color: white;
         }
+      }
+    }
+  }
+
+
+  .schedule-heading {
+    background-color: white;
+    border: 1px solid @border-color;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    font-weight: 700;
+    padding-top: 20px;
+    height: 70px;
+  }
+
+  .schedule-content {
+
+    .schedule-rows {
+
+      .schedule-row {
+        background-color: white;
+        border: 1px solid @border-color;
+        padding: 5px 0;
+        line-height: 50px;
+        cursor: pointer;
+
+        &.active {
+          background-color: #dcdce6;
+        }
+
+        p, i {
+          vertical-align: middle;
+          font-size: 15px;
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .schedule-detail {
+      background-color: #9d9fab;
+      color: white;
+      padding: 10px 0;
+
+      .row {
+        line-height: 30px;
+
+        p {
+          vertical-align: middle;
+          margin-bottom: 0;
+        }
+      }
+
+      table {
+        width: inherit;
       }
     }
   }

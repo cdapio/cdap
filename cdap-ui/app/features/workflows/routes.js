@@ -77,4 +77,17 @@ angular.module(PKG.name + '.feature.workflows')
             templateUrl: '/assets/features/workflows/templates/tabs/history.html',
             controller: 'WorkflowsRunsController'
           })
+
+          .state('workflows.detail.schedules', {
+            url: '/schedules',
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'development'
+            },
+            ncyBreadcrumb: {
+              label: 'schedules'
+            },
+            templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
+            controller: 'WorkflowsSchedulesController'
+          })
   });

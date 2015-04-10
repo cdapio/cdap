@@ -1,0 +1,98 @@
+<!-- HEADING -->
+<div class="schedule-heading row">
+
+  <div class="col-xs-offset-1 col-xs-3">
+    <h4>Schedule Name</h4>
+  </div>
+  <div class="col-xs-4">
+    <h4>Description</h4>
+  </div>
+  <div class="col-xs-2">
+    <h4>Last Run</h4>
+  </div>
+  <div class="col-xs-2">
+    <h4>Suspend</h4>
+  </div>
+</div>
+
+<div class="schedule-content">
+  <div class="schedule-rows" ng-repeat="schedule in schedules">
+    <div class="row schedule-row"
+      ng-click="toggleLine(schedule)"
+      ng-class="{ 'active': schedule.isOpen }">
+      <div class="col-xs-1">
+        <i class="fa"
+        ng-class="{'fa-chevron-down': schedule.isOpen, 'fa-chevron-right': !schedule.isOpen}"></i>
+      </div>
+
+      <div class="col-xs-3">
+        <p>{{ schedule.schedule.name }}</p>
+      </div>
+
+      <div class="col-xs-4">
+        <p>{{ schedule.schedule.description | myEllipsis: 50 }}</p>
+      </div>
+
+      <div class="col-xs-2">
+        <p>n/a</p>
+      </div>
+
+      <div class="col-xs-2">
+        <button class="btn btn-default">
+          <i class="fa fa-pause"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="row schedule-detail" ng-if="schedule.isOpen">
+      <div class="row">
+        <div class="col-xs-offset-2 col-xs-2">
+          <p>Trigger</p>
+        </div>
+        <div class="col-xs-8">
+          <p>{{ schedule.scheduleType }}</p>
+        </div>
+      </div>
+      <div class="row">
+        <div ng-if="schedule.scheduleType === 'TIME'">
+          <div class="col-xs-offset-2 col-xs-2">
+            <p>Crontab</p>
+          </div>
+
+          <div class="col-xs-8">
+
+            <table class="table table-responsive" cask-sortable>
+              <thead>
+                <th>min</th>
+                <th>hour</th>
+                <th>day/month</th>
+                <th>month</th>
+                <th>day/week</th>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>{{ schedule.time.min }}</td>
+                  <td>{{ schedule.time.hour }}</td>
+                  <td>{{ schedule.time.day }}</td>
+                  <td>{{ schedule.time.month }}</td>
+                  <td>{{ schedule.time.week }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div ng-if="schedule.scheduleType === 'STREAM'">
+          <div class="col-xs-offset-2 col-xs-2">
+            <p>Data Trigger</p>
+          </div>
+
+          <div class="col-xs-8">
+            <p>{{ schedule.schedule.dataTriggerMB }} MB</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
