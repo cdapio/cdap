@@ -348,10 +348,7 @@ public class AdapterService extends AbstractIdleService {
   private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
-    try {
-      Preconditions.checkArgument(appSpec != null);
-      Preconditions.checkArgument(appSpec.getWorkflows().size() == 1);
-    } catch (IllegalArgumentException e) {
+    if (appSpec == null || appSpec.getWorkflows().size() != 1) {
       throw new NotFoundException(appId);
     }
     String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
