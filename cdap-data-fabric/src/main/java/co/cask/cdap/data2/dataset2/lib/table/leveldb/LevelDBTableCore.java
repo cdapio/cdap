@@ -111,7 +111,7 @@ public class LevelDBTableCore {
     return true;
   }
 
-  public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws Exception {
+  public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws IOException {
     Map<byte[], Long> result = getResultMap(row, increments);
     Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], Long> entry : result.entrySet()) {

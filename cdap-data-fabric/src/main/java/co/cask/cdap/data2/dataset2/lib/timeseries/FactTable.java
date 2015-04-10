@@ -96,7 +96,7 @@ public final class FactTable {
     this.rollTime = rollTime;
   }
 
-  public void add(List<Fact> facts) throws Exception {
+  public void add(List<Fact> facts) {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -122,11 +122,11 @@ public final class FactTable {
     timeSeriesTable.increment(convertedIncrementsTable);
   }
 
-  public FactScanner scan(FactScan scan) throws Exception {
+  public FactScanner scan(FactScan scan) {
     return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs());
   }
 
-  private Scanner getScanner(FactScan scan) throws Exception {
+  private Scanner getScanner(FactScan scan) {
     byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
     byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
     byte[][] columns;
@@ -154,9 +154,8 @@ public final class FactTable {
   /**
    * Delete entries in fact table.
    * @param scan specifies deletion criteria
-   * @throws Exception
    */
-  public void delete(FactScan scan) throws Exception {
+  public void delete(FactScan scan) {
     Scanner scanner = getScanner(scan);
     try {
       Row row;
@@ -198,12 +197,11 @@ public final class FactTable {
    * @param startTs start of the time range, in seconds
    * @param endTs end of the time range, in seconds
    * @return {@link Set} of {@link TagValue}s
-   * @throws Exception
    */
   // todo: pass a limit on number of tagValues returned
   // todo: kinda not cool API when we expect null values in a map...
   public Set<TagValue> findSingleTagValue(List<String> allTagNames, Map<String, String> tagSlice,
-                                          long startTs, long endTs) throws Exception {
+                                          long startTs, long endTs) {
     // Algorithm, briefly:
     // We scan in the records which have given allTagNames. We use tagSlice as a criteria for scan.
     // If record from the scan has non-null values in the tags which are not specified in tagSlice, we use first of
@@ -308,11 +306,10 @@ public final class FactTable {
    * @param startTs start timestamp, in sec
    * @param endTs end timestamp, in sec
    * @return {@link Set} of measure names
-   * @throws Exception
    */
   // todo: pass a limit on number of measures returned
   public Set<String> findMeasureNames(List<String> allTagNames, Map<String, String> tagSlice,
-                                      long startTs, long endTs) throws Exception {
+                                      long startTs, long endTs) {
 
     List<TagValue> allTags = Lists.newArrayList();
     for (String tagName : allTagNames) {

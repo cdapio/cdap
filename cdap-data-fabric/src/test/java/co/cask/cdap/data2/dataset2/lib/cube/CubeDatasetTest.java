@@ -86,60 +86,60 @@ public class CubeDatasetTest extends AbstractCubeTest {
     }
 
     @Override
-    public void add(final CubeFact fact) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void add(final CubeFact fact) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.add(fact);
         }
       });
     }
 
     @Override
-    public void add(final Collection<? extends CubeFact> facts) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void add(final Collection<? extends CubeFact> facts) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.add(facts);
         }
       });
     }
 
     @Override
-    public Collection<TimeSeries> query(final CubeQuery query) throws Exception {
-      return txnl.execute(new Callable<Collection<TimeSeries>>() {
+    public Collection<TimeSeries> query(final CubeQuery query) {
+      return txnl.executeUnchecked(new Callable<Collection<TimeSeries>>() {
         @Override
-        public Collection<TimeSeries> call() throws Exception {
+        public Collection<TimeSeries> call() {
           return delegate.query(query);
         }
       });
     }
 
     @Override
-    public void delete(final CubeDeleteQuery query) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void delete(final CubeDeleteQuery query) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.delete(query);
         }
       });
     }
 
     @Override
-    public Collection<TagValue> findNextAvailableTags(final CubeExploreQuery query) throws Exception {
-      return txnl.execute(new Callable<Collection<TagValue>>() {
+    public Collection<TagValue> findNextAvailableTags(final CubeExploreQuery query) {
+      return txnl.executeUnchecked(new Callable<Collection<TagValue>>() {
         @Override
-        public Collection<TagValue> call() throws Exception {
+        public Collection<TagValue> call() {
           return delegate.findNextAvailableTags(query);
         }
       });
     }
 
     @Override
-    public Collection<String> findMeasureNames(final CubeExploreQuery query) throws Exception {
-      return txnl.execute(new Callable<Collection<String>>() {
+    public Collection<String> findMeasureNames(final CubeExploreQuery query) {
+      return txnl.executeUnchecked(new Callable<Collection<String>>() {
         @Override
-        public Collection<String> call() throws Exception {
+        public Collection<String> call() {
           return delegate.findMeasureNames(query);
         }
       });

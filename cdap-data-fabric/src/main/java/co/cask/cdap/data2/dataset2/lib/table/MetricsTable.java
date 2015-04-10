@@ -33,12 +33,12 @@ public interface MetricsTable extends Dataset {
    * Read single column of a row
    */
   @Nullable
-  byte[] get(byte[] row, byte[] column) throws Exception;
+  byte[] get(byte[] row, byte[] column);
 
   /**
    * Write multiple rows, each with multiple individual columns to write.
    */
-  void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception;
+  void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates);
 
   /**
    * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
@@ -46,26 +46,26 @@ public interface MetricsTable extends Dataset {
    * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
    * @return whether the write happened, that is, whether the existing value of the column matched the expected value.
    */
-  boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception;
+  boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue);
 
   /**
    * Atomic increment of multiple columns of a row. If a column does not exist prior to the increment,
    * its value is assumed zero. Increments are only guaranteed atomic with respect to other increments.
    * @param increments Map from each column key to the value it should be incremented by.
    */
-  void increment(byte[] row, Map<byte[], Long> increments) throws Exception;
+  void increment(byte[] row, Map<byte[], Long> increments);
 
 
   /**
    * Batch increment multiple rows each with multiple columns and increments
    */
-  void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception;
+  void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates);
 
   /**
    * Increment a single column of a row and return the new value.
    * @return the new value after the increment.
    */
-  long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception;
+  long incrementAndGet(byte[] row, byte[] column, long delta);
 
   /**
    * Deletes specified columns of the specified row.
@@ -73,7 +73,7 @@ public interface MetricsTable extends Dataset {
    * @param row row to delete from
    * @param columns names of columns to delete
    */
-  void delete(byte[] row, byte[][] columns) throws Exception;
+  void delete(byte[] row, byte[][] columns);
 
   /**
    * Get a scanner for a table.
@@ -81,8 +81,7 @@ public interface MetricsTable extends Dataset {
    * @param stop the row key of the last row to scan. If null, the scan goes to the last row of the table.
    * @param filter if non-null, a fuzzy row filter used to efficiently skip over entire rows.
    */
-  Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-               @Nullable FuzzyRowFilter filter) throws Exception;
+  Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter);
 
 }
 
