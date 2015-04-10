@@ -27,9 +27,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -165,33 +163,23 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   }
 
   public AdapterSpecification createSpecification() {
+    ScheduleSpecification scheduleSpec = null;
+    if (programType == ProgramType.WORKFLOW) {
+      String workflowName = templateSpec.getWorkflows().values().iterator().next().getName();
+      scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
+        SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs);
+    }
+
     AdapterSpecification.Builder builder =
       AdapterSpecification.builder(adapterName, adapterConfig.getTemplate())
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
         .setDatasetModules(dataSetModules)
-        .setStreams(streams);
-
-    if (programType == ProgramType.WORKFLOW) {
-      setWorkflowSpec(builder);
-    } else if (programType == ProgramType.WORKER) {
-      setWorkerSpec(builder);
-    }
+        .setStreams(streams)
+        .setRuntimeArgs(runtimeArgs)
+        .setScheduleSpec(scheduleSpec)
+        .setInstances(instances);
     return builder.build();
-  }
-
-  private void setWorkflowSpec(AdapterSpecification.Builder builder) {
-    WorkflowSpecification workflowSpec = templateSpec.getWorkflows().values().iterator().next();
-    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, workflowSpec.getName());
-    builder.setScheduleSpec(new ScheduleSpecification(schedule, programInfo, runtimeArgs));
-  }
-
-  private void setWorkerSpec(AdapterSpecification.Builder builder) {
-    WorkerSpecification templateWorkerSpec = templateSpec.getWorkers().values().iterator().next();
-    WorkerSpecification adapterWorkerSpec = new WorkerSpecification(
-      templateWorkerSpec.getClassName(), templateWorkerSpec.getName(), templateWorkerSpec.getDescription(),
-      runtimeArgs, dataSetInstances.keySet(), resources, instances);
-    builder.setWorkerSpec(adapterWorkerSpec);
   }
 }
