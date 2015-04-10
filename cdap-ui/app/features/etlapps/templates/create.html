@@ -25,7 +25,14 @@
           <span> ETL Sources</span>
         </div>
         <div class="panel-body" ng-if="ETLSourceTabOpen">
-          <h4> Source Blah!</h4>
+          <ul class="list-group" ng-if="etlSources.length > 0">
+            <li class="list-group-item" ng-repeat="source in etlSources">
+              {{source.name}}
+            </li>
+          </ul>
+          <div class="well well-xs text-center" ng-if="etlSources.length === 0">
+            <span> No Sources Found</span>
+          </div>
         </div>
       </div>
     </div>
@@ -36,7 +43,14 @@
           <span> ETL Sinks</span>
         </div>
         <div class="panel-body" ng-if="ETLSinkTabOpen">
-          <h4> Sinks Blah!</h4>
+          <ul class="list-group" ng-if="etlSinks.length > 0">
+            <li class="list-group-item" ng-repeat="sink in etlSinks">
+              {{sink.name}}
+            </li>
+          </ul>
+          <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
+            <span> No Sinks Found</span>
+          </div>
         </div>
       </div>
     </div>
@@ -47,7 +61,14 @@
           <span> ETL Transforms</span>
         </div>
         <div class="panel-body" ng-if="ETLTransformTabOpen">
-          <h4> Transforms Blah!</h4>
+          <ul class="list-group" ng-if="etlTransforms.length > 0">
+            <li class="list-group-item" ng-repeat="transform in etlTransforms">
+              {{transform.name}}
+            </li>
+          </ul>
+          <div class="well well-xs text-center" ng-if="etlTransforms.length === 0">
+            <span> No Transforms Found</span>
+          </div>
         </div>
       </div>
     </div>
