@@ -87,10 +87,10 @@ public class StandaloneLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    if (fromOffset < 0) {
-      getLogPrev(loggingContext, -1, maxEvents, filter, callback);
+    if (fromOffset.getTime() < 0) {
+      getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
       return;
     }
 
@@ -103,7 +103,7 @@ public class StandaloneLogReader implements LogReader {
           try {
             Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                               filter));
-            long fromTimeMs = fromOffset + 1;
+            long fromTimeMs = fromOffset.getTime() + 1;
 
             SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             if (sortedFiles.isEmpty()) {
@@ -125,7 +125,7 @@ public class StandaloneLogReader implements LogReader {
               tailFiles.add(prevPath);
             }
 
-            AvroFileLogReader logReader = new AvroFileLogReader(schema);
+            AvroFileReader logReader = new AvroFileReader(schema);
             CountingCallback countingCallback = new CountingCallback(callback);
             for (Location file : tailFiles) {
               logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
@@ -176,7 +176,7 @@ public class StandaloneLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
     executor.submit(new Runnable() {
       @Override
@@ -192,7 +192,7 @@ public class StandaloneLogReader implements LogReader {
             return;
           }
 
-          long fromTimeMs = fromOffset >= 0 ? fromOffset - 1 : System.currentTimeMillis();
+          long fromTimeMs = fromOffset.getTime() >= 0 ? fromOffset.getTime() - 1 : System.currentTimeMillis();
 
           List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
           for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
@@ -202,7 +202,7 @@ public class StandaloneLogReader implements LogReader {
           }
 
           List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
-          AvroFileLogReader logReader = new AvroFileLogReader(schema);
+          AvroFileReader logReader = new AvroFileReader(schema);
           int count = 0;
           for (Location file : tailFiles) {
             Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
@@ -259,9 +259,9 @@ public class StandaloneLogReader implements LogReader {
               files.add(prevPath);
             }
 
-            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
+            AvroFileReader avroFileReader = new AvroFileReader(schema);
             for (Location file : files) {
-              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
+              avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
             }
           } catch (Throwable e) {
             LOG.error("Got exception: ", e);
@@ -276,8 +276,6 @@ public class StandaloneLogReader implements LogReader {
 
   @Override
   public void close() {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
+    executor.shutdownNow();
   }
 }

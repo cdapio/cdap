@@ -111,9 +111,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    if (fromOffset < 0) {
+    if (fromOffset.getKafkaOffset() < 0) {
       getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
       return;
     }
@@ -132,7 +132,7 @@ public final class DistributedLogReader implements LogReader {
                                                               filter));
 
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-            long startOffset = fromOffset + 1;
+            long startOffset = fromOffset.getKafkaOffset() + 1;
 
             if (startOffset >= latestOffset) {
               // At end of events, nothing to return
@@ -161,7 +161,7 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
     executor.submit(
       new Runnable() {
@@ -181,10 +181,10 @@ public final class DistributedLogReader implements LogReader {
             long stopOffset;
             long startOffset;
 
-            if (fromOffset < 0)  {
+            if (fromOffset.getKafkaOffset() < 0)  {
               stopOffset = latestOffset;
             } else {
-              stopOffset = fromOffset;
+              stopOffset = fromOffset.getKafkaOffset();
             }
             startOffset = stopOffset - maxEvents;
 
@@ -263,9 +263,9 @@ public final class DistributedLogReader implements LogReader {
               files.add(prevFile);
             }
 
-            AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
+            AvroFileReader avroFileReader = new AvroFileReader(schema);
             for (Location file : files) {
-              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs,
+              avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
           } catch (Throwable e) {
@@ -281,9 +281,7 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public void close() {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
+    executor.shutdownNow();
   }
 
   private int fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long stopOffset,
@@ -327,7 +325,7 @@ public final class DistributedLogReader implements LogReader {
       ILoggingEvent event = serializer.fromBytes(msgBuffer);
       if (offset < stopOffset && count < maxEvents && logFilter.match(event)) {
         ++count;
-        callback.handle(new LogEvent(event, offset));
+        callback.handle(new LogEvent(event, new LogOffset(offset, event.getTimeStamp())));
       }
       lastOffset = offset;
     }
