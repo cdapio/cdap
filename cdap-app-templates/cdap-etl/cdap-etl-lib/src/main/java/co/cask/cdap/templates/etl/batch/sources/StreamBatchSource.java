@@ -20,11 +20,14 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLUtils;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
+  public static final String STREAM_NAME = "streamName";
 
   public void configure(StageConfigurer configurer) {
     configurer.setName(StreamBatchSource.class.getSimpleName());
@@ -43,11 +47,13 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
     configurer.addProperty(new Property("frequency", "Frequency of the schedule", false));
   }
 
-  /**
-   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
-   *
-   * @param context {@link BatchSourceContext}
-   */
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    String streamName = stageConfig.getProperties().get(STREAM_NAME);
+    Preconditions.checkArgument(streamName != null && !streamName.isEmpty(), "Stream name must be given.");
+    pipelineConfigurer.addStream(new Stream(streamName));
+  }
+
   @Override
   public void prepareJob(BatchSourceContext context) {
     long endTime = context.getLogicalStartTime();
@@ -55,7 +61,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
     // need the frequency as a configuration here (depends on to CDAP-2048)
     long startTime = endTime - ETLUtils.parseFrequency(context.getRuntimeArguments().get("frequency"));
 
-    String streamName = context.getRuntimeArguments().get("streamName");
+    String streamName = context.getRuntimeArguments().get(STREAM_NAME);
     LOG.info("Setting input to Stream : {}", streamName);
     Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
