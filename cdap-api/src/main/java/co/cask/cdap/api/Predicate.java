@@ -14,13 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package co.cask.cdap.api;
+
+import javax.annotation.Nullable;
 
 /**
- * Defines types of nodes in the {@link Workflow}.
+ * Determines a true or false value for a given input.
+ *
+ * @param <T> the type of the input based on which the predicate is to be evaluated
  */
-public enum WorkflowNodeType {
-  ACTION,
-  FORK,
-  CONDITION
+public interface Predicate<T> {
+  /**
+   * Returns the result of applying this predicate to {@code input}.
+   * @param input the input based on which the predicate to be evaluated
+   * @return the result of the evaluation of the predicate
+   */
+  boolean apply(@Nullable T input);
 }
