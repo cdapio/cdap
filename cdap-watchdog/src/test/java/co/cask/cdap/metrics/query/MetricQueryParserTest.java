@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
@@ -57,30 +58,26 @@ public class MetricQueryParserTest {
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(60, query.getResolution());
-    // todo: support interpolator
-//    Assert.assertNull(query.getInterpolate());
+    Assert.assertNull(query.getInterpolator());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?start=1&end=61&resolution=60m"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(3600, query.getResolution());
-    // todo: support interpolator
-//    Assert.assertNull(query.getInterpolate());
+    Assert.assertNull(query.getInterpolator());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=step"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
-    // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolate() instanceof Interpolators.Step);
+    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Step);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=linear"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
-    // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolate() instanceof Interpolators.Linear);
+    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Linear);
   }
 
   @Test

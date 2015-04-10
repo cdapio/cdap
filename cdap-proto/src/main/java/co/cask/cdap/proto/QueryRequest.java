@@ -56,6 +56,7 @@ public class QueryRequest {
   public TimeRange getTimeRange() {
     return timeRange;
   }
+
   public void setTimeRange(@Nullable Long start, @Nullable Long end, @Nullable Integer count,
                            @Nullable Integer resolution,  @Nullable Interpolator interpolator) {
     timeRange = new TimeRange(start, end, count, resolution, interpolator);
