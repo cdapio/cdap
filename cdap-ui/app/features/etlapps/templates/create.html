@@ -1,9 +1,14 @@
 <div class="row">
-  <div class="col-lg-4">
-
+  <div class="col-lg-4 col-md-4 col-xs-12">
+    <label for="etlAdapaterName" class="control-label">Name</label>
+    <input type="text"
+            name="etlAdapaterName"
+            class="form-control"
+            id="etlAdapaterName"
+            ng-model="metadata.name">
   </div>
   <div class="col-lg-4 col-md-4 col-xs-12">
-    <label for="etlAdapaterType"> Choose an ETL Template</label>
+    <label for="etlAdapaterType" class="control-label"> Choose an ETL Template</label>
     <select
       id="etlAdapaterType"
       name="etlAdaptertype"
@@ -91,45 +96,57 @@
   </div>
 
   <div class="col-lg-8 col-md-8 col-sm-12">
-    <div class="etlflowcontainer row">
-      <div class="col-xs-4">
-        <div class="sourceDropZone text-center"
-             drop="handleSourceDrop"
-             id="sourceDropZone"
-             droppable>
-          <div ng-if="source.name === ''" class="dropZoneEmptyMessage">
-           <h4> No Source Added</h4>
-          </div>
-          <div ng-if="source.name.length > 0" class="dropZoneEmptyMessage">
-            <h4>{{source.name}}</h4>
-          </div>
-        </div>
-      </div>
-      <div class="col-xs-4">
-        <div class="transformDropZone text-center"
-              drop="handleTransformDrop"
-              id="transformDropZone"
-              droppable>
-          <div ng-if="transforms.length === 0" class="dropZoneEmptyMessage">
-            <h4> No Transforms Added</h4>
-          </div>
-          <div ng-if="transforms.length > 0" class="dropZoneEmptyMessage">
-            <h4 ng-repeat="transform in transforms">{{transform.name}}</h4>
+    <div class="etlflowcontainer">
+      <div class="row">
+        <div class="col-xs-4">
+          <div class="sourceDropZone text-center"
+               drop="handleSourceDrop"
+               id="sourceDropZone"
+               ng-click="editSourceProperties()"
+               droppable>
+            <div ng-if="source.name === ''" class="dropZoneEmptyMessage">
+             <h4> No Source Added</h4>
+            </div>
+            <div ng-if="source.name.length > 0"
+                  class="dropZoneEmptyMessage"
+                  >
+              <h4>{{source.name}}</h4>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="col-xs-4">
-        <div class="sinkDropZone text-center"
-              drop="handleSinkDrop"
-              id="sinkDropZone"
-              droppable>
-          <div ng-if="sink.name === ''" class="dropZoneEmptyMessage">
-            <h4> No Sinks Added</h4>
-          </div>
-          <div ng-if="sink.name.length > 0" class="dropZoneEmptyMessage">
-            <h4>{{sink.name}}</h4>
+        <div class="col-xs-4">
+          <div class="transformDropZone text-center"
+                drop="handleTransformDrop"
+                id="transformDropZone"
+                ng-click="editTransformProperties()"
+                droppable>
+            <div ng-if="transforms.length === 0" class="dropZoneEmptyMessage">
+              <h4> No Transforms Added</h4>
+            </div>
+            <div ng-if="transforms.length > 0"
+                  class="dropZoneEmptyMessage"
+                  >
+              <h4 ng-repeat="transform in transforms">{{transform.name}}</h4>
+            </div>
           </div>
         </div>
+        <div class="col-xs-4">
+          <div class="sinkDropZone text-center"
+                drop="handleSinkDrop"
+                id="sinkDropZone"
+                ng-click="editSinkProperties()"
+                droppable>
+            <div ng-if="sink.name === ''" class="dropZoneEmptyMessage">
+              <h4> No Sinks Added</h4>
+            </div>
+            <div ng-if="sink.name.length > 0"
+                  class="dropZoneEmptyMessage"
+                  >
+              <h4>{{sink.name}}</h4>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

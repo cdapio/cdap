@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert) {
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert, $bootstrapModal) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
 
@@ -45,6 +45,7 @@ angular.module(PKG.name + '.feature.etlapps')
     };
 
     $scope.transforms = [];
+    $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',fetchSources);
 
@@ -167,5 +168,44 @@ angular.module(PKG.name + '.feature.etlapps')
         $scope.sink.name = sinkName;
         fetchSinkProperties(sinkName);
       }
+    };
+
+    $scope.editSourceProperties = function() {
+      if ($scope.source.name === '') {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/sourceProperties.html',
+        scope: $scope,
+        backdrop: true,
+        keyboard: true
+      });
+    };
+
+    $scope.editSinkProperties = function() {
+      if ($scope.sink.name === '') {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/sinkProperties.html',
+        scope: $scope,
+        backdrop: true,
+        keyboard: true
+
+      });
+    };
+
+    $scope.editTransformProperties = function() {
+      if ($scope.transforms.length === 0) {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/transformProperties.html',
+        scope: $scope,
+        size: 'lg',
+        backdrop: true,
+        keyboard: true
+
+      });
     };
   });

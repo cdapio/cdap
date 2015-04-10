@@ -1,0 +1,44 @@
+<!-- <div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content"> -->
+      <!-- <form class="form-horizontal"> -->
+
+      <!-- </form> -->
+    <!-- </div>
+  </div>
+</div> -->
+
+<div class="modal-header">
+  <div class="modal-title">
+    <h3> Editing Sink {{sink.name | caskCapitalizeFilter}} Properties</h3>
+  </div>
+</div>
+<div class="modal-body" >
+  <form class="form-horizontal">
+    <div ng-repeat="property in sink.properties">
+      <div class="form-group">
+        <label class="control-label col-sm-2"
+                for="{{property.value}}">{{property.name | caskCapitalizeFilter}}</label>
+        <div class="col-sm-10">
+          <input type="text"
+                  class="form-control"
+                  name="{{property.value}}"
+                  id="{{property.value}}"
+                  value="{{property.value}}"/>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="button-group">
+    <!--
+      Both save and close are the same.
+      Since we have 2-way binding we don't need to save anything.
+      This is just for users to give a feeling that their edits have
+      been saved
+    -->
+    <button type="button" name="button" class="btn btn-success" ng-click="$close()"> Save</button>
+    <button type="button" name="button" class="btn btn-default" ng-click="$close()"> Cancel</button>
+  </div>
+</div>
