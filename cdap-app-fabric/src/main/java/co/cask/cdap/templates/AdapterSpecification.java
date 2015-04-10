@@ -60,7 +60,7 @@ public final class AdapterSpecification {
     this.datasets = datasets == null ? ImmutableMap.<String, DatasetCreationSpec>of() : ImmutableMap.copyOf(datasets);
     this.datasetModules = datasetModules == null ?
       ImmutableMap.<String, String>of() : ImmutableMap.copyOf(datasetModules);
-    this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+    this.runtimeArgs = runtimeArgs == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(runtimeArgs);
     this.config = config;
   }
 
