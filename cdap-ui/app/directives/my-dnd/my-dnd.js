@@ -2,15 +2,17 @@ angular.module(PKG.name + '.commons')
   .directive('draggable', function() {
     return function(scope, element, attrs) {
       var el = element[0];
-      var dropZone = attrs.dropZone;
+      var dropZone = attrs.dropZone,
+          data = attrs.model;
        el.draggable = true;
 
        el.addEventListener(
            'dragstart',
            function(e) {
                e.dataTransfer.effectAllowed = 'copy';
-               e.dataTransfer.setData('Text', this.id);
+               e.dataTransfer.setData('Id', this.id);
                e.dataTransfer.setData('DropZone', dropZone);
+               e.dataTransfer.setData('Data', data);
                this.classList.add('drag');
                return false;
            },
@@ -73,8 +75,9 @@ angular.module(PKG.name + '.commons')
                     if (e.stopPropagation) e.stopPropagation();
 
                     this.classList.remove('over');
-                    var id = e.dataTransfer.getData('Text'),
-                        dropZone = e.dataTransfer.getData('DropZone');
+                    var id = e.dataTransfer.getData('Id'),
+                        dropZone = e.dataTransfer.getData('DropZone'),
+                        data = e.dataTransfer.getData('Data');
 
                     // var item = document.getElementById(e.dataTransfer.getData('Text'));
                     // this.appendChild(item);
@@ -83,7 +86,7 @@ angular.module(PKG.name + '.commons')
                     scope.$apply(function(scope) {
                         var fn = scope.drop();
                         if ('undefined' !== typeof fn) {
-                          fn(id, dropZone);
+                          fn(id, dropZone, data);
                         }
                     });
                     return false;
