@@ -108,14 +108,14 @@
                data-drop-type="source"
                ng-click="editSourceProperties()"
                droppable>
-            <div ng-if="source.name === ''" class="dropZoneEmptyMessage">
-             <h4> No Source Added</h4>
-            </div>
-            <div ng-if="source.name.length > 0"
-                  class="dropZoneEmptyMessage"
-                  >
-              <h4>{{source.name}}</h4>
-            </div>
+            <h4 ng-if="source.name === ''"
+                class="dropZoneEmptyMessage">
+               No Source Added
+            </h4>
+            <h4 ng-if="source.name.length > 0"
+                class="dropZoneEmptyMessage">
+              {{source.name}}
+            </h4>
           </div>
         </div>
         <div class="col-xs-4">
@@ -125,14 +125,12 @@
                 data-drop-type="transform"
                 ng-click="editTransformProperties()"
                 droppable>
-            <div ng-if="transforms.length === 0" class="dropZoneEmptyMessage">
-              <h4> No Transforms Added</h4>
-            </div>
-            <div ng-if="transforms.length > 0"
-                  class="dropZoneEmptyMessage"
-                  >
-              <h4 ng-repeat="transform in transforms">{{transform.name}}</h4>
-            </div>
+            <h4 ng-if="transforms.length === 0"
+                class="dropZoneEmptyMessage"> No Transforms Added</h4>
+            <h4 class="dropZoneEmptyMessage"
+                ng-repeat="transform in transforms">
+                {{transform.name}}
+            </h4>
           </div>
         </div>
         <div class="col-xs-4">
@@ -142,14 +140,12 @@
                 data-drop-type="sink"
                 ng-click="editSinkProperties()"
                 droppable>
-            <div ng-if="sink.name === ''" class="dropZoneEmptyMessage">
-              <h4> No Sinks Added</h4>
-            </div>
-            <div ng-if="sink.name.length > 0"
-                  class="dropZoneEmptyMessage"
-                  >
-              <h4>{{sink.name}}</h4>
-            </div>
+            <h4 ng-if="sink.name === ''"
+                class="dropZoneEmptyMessage"> No Sinks Added</h4>
+            <h4 ng-if="sink.name.length > 0"
+                class="dropZoneEmptyMessage">
+              {{sink.name}}
+            </h4>
           </div>
         </div>
 
@@ -157,4 +153,15 @@
     </div>
   </div>
 
+</div>
+
+<div class="row">
+  <div class="col-lg-12 col-sm-12 col-xs-12 text-right">
+    <button type="button"
+            name="button"
+            class="btn btn-success"
+            ng-click="doSave()">
+        Create!
+    </button>
+  </div>
 </div>
