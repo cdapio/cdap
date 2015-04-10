@@ -1,8 +1,23 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource) {
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter) {
+    var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
     $scope.loadingEtlSourceProps = false;
     $scope.loadingEtlSinkProps = false;
+    $scope.etlSources = [];
+    $scope.etlSinks = [];
+    $scope.etlTransforms = [];
+    $scope.addProperty = function(type) {
+      if ($scope[type]) {
+        $scope[type].properties[type + '-' + Date.now()] = '';
+      }
+    };
+
+    $scope.remoteProperty = function(type, propertyName) {
+      if ($scope[type] && $scope[type].properties[propertyName]) {
+        delete $scope[type].properties[propertyName];
+      }
+    };
 
     $scope.etlTypes = [
       {
@@ -20,7 +35,7 @@ angular.module(PKG.name + '.feature.etlapps')
         type: ''
     };
 
-    $scope.$watch('metadata.type',fetchSources)
+    $scope.$watch('metadata.type',fetchSources);
 
     function fetchSources(etlType) {
       if (!etlType) return;
@@ -62,12 +77,15 @@ angular.module(PKG.name + '.feature.etlapps')
 
     function fetchSourceProperties(etlSource) {
       if (!etlSource) return;
-      console.log("ETLSource: ", etlSource);
       dataSrc.request({
         _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sources/' + etlSource
       })
         .then(function(res) {
-          console.log("Source Name:", etlSource, "Properties:", res);
+          $scope.source = res;
+          angular.forEach($scope.source.properties, function(property) {
+            property.value = '';
+          });
+          $scope.loadingEtlSourceProps = false;
         });
       $scope.loadingEtlSourceProps = etlSource || false;
     }
@@ -86,7 +104,11 @@ angular.module(PKG.name + '.feature.etlapps')
         _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sinks/' + etlSink
       })
         .then(function(res) {
-          console.log("Sink Name:", etlSink, "Properties:", res);
+          $scope.sink = res;
+          angular.forEach($scope.sink.properties, function(property) {
+            property.value = '';
+          });
+          $scope.loadingEtlSinkProps = false;
         });
       $scope.loadingEtlSinkProps = etlSink || false;
     }
