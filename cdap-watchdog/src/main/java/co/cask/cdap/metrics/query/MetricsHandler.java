@@ -680,6 +680,13 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       return groupBy;
     }
 
+    /**
+     * time range has aggregate=true or {start, end, count, resolution, interpolate} parameters,
+     * since start, end can be represented as 'now ('+' or '-')' and not just absolute timestamp,
+     * we use this format to get those strings and after parsing and determining other parameters, we can construct
+     * {@link co.cask.cdap.proto.QueryRequest} , similar for resolution.
+     * @return
+     */
     public Map<String, String> getTimeRange() {
       return timeRange;
     }

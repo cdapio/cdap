@@ -66,7 +66,6 @@ public class QueryRequest {
    * Represents the time range of the query request
    */
   public class TimeRange {
-    // not initialized from constructor, but set during de-serialization from JSON
     private Long startTs;
     private Long endTs;
     private Integer count;
