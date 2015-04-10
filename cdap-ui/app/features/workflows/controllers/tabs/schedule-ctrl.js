@@ -22,44 +22,35 @@ angular.module(PKG.name + '.feature.workflows')
           v.time.week = parse[4];
         }
         v.isOpen = false;
+
+        dataSrc.poll({
+          _cdapNsPath: '/apps/' + $state.params.appId +
+                        '/schedules/' + v.schedule.name + '/status'
+        }, function (response) {
+          v.status = response.status;
+        });
       });
 
-      $scope.toggleLine = function (schedule) {
-        schedule.isOpen = !schedule.isOpen;
-      };
     });
-    // // TODO: change to real schedule
-    // $scope.schedules = [
-    //   {
-    //     'program': {
-    //       'programName': 'PurchaseHistoryWorkflow',
-    //       'programType': 'WORKFLOW'
-    //     },
-    //     'properties': {},
-    //     'schedule': {
-    //       'cronExpression': '0 4 * * *',
-    //       'description': 'Schedule execution every day',
-    //       'name': 'DailySchedule'
-    //     },
-    //     'scheduleType': 'TIME'
-    //   },
-    //   {
-    //     'program': {
-    //       'programName': 'PurchaseHistoryWorkflow',
-    //       'programType': 'WORKFLOW'
-    //     },
-    //     'properties': {},
-    //     'schedule': {
-    //       'dataTriggerMB': 1,
-    //       'description': 'Schedule execution when 1 MB or more of data is ingested in the   purchaseStream',
-    //       'name': 'DataSchedule',
-    //       'streamName': 'purchaseStream'
-    //     },
-    //     'scheduleType': 'STREAM'
-    //   }
-    // ];
 
+    $scope.toggleLine = function (schedule) {
+      schedule.isOpen = !schedule.isOpen;
+    };
 
+    $scope.suspendSchedule = function (obj) {
+      dataSrc.request({
+        _cdapNsPath: '/apps/' + $state.params.appId +
+                      '/schedules/' + obj.schedule.name + '/suspend',
+        method: 'POST'
+      });
+    };
 
+    $scope.resumeSchedule = function (obj) {
+      dataSrc.request({
+        _cdapNsPath: '/apps/' + $state.params.appId +
+                      '/schedules/' + obj.schedule.name + '/resume',
+        method: 'POST'
+      });
+    };
 
   });

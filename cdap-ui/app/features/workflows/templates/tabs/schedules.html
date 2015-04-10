@@ -11,7 +11,7 @@
     <h4>Last Run</h4>
   </div>
   <div class="col-xs-2">
-    <h4>Suspend</h4>
+    <h4>Status</h4>
   </div>
 </div>
 
@@ -38,9 +38,7 @@
       </div>
 
       <div class="col-xs-2">
-        <button class="btn btn-default">
-          <i class="fa fa-pause"></i>
-        </button>
+        <p>{{ schedule.status }}</p>
       </div>
     </div>
 
@@ -49,8 +47,21 @@
         <div class="col-xs-offset-2 col-xs-2">
           <p>Trigger</p>
         </div>
-        <div class="col-xs-8">
+        <div class="col-xs-6">
           <p>{{ schedule.scheduleType }}</p>
+        </div>
+        <div class="col-xs-2">
+          <button class="btn btn-default"
+            ng-show="schedule.status === 'SCHEDULED'"
+            ng-click="suspendSchedule(schedule)">
+            <i class="fa fa-pause"></i>
+          </button>
+
+          <button class="btn btn-default"
+            ng-show="schedule.status === 'SUSPENDED'"
+            ng-click="resumeSchedule(schedule)">
+            <i class="fa fa-play"></i>
+          </button>
         </div>
       </div>
       <div class="row">
