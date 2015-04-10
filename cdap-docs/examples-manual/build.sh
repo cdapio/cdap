@@ -74,7 +74,15 @@ function pandoc_includes() {
   version
   local includes=$1/$TUTORIAL_WISE
   local project_version=$PROJECT_SHORT_VERSION
-  local project_source=https://raw.githubusercontent.com/caskdata/cdap-apps/release/cdap-$project_version-compatible/Wise
+
+  local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
+  if [ "x$GIT_BRANCH_TYPE" == "xdevelop" ] || [ "x$GIT_BRANCH_TYPE" == "xfeature" ] ; then
+    local source2="develop"
+  else
+    local source2="release/cdap-$project_version-compatible"
+  fi
+
+  local project_source="$source1/$source2/Wise"
   local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
