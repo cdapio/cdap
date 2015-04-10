@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
@@ -344,11 +345,16 @@ public class AdapterService extends AbstractIdleService {
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
-  private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) {
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespace, adapterSpec.getTemplate()));
-    Preconditions.checkNotNull(appSpec);
-    Preconditions.checkArgument(appSpec.getWorkflows().size() == 1);
-    String workflowName = Lists.newArrayList(appSpec.getWorkflows().keySet()).get(0);
+  private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+    Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    try {
+      Preconditions.checkArgument(appSpec != null);
+      Preconditions.checkArgument(appSpec.getWorkflows().size() == 1);
+    } catch (IllegalArgumentException e) {
+      throw new NotFoundException(appId);
+    }
+    String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
     return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKFLOW, workflowName);
   }
 

@@ -35,6 +35,7 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -165,7 +166,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   public AdapterSpecification createSpecification() {
     ScheduleSpecification scheduleSpec = null;
     if (programType == ProgramType.WORKFLOW) {
-      String workflowName = templateSpec.getWorkflows().values().iterator().next().getName();
+      String workflowName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
       scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
         SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs);
     }
