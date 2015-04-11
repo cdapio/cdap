@@ -16,6 +16,12 @@
 
 package co.cask.cdap.logging.save;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
+import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
@@ -32,20 +38,22 @@ import java.util.concurrent.TimeUnit;
 public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageCallback.class);
 
-  private final CountDownLatch kafkaCancelCallbackLatch;
-  private final Set<LogMessageProcessor> logMessageProcessors;
+  private final Set<KafkaLogProcessor> kafkaLogProcessors;
+  private final LoggingEventSerializer serializer;
+  private final CountDownLatch countDownLatch;
 
-  public KafkaMessageCallback(CountDownLatch kafkaCancelCallbackLatch,
-                              Set<LogMessageProcessor> logMessageProcessors) {
-    this.kafkaCancelCallbackLatch = kafkaCancelCallbackLatch;
-    this.logMessageProcessors = logMessageProcessors;
+  public KafkaMessageCallback(CountDownLatch countDownLatch,
+                              Set<KafkaLogProcessor> kafkaLogProcessors) throws Exception {
+    this.kafkaLogProcessors = kafkaLogProcessors;
+    this.serializer = new LoggingEventSerializer();
+    this.countDownLatch = countDownLatch;
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
 
     try {
-      if (kafkaCancelCallbackLatch.await(50, TimeUnit.MICROSECONDS)) {
+      if (countDownLatch.await(50, TimeUnit.MICROSECONDS)) {
         // if count down occurred return
         LOG.info("Returning since callback is cancelled.");
         return;
@@ -60,9 +68,16 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
+      GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
+      ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
 
-      for (LogMessageProcessor processor : logMessageProcessors) {
-        processor.process(message);
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
+      KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
+                                                 message.getTopicPartition().getPartition(),
+                                                 message.getNextOffset());
+
+      for (KafkaLogProcessor processor : kafkaLogProcessors) {
+        processor.process(logEvent);
       }
 
       count++;
