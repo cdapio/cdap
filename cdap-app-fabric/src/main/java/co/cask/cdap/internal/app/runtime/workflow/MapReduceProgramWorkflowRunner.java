@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -25,8 +25,14 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramController;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Counters;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -42,14 +48,14 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
   /**
    * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
    * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * * {@link AbstractWorkflowProgram} and then gets the {@link Callable} of {@link RuntimeContext} for the program
+   * * {@link AbstractWorkflowProgram} and then gets the {@link Callable} for the program
    * which can be called to execute the program
    *
    * @param name name of the program in the workflow
-   * @return {@link Callable} of {@link RuntimeContext} for associated with this program run.
+   * @return {@link Callable} associated with this program run.
    */
   @Override
-  public Callable<RuntimeContext> create(String name) {
+  public Callable<Map<String, String>> create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
@@ -61,20 +67,32 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   /**
    * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   * On completion, return the {@link RuntimeContext} of the program.
+   * On completion, return the {@link Map} of hadoop counters for the program run.
    *
    * @throws Exception if execution failed.
    */
   @Override
-  public RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception {
+  public Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
                                                                                                         options);
     if (controller instanceof MapReduceProgramController) {
-      final RuntimeContext context = ((MapReduceProgramController) controller).getContext();
-      return executeProgram(controller, context);
+      MapReduceContext context = ((MapReduceProgramController) controller).getContext();
+      executeProgram(controller, context);
+      return getCounterMap(context);
     } else {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "MapReduceProgramController");
     }
+  }
+
+  private Map<String, String> getCounterMap(MapReduceContext context) throws Exception {
+    Map<String, String> mapCounters = Maps.newHashMap();
+    Counters counters = ((Job) context.getHadoopJob()).getCounters();
+    for (CounterGroup group : counters) {
+      for (Counter counter : group) {
+        mapCounters.put(group.getName() + "." + counter.getName(), Long.toString(counter.getValue()));
+      }
+    }
+    return mapCounters;
   }
 }

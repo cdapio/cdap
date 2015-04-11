@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -61,7 +60,7 @@ final class BasicWorkflowContext implements WorkflowContext {
   }
 
   @Override
-  public Callable<RuntimeContext> getProgramRunner(String name) {
+  public Callable<Map<String, String>> getProgramRunner(String name) {
     return programWorkflowRunner.create(name);
   }
 

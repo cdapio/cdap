@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -22,6 +23,7 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -83,6 +85,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private NettyHttpService httpService;
   private volatile Thread runningThread;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
+  private final Map<String, Map<String, String>> mapReduceJobCounters = new ConcurrentHashMap<String,
+    Map<String, String>>();
   private boolean suspended;
   private Lock lock;
   private Condition condition;
@@ -201,6 +205,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
       try {
         action.run();
+        if (actionInfo.getProgramType() == SchedulableProgramType.MAPREDUCE) {
+          mapReduceJobCounters.put(node.getNodeId(), ((ProgramWorkflowAction) action).getToken());
+        }
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -256,7 +263,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeNode(final ApplicationSpecification appSpec, WorkflowNode node,
-                           final InstantiatorFactory instantiator, final ClassLoader classLoader) throws Exception {
+                           final InstantiatorFactory instantiator, final ClassLoader classLoader,
+                           String previousNodeId) throws Exception {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
@@ -265,12 +273,39 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
         break;
+      case CONDITION:
+        executeCondition(appSpec, (WorkflowConditionNode) node, instantiator, classLoader, previousNodeId);
+        break;
       default:
         break;
     }
   }
 
-  @Override
+  @SuppressWarnings("unchecked")
+  private void executeCondition(final ApplicationSpecification appSpec, WorkflowConditionNode node,
+                                final InstantiatorFactory instantiator, final ClassLoader classLoader,
+                                String previousNodeId) throws Exception {
+    Map<String, String> token = mapReduceJobCounters.get(previousNodeId);
+    if (previousNodeId == null || token == null) {
+      throw new IllegalStateException("Condition node is not followed by the MapReduce program.");
+    }
+
+    Class<?> clz = Class.forName(node.getPredicateClassName(), true, classLoader);
+    Predicate<Map<String, String>> predicate = instantiator.get(
+      TypeToken.of((Class<? extends Predicate<Map<String, String>>>) clz)).create();
+
+    Iterator<WorkflowNode> iterator;
+    if (predicate.apply(token)) {
+      // execute the if branch
+      iterator = node.getIfBranch().iterator();
+    } else {
+      // execute the else branch
+      iterator = node.getElseBranch().iterator();
+    }
+    executeAll(iterator, appSpec, instantiator, classLoader);
+  }
+
+    @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
 
@@ -282,10 +317,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
                           InstantiatorFactory instantiator, ClassLoader classLoader) {
+    String previousNodeId = null;
     while (iterator.hasNext() && runningThread != null) {
       try {
         blockIfSuspended();
-        executeNode(appSpec, iterator.next(), instantiator, classLoader);
+        WorkflowNode node = iterator.next();
+        executeNode(appSpec, node, instantiator, classLoader, previousNodeId);
+        previousNodeId = node.getNodeId();
       } catch (Throwable t) {
         Throwables.propagate(t);
       }

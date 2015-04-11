@@ -73,19 +73,19 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   }
 
   @Override
-  public abstract Callable<RuntimeContext> create(String name);
+  public abstract Callable<Map<String, String>> create(String name);
 
   @Override
-  public abstract RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception;
+  public abstract Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception;
 
   /**
-   * Gets a {@link Callable} of {@link RuntimeContext} for the {@link Program}.
+   * Gets a {@link Callable} for the {@link Program}.
    *
    * @param name    name of the {@link Program}
    * @param program the {@link Program}
-   * @return a {@link Callable} of {@link RuntimeContext} for this {@link Program}
+   * @return a {@link Callable} for this {@link Program}
    */
-  protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
+  protected Callable<Map<String, String>> getRuntimeContextCallable(String name, final Program program) {
     Map<String, String> systemArgumentsMap = Maps.newHashMap();
     systemArgumentsMap.putAll(systemArguments.asMap());
     systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, runId.getId());
@@ -97,9 +97,9 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
                                                        userArguments.asMap()))
     );
 
-    return new Callable<RuntimeContext>() {
+    return new Callable<Map<String, String>>() {
       @Override
-      public RuntimeContext call() throws Exception {
+      public Map<String, String> call() throws Exception {
         return runAndWait(program, options);
       }
     };

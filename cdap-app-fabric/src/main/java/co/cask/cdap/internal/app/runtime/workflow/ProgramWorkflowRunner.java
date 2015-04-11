@@ -21,6 +21,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -33,9 +34,9 @@ public interface ProgramWorkflowRunner {
    * {@link RuntimeContext} from the program name in the workflow.
    *
    * @param name name of program in workflow
-   * @return {@link Callable} of {@link RuntimeContext} which will be called to execute the program
+   * @return {@link Callable} which will be called to execute the program
    */
-  Callable<RuntimeContext> create(String name);
+  Callable<Map<String, String>> create(String name);
 
   /**
    * Programs which want to run in Workflow should give an implementation to run the given {@link Program} with
@@ -43,8 +44,8 @@ public interface ProgramWorkflowRunner {
    *
    * @param program {@link Program} to run
    * @param options {@link ProgramOptions} with which this program should run
-   * @return {@link RuntimeContext} of the program run
+   * @return the {@link Map} which contains the execution context of the program run
    * @throws Exception if the execution of the program fails.
    */
-  RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception;
+  Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception;
 }

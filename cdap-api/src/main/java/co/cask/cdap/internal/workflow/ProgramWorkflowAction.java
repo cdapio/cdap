@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -40,9 +41,10 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   private final String name;
   private String programName;
-  private Callable<RuntimeContext> programRunner;
+  private Callable<Map<String, String>> programRunner;
   private SchedulableProgramType programType;
   private WorkflowContext context;
+  private Map<String, String> token;
 
   public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
     this.name = name;
@@ -81,14 +83,14 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   public void run() {
     try {
       LOG.info("Starting Program for workflow action: {}", programName);
-      RuntimeContext runtimeContext = programRunner.call();
+      token = programRunner.call();
 
       // TODO (terence) : Put something back to context.
 
       LOG.info("{} Program {} workflow action completed",
                programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
-      LOG.info("Failed to execute {} Program {} in workflow: {}", 
+      LOG.info("Failed to execute {} Program {} in workflow: {}",
                programType != null ? programType.name() : null, programName, e);
       throw Throwables.propagate(e);
     }
@@ -97,5 +99,9 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   @Override
   public void destroy() {
     // No-op
+  }
+
+  public Map<String, String> getToken() throws Exception {
+    return token;
   }
 }
