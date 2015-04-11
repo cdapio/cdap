@@ -43,6 +43,7 @@ user node['cdap']['sdk']['user'] do
   shell '/bin/bash'
   system true
   action :create
+  only_if { node['cdap']['sdk']['manage_user'].to_s == 'true' }
 end
 
 ark 'sdk' do
@@ -55,10 +56,15 @@ ark 'sdk' do
   group node['cdap']['sdk']['user']
 end
 
-link '/etc/init.d/cdap-sdk' do
-  to "#{ark_prefix_path}/sdk/bin/cdap.sh"
+template '/etc/init.d/cdap-sdk' do
+  source 'cdap-service.erb'
+  mode 0755
+  owner 'root'
+  group 'root'
+  action :create
+  variables node['cdap']['sdk']
 end
 
 service 'cdap-sdk' do
-  action :start
+  action node['cdap']['sdk']['init_actions']
 end
