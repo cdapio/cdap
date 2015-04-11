@@ -17,6 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -49,6 +50,8 @@ public final class WorkflowNodeCodec extends AbstractSpecificationCodec<Workflow
         return context.deserialize(json, WorkflowActionNode.class);
       case FORK:
         return context.deserialize(json, WorkflowForkNode.class);
+      case CONDITION:
+        return context.deserialize(json, WorkflowConditionNode.class);
     }
     return null;
   }

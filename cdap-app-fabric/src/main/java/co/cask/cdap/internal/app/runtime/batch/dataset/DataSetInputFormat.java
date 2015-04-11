@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,8 +30,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +41,7 @@ import java.util.List;
  * @param <VALUE> Type of value.
  */
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetInputFormat.class);
+
   public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
 
   public static void setInput(Job job, String inputDatasetName) {
@@ -53,7 +51,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
-    MapReduceContextConfig mrContextConfig = new MapReduceContextConfig(context);
+    MapReduceContextConfig mrContextConfig = new MapReduceContextConfig(context.getConfiguration());
     List<Split> splits = mrContextConfig.getInputSelection();
     List<InputSplit> list = new ArrayList<InputSplit>();
     for (Split split : splits) {

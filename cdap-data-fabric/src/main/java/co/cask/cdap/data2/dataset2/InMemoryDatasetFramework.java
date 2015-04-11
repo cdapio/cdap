@@ -479,7 +479,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
       // In real-world scenarios, default modules are guaranteed to always exist in the system namespace.
       // Hence, we could add a preconditions check here to verify that registries contains types from system namespace
-      // However, a lot of our tests (AbstractDatasetTest) start without default modules, so not adding that check.
+      // However, a lot of our tests (DatasetFrameworkTestUtil) start without default modules, so not adding that check.
       // In any case, the pattern here of first looking for the definition in own namespace, then in system is valid
       // and the else block should throw an exception if the dataset type is not found in the current or the system
       // namespace.

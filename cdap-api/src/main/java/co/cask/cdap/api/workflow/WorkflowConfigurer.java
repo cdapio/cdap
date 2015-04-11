@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.Predicate;
+
 import java.util.Map;
 
 /**
@@ -77,4 +79,10 @@ public interface WorkflowConfigurer {
    * @return the configurer for the {@link Workflow}
    */
   WorkflowForkConfigurer<? extends WorkflowConfigurer> fork();
+
+  /**
+   * Adds a condition to the {@link Workflow}.
+   * @return the configurer for the {@link Workflow}
+   */
+  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<Map<String, String>> condition);
 }

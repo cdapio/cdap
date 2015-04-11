@@ -19,15 +19,18 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.common.Constants;
+import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
-import co.cask.cdap.templates.etl.common.config.ETLStage;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -78,50 +81,63 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   @Override
-  public void configureAdapter(String adapterName, ETLBatchConfig etlConfig, AdapterConfigurer configurer)
+  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig, AdapterConfigurer adapterConfigurer)
     throws Exception {
     // Get cronEntry string for ETL Batch Adapter
-    String cronEntry = etlConfig.getSchedule();
+    String cronEntry = etlBatchConfig.getSchedule();
 
-    ETLStage source = etlConfig.getSource();
-    ETLStage sink = etlConfig.getSink();
-    List<ETLStage> transform = etlConfig.getTransforms();
+    ETLStage sourceConfig = etlBatchConfig.getSource();
+    ETLStage sinkConfig = etlBatchConfig.getSink();
+    List<ETLStage> transformConfigs = etlBatchConfig.getTransforms();
 
-    configureSource(source, configurer);
-    configureSink(sink, configurer);
-    configureTransforms(transform, configurer);
+    // pipeline configurer is just a wrapper around an adapter configurer that limits what can be added,
+    // since we don't want sources and sinks setting schedules or anything like that.
+    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(adapterConfigurer);
+    configureSource(sourceConfig, adapterConfigurer, pipelineConfigurer);
+    configureSink(sinkConfig, adapterConfigurer, pipelineConfigurer);
+    configureTransforms(transformConfigs, adapterConfigurer);
 
     //TODO: Validate if source, transforms, sink can be tied together
 
-    configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
-    configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
-    configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
-                                            String.format("Schedule for %s Adapter", adapterName),
-                                            cronEntry));
+    adapterConfigurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
+    adapterConfigurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
+    adapterConfigurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
+                                                   String.format("Schedule for %s Adapter", adapterName),
+                                                   cronEntry));
   }
 
-  private void configureSource(ETLStage source, AdapterConfigurer configurer) throws Exception {
-    String sourceName = source.getName();
+  private void configureSource(ETLStage sourceConfig, AdapterConfigurer configurer,
+                               PipelineConfigurer pipelineConfigurer) throws Exception {
+    String sourceName = sourceConfig.getName();
     String className = sourceClassMap.get(sourceName);
     BatchSource batchSource = (BatchSource) Class.forName(className).newInstance();
+    batchSource.configurePipeline(sourceConfig, pipelineConfigurer);
+
+    // TODO: after a few more use cases, determine if the spec is really needed at runtime
+    //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSource.getClass());
     StageSpecification specification = stageConfigurer.createSpecification();
     configurer.addRuntimeArgument(Constants.Source.SPECIFICATION, GSON.toJson(specification));
   }
 
-  private void configureSink(ETLStage sink, AdapterConfigurer configurer) throws Exception {
-    String sinkName = sink.getName();
+  private void configureSink(ETLStage sinkConfig, AdapterConfigurer configurer,
+                             PipelineConfigurer pipelineConfigurer) throws Exception {
+    String sinkName = sinkConfig.getName();
     String className = sinkClassMap.get(sinkName);
     BatchSink batchSink = (BatchSink) Class.forName(className).newInstance();
+    batchSink.configurePipeline(sinkConfig, pipelineConfigurer);
+
+    // TODO: after a few more use cases, determine if the spec is really needed at runtime
+    //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSink.getClass());
     StageSpecification specification = stageConfigurer.createSpecification();
     configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
   }
 
-  private void configureTransforms(List<ETLStage> transforms, AdapterConfigurer configurer) throws Exception {
+  private void configureTransforms(List<ETLStage> transformConfigs, AdapterConfigurer configurer) throws Exception {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
-    for (ETLStage transform : transforms) {
-      String transformName = transform.getName();
+    for (ETLStage transformConfig : transformConfigs) {
+      String transformName = transformConfig.getName();
       String className = transformClassMap.get(transformName);
       Transform transformObj = (Transform) Class.forName(className).newInstance();
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());

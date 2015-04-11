@@ -16,7 +16,9 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
@@ -32,6 +34,16 @@ public abstract class BatchSink<KEY, VALUE> {
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
+    // no-op
+  }
+
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the source needs.
+   *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

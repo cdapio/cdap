@@ -12,11 +12,16 @@
   </div>
   <div class="col-sm-6 text-right">
 
-    <a ng-show="status != 'start' && status != 'stop'"
-         ng-disabled = "activeRuns > 0"
+    <a ng-show = "activeRuns === 0"
          class="btn btn-success"
          ng-click="do('start')">
       Start a new run
+    </a>
+
+    <a ng-show="activeRuns > 0"
+        class="btn btn-default"
+        ng-click="do('stop')">
+      <i class="fa fa-stop"></i>
     </a>
 
     <a ng-show="status == 'start' || status == 'stop'"

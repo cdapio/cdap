@@ -38,7 +38,6 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -259,6 +258,12 @@ public class DatumCodecTest {
 
     String k;
     Inner inner;
+  }
+
+  @Test
+  public void test2() {
+    float f = 56L / 100F;
+    System.out.println(f);
   }
 
   @Test

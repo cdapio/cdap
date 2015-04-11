@@ -21,5 +21,6 @@ package co.cask.cdap.api.workflow;
  */
 public enum WorkflowNodeType {
   ACTION,
-  FORK
+  FORK,
+  CONDITION
 }

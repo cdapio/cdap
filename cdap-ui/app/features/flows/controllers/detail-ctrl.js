@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, MyDataSource, $state, FlowDiagramData, myHelpers) {
+  .controller('FlowsDetailController', function($scope, MyDataSource, $state, FlowDiagramData, myHelpers, $timeout) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -61,6 +61,10 @@ angular.module(PKG.name + '.feature.flows')
       dataSrc.request({
         _cdapNsPath: basePath + '/' + action,
         method: 'POST'
+      }).then(function() {
+        $timeout(function() {
+          $state.go($state.current, $state.params, { reload: true });
+        });
       });
     };
   });
