@@ -52,7 +52,6 @@ public abstract class BatchSink<KEY, VALUE> {
     return valueType;
   }
 
-
   /**
    * Configure the Sink.
    *
