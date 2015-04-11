@@ -98,14 +98,14 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
         try {
           session.close();
         } catch (JMSException ex1) {
-          LOG.debug("Exception when closing session", ex1);
+          LOG.warn("Exception when closing session", ex1);
         }
       }
       if (connection != null) {
         try {
           connection.close();
         } catch (JMSException ex2) {
-          LOG.debug("Exception when closing connection", ex2);
+          LOG.warn("Exception when closing connection", ex2);
         }
       }
       throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
@@ -141,7 +141,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
         // Different kind of messages, just get String for now
         // TODO Process different kind of JMS messages
         String text = message.toString();
-        LOG.debug("Process JMS message : " + text);
+        LOG.trace("Processing JMS message : " + text);
         writer.emit(text);
       }
     }  catch (JMSException e) {
@@ -212,13 +212,13 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
     try {
       messageID = message.getJMSMessageID();
     } catch (JMSException e) {
-      LOG.debug("Error when trying to get message ID for JMS message.");
+      LOG.warn("Encountered exception when trying to get message ID for JMS message.");
     }
 
-    LOG.debug("Attempt to add message: {}", messageID);
+    LOG.trace("Attempt to add message: {}", messageID);
 
     messageQueue.add(message);
 
-    LOG.debug("Success adding message: {}", messageID);
+    LOG.trace("Success adding message: {}", messageID);
   }
 }
