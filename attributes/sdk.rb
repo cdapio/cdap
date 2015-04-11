@@ -27,3 +27,7 @@ default['cdap']['sdk']['checksum'] =
 default['cdap']['sdk']['install_path'] = '/opt/cdap'
 default['cdap']['sdk']['user'] = 'cdap'
 default['cdap']['sdk']['manage_user'] = true
+default['cdap']['sdk']['init_name'] = 'SDK'
+default['cdap']['sdk']['init_krb5'] = false
+default['cdap']['sdk']['init_cmd'] = "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap.sh"
+default['cdap']['sdk']['init_actions'] = [:enable, :start]
