@@ -24,6 +24,10 @@ describe 'cdap::sdk' do
       expect(chef_run).to create_user('cdap')
     end
 
+    it 'creates /etc/init.d/cdap-sdk from template' do
+      expect(chef_run).to create_template('/etc/init.d/cdap-sdk')
+    end
+
     it 'creates cdap-sdk service and starts it' do
       expect(chef_run).to start_service('cdap-sdk')
       expect(chef_run).to enable_service('cdap-sdk')
