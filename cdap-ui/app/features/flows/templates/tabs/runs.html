@@ -1,17 +1,23 @@
-<accordion close-others="oneAtATime" ng-if="runs.length > 0">
-   <accordion-group is-open="run.isOpen" id="c{{run.runid}}" ng-repeat="run in runs" ui-sref="flows.detail.runs.run({runid: run.runid})">
-     <accordion-heading>
-        <div class="clearfix">
-          <span class="pull-left"> {{run.runid}} </span>
+<div class="panel-group">
+  <div class="panel panel-default" id="c{{run.runid}}" ng-repeat="run in runs">
+    <div class="panel-heading">
+      <a ui-sref="flows.detail.runs.run({runid: run.runid})" class="clearfix">
+        <div>
+          <span class="pull-left">{{run.runid}}</span>
           <span class="pull-right">
             {{run.status}}
-            <i class="fa fa-fw" ng-class="{'fa-chevron-down': run.isOpen, 'fa-chevron-right': !run.isOpen}"></i>
+            <i class="fa fa-fw"
+              ng-class="{'fa-chevron-down': run.isOpen, 'fa-chevron-right': !run.isOpen}"></i>
           </span>
         </div>
-     </accordion-heading>
-     <div ui-view ng-if="run.isOpen"></div>
- </accordion-group>
-</accordion>
+      </a>
+    </div>
+    <div class="panel-body" ng-if="run.isOpen">
+      <div ui-view></div>
+    </div>
+  </div>
+</div>
+
 <div ng-if="runs.length === 0">
   <div class="well well-lg text-center h2">
     <div> The Flow {{State.params.programId}} hasn't run so far. Start a new Run!</div>

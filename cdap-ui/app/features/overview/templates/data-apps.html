@@ -1,12 +1,12 @@
 <div class="row">
   <div class="col-xs-12 col-md-6">
     <div ng-if="datasets.length > 0 || streams.length > 0">
-      <h2 class="text-uppercase"> Data </h2>
+      <h3 class="text-uppercase"> Data </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-5">
-          <p> Most recent: </p>
+          <p> Most recent </p>
         </div>
-        <div class="col-xs-12 col-sm-7">
+        <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
             <a ui-sref="data.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -24,11 +24,17 @@
         <li class="list-group-item" ng-repeat="data in combined = streams.concat(datasets) | orderBy:'name' | limitTo: 5 track by $index ">
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
-            <p><img src="assets/img/stream.svg" alt="" /> Stream</p>
+            <div class="title-type-image">
+              <img src="assets/img/stream.svg" alt="" />
+              <span> Stream </span>
+            </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
-            <p><img src="assets/img/datasets.svg" alt="" /> Dataset </p>
+            <div class="title-type-image">
+              <img src="assets/img/datasets.svg" alt="" />
+              <span> Dataset </span>
+            </div>
           </a>
         </li>
       </ul>
@@ -36,7 +42,7 @@
 
     <div ng-if="datasets.length === 0 && streams.length === 0">
       <div class="clearfix">
-        <h2 class="text-uppercase"> Data </h2>
+        <h3 class="text-uppercase"> Data </h3>
         <p> You haven't deployed any datasets. Add one! </p>
       </div>
       <hr />
@@ -52,12 +58,12 @@
   </div>
   <div class="col-xs-12 col-md-6">
     <div ng-if="apps.length > 0">
-      <h2 class="text-uppercase"> Apps </h2>
+      <h3 class="text-uppercase"> Apps </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-5">
-          <p> Most recent: </p>
+          <p> Most recent </p>
         </div>
-        <div class="col-xs-12 col-sm-7">
+        <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-bars"></span>
@@ -81,7 +87,10 @@
         <li class="list-group-item" ng-repeat="app in apps | orderBy:'name' | limitTo:5">
           <a ui-sref="apps.detail.overview({appId: app.id})">
             <p ng-bind="app.name"> </p>
-            <p><img src="assets/img/cdap.svg" alt="" /> CDAP </p>
+            <div class="title-type-image">
+              <img src="assets/img/cdap.svg" alt="" />
+              <span> CDAP </span>
+            </div>
           </a>
         </li>
       </ul>
@@ -89,7 +98,7 @@
 
     <div ng-if="apps.length === 0">
       <div class="clearfix">
-        <h2 class="text-uppercase"> Apps </h2>
+        <h3 class="text-uppercase"> Apps </h3>
         <p> You haven't deployed any apps. Add one! </p>
       </div>
       <hr />

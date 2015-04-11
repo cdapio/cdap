@@ -37,7 +37,7 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
                                final String applicationId,
                                final String flowId,
                                final String flowletId) {
-    super(namespaceId, applicationId);
+    super(namespaceId, applicationId, null);
     setSystemTag(TAG_FLOW_ID, flowId);
     setSystemTag(TAG_FLOWLET_ID, flowletId);
   }

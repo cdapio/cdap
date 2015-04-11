@@ -17,22 +17,41 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Default implementation of {@link AdapterConfigurer} for ETL Batch Tests.
  */
 //TODO: Remove/Move this class else where until we figure out how to write tests without AdapterConfigurer dependency
 public class MockAdapterConfigurer implements AdapterConfigurer {
+  private final Map<String, String> arguments;
+  private final Set<Stream> streams;
+  private final Set<Class<? extends Dataset>> datasetTypes;
+  private final Map<String, Class<? extends DatasetModule>> datasetModules;
+  private final Map<String, ImmutablePair<String, DatasetProperties>> datasetInstances;
   private Schedule schedule;
   private int instances;
-  private Map<String, String> arguments = Maps.newHashMap();
   private Resources resources;
+
+  public MockAdapterConfigurer() {
+    this.arguments = Maps.newHashMap();
+    this.streams = Sets.newHashSet();
+    this.datasetTypes = Sets.newHashSet();
+    this.datasetModules = Maps.newHashMap();
+    this.datasetInstances = Maps.newHashMap();
+  }
 
   @Override
   public void setSchedule(Schedule schedule) {
@@ -59,6 +78,31 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
     this.arguments.put(key, value);
   }
 
+  @Override
+  public void addStream(Stream stream) {
+    streams.add(stream);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    datasetModules.put(moduleName, moduleClass);
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    datasetTypes.add(datasetClass);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    datasetInstances.put(datasetName, ImmutablePair.of(typeName, properties));
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    datasetInstances.put(datasetName, ImmutablePair.of(datasetClass.getName(), props));
+  }
+
   public Schedule getSchedule() {
     return schedule;
   }
@@ -73,5 +117,21 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
 
   public Resources getResources() {
     return resources;
+  }
+
+  public Set<Stream> getStreams() {
+    return streams;
+  }
+
+  public Set<Class<? extends Dataset>> getDatasetTypes() {
+    return datasetTypes;
+  }
+
+  public Map<String, Class<? extends DatasetModule>> getDatasetModules() {
+    return datasetModules;
+  }
+
+  public Map<String, ImmutablePair<String, DatasetProperties>> getDatasetInstances() {
+    return datasetInstances;
   }
 }

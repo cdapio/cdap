@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.table;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.Split;
@@ -261,14 +262,23 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    */
   void increment(Increment increment);
 
-    /**
-     * Scans table.
-     *
-     * @param startRow start row inclusive; {@code null} means start from first row of the table
-     * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
-     * @return instance of {@link Scanner}
-     */
+  /**
+   * Scans table.
+   *
+   * @param startRow start row inclusive; {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
+   * @return instance of {@link Scanner}
+   */
   Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
+
+  /**
+   * Returns a {@link Scanner} as specified by a given {@link Scan}.
+   *
+   * @param scan a {@link Scan} instance
+   * @return instance of {@link Scanner}
+   */
+  @Beta
+  Scanner scan(Scan scan);
 
   /**
    * Returns splits for a range of keys in the table.

@@ -33,7 +33,7 @@ public class GenericLoggingContext extends ApplicationLoggingContext {
   public GenericLoggingContext(final String namespaceId,
                                final String applicationId,
                                final String entityId) {
-    super(namespaceId, applicationId);
+    super(namespaceId, applicationId, null);
     setSystemTag(TAG_ENTITY_ID, entityId);
   }
 

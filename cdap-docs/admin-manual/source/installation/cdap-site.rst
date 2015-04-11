@@ -23,9 +23,9 @@ see the :ref:`configuration-security` section.
    * - Parameter name
      - Default Value
      - Description
-   * - ``app.adapter.dir``
+   * - ``app.template.dir``
      - ``/opt/cdap/master/plugins``
-     - Directory where all archives for adapters are stored
+     - Directory where all archives for application templates are stored
    * - ``app.bind.address``
      - ``127.0.0.1``
      - App-Fabric server host address

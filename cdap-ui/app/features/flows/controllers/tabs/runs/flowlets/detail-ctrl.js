@@ -4,7 +4,6 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope);
     $scope.activeTab = 0;
     var flowletid = $state.params.flowletid;
-    $scope.datasets = [];
 
     // Initialize
     dataSrc
@@ -13,8 +12,6 @@ angular.module(PKG.name + '.feature.flows')
       })
       .then(function (res) {
         $scope.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
-
-        $scope.datasets = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'dataSets');
 
       });
 

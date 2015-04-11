@@ -18,31 +18,24 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link co.cask.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
-  private static final Logger LOG = LoggerFactory.getLogger(CreateDatasetInstancesStage.class);
-  private final DatasetFramework datasetFramework;
-  private final boolean allowDatasetUncheckedUpgrade;
+  private final DatasetInstanceCreator datasetInstanceCreator;
 
-  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework) {
+  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
+                                     Id.Namespace namespace) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.datasetFramework = datasetFramework;
-    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework, namespace);
   }
 
   /**
@@ -55,22 +48,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
   public void process(ApplicationDeployable input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-    Id.Namespace namespaceId = input.getId().getNamespace();
-    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
-      String instanceName = instanceEntry.getKey();
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
-      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      try {
-        if (!datasetFramework.hasInstance(instanceId) || allowDatasetUncheckedUpgrade) {
-          LOG.info("Adding instance: {}", instanceName);
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
-        }
-      } catch (InstanceConflictException e) {
-        // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
-        // TODO: verify that the created instance is from this app
-        LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
-      }
-    }
+    datasetInstanceCreator.createInstances(specification.getDatasets());
 
     // Emit the input to next stage.
     emit(input);

@@ -1,5 +1,9 @@
-<div class="modal-header">
-    <h3 class="modal-title">Set Stream Properties: {{ $stateParams.streamid }}</h3>
+<div class="modal-header clearfix">
+    <h3 class="modal-title pull-left">Set Stream Properties: {{ $stateParams.streamid }}</h3>
+    <a class="btn pull-right" ng-click="closeModal()">
+      <span aria-hidden="true">×</span>
+      <span class="sr-only"> Close </span>
+    </a>
 </div>
 <div class="modal-body">
   <div class="panel-group" ng-model="activePanel" bs-collapse>
@@ -65,12 +69,12 @@
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label">Fields</label>
+              <label class="col-sm-2 control-label h4-margin">Fields</label>
               <div class="col-sm-10">
 
                 <div class="row">
                   <div class="col-sm-10" ng-show="properties.length > 0">
-                    <div ng-repeat="property in properties" class="h4">
+                    <div ng-repeat="property in properties" class="h4-margin">
                       <div class="row">
                         <div class="col-sm-4">
                           <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
@@ -79,68 +83,72 @@
                           <input type="text" class="form-control" ng-model="property.type" placeholder="type"/>
 
                         </div>
-                        <div class="col-sm-2">
-                          <a href="" class="btn btn-danger btn-xs" ng-click="removeProperty(property)">
+                        <div class="col-sm-1">
+                          <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
                             <span class="fa fa-fw fa-trash"> </span>
+                          </a>
+                        </div>
+                        <div class="col-sm-1" ng-if="$index == 0">
+                          <a class="btn btn-info btn-transparent" ng-click="addProperties()">
+                            <span class="fa fa-fw fa-plus"></span>
                           </a>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div class="col-sm-10" ng-show="properties.length === 0">
-                    <div class="well well-sm text-center h4">
+                    <div class="text-center h4 well well-sm dark">
                       <h4> No Properties </h4>
                     </div>
                   </div>
-
-                  <div class="col-sm-2 h4">
-                    <button class="btn btn-info" ng-click="addProperties()">
+                  <div class="col-sm-1" ng-show="properties.length === 0">
+                    <a class="btn btn-info btn-transparent" ng-click="addProperties()">
                       <span class="fa fa-fw fa-plus"></span>
-                    </button>
+                    </a>
+                  </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label h4-margin">Settings</label>
+          <div class="col-sm-10">
+
+            <div class="row">
+              <div class="col-sm-10" ng-show="settings.length > 0">
+                <div ng-repeat="setting in settings" class="h4-margin">
+                  <div class="row">
+                    <div class="col-sm-4">
+                      <input type="text" class="form-control" ng-model="setting.key" placeholder="key"/>
+                    </div>
+                    <div class="col-sm-6">
+                      <input type="text" class="form-control" ng-model="setting.value" placeholder="value"/>
+
+                    </div>
+                    <div class="col-sm-1">
+                      <a href="" class="btn btn-danger" ng-click="removeSetting(setting)">
+                        <span class="fa fa-fw fa-trash"> </span>
+                      </a>
+                    </div>
+                    <div class="col-sm-1" ng-if="$index == 0">
+                      <a class="btn btn-info btn-transparent" ng-click="addSetting()">
+                        <span class="fa fa-fw fa-plus"></span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label">Settings</label>
-              <div class="col-sm-10">
-
-                <div class="row">
-                  <div class="col-sm-10" ng-show="settings.length > 0">
-                    <div ng-repeat="setting in settings" class="h4">
-                      <div class="row">
-                        <div class="col-sm-4">
-                          <input type="text" class="form-control" ng-model="setting.key" placeholder="key"/>
-                        </div>
-                        <div class="col-sm-6">
-                          <input type="text" class="form-control" ng-model="setting.value" placeholder="value"/>
-
-                        </div>
-                        <div class="col-sm-2">
-                          <a href="" class="btn btn-danger btn-xs" ng-click="removeSetting(setting)">
-                            <span class="fa fa-fw fa-trash"> </span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-sm-10" ng-show="settings.length === 0">
-                    <div class="well well-sm text-center h4">
-                      <h4> No Setting </h4>
-                    </div>
-                  </div>
-
-                  <div class="col-sm-2 h4">
-                    <button class="btn btn-info" ng-click="addSetting()">
-                      <span class="fa fa-fw fa-plus"></span>
-                    </button>
-                  </div>
+              <div class="col-sm-10" ng-show="settings.length === 0">
+                <div class="text-center h4 well well-sm dark">
+                  <h4> No Setting </h4>
                 </div>
               </div>
+              <div class="col-sm-1" ng-show="settings.length === 0">
+                <a class="btn btn-info btn-transparent" ng-click="addSetting()">
+                  <span class="fa fa-fw fa-plus"></span>
+                </a>
+              </div>
             </div>
-
-
           </div>
         </div>
       </div>

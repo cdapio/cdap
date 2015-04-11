@@ -68,7 +68,8 @@ public abstract class AbstractMapReduceContextBuilder {
                                      Program mrProgram,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
-                                     @Nullable String outputDataSetName) {
+                                     @Nullable String outputDataSetName,
+                                     @Nullable String adapterName) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -104,10 +105,9 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId,
-                                runtimeArguments, datasets, spec, logicalStartTime,
-                                workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework);
+      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
+                                logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                datasetFramework, adapterName);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

@@ -55,21 +55,27 @@ public class MockLogReader implements LogReader {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
-    // Add log lines for app testApp1, flow testService1
+    // Add log lines for app testApp1, service testService1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));
     }
 
-    // Add log lines for app testApp2, flow testProcedure1
+    // Add log lines for app testApp2, procedure testProcedure1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp2/procedure-testProcedure1",
                  new LogLine(i, "testProcedure1<img>-" + i));
     }
 
-    // Add log lines for app testApp3, flow testMapReduce1
+    // Add log lines for app testApp3, mapreduce testMapReduce1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp3/mapred-testMapReduce1",
+                 new LogLine(i, "testMapReduce1<img>-" + i));
+    }
+
+    // Add log lines for app testApp1, mapreduce testMapReduce1 run as part of batch adapter adapter1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(testNamespacedLogBaseDir + "/testTemplate1/mapred-testMapReduce1",
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
 
@@ -78,7 +84,7 @@ public class MockLogReader implements LogReader {
       logMap.put(testNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
-    // Add log lines for app testApp1, flow testService1 in testNamespace
+    // Add log lines for app testApp1, service testService1 in testNamespace
     for (int i = 0; i < MAX; ++i) {
       logMap.put(testNamespacedLogBaseDir + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));

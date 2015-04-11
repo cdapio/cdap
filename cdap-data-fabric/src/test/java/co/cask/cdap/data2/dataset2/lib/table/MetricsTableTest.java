@@ -39,8 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * tests metrics table.
  */
 public abstract class MetricsTableTest {
-  private static final byte ONES = 0x7f;
-
   protected abstract MetricsTable getTable(String name) throws Exception;
 
   protected static final byte[] A = Bytes.toBytes(1L);
@@ -248,38 +246,17 @@ public abstract class MetricsTableTest {
 
     List<byte[]> toDelete = ImmutableList.of(
       Bytes.toBytes(0xa1000000), Bytes.toBytes(0xb2000000), Bytes.toBytes(0xc3000000));
-    // verify these three are there, we will soon delete them
+    // verify these three are there, and delete them
     for (byte[] row : toDelete) {
       Assert.assertArrayEquals(X, table.get(row, A));
+      table.delete(row, new byte[][] {A});
     }
-    // delete these three
-    table.delete(toDelete);
     // verify these three are now gone.
     for (byte[] row : toDelete) {
       Assert.assertNull(table.get(row, A));
     }
     // verify nothing else is gone by counting all entries in a scan
     Assert.assertEquals(1021, countRange(table, null, null));
-
-    // delete a range by prefix
-    table.deleteAll(new byte[] { 0x11 });
-    // verify that they are gone
-    Assert.assertEquals(0, countRange(table, 0x11000000, 0x12000000));
-    // verify nothing else is gone by counting all entries in a scan (deleted 4)
-    Assert.assertEquals(1017, countRange(table, null, null));
-
-    // delete all with prefix 0xff (it a border case because it has no upper bound)
-    table.deleteAll(new byte[] { (byte) 0xff });
-    // verify that they are gone
-    Assert.assertEquals(0, countRange(table, 0xff000000, null));
-    // verify nothing else is gone by counting all entries in a scan (deleted another 4)
-    Assert.assertEquals(1013, countRange(table, null, null));
-
-    // delete with empty prefix, should clear table
-    // delete all with prefix 0xff (it a border case because it has no upper bound)
-    table.deleteAll(new byte[0]);
-    // verify everything is gone by counting all entries in a scan
-    Assert.assertEquals(0, countRange(table, null, null));
   }
 
   @Test
@@ -289,23 +266,16 @@ public abstract class MetricsTableTest {
     // delete increment and increment again
     table.increment(A, ImmutableMap.of(B, 5L));
     table.increment(A, ImmutableMap.of(B, 2L));
-    table.increment(P, ImmutableMap.of(Q, 15L));
-    table.increment(P, ImmutableMap.of(Q, 12L));
     Assert.assertEquals(7L, Bytes.toLong(table.get(A, B)));
-    Assert.assertEquals(27L, Bytes.toLong(table.get(P, Q)));
     table.delete(A, new byte[][]{B});
-    table.deleteAll(P);
     Assert.assertNull(table.get(A, B));
-    Assert.assertNull(table.get(P, Q));
     table.increment(A, ImmutableMap.of(B, 3L));
-    table.increment(P, ImmutableMap.of(Q, 13L));
     Assert.assertEquals(3L, Bytes.toLong(table.get(A, B)));
-    Assert.assertEquals(13L, Bytes.toLong(table.get(P, Q)));
   }
 
   private static int countRange(MetricsTable table, Integer start, Integer stop) throws Exception {
     Scanner scanner = table.scan(start == null ? null : Bytes.toBytes(start),
-                                 stop == null ? null : Bytes.toBytes(stop), null, null);
+                                 stop == null ? null : Bytes.toBytes(stop), null);
     int count = 0;
     while (scanner.next() != null) {
       count++;
@@ -323,8 +293,7 @@ public abstract class MetricsTableTest {
         for (byte b3 : abc) {
           for (byte b4 : abc) {
             // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
-                                                                                 Bytes.toLong(Y)));
+            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
           }
         }
       }
@@ -336,7 +305,7 @@ public abstract class MetricsTableTest {
     // now do a fuzzy scan of the table
     FuzzyRowFilter filter = new FuzzyRowFilter(
       ImmutableList.of(ImmutablePair.of(new byte[] { '*', 'b', '*', 'b' }, new byte[] { 0x01, 0x00, 0x01, 0x00 })));
-    Scanner scanner = table.scan(null, null, new byte[][] { A }, filter);
+    Scanner scanner = table.scan(null, null, filter);
     int count = 0;
     while (true) {
       Row entry = scanner.next();
@@ -346,103 +315,8 @@ public abstract class MetricsTableTest {
       Assert.assertTrue(entry.getRow()[1] == 'b' && entry.getRow()[3] == 'b');
       Assert.assertEquals(1, entry.getColumns().size());
       Assert.assertTrue(entry.getColumns().containsKey(A));
-      Assert.assertFalse(entry.getColumns().containsKey(B));
       count++;
     }
     Assert.assertEquals(9, count);
   }
-
-  @Test
-  public void testRangeDeleteWithoutFilter() throws Exception {
-    MetricsTable table = getTable("rangeDeleteWithoutFilter");
-    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    byte[] abc = { 'a', 'b', 'c' };
-    for (byte b1 : abc) {
-      for (byte b2 : abc) {
-        for (byte b3 : abc) {
-          for (byte b4 : abc) {
-            // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
-                                                                                 Bytes.toLong(Y)));
-          }
-        }
-      }
-    }
-    table.put(writes);
-    // we should have 81 (3^4) rows now
-    Assert.assertEquals(81, countRange(table, null, null));
-
-    byte[] start = new byte[] { 'a', 0x00, 0x00, 0x00 };
-    byte[] end = new byte[] { 'a', ONES, ONES, ONES };
-    FuzzyRowFilter filter = new FuzzyRowFilter(
-      ImmutableList.of(ImmutablePair.of(new byte[] { '*', 'b', '*', 'b' }, new byte[] { 0x01, 0x00, 0x01, 0x00 })));
-    table.deleteRange(start, end, new byte[][] { A }, filter);
-
-    // now do a scan of the table, making sure the cells with row like {a,b,*,b} and column A are gone.
-    Scanner scanner = table.scan(null, null, null, null);
-    int count = 0;
-    while (true) {
-      Row entry = scanner.next();
-      if (entry == null) {
-        break;
-      }
-      byte[] row = entry.getRow();
-      if (row[0] == 'a' && row[1] == 'b' && row[3] == 'b') {
-        Assert.assertFalse(entry.getColumns().containsKey(A));
-        Assert.assertEquals(1, entry.getColumns().size());
-      } else {
-        Assert.assertTrue(entry.getColumns().containsKey(A));
-        Assert.assertTrue(entry.getColumns().containsKey(B));
-        Assert.assertEquals(2, entry.getColumns().size());
-      }
-      count++;
-    }
-    Assert.assertEquals(81, count);
-  }
-
-  @Test
-  public void testRangeDeleteWithFilter() throws Exception {
-    MetricsTable table = getTable("rangeDelete");
-    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    byte[] abc = { 'a', 'b', 'c' };
-    for (byte b1 : abc) {
-      for (byte b2 : abc) {
-        for (byte b3 : abc) {
-          for (byte b4 : abc) {
-            // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
-                                                                                 Bytes.toLong(Y)));
-          }
-        }
-      }
-    }
-    table.put(writes);
-    // we should have 81 (3^4) rows now
-    Assert.assertEquals(81, countRange(table, null, null));
-
-    byte[] start = new byte[] { 'a', 0x00, 0x00, 0x00 };
-    byte[] end = new byte[] { 'a', ONES, ONES, ONES };
-    table.deleteRange(start, end, new byte[][] { A }, null);
-
-    // now do a scan of the table, making sure the cells with row starting with 'a' and column A are gone.
-    Scanner scanner = table.scan(null, null, null, null);
-    int count = 0;
-    while (true) {
-      Row entry = scanner.next();
-      if (entry == null) {
-        break;
-      }
-      if (entry.getRow()[0] == 'a') {
-        Assert.assertFalse(entry.getColumns().containsKey(A));
-        Assert.assertEquals(1, entry.getColumns().size());
-      } else {
-        Assert.assertTrue(entry.getColumns().containsKey(A));
-        Assert.assertTrue(entry.getColumns().containsKey(B));
-        Assert.assertEquals(2, entry.getColumns().size());
-      }
-      count++;
-    }
-    Assert.assertEquals(81, count);
-  }
-
 }

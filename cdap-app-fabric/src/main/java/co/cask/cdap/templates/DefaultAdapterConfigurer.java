@@ -21,14 +21,13 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -36,6 +35,7 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -76,12 +76,27 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     this.instances = 1;
   }
 
+  @Override
   public void addStream(Stream stream) {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
     streams.put(spec.getName(), spec);
   }
 
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
+    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
+    dataSetModules.put(moduleName, moduleClass.getName());
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
   public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
@@ -90,6 +105,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
                          new DatasetCreationSpec(datasetInstanceName, typeName, properties));
   }
 
+  @Override
   public void createDataset(String datasetInstanceName,
                             Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
@@ -148,32 +164,23 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   }
 
   public AdapterSpecification createSpecification() {
+    ScheduleSpecification scheduleSpec = null;
+    if (programType == ProgramType.WORKFLOW) {
+      String workflowName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
+      scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
+        SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs);
+    }
+
     AdapterSpecification.Builder builder =
       AdapterSpecification.builder(adapterName, adapterConfig.getTemplate())
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
-        .setStreams(streams);
-
-    if (programType == ProgramType.WORKFLOW) {
-      setWorkflowSpec(builder);
-    } else if (programType == ProgramType.WORKER) {
-      setWorkerSpec(builder);
-    }
+        .setDatasetModules(dataSetModules)
+        .setStreams(streams)
+        .setRuntimeArgs(runtimeArgs)
+        .setScheduleSpec(scheduleSpec)
+        .setInstances(instances);
     return builder.build();
-  }
-
-  private void setWorkflowSpec(AdapterSpecification.Builder builder) {
-    WorkflowSpecification workflowSpec = templateSpec.getWorkflows().values().iterator().next();
-    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, workflowSpec.getName());
-    builder.setScheduleSpec(new ScheduleSpecification(schedule, programInfo, runtimeArgs));
-  }
-
-  private void setWorkerSpec(AdapterSpecification.Builder builder) {
-    WorkerSpecification templateWorkerSpec = templateSpec.getWorkers().values().iterator().next();
-    WorkerSpecification adapterWorkerSpec = new WorkerSpecification(
-      templateWorkerSpec.getClassName(), templateWorkerSpec.getName(), templateWorkerSpec.getDescription(),
-      runtimeArgs, dataSetInstances.keySet(), resources, instances);
-    builder.setWorkerSpec(adapterWorkerSpec);
   }
 }

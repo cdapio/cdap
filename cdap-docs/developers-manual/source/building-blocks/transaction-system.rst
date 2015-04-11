@@ -52,7 +52,7 @@ rollback in case of write conflicts. We can only achieve high throughput with OC
 number of conflicts is small. It is therefore good practice to reduce the probability of
 conflicts wherever possible.
 
-Here are some rules to follow for Flows, Flowlets, Services, and Procedures:
+Here are some rules to follow for Flows, Flowlets, and Services:
 
 - Keep transactions short. The Cask Data Application Platform attempts to delay the beginning of each
   transaction as long as possible. For instance, if your Flowlet only performs write
@@ -134,7 +134,7 @@ You have these options:
 Transactions in MapReduce
 -------------------------
 When you run a MapReduce that interacts with Datasets, the system creates a
-long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are
+long-running transaction. Similar to the transaction of a Flowlet, here are
 some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed
