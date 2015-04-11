@@ -18,15 +18,12 @@ package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
-import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -36,24 +33,25 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.kafka.client.FetchedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public class LogMessageProcessorPlugin extends AbstractIdleService implements LogMessageProcessor {
+public class KafkaLogProcessorPlugin extends AbstractIdleService implements KafkaLogProcessor {
 
   private final String logBaseDir;
   private final ListeningScheduledExecutorService scheduledExecutor;
@@ -65,21 +63,24 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
   private final int logCleanupIntervalMins;
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
+  private ScheduledFuture<?> logWriterFuture;
+  private final CountDownLatch countDownLatch;
 
-  private final LogCleanup logCleanup;
   private static final long SLEEP_TIME_MS = 100;
 
-  private static final Logger LOG = LoggerFactory.getLogger(LogMessageProcessorPlugin.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogProcessorPlugin.class);
 
   @Inject
-  public LogMessageProcessorPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                                   CheckpointManager checkpointManager, LocationFactory locationFactory)
-                                   throws Exception {
+  public KafkaLogProcessorPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
+                                 CheckpointManager checkpointManager, LocationFactory locationFactory)
+                                 throws Exception {
 
     this.serializer = new LoggingEventSerializer();
+    this.countDownLatch = new CountDownLatch(1);
 
     this.scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-main")));;
+      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
+
     messageTable = TreeBasedTable.create();
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
@@ -89,8 +90,6 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
-    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
-
     long maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
@@ -137,29 +136,26 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
                                                        syncIntervalBytes, inactiveIntervalMs);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
-
-    String namespacesDir = cConfig.get(Constants.Namespace.NAMESPACES_DIR);
-    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
-                                     retentionDurationMs);
-
   }
 
   @Override
-  public void begin() {
+  public void begin(Set<Integer> partitions) {
 
+    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
+                                        eventBucketIntervalMs, maxNumberOfBucketsInTable);
+    logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void process(FetchedMessage message) {
-    GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
-    ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+  public void process(KafkaLogEvent event) {
+    LoggingContext loggingContext = event.getLoggingContext();
+    ILoggingEvent logEvent = event.getLogEvent();
 
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
+    try {
+    // Compute the bucket number for the current event
+    long key = logEvent.getTimeStamp() / eventBucketIntervalMs;
 
-      // Compute the bucket number for the current event
-      long key = event.getTimeStamp() / eventBucketIntervalMs;
-
-      while (true) {
+    while (true) {
         // Get the oldest bucket in the table
         long oldestBucketKey = 0;
         synchronized (messageTable) {
@@ -177,11 +173,12 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
           LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
                     key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
 
-//          if (kafkaCancelCallbackLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
-//            // if count down occurred return
-//            LOG.info("Returning since callback is cancelled");
-//            return;
-//          }
+            if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
+              // if count down occurred return
+              LOG.info("Returning since callback is cancelled");
+              return;
+            }
+
         } else {
           break;
         }
@@ -199,14 +196,21 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
         } else {
           msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
         }
-        msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext,
-                                      message.getTopicPartition().getPartition(), message.getNextOffset()));
+        msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
+                                      event.getPartition(), event.getNextOffset()));
       }
+    } catch (Throwable th) {
+      LOG.warn("Exception while processing message with nextOffset {}. Skipping it.", event.getNextOffset(), th);
+    }
   }
 
   @Override
   public void end() {
-
+    if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
+      logWriterFuture.cancel(false);
+      logWriterFuture = null;
+    }
+    this.countDownLatch.countDown();
   }
 
   @Override
@@ -218,5 +222,4 @@ public class LogMessageProcessorPlugin extends AbstractIdleService implements Lo
   protected void shutDown() throws Exception {
     scheduledExecutor.shutdown();
   }
-
 }

@@ -16,16 +16,18 @@
 
 package co.cask.cdap.logging.save;
 
-import org.apache.twill.kafka.client.FetchedMessage;
+import co.cask.cdap.logging.kafka.KafkaLogEvent;
+
+import java.util.Set;
 
 /**
  *
  */
-public interface LogMessageProcessor {
+public interface KafkaLogProcessor {
 
-  public void begin();
+  public void begin(Set<Integer> partitions);
 
-  public void process(FetchedMessage message);
+  public void process(KafkaLogEvent event);
 
   public void end();
 
