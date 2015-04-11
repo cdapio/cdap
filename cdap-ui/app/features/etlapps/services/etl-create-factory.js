@@ -7,7 +7,6 @@ angular.module(PKG.name + '.feature.etlapps')
     }
 
     ETLAppsApiFactory.prototype.fetchSources = function(etlType) {
-      if (!etlType) return;
       this.dataSrc.request({
         _cdapPath: '/templates/etl.' + etlType + '/sources'
       })

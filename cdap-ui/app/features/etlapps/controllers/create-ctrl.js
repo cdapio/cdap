@@ -5,6 +5,7 @@ angular.module(PKG.name + '.feature.etlapps')
     // not been loaded yet (after/before choosing an etl template)
     $scope.loadingEtlSourceProps = false;
     $scope.loadingEtlSinkProps = false;
+    $scope.onETLTypeSelected = false;
 
     // List of ETL Sources, Sinks & Transforms
     // for a particular etl template type fetched from backend.
@@ -46,6 +47,8 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(etlType) {
+      if (!etlType) return;
+      $scope.onETLTypeSelected = true;
       apiFactory.fetchSources(etlType);
       apiFactory.fetchSinks(etlType);
       apiFactory.fetchTransforms(etlType);
