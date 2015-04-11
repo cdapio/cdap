@@ -37,6 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.util.List;
@@ -139,8 +140,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     throws IllegalArgumentException {
     if (transformList.size() == 0) {
       // No transforms. Check only source and sink.
-      if (!(batchSink.getKeyType().equals(batchSource.getKeyType()) &&
-        batchSink.getValueType().equals(batchSource.getValueType()))) {
+      if (!(TypeToken.of(batchSink.getKeyType()).isAssignableFrom(batchSource.getKeyType()) &&
+        TypeToken.of(batchSink.getValueType()).isAssignableFrom(batchSource.getValueType()))) {
         throw new IllegalArgumentException(String.format("Source %s and Sink %s Types don't match",
                                                          source.getName(), sink.getName()));
       }
@@ -151,14 +152,14 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = Iterables.getFirst(transforms, null);
       Transform lastTransform = Iterables.getLast(transforms);
 
-      if (!(firstTransform.getKeyInType().equals(batchSource.getKeyType()) &&
-        firstTransform.getValueInType().equals(batchSource.getValueType()))) {
+      if (!(TypeToken.of(firstTransform.getKeyInType()).isAssignableFrom(batchSource.getKeyType()) &&
+        TypeToken.of(firstTransform.getValueInType()).isAssignableFrom(batchSource.getValueType()))) {
         throw new IllegalArgumentException(String.format("Source %s and Transform %s Types don't match",
                                                          source.getName(), firstStage.getName()));
       }
 
-      if (!(lastTransform.getKeyOutType().equals(batchSink.getKeyType()) &&
-        lastTransform.getValueOutType().equals(batchSink.getValueType()))) {
+      if (!(TypeToken.of(lastTransform.getKeyOutType()).isAssignableFrom(batchSink.getKeyType()) &&
+        TypeToken.of(lastTransform.getValueOutType()).isAssignableFrom(batchSink.getValueType()))) {
         throw new IllegalArgumentException(String.format("Sink %s and Transform %s Types don't match",
                                                          sink.getName(), lastStage.getName()));
       }
@@ -166,8 +167,6 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       if (transformList.size() > 1) {
         // Check transform stages.
         validateTransforms(transformList);
-      } else {
-        transforms.add(firstTransform);
       }
     }
   }
@@ -179,8 +178,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = transforms.get(i);
       Transform secondTransform = transforms.get(i + 1);
 
-      if (!(secondTransform.getKeyInType().equals(firstTransform.getKeyOutType()) &&
-        secondTransform.getValueInType().equals(firstTransform.getValueOutType()))) {
+      if (!(TypeToken.of(secondTransform.getKeyInType()).isAssignableFrom(firstTransform.getKeyOutType()) &&
+        TypeToken.of(secondTransform.getValueInType()).isAssignableFrom(firstTransform.getValueOutType()))) {
         throw new IllegalArgumentException(String.format("Transform %s and Transform %s Types don't match",
                                                          currStage.getName(), nextStage.getName()));
       }

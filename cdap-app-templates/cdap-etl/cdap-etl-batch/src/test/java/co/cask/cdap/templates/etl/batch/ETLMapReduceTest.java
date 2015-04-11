@@ -100,7 +100,8 @@ public class ETLMapReduceTest extends TestBase {
   private ETLBatchConfig constructETLBatchConfig() {
     ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
-    List<ETLStage> transformList = Lists.newArrayList();
+    ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
+    List<ETLStage> transformList = Lists.newArrayList(transform);
     return new ETLBatchConfig("", source, sink, transformList);
   }
 
