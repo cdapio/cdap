@@ -25,8 +25,8 @@
       <li ng-class="{active: highlightTab == 'development'}">
         <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
       </li>
-      <li ng-class="{active: highlightTab == 'operations'}">
-        <a ui-sref="operations({namespace: $stateParams.namespace})"> Operations </a>
+      <li ng-class="{active: highlightTab == 'dashboard'}">
+        <a ui-sref="dashboard.standard.cdap({namespace: $stateParams.namespace})"> Operations </a>
       </li>
       <li ng-class="{active: highlightTab == 'management'}">
         <a ui-sref="admin.overview"> Management </a>
