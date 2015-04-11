@@ -14,7 +14,6 @@ body.theme-cdap {
   .btn-info,
   .btn-warning,
   .btn-danger {
-    //text-shadow: 0 -1px 0 rgba(0,0,0,.2);
     background-image:none;
     // Reset the shadow
     &:active,
@@ -67,8 +66,6 @@ body.theme-cdap {
 
   // Apply the mixin to the buttons
   .btn-default {
-    //.btn-styles(@btn-default-bg);
-    //text-shadow: 0 1px 0 #fff;
     border-color: #dfe2e9;
   }
   .btn-primary { .btn-styles(@btn-primary-bg); background-image:none; border:none;}
@@ -77,4 +74,12 @@ body.theme-cdap {
   .btn-warning { .btn-styles(@btn-warning-bg); background-image:none; border:none;}
   .btn-danger  { .btn-styles(@btn-danger-bg); background-image:none; border:none;}
 
+  .btn-transparent {
+    background-color: @brand-primary;
+    
+    &:hover,
+    &:focus  {
+      background-color: darken(@brand-primary, 12%);
+    }
+  }
 }

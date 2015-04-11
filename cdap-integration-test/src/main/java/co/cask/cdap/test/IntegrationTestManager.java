@@ -27,17 +27,19 @@ import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -67,22 +69,25 @@ public class IntegrationTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
-    File appJarFile = null;
     try {
-      appJarFile = createAppJarFile(applicationClz, bundleEmbeddedJars);
-      applicationClient.deploy(appJarFile);
+      Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
+      File appJarFile = File.createTempFile(applicationClz.getSimpleName(), ".jar");
+      try {
+        Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+        applicationClient.deploy(appJarFile);
 
-      Application application = applicationClz.newInstance();
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-      application.configure(configurer, new ApplicationContext());
-      String applicationId = configurer.createSpecification().getName();
-      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig);
+        Application application = applicationClz.newInstance();
+        DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
+        application.configure(configurer, new ApplicationContext());
+        String applicationId = configurer.createSpecification().getName();
+        return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig);
+      } finally {
+        if (!appJarFile.delete()) {
+          LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
+        }
+      }
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      if (appJarFile != null && !appJarFile.delete()) {
-        LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
-      }
     }
   }
 
@@ -130,9 +135,5 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
     namespaceClient.delete(namespace.getId());
-  }
-
-  private File createAppJarFile(Class<?> cls, File[] bundleEmbeddedJars) throws IOException {
-    return AppFabricClient.createDeploymentJar(locationFactory, cls, bundleEmbeddedJars);
   }
 }

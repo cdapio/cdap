@@ -7,11 +7,8 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
-  $scope.dashboards = rDashboardsModel.data;
+  $scope.dashboards = rDashboardsModel.data || [];
 
-  if(!rDashboardsModel.data.length) {
-    rDashboardsModel.add();
-  }
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
   $scope.currentBoard = rDashboardsModel.current();
@@ -55,13 +52,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {
-      $state.go($state.current, {tab: 0}, {reload: true});
+      var tabDest = rDashboardsModel.data.length - 1;
+      $state.go('dashboard.user', {tab: tabDest}, {reload: true});
     });
   };
 
   $scope.removeDashboard = function () {
-    rDashboardsModel.remove($scope.dashboards.activeIndex);
-    $state.go('dashboard.standard.cdap', {}, {reload: true});
+    rDashboardsModel.remove($scope.dashboards.activeIndex)
+      .then(function() {
+        $state.go('dashboard.standard.cdap', {}, {reload: true});
+      });
   };
 
   $scope.reorderDashboard = function (reverse) {

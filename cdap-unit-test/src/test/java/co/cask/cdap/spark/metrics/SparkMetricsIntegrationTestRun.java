@@ -16,12 +16,12 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;

@@ -191,7 +191,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
                                                        "counter"));
     flowCollector.increment("reads", 2);
 
-
+    // should wait for increment to happen before gauge, so we keep ordering for test
+    TimeUnit.SECONDS.sleep(1);
     MetricsCollector mrCollector =
       collectionService.getCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WordCount", "CounterMapRed",
                                                              MapReduceMetrics.TaskType.Mapper, "id1", "t1"));
@@ -211,7 +212,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     testSingleMetric(flowletMetric2, 2);
     testSingleMetric(flowMetric, 4);
     testSingleMetric(mrMetric, 10);
-    testSingleMetric(appMetric, 14);
+    testSingleMetric(appMetric, 10);
   }
 
   @Test
@@ -298,6 +299,8 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("gmetric", 1);
     collector.gauge("gmetric", 10);
     collector.increment("gmetric", 1);
+    // should wait for previous increments/gauge to happen, so we keep ordering for test
+    TimeUnit.SECONDS.sleep(1);
     collector.gauge("gmetric", 10);
 
     // Wait for collection to happen

@@ -32,13 +32,13 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
    */
   $scope.getInstances = function(nodeId) {
     return $scope.instanceMap[nodeId].instances ? $scope.instanceMap[nodeId].instances : 0;
-  }
+  };
 
   $scope.$watch('model', update);
   $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function ($filter, $state, $alert) {
+module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = genericRender.bind(null, scope, $filter);
@@ -161,12 +161,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         if (instance.type === 'STREAM') {
-          $alert({
-            type: 'info',
-            title: 'Temporary Problem',
-            content: 'Injecting into streams in flow temporarily disabled. Will be fixed ASAP'
-          });
-          // $state.go('flows.detail.status.runs.status.streamsDetail', {streamId: nodeId});
+          myStreamService.show(nodeId);
         } else {
           $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
         }
@@ -180,7 +175,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert) {
         var base = radius;
         var extra = (instances.toString().length - 1) * base / 2;
         return base + extra;
-      }
+      };
 
     }
   }, baseDirective);
@@ -397,7 +392,6 @@ function genericRender(scope, $filter) {
    * Handles showing tooltip on mouseover of node name.
    */
   scope.handleShowTip = function(nodeId) {
-    console.log('test');
     tip
       .html(function(d) {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';

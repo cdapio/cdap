@@ -30,7 +30,28 @@ angular.module(PKG.name + '.feature.flows')
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
-              updateOutput(res.series[0].data);
+              if (res.series[0]) {
+                updateOutput(res.series[0].data);
+              } else {
+                  var val = [];
+
+                  for (var i = 60; i > 0; i--) {
+                    val.push({
+                      time: Math.floor((new Date()).getTime()/1000 - (i)),
+                      y: 0
+                    });
+                  }
+
+                  if ($scope.outputHistory) {
+                    $scope.outputStream = val.slice(-1);
+                  }
+
+                  $scope.outputHistory = [{
+                    label: 'output',
+                    values: val
+                  }];
+
+                }
             });
 
           function updateOutput(newVal) {
@@ -56,21 +77,23 @@ angular.module(PKG.name + '.feature.flows')
               ];
 
             }
+
+            // Total
+            dataSrc
+              .poll({
+                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
+                              + '.app.' + $state.params.appId
+                              + '.flow.' + $state.params.programId
+                              + '.flowlet.' + $state.params.flowletid
+                              + '&metric=system.process.events.out',
+                method: 'POST'
+              }, function(res) {
+                if (res.series[0]) {
+                  $scope.total = res.series[0].data[0].value;
+                }
+              });
+
           }
-
-
-          // Total
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                            + '.app.' + $state.params.appId
-                            + '.flow.' + $state.params.programId
-                            + '.flowlet.' + $state.params.flowletid
-                            + '&metric=system.process.events.out',
-              method: 'POST'
-            }, function(res) {
-              $scope.total = res.series[0].data[0].value;
-            });
 
         }
 

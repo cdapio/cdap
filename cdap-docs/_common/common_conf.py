@@ -26,6 +26,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+wise_version = "0.3.0"
+
 import sys
 import os
 import os.path
@@ -119,20 +121,11 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # is read. This is the right place to add substitutions that should be available in every
 # file. 
 rst_epilog = """
-.. |bold-version| replace:: **%(version)s**
-
-.. |italic-version| replace:: *%(version)s*
-
-.. |short-version| replace:: %(short_version)s
-
-.. |literal-version| replace:: ``%(version)s``
-
-.. |literal-release| replace:: ``%(release)s``
-
 .. role:: gp
 .. |$| replace:: :gp:`$`
 
 .. |http:| replace:: http:
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
@@ -140,17 +133,39 @@ rst_epilog = """
 .. |(R)| unicode:: U+00AE .. registered trademark sign
    :ltrim:
 
-.. |copyright| replace:: %(copyright)s
-
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
+"""
 
-""" % {'version': version, 
-       'short_version': short_version, 
-       'release': release,
-       'copyright': copyright,
-       }
+if version:
+    rst_epilog = rst_epilog + """
+.. |bold-version| replace:: **%(version)s**
+
+.. |italic-version| replace:: *%(version)s*
+
+.. |literal-version| replace:: ``%(version)s``
+""" % {'version': version}
+
+if short_version:
+    rst_epilog = rst_epilog + """
+.. |short-version| replace:: %(short_version)s
+""" % {'short_version': short_version}
+
+if release:
+    rst_epilog = rst_epilog + """
+.. |literal-release| replace:: ``%(release)s``
+""" % {'release': release}
+
+if copyright:
+    rst_epilog = rst_epilog + """
+.. |copyright| replace:: %(copyright)s
+""" % {'copyright': copyright}
+
+if wise_version:
+    rst_epilog = rst_epilog + """
+.. |wise-version| replace:: %(wise-version)s
+""" % {'wise-version': wise_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -217,7 +232,9 @@ html_theme = 'cdap'
 # versions points to the JSON file on the webservers
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
 # format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
-# the inner-lists being the directory and a label
+# the inner-lists being the directory, a label, and the release date in YYYY-MM-DD format.
+# The label is currently not used in output, but is there for a future possibility of using 
+# a label instead of the directory to identify a release.
 #
 # manual_list is an ordered list of the manuals
 # Fields: directory, manual name, icon 
@@ -246,10 +263,17 @@ html_theme_options = {
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
-        [ ["2.8.0-SNAPSHOT", "2.8.0"], ], 
-      "current": ["2.7.1", "2.7.1"], 
-      "older": 
-        [ ["2.6.1", "2.6.1"],["2.6.0", "2.6.0"],["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+        [ ['3.0.0-SNAPSHOT', '3.0.0'], ], 
+      "current": ['2.8.0', '2.8.0', '2015-03-23'], 
+      "older": [ 
+        ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.2', '2.6.2', '2015-03-23'], 
+        ['2.6.1', '2.6.1', '2015-01-29'], 
+        ['2.6.0', '2.6.0', '2015-01-10'], 
+        ['2.5.2', '2.5.2', '2014-11-14'], 
+        ['2.5.1', '2.5.1', '2014-10-15'], 
+        ['2.5.0', '2.5.0', '2014-09-26'],
+        ],
     },
 }
 
@@ -320,7 +344,14 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'downloads.html', 'searchbox.html', ],}
+html_sidebars = {'**': [
+    'manuals.html', 
+    'globaltoc.html', 
+    'relations.html', 
+    'downloads.html', 
+    'searchbox.html',
+    'casksites.html',
+     ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

@@ -25,6 +25,7 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -52,43 +53,51 @@ public class MockLogReader implements LogReader {
 
     // Add log lines for app testApp1, flow testFlow1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(defaultNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(defaultNamespacedLogBaseDir + "/testApp1/flow-testFlow1",
+                 new LogLine(new LogOffset(i, i), "testFlow1<img>-" + i));
     }
 
-    // Add log lines for app testApp1, flow testService1
+    // Add log lines for app testApp1, service testService1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp4/userservice-testService1",
-                 new LogLine(i, "testService1<img>-" + i));
+                 new LogLine(new LogOffset(i, i), "testService1<img>-" + i));
     }
 
-    // Add log lines for app testApp2, flow testProcedure1
+    // Add log lines for app testApp2, procedure testProcedure1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp2/procedure-testProcedure1",
-                 new LogLine(i, "testProcedure1<img>-" + i));
+                 new LogLine(new LogOffset(i, i), "testProcedure1<img>-" + i));
     }
 
-    // Add log lines for app testApp3, flow testMapReduce1
+    // Add log lines for app testApp3, mapreduce testMapReduce1
     for (int i = 0; i < MAX; ++i) {
       logMap.put(defaultNamespacedLogBaseDir + "/testApp3/mapred-testMapReduce1",
-                 new LogLine(i, "testMapReduce1<img>-" + i));
+                 new LogLine(new LogOffset(i, i), "testMapReduce1<img>-" + i));
+    }
+
+    // Add log lines for app testApp1, mapreduce testMapReduce1 run as part of batch adapter adapter1 in testNamespace
+    for (int i = 0; i < MAX; ++i) {
+      logMap.put(testNamespacedLogBaseDir + "/testTemplate1/mapred-testMapReduce1",
+                 new LogLine(new LogOffset(i, i), "testMapReduce1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testFlow1 in testNamespace
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(testNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(testNamespacedLogBaseDir + "/testApp1/flow-testFlow1",
+                 new LogLine(new LogOffset(i, i), "testFlow1<img>-" + i));
     }
 
-    // Add log lines for app testApp1, flow testService1 in testNamespace
+    // Add log lines for app testApp1, service testService1 in testNamespace
     for (int i = 0; i < MAX; ++i) {
       logMap.put(testNamespacedLogBaseDir + "/testApp4/userservice-testService1",
-                 new LogLine(i, "testService1<img>-" + i));
+                 new LogLine(new LogOffset(i, i), "testService1<img>-" + i));
     }
   }
 
   @Override
-  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  public void getLogNext(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset < 0) {
+    if (fromOffset.getKafkaOffset() < 0) {
       getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
       return;
     }
@@ -97,12 +106,12 @@ public class MockLogReader implements LogReader {
     try {
       int count = 0;
       for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
-        if (logLine.getOffset() >= fromOffset) {
+        if (logLine.getOffset().getKafkaOffset() >= fromOffset.getKafkaOffset()) {
           if (++count > maxEvents) {
             break;
           }
 
-          if (filter != Filter.EMPTY_FILTER && logLine.getOffset() % 2 != 0) {
+          if (filter != Filter.EMPTY_FILTER && logLine.getOffset().getKafkaOffset() % 2 != 0) {
             continue;
           }
 
@@ -123,23 +132,24 @@ public class MockLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  public void getLogPrev(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset < 0) {
-      fromOffset = MAX;
+    if (fromOffset.getKafkaOffset() < 0) {
+      fromOffset = new LogOffset(MAX, MAX);
     }
 
     callback.init();
     try {
       int count = 0;
-      long startOffset = fromOffset - maxEvents;
+      long startOffset = fromOffset.getKafkaOffset() - maxEvents;
       for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
-        if (logLine.getOffset() >= startOffset && logLine.getOffset() < fromOffset) {
+        if (logLine.getOffset().getKafkaOffset() >= startOffset &&
+          logLine.getOffset().getKafkaOffset() < fromOffset.getKafkaOffset()) {
           if (++count > maxEvents) {
             break;
           }
 
-          if (filter != Filter.EMPTY_FILTER && logLine.getOffset() % 2 != 0) {
+          if (filter != Filter.EMPTY_FILTER && logLine.getOffset().getKafkaOffset() % 2 != 0) {
             continue;
           }
 
@@ -162,7 +172,9 @@ public class MockLogReader implements LogReader {
   @Override
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                      Callback callback) {
-    getLogNext(loggingContext, fromTimeMs / 1000, (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
+    long fromOffset = fromTimeMs / 1000;
+    getLogNext(loggingContext, new LogOffset(fromOffset, fromOffset),
+               (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
   }
 
   @Override

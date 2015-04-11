@@ -23,9 +23,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  */
 public class LogEvent {
   private final ILoggingEvent loggingEvent;
-  private final long offset;
+  private final LogOffset offset;
 
-  public LogEvent(ILoggingEvent loggingEvent, long offset) {
+  public LogEvent(ILoggingEvent loggingEvent, LogOffset offset) {
     this.loggingEvent = loggingEvent;
     this.offset = offset;
   }
@@ -34,7 +34,7 @@ public class LogEvent {
     return loggingEvent;
   }
 
-  public long getOffset() {
+  public LogOffset getOffset() {
     return offset;
   }
 }

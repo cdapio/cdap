@@ -4,7 +4,7 @@
   <thead>
     <tr ng-class="{'sort-enabled': apps.length>0}">
       <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-      <th> Description </th>
+      <th data-predicate="description"> Description </th>
       <th> </th>
     </tr>
   </thead>
@@ -17,7 +17,6 @@
         </a>
       </td>
       <td ng-bind="app.description">  </td>
-      <td ng-bind="app.owner">  </td>
       <td class="text-center">
         <a ng-click="caskConfirm()"
             class="btn btn-danger btn-xs"

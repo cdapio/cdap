@@ -40,7 +40,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.AvroFileLogReader;
+import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
@@ -366,7 +366,7 @@ public class LogSaverTest extends KafkaTestBase {
     while (true) {
       Location latestFile = getLatestFile(logBaseDir, filePattern);
       if (latestFile != null) {
-        AvroFileLogReader logReader = new AvroFileLogReader(new LogSchema().getAvroSchema());
+        AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
         logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);

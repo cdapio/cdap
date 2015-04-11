@@ -152,7 +152,9 @@ final class TimeScheduler implements Scheduler {
       Trigger trigger = TriggerBuilder.newTrigger()
         .withIdentity(triggerKey)
         .forJob(job)
-        .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)))
+        .withSchedule(CronScheduleBuilder
+                        .cronSchedule(getQuartzCronExpression(cronEntry))
+                        .withMisfireHandlingInstructionDoNothing())
         .build();
       try {
         scheduler.scheduleJob(trigger);

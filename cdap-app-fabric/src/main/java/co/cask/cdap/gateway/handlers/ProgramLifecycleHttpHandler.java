@@ -24,10 +24,13 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.mapreduce.MRJobClient;
+import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -50,12 +53,14 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
@@ -116,12 +121,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-  
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private MRJobClient mrJobClient;
+  private MapReduceMetricsInfo mapReduceMetricsInfo;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -187,21 +193,68 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store, CConfiguration configuration,
-                                     ProgramRuntimeService runtimeService,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
+                                     CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
+                                     MapReduceMetricsInfo mapReduceMetricsInfo) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
+    this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
+    this.mrJobClient = mrJobClient;
+    this.mapReduceMetricsInfo = mapReduceMetricsInfo;
+  }
+
+  /**
+   * Relays job-level and task-level information about a particular MapReduce program run.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runs/{run-id}/info")
+  public void mapReduceInfo(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId,
+                            @PathParam("mapreduce-id") String mapreduceId,
+                            @PathParam("run-id") String runId) {
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+      Id.Run run = new Id.Run(programId, runId);
+      ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+      if (appSpec == null) {
+        throw new NotFoundException(programId.getApplication());
+      }
+      if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+        throw new NotFoundException(programId);
+      }
+      if (store.getRun(programId, runId) == null) {
+        throw new NotFoundException(run);
+      }
+
+
+      MRJobInfo mrJobInfo;
+      try {
+        mrJobInfo = mrJobClient.getMRJobInfo(run);
+      } catch (IOException ioe) {
+        LOG.warn("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      }
+
+
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+    } catch (NotFoundException e) {
+      LOG.warn("NotFoundException while getting MapReduce Run info.", e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Failed to get run history for runId: {}", runId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
@@ -374,9 +427,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+  }
+
+  /**
+   * Returns run record for a particular run of a program.
+   */
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}")
+  public void programRunRecord(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @PathParam("run-id") String runid) {
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    if (type == null || type == ProgramType.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
+      if (runRecord != null) {
+        responder.sendJson(HttpResponseStatus.OK, runRecord);
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -1362,7 +1447,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         controller.addListener(new AbstractListener() {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
-            store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+            // Get start time from RunId
+            long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+            if (startTimeInSeconds == -1) {
+              // If RunId is not time-based, use current time as start time
+              startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            }
+            store.setStart(id, runId, startTimeInSeconds);
             if (state == ProgramController.State.COMPLETED) {
               completed();
             }
@@ -1373,13 +1464,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           @Override
           public void completed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.COMPLETED.getRunStatus());
           }
 
           @Override
           public void killed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.KILLED.getRunStatus());
           }
 
@@ -1396,7 +1487,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           @Override
           public void error(Throwable cause) {
             LOG.info("Program stopped with error {}, {}", id, runId, cause);
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.ERROR.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);
@@ -1440,7 +1531,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      Preconditions.checkNotNull(runtimeInfo,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), type, identifier);
       ProgramController controller = runtimeInfo.getController();
       controller.stop().get();
       return AppFabricServiceStatus.OK;

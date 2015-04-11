@@ -25,18 +25,19 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;
@@ -52,6 +53,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final LogReader logReader;
   private final String logPattern;
@@ -103,7 +105,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   public void next(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("app-id") String appId, @PathParam("program-type") String programType,
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
 
@@ -115,7 +117,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                                                programId, getProgramType(ProgramType.valueOfCategoryName(programType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -131,7 +133,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   public void prev(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("app-id") String appId, @PathParam("program-type") String programType,
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                   @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                   @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
@@ -141,7 +143,47 @@ public class LogHandler extends AuthenticatedHttpHandler {
         LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                                getProgramType(ProgramType.valueOfCategoryName(programType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/logs")
+  public void adapterList(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("adapter-id") String adapterId,
+                          // The following 3 query params should be removed,
+                          // when we have a way of querying adapter service
+                          // for the template and program, given an adapter name
+                          @QueryParam("template") String templateId,
+                          @QueryParam("programtype") String programType,
+                          @QueryParam("programid") String programId,
+                          @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                          @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                          @QueryParam("escape") @DefaultValue("true") boolean escape,
+                          @QueryParam("filter") @DefaultValue("") String filterStr) {
+    try {
+      Filter filter = FilterParser.parse(filterStr);
+      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
+      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
+
+      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
+          "greater than zero and 'stop' should be greater than 'start'.");
+        return;
+      }
+      LoggingContext loggingContext =
+        LoggingContextHelper.getLoggingContext(namespaceId, templateId, programId,
+                                               getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
+      logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -187,7 +229,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/system/{component-id}/{service-id}/logs/next")
   public void sysNext(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
                       @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
@@ -196,7 +238,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -209,7 +251,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/system/{component-id}/{service-id}/logs/prev")
   public void sysPrev(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
                       @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                      @QueryParam("fromOffset") @DefaultValue("-1") long fromOffset,
+                      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
@@ -218,7 +260,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -246,5 +288,12 @@ public class LogHandler extends AuthenticatedHttpHandler {
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }
+  }
+
+  private LogOffset parseLogOffset(String offsetStr) {
+    if (offsetStr.isEmpty()) {
+      return LogOffset.LATEST_OFFSET;
+    }
+    return GSON.fromJson(offsetStr, LogOffset.class);
   }
 }

@@ -16,9 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
-
-import javax.annotation.Nullable;
 
 /**
  * This class records information for a particular run.
@@ -61,5 +60,37 @@ public final class RunRecord {
 
   public ProgramRunStatus getStatus() {
     return status;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    RunRecord that = (RunRecord) o;
+
+    return Objects.equal(this.pid, that.pid) &&
+      Objects.equal(this.startTs, that.startTs) &&
+      Objects.equal(this.stopTs, that.stopTs) &&
+      Objects.equal(this.status, that.status);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(pid, startTs, stopTs, status);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("pid", pid)
+      .add("startTs", startTs)
+      .add("stopTs", stopTs)
+      .add("status", status)
+      .toString();
   }
 }

@@ -75,7 +75,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
 
   private final Program program;
-  private final RunId runId;
   private final InetAddress hostname;
   private final Map<String, String> runtimeArgs;
   private final WorkflowSpecification workflowSpec;
@@ -91,17 +90,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
     this.program = program;
-    this.runId = runId;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
     this.workflowSpec = workflowSpec;
-    this.logicalStartTime = options.getArguments().hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
-      ? Long.parseLong(options.getArguments()
-                         .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+    Arguments arguments = options.getArguments();
+    this.logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+      ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
-                                                                         runId, options.getUserArguments(),
-                                                                         logicalStartTime);
+                                                                         runId, options);
     lock = new ReentrantLock();
     condition = lock.newCondition();
   }

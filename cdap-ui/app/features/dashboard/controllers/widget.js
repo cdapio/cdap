@@ -10,6 +10,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.title = opts.title || 'Widget';
       this.type = opts.type;
       this.metric = opts.metric || false;
+      this.color = opts.color;
     }
 
     Widget.prototype.fetchData = function (scope) {

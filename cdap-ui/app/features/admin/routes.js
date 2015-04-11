@@ -117,7 +117,7 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.namespace.create', {
             url: '/create',
-            onEnter: function($bootstrapModal, $state) {
+            onEnter: function($bootstrapModal, $state, myNamespace) {
               $bootstrapModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
@@ -125,7 +125,10 @@ angular.module(PKG.name + '.feature.admin')
                 keyboard: true,
                 controller: 'AdminNamespaceCreateController'
               }).result.finally(function() {
-                $state.go('admin.overview', {}, {reload: true});
+                myNamespace.getList(true).then(function() {
+                  $state.go('admin.overview', {}, {reload: true});
+                });
+
               });
             }
           })

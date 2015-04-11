@@ -652,6 +652,14 @@
         <description>Java options for all program containers</description>
     </property>
 
+  <!-- Used for MapReduce Info endpoint -->
+    <property>
+      <name>mapreduce.jobclient.connect.max.retries</name>
+      <value>2</value>
+      <description>Indicates the maximum number of retries JobClient will make to establish
+        a server connection when retrieving job status and history.</description>
+    </property>
+
     <!-- scheduler related changes -->
     <property>
         <name>scheduler.max.thread.pool.size</name>

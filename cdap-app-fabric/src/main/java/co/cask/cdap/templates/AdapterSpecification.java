@@ -18,7 +18,6 @@ package co.cask.cdap.templates;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
@@ -36,28 +35,32 @@ public final class AdapterSpecification {
   private final String description;
   private final String template;
   private final ScheduleSpecification scheduleSpec;
-  private final WorkerSpecification workerSpec;
+  private final int instances;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, DatasetCreationSpec> datasets;
-  private final int instances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, String> runtimeArgs;
   // this is a json representation of some config that templates will use to configure
   // an adapter. At configuration time it will be translated into the correct object,
   // but the platform itself never interprets it but just passes it along.
   private final JsonElement config;
 
   private AdapterSpecification(String name, String description, String template,
-                               ScheduleSpecification scheduleSpec, WorkerSpecification workerSpec,
+                               ScheduleSpecification scheduleSpec, int instances,
                                Map<String, StreamSpecification> streams,
                                Map<String, DatasetCreationSpec> datasets,
-                               int instances, JsonElement config) {
+                               Map<String, String> datasetModules,
+                               Map<String, String> runtimeArgs, JsonElement config) {
     this.name = name;
     this.description = description;
     this.template = template;
     this.scheduleSpec = scheduleSpec;
-    this.workerSpec = workerSpec;
+    this.instances = instances;
     this.streams = streams == null ? ImmutableMap.<String, StreamSpecification>of() : ImmutableMap.copyOf(streams);
     this.datasets = datasets == null ? ImmutableMap.<String, DatasetCreationSpec>of() : ImmutableMap.copyOf(datasets);
-    this.instances = instances;
+    this.datasetModules = datasetModules == null ?
+      ImmutableMap.<String, String>of() : ImmutableMap.copyOf(datasetModules);
+    this.runtimeArgs = runtimeArgs == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(runtimeArgs);
     this.config = config;
   }
 
@@ -73,14 +76,13 @@ public final class AdapterSpecification {
     return template;
   }
 
-  @Nullable
-  public ScheduleSpecification getScheduleSpec() {
-    return scheduleSpec;
+  public Map<String, String> getRuntimeArgs() {
+    return runtimeArgs;
   }
 
   @Nullable
-  public WorkerSpecification getWorkerSpec() {
-    return workerSpec;
+  public ScheduleSpecification getScheduleSpec() {
+    return scheduleSpec;
   }
 
   public Map<String, StreamSpecification> getStreams() {
@@ -91,7 +93,12 @@ public final class AdapterSpecification {
     return datasets;
   }
 
-  public int getInstances() {
+  public Map<String, String> getDatasetModules() {
+    return datasetModules;
+  }
+
+  @Nullable
+  public Integer getInstances() {
     return instances;
   }
 
@@ -110,10 +117,11 @@ public final class AdapterSpecification {
     private final String name;
     private final String template;
     private String description;
-    private ScheduleSpecification scheduleSpec;
-    private WorkerSpecification workerSpec;
+    private ScheduleSpecification schedule;
+    private Map<String, String> runtimeArgs;
     private Map<String, StreamSpecification> streams;
     private Map<String, DatasetCreationSpec> datasets;
+    private Map<String, String> datasetModules;
     private int instances;
     private JsonElement config;
 
@@ -132,13 +140,13 @@ public final class AdapterSpecification {
       return this;
     }
 
-    public Builder setScheduleSpec(ScheduleSpecification scheduleSpec) {
-      this.scheduleSpec = scheduleSpec;
+    public Builder setScheduleSpec(ScheduleSpecification schedule) {
+      this.schedule = schedule;
       return this;
     }
 
-    public Builder setWorkerSpec(WorkerSpecification workerSpec) {
-      this.workerSpec = workerSpec;
+    public Builder setRuntimeArgs(Map<String, String> runtimeArgs) {
+      this.runtimeArgs = runtimeArgs;
       return this;
     }
 
@@ -149,6 +157,11 @@ public final class AdapterSpecification {
 
     public Builder setDatasets(Map<String, DatasetCreationSpec> datasets) {
       this.datasets = datasets;
+      return this;
+    }
+
+    public Builder setDatasetModules(Map<String, String> modules) {
+      this.datasetModules = modules;
       return this;
     }
 
@@ -163,8 +176,8 @@ public final class AdapterSpecification {
     }
 
     public AdapterSpecification build() {
-      return new AdapterSpecification(name, description, template, scheduleSpec, workerSpec,
-                                      streams, datasets, instances, config);
+      return new AdapterSpecification(name, description, template, schedule, instances,
+                                      streams, datasets, datasetModules, runtimeArgs, config);
     }
   }
 
@@ -184,16 +197,17 @@ public final class AdapterSpecification {
       Objects.equal(template, that.template) &&
       Objects.equal(config, that.config) &&
       Objects.equal(scheduleSpec, that.scheduleSpec) &&
-      Objects.equal(workerSpec, that.workerSpec) &&
+      Objects.equal(runtimeArgs, that.runtimeArgs) &&
       Objects.equal(streams, that.streams) &&
       Objects.equal(datasets, that.datasets) &&
+      Objects.equal(datasetModules, that.datasetModules) &&
       Objects.equal(instances, that.instances);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, description, template, config, scheduleSpec, workerSpec,
-                            streams, datasets, instances);
+    return Objects.hashCode(name, description, template, config, scheduleSpec, runtimeArgs,
+                            streams, datasets, datasetModules, instances);
   }
 
   @Override
@@ -204,9 +218,10 @@ public final class AdapterSpecification {
       .add("template", template)
       .add("config", config)
       .add("scheduleSpec", scheduleSpec)
-      .add("workerSpec", workerSpec)
+      .add("runtimeargs", runtimeArgs)
       .add("streams", streams)
       .add("datasets", datasets)
+      .add("datasetModules", datasetModules)
       .add("instances", instances)
       .toString();
   }

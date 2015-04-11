@@ -100,7 +100,7 @@ A ``user`` endpoint to add a user's profile information to the system::
 
 A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
-  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user/Alice
+  $ cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/Alice
 
 Building and Starting
 =================================

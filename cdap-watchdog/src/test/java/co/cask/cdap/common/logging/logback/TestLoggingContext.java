@@ -23,7 +23,7 @@ import co.cask.cdap.common.logging.ApplicationLoggingContext;
  */
 public class TestLoggingContext extends ApplicationLoggingContext {
   public TestLoggingContext(String namespaceId, String applicationId) {
-    super(namespaceId, applicationId);
+    super(namespaceId, applicationId, null);
   }
 
   @Override

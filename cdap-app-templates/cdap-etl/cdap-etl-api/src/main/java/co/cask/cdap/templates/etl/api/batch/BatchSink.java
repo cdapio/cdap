@@ -16,7 +16,12 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
+import com.google.common.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
@@ -26,12 +31,43 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
  */
 public abstract class BatchSink<KEY, VALUE> {
 
+  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
+  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
+
+  /**
+   * Get the Type of {@link KEY}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getKeyType() {
+    return keyType;
+  }
+
+  /**
+   * Get the Type of {@link VALUE}.
+   *
+   * @return {@link Type}
+   */
+  public final Type getValueType() {
+    return valueType;
+  }
+
   /**
    * Configure the Sink.
    *
    * @param configurer {@link StageConfigurer}
    */
   public void configure(StageConfigurer configurer) {
+    // no-op
+  }
+
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the source needs.
+   *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

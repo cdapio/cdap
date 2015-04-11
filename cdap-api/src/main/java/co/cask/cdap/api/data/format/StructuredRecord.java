@@ -19,8 +19,8 @@ package co.cask.cdap.api.data.format;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -80,7 +80,7 @@ public class StructuredRecord {
 
     private Builder(Schema schema) {
       this.schema = schema;
-      this.fields = Maps.newHashMap();
+      this.fields = new HashMap<String, Object>();
     }
 
     /**

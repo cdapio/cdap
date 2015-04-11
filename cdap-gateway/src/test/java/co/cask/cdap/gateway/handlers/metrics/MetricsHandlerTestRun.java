@@ -29,6 +29,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -59,6 +60,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static final String DOT_FLOW_ESCAPED = DOT_FLOW.replaceAll("\\.", "~");
   private static final String DOT_RUN_ESCAPED = DOT_RUN.replaceAll("\\.", "~");
   private static final String DOT_FLOWLET_ESCAPED = DOT_FLOWLET.replaceAll("\\.", "~");
+  private static final Gson GSON = new Gson();
 
   private static final List<String> FLOW_TAGS = ImmutableList.of(Tag.NAMESPACE, Tag.APP, Tag.FLOW, Tag.FLOWLET);
   private static final List<String> FLOW_TAGS_HUMAN = ImmutableList.of("namespace", "app", "flow", "flowlet");
@@ -347,7 +349,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifyRangeQueryResult(
       "/v3/metrics/query?context=" + getContext("yourspace", "WCount1", "WCounter", "splitter") +
         "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
-
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
@@ -381,8 +382,141 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testQueryMetricsWithTags() throws Exception {
+  public void testAggregateQueryBatch() throws Exception {
 
+    QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
+
+    // empty time range should default to aggregate=true
+    QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "counter"),
+                                           ImmutableList.of("system.reads"),
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
+
+
+    QueryRequestFormat query3 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                                  "flow", "WCounter", "flowlet", "*"),
+                                           ImmutableList.of("system.reads"),
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
+
+
+    QueryRequestFormat query4 = new QueryRequestFormat(ImmutableMap.of("namespace", "myspace", "app", "WordCount1",
+                                                                       "flow", "WordCounter", "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads", "system.writes"),
+                                           ImmutableList.<String>of(),
+                                           ImmutableMap.of("aggregate", "true"));
+
+    // test batching of multiple queries
+
+    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+      ImmutableMap.of("testQuery1",
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+                      "testQuery2",
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
+
+    batchTest(ImmutableMap.of("testQuery1", query1, "testQuery2", query2), expected);
+
+    // test batching of multiple queries, with one query having multiple metrics to query
+
+    expected = ImmutableMap.of("testQuery3",
+                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
+                                                                "system.reads", 1, 4)),
+                               "testQuery4",
+                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
+                                                                "system.reads", 1, 2),
+                                                new TimeSeriesSummary(ImmutableMap.<String, String>of(),
+                                                                "system.writes", 1, 2))
+    );
+
+    batchTest(ImmutableMap.of("testQuery3", query3, "testQuery4", query4), expected);
+
+
+    // test invalid request - query without any query Params and body content
+    HttpResponse response = doPost("/v3/metrics/query", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+  }
+
+  private Map<String, String> getTagsMap(String... entries) {
+    Map<String, String> tagsMap = Maps.newHashMap();
+    for (int i = 0; i < entries.length; i += 2) {
+      tagsMap.put(entries[i], entries[i + 1]);
+    }
+    return tagsMap;
+  }
+
+
+  /**
+   * Helper class to construct json for QueryRequest for batch queries
+   */
+  private class QueryRequestFormat {
+    Map<String, String> tags;
+    List<String> metrics;
+    List<String> groupBy;
+    Map<String, String> timeRange;
+
+    QueryRequestFormat(Map<String, String> tags, List<String> metrics, List<String> groupBy,
+                       Map<String, String> timeRange) {
+      this.tags = tags;
+      this.metrics = metrics;
+      this.groupBy = groupBy;
+      this.timeRange = timeRange;
+    }
+  }
+
+  @Test
+  public void testTimeRangeQueryBatch() throws Exception {
+    // note: times are in seconds, hence "divide by 1000";
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 60 * 1000) / 1000;
+    int count = 120;
+
+    QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                      "flow", "WCounter", "flowlet", "splitter"),
+                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                           ImmutableMap.of("start", String.valueOf(start),
+                                                           "end", String.valueOf(end)));
+
+    QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
+                                                      "flow", "WCounter"), ImmutableList.of("system.reads"),
+                                           ImmutableList.of("flowlet"),
+                                           ImmutableMap.of("start", String.valueOf(start),
+                                                           "count", String.valueOf(count)));
+
+    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+      ImmutableMap.of("timeRangeQuery1",
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+                      "timeRangeQuery2",
+                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"),
+                                                             "system.reads", 1, 1),
+                                       new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"),
+                                                             "system.reads", 2, 3)
+                      ));
+
+    Map<String, QueryRequestFormat> batchQueries = ImmutableMap.of("timeRangeQuery1", query1,
+                                                                   "timeRangeQuery2", query2);
+    batchTest(batchQueries, expected);
+  }
+
+  @Test
+  public void testMultipleMetricsSingleContext() throws Exception {
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
+        "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.<Long>of(2L, 2L));
+
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 300 * 1000) / 1000;
+    verifyRangeQueryResult(
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:collector" +
+        "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
+        + end, ImmutableList.<Long>of(1L, 1L, 1L), ImmutableList.<Long>of(1L, 1L, 1L));
+  }
+
+  @Test
+  public void testQueryMetricsWithTags() throws Exception {
     //aggregate result, in the right namespace
     verifyAggregateQueryResult(
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
@@ -443,6 +577,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         "&groupBy=namespace&groupBy=flowlet&start=" + start + "&end=" + end, groupByResult);
   }
 
+  @Test
   public void testInterpolate() throws Exception {
     long start = System.currentTimeMillis() / 1000;
     long end = start + 3;
@@ -669,6 +804,99 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                                       "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
+  /**
+   * Used to test time range queries when requests are batched
+   */
+  class TimeSeriesSummary {
+    Map<String, String> grouping;
+    String metricName;
+    long numPoints;
+    long totalSum;
+
+    public TimeSeriesSummary(Map<String, String> grouping, String metricName, long numPoints, long totalSum) {
+      this.grouping = grouping;
+      this.metricName = metricName;
+      this.numPoints = numPoints;
+      this.totalSum = totalSum;
+    }
+
+    public long getTotalSum() {
+      return totalSum;
+    }
+
+    public long getNumPoints() {
+      return numPoints;
+    }
+
+    public String getMetricName() {
+      return metricName;
+    }
+
+    public Map<String, String> getGrouping() {
+      return grouping;
+    }
+  }
+
+  private  void batchTest(Map<String, QueryRequestFormat> jsonBatch,
+                          ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected) throws Exception {
+    String url = "/v3/metrics/query";
+    Map<String, MetricQueryResult> results =
+      post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, MetricQueryResult>>() { }.getType());
+
+    // check we have all the keys
+    Assert.assertEquals(expected.keySet(), results.keySet());
+    for (Map.Entry<String, MetricQueryResult> entry : results.entrySet()) {
+      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey());
+      MetricQueryResult actualQueryResult = entry.getValue();
+      compareQueryResults(expectedTimeSeriesSummary, actualQueryResult);
+    }
+  }
+
+  private void compareQueryResults(ImmutableList<TimeSeriesSummary> expected, MetricQueryResult actual) {
+
+    MetricQueryResult.TimeSeries[] actualTimeSeries = actual.getSeries();
+    for (int i = 0; i < actualTimeSeries.length; i++) {
+
+      TimeSeriesSummary expectedTimeSeriesSummary = findExpectedQueryResult(expected, actualTimeSeries[i]);
+      Assert.assertNotNull(expectedTimeSeriesSummary);
+      MetricQueryResult.TimeValue[] values = actualTimeSeries[i].getData();
+      long numPoints = 0;
+      long totalSum = 0;
+      for (MetricQueryResult.TimeValue tv : values) {
+        numPoints++;
+        totalSum += tv.getValue();
+      }
+      Assert.assertEquals(expectedTimeSeriesSummary.getNumPoints(), numPoints);
+      Assert.assertEquals(expectedTimeSeriesSummary.getTotalSum(), totalSum);
+    }
+  }
+
+  private TimeSeriesSummary findExpectedQueryResult(ImmutableList<TimeSeriesSummary> expected,
+                                              MetricQueryResult.TimeSeries actualTimeSeries) {
+    for (TimeSeriesSummary result : expected) {
+      if (result.getGrouping().equals(actualTimeSeries.getGrouping()) &&
+        result.getMetricName().equals(actualTimeSeries.getMetricName())) {
+        return result;
+      }
+    }
+
+    return null;
+  }
+
+  private void verifyAggregateQueryResult(String url, List<Long> expectedValue) throws Exception {
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    for (int i = 0; i < queryResult.getSeries().length; i++) {
+      Assert.assertEquals(expectedValue.get(i), (Long) queryResult.getSeries()[i].getData()[0].getValue());
+    }
+  }
+
+  private void verifyRangeQueryResult(String url, List<Long> expectedPoints, List<Long> expectedSum) throws Exception {
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    for (int i = 0; i < queryResult.getSeries().length; i++) {
+      verifyTimeSeries(queryResult.getSeries()[i], expectedPoints.get(i), expectedSum.get(i));
+    }
+  }
+
   @Test
   public void testResultLimit() throws Exception {
     long start = 1;
@@ -712,11 +940,11 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private void verifyRangeQueryResult(String url, long nonZeroPointsCount, long expectedSum) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    verifyTimeSeries(queryResult, nonZeroPointsCount, expectedSum);
+    verifyTimeSeries(queryResult.getSeries()[0], nonZeroPointsCount, expectedSum);
   }
 
-  private void verifyTimeSeries(MetricQueryResult queryResult, long nonZeroPointsCount, long expectedSum) {
-    MetricQueryResult.TimeValue[] data = queryResult.getSeries()[0].getData();
+  private void verifyTimeSeries(MetricQueryResult.TimeSeries timeSeries, long nonZeroPointsCount, long expectedSum) {
+    MetricQueryResult.TimeValue[] data = timeSeries.getData();
 
     for (MetricQueryResult.TimeValue point : data) {
       if (point.getValue() != 0) {
@@ -729,16 +957,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private <T> T post(String url, Type type) throws Exception {
-    HttpResponse response = doPost(url, null);
+    return post(url, null, type);
+  }
+
+  private <T> T post(String url, String body, Type type) throws Exception {
+    HttpResponse response = doPost(url, body);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return new Gson().fromJson(EntityUtils.toString(response.getEntity()), type);
+    return GSON.fromJson(EntityUtils.toString(response.getEntity(), Charsets.UTF_8), type);
   }
 
   private void verifySearchResult(String url, List<String> expectedValues) throws Exception {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
     }.getType());
     // We want to make sure expectedValues are in the response. Response may also have other things that denote
     // null values for tags - we'll ignore them.
@@ -752,7 +984,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() {
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
     }.getType());
     Assert.assertEquals(expectedValues.size(), reply.size());
     for (int i = 0; i < expectedValues.size(); i++) {
@@ -764,8 +996,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-    List<Map<String, String>> reply = new Gson().fromJson(result,
-                                                          new TypeToken<List<Map<String, String>>>() { }.getType());
+    List<Map<String, String>> reply = GSON.fromJson(result, new TypeToken<List<Map<String, String>>>() { }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
 
@@ -773,7 +1004,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doPost(url, null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() {
+    }.getType());
     Assert.assertTrue(reply.containsAll(expectedValues));
   }
 

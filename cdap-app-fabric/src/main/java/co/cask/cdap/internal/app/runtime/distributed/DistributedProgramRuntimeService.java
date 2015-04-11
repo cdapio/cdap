@@ -302,7 +302,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
                                       program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
-    JsonObject json = new JsonObject();
     // this will return an empty Json if there is no live instance
     if (controllers.hasNext()) {
       TwillController controller = controllers.next();

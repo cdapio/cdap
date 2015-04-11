@@ -21,6 +21,7 @@ import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import org.junit.Assert;
 
@@ -35,14 +36,14 @@ import java.util.concurrent.CountDownLatch;
 public class LoggingTester {
   public void testGetNext(LogReader logReader, LoggingContext loggingContext) throws Exception {
     LogCallback logCallback1 = new LogCallback();
-    logReader.getLogNext(loggingContext, -1, 10, Filter.EMPTY_FILTER, logCallback1);
+    logReader.getLogNext(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> events = logCallback1.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 59 arg1 arg2", events.get(9).getLoggingEvent().getFormattedMessage());
 
-    long ultimateOffset =  events.get(9).getOffset();
-    long penultimateOffset = events.get(8).getOffset();
+    LogOffset ultimateOffset =  events.get(9).getOffset();
+    LogOffset penultimateOffset = events.get(8).getOffset();
 
     loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
@@ -76,8 +77,7 @@ public class LoggingTester {
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback6 = new LogCallback();
-    logReader.getLogNext(loggingContext, ultimateOffset + 1, 20, Filter.EMPTY_FILTER,
-                         logCallback6);
+    logReader.getLogNext(loggingContext, getNextOffset(ultimateOffset), 20, Filter.EMPTY_FILTER, logCallback6);
     events = logCallback6.getEvents();
     Assert.assertEquals(0, events.size());
 
@@ -91,13 +91,13 @@ public class LoggingTester {
 
   public void testGetPrev(LogReader logReader, LoggingContext loggingContext) throws Exception {
     LogCallback logCallback1 = new LogCallback();
-    logReader.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER, logCallback1);
+    logReader.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> events = logCallback1.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 59 arg1 arg2", events.get(9).getLoggingEvent().getFormattedMessage());
 
-    long ultimateOffset =  events.get(9).getOffset();
+    LogOffset ultimateOffset =  events.get(9).getOffset();
 
     loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
@@ -133,7 +133,7 @@ public class LoggingTester {
     Assert.assertEquals("Test log message 29 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback5 = new LogCallback();
-    logReader.getLogPrev(loggingContext, 0, 15, Filter.EMPTY_FILTER, logCallback5);
+    logReader.getLogPrev(loggingContext, new LogOffset(0, 0), 15, Filter.EMPTY_FILTER, logCallback5);
     events = logCallback5.getEvents();
     Assert.assertEquals(0, events.size());
 
@@ -154,8 +154,7 @@ public class LoggingTester {
     Assert.assertEquals("Test log message 14 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback9 = new LogCallback();
-    logReader.getLogPrev(loggingContext, ultimateOffset + 1, 15, Filter.EMPTY_FILTER,
-                         logCallback9);
+    logReader.getLogPrev(loggingContext, getNextOffset(ultimateOffset), 15, Filter.EMPTY_FILTER, logCallback9);
     events = logCallback9.getEvents();
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 45 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -166,21 +165,19 @@ public class LoggingTester {
    * Log Call back for testing.
    */
   public static class LogCallback implements Callback {
-    private long firstOffset;
-    private long lastOffset;
+    private LogOffset firstOffset;
+    private LogOffset lastOffset;
     private List<LogEvent> events;
     private final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
     public void init() {
-      firstOffset = -1;
-      lastOffset = -1;
       events = Collections.synchronizedList(new ArrayList<LogEvent>());
     }
 
     @Override
     public void handle(LogEvent event) {
-      if (firstOffset == -1) {
+      if (firstOffset == null) {
         firstOffset = event.getOffset();
       }
       lastOffset = event.getOffset();
@@ -197,12 +194,16 @@ public class LoggingTester {
       return events;
     }
 
-    public long getFirstOffset() {
-      return firstOffset;
+    public LogOffset getFirstOffset() {
+      return firstOffset == null ? LogOffset.LATEST_OFFSET : firstOffset;
     }
 
-    public long getLastOffset() {
-      return lastOffset;
+    public LogOffset getLastOffset() {
+      return lastOffset == null ? LogOffset.LATEST_OFFSET : lastOffset;
     }
+  }
+
+  private LogOffset getNextOffset(LogOffset offset) {
+    return new LogOffset(offset.getKafkaOffset() + 1, offset.getTime() + 1);
   }
 }

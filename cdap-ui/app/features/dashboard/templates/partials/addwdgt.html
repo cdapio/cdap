@@ -2,8 +2,12 @@
       class="form-horizontal"
       ng-submit="doAddWidget()"
         novalidate>
-  <div class="modal-header">
-      <h4 class="modal-title">Add a Widget</h4>
+  <div class="modal-header clearfix">
+      <h4 class="modal-title pull-left">Add a Widget</h4>
+      <a class="btn pull-right" ng-click="closeModal()">
+        <span aria-hidden="true">×</span>
+        <span class="sr-only"> Close </span>
+      </a>
   </div>
   <div class="modal-body">
 

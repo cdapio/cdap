@@ -89,8 +89,8 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     } else {
       JsonObject db = new JsonObject();
       JsonObject stream = new JsonObject();
-      db.addProperty("name", "DB");
-      db.addProperty("description", "RDBMS Source");
+      db.addProperty("name", "KVTableSource");
+      db.addProperty("description", "KeyValue Table Source");
       stream.addProperty("name", "Stream");
       stream.addProperty("description", "Stream Source");
       sources.add(db);
@@ -111,8 +111,8 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
       sinks.add(stream);
     } else {
       JsonObject db = new JsonObject();
-      db.addProperty("name", "DB");
-      db.addProperty("description", "RDBMS Sink");
+      db.addProperty("name", "KVTableSink");
+      db.addProperty("description", "KeyValue Table Sink");
       sinks.add(db);
     }
     responder.sendJson(HttpResponseStatus.OK, sinks);
@@ -126,8 +126,8 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     //TODO: Transforms will be shared between batch, realtime -> to be placed in both dir?
     JsonObject filter = new JsonObject();
     JsonObject projection = new JsonObject();
-    filter.addProperty("name", "FilterTransform");
-    filter.addProperty("description", "Filter Data");
+    filter.addProperty("name", "IdentityTransform");
+    filter.addProperty("description", "Identity Transform");
     projection.addProperty("name", "ProjectionTransform");
     projection.addProperty("description", "Projection Transform");
     transforms.add(filter);
@@ -144,8 +144,8 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     JsonObject nameProperty = new JsonObject();
     transform.addProperty("name", sourceId);
     transform.addProperty("description", "Data Source");
-    nameProperty.addProperty("name", "data.name");
-    nameProperty.addProperty("description", "Name of the Data");
+    nameProperty.addProperty("name", "name");
+    nameProperty.addProperty("description", "Table Name");
     nameProperty.addProperty("required", true);
     properties.add(nameProperty);
     transform.add("properties", properties);
@@ -161,9 +161,9 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     JsonObject nameProperty = new JsonObject();
     transform.addProperty("name", transformId);
     transform.addProperty("description", "Data Transform");
-    nameProperty.addProperty("name", "data.name");
+    nameProperty.addProperty("name", "name");
     nameProperty.addProperty("description", "Name of the Data");
-    nameProperty.addProperty("required", true);
+    nameProperty.addProperty("required", false);
     properties.add(nameProperty);
     transform.add("properties", properties);
     responder.sendJson(HttpResponseStatus.OK, transform);
@@ -178,8 +178,8 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     JsonObject nameProperty = new JsonObject();
     transform.addProperty("name", sinkId);
     transform.addProperty("description", "Data Sink");
-    nameProperty.addProperty("name", "data.name");
-    nameProperty.addProperty("description", "Name of the Data");
+    nameProperty.addProperty("name", "name");
+    nameProperty.addProperty("description", "Table Name");
     nameProperty.addProperty("required", true);
     properties.add(nameProperty);
     transform.add("properties", properties);
