@@ -49,30 +49,6 @@
     </div>
 
     <div class="panel-group">
-      <div class="panel panel-default" id="ETLsinkTab">
-        <div class="panel-heading" ng-click="ETLSinkTabOpen=!ETLSinkTabOpen">
-          <span> ETL Sinks</span>
-        </div>
-        <div class="panel-body" ng-if="ETLSinkTabOpen">
-          <ul class="list-group" ng-if="etlSinks.length > 0">
-            <li class="list-group-item"
-                ng-repeat="sink in etlSinks"
-                id="sink-{{sink.name}}"
-                data-model="{{sink.name}}"
-                data-drop-zone="sinkDropZone"
-                data-drag-type="sink"
-                draggable>
-              {{sink.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
-            <span> No Sinks Found</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel-group">
       <div class="panel panel-default" id="ETLtransformsTab">
         <div class="panel-heading" ng-click="ETLTransformTabOpen=!ETLTransformTabOpen">
           <span> ETL Transforms</span>
@@ -96,6 +72,30 @@
       </div>
     </div>
 
+    <div class="panel-group">
+      <div class="panel panel-default" id="ETLsinkTab">
+        <div class="panel-heading" ng-click="ETLSinkTabOpen=!ETLSinkTabOpen">
+          <span> ETL Sinks</span>
+        </div>
+        <div class="panel-body" ng-if="ETLSinkTabOpen">
+          <ul class="list-group" ng-if="etlSinks.length > 0">
+            <li class="list-group-item"
+                ng-repeat="sink in etlSinks"
+                id="sink-{{sink.name}}"
+                data-model="{{sink.name}}"
+                data-drop-zone="sinkDropZone"
+                data-drag-type="sink"
+                draggable>
+              {{sink.name}}
+            </li>
+          </ul>
+          <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
+            <span> No Sinks Found</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
   </div>
 
   <div class="col-lg-8 col-md-8 col-sm-12">
