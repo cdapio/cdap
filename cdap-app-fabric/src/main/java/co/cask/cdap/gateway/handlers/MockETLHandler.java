@@ -63,8 +63,23 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
   public void getTemplate(HttpRequest request, HttpResponder responder, @PathParam("template-id") String templateId)
     throws Exception {
     JsonObject template = new JsonObject();
+    JsonArray properties = new JsonArray();
     template.addProperty("name", templateId);
     template.addProperty("description", "Template used to create ETL Adapters");
+    if (templateId.equalsIgnoreCase(BATCH)) {
+      JsonObject scheduleProperty = new JsonObject();
+      scheduleProperty.addProperty("name", "schedule");
+      scheduleProperty.addProperty("description", "Cron Schedule for Batch Adapter");
+      scheduleProperty.addProperty("required", true);
+      properties.add(scheduleProperty);
+    } else {
+      JsonObject instanceProperty = new JsonObject();
+      instanceProperty.addProperty("name", "instances");
+      instanceProperty.addProperty("description", "Number of Instances");
+      instanceProperty.addProperty("required", true);
+      properties.add(instanceProperty);
+    }
+    template.add("properties", properties);
     responder.sendJson(HttpResponseStatus.OK, template);
   }
 
