@@ -52,7 +52,7 @@ import javax.naming.NamingException;
 public class JmsMessageToStringSourceTest {
   private static final Logger LOG = LoggerFactory.getLogger(JmsMessageToStringSourceTest.class);
 
-  private final int sessionAckMode = Session.DUPS_OK_ACKNOWLEDGE;
+  private final int sessionAckMode = Session.AUTO_ACKNOWLEDGE;
 
   private JmsSource jmsSource;
   private JmsProvider jmsProvider;
@@ -89,6 +89,21 @@ public class JmsMessageToStringSourceTest {
         // no-op
       }
     });
+  }
+
+  @After
+  public void afterTest() {
+    if(jmsSource != null) {
+      jmsSource.destroy();
+    }
+    originalMessage = "NO_MATCH";
+  }
+
+  @Test
+  public void testSimpleQueueMessages() throws NamingException, JMSException {
+    jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
+    jmsSource.setJmsProvider(jmsProvider);
+    jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     jmsSource.initialize(new SourceContext() {
       @Override
@@ -111,21 +126,6 @@ public class JmsMessageToStringSourceTest {
         return null;
       }
     });
-  }
-
-  @After
-  public void afterTest() {
-    if(jmsSource != null) {
-      jmsSource.destroy();
-    }
-    originalMessage = "";
-  }
-
-  @Test
-  public void testSimpleQueueMessages() throws NamingException, JMSException {
-    jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
-    jmsSource.setJmsProvider(jmsProvider);
-    jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     QueueConnection queueConn = null;
@@ -138,7 +138,7 @@ public class JmsMessageToStringSourceTest {
       sendMessage(queueConn, queueDestination, "Queue:" + queueDestination.getQueueName());
 
       // Verify if it is valid
-      verifyEmittedText(jmsSource);
+      verifyEmittedText(jmsSource, 5, 4000);
 
     } finally {
       if (queueConn != null) {
@@ -155,9 +155,29 @@ public class JmsMessageToStringSourceTest {
   public void testSimpleTopicMessages() throws NamingException, JMSException {
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
-
-    // TODO Add test for Topic
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
+
+    jmsSource.initialize(new SourceContext() {
+      @Override
+      public RealtimeSpecification getSpecification() {
+        return null;
+      }
+
+      @Override
+      public int getInstanceId() {
+        return 0;
+      }
+
+      @Override
+      public int getInstanceCount() {
+        return 0;
+      }
+
+      @Override
+      public Map<String, String> getRuntimeArguments() {
+        return null;
+      }
+    });
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     TopicConnection topicConn = null;
@@ -171,7 +191,7 @@ public class JmsMessageToStringSourceTest {
       sendMessage(topicConn, topicDestination, "Topic:" + topicDestination.getTopicName());
 
       // Verify if it is valid
-      verifyEmittedText(jmsSource);
+      verifyEmittedText(jmsSource, 5, 4000);
     } finally {
       if (topicConn != null) {
         try {
@@ -198,12 +218,30 @@ public class JmsMessageToStringSourceTest {
   }
 
   // Helper method to verify
-  private void verifyEmittedText(JmsSource source) {
+  private void verifyEmittedText(JmsSource source, int numTries, long sleepMilis) {
     // Lets verify from JMS source
     MockValueEmitter emitter = new MockValueEmitter();
-    source.poll(emitter, new SourceState());
+    SourceState sourceState = new SourceState();
+    source.poll(emitter, sourceState);
 
-    Assert.assertEquals(emitter.getCurrentValue, originalMessage);
+    int i = 1;
+    while (i < numTries) {
+      if (emitter.getCurrentValue() == null) {
+        try {
+          Thread.sleep(sleepMilis);
+        } catch (InterruptedException e) {
+          // no-op
+        }
+        source.poll(emitter, sourceState);
+        i++;
+      } else {
+        break;
+      }
+    }
+    String emitterValue = emitter.getCurrentValue();
+    Assert.assertEquals(originalMessage, emitterValue);
+
+    System.out.println("Getting JMS Message in emitter with value: " + emitterValue);
   }
 
   /**
@@ -233,6 +271,8 @@ public class JmsMessageToStringSourceTest {
       // no-op
     }
 
-    String getCurrentValue;
+    String getCurrentValue() {
+      return currentValue;
+    }
   }
 }

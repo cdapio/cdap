@@ -87,7 +87,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
 
     try {
       connection = connectionFactory.createConnection();
-      session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+      session = connection.createSession(false, jmsAcknowledgeMode);
       Destination destination = jmsProvider.getDestination();
       MessageConsumer consumer = session.createConsumer(destination);
       consumer.setMessageListener(this);
@@ -110,7 +110,6 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
       throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
                                  ex);
     }
-
   }
 
   @Nullable
