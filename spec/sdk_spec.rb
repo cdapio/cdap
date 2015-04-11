@@ -24,14 +24,9 @@ describe 'cdap::sdk' do
       expect(chef_run).to create_user('cdap')
     end
 
-    it 'creates /etc/init.d/cdap-sdk link' do
-      expect(chef_run).to create_link('/etc/init.d/cdap-sdk').with(
-        to: '/opt/cdap/sdk/bin/cdap.sh'
-      )
-    end
-
     it 'creates cdap-sdk service and starts it' do
       expect(chef_run).to start_service('cdap-sdk')
+      expect(chef_run).to enable_service('cdap-sdk')
     end
     # ark[sdk]                           cdap/recipes/sdk.rb:48
   end
