@@ -1,6 +1,7 @@
 ---
 driver:
   name: vagrant
+  vm_hostname: test-kitchen.local
   customize:
     cpus: 2
     memory: 4096
