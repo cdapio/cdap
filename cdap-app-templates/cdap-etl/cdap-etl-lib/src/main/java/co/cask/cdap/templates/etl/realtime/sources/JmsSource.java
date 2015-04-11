@@ -80,7 +80,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
    * Helper method to initialize the JMS Connection to start listening messages.
    */
   private void initializeJMSConnection() {
-    if(jmsProvider == null) {
+    if (jmsProvider == null) {
       throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
                                          "Please set the right JMSProvider");
     }
@@ -94,7 +94,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
       consumer.setMessageListener(this);
       connection.start();
     } catch (JMSException ex) {
-      if(session != null) {
+      if (session != null) {
         try {
           session.close();
         } catch (JMSException ex1) {
@@ -133,7 +133,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
         int bodyLength = (int) bytesMessage.getBodyLength();
         byte[] data = new byte[bodyLength];
         int bytesRead = bytesMessage.readBytes(data);
-        if(bytesRead != bodyLength) {
+        if (bytesRead != bodyLength) {
           LOG.warn("Number of bytes read {} not same as expected {}", bytesRead, bodyLength);
         }
         writer.emit(new String(data));
@@ -155,10 +155,10 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
   @Override
   public void destroy() {
     try {
-      if(session != null) {
+      if (session != null) {
         session.close();
       }
-      if(connection != null) {
+      if (connection != null) {
         connection.close();
       }
     } catch (Exception ex) {
@@ -196,7 +196,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
    *
    * @param provider the instance of {@link JmsProvider}
    */
-  public void setJmsProvider(JmsProvider provider){
+  public void setJmsProvider(JmsProvider provider) {
     jmsProvider = provider;
   }
 

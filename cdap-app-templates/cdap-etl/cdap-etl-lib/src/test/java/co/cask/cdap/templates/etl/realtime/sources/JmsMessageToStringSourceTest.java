@@ -93,7 +93,7 @@ public class JmsMessageToStringSourceTest {
 
   @After
   public void afterTest() {
-    if(jmsSource != null) {
+    if (jmsSource != null) {
       jmsSource.destroy();
     }
     originalMessage = "NO_MATCH";
