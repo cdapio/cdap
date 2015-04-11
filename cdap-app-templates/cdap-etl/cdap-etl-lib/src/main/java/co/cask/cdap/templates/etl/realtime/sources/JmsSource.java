@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.Nullable;
+import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -121,27 +122,31 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
       return currentState;
     }
 
-    if (message instanceof TextMessage) {
-      TextMessage textMessage = (TextMessage) message;
-      try {
+    try {
+      if (message instanceof TextMessage) {
+        TextMessage textMessage = (TextMessage) message;
         String text = textMessage.getText();
-        LOG.debug("Process JMS TextMessage : " + text);
+        LOG.trace("Process JMS TextMessage : " + text);
         writer.emit(text);
-      } catch (JMSException e) {
-        LOG.error("Unable to read text from a JMS TextMessage.");
-        return currentState;
-      }
-    } else {
-      // Different kind of messages, just get String for now
-      // TODO Process different kind of JMS messages
-      try {
-        String text = message.getBody(String.class);
+      } else if (message instanceof BytesMessage) {
+        BytesMessage bytesMessage = (BytesMessage) message;
+        int bodyLength = (int) bytesMessage.getBodyLength();
+        byte[] data = new byte[bodyLength];
+        int bytesRead = bytesMessage.readBytes(data);
+        if(bytesRead != bodyLength) {
+          LOG.warn("Number of bytes read {} not same as expected {}", bytesRead, bodyLength);
+        }
+        writer.emit(new String(data));
+      } else {
+        // Different kind of messages, just get String for now
+        // TODO Process different kind of JMS messages
+        String text = message.toString();
         LOG.debug("Process JMS message : " + text);
         writer.emit(text);
-      } catch (JMSException e) {
-        LOG.error("Unable to read text from a JMS Message.");
-        return currentState;
       }
+    }  catch (JMSException e) {
+      LOG.error("Unable to read text from a JMS Message.");
+      return currentState;
     }
 
     return new SourceState(currentState.getState());
