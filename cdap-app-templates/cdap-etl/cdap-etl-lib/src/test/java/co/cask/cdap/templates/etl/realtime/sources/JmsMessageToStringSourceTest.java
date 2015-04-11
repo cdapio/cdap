@@ -22,8 +22,10 @@ import co.cask.cdap.templates.etl.api.ValueEmitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -54,6 +56,8 @@ public class JmsMessageToStringSourceTest {
 
   private JmsSource jmsSource;
   private JmsProvider jmsProvider;
+
+  private String originalMessage;
 
   @Before
   public void beforeTest() {
@@ -114,25 +118,37 @@ public class JmsMessageToStringSourceTest {
     if(jmsSource != null) {
       jmsSource.destroy();
     }
+    originalMessage = "";
   }
 
   @Test
-  public void testSimpleQueueMessages() throws JMSException, NamingException {
+  public void testSimpleQueueMessages() throws NamingException, JMSException {
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
-    QueueConnection queueConn = (QueueConnection) connectionFactory.createConnection();
-    Queue queueDestination = (Queue) jmsProvider.getDestination();
+    QueueConnection queueConn = null;
+    try {
+      queueConn = (QueueConnection) connectionFactory.createConnection();
+      Queue queueDestination = (Queue) jmsProvider.getDestination();
 
-    // Let's start the Connection
-    queueConn.start();
-    sendMessage(queueConn, queueDestination, "Queue:" + queueDestination.getQueueName());
+      // Let's start the Connection
+      queueConn.start();
+      sendMessage(queueConn, queueDestination, "Queue:" + queueDestination.getQueueName());
 
-    // TODO Lets verify from JMS source
-    //jmsSource.poll()
+      // Verify if it is valid
+      verifyEmittedText(jmsSource);
 
+    } finally {
+      if (queueConn != null) {
+        try {
+          queueConn.close();
+        } catch (JMSException e) {
+          LOG.error("Exception when closing Queue connection.");
+        }
+      }
+    }
   }
 
   @Test
@@ -144,35 +160,57 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
-    TopicConnection topicConn = (TopicConnection) connectionFactory.createConnection();
-    Topic topicDestination = (Topic) jmsProvider.getDestination();
+    TopicConnection topicConn = null;
+    try {
+      topicConn = (TopicConnection) connectionFactory.createConnection();
 
-    // Let's start the Connection
-    topicConn.start();
-    sendMessage(topicConn, topicDestination, "Topic:" + topicDestination.getTopicName());
+      Topic topicDestination = (Topic) jmsProvider.getDestination();
 
-    // TODO Lets verify from JMS source
-    //jmsSource.poll()
+      // Let's start the Connection
+      topicConn.start();
+      sendMessage(topicConn, topicDestination, "Topic:" + topicDestination.getTopicName());
+
+      // Verify if it is valid
+      verifyEmittedText(jmsSource);
+    } finally {
+      if (topicConn != null) {
+        try {
+          topicConn.close();
+        } catch (JMSException e) {
+          LOG.error("Exception when closing Topic connection.");
+        }
+      }
+    }
 
   }
 
   // Helper method to start sending message to destination
-  public void sendMessage(Connection connection, Destination destination, String destType) throws JMSException {
+  private void sendMessage(Connection connection, Destination destination, String destType) throws JMSException {
     Session session = connection.createSession(false, sessionAckMode);
     MessageProducer producer = session.createProducer(destination);
     TextMessage msg = session.createTextMessage();
-    msg.setText("Hello World to destination: " + destination.getClass().getName());
+    originalMessage = "Hello World to destination: " + destination.getClass().getName();
+    msg.setText(originalMessage);
     LOG.info("Sending Message: " + msg.getText());
     producer.send(msg);
 
     System.out.println("Sending Message to " + destType + " destination with text: " + msg.getText());
   }
 
+  // Helper method to verify
+  private void verifyEmittedText(JmsSource source) {
+    // Lets verify from JMS source
+    MockValueEmitter emitter = new MockValueEmitter();
+    source.poll(emitter, new SourceState());
+
+    Assert.assertEquals(emitter.getCurrentValue, originalMessage);
+  }
 
   /**
    * Helper class to emit JMS message to next stage
    */
   public static class MockValueEmitter implements ValueEmitter<String> {
+    private String currentValue;
 
     /**
      * Emit objects to the next stage.
@@ -181,7 +219,7 @@ public class JmsMessageToStringSourceTest {
      */
     @Override
     public void emit(String value) {
-
+      currentValue = value;
     }
 
     /**
@@ -192,7 +230,9 @@ public class JmsMessageToStringSourceTest {
      */
     @Override
     public void emit(Void key, String value) {
-
+      // no-op
     }
+
+    String getCurrentValue;
   }
 }

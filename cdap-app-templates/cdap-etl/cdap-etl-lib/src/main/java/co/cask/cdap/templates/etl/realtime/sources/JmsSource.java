@@ -24,21 +24,30 @@ import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.Nullable;
 import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 
 /**
  * <p>
- * Implementation of CDAP {@link RealtimeSource} that listen to external JMS producer and send the message
- * as String to the CDAP ETL Template.
+ * Implementation of CDAP {@link RealtimeSource} that listen to external JMS producer by managing internal
+ * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link ValueEmitter}
  * </p>
  */
-public class JmsSource extends RealtimeSource<String> {
+public class JmsSource extends RealtimeSource<String> implements MessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
+  private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<Message>();
 
   private transient Connection connection;
   private transient Session session;
@@ -62,16 +71,81 @@ public class JmsSource extends RealtimeSource<String> {
   public void initialize(SourceContext context) {
     super.initialize(context);
 
-    // TODO Bootstrap the JMS consumer
+    // Bootstrap the JMS consumer
+    initializeJMSConnection();
+  }
+
+  /**
+   * Helper method to initialize the JMS Connection to start listening messages.
+   */
+  private void initializeJMSConnection() {
+    if(jmsProvider == null) {
+      throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
+                                         "Please set the right JMSProvider");
+    }
+    ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
+
+    try {
+      connection = connectionFactory.createConnection();
+      session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+      Destination destination = jmsProvider.getDestination();
+      MessageConsumer consumer = session.createConsumer(destination);
+      consumer.setMessageListener(this);
+      connection.start();
+    } catch (JMSException ex) {
+      if(session != null) {
+        try {
+          session.close();
+        } catch (JMSException ex1) {
+          LOG.debug("Exception when closing session", ex1);
+        }
+      }
+      if (connection != null) {
+        try {
+          connection.close();
+        } catch (JMSException ex2) {
+          LOG.debug("Exception when closing connection", ex2);
+        }
+      }
+      throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
+                                 ex);
+    }
 
   }
 
   @Nullable
   @Override
   public SourceState poll(ValueEmitter<String> writer, SourceState currentState) {
-    // TODO code this shit
+    // Try to get message from Queue
+    Message message = messageQueue.poll();
+    if (message == null) {
+      return currentState;
+    }
 
-    return null;
+    if (message instanceof TextMessage) {
+      TextMessage textMessage = (TextMessage) message;
+      try {
+        String text = textMessage.getText();
+        LOG.debug("Process JMS TextMessage : " + text);
+        writer.emit(text);
+      } catch (JMSException e) {
+        LOG.error("Unable to read text from a JMS TextMessage.");
+        return currentState;
+      }
+    } else {
+      // Different kind of messages, just get String for now
+      // TODO Process different kind of JMS messages
+      try {
+        String text = message.getBody(String.class);
+        LOG.debug("Process JMS message : " + text);
+        writer.emit(text);
+      } catch (JMSException e) {
+        LOG.error("Unable to read text from a JMS Message.");
+        return currentState;
+      }
+    }
+
+    return new SourceState(currentState.getState());
   }
 
   @Override
@@ -115,12 +189,32 @@ public class JmsSource extends RealtimeSource<String> {
 
   /**
    * Set the {@link JmsProvider} to be used by the source.
-   * implementation that this Spout will use to connect to
-   * a JMS <code>javax.jms.Desination</code>
    *
    * @param provider the instance of {@link JmsProvider}
    */
   public void setJmsProvider(JmsProvider provider){
     jmsProvider = provider;
+  }
+
+  /**
+   * <p>
+   * The {@link javax.jms.MessageListener} implementation that will store the messsages to be processed by next poll
+   * to this {@link JmsSource}
+   * </p>
+   */
+  @Override
+  public void onMessage(Message message) {
+    String messageID = "";
+    try {
+      messageID = message.getJMSMessageID();
+    } catch (JMSException e) {
+      LOG.debug("Error when trying to get message ID for JMS message.");
+    }
+
+    LOG.debug("Attempt to add message: {}", messageID);
+
+    messageQueue.add(message);
+
+    LOG.debug("Success adding message: {}", messageID);
   }
 }
