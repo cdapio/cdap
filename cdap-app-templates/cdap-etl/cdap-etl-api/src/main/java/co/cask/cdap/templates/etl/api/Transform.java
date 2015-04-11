@@ -32,10 +32,10 @@ import javax.annotation.Nullable;
  */
 public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements ProgramLifecycle<TransformContext> {
 
-  private final TypeToken<KEY_IN> keyInTypeToken = new TypeToken<KEY_IN>(getClass()) { };
-  private final TypeToken<VALUE_IN> valueInTypeToken = new TypeToken<VALUE_IN>(getClass()) { };
-  private final TypeToken<KEY_OUT> keyOutTypeToken = new TypeToken<KEY_OUT>(getClass()) { };
-  private final TypeToken<VALUE_OUT> valueOutTypeToken = new TypeToken<VALUE_OUT>(getClass()) { };
+  private final Type keyInType = new TypeToken<KEY_IN>(getClass()) { }.getType();
+  private final Type valueInType = new TypeToken<VALUE_IN>(getClass()) { }.getType();
+  private final Type keyOutType = new TypeToken<KEY_OUT>(getClass()) { }.getType();
+  private final Type valueOutType = new TypeToken<VALUE_OUT>(getClass()) { }.getType();
 
   /**
    * Get the Type of {@link KEY_IN}.
@@ -43,7 +43,7 @@ public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements
    * @return {@link Type}
    */
   public final Type getKeyInType() {
-    return keyInTypeToken.getType();
+    return keyInType;
   }
 
   /**
@@ -52,7 +52,7 @@ public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements
    * @return {@link Type}
    */
   public final Type getValueInType() {
-    return valueInTypeToken.getType();
+    return valueInType;
   }
 
   /**
@@ -61,7 +61,7 @@ public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements
    * @return {@link Type}
    */
   public final Type getKeyOutType() {
-    return keyOutTypeToken.getType();
+    return keyOutType;
   }
 
   /**
@@ -70,7 +70,7 @@ public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements
    * @return {@link Type}
    */
   public final Type getValueOutType() {
-    return valueOutTypeToken.getType();
+    return valueOutType;
   }
 
   private TransformContext context;

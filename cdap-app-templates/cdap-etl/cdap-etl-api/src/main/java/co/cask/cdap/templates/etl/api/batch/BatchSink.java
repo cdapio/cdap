@@ -31,8 +31,8 @@ import java.lang.reflect.Type;
  */
 public abstract class BatchSink<KEY, VALUE> {
 
-  private final TypeToken<KEY> keyTypeToken = new TypeToken<KEY>(getClass()) { };
-  private final TypeToken<VALUE> valueTypeToken = new TypeToken<VALUE>(getClass()) { };
+  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
+  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
 
   /**
    * Get the Type of {@link KEY}.
@@ -40,7 +40,7 @@ public abstract class BatchSink<KEY, VALUE> {
    * @return {@link Type}
    */
   public final Type getKeyType() {
-    return keyTypeToken.getType();
+    return keyType;
   }
 
   /**
@@ -49,7 +49,7 @@ public abstract class BatchSink<KEY, VALUE> {
    * @return {@link Type}
    */
   public final Type getValueType() {
-    return valueTypeToken.getType();
+    return valueType;
   }
 
 

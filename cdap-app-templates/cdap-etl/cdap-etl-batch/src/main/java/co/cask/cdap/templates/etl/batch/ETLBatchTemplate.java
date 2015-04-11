@@ -118,7 +118,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   private void instantiateStages(ETLStage source, ETLStage sink, List<ETLStage> transformList)
-    throws InstantiationException, IllegalAccessException {
+    throws IllegalArgumentException {
     try {
       String sourceClassName = sourceClassMap.get(source.getName());
       String sinkClassName = sinkClassMap.get(sink.getName());
@@ -130,8 +130,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
         Transform transformObj = (Transform) Class.forName(transformName).newInstance();
         transforms.add(transformObj);
       }
-    } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException(String.format("Unable to load class. Check stage names. %s", e));
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Unable to load class. Check stage names. %s", e);
     }
   }
 
