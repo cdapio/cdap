@@ -50,6 +50,7 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -78,6 +79,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -547,7 +549,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       String decoderType = stream.getDecoderType();
       if (decoderType == null) {
         // If the user don't specify the decoder, detect the type from Mapper/Reducer
-        setStreamEventDecoder(job);
+        setStreamEventDecoder(job.getConfiguration());
       } else {
         StreamInputFormat.setDecoderClassName(job, decoderType);
       }
@@ -563,20 +565,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * inspecting the Mapper/Reducer type parameters to figure out what the input type is, and pick the appropriate
    * {@link StreamEventDecoder}.
    *
-   * @param job The MapReduce job
+   * @param hConf The job configuration
    * @throws IOException If fails to detect what decoder to use for decoding StreamEvent.
    */
-  private void setStreamEventDecoder(Job job) throws IOException {
+  @VisibleForTesting
+  void setStreamEventDecoder(Configuration hConf) throws IOException {
     // Try to set from mapper
-    TypeToken<Mapper> mapperType = resolveClass(job.getConfiguration(), MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+    TypeToken<Mapper> mapperType = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
     if (mapperType != null) {
-      setStreamEventDecoder(job, mapperType);
+      setStreamEventDecoder(hConf, mapperType);
       return;
     }
 
     // If there is no Mapper, it's a Reducer only job, hence get the decoder type from Reducer class
-    TypeToken<Reducer> reducerType = resolveClass(job.getConfiguration(), MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
-    setStreamEventDecoder(job, reducerType);
+    TypeToken<Reducer> reducerType = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
+    setStreamEventDecoder(hConf, reducerType);
   }
 
   /**
@@ -587,16 +590,29 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    *
    * @param <V> type of the super class
    */
-  private <V> void setStreamEventDecoder(Job job, TypeToken<V> type) throws IOException {
+  private <V> void setStreamEventDecoder(Configuration hConf, TypeToken<V> type) throws IOException {
     // The super type must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
     Type valueType = StreamEvent.class;
     if ((type.getType() instanceof ParameterizedType)) {
       // Try to determine the decoder to use from the first input types
       // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
-      valueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
+      Type inputValueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
+
+      // If the Mapper/Reducer class is not parameterized (meaning not extends with parameters),
+      // then assume StreamEvent as the input value type.
+      // We need to check if the TypeVariable is the same as the one in the parent type.
+      // This avoid the case where a subclass that has "class InvalidMapper<I, O> extends Mapper<I, O>"
+      if (inputValueType instanceof TypeVariable && inputValueType.equals(type.getRawType().getTypeParameters()[1])) {
+        inputValueType = StreamEvent.class;
+      }
+      // Only Class type is support for inferring stream decoder class
+      if (!(inputValueType instanceof Class)) {
+        throw new IllegalArgumentException("Input value type not supported for stream input: " + type);
+      }
+      valueType = inputValueType;
     }
     try {
-      StreamInputFormat.inferDecoderClass(job.getConfiguration(), valueType);
+      StreamInputFormat.inferDecoderClass(hConf, valueType);
     } catch (IllegalArgumentException e) {
       throw new IOException("Type not support for consuming StreamEvent from " + type, e);
     }
