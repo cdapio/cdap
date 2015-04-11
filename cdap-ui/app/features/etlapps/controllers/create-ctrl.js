@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert, $bootstrapModal) {
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert, $bootstrapModal, $state) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope);
 
@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.etlTypes = [
       {
         name: 'Etl Batch',
-        type: 'batch'
+        type: 'etlbatch'
       },
       {
         name: 'ETL Real Time',
@@ -47,19 +47,20 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.transforms = [];
     $scope.activePanel = 0;
 
-    $scope.$watch('metadata.type',fetchSources);
+    $scope.$watch('metadata.type',function(etlType) {
+      fetchSources(etlType);
+      fetchSinks(etlType);
+      fetchTransforms(etlType);
+    });
 
     function fetchSources(etlType) {
       if (!etlType) return;
-      console.log("ETLType: ", etlType);
       dataSrc.request({
         _cdapPath: '/templates/etl.' + etlType + '/sources'
       })
         .then(function(res) {
           $scope.etlSources = res;
         });
-      fetchSinks(etlType);
-      fetchTransforms(etlType);
     }
 
     function fetchSinks(etlType) {
@@ -80,19 +81,18 @@ angular.module(PKG.name + '.feature.etlapps')
         });
     }
 
-    fetchSourceProperties
-    fetchSinkProperties
-
     function fetchSourceProperties(etlSource) {
       if (!etlSource) return;
       dataSrc.request({
         _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sources/' + etlSource
       })
         .then(function(res) {
-          $scope.source = res;
-          angular.forEach($scope.source.properties, function(property) {
-            property.value = '';
+          $scope.source.name = res.name;
+          var obj = {};
+          angular.forEach(res.properties, function(property) {
+            obj[property.name] = '';
           });
+          $scope.source.properties = obj;
           $scope.loadingEtlSourceProps = false;
         });
       $scope.loadingEtlSourceProps = etlSource || false;
@@ -100,15 +100,16 @@ angular.module(PKG.name + '.feature.etlapps')
 
     function fetchSinkProperties(etlSink){
       if (!etlSink) return;
-      console.log("Sink: ", etlSink);
       dataSrc.request({
         _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sinks/' + etlSink
       })
         .then(function(res) {
-          $scope.sink = res;
-          angular.forEach($scope.sink.properties, function(property) {
-            property.value = '';
+          $scope.sink.name = res.name;
+          var obj = {};
+          angular.forEach(res.properties, function(property) {
+            obj[property.name] = '';
           });
+          $scope.sink.properties = obj;
           $scope.loadingEtlSinkProps = false;
         });
       $scope.loadingEtlSinkProps = etlSink || false;
@@ -119,7 +120,6 @@ angular.module(PKG.name + '.feature.etlapps')
     })
 
     $scope.handleSourceDrop = function(id, dropZone, sourceName) {
-      console.log("Source Dropped", id);
       if (dropZone.indexOf('source') === -1) {
         $alert({
           type: 'danger',
@@ -135,7 +135,6 @@ angular.module(PKG.name + '.feature.etlapps')
       }
     };
     $scope.handleTransformDrop = function(id, dropZone, transformName) {
-      console.log("Transform Dropped", id);
       if (dropZone.indexOf('transform') === -1) {
         $alert({
           type: 'danger',
@@ -148,13 +147,12 @@ angular.module(PKG.name + '.feature.etlapps')
         });
         $scope.transforms.push({
           name: transformName,
-          properties: '' // fetchTransformProperties(transformName)
+          properties: {}
         });
         // fetchSourceProperties(sourceName);
       }
     };
     $scope.handleSinkDrop = function(id, dropZone, sinkName) {
-      console.log("Sink Dropped", id);
       if (dropZone.indexOf('sink') === -1) {
         $alert({
           type: 'danger',
@@ -181,7 +179,6 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
       });
     };
-
     $scope.editSinkProperties = function() {
       if ($scope.sink.name === '') {
         return;
@@ -194,7 +191,6 @@ angular.module(PKG.name + '.feature.etlapps')
 
       });
     };
-
     $scope.editTransformProperties = function() {
       if ($scope.transforms.length === 0) {
         return;
