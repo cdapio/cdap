@@ -115,9 +115,23 @@ angular.module(PKG.name + '.feature.etlapps')
       $scope.loadingEtlSinkProps = etlSink || false;
     }
 
-    $scope.$watchCollection('transforms', function(newVal) {
-      console.log("Transform Collection Watch", newVal);
-    })
+    function fetchTransformProperties(etlTransform) {
+      if(!etlTransform) return;
+      dataSrc.request({
+        _cdapPath: '/templates/etl.' + $scope.metadata.type + '/transforms/' + etlTransform
+      })
+        .then(function(res) {
+          var obj = {};
+          var match = filterFilter($scope.transforms, {name: res.name});
+          if(match.length) {
+            angular.forEach(res.properties, function(property) {
+              obj[property.name] = '';
+            });
+            match[0].properties = obj;
+          }
+          $scope.transforms[$scope.transforms.indexOf(match[0])].properties = obj;
+        });
+    }
 
     $scope.handleSourceDrop = function(id, dropZone, sourceName) {
       if (dropZone.indexOf('source') === -1) {
@@ -149,7 +163,7 @@ angular.module(PKG.name + '.feature.etlapps')
           name: transformName,
           properties: {}
         });
-        // fetchSourceProperties(sourceName);
+        fetchTransformProperties(transformName);
       }
     };
     $scope.handleSinkDrop = function(id, dropZone, sinkName) {
@@ -204,4 +218,30 @@ angular.module(PKG.name + '.feature.etlapps')
 
       });
     };
+    $scope.doSave = function() {
+      var data = {
+        template: $scope.metadata.type,
+        config: {
+          source: $scope.source,
+          sink: $scope.sink,
+          transforms: $scope.transforms
+        }
+      };
+
+      dataSrc.request({
+        method: 'PUT',
+        _cdapPath: '/namespaces/'
+                    + $state.params.namespace +
+                    '/adapters/' +
+                    $scope.metadata.name,
+        body: data
+      })
+        .then(function(res) {
+          $state.go('etlapps.list', $state.params, {reload: true});
+          $alert({
+            type: 'success',
+            content: 'ETL Template: ' + $scope.metata.name + ' created successfully!'
+          });
+        });
+    }
   });
