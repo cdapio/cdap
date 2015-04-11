@@ -387,7 +387,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                                   "flow", "WCounter", "flowlet", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                           ImmutableMap.of("aggregate", "true"));
+                                           ImmutableMap.<String, String>of());
 
     // empty time range should default to aggregate=true
     QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
