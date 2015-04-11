@@ -91,6 +91,8 @@ public class TestResilientLogging {
     cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());
 
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
@@ -112,8 +114,9 @@ public class TestResilientLogging {
     opExecutorService.startAndWait();
 
     // Start the logging before starting the service.
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    String logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN", "INSTANCE"));
+    String logBaseDir = "trl-log/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
@@ -159,7 +162,7 @@ public class TestResilientLogging {
     appender.stop();
 
     // Verify - we should have at least 5 events.
-    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "", "RUN", "INSTANCE");
     StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER,

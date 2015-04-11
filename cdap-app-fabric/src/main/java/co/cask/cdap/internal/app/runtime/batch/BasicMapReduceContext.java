@@ -95,7 +95,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.userMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
-                                                      getAdapterName());
+                                                      getRunId().getId(), getAdapterName());
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
