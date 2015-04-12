@@ -75,7 +75,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       });
 
       return stats;
-    }
 
+    }
 
   });
