@@ -26,7 +26,12 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.io.LongWritable;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
@@ -67,7 +72,7 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
       }
       setField(output, field, record.get(field.getName()));
     }
-    emitter.emit(key, output);
+    emitter.emit(getBytes(key), output);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -152,6 +157,33 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
         return new Put(Bytes.toBytes((String) record.get(rowField)));
       default:
         throw new IllegalArgumentException("Row key is of unsupported type " + keyType);
+    }
+  }
+
+  private byte [] getBytes(Object key) throws IOException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutput out = null;
+    try {
+      out = new ObjectOutputStream(bos);
+      Object toWrite = key;
+      if (key instanceof LongWritable) {
+        toWrite = ((LongWritable) key).get();
+      }
+      out.writeObject(toWrite);
+      return bos.toByteArray();
+    } finally {
+      try {
+        if (out != null) {
+          out.close();
+        }
+      } catch (IOException ex) {
+        // ignore close exception
+      }
+      try {
+        bos.close();
+      } catch (IOException ex) {
+        // ignore close exception
+      }
     }
   }
 }
