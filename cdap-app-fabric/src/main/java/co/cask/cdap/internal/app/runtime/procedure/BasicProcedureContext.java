@@ -22,7 +22,6 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -64,7 +63,8 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.procedureSpec = procedureSpec;
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(collectionService, program,
                                                                  runId.getId(), instanceId));
-    this.procedureLoggingContext = new ProcedureLoggingContext(getNamespaceId(), getApplicationId(), getProcedureId());
+    this.procedureLoggingContext = new ProcedureLoggingContext(getNamespaceId(), getApplicationId(), getProcedureId(),
+                                                               getRunId().getId(), String.valueOf(getInstanceId()));
   }
 
   @Override

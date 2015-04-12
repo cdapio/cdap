@@ -40,7 +40,8 @@ import java.util.Map;
 public class LoggingEventSerializerTest {
   @BeforeClass
   public static void setUpContext() {
-    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));
+    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1", "RUN1",
+                                                                    "INSTANCE1"));
   }
 
   @Test
@@ -141,7 +142,8 @@ public class LoggingEventSerializerTest {
 
   public static void assertLoggingEventEquals(ILoggingEvent expected, ILoggingEvent actual) {
     expected.getMDCPropertyMap().putAll(
-      ImmutableMap.of(".namespaceId", "TEST_ACCT_ID1", ".applicationId", "TEST_APP_ID1"));
+      ImmutableMap.of(".namespaceId", "TEST_ACCT_ID1", ".applicationId", "TEST_APP_ID1", ".runId", "RUN1",
+                      ".instanceId", "INSTANCE1"));
 
     Assert.assertEquals(expected.getThreadName(), actual.getThreadName());
     Assert.assertEquals(expected.getLevel(), actual.getLevel());
