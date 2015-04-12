@@ -138,7 +138,7 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
   }
 
   @Override
-  public void begin(Set<Integer> partitions) {
+  public void partitionsChanged(Set<Integer> partitions) {
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
@@ -206,7 +206,7 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
   }
 
   @Override
-  public void end() {
+  public void cleanup() {
     try {
       logFileWriter.flush();
       logFileWriter.close();
