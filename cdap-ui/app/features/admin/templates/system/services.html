@@ -1,25 +1,30 @@
-<h3> Services </h3>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title"> Services </h3>
+  </div>
 
-<table class="table table-responsive" cask-sortable>
-    <thead>
-      <tr ng-class="{'sort-enabled': services.length>0}">
-        <th data-predicate="name" data-predicate-default="reverse">Name</th>
-        <th data-predicate="status">Status</th>
-        <th data-predicate="provisioned">Instances Provisioned</th>
-        <th data-predicate="requested">Instances Requested</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr ng-repeat="service in services | orderBy:sortable.predicate:sortable.reverse">
-            <td>
-                <a ng-bind="service.name"
-                   ui-sref="admin.system.services.detail({serviceName:service.name})"
-                  ></a>
-            </td>
-            <td ng-bind="service.status"></td>
-            <td ng-bind="service.provisioned"></td>
-            <td ng-bind="service.requested"></td>
+  <div class="panel-body">
+    <table class="table table-responsive" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': services.length>0}">
+          <th data-predicate="name" data-predicate-default="reverse">Name</th>
+          <th data-predicate="status">Status</th>
+          <th data-predicate="provisioned">Instances Provisioned</th>
+          <th data-predicate="requested">Instances Requested</th>
         </tr>
-    </tbody>
-
-</table>
+      </thead>
+      <tbody>
+        <tr ng-repeat="service in services | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ng-bind="service.name"
+               ui-sref="admin.system.services.detail({serviceName:service.name})"
+              ></a>
+          </td>
+          <td ng-bind="service.status"></td>
+          <td ng-bind="service.provisioned"></td>
+          <td ng-bind="service.requested"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
