@@ -203,7 +203,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
 
   /**
    * <p>
-   * The {@link javax.jms.MessageListener} implementation that will store the messsages to be processed by next poll
+   * The {@link javax.jms.MessageListener} implementation that will store the messages to be processed by next poll
    * to this {@link JmsSource}
    * </p>
    */
