@@ -130,6 +130,7 @@ function build_docs_outer_level() {
   copy_source admin-manual        "Administration Manual"
   copy_source developers-manual   "Developers’ Manual"
   copy_source integrations        "Integrations"
+  copy_source introduction        "Introduction"
   copy_source reference-manual    "Reference Manual"
   copy_source examples-manual     "Examples, Guides, and Tutorials"
 
@@ -156,6 +157,7 @@ function copy_docs_lower_level() {
   copy_html admin-manual
   copy_html developers-manual
   copy_html integrations
+  copy_html introduction
   copy_html reference-manual
   copy_html examples-manual
 
@@ -224,6 +226,7 @@ function build_docs_inner_level() {
   build_specific_doc admin-manual $1
   build_specific_doc developers-manual $1
   build_specific_doc integrations $1
+  build_specific_doc introduction $1
   build_specific_doc reference-manual $1
   build_specific_doc examples-manual $1
 }

@@ -8,7 +8,7 @@
 .. _getting-started-index:
 
 ============================================
-Getting Started with CDAP
+Getting Started Developing with CDAP
 ============================================
 
 .. toctree::

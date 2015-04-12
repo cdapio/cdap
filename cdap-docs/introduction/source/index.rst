@@ -1,10 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
-:hide-relations: true
-:hide-global-toc: true
 
 .. _introduction-to-cdap:
 
@@ -15,27 +13,28 @@ Introduction to CDAP
 Simple Access to Powerful Technology
 ====================================
 
-The idea of CDAP is captured in our phrase, "Simple Access to Powerful Technology". Our
-goal is to provide access to the powerful technology of Apache Hadoop through a unified
-big data platform for both the cloud and on-premises.
+The idea of CDAP is captured in our phrase, *Simple Access to Powerful Technology*. Our
+goal is to provide access to the powerful technology of Apache Hadoop |(R)| through a
+unified big data platform for both the cloud and on-premises.
 
 In this introduction to CDAP, we're going to show how CDAP provides that access,
 demonstrated through a comparison between using the current technologies available from
 the Hadoop ecosystem and using CDAP |---| a new paradigm.
 
 We'll look at these areas:
-  - Data Ingestion
-  - Data Exploration
-  - Advanced Data Exploration
-  - Transforming Your Data
-  - Building Real World Applications
+  - `Data Ingestion`_
+  - `Data Exploration`_
+  - `Advanced Data Exploration`_
+  - `Transforming Your Data`_
+  - `Building Real World Applications`_
 
+.. highlight:: console
 
 Data Ingestion
 ==============
 - Streams are abstractions over HDFS with an HTTP endpoint
-- Data in a Stream are ordered and time-partitioned]
-- Support easy exploration and processing in realtime and batch
+- Data in a Stream are ordered and time-partitioned
+- CDAP supports easy exploration and processing in both realtime and batch
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
 - The abstraction of Streams lets you disconnect how you ingest from how you process
 
@@ -43,7 +42,7 @@ Data Ingestion
    :widths: 45 45 10
    :header-rows: 1
 
-   * - New Paradigm With CDAP
+   * - CDAP Console
      - Current Approach and Required Technologies
      - 
      
@@ -62,6 +61,84 @@ Data Ingestion
 
 Data Exploration
 ================
+- Immediately start with the exploration of your ingested data
+- Introspect raw data or view data within a time range
+- Easily inspect the quality of data by generating data stats
+- Easily associate a schema once you know your data: "schema on read"
+- Support different data formats; extensible to support custom formats
+- Supported data formats include AVRO, Text, CSV, TSV, and CLF
+- Query using SQL
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventstream``
+     - Required Technologies:
+         - HiveServer
+         - Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - 
+   * - Command
+     - ``$ execute 'describe stream_logEventStream'``
+   * - Output
+     - ::
+    
+        +============================================================================================================+
+        | col_name: STRING                  | data_type: STRING                 | comment: STRING                    |
+        +============================================================================================================+
+        | ts                                | bigint                            | from deserializer                  |
+        | headers                           | map<string,string>                | from deserializer                  |
+        | body                              | string                            | from deserializer                  |
+        +============================================================================================================+
+
+|nb-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Action
+     - Required Technologies
+   * - 
+     - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
+     - HiveServer, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - Console Command and Output
+   * -  
+     - ``$ execute 'select * from stream_logEventStream limit 2'``
+   * - 
+     - ::
+
+        +=========================================================================================================+
+        | stream_logeventstream.ts: BIGINT  | stream_logeventstream.headers: | stream_logeventstream.body: STRING |
+        |                                   | map<string,string>             |                                    |
+        +=========================================================================================================+
+        | 1428100343436                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
+        |                                   |                                | 1:45:38 -0400]  "GET /cdap.html HT |
+        |                                   |                                | TP/1.0" 401 2969 " " "Mozilla/4.0  |
+        |                                   |                                | (compatible; MSIE 7.0; Windows NT  |
+        |                                   |                                | 5.1)"                              |
+        |---------------------------------------------------------------------------------------------------------|
+        | 1428100483106                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
+        |                                   |                                | 1:45:38 -0400] "GET /cdap.html HTT |
+        |                                   |                                | P/1.0" 401 2969 " " "Mozilla/4.0 ( |
+        |                                   |                                | compatible; MSIE 7.0; Windows NT 5 |
+        |                                   |                                | .1)"                               |
+        +=========================================================================================================+
+
+
+
+Data Exploration (v2)
+=====================
 - Immediately start with exploration of your ingested data
 - Introspect raw data, view data within a time range
 - Easily inspect the quality of data by generating data stats
@@ -78,17 +155,55 @@ Data Exploration
      - Current Approach and Required Technologies
      - 
      
-   * - ``$ execute 'describe cdap_stream_logEventStream'``
+   * - ``$ execute 'describe stream_logEventStream'``
      - - Run Hive command using Hive CLI
-       - ``DESCRIBE cdap_stream_logeventstream``
+       - ``DESCRIBE stream_logeventstream``
      - - HiveServer
        - Beeline
+
+CDAP Console Output::
+
+  +============================================================================================================+
+  | col_name: STRING                  | data_type: STRING                 | comment: STRING                    |
+  +============================================================================================================+
+  | ts                                | bigint                            | from deserializer                  |
+  | headers                           | map<string,string>                | from deserializer                  |
+  | body                              | string                            | from deserializer                  |
+  +============================================================================================================+
      
-   * - ``$ execute 'select * from cdap_stream_logEventStream limit 2'``
+.. list-table::
+   :widths: 45 45 10
+   :header-rows: 1
+
+   * - New Paradigm With CDAP
+     - Current Approach and Required Technologies
+     - 
+     
+   * - ``$ execute 'select * from stream_logEventStream limit 2'``
      - - Run Hive command using Hive CLI
-       - ``SELECT * FROM cdap_stream_logeventstream LIMIT 2``
+       - ``SELECT * FROM stream_logeventstream LIMIT 2``
      - - HiveServer
        - Beeline
+
+::
+
+  +=========================================================================================================+
+  | stream_logeventstream.ts: BIGINT  | stream_logeventstream.headers: | stream_logeventstream.body: STRING |
+  |                                   | map<string,string>             |                                    |
+  +=========================================================================================================+
+  | 1428100343436                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
+  |                                   |                                | 1:45:38 -0400]  "GET /cdap.html HT |
+  |                                   |                                | TP/1.0" 401 2969 " " "Mozilla/4.0  |
+  |                                   |                                | (compatible; MSIE 7.0; Windows NT  |
+  |                                   |                                | 5.1)"                              |
+  |---------------------------------------------------------------------------------------------------------|
+  | 1428100483106                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
+  |                                   |                                | 1:45:38 -0400] "GET /cdap.html HTT |
+  |                                   |                                | P/1.0" 401 2969 " " "Mozilla/4.0 ( |
+  |                                   |                                | compatible; MSIE 7.0; Windows NT 5 |
+  |                                   |                                | .1)"                               |
+  +=========================================================================================================+
+
 
 Data Exploration: Attaching schema
 ==================================
@@ -178,7 +293,7 @@ Advanced Data Exploration
      - - Hive CLI
        - Beeline
 
-   * - ``$execute 'select remote_host, city, state, request from cdap_stream_logEventStream join cdap_stream_ip2geo on (cdap_stream_logEventStream.remote_host = cdap_stream_ip2geo.ip) limit 10'``
+   * - ``$ execute 'select remote_host, city, state, request from cdap_stream_logEventStream join cdap_stream_ip2geo on (cdap_stream_logEventStream.remote_host = cdap_stream_ip2geo.ip) limit 10'``
      - - Run Hive command using Hive CLI
        - ``SELECT remote_host, city, state, request from cdap_stream_logEventStream join cdap_stream_ip2geo on (cdap_stream_logEventStream.remote_host = cdap_stream_ip2geo.ip) limit 10``
      - - Hive CLI
