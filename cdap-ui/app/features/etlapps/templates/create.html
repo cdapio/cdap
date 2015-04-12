@@ -1,0 +1,89 @@
+<div class="row">
+  
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
+        <span class="pull-left"> Metadata</span>
+        <i class="fa fa-fw pull-right"
+          ng-class="{'fa-chevron-down': ETLMetadataTabOpen, 'fa-chevron-right': !ETLMetadataTabOpen}"></i>
+      </div>
+      <div class="panel-body" ng-if="ETLMetadataTabOpen">
+        <div class="col-lg-4 col-md-4 col-xs-12">
+          <label for="etlAdapaterType" class="control-label"> Choose an ETL Template</label>
+          <select
+            id="etlAdapaterType"
+            name="etlAdaptertype"
+            class="form-control"
+            ng-model="metadata.type"
+            ng-options="etltype.type as etltype.name for etltype in etlTypes" required></select>
+        </div>
+        <div class="col-lg-4 col-md-4 col-xs-12">
+          <label for="etlAdapaterName" class="control-label">Name</label>
+          <input type="text"
+                  name="etlAdapaterName"
+                  class="form-control"
+                  id="etlAdapaterName"
+                  ng-model="metadata.name">
+        </div>
+        <div class="col-lg-4">
+
+        </div>
+      </div>
+    </div>
+</div>
+
+<div ng-if="onETLTypeSelected">
+
+
+<div class="row">
+
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix" ng-click="ETLConfigTabOpen = !ETLConfigTabOpen">
+        <span class="pull-left">Configurations</span>
+        <i class="fa fa-fw pull-right"
+          ng-class="{'fa-chevron-down': ETLConfigTabOpen, 'fa-chevron-right': !ETLConfigTabOpen}"></i>
+      </div>
+      <div class="panel-body" ng-if="ETLConfigTabOpen">
+        <div class="well well-sm text-center">
+          Properties TBD
+        </div>
+      </div>
+    </div>
+
+</div>
+
+<br/>
+<div class="row">
+
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix">
+        <span class=pull-left>Adapter Canvas</span>
+        <button type="button"
+                name="button"
+                class="btn btn-success pull-right"
+                ng-click="doSave()">
+            Create!
+        </button>
+      </div>
+      <div class="panel-body">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <div ng-include="'/assets/features/etlapps/templates/create/plugins.html'">
+          </div>
+        </div>
+        <div class="col-lg-8 col-md-8 col-sm-12">
+          <div ng-include="'/assets/features/etlapps/templates/create/etlcanvas.html'">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+</div>
+
+</div>
+
+<div ng-if="!onETLTypeSelected">
+  <div class="well well-lg text-center">
+    <h2> Please select a type of ETL you want to create to configure it!</h2>
+  </div>
+</div>
