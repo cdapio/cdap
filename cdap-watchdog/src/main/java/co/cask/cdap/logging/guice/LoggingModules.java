@@ -27,7 +27,7 @@ import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
-import co.cask.cdap.logging.save.KafkaLogProcessorPlugin;
+import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -50,7 +50,7 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(KafkaLogProcessorPlugin.class);
+        handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
       }
     };
   }
@@ -66,7 +66,7 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(KafkaLogProcessorPlugin.class);
+        handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
       }
     };
   }
@@ -80,7 +80,7 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).to(KafkaLogAppender.class);
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(KafkaLogProcessorPlugin.class);
+        handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
       }
     };
   }

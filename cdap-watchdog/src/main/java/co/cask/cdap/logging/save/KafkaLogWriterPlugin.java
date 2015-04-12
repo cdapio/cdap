@@ -29,7 +29,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -49,38 +48,34 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Plugin that writes the log data.
  */
-public class KafkaLogProcessorPlugin extends AbstractIdleService implements KafkaLogProcessor {
+public class KafkaLogWriterPlugin implements KafkaLogProcessor {
+
+  private static final long SLEEP_TIME_MS = 100;
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
 
   private final String logBaseDir;
-  private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
-
-
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
+
   private ScheduledFuture<?> logWriterFuture;
-  private  CountDownLatch countDownLatch;
+  private CountDownLatch countDownLatch;
+  private ListeningScheduledExecutorService scheduledExecutor;
 
-  private static final long SLEEP_TIME_MS = 100;
-
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogProcessorPlugin.class);
 
   @Inject
-  public KafkaLogProcessorPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                                 CheckpointManager checkpointManager, LocationFactory locationFactory)
-                                 throws Exception {
+  public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
+                              CheckpointManager checkpointManager, LocationFactory locationFactory)
+                              throws Exception {
 
     this.serializer = new LoggingEventSerializer();
-
-    this.scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
-
     messageTable = TreeBasedTable.create();
+
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
     LOG.info(String.format("Log base dir is %s", this.logBaseDir));
@@ -89,6 +84,7 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
+
     long maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
@@ -119,7 +115,6 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
                                 "Maximum number of event buckets in memory is invalid: %s",
                                 this.maxNumberOfBucketsInTable);
 
-
     long topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
     Preconditions.checkArgument(topicCreationSleepMs > 0,
@@ -142,8 +137,11 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
+    //TODO: Is this a good idea?
+    countDownLatch = new CountDownLatch(1);
+    scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
-    this.countDownLatch = new CountDownLatch(1);
   }
 
   @Override
@@ -151,11 +149,11 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
     LoggingContext loggingContext = event.getLoggingContext();
     ILoggingEvent logEvent = event.getLogEvent();
     try {
-    // Compute the bucket number for the current event
-    long key = logEvent.getTimeStamp() / eventBucketIntervalMs;
+      // Compute the bucket number for the current event
+      long key = logEvent.getTimeStamp() / eventBucketIntervalMs;
 
-    // Sleep while we can add the entry
-    while (true) {
+      // Sleep while we can add the entry
+      while (true) {
         // Get the oldest bucket in the table
         long oldestBucketKey = 0;
         synchronized (messageTable) {
@@ -173,11 +171,11 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
           LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
                     key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
 
-            if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
-              // if count down occurred return
-              LOG.info("Returning since callback is cancelled");
-              return;
-            }
+          if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
+            // if count down occurred return
+            LOG.info("Returning since callback is cancelled");
+            return;
+          }
 
         } else {
           break;
@@ -210,26 +208,15 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
     try {
       logFileWriter.flush();
       logFileWriter.close();
-
-      if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
-        logWriterFuture.cancel(false);
-        logWriterFuture = null;
-      }
-      this.countDownLatch.countDown();
     } catch (Exception e) {
-      // TODO: LOG
+      LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
     }
+    if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
+      logWriterFuture.cancel(false);
+      logWriterFuture = null;
+    }
+    this.countDownLatch.countDown();
     messageTable.clear();
-    LOG.info("END");
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
     scheduledExecutor.shutdown();
   }
 }
