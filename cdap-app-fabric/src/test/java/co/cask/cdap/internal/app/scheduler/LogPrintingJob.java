@@ -29,17 +29,19 @@ import org.slf4j.LoggerFactory;
 *
 */
 public class LogPrintingJob implements Job {
-
   private static final Logger LOG = LoggerFactory.getLogger(LogPrintingJob.class);
+  public static final String KEY = "key";
+  public static final String VALUE = "value";
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     try {
       LOG.info("Received Trigger at {}", context.getScheduledFireTime().toString());
-
+      JobDataMap triggerMap = context.getTrigger().getJobDataMap();
       JobDataMap map = context.getMergedJobDataMap();
       String[] keys = map.getKeys();
 
+      Preconditions.checkArgument(triggerMap.getString(KEY).equals(VALUE));
       Preconditions.checkArgument(keys != null);
       Preconditions.checkArgument(keys.length > 0);
       LOG.info("Number of parameters {}", keys.length);
@@ -49,6 +51,6 @@ public class LogPrintingJob implements Job {
     } catch (Throwable e) {
       throw Throwables.propagate(e);
     }
-    throw new JobExecutionException("excepion");
+    throw new JobExecutionException("exception");
   }
 }
