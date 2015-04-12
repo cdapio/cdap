@@ -4,7 +4,8 @@
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-relations: true
-:hide-global-toc: true
+
+.. :hide-global-toc: true
 
 .. _documentation-index:
 

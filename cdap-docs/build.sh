@@ -77,6 +77,7 @@ function usage() {
 function run_command() {
   case "$1" in
     all )               build_all; exit 1;;
+    doc )               build_docs_outer_level; exit 1;;
     docs )              build_docs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
@@ -142,7 +143,9 @@ function build_docs_outer_level() {
   else
     sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
   fi
-  
+}
+
+function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
   echo "Copying lower-level docs..."
@@ -191,7 +194,7 @@ function build_javadocs() {
 }
 
 function build_docs_javadocs() {
-  build "build"
+  build_docs_inner_level "build"
 }
 
 function build_docs() {
@@ -207,15 +210,16 @@ function build_docs_web() {
 }
 
 function _build_docs() {
-  build $1
+  build_docs_inner_level $1
   build_docs_outer_level $2
+  copy_docs_lower_level
   build_zip $3
   zip_extras $4
   display_version
   bell "Building $1 completed."
 }
 
-function build() {
+function build_docs_inner_level() {
   build_specific_doc admin-manual $1
   build_specific_doc developers-manual $1
   build_specific_doc integrations $1
