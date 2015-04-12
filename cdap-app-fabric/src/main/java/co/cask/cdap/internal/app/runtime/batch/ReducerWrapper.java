@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,13 +43,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducerWrapper extends Reducer {
 
-  private static final String ATTR_REDUCER_CLASS = "c.reducer.class";
-
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
+  private static final String ATTR_REDUCER_CLASS = "c.reducer.class";
 
   /**
    * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
-   * @param job
+   * @param job The MapReduce job
    */
   public static void wrap(Job job) {
     // NOTE: we don't use job.getReducerClass() as we don't need to load user class here
@@ -61,19 +60,18 @@ public class ReducerWrapper extends Reducer {
     }
   }
 
-
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
-    context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
+      ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
+      Reducer delegate = createReducerInstance(programClassLoader, userReducer);
 
       // injecting runtime components, like datasets, etc.
       try {
@@ -93,7 +91,7 @@ public class ReducerWrapper extends Reducer {
 
       ClassLoader oldClassLoader;
       if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
+        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
           ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
         } catch (Exception e) {
@@ -104,7 +102,7 @@ public class ReducerWrapper extends Reducer {
         }
       }
 
-      oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
+      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
         delegate.run(flushingContext);
       } finally {
@@ -125,7 +123,7 @@ public class ReducerWrapper extends Reducer {
 
 
       if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(basicMapReduceContext.getProgram().getClassLoader());
+        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
           ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
         } catch (Exception e) {

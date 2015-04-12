@@ -24,6 +24,10 @@ import java.util.Map;
 public class MetricValue {
   private final Map<String, String> tags;
   private final String name;
+
+  /**
+   * Timestamp in seconds.
+   */
   private final long timestamp;
   private final long value;
   private final MetricType type;

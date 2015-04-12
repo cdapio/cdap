@@ -34,7 +34,7 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
   public ProcedureLoggingContext(final String namespaceId,
                                  final String applicationId,
                                  final String procedureId) {
-    super(namespaceId, applicationId, null);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_PROCEDURE_ID, procedureId);
   }
 

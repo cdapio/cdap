@@ -19,9 +19,13 @@ package co.cask.cdap.client.app;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.internal.app.runtime.spark.SparkProgramWrapper;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A Fake spark program to test CLI integration with Spark
@@ -44,10 +48,10 @@ public class FakeSpark extends AbstractSpark {
   public static class FakeSparkProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      // this is needed as we don't have any jobs in our spark program which can pass or fail determining the pass or
-      // fail of the whole program. So we manually set the program to pass status.
-      SparkProgramWrapper.setSparkProgramSuccessful(true);
       LOG.info("HelloFakeSpark");
+      List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      distData.collect();
     }
   }
 }

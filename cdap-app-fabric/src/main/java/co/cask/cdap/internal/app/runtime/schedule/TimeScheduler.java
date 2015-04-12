@@ -167,9 +167,13 @@ final class TimeScheduler implements Scheduler {
       TriggerBuilder trigger = TriggerBuilder.newTrigger()
         .withIdentity(triggerKey)
         .forJob(job)
-        .withSchedule(CronScheduleBuilder.cronSchedule(getQuartzCronExpression(cronEntry)));
-      if (properties != null && !properties.isEmpty() && properties.containsKey(ProgramOptionConstants.ADAPTER_NAME)) {
-        trigger.usingJobData(ProgramOptionConstants.ADAPTER_NAME, properties.get(ProgramOptionConstants.ADAPTER_NAME));
+        .withSchedule(CronScheduleBuilder
+                        .cronSchedule(getQuartzCronExpression(cronEntry))
+                        .withMisfireHandlingInstructionDoNothing());
+      if (properties != null && !properties.isEmpty()) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+          trigger.usingJobData(entry.getKey(), entry.getValue());
+        }
       }
       try {
         scheduler.scheduleJob(trigger.build());

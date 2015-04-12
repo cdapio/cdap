@@ -8,10 +8,10 @@ Best Practices for Developing Applications
 
 Initializing Instance Fields
 ==========================================
-There are three ways to initialize instance fields used in Flowlets and Procedures:
+There are three ways to initialize instance fields used in Flowlets:
 
 #. Using the default constructor;
-#. Using the ``initialize()`` method of the Flowlets and Procedures; and
+#. Using the ``initialize()`` method of the Flowlets; and
 #. Using ``@Property`` annotations.
 
 To initialize using an Property annotation, simply annotate the field definition with

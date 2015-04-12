@@ -22,7 +22,6 @@ Building Blocks
     Workflows <workflows>
     Schedules <schedules>
     Spark Programs <spark-programs>
-    Procedures (Deprecated) <procedures>
     Workers <workers>
     Services <services>
     Namespaces <namespaces>
@@ -47,7 +46,6 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Schedules <schedules>`
 - :doc:`Workers <workers>`
 - :doc:`Spark Programs <spark-programs>`
-- :doc:`Procedures (Deprecated) <procedures>`
 - :doc:`Services <services>`
 
 A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.

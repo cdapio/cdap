@@ -29,6 +29,7 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
@@ -132,6 +133,7 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static StreamService streamService;
+  private static SchedulerService schedulerService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
 
@@ -150,7 +152,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
+    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, false);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
@@ -176,6 +178,8 @@ public abstract class AppFabricTestBase {
     metricsService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
+    schedulerService = injector.getInstance(SchedulerService.class);
+    schedulerService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
@@ -186,13 +190,14 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() throws Exception {
     deleteNamespaces();
+    schedulerService.stopAndWait();
     streamService.stopAndWait();
     appFabricServer.stopAndWait();
+    metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-    metricsCollectionService.stopAndWait();
   }
 
   protected String getAPIVersion() {

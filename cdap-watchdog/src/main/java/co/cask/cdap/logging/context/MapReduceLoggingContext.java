@@ -32,11 +32,15 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
    * @param namespaceId namespace id
    * @param applicationId application id
    * @param mapReduceId mapreduce job id
+   * @param adapterId adapter id
    */
   public MapReduceLoggingContext(final String namespaceId, final String applicationId, final String mapReduceId,
                                  @Nullable String adapterId) {
-    super(namespaceId, applicationId, adapterId);
+    super(namespaceId, applicationId);
     setSystemTag(TAG_MAP_REDUCE_JOB_ID, mapReduceId);
+    if (adapterId != null) {
+      setAdapterId(adapterId);
+    }
   }
 
   @Override

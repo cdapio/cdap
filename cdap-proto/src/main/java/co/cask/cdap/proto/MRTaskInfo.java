@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 
 /**
@@ -25,13 +26,13 @@ import java.util.Map;
 public class MRTaskInfo {
   private final String taskId;
   private final String state;
-  private final long startTime;
-  private final long finishTime;
+  private final Long startTime;
+  private final Long finishTime;
   private final float progress;
   private final Map<String, Long> counters;
 
-  public MRTaskInfo(String taskId, String state, long startTime, long finishTime, float progress,
-                    Map<String, Long> counters) {
+  public MRTaskInfo(String taskId, @Nullable String state, @Nullable Long startTime, @Nullable Long finishTime,
+                    float progress, Map<String, Long> counters) {
     this.taskId = taskId;
     this.state = state;
     this.startTime = startTime;
@@ -44,15 +45,18 @@ public class MRTaskInfo {
     return taskId;
   }
 
+  @Nullable
   public String getState() {
     return state;
   }
 
-  public long getStartTime() {
+  @Nullable
+  public Long getStartTime() {
     return startTime;
   }
 
-  public long getFinishTime() {
+  @Nullable
+  public Long getFinishTime() {
     return finishTime;
   }
 

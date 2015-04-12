@@ -49,23 +49,26 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
   protected void publish(Iterator<MetricValue> metrics) throws Exception {
     while (metrics.hasNext()) {
       MetricValue record = metrics.next();
+      publishMetric(record);
+    }
+  }
 
-      // The format of the counters:
-      // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
-      // * counter name: metric name
+  private void publishMetric(MetricValue record) {
+    // The format of the counters:
+    // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
+    // * counter name: metric name
 
-      StringBuilder counterGroup = new StringBuilder("cdap");
-      // flatten tags
-      for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
-        counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
-      }
+    StringBuilder counterGroup = new StringBuilder("cdap");
+    // flatten tags
+    for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
+      counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
+    }
 
-      String counterName = getCounterName(record.getName());
-      if (record.getType() == MetricType.COUNTER) {
-        taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
-      } else {
-        taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
-      }
+    String counterName = getCounterName(record.getName());
+    if (record.getType() == MetricType.COUNTER) {
+      taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
+    } else {
+      taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
     }
   }
 

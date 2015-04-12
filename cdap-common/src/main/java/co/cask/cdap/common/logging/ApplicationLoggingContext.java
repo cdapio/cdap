@@ -16,8 +16,6 @@
 
 package co.cask.cdap.common.logging;
 
-import javax.annotation.Nullable;
-
 /**
  * Application logging context.
  */
@@ -30,12 +28,13 @@ public abstract class ApplicationLoggingContext extends NamespaceLoggingContext 
    * @param namespaceId namespace id
    * @param applicationId application id
    */
-  public ApplicationLoggingContext(final String namespaceId, final String applicationId, @Nullable String adapterId) {
+  public ApplicationLoggingContext(final String namespaceId, final String applicationId) {
     super(namespaceId);
     setSystemTag(TAG_APPLICATION_ID, applicationId);
-    if (adapterId != null) {
-      setSystemTag(TAG_ADAPTER_ID, adapterId);
-    }
+  }
+
+  protected void setAdapterId(String adapterId) {
+    setSystemTag(TAG_ADAPTER_ID, adapterId);
   }
 
   @Override

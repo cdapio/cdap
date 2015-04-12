@@ -24,6 +24,8 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.mapreduce.MRJobClient;
+import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -125,6 +127,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private MRJobClient mrJobClient;
+  private MapReduceMetricsInfo mapReduceMetricsInfo;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -194,7 +197,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
+                                     MapReduceMetricsInfo mapReduceMetricsInfo) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
@@ -206,6 +210,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.preferencesStore = preferencesStore;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.mrJobClient = mrJobClient;
+    this.mapReduceMetricsInfo = mapReduceMetricsInfo;
   }
 
   /**
@@ -223,23 +228,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Run run = new Id.Run(programId, runId);
       ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
       if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application not found: %s",
-                                                                         programId.getApplication()));
-        return;
+        throw new NotFoundException(programId.getApplication());
       }
       if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Program not found: %s", programId));
-        return;
+        throw new NotFoundException(programId);
+      }
+      if (store.getRun(programId, runId) == null) {
+        throw new NotFoundException(run);
       }
 
-      MRJobInfo mrJobInfo = mrJobClient.getMRJobInfo(run);
+
+      MRJobInfo mrJobInfo;
+      try {
+        mrJobInfo = mrJobClient.getMRJobInfo(run);
+      } catch (IOException ioe) {
+        LOG.warn("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      }
+
+
       responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
     } catch (NotFoundException e) {
-      LOG.debug("RunId not found: {}", runId, e);
+      LOG.warn("NotFoundException while getting MapReduce Run info.", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (IOException ioe) {
-      LOG.warn("Failed to get run history for runId: {}", runId, ioe);
-      responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
     } catch (Exception e) {
       LOG.error("Failed to get run history for runId: {}", runId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -1437,12 +1448,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           @Override
           public void init(ProgramController.State state, @Nullable Throwable cause) {
             // Get start time from RunId
-            long startTimeMillis = RunIds.getTimeMillis(controller.getRunId());
-            if (startTimeMillis == -1) {
+            long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+            if (startTimeInSeconds == -1) {
               // If RunId is not time-based, use current time as start time
-              startTimeMillis = System.currentTimeMillis();
+              startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
             }
-            store.setStart(id, runId, TimeUnit.MILLISECONDS.toSeconds(startTimeMillis));
+            store.setStart(id, runId, startTimeInSeconds);
             if (state == ProgramController.State.COMPLETED) {
               completed();
             }
@@ -1453,13 +1464,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           @Override
           public void completed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.COMPLETED.getRunStatus());
           }
 
           @Override
           public void killed() {
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.KILLED.getRunStatus());
           }
 
@@ -1476,7 +1487,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           @Override
           public void error(Throwable cause) {
             LOG.info("Program stopped with error {}, {}", id, runId, cause);
-            store.setStop(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                           ProgramController.State.ERROR.getRunStatus());
           }
         }, Threads.SAME_THREAD_EXECUTOR);
@@ -1520,7 +1531,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      Preconditions.checkNotNull(runtimeInfo,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), type, identifier);
       ProgramController controller = runtimeInfo.getController();
       controller.stop().get();
       return AppFabricServiceStatus.OK;

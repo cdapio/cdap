@@ -175,7 +175,7 @@ public class DefaultStoreTest {
 
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
-                   run3.getId(), RunIds.getTimeMillis(run3));
+                   run3.getId(), RunIds.getTime(run3, TimeUnit.MILLISECONDS));
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> successHistory = store.getRuns(programId, ProgramRunStatus.COMPLETED,
@@ -256,7 +256,7 @@ public class DefaultStoreTest {
   }
 
   private long runIdToSecs(RunId runId) {
-    return TimeUnit.MILLISECONDS.toSeconds(RunIds.getTimeMillis(runId));
+    return RunIds.getTime(runId, TimeUnit.SECONDS);
   }
 
   @Test

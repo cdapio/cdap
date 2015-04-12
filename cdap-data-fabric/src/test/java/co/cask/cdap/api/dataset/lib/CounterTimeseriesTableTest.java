@@ -18,11 +18,12 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -34,24 +35,28 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests covering the {@link co.cask.cdap.api.dataset.lib.CounterTimeseriesTable} class.
  */
-public class CounterTimeseriesTableTest extends AbstractDatasetTest {
+public class CounterTimeseriesTableTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
   private static CounterTimeseriesTable table = null;
-  private static Id.DatasetInstance counterTable = Id.DatasetInstance.from(NAMESPACE_ID, "counterTable");
+  private static Id.DatasetInstance counterTable =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "counterTable");
 
   @BeforeClass
   public static void setup() throws Exception {
-    createInstance("counterTimeseriesTable", counterTable, DatasetProperties.EMPTY);
-    table = getInstance(counterTable);
+    dsFrameworkUtil.createInstance("counterTimeseriesTable", counterTable, DatasetProperties.EMPTY);
+    table = dsFrameworkUtil.getInstance(counterTable);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    deleteInstance(counterTable);
+    dsFrameworkUtil.deleteInstance(counterTable);
   }
 
   @Test
   public void testCounter() throws Exception {
-    TransactionExecutor tx = newTransactionExecutor(table);
+    TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor(table);
     tx.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

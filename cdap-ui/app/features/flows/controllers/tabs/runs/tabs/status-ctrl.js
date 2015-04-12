@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData) {
+  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -8,14 +8,12 @@ angular.module(PKG.name + '.feature.flows')
                           $state.params.namespace +
                           '.app.' + $state.params.appId +
                           '.flow.' + $state.params.programId +
-                          '.run.' + $state.params.runId +
+                          '.run.' + $state.params.runid +
                           '.flowlet.',
         metricStreamPath = '/metrics/query?metric=system.collect.events' +
                            '&context=namespace.' +
                            $state.params.namespace +
                            '.stream.';
-
-
     $scope.data = {};
     $scope.status = null;
     $scope.duration = null;
@@ -24,10 +22,10 @@ angular.module(PKG.name + '.feature.flows')
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
       .then(function(data) {
         $scope.data = data;
-      })
+        pollMetrics();
+      });
 
     // This controller is NOT shared between the accordions.
-    console.info("Polling on Runs");
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
     }, function(res) {
@@ -44,12 +42,10 @@ angular.module(PKG.name + '.feature.flows')
       var nodes = $scope.data.nodes;
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
-        console.info("Polling on Metrics");
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
           method: 'POST'
         }, function (data) {
-            // $scope.data.metrics[node.name] = data.series[0] ? data.series[0].data[0].value : 0;
             $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
           });
       });
@@ -59,6 +55,11 @@ angular.module(PKG.name + '.feature.flows')
       dataSrc.request({
         _cdapNsPath: basePath + '/stop',
         method: 'POST'
+      })
+      .then(function() {
+        $timeout(function() {
+          $state.go($state.current, {}, { reload: true });
+        });
       });
     };
   });

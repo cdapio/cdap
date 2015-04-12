@@ -50,7 +50,7 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner>
 
   @Override
   public WorkflowForkConfigurer<T> addSpark(String spark) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.CUSTOM_ACTION));
+    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
     return this;
   }
 

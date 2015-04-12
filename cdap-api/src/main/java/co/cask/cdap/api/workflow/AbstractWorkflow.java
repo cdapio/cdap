@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.Predicate;
+
 import java.util.Map;
 
 /**
@@ -113,5 +115,15 @@ public abstract class AbstractWorkflow implements Workflow {
    */
   protected final WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return configurer.fork();
+  }
+
+  /**
+   * Adds a condition to the {@link Workflow}.
+   * @param predicate the {@link Predicate} to be evaluated to determine which branch to take
+   * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
+   */
+  protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
+    Predicate<Map<String, String>> predicate) {
+    return configurer.condition(predicate);
   }
 }

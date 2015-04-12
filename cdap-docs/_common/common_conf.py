@@ -232,7 +232,9 @@ html_theme = 'cdap'
 # versions points to the JSON file on the webservers
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
 # format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
-# the inner-lists being the directory and a label
+# the inner-lists being the directory, a label, and the release date in YYYY-MM-DD format.
+# The label is currently not used in output, but is there for a future possibility of using 
+# a label instead of the directory to identify a release.
 #
 # manual_list is an ordered list of the manuals
 # Fields: directory, manual name, icon 
@@ -261,10 +263,17 @@ html_theme_options = {
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
-        [ ["2.8.0-SNAPSHOT", "2.8.0"], ], 
-      "current": ["2.7.1", "2.7.1"], 
-      "older": 
-        [ ["2.6.1", "2.6.1"],["2.6.0", "2.6.0"],["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+        [ ['3.0.0-SNAPSHOT', '3.0.0'], ], 
+      "current": ['2.8.0', '2.8.0', '2015-03-23'], 
+      "older": [ 
+        ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.2', '2.6.2', '2015-03-23'], 
+        ['2.6.1', '2.6.1', '2015-01-29'], 
+        ['2.6.0', '2.6.0', '2015-01-10'], 
+        ['2.5.2', '2.5.2', '2014-11-14'], 
+        ['2.5.1', '2.5.1', '2014-10-15'], 
+        ['2.5.0', '2.5.0', '2014-09-26'],
+        ],
     },
 }
 
@@ -335,7 +344,14 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'downloads.html', 'searchbox.html', ],}
+html_sidebars = {'**': [
+    'manuals.html', 
+    'globaltoc.html', 
+    'relations.html', 
+    'downloads.html', 
+    'searchbox.html',
+    'casksites.html',
+     ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

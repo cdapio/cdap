@@ -16,19 +16,21 @@
 
 package co.cask.cdap.gateway.handlers.log;
 
+import co.cask.cdap.logging.read.LogOffset;
+
 /**
 * Test Log object.
 */
 class LogLine {
-  private final long offset;
+  private final LogOffset offset;
   private final String log;
 
-  LogLine(long offset, String log) {
+  LogLine(LogOffset offset, String log) {
     this.offset = offset;
     this.log = log;
   }
 
-  public long getOffset() {
+  public LogOffset getOffset() {
     return offset;
   }
 

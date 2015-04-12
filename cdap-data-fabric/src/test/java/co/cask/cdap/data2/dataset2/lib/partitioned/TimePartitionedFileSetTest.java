@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
@@ -38,6 +38,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -52,7 +53,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class TimePartitionedFileSetTest extends AbstractDatasetTest {
+public class TimePartitionedFileSetTest {
+
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
   static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -60,22 +64,23 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   static final long YEAR = TimeUnit.DAYS.toMillis(365);
   static final long MAX = Long.MAX_VALUE;
 
-  private static final Id.DatasetInstance TPFS_INSTANCE = Id.DatasetInstance.from(NAMESPACE_ID, "tpfs");
+  private static final Id.DatasetInstance TPFS_INSTANCE =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tpfs");
 
   @Before
   public void before() throws Exception {
-    createInstance("timePartitionedFileSet", TPFS_INSTANCE, FileSetProperties.builder()
+    dsFrameworkUtil.createInstance("timePartitionedFileSet", TPFS_INSTANCE, FileSetProperties.builder()
       .setBasePath("testDir").build());
   }
 
   @After
   public void after() throws Exception {
-    deleteInstance(TPFS_INSTANCE);
+    dsFrameworkUtil.deleteInstance(TPFS_INSTANCE);
   }
 
   @Test
   public void testAddGetPartitions() throws IOException, ParseException, DatasetManagementException {
-    TimePartitionedFileSet fileSet = getInstance(TPFS_INSTANCE);
+    TimePartitionedFileSet fileSet = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
 
     // this is an arbitrary data to use as the test time
     long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
@@ -152,7 +157,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
-    TimePartitionedFileSet ds = getInstance(TPFS_INSTANCE, args);
+    TimePartitionedFileSet ds = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
 
     String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();
     Assert.assertTrue(outputPath.endsWith("2015-01-01/20-42." + date.getTime()));
@@ -168,19 +173,19 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       .addIntField("hour", 20)
       .addIntField("minute", 54)
       .build();
-    TimePartitionedFileSet ds1 = getInstance(TPFS_INSTANCE, args);
+    TimePartitionedFileSet ds1 = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
     outputConfig = ds1.getOutputFormatConfiguration();
     Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
 
     args.clear();
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
-    TimePartitionedFileSet ds2 = getInstance(TPFS_INSTANCE, args);
+    TimePartitionedFileSet ds2 = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
     outputConfig = ds2.getOutputFormatConfiguration();
     Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("54"));
 
     args.clear();
-    TimePartitionedFileSet ds3 = getInstance(TPFS_INSTANCE, args);
+    TimePartitionedFileSet ds3 = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
     try {
       ds3.getOutputFormatConfiguration();
       Assert.fail("getOutputFormatConfiguration should have failed with neither output time nor partition key");
@@ -195,12 +200,12 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   @Test
   public void testInputPartitionPaths() throws Exception {
     // make sure the dataset has no partitions
-    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE);
+    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
     validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
-    newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         tpfs.addPartition(time, "file");
@@ -226,8 +231,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     Map<String, String> arguments = Maps.newHashMap();
     TimePartitionedFileSetArguments.setInputStartTime(arguments, time + start * MINUTE);
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time + end * MINUTE);
-    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE, arguments);
-    newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConfig = tpfs.getInputFormatConfiguration();
@@ -404,7 +409,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   public void testBackwardCompatibility() throws Exception {
 
     // this should give us an instance that thinks it may have pre-2.8 partitions
-    final TimePartitionedFileSet dataset = getInstance(
+    final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(
       TPFS_INSTANCE, ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true"));
     final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
 
@@ -413,7 +418,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     final TimePartitionedFileSetDataset legacyDataset = (TimePartitionedFileSetDataset) dataset;
     TransactionAware txAware = (TransactionAware) dataset;
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         legacyDataset.addLegacyPartition(time, "8:42");
@@ -422,7 +427,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -435,7 +440,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // add some new partitions
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         dataset.addPartition(time + 3 * HOUR, "11:42");
@@ -443,7 +448,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -458,7 +463,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // attempt to add a partition with the time of an existing legacy partition
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         try {
@@ -470,7 +475,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -484,7 +489,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // drop one legacy partition
@@ -492,7 +497,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -506,14 +511,14 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // re-add a partition with the time of the dropped one
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         dataset.addPartition(time, "18:42");
       }
     });
 
-    newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -528,10 +533,10 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // list again with a dataset that does not take legacy partitions into account
-    final TimePartitionedFileSet tpfs = getInstance(TPFS_INSTANCE);
+    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
     final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
 
-    newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -545,17 +550,18 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // get partitions for a sub range, with legacy support enabled
-    newTransactionExecutor(txAware, (TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        validateTimePartitions(dataset,
-                               time +     HOUR + 20 * MINUTE,
-                               time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 2 * HOUR, "10:42",
-                                                                              time + 3 * HOUR, "11:42"));
-        validateTimePartitions(tpfs,
-                               time +     HOUR + 20 * MINUTE,
-                               time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 3 * HOUR, "11:42"));
-      }
+    dsFrameworkUtil.newTransactionExecutor(txAware, (TransactionAware) tpfs).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          validateTimePartitions(dataset,
+                                 time +     HOUR + 20 * MINUTE,
+                                 time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 2 * HOUR, "10:42",
+                                                                                time + 3 * HOUR, "11:42"));
+          validateTimePartitions(tpfs,
+                                 time +     HOUR + 20 * MINUTE,
+                                 time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 3 * HOUR, "11:42"));
+        }
     });
   }
 
@@ -589,8 +595,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // this should give us one instance that thinks it may have pre-2.8 partitions, and one that does not
     Map<String, String> legacyArgs = ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true");
-    final TimePartitionedFileSet withCompat = getInstance(TPFS_INSTANCE, legacyArgs);
-    final TimePartitionedFileSet withoutCompat = getInstance(TPFS_INSTANCE);
+    final TimePartitionedFileSet withCompat = dsFrameworkUtil.getInstance(TPFS_INSTANCE, legacyArgs);
+    final TimePartitionedFileSet withoutCompat = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
     TransactionAware[] txAwares = { (TransactionAware) withCompat, (TransactionAware) withCompat };
 
     // add some legacy partitions
@@ -599,7 +605,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     Assert.assertTrue(legacyDataset.isLegacyDataset());
 
     final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         legacyDataset.addLegacyPartition(time, "8:42");
@@ -609,7 +615,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     });
 
     // add some new partitions
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         withCompat.addPartition(time + 3 * HOUR, "11:42");
@@ -624,7 +630,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
                                                         time + 4 * HOUR, "12:42");
 
     // with compatibility on, we should see all partitions
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         validateTimePartitions(withCompat, 0, MAX, expectAll);
@@ -634,7 +640,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     // with compatibility off, we should see only new partitions
     final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
 
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
@@ -648,7 +654,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     // migrate legacy partitions
     long migratedTime = 0;
     while (migratedTime >= 0) {
-      migratedTime = newTransactionExecutor(txAwares).execute(
+      migratedTime = dsFrameworkUtil.newTransactionExecutor(txAwares).execute(
         new TransactionExecutor.Function<Long, Long>() {
           @Override
           public Long apply(Long startTime) throws Exception {
@@ -658,7 +664,7 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
     }
 
     // now we should see all partitions with and without backwards compatibility
-    newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), paths(withCompat.getPartitions(null)));
@@ -694,8 +700,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
 
     // add a few partitions
     {
-      final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE);
-      newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
+      dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           dataset.addPartition(time8, path8);
@@ -731,8 +737,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   }
 
   private void testInputConfiguration(Map<String, String> arguments, final String expectedPath) throws Exception {
-    final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE, arguments);
-    newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+    final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConf = dataset.getInputFormatConfiguration();
@@ -745,8 +751,8 @@ public class TimePartitionedFileSetTest extends AbstractDatasetTest {
   }
 
   private void testInputConfigurationFailure(Map<String, String> arguments, final String why) throws Exception {
-    final TimePartitionedFileSet dataset = getInstance(TPFS_INSTANCE, arguments);
-    newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+    final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         try {

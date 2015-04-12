@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
@@ -30,7 +29,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
@@ -101,11 +99,6 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void deleteAll(byte[] prefix) throws Exception {
-    InMemoryTableService.delete(tableName, prefix);
-  }
-
-  @Override
   public void delete(byte[] row, byte[][] columns) throws Exception {
     for (byte[] column : columns) {
       InMemoryTableService.deleteColumns(tableName, row, column);
@@ -113,30 +106,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void delete(Collection<byte[]> rows) throws Exception {
-    InMemoryTableService.delete(tableName, rows);
-  }
-
-  @Override
-  public void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
-                          @Nullable FuzzyRowFilter filter) {
-    Scanner scanner = this.scan(start, stop, columns, filter);
-
-    try {
-      Row rowValues;
-      while ((rowValues = scanner.next()) != null) {
-        byte[] row = rowValues.getRow();
-        for (byte[] column : rowValues.getColumns().keySet()) {
-          InMemoryTableService.deleteColumns(tableName, row, column);
-        }
-      }
-    } finally {
-      scanner.close();
-    }
-  }
-
-  @Override
-  public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
+  public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
                       @Nullable FuzzyRowFilter filter) {
 
     // todo: a lot of inefficient copying from one map to another
@@ -144,7 +114,7 @@ public class InMemoryMetricsTable implements MetricsTable {
       InMemoryTableService.getRowRange(tableName, start, stop, null);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = getLatest(rowRange);
 
-    return new InMemoryScanner(rows.entrySet().iterator(), filter, columns);
+    return new InMemoryScanner(rows.entrySet().iterator(), filter, null);
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> getLatest(

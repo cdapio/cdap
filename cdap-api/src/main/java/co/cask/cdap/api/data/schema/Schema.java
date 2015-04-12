@@ -44,7 +44,7 @@ import java.util.Set;
  */
 @Beta
 public final class Schema {
-  private static final SchemaTypeAdapter schemaTypeAdapter = new SchemaTypeAdapter();
+  private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
 
   /**
    * Types known to Schema.
@@ -126,7 +126,7 @@ public final class Schema {
    * @throws IOException if there was an exception parsing the schema
    */
   public static Schema parseJson(String schemaJson) throws IOException {
-    return schemaTypeAdapter.fromJson(schemaJson);
+    return SCHEMA_TYPE_ADAPTER.fromJson(schemaJson);
   }
 
   /**
@@ -137,7 +137,7 @@ public final class Schema {
    * @throws IOException if there was an exception parsing the schema
    */
   public static Schema parseJson(Reader reader) throws IOException {
-    return schemaTypeAdapter.fromJson(reader);
+    return SCHEMA_TYPE_ADAPTER.fromJson(reader);
   }
 
   /**
@@ -760,7 +760,7 @@ public final class Schema {
     StringBuilder builder = new StringBuilder();
     JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
     try {
-      schemaTypeAdapter.write(writer, this);
+      SCHEMA_TYPE_ADAPTER.write(writer, this);
       writer.close();
       return builder.toString();
     } catch (IOException e) {

@@ -149,12 +149,12 @@ public final class ScheduleTaskRunner {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
         // Get start time from RunId
-        long startTimeMillis = RunIds.getTimeMillis(controller.getRunId());
-        if (startTimeMillis == -1) {
+        long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
           // If RunId is not time-based, use current time as start time
-          startTimeMillis = System.currentTimeMillis();
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(programId, runId, TimeUnit.MILLISECONDS.toSeconds(startTimeMillis));
+        store.setStart(programId, runId, startTimeInSeconds);
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -165,8 +165,7 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void completed() {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
@@ -175,8 +174,7 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void error(Throwable cause) {
-        store.setStop(programId, runId,
-                      TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),

@@ -7,7 +7,7 @@ angular.module(PKG.name + '.feature.flows')
     $scope.logs = [];
 
     dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?fromOffset=-1&maxSize=50'
+      _cdapNsPath: basePath + '/logs/next?maxSize=50'
     }, function(res) {
       $scope.logs = res;
     });

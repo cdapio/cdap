@@ -19,12 +19,11 @@ package co.cask.cdap.internal.app.deploy;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -53,7 +52,7 @@ public class LocalApplicationManagerTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    lf = new LocalLocationFactory();
+    lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     temp = TMP_FOLDER.newFolder("pipeline");
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
@@ -65,9 +64,7 @@ public class LocalApplicationManagerTest {
    */
   @Test(expected = ExecutionException.class)
   public void testImproperOrNoManifestFile() throws Exception {
-    String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
-    Location deployedJar = lf.create(jar);
-
+    Location deployedJar = AppJarHelper.createDeploymentJar(lf, WebCrawlApp.class, new Manifest());
     Location destination = new LocalLocationFactory().create(temp.toURI());
     DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
 
@@ -83,10 +80,7 @@ public class LocalApplicationManagerTest {
    */
   @Test
   public void testGoodPipeline() throws Exception {
-    Location deployedJar = lf.create(
-      JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
-    );
-
+    Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
     Location destination = new LocalLocationFactory().create(temp.toURI()).append("test.jar");
     DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
 

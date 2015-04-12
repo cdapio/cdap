@@ -46,6 +46,7 @@ import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
@@ -244,7 +245,7 @@ public class AdapterService extends AbstractIdleService {
 
     ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterConfig.getTemplate());
     Preconditions.checkArgument(applicationTemplateInfo != null,
-                                "Applicaiton template %s not found", adapterConfig.getTemplate());
+                                "Application template %s not found", adapterConfig.getTemplate());
 
     if (store.getAdapter(namespace, adapterName) != null) {
       throw new AdapterAlreadyExistsException(adapterName);
@@ -346,14 +347,20 @@ public class AdapterService extends AbstractIdleService {
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
+  private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+    Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null || appSpec.getWorkflows().size() != 1) {
+      throw new NotFoundException(appId);
+    }
+    String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
+    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKFLOW, workflowName);
+  }
+
   private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
     throws NotFoundException, SchedulerException {
-    String workflowName = adapterSpec.getScheduleSpec().getProgram().getProgramName();
-    Id.Program workflowId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
-                                            ProgramType.WORKFLOW, workflowName);
-
+    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
-
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
     //TODO: Scheduler API should also manage the MDS.
@@ -362,10 +369,7 @@ public class AdapterService extends AbstractIdleService {
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
     throws NotFoundException, SchedulerException {
-    String workflowName = adapterSpec.getScheduleSpec().getProgram().getProgramName();
-    Id.Program workflowId = Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
-                                            ProgramType.WORKFLOW, workflowName);
-
+    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
     scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
@@ -508,5 +512,4 @@ public class AdapterService extends AbstractIdleService {
 
     return new ApplicationTemplateInfo(jarFile, spec.getName(), spec.getDescription(), programType, fileHash);
   }
-
 }
