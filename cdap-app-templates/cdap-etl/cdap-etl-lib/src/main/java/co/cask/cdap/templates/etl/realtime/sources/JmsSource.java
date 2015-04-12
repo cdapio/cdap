@@ -171,9 +171,10 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
    * <p/>
    * Possible values:
    * <ul>
-   * <li>javax.jms.Session.AUTO_ACKNOWLEDGE</li>
-   * <li>javax.jms.Session.CLIENT_ACKNOWLEDGE</li>
-   * <li>javax.jms.Session.DUPS_OK_ACKNOWLEDGE</li>
+   *  <li>javax.jms.Session.AUTO_ACKNOWLEDGE</li>
+   *  <li>javax.jms.Session.CLIENT_ACKNOWLEDGE</li>
+   *  <li>javax.jms.Session.DUPS_OK_ACKNOWLEDGE</li>
+   *  <li>javax.jms.Session.SESSION_TRANSACTED</li>
    * </ul>
    * @param mode JMS Session Acknowledgement mode
    * @throws IllegalArgumentException if the mode is not recognized.
@@ -188,7 +189,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
       default:
         throw new IllegalArgumentException("Unknown JMS Session acknowledge mode: " + mode);
     }
-    this.jmsAcknowledgeMode = mode;
+    jmsAcknowledgeMode = mode;
   }
 
   /**
