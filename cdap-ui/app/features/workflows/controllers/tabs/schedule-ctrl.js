@@ -33,10 +33,6 @@ angular.module(PKG.name + '.feature.workflows')
 
     });
 
-    $scope.toggleLine = function (schedule) {
-      schedule.isOpen = !schedule.isOpen;
-    };
-
     $scope.suspendSchedule = function (obj) {
       dataSrc.request({
         _cdapNsPath: '/apps/' + $state.params.appId +

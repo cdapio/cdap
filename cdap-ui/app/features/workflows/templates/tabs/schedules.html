@@ -18,7 +18,7 @@
 <div class="schedule-content">
   <div class="schedule-rows" ng-repeat="schedule in schedules">
     <div class="row schedule-row"
-      ng-click="toggleLine(schedule)"
+      ng-click="schedule.isOpen = !schedule.isOpen"
       ng-class="{ 'active': schedule.isOpen }">
       <div class="col-xs-1">
         <i class="fa"
