@@ -64,7 +64,7 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
   private ScheduledFuture<?> logWriterFuture;
-  private final CountDownLatch countDownLatch;
+  private  CountDownLatch countDownLatch;
 
   private static final long SLEEP_TIME_MS = 100;
 
@@ -76,7 +76,6 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
                                  throws Exception {
 
     this.serializer = new LoggingEventSerializer();
-    this.countDownLatch = new CountDownLatch(1);
 
     this.scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-saver-log-processor")));;
@@ -144,17 +143,18 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
+    this.countDownLatch = new CountDownLatch(1);
   }
 
   @Override
   public void process(KafkaLogEvent event) {
     LoggingContext loggingContext = event.getLoggingContext();
     ILoggingEvent logEvent = event.getLogEvent();
-
     try {
     // Compute the bucket number for the current event
     long key = logEvent.getTimeStamp() / eventBucketIntervalMs;
 
+    // Sleep while we can add the entry
     while (true) {
         // Get the oldest bucket in the table
         long oldestBucketKey = 0;
@@ -196,6 +196,7 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
         } else {
           msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
         }
+        LOG.info("ADDING event {} {}", event.getLogEvent().getMessage(), event.getLoggingContext());
         msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
                                       event.getPartition(), event.getNextOffset()));
       }
@@ -206,11 +207,20 @@ public class KafkaLogProcessorPlugin extends AbstractIdleService implements Kafk
 
   @Override
   public void end() {
-    if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
-      logWriterFuture.cancel(false);
-      logWriterFuture = null;
+    try {
+      logFileWriter.flush();
+      logFileWriter.close();
+
+      if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
+        logWriterFuture.cancel(false);
+        logWriterFuture = null;
+      }
+      this.countDownLatch.countDown();
+    } catch (Exception e) {
+      // TODO: LOG
     }
-    this.countDownLatch.countDown();
+    messageTable.clear();
+    LOG.info("END");
   }
 
   @Override
