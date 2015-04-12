@@ -59,6 +59,7 @@ function usage() {
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
   echo ""
+  echo "    doc            Clean build of just the outer level HTML docs, skipping Javadocs and zipping"
   echo "    docs           Clean build of just the HTML docs, skipping Javadocs, zipped for placing on docs.cask.co webserver"
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
