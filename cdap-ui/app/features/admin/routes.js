@@ -33,6 +33,11 @@ angular.module(PKG.name + '.feature.admin')
             templateUrl: '/assets/features/admin/templates/system/instance.html',
             controller: 'AdminInstanceController'
           })
+          .state('admin.system.configuration', {
+            url: '/configuration',
+            templateUrl: '/assets/features/admin/templates/system/configuration.html',
+            controller: 'ConfigurationController'
+          })
 
           .state('admin.system.services', {
             url: '/services',

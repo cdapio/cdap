@@ -1,0 +1,32 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title"> Configuration </h3>
+  </div>
+
+  <div class="panel-body">
+    <form>
+      <div class="input-group">
+        <div class="input-group-addon">
+          <i class="fa fa-search"></i>
+        </div>
+        <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+      </div>
+    </form>
+    <br/>
+    <table class="table table-responsive" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': config.length>0}">
+          <th data-predicate="key">Key</th>
+          <th data-predicate="value">Value</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="row in config | filter: searchText | orderBy:sortable.predicate:sortable.reverse">
+          <td>{{row.key}}</td>
+          <td>{{row.value}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
