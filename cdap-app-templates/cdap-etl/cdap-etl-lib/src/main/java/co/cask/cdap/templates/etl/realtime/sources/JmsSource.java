@@ -24,6 +24,7 @@ import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.Nullable;
 import javax.jms.BytesMessage;
@@ -46,9 +47,11 @@ import javax.jms.TextMessage;
 public class JmsSource extends RealtimeSource<String> implements MessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
+  // TODO Need option to add Max size of the internal queue
+  private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<Message>();
+
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
-  private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<Message>();
 
   private transient Connection connection;
   private transient Session session;
