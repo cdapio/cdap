@@ -1,126 +1,61 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $filter, $alert) {
-    var filterFilter = $filter('filter');
-    var dataSrc = new MyDataSource($scope);
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory) {
+    var apiFactory = new ETLAppsApiFactory($scope);
+    // Loading flag to indicate source & sinks have
+    // not been loaded yet (after/before choosing an etl template)
     $scope.loadingEtlSourceProps = false;
     $scope.loadingEtlSinkProps = false;
+    $scope.onETLTypeSelected = false;
+
+    // List of ETL Sources, Sinks & Transforms
+    // for a particular etl template type fetched from backend.
     $scope.etlSources = [];
     $scope.etlSinks = [];
     $scope.etlTransforms = [];
-    $scope.addProperty = function(type) {
-      if ($scope[type]) {
-        $scope[type].properties[type + '-' + Date.now()] = '';
-      }
-    };
 
-    $scope.remoteProperty = function(type, propertyName) {
-      if ($scope[type] && $scope[type].properties[propertyName]) {
-        delete $scope[type].properties[propertyName];
-      }
-    };
-
+    // Default ETL Templates
     $scope.etlTypes = [
       {
         name: 'Etl Batch',
-        type: 'batch'
+        type: 'etlbatch'
       },
       {
         name: 'ETL Real Time',
         type: 'realtime'
       }
     ];
+
+    // Metadata Model
     $scope.metadata = {
         name: '',
         description: '',
         type: ''
     };
 
-    $scope.$watch('metadata.type',fetchSources);
-
-    function fetchSources(etlType) {
-      if (!etlType) return;
-      console.log("ETLType: ", etlType);
-      dataSrc.request({
-        _cdapPath: '/templates/etl.' + etlType + '/sources'
-      })
-        .then(function(res) {
-          $scope.etlSources = res;
-        });
-      fetchSinks(etlType);
-      fetchTransforms(etlType);
-    }
-
-    function fetchSinks(etlType) {
-      dataSrc.request({
-        _cdapPath: '/templates/etl.'+ etlType + '/sinks'
-      })
-        .then(function(res) {
-          $scope.etlSinks = res;
-        });
-    }
-
-    function fetchTransforms(etlType) {
-      dataSrc.request({
-        _cdapPath: '/templates/etl.' + etlType + '/transforms'
-      })
-        .then(function(res) {
-          $scope.etlTransforms = res;
-        });
-    }
-
+    // Source, Sink and Transform Models
     $scope.source = {
       name: '',
       properties: {}
     };
-
-    $scope.$watch('source.name', fetchSourceProperties);
-
-    function fetchSourceProperties(etlSource) {
-      if (!etlSource) return;
-      dataSrc.request({
-        _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sources/' + etlSource
-      })
-        .then(function(res) {
-          $scope.source = res;
-          angular.forEach($scope.source.properties, function(property) {
-            property.value = '';
-          });
-          $scope.loadingEtlSourceProps = false;
-        });
-      $scope.loadingEtlSourceProps = etlSource || false;
-    }
 
     $scope.sink = {
       name: '',
       properties: {}
     };
 
-    $scope.$watch('sink.name', fetchSinkProperties);
-
-    function fetchSinkProperties(etlSink){
-      if (!etlSink) return;
-      console.log("Sink: ", etlSink);
-      dataSrc.request({
-        _cdapPath: '/templates/etl.' + $scope.metadata.type + '/sinks/' + etlSink
-      })
-        .then(function(res) {
-          $scope.sink = res;
-          angular.forEach($scope.sink.properties, function(property) {
-            property.value = '';
-          });
-          $scope.loadingEtlSinkProps = false;
-        });
-      $scope.loadingEtlSinkProps = etlSink || false;
-    }
-
     $scope.transforms = [];
+    $scope.activePanel = 0;
 
-    $scope.$watchCollection('transforms', function(newVal) {
-      console.log("Transform Collection Watch", newVal);
-    })
+    $scope.$watch('metadata.type',function(etlType) {
+      if (!etlType) return;
+      $scope.onETLTypeSelected = true;
+      apiFactory.fetchSources(etlType);
+      apiFactory.fetchSinks(etlType);
+      apiFactory.fetchTransforms(etlType);
+    });
 
-    $scope.handleSourceDrop = function(id, dropZone) {
-      console.log("Source Dropped", id);
+
+    $scope.handleSourceDrop = function(id, dropZone, sourceName) {
       if (dropZone.indexOf('source') === -1) {
         $alert({
           type: 'danger',
@@ -129,12 +64,13 @@ angular.module(PKG.name + '.feature.etlapps')
       } else {
         $alert({
           type: 'success',
-          content: 'You have dropped a source!'
+          content: 'You have added a Source!!'
         });
+        $scope.source.name = sourceName;
+        apiFactory.fetchSourceProperties(sourceName);
       }
     };
-    $scope.handleTransformDrop = function(id, dropZone) {
-      console.log("Transform Dropped", id);
+    $scope.handleTransformDrop = function(id, dropZone, transformName) {
       if (dropZone.indexOf('transform') === -1) {
         $alert({
           type: 'danger',
@@ -145,10 +81,14 @@ angular.module(PKG.name + '.feature.etlapps')
           type: 'success',
           content: 'You have dropped a transform!'
         });
+        $scope.transforms.push({
+          name: transformName,
+          properties: {}
+        });
+        apiFactory.fetchTransformProperties(transformName);
       }
     };
-    $scope.handleSinkDrop = function(id, dropZone) {
-      console.log("Sink Dropped", id);
+    $scope.handleSinkDrop = function(id, dropZone, sinkName) {
       if (dropZone.indexOf('sink') === -1) {
         $alert({
           type: 'danger',
@@ -159,6 +99,57 @@ angular.module(PKG.name + '.feature.etlapps')
           type: 'success',
           content: 'You have dropped a sink!'
         });
+        $scope.sink.name = sinkName;
+        apiFactory.fetchSinkProperties(sinkName);
       }
     };
+
+    $scope.editSourceProperties = function() {
+      if ($scope.source.name === '') {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/sourceProperties.html',
+        scope: $scope,
+        backdrop: true,
+        keyboard: true
+      });
+    };
+    $scope.editSinkProperties = function() {
+      if ($scope.sink.name === '') {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/sinkProperties.html',
+        scope: $scope,
+        backdrop: true,
+        keyboard: true
+
+      });
+    };
+    $scope.editTransformProperties = function() {
+      if ($scope.transforms.length === 0) {
+        return;
+      }
+      $bootstrapModal.open({
+        templateUrl: '/assets/features/etlapps/templates/create/transformProperties.html',
+        scope: $scope,
+        size: 'lg',
+        backdrop: true,
+        keyboard: true
+
+      });
+    };
+
+    $scope.doSave = function() {
+      var data = {
+        template: $scope.metadata.type,
+        config: {
+          source: $scope.source,
+          sink: $scope.sink,
+          transforms: $scope.transforms
+        }
+      };
+      apiFactory.save(data);
+    }
   });

@@ -1,9 +1,15 @@
-<h2> ETL Apps List </h2>
-
-<a ui-sref="etlapps.create" class="btn btn-default">
-  <span class="fa fa-plus"></span>
-   Create ETL App
-</a>
+<div class="row">
+  <div class="col-xs-6">
+    <h2 class="pull-left"> ETL Apps List </h2>
+  </div>
+  <div class="col-xs-6">
+    <a ui-sref="etlapps.create"
+        class="btn btn-default pull-right h2">
+      <span class="fa fa-plus"></span>
+       Create ETL App
+    </a>
+  </div>
+</div>
 
 <br/>
 
@@ -11,11 +17,15 @@
   <thead>
     <tr>
       <th> Name </th>
+      <th> Template </th>
+      <th> Instances </th>
     </tr>
   </thead>
   <tbody>
     <tr ng-repeat="app in etlapps">
-      <td> {{app.name}} </td>
+      <td> {{app.name | caskCapitalizeFilter}} </td>
+      <td> {{app.template}} </td>
+      <td> {{app.instances}} </td>
     </tr>
   </tbody>
 </table>
