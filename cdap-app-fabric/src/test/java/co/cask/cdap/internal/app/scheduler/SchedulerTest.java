@@ -146,6 +146,7 @@ public class SchedulerTest {
     JobKey key =  job.getKey();
     //Schedule job
     scheduler.scheduleJob(job, trigger);
+    //Make sure that the job gets triggered more than once.
     TimeUnit.SECONDS.sleep(3);
     scheduler.deleteJob(key);
   }
