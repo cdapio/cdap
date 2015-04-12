@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.config = [];
 
     dataSrc.request({
-      _cdapPath: '/config/cdap?format=json'
+      _cdapPath: '/config/cdap'
     })
     .then(function (res) {
       angular.forEach(res, function(v, k) {
