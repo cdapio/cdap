@@ -56,6 +56,7 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
   private static final long SLEEP_TIME_MS = 100;
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
 
+  private final ListeningScheduledExecutorService scheduledExecutor;
   private final String logBaseDir;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
@@ -66,7 +67,6 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
 
   private ScheduledFuture<?> logWriterFuture;
   private CountDownLatch countDownLatch;
-  private final ListeningScheduledExecutorService scheduledExecutor;
 
 
   @Inject
