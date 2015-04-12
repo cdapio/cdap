@@ -3,17 +3,29 @@
 body.state-etlapps-create {
   .etlflowcontainer {
     width: 100%;
-    height: 80vh;
     background: @cdap-header;
     padding: 0 10px;
   }
-  .panel-group {
+
+  .plugins {
     .panel.panel-default {
-      .panel-heading {
-        cursor: pointer;
+      margin-bottom: 5px;
+      .panel-body{
+        padding: 5px;
+
+        .list-group {
+          margin-bottom: 0;
+        }
       }
     }
   }
+
+  .panel.panel-default {
+    .panel-heading {
+      cursor: pointer;
+    }
+  }
+
 
   #ETLsourceTab, #ETLsinkTab, #ETLtransformsTab {
     .panel-heading {
