@@ -25,7 +25,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -170,7 +169,7 @@ final class TimeScheduler implements Scheduler {
         .withSchedule(CronScheduleBuilder
                         .cronSchedule(getQuartzCronExpression(cronEntry))
                         .withMisfireHandlingInstructionDoNothing());
-      if (properties != null && !properties.isEmpty()) {
+      if (properties != null) {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
           trigger.usingJobData(entry.getKey(), entry.getValue());
         }

@@ -43,7 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * AdapterService life cycle tests.
@@ -85,7 +84,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
   @Test
   public void testAdapters() throws Exception {
     String adapterName = "myAdapter";
-    DummyTemplate.Config config = new DummyTemplate.Config("somestream", "*/1 * * * *");
+    DummyTemplate.Config config = new DummyTemplate.Config("somestream", "0 0 1 1 *");
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
@@ -118,8 +117,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // start adapter
     adapterService.startAdapter(NAMESPACE, adapterName);
     Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
-
-    TimeUnit.MINUTES.sleep(10);
 
     // stop adapter
     adapterService.stopAdapter(NAMESPACE, adapterName);
