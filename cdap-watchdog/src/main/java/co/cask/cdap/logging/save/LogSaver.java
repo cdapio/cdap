@@ -153,7 +153,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private void unscheduleTasks() throws Exception {
 
     for (KafkaLogProcessor processor : messageProcessors) {
-      processor.end();
+      processor.cleanup();
     }
 
     if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
@@ -180,7 +180,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info("Prepare to subscribe for partitions: {}", partitions);
 
     for (KafkaLogProcessor processor : messageProcessors) {
-      processor.begin(partitions);
+      processor.partitionsChanged(partitions);
     }
 
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
