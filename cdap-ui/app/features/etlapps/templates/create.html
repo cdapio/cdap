@@ -1,168 +1,89 @@
 <div class="row">
-  <div class="col-lg-4 col-md-4 col-xs-12">
-    <label for="etlAdapaterName" class="control-label">Name</label>
-    <input type="text"
-            name="etlAdapaterName"
+  
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
+        <span class="pull-left"> Metadata</span>
+        <i class="fa fa-fw pull-right"
+          ng-class="{'fa-chevron-down': ETLMetadataTabOpen, 'fa-chevron-right': !ETLMetadataTabOpen}"></i>
+      </div>
+      <div class="panel-body" ng-if="ETLMetadataTabOpen">
+        <div class="col-lg-4 col-md-4 col-xs-12">
+          <label for="etlAdapaterType" class="control-label"> Choose an ETL Template</label>
+          <select
+            id="etlAdapaterType"
+            name="etlAdaptertype"
             class="form-control"
-            id="etlAdapaterName"
-            ng-model="metadata.name">
-  </div>
-  <div class="col-lg-4 col-md-4 col-xs-12">
-    <label for="etlAdapaterType" class="control-label"> Choose an ETL Template</label>
-    <select
-      id="etlAdapaterType"
-      name="etlAdaptertype"
-      class="form-control"
-      ng-model="metadata.type"
-      ng-options="etltype.type as etltype.name for etltype in etlTypes" required></select>
-  </div>
-  <div class="col-lg-4">
+            ng-model="metadata.type"
+            ng-options="etltype.type as etltype.name for etltype in etlTypes" required></select>
+        </div>
+        <div class="col-lg-4 col-md-4 col-xs-12">
+          <label for="etlAdapaterName" class="control-label">Name</label>
+          <input type="text"
+                  name="etlAdapaterName"
+                  class="form-control"
+                  id="etlAdapaterName"
+                  ng-model="metadata.name">
+        </div>
+        <div class="col-lg-4">
 
-  </div>
+        </div>
+      </div>
+    </div>
 </div>
-<br/>
+
+<div ng-if="onETLTypeSelected">
+
+
 <div class="row">
 
-  <div class="col-lg-4 col-md-4 col-sm-12">
-    <div class="panel-group">
-      <div class="panel panel-default" id="ETLsourceTab">
-        <div class="panel-heading" ng-click="ETLSourceTabOpen=!ETLSourceTabOpen">
-          <span> ETL Sources</span>
-        </div>
-        <div class="panel-body" ng-if="ETLSourceTabOpen">
-          <ul class="list-group" ng-if="etlSources.length > 0">
-            <li class="list-group-item"
-                ng-repeat="source in etlSources"
-                id="source-{{source.name}}"
-                data-model="{{source.name}}"
-                data-drop-zone="sourceDropZone"
-                data-drag-type="source"
-                draggable>
-              {{source.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlSources.length === 0">
-            <span> No Sources Found</span>
-          </div>
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix" ng-click="ETLConfigTabOpen = !ETLConfigTabOpen">
+        <span class="pull-left">Configurations</span>
+        <i class="fa fa-fw pull-right"
+          ng-class="{'fa-chevron-down': ETLConfigTabOpen, 'fa-chevron-right': !ETLConfigTabOpen}"></i>
+      </div>
+      <div class="panel-body" ng-if="ETLConfigTabOpen">
+        <div class="well well-sm text-center">
+          Properties TBD
         </div>
       </div>
     </div>
-
-    <div class="panel-group">
-      <div class="panel panel-default" id="ETLtransformsTab">
-        <div class="panel-heading" ng-click="ETLTransformTabOpen=!ETLTransformTabOpen">
-          <span> ETL Transforms</span>
-        </div>
-        <div class="panel-body" ng-if="ETLTransformTabOpen">
-          <ul class="list-group" ng-if="etlTransforms.length > 0">
-            <li class="list-group-item"
-                ng-repeat="transform in etlTransforms"
-                id="transform-{{transform.name}}"
-                data-model="{{transform.name}}"
-                data-drop-zone="transformDropZone"
-                data-drag-type="transform"
-                draggable>
-              {{transform.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlTransforms.length === 0">
-            <span> No Transforms Found</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel-group">
-      <div class="panel panel-default" id="ETLsinkTab">
-        <div class="panel-heading" ng-click="ETLSinkTabOpen=!ETLSinkTabOpen">
-          <span> ETL Sinks</span>
-        </div>
-        <div class="panel-body" ng-if="ETLSinkTabOpen">
-          <ul class="list-group" ng-if="etlSinks.length > 0">
-            <li class="list-group-item"
-                ng-repeat="sink in etlSinks"
-                id="sink-{{sink.name}}"
-                data-model="{{sink.name}}"
-                data-drop-zone="sinkDropZone"
-                data-drag-type="sink"
-                draggable>
-              {{sink.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
-            <span> No Sinks Found</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="col-lg-8 col-md-8 col-sm-12">
-    <div class="etlflowcontainer">
-      <div class="row">
-        <div class="col-xs-4">
-          <div class="sourceDropZone text-center"
-               drop="handleSourceDrop"
-               id="sourceDropZone"
-               data-drop-type="source"
-               ng-click="editSourceProperties()"
-               droppable>
-            <h4 ng-if="source.name === ''"
-                class="dropZoneEmptyMessage">
-               No Source Added
-            </h4>
-            <h4 ng-if="source.name.length > 0"
-                class="dropZoneEmptyMessage">
-              {{source.name}}
-            </h4>
-          </div>
-        </div>
-        <div class="col-xs-4">
-          <div class="transformDropZone text-center"
-                drop="handleTransformDrop"
-                id="transformDropZone"
-                data-drop-type="transform"
-                ng-click="editTransformProperties()"
-                droppable>
-            <h4 ng-if="transforms.length === 0"
-                class="dropZoneEmptyMessage"> No Transforms Added</h4>
-            <h4 class="dropZoneEmptyMessage"
-                ng-repeat="transform in transforms">
-                {{transform.name}}
-            </h4>
-          </div>
-        </div>
-        <div class="col-xs-4">
-          <div class="sinkDropZone text-center"
-                drop="handleSinkDrop"
-                id="sinkDropZone"
-                data-drop-type="sink"
-                ng-click="editSinkProperties()"
-                droppable>
-            <h4 ng-if="sink.name === ''"
-                class="dropZoneEmptyMessage"> No Sinks Added</h4>
-            <h4 ng-if="sink.name.length > 0"
-                class="dropZoneEmptyMessage">
-              {{sink.name}}
-            </h4>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
 
 </div>
 
 <br/>
 <div class="row">
-  <div class="col-lg-12 col-sm-12 col-xs-12 text-right">
-    <button type="button"
-            name="button"
-            class="btn btn-lg btn-success"
-            ng-click="doSave()">
-        Create!
-    </button>
+
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix">
+        <span class=pull-left>Adapter Canvas</span>
+        <button type="button"
+                name="button"
+                class="btn btn-success pull-right"
+                ng-click="doSave()">
+            Create!
+        </button>
+      </div>
+      <div class="panel-body">
+        <div class="col-lg-4 col-md-4 col-sm-12">
+          <div ng-include="'/assets/features/etlapps/templates/create/plugins.html'">
+          </div>
+        </div>
+        <div class="col-lg-8 col-md-8 col-sm-12">
+          <div ng-include="'/assets/features/etlapps/templates/create/etlcanvas.html'">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+</div>
+
+</div>
+
+<div ng-if="!onETLTypeSelected">
+  <div class="well well-lg text-center">
+    <h2> Please select a type of ETL you want to create to configure it!</h2>
   </div>
 </div>
