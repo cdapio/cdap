@@ -4,19 +4,17 @@
   </div>
 
   <div class="panel-body">
-    <form>
-      <div class="input-group">
-        <div class="input-group-addon">
-          <i class="fa fa-search"></i>
-        </div>
-        <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+    <div class="input-group col-xs-4 pull-right search-bar">
+      <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
       </div>
-    </form>
+    </div>
     <br/>
     <table class="table table-responsive" cask-sortable>
       <thead>
         <tr ng-class="{'sort-enabled': config.length>0}">
-          <th data-predicate="key">Key</th>
+          <th data-predicate="key">Name</th>
           <th data-predicate="value">Value</th>
         </tr>
       </thead>

@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.admin')
           key: k,
           value: v
         });
-      })
+      });
     });
 
   });
