@@ -67,13 +67,37 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/logs")
-  public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                   @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                   @PathParam("program-id") String programId,
-                   @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
-                   @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
-                   @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+  public void getLogs(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+                      @PathParam("program-id") String programId,
+                      @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                      @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                      @QueryParam("escape") @DefaultValue("true") boolean escape,
+                      @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
+                                             getProgramType(ProgramType.valueOfCategoryName(programType)));
+    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs")
+  public void getRunIdLogs(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                           @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+                           @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+                           @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                           @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                           @QueryParam("escape") @DefaultValue("true") boolean escape,
+                           @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
+                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      runId, null);
+    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
+  }
+
+  private void doGetLogs(HttpResponder responder, LoggingContext loggingContext,
+                         long fromTimeMsParam, long toTimeMsParam, boolean escape, String filterStr) {
     try {
       Filter filter = FilterParser.parse(filterStr);
       long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
@@ -85,9 +109,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      LoggingContext loggingContext =
-        LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                               getProgramType(ProgramType.valueOfCategoryName(programType)));
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
     } catch (SecurityException e) {
@@ -108,13 +129,33 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(namespaceId, appId,
+                                             programId, getProgramType(ProgramType.valueOfCategoryName(programType)));
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
+  }
 
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs/next")
+  public void runIdNext(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+                        @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+                        @QueryParam("max") @DefaultValue("50") int maxEvents,
+                        @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+                        @QueryParam("escape") @DefaultValue("true") boolean escape,
+                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
+                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      runId, null);
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
+  }
+
+  private void doNext(HttpResponder responder, LoggingContext loggingContext, int maxEvents,
+                      String fromOffsetStr, boolean escape, String filterStr) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext =
-        LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                               programId, getProgramType(ProgramType.valueOfCategoryName(programType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
@@ -136,12 +177,33 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
+                                             getProgramType(ProgramType.valueOfCategoryName(programType)));
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs/prev")
+  public void runIdPrev(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+                        @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+                        @QueryParam("max") @DefaultValue("50") int maxEvents,
+                        @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+                        @QueryParam("escape") @DefaultValue("true") boolean escape,
+                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
+                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      runId, null);
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
+  }
+
+  private void doPrev(HttpResponder responder, LoggingContext loggingContext,
+                      int maxEvents, String fromOffsetStr, boolean escape, String filterStr) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext =
-        LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                               getProgramType(ProgramType.valueOfCategoryName(programType)));
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -156,42 +218,46 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
   @GET
   @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/logs")
-  public void adapterList(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId,
-                          @PathParam("adapter-id") String adapterId,
-                          // The following 3 query params should be removed,
-                          // when we have a way of querying adapter service
-                          // for the template and program, given an adapter name
-                          @QueryParam("template") String templateId,
-                          @QueryParam("programtype") String programType,
-                          @QueryParam("programid") String programId,
-                          @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
-                          @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
-                          @QueryParam("escape") @DefaultValue("true") boolean escape,
-                          @QueryParam("filter") @DefaultValue("") String filterStr) {
-    try {
-      Filter filter = FilterParser.parse(filterStr);
-      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
-      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
+  public void getAdapterLogs(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("adapter-id") String adapterId,
+                             // The following 3 query params should be removed,
+                             // when we have a way of querying adapter service
+                             // for the template and program, given an adapter name
+                             @QueryParam("template") String templateId,
+                             @QueryParam("programtype") String programType,
+                             @QueryParam("programid") String programId,
+                             @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                             @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                             @QueryParam("escape") @DefaultValue("true") boolean escape,
+                             @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(namespaceId, templateId, programId,
+                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
+  }
 
-      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
-          "greater than zero and 'stop' should be greater than 'start'.");
-        return;
-      }
-      LoggingContext loggingContext =
-        LoggingContextHelper.getLoggingContext(namespaceId, templateId, programId,
-                                               getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  @GET
+  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs")
+  public void getAdapterRunIdLogs(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("adapter-id") String adapterId,
+                                  @PathParam("run-id") String runId,
+                                  // The following 3 query params should be removed,
+                                  // when we have a way of querying adapter service
+                                  // for the template and program, given an adapter name
+                                  @QueryParam("template") String templateId,
+                                  @QueryParam("programtype") String programType,
+                                  @QueryParam("programid") String programId,
+                                  @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
+                                  @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
+                                  @QueryParam("escape") @DefaultValue("true") boolean escape,
+                                  @QueryParam("filter") @DefaultValue("") String filterStr) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, templateId, programId,
+                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      runId, adapterId);
+    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
   @GET
