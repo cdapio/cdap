@@ -18,21 +18,15 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
@@ -44,8 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,13 +51,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final KafkaClientService kafkaClient;
 
   private final CheckpointManager checkpointManager;
-
-
-  private final ListeningScheduledExecutorService scheduledExecutor;
-  private final LogCleanup logCleanup;
-
-  private ScheduledFuture<?> cleanupFuture;
-  private final int logCleanupIntervalMins;
 
   private Map<Integer, Cancellable> kafkaCancelMap;
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
@@ -85,25 +70,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     this.checkpointManager = checkpointManager;
     this.kafkaClient = kafkaClient;
-
-    this.scheduledExecutor =
-      MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-        Threads.createDaemonThreadFactory("log-saver-main")));
-    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-
-    long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
-                                                 LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
-    Preconditions.checkArgument(retentionDurationDays > 0,
-                                "Log file retention duration is invalid: %s", retentionDurationDays);
-    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
-
-    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
-                                     retentionDurationMs);
-    logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                            LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
-    Preconditions.checkArgument(logCleanupIntervalMins > 0,
-                                "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
-
     this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
     this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
     this.messageProcessors = messageProcessors;
@@ -129,9 +95,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping LogSaver...");
-
     cancelLogCollectorCallbacks();
-    scheduledExecutor.shutdown();
   }
 
   private void scheduleTasks(Set<Integer> partitions) throws Exception {
@@ -140,25 +104,12 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       LOG.info("Not scheduling when stopping!");
       return;
     }
-
     subscribe(partitions);
-
-    if (partitions.contains(0)) {
-      LOG.info("Scheduling cleanup task");
-      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
-                                                            logCleanupIntervalMins, TimeUnit.MINUTES);
-    }
-  }
+ }
 
   private void unscheduleTasks() throws Exception {
-
     for (KafkaLogProcessor processor : messageProcessors) {
       processor.cleanup();
-    }
-
-    if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
-      cleanupFuture.cancel(false);
-      cleanupFuture = null;
     }
     cancelLogCollectorCallbacks();
   }

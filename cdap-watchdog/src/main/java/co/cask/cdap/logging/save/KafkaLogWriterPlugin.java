@@ -18,12 +18,14 @@ package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -64,8 +66,10 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
   private final int logCleanupIntervalMins;
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
+  private final LogCleanup logCleanup;
 
   private ScheduledFuture<?> logWriterFuture;
+  private ScheduledFuture<?> cleanupFuture;
   private CountDownLatch countDownLatch;
 
 
@@ -133,6 +137,11 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
                                                        syncIntervalBytes, inactiveIntervalMs);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
+
+    String namespacesDir = cConfig.get(Constants.Namespace.NAMESPACES_DIR);
+    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
+                                     retentionDurationMs);
   }
 
   @Override
@@ -143,6 +152,12 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
     //TODO: Is this a good idea?
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
     countDownLatch = new CountDownLatch(1);
+
+    if (partitions.contains(0)) {
+      LOG.info("Scheduling cleanup task");
+      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
+                                                            logCleanupIntervalMins, TimeUnit.MINUTES);
+    }
   }
 
   @Override
@@ -195,7 +210,6 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
         } else {
           msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
         }
-        LOG.info("ADDING event {} {}", event.getLogEvent().getMessage(), event.getLoggingContext());
         msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
                                       event.getPartition(), event.getNextOffset()));
       }
@@ -213,6 +227,12 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
         logWriterFuture.cancel(false);
         logWriterFuture = null;
       }
+
+      if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
+        cleanupFuture.cancel(false);
+        cleanupFuture = null;
+      }
+
       countDownLatch.countDown();
     } catch (Exception e) {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
