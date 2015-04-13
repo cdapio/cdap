@@ -47,7 +47,7 @@ public interface Scheduler {
    * @param program Program that needs to be run.
    * @param programType type of program.
    * @param schedule Schedule with which the program runs.
-   * @param properties properties to be passed to the schedule
+   * @param properties system properties to be passed to the schedule
    * @throws SchedulerException on unforeseen error.
    */
   public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
