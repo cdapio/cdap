@@ -61,7 +61,8 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
     StringBuilder counterGroup = new StringBuilder("cdap");
     // flatten tags
     for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
-      counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue());
+      // escape dots with tilde
+      counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue().replace(".", "~"));
     }
 
     String counterName = getCounterName(record.getName());
@@ -83,7 +84,8 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
     for (int i = 1; i < parts.length; i += 2) {
       String tagName = parts[i];
       String tagValue = parts[i + 1];
-      tags.put(tagName, tagValue);
+      // replace tilde with dots as context with dots are escaped with tilde
+      tags.put(tagName, tagValue.replace("~", "."));
     }
     return tags;
   }
