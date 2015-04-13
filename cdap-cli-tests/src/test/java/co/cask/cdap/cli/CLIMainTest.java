@@ -195,7 +195,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully send stream event");
+    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully sent stream event");
     testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
