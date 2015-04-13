@@ -14,7 +14,8 @@
         </div>
         <div class="col-sm-4 item">
           <div class="title">Duration</div>
-          <div class="entry">{{ (finishTime - info.startTime)  | amDurationFormat}}</div>
+          <div class="entry" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
+          <div class="entry" ng-hide="info.finishTime !== 0">N/A</div>
         </div>
       </div>
     </div>
