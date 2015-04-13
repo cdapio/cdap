@@ -60,7 +60,9 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
     statusListener = new StatusListener() {
       @Override
       public void onStatus(Status status) {
-        tweetQ.add(new Tweet(status.getId(), status.getText(), status.getLang()));
+        tweetQ.add(new Tweet(status.getId(), status.getText(), status.getLang(), status.getCreatedAt(),
+                             status.getFavoriteCount(), status.getRetweetCount(), status.getSource(),
+                             status.getGeoLocation(), status.isRetweet()));
       }
 
       @Override
