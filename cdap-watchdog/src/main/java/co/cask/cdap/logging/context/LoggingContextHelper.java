@@ -78,28 +78,38 @@ public final class LoggingContextHelper {
         return null;
       }
       return new FlowletLoggingContext(namespaceId, applicationId, tags.get(FlowletLoggingContext.TAG_FLOW_ID),
-                                       tags.get(FlowletLoggingContext.TAG_FLOWLET_ID));
+                                       tags.get(FlowletLoggingContext.TAG_FLOWLET_ID),
+                                       tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
+                                       tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
+                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
                                          tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
-        return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID));
+        return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
+                                       tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
     } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
       return new ProcedureLoggingContext(namespaceId, applicationId,
-                                         tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID));
+                                         tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID),
+                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
+                                         tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(UserServiceLoggingContext.TAG_USERSERVICE_ID)) {
       if (!tags.containsKey(UserServiceLoggingContext.TAG_RUNNABLE_ID)) {
         return null;
       }
       return new UserServiceLoggingContext(namespaceId, applicationId,
                                            tags.get(UserServiceLoggingContext.TAG_USERSERVICE_ID),
-                                           tags.get(UserServiceLoggingContext.TAG_RUNNABLE_ID));
+                                           tags.get(UserServiceLoggingContext.TAG_RUNNABLE_ID),
+                                           tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
+                                           tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {
       return new ServiceLoggingContext(systemId, componentId,
                                        tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
     } else if (tags.containsKey(WorkerLoggingContext.TAG_WORKER_ID)) {
       return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID),
+                                      tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
+                                      tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID),
                                       tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
     }
 
@@ -119,17 +129,17 @@ public final class LoggingContextHelper {
                                                  ProgramType programType, @Nullable String adapterName) {
     switch (programType) {
       case FLOW:
-        return new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
+        return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", null, null);
       case PROCEDURE:
-        return new ProcedureLoggingContext(namespaceId, applicationId, entityId);
+        return new ProcedureLoggingContext(namespaceId, applicationId, entityId, null, null);
       case MAPREDUCE:
-        return new MapReduceLoggingContext(namespaceId, applicationId, entityId, adapterName);
+        return new MapReduceLoggingContext(namespaceId, applicationId, entityId, null, adapterName);
       case SPARK:
-        return new SparkLoggingContext(namespaceId, applicationId, entityId);
+        return new SparkLoggingContext(namespaceId, applicationId, entityId, null);
       case SERVICE:
-        return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "");
+        return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", null, null);
       case WORKER:
-        return new WorkerLoggingContext(namespaceId, applicationId, entityId, adapterName);
+        return new WorkerLoggingContext(namespaceId, applicationId, entityId, null, null, adapterName);
       default:
         throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }
@@ -169,9 +179,6 @@ public final class LoggingContextHelper {
       } else if (loggingContext instanceof WorkerLoggingContext) {
         tagName = WorkerLoggingContext.TAG_WORKER_ID;
         entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
-      } else if (loggingContext instanceof GenericLoggingContext) {
-        entityId = loggingContext.getSystemTagsMap().get(GenericLoggingContext.TAG_ENTITY_ID).getValue();
-        return createGenericFilter(namespaceId, applId, entityId);
       } else {
         throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
       }
@@ -198,30 +205,5 @@ public final class LoggingContextHelper {
       );
 
     }
-  }
-
-  private static Filter createGenericFilter(String namespaceId, String applicationId, String entityId) {
-    FlowletLoggingContext flowletLoggingContext = new FlowletLoggingContext(namespaceId, applicationId, entityId, "");
-    ProcedureLoggingContext procedureLoggingContext = new ProcedureLoggingContext(namespaceId, applicationId, entityId);
-    // we don't care about adapters in GenericLoggingContext
-    MapReduceLoggingContext mapReduceLoggingContext = new MapReduceLoggingContext(namespaceId, applicationId, entityId,
-                                                                                  null);
-    SparkLoggingContext sparkLoggingContext = new SparkLoggingContext(namespaceId, applicationId, entityId);
-    UserServiceLoggingContext userServiceLoggingContext = new UserServiceLoggingContext(namespaceId, applicationId,
-                                                                                        entityId, "");
-    // we don't care about adapters in GenericLoggingContext
-    WorkerLoggingContext workerLoggingContext = new WorkerLoggingContext(namespaceId, applicationId, entityId,
-                                                                         null);
-
-
-    return new OrFilter(
-      ImmutableList.of(createFilter(flowletLoggingContext),
-                       createFilter(procedureLoggingContext),
-                       createFilter(mapReduceLoggingContext),
-                       createFilter(sparkLoggingContext),
-                       createFilter(userServiceLoggingContext),
-                       createFilter(workerLoggingContext)
-      )
-    );
   }
 }

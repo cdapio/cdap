@@ -82,7 +82,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DatasetFramework dsFramework,
                                @Nullable String adapterName) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(metricsCollectionService, program, type, runId.getId(), taskId),
+          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterName),
           dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
@@ -95,7 +95,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.userMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
-                                                      getAdapterName());
+                                                      getRunId().getId(), getAdapterName());
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
@@ -241,8 +241,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.reducerResources = resources;
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
-                                                     MapReduceMetrics.TaskType type, String runId, String taskId) {
+  @Nullable
+  private static MetricsCollector getMetricCollector(Program program, String runId, String taskId,
+                                                     @Nullable MetricsCollectionService service,
+                                                     @Nullable MapReduceMetrics.TaskType type,
+                                                     @Nullable String adapterName) {
     if (service == null) {
       return null;
     }
@@ -257,6 +260,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       // in a runner (container that submits the job): put program info
       tags.putAll(getMetricsContext(program, runId));
+    }
+
+    if (adapterName != null) {
+      tags.put(Constants.Metrics.Tag.ADAPTER, adapterName);
     }
 
     return service.getCollector(tags);

@@ -177,12 +177,12 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead2() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", ""));
+    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN", "INSTANCE"));
   }
 
   @Test
   public void testLogRead1() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", ""));
+    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN", "INSTANCE"));
   }
 
   @Test
@@ -314,8 +314,10 @@ public class LogSaverTest extends KafkaTestBase {
 
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                           "RUN", "INSTANCE"))));
+    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2",
+                                                                           "RUN", "INSTANCE"))));
     futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("system", "services", "metrics"))));
 
     Futures.allAsList(futures).get();

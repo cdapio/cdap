@@ -37,7 +37,6 @@ import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.service.BasicServiceWorkerContext;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
@@ -146,7 +145,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   public LoggingContext getLoggingContext() {
     //TODO: Add adapter name if present later
     return new WorkerLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getId().getId(),
-                                    null);
+                                    getRunId().getId(), String.valueOf(getInstanceId()), null);
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
