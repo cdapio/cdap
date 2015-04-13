@@ -29,6 +29,7 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -90,7 +91,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   }
 
   @Override
-  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<Map<String, String>> predicate) {
+  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowToken> predicate) {
     return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate.getClass().getName());
   }
 

@@ -50,8 +50,7 @@ public interface WorkflowConditionConfigurer<T> {
    * Adds a nested condition to the current condition.
    * @return the configurer for the nested condition
    */
-  WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
-    Predicate<Map<String, String>> condition);
+  WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Predicate<WorkflowToken> condition);
 
   /**
    * Adds a branch to the {@link WorkflowConditionNode} which is executed if the condition evaluates to the false.

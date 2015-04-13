@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -60,7 +61,7 @@ final class BasicWorkflowContext implements WorkflowContext {
   }
 
   @Override
-  public Callable<Map<String, String>> getProgramRunner(String name) {
+  public Callable<WorkflowToken> getProgramRunner(String name) {
     return programWorkflowRunner.create(name);
   }
 

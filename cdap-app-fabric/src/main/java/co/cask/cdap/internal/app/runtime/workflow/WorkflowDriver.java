@@ -28,6 +28,7 @@ import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -85,8 +86,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private NettyHttpService httpService;
   private volatile Thread runningThread;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
-  private final Map<String, Map<String, String>> mapReduceJobCounters = new ConcurrentHashMap<String,
-    Map<String, String>>();
+  private final Map<String, WorkflowToken> mapReduceJobCounters = new ConcurrentHashMap<String, WorkflowToken>();
   private boolean suspended;
   private Lock lock;
   private Condition condition;
@@ -282,17 +282,17 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   @SuppressWarnings("unchecked")
-  private void executeCondition(final ApplicationSpecification appSpec, WorkflowConditionNode node,
-                                final InstantiatorFactory instantiator, final ClassLoader classLoader,
+  private void executeCondition(ApplicationSpecification appSpec, WorkflowConditionNode node,
+                                InstantiatorFactory instantiator, ClassLoader classLoader,
                                 String previousNodeId) throws Exception {
-    Map<String, String> token = mapReduceJobCounters.get(previousNodeId);
+    WorkflowToken token = mapReduceJobCounters.get(previousNodeId);
     if (previousNodeId == null || token == null) {
       throw new IllegalStateException("Condition node is not followed by the MapReduce program.");
     }
 
-    Class<?> clz = Class.forName(node.getPredicateClassName(), true, classLoader);
-    Predicate<Map<String, String>> predicate = instantiator.get(
-      TypeToken.of((Class<? extends Predicate<Map<String, String>>>) clz)).create();
+    Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
+    Predicate<WorkflowToken> predicate = instantiator.get(
+      TypeToken.of((Class<? extends Predicate<WorkflowToken>>) clz)).create();
 
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(token)) {

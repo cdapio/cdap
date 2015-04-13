@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -41,10 +42,10 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   private final String name;
   private String programName;
-  private Callable<Map<String, String>> programRunner;
+  private Callable<WorkflowToken> programRunner;
   private SchedulableProgramType programType;
   private WorkflowContext context;
-  private Map<String, String> token;
+  private WorkflowToken token;
 
   public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
     this.name = name;
@@ -101,7 +102,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
     // No-op
   }
 
-  public Map<String, String> getToken() throws Exception {
+  public WorkflowToken getToken() throws Exception {
     return token;
   }
 }

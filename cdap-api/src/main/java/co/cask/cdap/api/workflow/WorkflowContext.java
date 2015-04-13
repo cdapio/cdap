@@ -32,14 +32,14 @@ public interface WorkflowContext {
   /**
    * Returns a {@link Callable} that launches the associated program with the specified name when
    * the {@link Callable#call() call} method is invoked. When the program completes,
-   * the {@link Callable} returns the {@link Map} of execution context of the program run or {@code null} if
+   * the {@link Callable} returns the {@link WorkflowToken} for the program run or {@code null} if
    * no such context exists.
    * <p/>
    * <p> An Exception is thrown from the {@link Callable#call()} method if the program fails </p>
    *
    * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
    */
-  Callable<Map<String, String>> getProgramRunner(String name);
+  Callable<WorkflowToken> getProgramRunner(String name);
 
   /**
    * @return A map of the argument's key and value.

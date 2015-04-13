@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -44,7 +45,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * An Abstract class implementing {@link ProgramWorkflowRunner}, providing a {@link Callable} of
- * {@link RuntimeContext} to programs running in a workflow.
+ * {@link WorkflowToken} to programs running in a workflow.
  * <p>
  * Programs that extend this class (such as {@link MapReduceProgramWorkflowRunner} or
  * {@link SparkProgramWorkflowRunner}) can execute their associated programs through the
@@ -73,19 +74,19 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   }
 
   @Override
-  public abstract Callable<Map<String, String>> create(String name);
+  public abstract Callable<WorkflowToken> create(String name);
 
   @Override
-  public abstract Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception;
+  public abstract WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception;
 
   /**
-   * Gets a {@link Callable} for the {@link Program}.
+   * Gets a {@link Callable} of {@link WorkflowToken} for the {@link Program}.
    *
    * @param name    name of the {@link Program}
    * @param program the {@link Program}
-   * @return a {@link Callable} for this {@link Program}
+   * @return a {@link Callable} of {@link WorkflowToken} for this {@link Program}
    */
-  protected Callable<Map<String, String>> getRuntimeContextCallable(String name, final Program program) {
+  protected Callable<WorkflowToken> getRuntimeContextCallable(String name, final Program program) {
     Map<String, String> systemArgumentsMap = Maps.newHashMap();
     systemArgumentsMap.putAll(systemArguments.asMap());
     systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, runId.getId());
@@ -97,9 +98,9 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
                                                        userArguments.asMap()))
     );
 
-    return new Callable<Map<String, String>>() {
+    return new Callable<WorkflowToken>() {
       @Override
-      public Map<String, String> call() throws Exception {
+      public WorkflowToken call() throws Exception {
         return runAndWait(program, options);
       }
     };

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -32,6 +33,7 @@ import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -55,7 +57,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
    * @return {@link Callable} associated with this program run.
    */
   @Override
-  public Callable<Map<String, String>> create(String name) {
+  public Callable<WorkflowToken> create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
@@ -72,7 +74,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
    * @throws Exception if execution failed.
    */
   @Override
-  public Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception {
+  public WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
                                                                                                         options);
     if (controller instanceof MapReduceProgramController) {
@@ -85,14 +87,15 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
     }
   }
 
-  private Map<String, String> getCounterMap(MapReduceContext context) throws Exception {
-    Map<String, String> mapCounters = Maps.newHashMap();
+  private WorkflowToken getCounterMap(MapReduceContext context) throws Exception {
+    Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
     Counters counters = ((Job) context.getHadoopJob()).getCounters();
     for (CounterGroup group : counters) {
+      mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
       for (Counter counter : group) {
-        mapCounters.put(group.getName() + "." + counter.getName(), Long.toString(counter.getValue()));
+        mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
       }
     }
-    return mapCounters;
+    return new BasicWorkflowToken(mapReduceCounters);
   }
 }

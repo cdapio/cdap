@@ -19,6 +19,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -45,14 +46,14 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
   /**
    * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
    * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * {@link AbstractWorkflowProgram} and then gets the {@link Callable} for the program which can be called to
-   * execute the program
+   * {@link AbstractWorkflowProgram} and then gets the {@link Callable} of {@link WorkflowToken} for the
+   * program which can be called to execute the program.
    *
    * @param name name of the program in the workflow
-   * @return {@link Callable} associated with this program run.
+   * @return {@link Callable} of {@link WorkflowToken} associated with this program run.
    */
   @Override
-  public Callable<Map<String, String>> create(String name) {
+  public Callable<WorkflowToken> create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final SparkSpecification sparkSpec = spec.getSpark().get(name);
     Preconditions.checkArgument(sparkSpec != null,
@@ -64,12 +65,12 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   /**
    * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   * On completion, currently this always returns the empty {@link Map}.
+   * On completion, currently this always returns the null.
    *
    * @throws Exception if execution failed.
    */
   @Override
-  public Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception {
+  public WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SPARK).run(program, options);
 
     if (controller instanceof SparkProgramController) {
@@ -78,7 +79,7 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "SparkProgramController");
     }
-    // TODO: currently Spark program returns the empty map
-    return Maps.newHashMap();
+    // TODO: currently Spark program returns the null token
+    return null;
   }
 }

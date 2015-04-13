@@ -22,6 +22,7 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -68,7 +69,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
-    Predicate<Map<String, String>> predicate) {
+    Predicate<WorkflowToken> predicate) {
     String predicateClassName = predicate.getClass().getName();
     return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConditionConfigurer<T>>(this, predicateClassName);
   }

@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 
@@ -31,21 +31,21 @@ public interface ProgramWorkflowRunner {
 
   /**
    * Programs which want to support running in Workflow should give the implementation to get a {@link Callable} of
-   * {@link RuntimeContext} from the program name in the workflow.
+   * {@link WorkflowToken} from the program name in the workflow.
    *
    * @param name name of program in workflow
    * @return {@link Callable} which will be called to execute the program
    */
-  Callable<Map<String, String>> create(String name);
+  Callable<WorkflowToken> create(String name);
 
   /**
    * Programs which want to run in Workflow should give an implementation to run the given {@link Program} with
-   * {@link ProgramOptions} and should return the {@link RuntimeContext} of the run.
+   * {@link ProgramOptions} and should return the {@link WorkflowToken} of the run.
    *
    * @param program {@link Program} to run
    * @param options {@link ProgramOptions} with which this program should run
    * @return the {@link Map} which contains the execution context of the program run
    * @throws Exception if the execution of the program fails.
    */
-  Map<String, String> runAndWait(Program program, ProgramOptions options) throws Exception;
+  WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception;
 }
