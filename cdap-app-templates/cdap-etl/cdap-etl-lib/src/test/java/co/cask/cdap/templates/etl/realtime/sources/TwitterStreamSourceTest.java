@@ -118,7 +118,7 @@ public class TwitterStreamSourceTest {
     while (count <= retryCount) {
       count++;
       tweet = emitter.getTweet();
-      if (tweet!=null) {
+      if (tweet != null) {
         return tweet;
       }
       source.poll(emitter, state);
