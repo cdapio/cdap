@@ -172,6 +172,17 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setStart(final Id.Adapter id, final String pid, final long startTime) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordAdapterStart(id, pid, startTime);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
 
@@ -188,11 +199,34 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setStop(final Id.Adapter id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
+    Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordAdapterStop(id, pid, endTime, runStatus);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void setSuspend(final Id.Program id, final String pid) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordProgramSuspend(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setSuspend(final Id.Adapter id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordAdapterSuspend(id, pid);
         return null;
       }
     });
@@ -210,7 +244,29 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setResume(final Id.Adapter id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordAdapterResumed(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
+                                 final long startTime, final long endTime, final int limit) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+      @Override
+      public List<RunRecord> apply(AppMds mds) throws Exception {
+        return mds.apps.getRuns(id, status, startTime, endTime, limit);
+      }
+    });
+  }
+
+  @Override
+  public List<RunRecord> getRuns(final Id.Adapter id, final ProgramRunStatus status,
                                  final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
@@ -229,6 +285,16 @@ public class DefaultStore implements Store {
    */
   @Override
   public RunRecord getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
+      @Override
+      public RunRecord apply(AppMds mds) throws Exception {
+        return mds.apps.getRun(id, runid);
+      }
+    });
+  }
+
+  @Override
+  public RunRecord getRun(final Id.Adapter id, final String runid) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
       @Override
       public RunRecord apply(AppMds mds) throws Exception {

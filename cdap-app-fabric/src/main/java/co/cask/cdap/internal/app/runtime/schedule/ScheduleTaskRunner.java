@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -141,8 +142,10 @@ public final class ScheduleTaskRunner {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
     final ProgramController controller = runtimeInfo.getController();
+    final Id.Namespace namespaceId = Id.Namespace.from(program.getNamespaceId());
     final Id.Program programId = program.getId();
     final String runId = controller.getRunId().getId();
+    final String adapterName = options.getArguments().getOption(ProgramOptionConstants.ADAPTER_NAME);
     final CountDownLatch latch = new CountDownLatch(1);
 
     controller.addListener(new AbstractListener() {
@@ -154,7 +157,11 @@ public final class ScheduleTaskRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
+
         store.setStart(programId, runId, startTimeInSeconds);
+        if (adapterName != null) {
+          store.setStart(Id.Adapter.from(namespaceId, adapterName), runId, startTimeInSeconds);
+        }
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -165,8 +172,12 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void completed() {
-        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.COMPLETED.getRunStatus());
+        long stopTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        ProgramRunStatus status = ProgramController.State.COMPLETED.getRunStatus();
+        store.setStop(programId, runId, stopTimeInSeconds, status);
+        if (adapterName != null) {
+          store.setStop(Id.Adapter.from(namespaceId, adapterName), runId, stopTimeInSeconds, status);
+        }
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -174,12 +185,15 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void error(Throwable cause) {
-        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus());
+        long errorTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        ProgramRunStatus status = ProgramController.State.ERROR.getRunStatus();
+        store.setStop(programId, runId, errorTimeInSeconds, status);
+        if (adapterName != null) {
+          store.setStop(Id.Adapter.from(namespaceId, adapterName), runId, errorTimeInSeconds, status);
+        }
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
-
         latch.countDown();
       }
 
@@ -188,6 +202,9 @@ public final class ScheduleTaskRunner {
         LOG.debug("Suspending Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
                   program.getId(), runId);
         store.setSuspend(programId, runId);
+        if (adapterName != null) {
+          store.setSuspend(Id.Adapter.from(namespaceId, adapterName), runId);
+        }
       }
 
       @Override
@@ -195,6 +212,9 @@ public final class ScheduleTaskRunner {
         LOG.debug("Resuming Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
                   program.getId(), runId);
         store.setResume(programId, runId);
+        if (adapterName != null) {
+          store.setResume(Id.Adapter.from(namespaceId, adapterName), runId);
+        }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
