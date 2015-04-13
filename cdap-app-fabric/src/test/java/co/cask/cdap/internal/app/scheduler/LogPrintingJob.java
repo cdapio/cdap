@@ -22,6 +22,7 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.TriggerKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,13 @@ public class LogPrintingJob implements Job {
       JobDataMap map = context.getMergedJobDataMap();
       String[] keys = map.getKeys();
 
-      Preconditions.checkArgument(triggerMap.getString(KEY).equals(VALUE));
+      TriggerKey triggerKey = context.getTrigger().getKey();
+      if (triggerKey.getName().equalsIgnoreCase("g2")) {
+        Preconditions.checkArgument(triggerMap.getString(KEY).equals(VALUE));
+      } else {
+        Preconditions.checkArgument(!triggerMap.containsKey(KEY));
+      }
+
       Preconditions.checkArgument(keys != null);
       Preconditions.checkArgument(keys.length > 0);
       LOG.info("Number of parameters {}", keys.length);

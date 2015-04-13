@@ -137,7 +137,7 @@ public class SchedulerTest {
       .build();
 
     Trigger trigger  = TriggerBuilder.newTrigger()
-      .withIdentity("g1")
+      .withIdentity("g2")
       .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
       .startNow()
       .withSchedule(CronScheduleBuilder.cronSchedule("0/1 * * * * ?"))
@@ -162,7 +162,6 @@ public class SchedulerTest {
 
     Trigger trigger  = TriggerBuilder.newTrigger()
                                      .withIdentity("g1")
-                                     .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
                                      .startNow()
                                      .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
                                      .build();
@@ -204,7 +203,6 @@ public class SchedulerTest {
 
     Trigger trigger  = TriggerBuilder.newTrigger()
       .withIdentity("p1")
-      .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
       .startNow()
       .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
       .build();
