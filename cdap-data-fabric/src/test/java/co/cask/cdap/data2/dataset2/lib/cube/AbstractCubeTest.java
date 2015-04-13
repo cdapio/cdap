@@ -42,7 +42,8 @@ import java.util.Map;
  *
  */
 public abstract class AbstractCubeTest {
-  protected abstract Cube getCube(String name, int[] resolutions, Collection<? extends Aggregation> aggregations);
+  protected abstract Cube getCube(String name, int[] resolutions,
+                                  Collection<? extends Aggregation> aggregations) throws Exception;
 
   @Test
   public void test() throws Exception {
