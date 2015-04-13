@@ -138,7 +138,7 @@ rst_epilog = """
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
    
-.. |nb-space| unicode:: U+00A0 .. non-breaking space
+.. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
 if version:

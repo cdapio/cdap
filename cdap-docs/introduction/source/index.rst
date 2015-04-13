@@ -21,6 +21,13 @@ In this introduction to CDAP, we're going to show how CDAP provides that access,
 demonstrated through a comparison between using the current technologies available from
 the Hadoop ecosystem and using CDAP |---| a new paradigm.
 
+For each example action, we describe a current approach, the steps involved and the
+technologies required, and then show an equivalent CDAP command with the resulting output
+from the CDAP Command Line Interface.
+
+To try this yourself, :ref:`download a copy of CDAP SDK <standalone-index>`, install it
+and then use the resources in its ``examples`` directory as you follow along.
+
 We'll look at these areas:
   - `Data Ingestion`_
   - `Data Exploration`_
@@ -39,25 +46,47 @@ Data Ingestion
 - The abstraction of Streams lets you disconnect how you ingest from how you process
 
 .. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
+   :widths: 15 65 20
 
-   * - CDAP Console
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ create stream logEventStream``
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
      - - Create a Time partitioned file in HDFS
        - Configure Kafka or Flume to write to time partitions
-     - - HDFS
-       - Kafka
+     - HDFS, Kafka
        
-   * - ``$ load stream logEventStream data/accesslog.txt``
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ create stream logEventStream``
+       ::
+       
+        Successfully created stream with ID 'logEventStream'
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
      - - Write a custom consumer for Kafka that reads from source
        - Write the data to HDFS
        - Create external table in Hive called ``cdap_stream_logeventstream``
-     - - HDFS
-       - Kafka
+     - HDFS, Kafka
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ load stream logEventStream examples/resources/accesslog.txt``
+       ::
+       
+        Successfully send stream event to stream 'logEventStream'
 
 Data Exploration
 ================
@@ -72,39 +101,37 @@ Data Exploration
 .. list-table::
    :widths: 15 65 20
 
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventstream``
-     - Required Technologies:
-         - HiveServer
-         - Beeline
-
+     - HiveServer, Beeline
+       
 .. list-table::
    :widths: 15 85
 
    * - **CDAP**
-     - 
-   * - Command
      - ``$ execute 'describe stream_logEventStream'``
-   * - Output
-     - ::
+       ::
     
-        +============================================================================================================+
-        | col_name: STRING                  | data_type: STRING                 | comment: STRING                    |
-        +============================================================================================================+
-        | ts                                | bigint                            | from deserializer                  |
-        | headers                           | map<string,string>                | from deserializer                  |
-        | body                              | string                            | from deserializer                  |
-        +============================================================================================================+
+        +=========================================================================================================+
+        | col_name: STRING                 | data_type: STRING                | comment: STRING                   |
+        +=========================================================================================================+
+        | ts                               | bigint                           | from deserializer                 |
+        | headers                          | map<string,string>               | from deserializer                 |
+        | body                             | string                           | from deserializer                 |
+        +=========================================================================================================+
 
-|nb-space|
+|non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - **Current Approach**
-     - Action
-     - Required Technologies
    * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
      - HiveServer, Beeline
 
@@ -112,11 +139,8 @@ Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - Console Command and Output
-   * -  
      - ``$ execute 'select * from stream_logEventStream limit 2'``
-   * - 
-     - ::
+       ::
 
         +=========================================================================================================+
         | stream_logeventstream.ts: BIGINT  | stream_logeventstream.headers: | stream_logeventstream.body: STRING |
@@ -136,115 +160,310 @@ Data Exploration
         +=========================================================================================================+
 
 
-
-Data Exploration (v2)
-=====================
-- Immediately start with exploration of your ingested data
-- Introspect raw data, view data within a time range
-- Easily inspect the quality of data by generating data stats
-- Easily associate schema once you know your data: "schema on read"
-- Support different data formats; extensible to support custom formats
-- Supported data formats include AVRO, Text, CSV, TSV, and CLF
-- Query using SQL
-
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ execute 'describe stream_logEventStream'``
-     - - Run Hive command using Hive CLI
-       - ``DESCRIBE stream_logeventstream``
-     - - HiveServer
-       - Beeline
-
-CDAP Console Output::
-
-  +============================================================================================================+
-  | col_name: STRING                  | data_type: STRING                 | comment: STRING                    |
-  +============================================================================================================+
-  | ts                                | bigint                            | from deserializer                  |
-  | headers                           | map<string,string>                | from deserializer                  |
-  | body                              | string                            | from deserializer                  |
-  +============================================================================================================+
-     
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ execute 'select * from stream_logEventStream limit 2'``
-     - - Run Hive command using Hive CLI
-       - ``SELECT * FROM stream_logeventstream LIMIT 2``
-     - - HiveServer
-       - Beeline
-
-::
-
-  +=========================================================================================================+
-  | stream_logeventstream.ts: BIGINT  | stream_logeventstream.headers: | stream_logeventstream.body: STRING |
-  |                                   | map<string,string>             |                                    |
-  +=========================================================================================================+
-  | 1428100343436                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
-  |                                   |                                | 1:45:38 -0400]  "GET /cdap.html HT |
-  |                                   |                                | TP/1.0" 401 2969 " " "Mozilla/4.0  |
-  |                                   |                                | (compatible; MSIE 7.0; Windows NT  |
-  |                                   |                                | 5.1)"                              |
-  |---------------------------------------------------------------------------------------------------------|
-  | 1428100483106                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
-  |                                   |                                | 1:45:38 -0400] "GET /cdap.html HTT |
-  |                                   |                                | P/1.0" 401 2969 " " "Mozilla/4.0 ( |
-  |                                   |                                | compatible; MSIE 7.0; Windows NT 5 |
-  |                                   |                                | .1)"                               |
-  +=========================================================================================================+
-
-
 Data Exploration: Attaching schema
 ==================================
-- Apply Combined log format schema to data in stream
-- Basic Stream stats
+- Apply an *Combined log format* schema to data in the Stream
+- Retrieve basic Stream stats
 
 .. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
+   :widths: 15 65 20
 
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ set stream format logEventStream clf``
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
      - Drop the external Hive table
-     - - HiveServer
-       - Beeline
-   
-   * - ``$ execute 'describe cdap_stream_logEventStream'``
-     - - Run Hive command 
-       - ``DESCRIBE cdap_stream_logeventsetream``
-     - - Hive CLI
-       - Beeline
-   
-   * - ``$ execute 'select * from cdap_stream_logEventStream limit 2'``
-     - - Run Hive command 
-       - ``SELECT * FROM cdap_stream_logeventsetream LIMIT 2``
-     - - Hive CLI
-       - Beeline
-   
-   * - ``$ get stream-stats logEventStream limit 1000``
-     - Write a code to compute the various stats: Unique, Histograms, etc.   
-     - - HiveServer
-       - Beeline
+     - HiveServer, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ set stream format logEventStream clf``
+       ::
+
+        Successfully set format of stream 'logEventStream'
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - Run Hive command using Hive CLI: `DESCRIBE cdap_stream_logeventsetream``
+     - HiveServer, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ execute 'describe stream_logEventStream'``
+       ::
+
+        +=============================================================================+
+        | col_name: STRING          | data_type: STRING       | comment: STRING       |
+        +=============================================================================+
+        | ts                        | bigint                  | from deserializer     |
+        | headers                   | map<string,string>      | from deserializer     |
+        | remote_host               | string                  | from deserializer     |
+        | remote_login              | string                  | from deserializer     |
+        | auth_user                 | string                  | from deserializer     |
+        | date                      | string                  | from deserializer     |
+        | request                   | string                  | from deserializer     |
+        | status                    | int                     | from deserializer     |
+        | content_length            | int                     | from deserializer     |
+        | referrer                  | string                  | from deserializer     |
+        | user_agent                | string                  | from deserializer     |
+        +=============================================================================+
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - Run Hive command using Hive CLI: ``SELECT * FROM cdap_stream_logeventsetream LIMIT 2``
+     - HiveCLI, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ execute 'select * from stream_logEventStream limit 2'``
+       ::
+
+        +===================================================================================================================+
+        | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_logeve |
+        | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | ntstream.user |
+        | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | _agent: STRIN |
+        | .ts: BI | .header | .remote | .remote | .auth_u | .date:  | .reques | .status | .conten | .referr | G             |
+        | GINT    | s: map< | _host:  | _login: | ser: ST | STRING  | t: STRI | : INT   | t_lengt | er: STR |               |
+        |         | string, | STRING  |  STRING | RING    |         | NG      |         | h: INT  | ING     |               |
+        |         | string> |         |         |         |         |         |         |         |         |               |
+        +===================================================================================================================+
+        | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
+        | 343436  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
+        |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
+        |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
+        |-------------------------------------------------------------------------------------------------------------------|
+        | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
+        | 483106  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
+        |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
+        |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
+        +===================================================================================================================+
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - Write a code to compute the various stats: Unique, Histograms, etc.
+     - HiveServer, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ get stream-stats logEventStream limit 1000``
+       ::
+
+        Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
+
+        column: stream_logeventstream.remote_host, type: STRING
+        Unique elements: 6
+
+        column: stream_logeventstream.remote_login, type: STRING
+        Unique elements: 0
+
+        column: stream_logeventstream.auth_user, type: STRING
+        Unique elements: 0
+
+        column: stream_logeventstream.date, type: STRING
+        Unique elements: 750
+
+        column: stream_logeventstream.request, type: STRING
+        Unique elements: 972
+
+        column: stream_logeventstream.status, type: INT
+        Unique elements: 4
+        Histogram:
+          [200, 299]: 977  |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          [300, 399]: 17   |
+          [400, 499]: 6    |
+
+        column: stream_logeventstream.content_length, type: INT
+        Unique elements: 142
+        Histogram:
+          [0, 99]: 205           |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          [100, 199]: 1          |
+          [200, 299]: 9          |+
+          [300, 399]: 9          |+
+          [400, 499]: 3          |
+          [500, 599]: 300        |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          [600, 699]: 4          |
+          [800, 899]: 2          |
+          [900, 999]: 1          |
+          [1300, 1399]: 10       |++
+          [1400, 1499]: 206      |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+          [1500, 1599]: 2        |
+          [1600, 1699]: 2        |
+          [2500, 2599]: 1        |
+          [2700, 2799]: 1        |
+          [2800, 2899]: 1        |
+          [4200, 4299]: 1        |
+          [5700, 5799]: 5        |
+          [7100, 7199]: 1        |
+          [7300, 7399]: 4        |
+          [7800, 7899]: 1        |
+          [8200, 8299]: 5        |
+          [8700, 8799]: 3        |
+          [8800, 8899]: 12       |++
+          [8900, 8999]: 22       |+++++
+          [9000, 9099]: 16       |+++
+          [9100, 9199]: 9        |+
+          [9200, 9299]: 4        |
+          [9300, 9399]: 3        |
+          [9400, 9499]: 5        |
+          [9600, 9699]: 1        |
+          [9700, 9799]: 2        |
+          [9800, 9899]: 39       |++++++++++
+          [9900, 9999]: 4        |
+          [10000, 10099]: 1      |
+          [10100, 10199]: 8      |+
+          [10200, 10299]: 1      |
+          [10300, 10399]: 3      |
+          [10400, 10499]: 1      |
+          [10500, 10599]: 1      |
+          [10600, 10699]: 9      |+
+          [10700, 10799]: 32     |++++++++
+          [10800, 10899]: 5      |
+          [10900, 10999]: 3      |
+          [11000, 11099]: 4      |
+          [11100, 11199]: 1      |
+          [11200, 11299]: 4      |
+          [11300, 11399]: 2      |
+          [11500, 11599]: 1      |
+          [11800, 11899]: 3      |
+          [17900, 17999]: 2      |
+          [36500, 36599]: 1      |
+          [105800, 105899]: 1    |
+          [397900, 397999]: 2    |
+          [1343400, 1343499]: 1  |
+          [1351600, 1351699]: 1  |
+
+        column: stream_logeventstream.referrer, type: STRING
+        Unique elements: 8
+
+        column: stream_logeventstream.user_agent, type: STRING
+        Unique elements: 4
+
 
 Advanced Data Exploration
 =========================
-- Ability to join multiple Streams using SQL
-- Data in Stream can be ingested in Realtime or Batch
-- Supports joining with other streams using Hive SQL
+- CDAP has the ability to join multiple Streams using SQL
+- Data in a Stream can be ingested in Realtime or Batch
+- CDAP supports joining with other Streams using Hive SQL
+
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - - Create a Time partitioned file in HDFS
+       - Configure Flume or Kafka to write to time partitions
+     - HDFS, Kafka, Hive
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ create stream ip2geo``
+       ::
+
+        Successfully created stream with ID 'ip2geo'
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - - Creating a file in Hadoop file system called ip2geo
+       - Write a custom consumer that reads from source (Example: Kafka)
+       - Write the data to HDFS
+       - Create external table in Hive called ``cdap_stream_ip2geo``
+     - HDFS, Kafka, Hive
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ load stream ip2geo examples/resources/ip2geo-maps.csv``
+       ::
+
+        Successfully send stream event to stream 'ip2geo'
+        
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - Write data to Kafka or append directly to HDFS
+     - HDFS, Kafka
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ Successfully send stream event to stream 'ip2geo'``
+       ::
+
+        Successfully send stream event to stream 'ip2geo'
+        
+
+|non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - *Action / CDAP Command and Output*
+     - *Required Technologies*
+   * - **Current Approach**
+     - Write data to Kafka or append directly to HDFS
+     - HDFS, Kafka
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ Successfully send stream event to stream 'ip2geo'``
+       ::
+
+        Successfully send stream event to stream 'ip2geo'
+
+
+OLD
 
 .. list-table::
    :widths: 45 45 10
@@ -261,7 +480,7 @@ Advanced Data Exploration
        - Kafka
        - Hive
   
-   * - ``$ load stream ip2geo data/ip2geo-maps.csv``
+   * - ``$ load stream ip2geo examples/resources/ip2geo-maps.csv``
      - - Creating a file in Hadoop file system called ip2geo
        - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
@@ -332,7 +551,7 @@ Transforming Your Data
        - Hive
        - Oozie
 
-   * - ``$ load stream logEventStream data/accesslog.txt``
+   * - ``$ load stream logEventStream examples/resources/accesslog.txt``
      - - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
        - Create external table in Hive called ``cdap_stream_ip2geo``
