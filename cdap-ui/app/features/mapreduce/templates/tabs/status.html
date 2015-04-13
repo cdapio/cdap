@@ -1,2 +1,24 @@
-
-<div ng-include="'/assets/features/mapreduce/templates/tabs/runs/tabs/status.html'"></div>
+<table class="table table-responsive">
+  <thead>
+    <th>Metric</th>
+    <th>Value</th>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Map Total Records In</td>
+      <td>{{ mapperTaskIn }}</td>
+    </tr>
+    <tr>
+      <td>Map Total Records Out</td>
+      <td>{{ mapperTaskOut }}</td>
+    </tr>
+    <tr>
+      <td>Reduce Total Records In</td>
+      <td>{{ reduceTaskIn }}</td>
+    </tr>
+    <tr>
+      <td>Reduce Total Records Out</td>
+      <td>{{ reduceTaskOut }}</td>
+    </tr>
+  </tbody>
+</table>

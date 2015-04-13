@@ -14,18 +14,18 @@
         </div>
         <div class="col-sm-4 item">
           <div class="title">Duration</div>
-          <div class="entry">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
+          <div class="entry">{{ (finishTime - info.startTime)  | amDurationFormat}}</div>
         </div>
       </div>
     </div>
   </div>
 
   <h3>Mappers</h3>
-  <p>{{ mapProgress }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
+  <p>{{ getCompletedPercentage(info.mapTasks) }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ mapProgress }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ getCompletedPercentage(info.mapTasks) }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">
@@ -64,11 +64,11 @@
   </div>
 
   <h3>Reducers</h3>
-  <p>{{ reduceProgress }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
+  <p>{{ getCompletedPercentage(info.reduceTasks) }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ reduceProgress }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ getCompletedPercentage(info.reduceTasks) }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">

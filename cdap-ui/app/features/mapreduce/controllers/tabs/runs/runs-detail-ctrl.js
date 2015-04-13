@@ -18,8 +18,10 @@ angular.module(PKG.name + '.feature.mapreduce')
     }, function (res) {
 
       $scope.info = res;
-      $scope.mapProgress = Math.floor(res.mapProgress * 100);
-      $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+      // To Be used when progress is fixed in the backend
+      // $scope.mapProgress = Math.floor(res.mapProgress * 100);
+      // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+      $scope.finishTime = res.finishTime !== 0 ? res.finishTime : (new Date()).getTime();
 
       $scope.mapperStats = getStats($scope.info.mapTasks);
       $scope.reducerStats = getStats($scope.info.reduceTasks);
@@ -64,7 +66,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           stats.completed++;
         } else if (task.state === 'FAILED') {
           stats.failed++;
-        } else if (task.state === 'PENDING') {
+        } else if (task.state === 'SCHEDULED') {
           stats.pending++;
         } else if (task.state === 'RUNNING') {
           stats.running++;
