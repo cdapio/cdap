@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.twill;
 
+import co.cask.cdap.proto.SystemServiceLiveInfo;
+
 /**
  * Interface that defines a set of methods that will be used for management of CDAP Services.
  * Each individual service must provide an implementation.
@@ -81,6 +83,8 @@ public interface MasterServiceManager {
    * @return true if service is available.
    */
   public boolean isServiceAvailable();
+
+  SystemServiceLiveInfo getLiveInfo();
 
   //TODO: Add method to get the metrics name to get event rate on UI
 }
