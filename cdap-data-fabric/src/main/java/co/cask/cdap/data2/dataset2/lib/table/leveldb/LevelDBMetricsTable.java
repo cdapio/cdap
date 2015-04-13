@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -51,61 +52,95 @@ public class LevelDBMetricsTable implements MetricsTable {
     }
   };
 
+  private final String tableName;
   private final LevelDBTableCore core;
 
   public LevelDBMetricsTable(DatasetContext datasetContext, String tableName,
                              LevelDBTableService service, CConfiguration cConf) throws IOException {
     this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
                                      service);
+    this.tableName = tableName;
   }
 
   @Override
-  public byte[] get(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][]{column}, null, null, -1, null);
-    if (!result.isEmpty()) {
-      return result.get(column);
+  public byte[] get(byte[] row, byte[] column) {
+    try {
+      NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][]{column}, null, null, -1, null);
+      if (!result.isEmpty()) {
+        return result.get(column);
+      }
+      return null;
+    } catch (IOException e) {
+      throw new DataSetException("Get failed on table " + tableName, e);
     }
-    return null;
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates =
       Maps.transformValues(updates, TRANSFORM_MAP_LONG_TO_BYTE_ARRAY);
-    core.persist(convertedUpdates, System.currentTimeMillis());
+    try {
+      core.persist(convertedUpdates, System.currentTimeMillis());
+    } catch (IOException e) {
+      throw new DataSetException("Put failed on table " + tableName, e);
+    }
   }
 
   @Override
-  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
-    return core.swap(row, column, oldValue, newValue);
+  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
+    try {
+      return core.swap(row, column, oldValue, newValue);
+    } catch (IOException e) {
+      throw new DataSetException("Swap failed on table " + tableName, e);
+    }
   }
 
   @Override
-  public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
-    core.increment(row, increments);
+  public void increment(byte[] row, Map<byte[], Long> increments) {
+    try {
+      core.increment(row, increments);
+    } catch (IOException e) {
+      throw new DataSetException("Increment failed on table " + tableName, e);
+    }
   }
 
   @Override
-  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-    core.increment(updates);
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+    try {
+      core.increment(updates);
+    } catch (IOException e) {
+      throw new DataSetException("Increment failed on table " + tableName, e);
+    }
   }
 
   @Override
-  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
-    return core.increment(row, ImmutableMap.of(column, delta)).get(column);
+  public long incrementAndGet(byte[] row, byte[] column, long delta) {
+    try {
+      return core.increment(row, ImmutableMap.of(column, delta)).get(column);
+    } catch (IOException e) {
+      throw new DataSetException("IncrementAndGet failed on table " + tableName, e);
+    }
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns) throws Exception {
-    for (byte[] column : columns) {
-      core.deleteColumn(row, column);
+  public void delete(byte[] row, byte[][] columns) {
+    try {
+      for (byte[] column : columns) {
+        core.deleteColumn(row, column);
+      }
+    } catch (IOException e) {
+      throw new DataSetException("Delete failed on table " + tableName, e);
     }
   }
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-                      @Nullable FuzzyRowFilter filter) throws IOException {
-    return core.scan(start, stop, filter, null, null);
+                      @Nullable FuzzyRowFilter filter) {
+    try {
+      return core.scan(start, stop, filter, null, null);
+    } catch (IOException e) {
+      throw new DataSetException("Scan failed on table " + tableName, e);
+    }
   }
 
   @Override

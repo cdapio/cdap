@@ -59,6 +59,10 @@ public class DefaultAggregation implements Aggregation {
     return aggregateTags;
   }
 
+  public Set<String> getRequiredTags() {
+    return requiredTags;
+  }
+
   @Override
   public boolean accept(CubeFact fact) {
     return fact.getTagValues().keySet().containsAll(requiredTags);

@@ -90,32 +90,40 @@ public class TestKafkaLogging extends KafkaTestBase {
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN1", "INSTANCE1"));
     for (int i = 0; i < 40; ++i) {
       logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN1", "INSTANCE1"));
     for (int i = 0; i < 20; ++i) {
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN1", "INSTANCE1"));
     for (int i = 40; i < 80; ++i) {
       logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN1", "INSTANCE1"));
     for (int i = 20; i < 40; ++i) {
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    // Check with null runId and null instanceId
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       null, null));
     for (int i = 40; i < 60; ++i) {
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    // Check with null runId and null instanceId
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       null, null));
     for (int i = 80; i < 120; ++i) {
       logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
@@ -135,7 +143,9 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetNext() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    // Check with null runId and null instanceId
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "",
+                                                              null, null);
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
@@ -144,7 +154,7 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetPrev() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);

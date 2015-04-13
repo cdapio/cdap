@@ -467,4 +467,18 @@ public abstract class MetricsSuiteTestBase {
       .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
       .build();
   }
+
+  protected static Map<String, String> getAdapterContext(String namespaceId, String appName, String jobName,
+                                                         MapReduceMetrics.TaskType type, String runId,
+                                                         String instanceId, String adapterName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
+      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
+      .build();
+  }
 }

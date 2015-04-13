@@ -36,7 +36,8 @@ public class LoggingEventTest {
 
   @BeforeClass
   public static void setUpContext() {
-    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1"));
+    LoggingContextAccessor.setLoggingContext(new TestLoggingContext("TEST_ACCT_ID1", "TEST_APP_ID1", "RUN1",
+                                                                    "INSTANCE1"));
   }
 
   @Test

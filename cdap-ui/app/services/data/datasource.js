@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
     ); // will post to <host>:<port>/v3/system/config
    */
   .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q) {
+    MYSOCKET_EVENT, $q, $filter) {
 
     var instances = {}; // keyed by scopeid
 
@@ -115,22 +115,37 @@ angular.module(PKG.name+'.services')
      * poll a resource
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
+      // Very fundamental (naive) unique id. Wouldn't
+      // work on a cluster environment if two browser sessions
+      // access the same metric from different computers
+      var id = Date.now();
       this.bindings.push({
         poll: true,
         resource: resource,
+        id: id,
         callback: cb,
         errorCallback: errorCb
       });
+      resource.id = id;
 
       this.scope.$on('$destroy', function () {
         _pollStop(resource);
       });
 
       _pollStart(resource);
+      return id;
     };
 
 
+    DataSource.prototype.stopPoll = function(id) {
+      var filterFilter = $filter('filter');
+      var match = filterFilter(this.bindings, {id: id});
 
+      if (match.length) {
+        _pollStop(match[0].resource);
+        this.bindings.splice(this.bindings.indexOf(match[0]), 1);
+      }
+    };
 
     /**
      * fetch a resource

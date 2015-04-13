@@ -17,7 +17,6 @@
 package co.cask.cdap.logging.appender;
 
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
@@ -45,7 +44,6 @@ public class LoggingTester {
     LogOffset ultimateOffset =  events.get(9).getOffset();
     LogOffset penultimateOffset = events.get(8).getOffset();
 
-    loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
     logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
                          logCallback2);
@@ -99,7 +97,6 @@ public class LoggingTester {
 
     LogOffset ultimateOffset =  events.get(9).getOffset();
 
-    loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
     logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
                          logCallback2);
