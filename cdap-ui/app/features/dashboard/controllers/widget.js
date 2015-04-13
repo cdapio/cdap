@@ -18,9 +18,6 @@ angular.module(PKG.name+'.feature.dashboard')
       if (!this.dataSrc) {
         this.dataSrc = new MyDataSource(scope);
       }
-      // if (!this.metric) {
-      //   return;
-      // }
       this.dataSrc.request({
         _cdapPath: '/metrics/query' +
           '?context=' + encodeURIComponent(this.metric.context) +
