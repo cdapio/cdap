@@ -247,7 +247,7 @@ public class JmsMessageToStringSourceTest {
   /**
    * Helper class to emit JMS message to next stage
    */
-  public static class MockValueEmitter implements ValueEmitter<String> {
+  private static class MockValueEmitter implements ValueEmitter<String> {
     private String currentValue;
 
     /**
