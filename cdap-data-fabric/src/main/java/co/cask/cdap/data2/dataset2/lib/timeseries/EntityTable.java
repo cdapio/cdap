@@ -25,6 +25,8 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -43,7 +45,7 @@ import javax.annotation.Nullable;
  * Each entity would have two rows. One is keyed by {@code [type].[entityName]} and have one "id" column which
  * stores the unique ID. The other is a reverse map from {@code [type].id} to entity name in "name" column.
  */
-public final class EntityTable {
+public final class EntityTable implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(EntityTable.class);
 
@@ -209,6 +211,11 @@ public final class EntityTable {
       size--;
     }
     return size;
+  }
+
+  @Override
+  public void close() throws IOException {
+    table.close();
   }
 
   /**

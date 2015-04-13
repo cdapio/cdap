@@ -32,6 +32,7 @@ import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Joiner;
 import org.junit.ClassRule;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
@@ -143,6 +144,11 @@ public class CubeDatasetTest extends AbstractCubeTest {
           return delegate.findMeasureNames(query);
         }
       });
+    }
+
+    @Override
+    public void close() throws IOException {
+      delegate.close();
     }
   }
 }
