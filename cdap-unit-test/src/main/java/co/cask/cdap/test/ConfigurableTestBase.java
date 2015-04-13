@@ -485,6 +485,19 @@ public class ConfigurableTestBase {
    * Gets Dataset manager of Dataset instance of type <T>
    *
    * @param datasetInstanceName - instance name of dataset
+   * @param arguments the arguments for the dataset
+   * @return Dataset Manager of Dataset instance of type <T>
+   * @throws Exception
+   */
+  protected final <T> DataSetManager<T> getDataset(String datasetInstanceName,
+                                                   Map<String, String> arguments) throws Exception {
+    return getTestManager().getDataset(Constants.DEFAULT_NAMESPACE_ID, datasetInstanceName, arguments);
+  }
+
+  /**
+   * Gets Dataset manager of Dataset instance of type <T>
+   *
+   * @param datasetInstanceName - instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */

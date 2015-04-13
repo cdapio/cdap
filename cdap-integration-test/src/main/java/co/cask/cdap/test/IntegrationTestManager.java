@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.Connection;
+import java.util.Map;
 
 /**
  *
@@ -119,6 +120,12 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName,
+                                          Map<String, String> arguments) throws Exception {
     throw new UnsupportedOperationException();
   }
 

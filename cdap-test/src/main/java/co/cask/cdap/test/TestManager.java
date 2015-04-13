@@ -26,6 +26,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 
 import java.io.File;
 import java.sql.Connection;
+import java.util.Map;
 
 /**
  *
@@ -98,6 +99,19 @@ public interface TestManager {
    */
   @Beta
   <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception;
+
+  /**
+   * Gets Dataset manager of Dataset instance of type <T>
+   *
+   * @param namespace namespace of the dataset
+   * @param datasetInstanceName instance name of dataset
+   * @param arguments the arguments for the dataset
+   * @return Dataset Manager of Dataset instance of type <T>
+   * @throws Exception
+   */
+  @Beta
+  <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName,
+                                   Map<String, String> arguments) throws Exception;
 
   /**
    * @param namespace namespace to interact within

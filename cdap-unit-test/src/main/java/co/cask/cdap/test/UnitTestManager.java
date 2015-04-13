@@ -51,6 +51,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -147,16 +148,18 @@ public class UnitTestManager implements TestManager {
   /**
    * Gets Dataset manager of Dataset instance of type <T>
    * @param datasetInstanceName - instance name of dataset
+   * @param arguments the arguments for the dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
    */
   @Beta
   @Override
-  public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
+  public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName,
+                                                Map<String, String> arguments) throws Exception {
     //TODO: Expose namespaces later. Hardcoding to default right now.
     Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
+    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, arguments, null);
     try {
       final TransactionContext txContext;
       // not every dataset is TransactionAware. FileSets for example, are not transactional.
@@ -188,6 +191,13 @@ public class UnitTestManager implements TestManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+
+  @Beta
+  @Override
+  public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
+    return getDataset(namespace, datasetInstanceName, new HashMap<String, String>());
   }
 
   /**
