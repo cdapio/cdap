@@ -62,17 +62,24 @@ angular.module(PKG.name + '.feature.mapreduce')
       };
 
       angular.forEach(tasks, function (task) {
-        if (task.state === 'SUCCEEDED') {
-          stats.completed++;
-        } else if (task.state === 'FAILED') {
-          stats.failed++;
-        } else if (task.state === 'SCHEDULED') {
-          stats.pending++;
-        } else if (task.state === 'RUNNING') {
-          stats.running++;
-        } else if (task.state === 'KILLED') {
-          stats.killed++;
+        switch (task.state) {
+          case 'SUCCEEDED':
+            stats.completed++;
+            break;
+          case 'FAILED':
+            stats.failed++;
+            break;
+          case 'SCHEDULED':
+            stats.pending++;
+            break;
+          case 'RUNNING':
+            stats.running++;
+            break;
+          case 'KILLED':
+            stats.killed++;
+            break;
         }
+
         stats.total++;
       });
 
