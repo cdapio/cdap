@@ -49,8 +49,8 @@ Data Ingestion
    :widths: 15 65 20
 
    * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
    * - **Current Approach**
      - - Create a Time partitioned file in HDFS
        - Configure Kafka or Flume to write to time partitions
@@ -65,18 +65,15 @@ Data Ingestion
        
         Successfully created stream with ID 'logEventStream'
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
      - - Write a custom consumer for Kafka that reads from source
        - Write the data to HDFS
-       - Create external table in Hive called ``cdap_stream_logeventstream``
+       - Create external table in Hive called ``stream_logeventstream``
      - HDFS, Kafka
 
 .. list-table::
@@ -86,7 +83,8 @@ Data Ingestion
      - ``$ load stream logEventStream examples/resources/accesslog.txt``
        ::
        
-        Successfully send stream event to stream 'logEventStream'
+        Successfully sent stream event to stream 'logEventStream'
+
 
 Data Exploration
 ================
@@ -102,8 +100,8 @@ Data Exploration
    :widths: 15 65 20
 
    * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventstream``
      - HiveServer, Beeline
@@ -123,14 +121,11 @@ Data Exploration
         | body                             | string                           | from deserializer                 |
         +=========================================================================================================+
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
      - HiveServer, Beeline
@@ -169,8 +164,8 @@ Data Exploration: Attaching schema
    :widths: 15 65 20
 
    * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
    * - **Current Approach**
      - Drop the external Hive table
      - HiveServer, Beeline
@@ -184,16 +179,13 @@ Data Exploration: Attaching schema
 
         Successfully set format of stream 'logEventStream'
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
-     - Run Hive command using Hive CLI: `DESCRIBE cdap_stream_logeventsetream``
+     - Run Hive command using Hive CLI: `DESCRIBE stream_logeventsetream``
      - HiveServer, Beeline
 
 .. list-table::
@@ -219,16 +211,13 @@ Data Exploration: Attaching schema
         | user_agent                | string                  | from deserializer     |
         +=============================================================================+
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
-     - Run Hive command using Hive CLI: ``SELECT * FROM cdap_stream_logeventsetream LIMIT 2``
+     - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventsetream LIMIT 2``
      - HiveCLI, Beeline
 
 .. list-table::
@@ -258,14 +247,11 @@ Data Exploration: Attaching schema
         |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
         +===================================================================================================================+
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
      - Write a code to compute the various stats: Unique, Histograms, etc.
      - HiveServer, Beeline
@@ -374,13 +360,12 @@ Advanced Data Exploration
 - Data in a Stream can be ingested in Realtime or Batch
 - CDAP supports joining with other Streams using Hive SQL
 
-
 .. list-table::
    :widths: 15 65 20
 
    * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
    * - **Current Approach**
      - - Create a Time partitioned file in HDFS
        - Configure Flume or Kafka to write to time partitions
@@ -395,19 +380,16 @@ Advanced Data Exploration
 
         Successfully created stream with ID 'ip2geo'
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
      - - Creating a file in Hadoop file system called ip2geo
        - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
-       - Create external table in Hive called ``cdap_stream_ip2geo``
+       - Create external table in Hive called ``stream_ip2geo``
      - HDFS, Kafka, Hive
 
 .. list-table::
@@ -417,16 +399,13 @@ Advanced Data Exploration
      - ``$ load stream ip2geo examples/resources/ip2geo-maps.csv``
        ::
 
-        Successfully send stream event to stream 'ip2geo'
+        Successfully sent stream event to stream 'ip2geo'
         
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
      - Write data to Kafka or append directly to HDFS
      - HDFS, Kafka
@@ -435,98 +414,370 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ Successfully send stream event to stream 'ip2geo'``
+     - ``$ send stream ip2geo '69.181.160.120, Los Angeles, CA'``
        ::
 
-        Successfully send stream event to stream 'ip2geo'
-        
+        Successfully sent stream event to stream 'ip2geo'
 
-|non-breaking-space|
+       |non-breaking-space|
 
 .. list-table::
    :widths: 15 65 20
 
-   * - 
-     - *Action / CDAP Command and Output*
-     - *Required Technologies*
    * - **Current Approach**
-     - Write data to Kafka or append directly to HDFS
-     - HDFS, Kafka
+     - Run Hive command using Hive CLI ``SELECT * FROM stream_ip2geo``
+     - Hive CLI, Beeline
 
 .. list-table::
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ Successfully send stream event to stream 'ip2geo'``
+     - ``$ execute 'select * from stream_ip2geo'``
        ::
 
-        Successfully send stream event to stream 'ip2geo'
+        +===========================================================================================================+
+        | stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map<string,string> | stream_ip2geo.body: STRING         |
+        +===========================================================================================================+
+        | 1428892912060            | {"content.type":"text/csv"}               | 108.206.32.124, Santa Clara, CA    |
+        | 1428892912060            | {"content.type":"text/csv"}               | 109.63.206.34, San Jose, CA        |
+        | 1428892912060            | {"content.type":"text/csv"}               | 113.72.144.115, New York, New York |
+        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.19, Palo Alto, CA       |
+        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.27, Redwood, CA         |
+        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.28, Los Altos, CA       |
+        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.58, Mountain View, CA   |
+        | 1428892912060            | {"content.type":"text/csv"}               | 142.54.173.19, Houston, TX         |
+        | 1428892912060            | {"content.type":"text/csv"}               | 144.76.137.226, Dallas, TX         |
+        | 1428892912060            | {"content.type":"text/csv"}               | 144.76.201.175, Bedminister, NJ    |
+        | 1428892912060            | {"content.type":"text/csv"}               | 162.210.196.97, Milipitas, CA      |
+        | 1428892912060            | {"content.type":"text/csv"}               | 188.138.17.205, Santa Barbara, CA  |
+        | 1428892912060            | {"content.type":"text/csv"}               | 195.110.40.7, Orlando, FL          |
+        | 1428892912060            | {"content.type":"text/csv"}               | 201.91.5.170, Tampa, FL            |
+        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.158, Miami, FL         |
+        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.161, Chicago, IL       |
+        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.184, Philadelphia, PA  |
+        | 1428892912060            | {"content.type":"text/csv"}               | 222.205.101.211, Indianpolis, IN   |
+        | 1428892912060            | {"content.type":"text/csv"}               | 24.4.216.155, Denver, CO           |
+        | 1428892912060            | {"content.type":"text/csv"}               | 66.249.75.153, San Diego, CA       |
+        | 1428892912060            | {"content.type":"text/csv"}               | 77.75.77.11, Austin, TX            |
+        | 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |
+        +===========================================================================================================+
 
-
-OLD
+       |non-breaking-space|
 
 .. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
+   :widths: 15 65 20
 
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ create stream ip2geo``
-     - - Create a Time partitioned file in HDFS
-       - Configure Flume or Kafka to write to time partitions
-     - - HDFS
-       - Kafka
-       - Hive
-  
-   * - ``$ load stream ip2geo examples/resources/ip2geo-maps.csv``
-     - - Creating a file in Hadoop file system called ip2geo
-       - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called cdap_stream_ip2geo
-     - - HDFS
-       - Kafka
-       - Hive
-
-   * - ``$ send stream ip2geo '69.181.160.120, Los Angeles, CA'``
-     - - Write data to Kafka or append directly to HDFS
-     - - HDFS
-       - Kafka
-
-   * - ``$ execute 'select * from cdap_stream_ip2geo'``
-     - - Run Hive command using Hive CLI
-       - ``SELECT * FROM cdap_stream_ip2geo``
-     - - Hive CLI
-       - Beeline
-
-   * - ``$ set stream format ip2geo csv "ip string, city string, state string"``
+   * - **Current Approach**
      - - Drop the external Hive table
        - Recreate the Hive table with new schema
-     - - HDFS
-       - Kafka
+     - HDFS, Kafka, Hive CLI, Beeline
 
-   * - ``$ execute 'select * from cdap_stream_ip2geo'``
-     - - Run Hive command using Hive CLI
-       - ``SELECT * FROM cdap_stream_ip2geo``
-     - - Hive CLI
-       - Beeline
+.. list-table::
+   :widths: 15 85
 
-   * - ``$ execute 'select remote_host, city, state, request from cdap_stream_logEventStream join cdap_stream_ip2geo on (cdap_stream_logEventStream.remote_host = cdap_stream_ip2geo.ip) limit 10'``
-     - - Run Hive command using Hive CLI
-       - ``SELECT remote_host, city, state, request from cdap_stream_logEventStream join cdap_stream_ip2geo on (cdap_stream_logEventStream.remote_host = cdap_stream_ip2geo.ip) limit 10``
-     - - Hive CLI
-       - Beeline
+   * - **CDAP**
+     - ``$ set stream format ip2geo csv "ip string, city string, state string"``
+       ::
+
+        Successfully set format of stream 'ip2geo'
+        
+       |non-breaking-space|
+        
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Run Hive command using Hive CLI: ``SELECT * FROM stream_ip2geo``
+     - Hive CLI, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ execute 'select * from stream_ip2geo'``
+       ::
+
+        +================================================================================================================+
+        | stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |
+        | BIGINT           | map<string,string>          | STRING           | STRING              | STRING               |
+        +================================================================================================================+
+        | 1428892912060    | {"content.type":"text/csv"} | 108.206.32.124   |  Santa Clara        |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 109.63.206.34    |  San Jose           |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 113.72.144.115   |  New York           |  New York            |
+        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.19    |  Palo Alto          |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.27    |  Redwood            |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.28    |  Los Altos          |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.58    |  Mountain View      |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 142.54.173.19    |  Houston            |  TX                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 144.76.137.226   |  Dallas             |  TX                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 144.76.201.175   |  Bedminister        |  NJ                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 162.210.196.97   |  Milipitas          |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 188.138.17.205   |  Santa Barbara      |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 195.110.40.7     |  Orlando            |  FL                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 201.91.5.170     |  Tampa              |  FL                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.158  |  Miami              |  FL                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.161  |  Chicago            |  IL                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.184  |  Philadelphia       |  PA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 222.205.101.211  |  Indianpolis        |  IN                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 24.4.216.155     |  Denver             |  CO                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 66.249.75.153    |  San Diego          |  CA                  |
+        | 1428892912060    | {"content.type":"text/csv"} | 77.75.77.11      |  Austin             |  TX                  |
+        | 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |
+        +================================================================================================================+
+        
+       |non-breaking-space|
+        
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Run Hive command using Hive CLI: ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
+     - Hive CLI, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
+       ::
+
+        +===============================================================================================================+
+        | remote_host: STRING          | city: STRING                 | state: STRING | request: STRING                 |
+        +===============================================================================================================+
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312519 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+        |                              |                              |               | 423341312520 HTTP/1.1           |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312521 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312522 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+        |                              |                              |               | 423341312523 HTTP/1.1           |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312524 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312525 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+        |                              |                              |               | 423341312526 HTTP/1.1           |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312527 HTTP/1.1            |
+        |---------------------------------------------------------------------------------------------------------------|
+        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+        |                              |                              |               | hbouringSummaries.action?planKe |
+        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+        |                              |                              |               | 23341312528 HTTP/1.1            |
+        +===============================================================================================================+
 
 
 Transforming Your Data
 ======================
-- Adapters are high order compositions of programs that includes MapReduce, Workflow, Services
-- Adapters provide pre-defined transformations to be applied on Stream or other datasets
-- Adapters are re-usable and extenable
-- Easily configure and manage
+- CDAP Adapters are high order compositions of programs that includes MapReduce, Workflow, Services
+- Adapters provide pre-defined transformations to be applied on Streams or other datasets
+- Adapters are re-usable and extendable, easily configured and managed
 - Build your own adapters using simple APIs
-- In the following example we will apply pre-defined transformation of converting data in streams to writing to TimePartitionedDatasets (in Avro format) that can be queried using Hive or Impala
+- In this example, we will apply a pre-defined transformation of converting data in streams
+  to writing to TimePartitionedDatasets (in Avro format) that can be queried using Hive or Impala
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
+   * - **Current Approach**
+     - - Write a custom consumer that reads from source (Example: Kafka)
+       - Write the data to HDFS
+       - Create external table in Hive called ``stream_ip2geo``
+       - Orchestrate running the job periodically using Oozie
+       - Keep track of last processed times
+     - - HDFS
+       - Kafka
+       - Hive
+       - Oozie
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream frequency 1m format clf schema "remotehost string, remotelogname string, authuser string, date string, request string, status int, contentlength int, referrer string, useragent string"``
+       ::
+
+        Successfully created adapter named 'logEventStreamConverter' with config '{"type":"stream-conversion","properties":{"sink.name":"logEventStream.converted","source.schema":"{...}","base.path":"logEventStream.converted"}}}'
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     -  
+     - 
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ list adapters``
+       ::
+
+        +=============================================================================================================+
+        | name                | type                | sources             | sinks               | properties          |
+        +=============================================================================================================+
+        | logEventStreamConve | stream-conversion   | [{"name":"logEventS | [{"name":"logEventS | {"sink.name":"logEv |
+        | rter                |                     | tream","type":"STRE | tream.converted","t | entStream.converted |
+        |                     |                     | AM","properties":{} | ype":"DATASET","pro | ","source.schema":" |
+        |                     |                     | }]                  | perties":{"input.fo | {\"type\":\"record\ |
+        |                     |                     |                     | rmat":"org.apache.a | ",\"name\":\"rec\", |
+        |                     |                     |                     | vro.mapreduce.AvroK | \"fields\":[{\"name |
+        |                     |                     |                     | eyInputFormat","exp | \":\"remotehost\",\ |
+        |                     |                     |                     | lore.table.property | "type\":[\"string\" |
+        |                     |                     |                     | .avro.schema.litera | ,\"null\"]},{\"name |
+        |                     |                     |                     | l":"{\"type\":\"rec | \":\"remotelogname\ |
+        |                     |                     |                     | ord\",\"name\":\"ev | ",\"type\":[\"strin |
+        |                     |                     |                     | ent\",\"fields\":[{ | g\",\"null\"]},{\"n |
+        |                     |                     |                     | \"name\":\"remoteho | ame\":\"authuser\", |
+        |                     |                     |                     | st\",\"type\":[\"st | \"type\":[\"string\ |
+        |                     |                     |                     | ring\",\"null\"]},{ | ",\"null\"]},{\"nam |
+        |                     |                     |                     | \"name\":\"remotelo | e\":\"date\",\"type |
+        |                     |                     |                     | gname\",\"type\":[\ | \":[\"string\",\"nu |
+        |                     |                     |                     | "string\",\"null\"] | ll\"]},{\"name\":\" |
+        |                     |                     |                     | },{\"name\":\"authu | request\",\"type\": |
+        |                     |                     |                     | ser\",\"type\":[\"s | [\"string\",\"null\ |
+        |                     |                     |                     | tring\",\"null\"]}, | "]},{\"name\":\"sta |
+        |                     |                     |                     | {\"name\":\"date\", | tus\",\"type\":[\"i |
+        |                     |                     |                     | \"type\":[\"string\ | nt\",\"null\"]},{\" |
+        |                     |                     |                     | ",\"null\"]},{\"nam | name\":\"contentlen |
+        |                     |                     |                     | e\":\"request\",\"t | gth\",\"type\":[\"i |
+        |                     |                     |                     | ype\":[\"string\",\ | nt\",\"null\"]},{\" |
+        |                     |                     |                     | "null\"]},{\"name\" | name\":\"referrer\" |
+        |                     |                     |                     | :\"status\",\"type\ | ,\"type\":[\"string |
+        |                     |                     |                     | ":[\"int\",\"null\" | \",\"null\"]},{\"na |
+        |                     |                     |                     | ]},{\"name\":\"cont | me\":\"useragent\", |
+        |                     |                     |                     | entlength\",\"type\ | \"type\":[\"string\ |
+        |                     |                     |                     | ":[\"int\",\"null\" | ",\"null\"]}]}","so |
+        |                     |                     |                     | ]},{\"name\":\"refe | urce.format.name":" |
+        |                     |                     |                     | rrer\",\"type\":[\" | clf","frequency":"1 |
+        |                     |                     |                     | string\",\"null\"]} | m","source.format.s |
+        |                     |                     |                     | ,{\"name\":\"userag | ettings":"{}","sour |
+        |                     |                     |                     | ent\",\"type\":[\"s | ce.name":"logEventS |
+        |                     |                     |                     | tring\",\"null\"]}, | tream"}             |
+        |                     |                     |                     | {\"name\":\"ts\",\" |                     |
+        |                     |                     |                     | type\":\"long\"}]}" |                     |
+        |                     |                     |                     | ,"dataset.class":"c |                     |
+        |                     |                     |                     | o.cask.cdap.api.dat |                     |
+        |                     |                     |                     | aset.lib.TimePartit |                     |
+        |                     |                     |                     | ionedFileSet","expl |                     |
+        |                     |                     |                     | ore.serde":"org.apa |                     |
+        |                     |                     |                     | che.hadoop.hive.ser |                     |
+        |                     |                     |                     | de2.avro.AvroSerDe" |                     |
+        |                     |                     |                     | ,"base.path":"logEv |                     |
+        |                     |                     |                     | entStream.converted |                     |
+        |                     |                     |                     | ","explore.output.f |                     |
+        |                     |                     |                     | ormat":"org.apache. |                     |
+        |                     |                     |                     | hadoop.hive.ql.io.a |                     |
+        |                     |                     |                     | vro.AvroContainerOu |                     |
+        |                     |                     |                     | tputFormat","output |                     |
+        |                     |                     |                     | .format":"org.apach |                     |
+        |                     |                     |                     | e.avro.mapreduce.Av |                     |
+        |                     |                     |                     | roKeyOutputFormat", |                     |
+        |                     |                     |                     | "explore.input.form |                     |
+        |                     |                     |                     | at":"org.apache.had |                     |
+        |                     |                     |                     | oop.hive.ql.io.avro |                     |
+        |                     |                     |                     | .AvroContainerInput |                     |
+        |                     |                     |                     | Format","explore.en |                     |
+        |                     |                     |                     | abled":"true"}}]    |                     |
+        +=============================================================================================================+
+        
+       |non-breaking-space|
+
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Write a custom consumer that reads from source (Example: Kafka)
+       - Write the data to HDFS
+       - Create external table in Hive called ``stream_ip2geo``
+     - - HDFS
+       - Hive
+       - Kafka
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ load stream logEventStream examples/resources/accesslog.txt``
+       ::
+
+        Successfully sent stream event to stream 'logEventStream'
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Run commands using HBase shell:
+       - ``hbase shell> list``
+       - ``hbase shell> hdfs fs -ls /path/to/my/files``
+     - - HBase
+       - HDFS
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - Dataset that is time partitioned::
+     
+        $ list dataset instances
+
+        +======================================================================================================+
+        | name                                  | type                                                         |
+        +======================================================================================================+
+        | logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |
+        +======================================================================================================+
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Run Hive query using CLI: ``'describe user_logEventStream_converted'`` 
+     - Hive CLI, Beeline
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ execute 'describe logEventStream.converted'``
+       ::
+
+        +=============================================================================================================+
+
+
+OLD
 
 .. list-table::
    :widths: 45 45 10
@@ -543,7 +794,7 @@ Transforming Your Data
    * - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream frequency 1m format clf schema "remotehost string, remotelogname string, authuser string, date string, request string, status int, contentlength int, referrer string, useragent string"``
      - - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
-       - Create external table in Hive called ``cdap_stream_ip2geo``
+       - Create external table in Hive called ``stream_ip2geo``
        - Orchestrate running the job periodically using Oozie
        - Keep track of last processed times
      - - HDFS
@@ -554,7 +805,7 @@ Transforming Your Data
    * - ``$ load stream logEventStream examples/resources/accesslog.txt``
      - - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
-       - Create external table in Hive called ``cdap_stream_ip2geo``
+       - Create external table in Hive called ``stream_ip2geo``
      - - HDFS
 
    * - ``$ list dataset instances``
@@ -564,9 +815,9 @@ Transforming Your Data
        - ``hbase shell> hdfs fs -ls /path/to/my/files``
      - - HDFS
 
-   * - ``$ execute 'describe cdap_user_logEventStream_converted'``
+   * - ``$ execute 'describe user_logEventStream_converted'``
      - - Run Hive query using CLI 
-       - ``'describe cdap_user_logEventStream_converted'``
+       - ``'describe user_logEventStream_converted'``
      - - Hive CLI
        - Beeline
 
@@ -756,9 +1007,9 @@ Building Real World Applications
      - Current Approach and Required Technologies
      - 
      
-   * - ``$ execute 'SELECT * FROM cdap_user_bouncecountstore LIMIT 5'``
+   * - ``$ execute 'SELECT * FROM user_bouncecountstore LIMIT 5'``
      - - Run the folllowing command in Hive CLI
-       - ``"SELECT * FROM cdap_user_bouncecountstore LIMIT 5"``
+       - ``"SELECT * FROM user_bouncecountstore LIMIT 5"``
      - - HDFS
        - Kafka
        - Hive
