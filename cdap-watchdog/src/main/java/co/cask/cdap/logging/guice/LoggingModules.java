@@ -48,9 +48,6 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
           .to(FileLogAppender.class).in(Scopes.SINGLETON);
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
-        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
-          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
       }
     };
   }
@@ -64,9 +61,6 @@ public class LoggingModules extends RuntimeModule {
         bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
           .to(FileLogAppender.class).in(Scopes.SINGLETON);
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
-        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
-          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
-        handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
       }
     };
   }

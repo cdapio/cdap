@@ -31,7 +31,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -53,12 +52,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Plugin that writes the log data.
  */
-public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLogProcessor {
+public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
   private static final long SLEEP_TIME_MS = 100;
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
 
-  private final ListeningScheduledExecutorService scheduledExecutor;
+  private ListeningScheduledExecutorService scheduledExecutor;
   private final String logBaseDir;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
@@ -80,8 +79,6 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
 
     this.serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
-    this.scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
 
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(this.logBaseDir, "Log base dir cannot be null");
@@ -146,6 +143,9 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
 
   @Override
   public void partitionsChanged(Set<Integer> partitions) {
+
+    scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
@@ -219,10 +219,11 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
   }
 
   @Override
-  public void cleanup() {
+  public void stop() {
     try {
       logFileWriter.flush();
       logFileWriter.close();
+
       if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
         logWriterFuture.cancel(false);
         logWriterFuture = null;
@@ -234,19 +235,13 @@ public class KafkaLogWriterPlugin extends AbstractIdleService implements KafkaLo
       }
 
       countDownLatch.countDown();
+
+      if (scheduledExecutor != null) {
+        scheduledExecutor.shutdown();
+      }
     } catch (Exception e) {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
     }
     messageTable.clear();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // No-op
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    scheduledExecutor.shutdown();
   }
 }

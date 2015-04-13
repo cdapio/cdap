@@ -109,7 +109,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   private void unscheduleTasks() throws Exception {
     for (KafkaLogProcessor processor : messageProcessors) {
-      processor.cleanup();
+      processor.stop();
     }
     cancelLogCollectorCallbacks();
   }

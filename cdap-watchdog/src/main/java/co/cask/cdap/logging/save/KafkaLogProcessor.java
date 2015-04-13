@@ -33,9 +33,9 @@ public interface KafkaLogProcessor extends PartitionChangeHandler {
   public void process(KafkaLogEvent event);
 
   /**
-   * Called to perform cleanup tasks. This method will be called before the framework stops calling the process
+   * Called to perform cleanup tasks. This method will be called partitionChanged is called as well as during shutdown.
    * method any further.
    */
-  public void cleanup();
+  public void stop();
 
 }
