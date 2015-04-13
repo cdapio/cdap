@@ -33,7 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Kafka callback to fetch log messages and store them in time buckets per logging context.
+ * Kafka Message callback that fetches log from kafka and calls the process method for all the plugins configured.
  */
 public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMessageCallback.class);
