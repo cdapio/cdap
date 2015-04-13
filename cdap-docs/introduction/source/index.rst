@@ -620,10 +620,15 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream frequency 1m format clf schema "remotehost string, remotelogname string, authuser string, date string, request string, status int, contentlength int, referrer string, useragent string"``
+     - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream 
+       frequency 1m format clf schema "remotehost string, remotelogname string, authuser 
+       string, date string, request string, status int, contentlength int, referrer string, 
+       useragent string"``       
        ::
 
-        Successfully created adapter named 'logEventStreamConverter' with config '{"type":"stream-conversion","properties":{"sink.name":"logEventStream.converted","source.schema":"{...}","base.path":"logEventStream.converted"}}}'
+        Successfully created adapter named 'logEventStreamConverter' with config 
+        '{"type":"stream-conversion","properties":{"sink.name":"logEventStream.converted",
+        "source.schema":"{...}","base.path":"logEventStream.converted"}}}'
 
        |non-breaking-space|
 
@@ -771,55 +776,37 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'describe logEventStream.converted'``
+     - ``$ execute 'describe dataset_logEventStream_converted'``
        ::
 
-        +=============================================================================================================+
-
-
-OLD
-
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ list adapters``
-     - 
-     - 
-
-   * - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream frequency 1m format clf schema "remotehost string, remotelogname string, authuser string, date string, request string, status int, contentlength int, referrer string, useragent string"``
-     - - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_ip2geo``
-       - Orchestrate running the job periodically using Oozie
-       - Keep track of last processed times
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-
-   * - ``$ load stream logEventStream examples/resources/accesslog.txt``
-     - - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_ip2geo``
-     - - HDFS
-
-   * - ``$ list dataset instances``
-       - Dataset that is time paritioned
-     - - Run this command using hbase shell:
-       - ``hbase shell> list``
-       - ``hbase shell> hdfs fs -ls /path/to/my/files``
-     - - HDFS
-
-   * - ``$ execute 'describe user_logEventStream_converted'``
-     - - Run Hive query using CLI 
-       - ``'describe user_logEventStream_converted'``
-     - - Hive CLI
-       - Beeline
+        +==========================================================================================+
+        | col_name: STRING                             | data_type: STRING   | comment: STRING     |
+        +==========================================================================================+
+        | remotehost                                   | string              | from deserializer   |
+        | remotelogname                                | string              | from deserializer   |
+        | authuser                                     | string              | from deserializer   |
+        | date                                         | string              | from deserializer   |
+        | request                                      | string              | from deserializer   |
+        | status                                       | int                 | from deserializer   |
+        | contentlength                                | int                 | from deserializer   |
+        | referrer                                     | string              | from deserializer   |
+        | useragent                                    | string              | from deserializer   |
+        | ts                                           | bigint              | from deserializer   |
+        | year                                         | int                 |                     |
+        | month                                        | int                 |                     |
+        | day                                          | int                 |                     |
+        | hour                                         | int                 |                     |
+        | minute                                       | int                 |                     |
+        |                                              |                     |                     |
+        | # Partition Information                      |                     |                     |
+        | # col_name                                   | data_type           | comment             |
+        |                                              |                     |                     |
+        | year                                         | int                 |                     |
+        | month                                        | int                 |                     |
+        | day                                          | int                 |                     |
+        | hour                                         | int                 |                     |
+        | minute                                       | int                 |                     |
+        +==========================================================================================+
 
 
 Building Real World Applications
@@ -827,14 +814,81 @@ Building Real World Applications
 - Build Data Applications using simple-to-use CDAP APIs
 - Compose complex applications consisting of Workflow, MapReduce, Realtime DAGs (Tigon) and Services
 - Build using a collection of pre-defined data pattern libraries
-- Deploy and Manage complex data applications such as Web Applications
-- **Let's see how we would build a real-world application using CDAP:**
+- Deploy and manage complex data applications such as Web Applications
 
-  - *Wise App* performs Web Analytics on access logs
-  - *WiseFlow*, parses and computes pageview count per IP in realtime
-  - MapReduce job that computes bounce counts: percentage of page that goes to the page before exiting
-  - Service to expose the data 
-  - Unified platform for different processing paradigms
+**Let's see how we would build a real-world application using CDAP:**
+
+- *Wise App* performs Web analytics on access logs
+- *WiseFlow* parses and computes pageview count per IP in realtime
+- A MapReduce computes bounce counts: percentage of pages that *don’t* go to another page before exiting
+- Service to expose the data 
+- Unified platform for different processing paradigms
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
+   * - **Current Approach**
+     - - Write and execute MR job
+       - Separate environment for processing in real-time setup stack
+       - Add ability to periodically copy datasets into SQL using Sqoop
+       - Orchestrate the Mapreduce job using Oozie
+       - Write an application to serve the data
+     - - HDFS
+       - Kafka
+       - Hive
+       - Oozie
+       - Sqoop
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ deploy app apps/cdap-wise-0.4.0-SNAPSHOT.jar``       
+       ::
+
+        Successfully 
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Check Oozie
+       - Check YARN Console
+     - - Oozie
+       - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ describe app Wise``       
+       ::
+
+        Successfully 
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+
+
+
+
+
+
+
+
+
+
+
+OLD
 
 .. list-table::
    :widths: 45 45 10
