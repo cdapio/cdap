@@ -16,10 +16,16 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,5 +67,23 @@ public class ETLUtils {
         return TimeUnit.DAYS.toMillis(parsedValue);
     }
     throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
+  }
+
+  /**
+   * Builds a {@link Partitioning} which is used to set the partitioning for
+   * {@link PartitionedFileSet}
+   *
+   * @param partitioningString a JSON format partitioning string
+   * @return {@link Partitioning}
+   */
+  public static Partitioning createPartitioning(String partitioningString) {
+    Partitioning.Builder builder = Partitioning.builder();
+    Type stringStringMap = new TypeToken<Map<String, String>>() {
+    }.getType();
+    Map<String, String> filters = new Gson().fromJson(partitioningString, stringStringMap);
+    for (Map.Entry<String, String> entrySet : filters.entrySet()) {
+      builder.addField(entrySet.getKey(), Partitioning.FieldType.valueOf(entrySet.getValue()));
+    }
+    return builder.build();
   }
 }

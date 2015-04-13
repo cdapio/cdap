@@ -27,8 +27,10 @@ import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
+import co.cask.cdap.templates.etl.batch.sinks.PartitionedFileSetSink;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
+import co.cask.cdap.templates.etl.batch.sources.PartitionedFileSetSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
@@ -71,7 +73,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         StreamBatchSource.class, StreamToStructuredRecordTransform.class,
                                         StructuredRecordToGenericRecordTransform.class,
                                         GenericTypeToAvroKeyTransform.class,
-                                        TimePartitionedFileSetDatasetAvroSink.class));
+                                        TimePartitionedFileSetDatasetAvroSink.class, PartitionedFileSetSource.class,
+                                        PartitionedFileSetSink.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
