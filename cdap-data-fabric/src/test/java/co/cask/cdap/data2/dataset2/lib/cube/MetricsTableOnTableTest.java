@@ -72,20 +72,20 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
 
     @Nullable
     @Override
-    public byte[] get(final byte[] row, final byte[] column) throws Exception {
-      return txnl.execute(new Callable<byte[]>() {
+    public byte[] get(final byte[] row, final byte[] column) {
+      return txnl.executeUnchecked(new Callable<byte[]>() {
         @Override
-        public byte[] call() throws Exception {
+        public byte[] call() {
           return delegate.get(row, column);
         }
       });
     }
 
     @Override
-    public void put(final NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void put(final NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.put(updates);
         }
       });
@@ -93,50 +93,50 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
 
     @Override
     public boolean swap(final byte[] row, final byte[] column,
-                        final byte[] oldValue, final byte[] newValue) throws Exception {
-      return txnl.execute(new Callable<Boolean>() {
+                        final byte[] oldValue, final byte[] newValue) {
+      return txnl.executeUnchecked(new Callable<Boolean>() {
         @Override
-        public Boolean call() throws Exception {
+        public Boolean call() {
           return delegate.swap(row, column, oldValue, newValue);
         }
       });
     }
 
     @Override
-    public void increment(final byte[] row, final Map<byte[], Long> increments) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void increment(final byte[] row, final Map<byte[], Long> increments) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.increment(row, increments);
         }
       });
     }
 
     @Override
-    public void increment(final NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void increment(final NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.increment(updates);
         }
       });
     }
 
     @Override
-    public long incrementAndGet(final byte[] row, final byte[] column, final long delta) throws Exception {
-      return txnl.execute(new Callable<Long>() {
+    public long incrementAndGet(final byte[] row, final byte[] column, final long delta) {
+      return txnl.executeUnchecked(new Callable<Long>() {
         @Override
-        public Long call() throws Exception {
+        public Long call() {
           return delegate.incrementAndGet(row, column, delta);
         }
       });
     }
 
     @Override
-    public void delete(final byte[] row, final byte[][] columns) throws Exception {
-      txnl.execute(new TransactionExecutor.Subroutine() {
+    public void delete(final byte[] row, final byte[][] columns) {
+      txnl.executeUnchecked(new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws Exception {
+        public void apply() {
           delegate.delete(row, columns);
         }
       });
@@ -144,10 +144,10 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
 
     @Override
     public Scanner scan(@Nullable final byte[] start, @Nullable final byte[] stop,
-                        @Nullable final FuzzyRowFilter filter) throws Exception {
-      return txnl.execute(new Callable<Scanner>() {
+                        @Nullable final FuzzyRowFilter filter) {
+      return txnl.executeUnchecked(new Callable<Scanner>() {
         @Override
-        public Scanner call() throws Exception {
+        public Scanner call() {
           return delegate.scan(start, stop, filter);
         }
       });

@@ -58,32 +58,32 @@ public class CubeDataset extends AbstractDataset implements Cube {
   }
 
   @Override
-  public void add(CubeFact fact) throws Exception {
+  public void add(CubeFact fact) {
     cube.add(fact);
   }
 
   @Override
-  public void add(Collection<? extends CubeFact> facts) throws Exception {
+  public void add(Collection<? extends CubeFact> facts) {
     cube.add(facts);
   }
 
   @Override
-  public Collection<TimeSeries> query(CubeQuery query) throws Exception {
+  public Collection<TimeSeries> query(CubeQuery query) {
     return cube.query(query);
   }
 
   @Override
-  public void delete(CubeDeleteQuery query) throws Exception {
+  public void delete(CubeDeleteQuery query) {
     cube.delete(query);
   }
 
   @Override
-  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) {
     return cube.findNextAvailableTags(query);
   }
 
   @Override
-  public Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception {
+  public Collection<String> findMeasureNames(CubeExploreQuery query) {
     return cube.findMeasureNames(query);
   }
 

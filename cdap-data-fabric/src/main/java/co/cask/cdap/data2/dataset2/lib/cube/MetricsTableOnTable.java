@@ -41,12 +41,12 @@ class MetricsTableOnTable implements MetricsTable {
 
   @Nullable
   @Override
-  public byte[] get(byte[] row, byte[] column) throws Exception {
+  public byte[] get(byte[] row, byte[] column) {
     return table.get(row, column);
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> rowUpdate : updates.entrySet()) {
       Put put = new Put(rowUpdate.getKey());
       for (Map.Entry<byte[], Long> columnUpdate : rowUpdate.getValue().entrySet()) {
@@ -57,12 +57,12 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
-  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
+  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     return table.compareAndSwap(row, column, oldValue, newValue);
   }
 
   @Override
-  public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
+  public void increment(byte[] row, Map<byte[], Long> increments) {
     Increment increment = new Increment(row);
     for (Map.Entry<byte[], Long> columnUpdate : increments.entrySet()) {
       increment.add(columnUpdate.getKey(), columnUpdate.getValue());
@@ -71,7 +71,7 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
-  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> rowUpdate : updates.entrySet()) {
       Increment increment = new Increment(rowUpdate.getKey());
       for (Map.Entry<byte[], Long> columnUpdate : rowUpdate.getValue().entrySet()) {
@@ -82,18 +82,18 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
-  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
+  public long incrementAndGet(byte[] row, byte[] column, long delta) {
     return table.incrementAndGet(row, column, delta);
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns) throws Exception {
+  public void delete(byte[] row, byte[][] columns) {
     table.delete(row, columns);
   }
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-                      @Nullable FuzzyRowFilter filter) throws Exception {
+                      @Nullable FuzzyRowFilter filter) {
     return table.scan(new Scan(start, stop, filter));
   }
 
