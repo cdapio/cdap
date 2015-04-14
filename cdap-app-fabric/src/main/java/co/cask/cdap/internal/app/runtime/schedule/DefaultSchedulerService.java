@@ -31,10 +31,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * ScheduleJob class is used in quartz scheduler job store. Retaining the DefaultSchedulerService$ScheduleJob
@@ -62,8 +66,8 @@ public class DefaultSchedulerService {
     public void execute(JobExecutionContext context) throws JobExecutionException {
       LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
                 context.getTrigger().getKey().toString());
-
-      String key = context.getTrigger().getKey().getName();
+      Trigger trigger = context.getTrigger();
+      String key = trigger.getKey().getName();
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 5);
 
@@ -84,6 +88,10 @@ public class DefaultSchedulerService {
         builder.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
       }
 
+      JobDataMap jobDataMap = trigger.getJobDataMap();
+      for (Map.Entry<String, Object> entry : jobDataMap.entrySet()) {
+        builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
+      }
       Arguments args = new BasicArguments(builder.build());
 
       try {
