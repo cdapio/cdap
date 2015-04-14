@@ -23,7 +23,7 @@ import co.cask.cdap.templates.etl.api.Transform;
 /**
  * Simple Identity Transform for testing.
  */
-public class IdentityTransform extends Transform<Object, Object, Object, Object> {
+public class IdentityTransform<A, B> extends Transform<A, B, A, B> {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -31,7 +31,7 @@ public class IdentityTransform extends Transform<Object, Object, Object, Object>
   }
 
   @Override
-  public void transform(Object keyIn, Object valueIn, Emitter<Object, Object> emitter) {
+  public void transform(A keyIn, B valueIn, Emitter<A, B> emitter) {
     emitter.emit(keyIn, valueIn);
   }
 }

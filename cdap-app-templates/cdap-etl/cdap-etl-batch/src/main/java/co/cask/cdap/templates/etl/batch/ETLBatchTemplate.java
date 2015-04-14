@@ -40,6 +40,8 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -140,8 +142,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     throws IllegalArgumentException {
     if (transformList.size() == 0) {
       // No transforms. Check only source and sink.
-      if (!(TypeToken.of(batchSink.getKeyType()).isAssignableFrom(batchSource.getKeyType()) &&
-        TypeToken.of(batchSink.getValueType()).isAssignableFrom(batchSource.getValueType()))) {
+      if (!(isAssignable(batchSource.getKeyType(), batchSink.getKeyType()) &&
+        (isAssignable(batchSource.getValueType(), batchSink.getValueType())))) {
         throw new IllegalArgumentException(String.format("Source %s and Sink %s Types don't match",
                                                          source.getName(), sink.getName()));
       }
@@ -152,14 +154,14 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = Iterables.getFirst(transforms, null);
       Transform lastTransform = Iterables.getLast(transforms);
 
-      if (!(TypeToken.of(firstTransform.getKeyInType()).isAssignableFrom(batchSource.getKeyType()) &&
-        TypeToken.of(firstTransform.getValueInType()).isAssignableFrom(batchSource.getValueType()))) {
+      if (!(isAssignable(batchSource.getKeyType(), firstTransform.getKeyInType()) &&
+        (isAssignable(batchSource.getValueType(), firstTransform.getValueInType())))) {
         throw new IllegalArgumentException(String.format("Source %s and Transform %s Types don't match",
                                                          source.getName(), firstStage.getName()));
       }
 
-      if (!(TypeToken.of(lastTransform.getKeyOutType()).isAssignableFrom(batchSink.getKeyType()) &&
-        TypeToken.of(lastTransform.getValueOutType()).isAssignableFrom(batchSink.getValueType()))) {
+      if (!(isAssignable(lastTransform.getKeyOutType(), batchSink.getKeyType()) &&
+        (isAssignable(lastTransform.getValueOutType(), batchSink.getValueType())))) {
         throw new IllegalArgumentException(String.format("Sink %s and Transform %s Types don't match",
                                                          sink.getName(), lastStage.getName()));
       }
@@ -171,6 +173,23 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     }
   }
 
+  private boolean isAssignable(Type source, Type destination) {
+    if (source instanceof ParameterizedType) {
+      if (destination instanceof ParameterizedType) {
+        // For ex, List<T> to List<String> should be assignable. It is up to the user code to manage mismatch if any.
+        Class<?> sourceClass = TypeToken.of(source).getRawType();
+        return TypeToken.of(destination).getRawType().isAssignableFrom(sourceClass);
+      }
+      return false;
+    } else if (source instanceof Class && destination instanceof Class) {
+      // If both are type Class, then check if they are assignable
+      return TypeToken.of(destination).isAssignableFrom(source);
+    } else {
+      // Fall back. Catch any errors in runtime.
+      return true;
+    }
+  }
+
   private void validateTransforms(List<ETLStage> transformList) throws IllegalArgumentException {
     for (int i = 0; i < transformList.size() - 1; i++) {
       ETLStage currStage = transformList.get(i);
@@ -178,8 +197,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
       Transform firstTransform = transforms.get(i);
       Transform secondTransform = transforms.get(i + 1);
 
-      if (!(TypeToken.of(secondTransform.getKeyInType()).isAssignableFrom(firstTransform.getKeyOutType()) &&
-        TypeToken.of(secondTransform.getValueInType()).isAssignableFrom(firstTransform.getValueOutType()))) {
+      if (!(isAssignable(firstTransform.getKeyOutType(), secondTransform.getKeyInType()) &&
+        (isAssignable(firstTransform.getValueOutType(), secondTransform.getValueInType())))) {
         throw new IllegalArgumentException(String.format("Transform %s and Transform %s Types don't match",
                                                          currStage.getName(), nextStage.getName()));
       }
