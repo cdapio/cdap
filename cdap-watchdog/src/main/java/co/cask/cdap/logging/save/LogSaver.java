@@ -16,10 +16,8 @@
 
 package co.cask.cdap.logging.save;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -27,7 +25,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
@@ -58,9 +55,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
 
   @Inject
-  public LogSaver(CConfiguration cConf, CheckpointManager checkpointManager,
-                  FileMetaDataManager fileMetaDataManager, KafkaClientService kafkaClient,
-                  CConfiguration cConfig, LocationFactory locationFactory,
+  public LogSaver(CheckpointManager checkpointManager, KafkaClientService kafkaClient,
                   @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors)
                   throws Exception {
     LOG.info("Initializing LogSaver...");
