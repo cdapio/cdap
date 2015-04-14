@@ -39,45 +39,45 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
   // and we don't want to have a big switch statement each time we read a row.
   private static final Map<Schema.Type, RowKeyFunction> rowKeyFuctions =
     ImmutableMap.<Schema.Type, RowKeyFunction>builder()
-      .put(Schema.Type.BOOLEAN, new RowKeyFunction() {
+      .put(Schema.Type.BOOLEAN, new RowKeyFunction<Boolean>() {
         @Override
-        Object get(byte[] rowKey) {
+        public Boolean get(byte[] rowKey) {
           return Bytes.toBoolean(rowKey);
         }
       })
-      .put(Schema.Type.BYTES, new RowKeyFunction() {
+      .put(Schema.Type.BYTES, new RowKeyFunction<byte[]>() {
         @Override
-        Object get(byte[] rowKey) {
+        public byte[] get(byte[] rowKey) {
           return rowKey;
         }
       })
-      .put(Schema.Type.INT, new RowKeyFunction() {
+      .put(Schema.Type.INT, new RowKeyFunction<Integer>() {
         @Override
-        Object get(byte[] rowKey) {
+        public Integer get(byte[] rowKey) {
           return Bytes.toInt(rowKey);
         }
       })
-      .put(Schema.Type.LONG, new RowKeyFunction() {
+      .put(Schema.Type.LONG, new RowKeyFunction<Long>() {
         @Override
-        Object get(byte[] rowKey) {
+        public Long get(byte[] rowKey) {
           return Bytes.toLong(rowKey);
         }
       })
-      .put(Schema.Type.FLOAT, new RowKeyFunction() {
+      .put(Schema.Type.FLOAT, new RowKeyFunction<Float>() {
         @Override
-        Object get(byte[] rowKey) {
+        public Float get(byte[] rowKey) {
           return Bytes.toFloat(rowKey);
         }
       })
-      .put(Schema.Type.DOUBLE, new RowKeyFunction() {
+      .put(Schema.Type.DOUBLE, new RowKeyFunction<Double>() {
         @Override
-        Object get(byte[] rowKey) {
+        public Double get(byte[] rowKey) {
           return Bytes.toDouble(rowKey);
         }
       })
-      .put(Schema.Type.STRING, new RowKeyFunction() {
+      .put(Schema.Type.STRING, new RowKeyFunction<String>() {
         @Override
-        Object get(byte[] rowKey) {
+        public String get(byte[] rowKey) {
           return Bytes.toString(rowKey);
         }
       })
@@ -132,7 +132,7 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
   }
 
   // translates a row key into some other object.
-  private abstract static class RowKeyFunction {
-    abstract Object get(byte[] rowKey);
+  private interface RowKeyFunction<T> {
+    T get(byte[] rowKey);
   }
 }

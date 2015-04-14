@@ -571,7 +571,7 @@ public final class Schema {
    * @return whether or not this is a nullable simple type.
    */
   public boolean isSimpleOrNullableSimple() {
-    return type.isSimpleType() || (type == Type.UNION && getNonNullable().getType().isSimpleType());
+    return type.isSimpleType() || isNullableSimple();
   }
 
   /**
