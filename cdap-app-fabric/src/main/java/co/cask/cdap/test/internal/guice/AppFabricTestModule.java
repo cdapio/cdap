@@ -52,6 +52,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -111,7 +112,17 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                           Map<String, String> properties) {
+      }
+
+      @Override
       public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      }
+
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                           Map<String, String> properties) {
       }
 
       @Override
@@ -134,7 +145,11 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      }
 
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                                 Map<String, String> properties) {
       }
 
       @Override

@@ -24,9 +24,12 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Map;
 
 /**
  *
@@ -45,6 +48,8 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
                                                                                      STREAM_ID.getId(), 10);
   private static final String SCHEDULE_NAME_1 = "Schedule1";
   private static final String SCHEDULE_NAME_2 = "Schedule2";
+  private static final Map<String, String> MAP_1 = ImmutableMap.of("key1", "value1", "key2", "value2");
+  private static final Map<String, String> MAP_2 = ImmutableMap.of("key3", "value3", "key4", "value4");
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
 
   @BeforeClass
@@ -54,16 +59,16 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
 
   @Test
   public void testStreamSizeSchedule() throws Exception {
-    scheduleStore.persist(PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, true);
-    scheduleStore.persist(PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, false);
+    scheduleStore.persist(PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 0L, 0L, true);
+    scheduleStore.persist(PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 1000L, 10L, 1000L, 10L, false);
 
     // List all schedules
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 0L, 0L, true
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 1000L, 10L, 1000L, 10L, false
                           )
                         ),
                         scheduleStore.list());
@@ -72,10 +77,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.suspend(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 0L, 0L, false
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 1000L, 10L, 1000L, 10L, false
                           )
                         ),
                         scheduleStore.list());
@@ -84,10 +89,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.resume(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 0L, 0L, false
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 1000L, 10L, 1000L, 10L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 1000L, 10L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
@@ -96,10 +101,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.updateBaseRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2, 10000L, 100L);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 0L, 0L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 0L, 0L, false
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
@@ -108,10 +113,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.updateLastRun(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, 100L, 10000L, null);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, 0L, 0L, 100L, 10000L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_1, MAP_1, 0L, 0L, 100L, 10000L, false
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
@@ -120,10 +125,10 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1, STREAM_SCHEDULE_2);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 0L, 0L, 100L, 10000L, false
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_1, 0L, 0L, 100L, 10000L, false
                           ),
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
@@ -132,7 +137,7 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore.delete(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
     Assert.assertEquals(ImmutableList.of(
                           new StreamSizeScheduleState(
-                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, 10000L, 100L, 1000L, 10L, true
+                            PROGRAM_ID, PROGRAM_TYPE, STREAM_SCHEDULE_2, MAP_2, 10000L, 100L, 1000L, 10L, true
                           )
                         ),
                         scheduleStore.list());
