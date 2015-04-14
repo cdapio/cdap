@@ -42,14 +42,14 @@ public class UserProfiles extends AbstractApplication {
     addService(new UserProfileService());
     createDataset("counters", KeyValueTable.class);
 
-    // create the profiles table with a schema so that it can be explore via Hive
+    // create the profiles table with a schema so that it can be explored via Hive
     Schema profileSchema = Schema.recordOf(
       "profile",
       // id, name, and email are never null and are set when a user profile is created
       Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("email", Schema.of(Schema.Type.STRING)),
-      // login and active are never set when a profile is created, but are set later in the flow, so they are nullable.
+      // login and active are never set when a profile is created but are set later, so they are nullable.
       Schema.Field.of("login", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
       Schema.Field.of("active", Schema.nullableOf(Schema.of(Schema.Type.LONG)))
     );
