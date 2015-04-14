@@ -8,14 +8,13 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
-
+  $scope.liveDashboard = null;
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
   $scope.currentBoard = rDashboardsModel.current();
   if (!$scope.currentBoard) {
     $scope.unknownBoard = true;
   }
-
 
   /**
    * show a dropdown when clicking on the tab of active dashboard
@@ -79,6 +78,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     }
   };
 
+  $scope.makeItLive = function() {
+    $scope.liveDashboard = !$scope.liveDashboard;
+    var currentColumns = rDashboardsModel.current().columns,
+        i, j;
+    for (i=0; i<currentColumns.length; i++) {
+      for (j=0; j<currentColumns[i].length; j++) {
+        currentColumns[i][j].isLive = $scope.liveDashboard;
+      }
+    }
+  };
 
 
 });

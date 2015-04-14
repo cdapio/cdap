@@ -48,7 +48,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
     String streamId = arguments.get(ArgumentName.STREAM.toString());
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
     streamClient.sendEvent(streamId, streamEvent);
-    output.printf("Successfully send stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
   }
 
   @Override

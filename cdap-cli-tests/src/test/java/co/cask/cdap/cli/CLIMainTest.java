@@ -195,7 +195,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully send stream event");
+    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully sent stream event");
     testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
@@ -225,7 +225,7 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully send stream event to stream");
+                              "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for Stream '%s'", streamId));

@@ -12,7 +12,8 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo'
+      PKG.name+'.feature.foo',
+      PKG.name+'.feature.etlapps'
     ]).name,
 
     angular.module(PKG.name+'.commons', [

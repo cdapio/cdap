@@ -28,7 +28,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
@@ -56,7 +55,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public byte[] get(byte[] row, byte[] column) throws Exception {
+  public byte[] get(byte[] row, byte[] column) {
     NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryTableService.get(tableName, row, null);
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
@@ -68,7 +67,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
     NavigableMap<byte[], NavigableMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_PUTS));
@@ -77,29 +76,29 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws Exception {
+  public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     return InMemoryTableService.swap(tableName, row, column, oldValue, newValue);
   }
 
   @Override
-  public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
+  public void increment(byte[] row, Map<byte[], Long> increments) {
     InMemoryTableService.increment(tableName, row, increments);
   }
 
   @Override
-  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
     for (Map.Entry<byte[] , NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       increment(entry.getKey(), entry.getValue());
     }
   }
 
   @Override
-  public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
+  public long incrementAndGet(byte[] row, byte[] column, long delta) {
     return InMemoryTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
   }
 
   @Override
-  public void delete(byte[] row, byte[][] columns) throws Exception {
+  public void delete(byte[] row, byte[][] columns) {
     for (byte[] column : columns) {
       InMemoryTableService.deleteColumns(tableName, row, column);
     }
@@ -131,7 +130,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     // Do nothing
   }
 }

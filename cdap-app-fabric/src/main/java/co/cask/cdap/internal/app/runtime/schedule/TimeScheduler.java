@@ -127,9 +127,9 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule,
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                        Map<String, String> properties) throws SchedulerException {
-    schedule(programId, programType, ImmutableList.of(schedule), properties);
+    schedule(program, programType, ImmutableList.of(schedule), properties);
   }
 
   @Override
@@ -139,12 +139,12 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
                        Map<String, String> properties) throws SchedulerException {
     checkInitialized();
     Preconditions.checkNotNull(schedules);
 
-    String jobKey = jobKeyFor(programId, programType).getName();
+    String jobKey = jobKeyFor(program, programType).getName();
     JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
       .withIdentity(jobKey)
       .storeDurably(true)
@@ -159,7 +159,7 @@ final class TimeScheduler implements Scheduler {
       TimeSchedule timeSchedule = (TimeSchedule) schedule;
       String scheduleName = timeSchedule.getName();
       String cronEntry = timeSchedule.getCronEntry();
-      String triggerKey = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
+      String triggerKey = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
 
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 

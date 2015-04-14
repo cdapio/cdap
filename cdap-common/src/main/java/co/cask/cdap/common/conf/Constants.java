@@ -434,6 +434,8 @@ public final class Constants {
 
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
+
+      public static final String ADAPTER = "adp";
     }
   }
 
