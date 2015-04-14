@@ -40,20 +40,20 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
   private final Set<KafkaLogProcessor> kafkaLogProcessors;
   private final LoggingEventSerializer serializer;
-  private final CountDownLatch countDownLatch;
+  private final CountDownLatch stopLatch;
 
-  public KafkaMessageCallback(CountDownLatch countDownLatch,
+  public KafkaMessageCallback(CountDownLatch stopLatch,
                               Set<KafkaLogProcessor> kafkaLogProcessors) throws Exception {
     this.kafkaLogProcessors = kafkaLogProcessors;
     this.serializer = new LoggingEventSerializer();
-    this.countDownLatch = countDownLatch;
+    this.stopLatch = stopLatch;
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
 
     try {
-      if (countDownLatch.await(50, TimeUnit.MICROSECONDS)) {
+      if (stopLatch.await(50, TimeUnit.MICROSECONDS)) {
         // if count down occurred return
         LOG.info("Returning since callback is cancelled.");
         return;
@@ -68,16 +68,22 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
-      GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
-      ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+      try {
+        GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
+        ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
-      KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
-                                                 message.getTopicPartition().getPartition(),
-                                                 message.getNextOffset());
+        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
+        KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
+                                                   message.getTopicPartition().getPartition(),
+                                                   message.getNextOffset());
 
-      for (KafkaLogProcessor processor : kafkaLogProcessors) {
-        processor.process(logEvent);
+        for (KafkaLogProcessor processor : kafkaLogProcessors) {
+          processor.process(logEvent);
+        }
+      } catch (Throwable th) {
+        LOG.error("Error processing message at topic {} parition {}",
+                  message.getTopicPartition().getTopic(),
+                  message.getTopicPartition().getPartition());
       }
 
       count++;
