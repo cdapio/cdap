@@ -1,0 +1,32 @@
+<div class="mapreduce-components">
+  <table class="table table-responsive" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': info.mapTasks.length>0}">
+        <th data-predicate="taskId">ID</th>
+        <th data-predicate="state">Status</th>
+        <th data-predicate="progress">% Complete</th>
+        <th data-predicate="finishTime">Duration</th>
+        <th data-predicate="counters.REDUCE_INPUT_RECORDS">Records In</th>
+        <th data-predicate="">Bytes In</th>
+        <th data-predicate="counters.REDUCE_OUTPUT_RECORDS">Records Out</th>
+        <th data-predicate="">Bytes Out</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr ng-repeat="reduce in info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
+        <td>{{ ::reduce.taskId }}</td>
+        <td>{{ reduce.state }}</td>
+        <td>{{ reduce.progress * 100 }}%</td>
+        <td>
+          <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
+          <span ng-show="reduce.finishTime === 0">N/A</span>
+        </td>
+        <td>{{ reduce.counters.REDUCE_INPUT_RECORDS }}</td>
+        <td></td>
+        <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

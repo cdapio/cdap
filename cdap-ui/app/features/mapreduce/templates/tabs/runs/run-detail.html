@@ -1,3 +1,25 @@
+<div class="mapreduce-components">
+  <div class="row run-status" ng-if="info.state">
+    <div class="col-sm-6">
+      <div class="run-status-box row">
+        <div class="col-sm-4 item">
+          <div class="title">Status</div>
+          <div class="entry">{{info.state}}</div>
+        </div>
+        <div class="col-sm-4 item">
+          <div class="title">Started</div>
+          <div class="entry">{{info.startTime | date: 'medium'}}</div>
+        </div>
+        <div class="col-sm-4 item">
+          <div class="title">Duration</div>
+          <div class="entry" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
+          <div class="entry" ng-hide="info.finishTime !== 0">N/A</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <tabset>
   <tab ng-repeat="tab in tabs" select="activeTab = true">
     <tab-heading> {{tab.title}} </tab-heading>

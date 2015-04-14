@@ -6,15 +6,15 @@ angular.module(PKG.name + '.feature.mapreduce')
             '/mapreduce/' +
             $state.params.programId;
 
-    dataSrc.request({
+    dataSrc.poll({
       _cdapNsPath: basePath + '/runs'
-    })
-      .then(function(res) {
-        $scope.runs = res;
-        angular.forEach($scope.runs, function(value) {
-          value.isOpen = $state.params.runid === value.runid;
-        });
+    },
+    function(res) {
+      $scope.runs = res;
+      angular.forEach($scope.runs, function(value) {
+        value.isOpen = $state.params.runid === value.runid;
       });
+    });
 
 
     // This is for toggling (opening/closing) accordions if state changes.

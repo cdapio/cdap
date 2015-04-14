@@ -7,6 +7,14 @@ angular.module(PKG.name + '.feature.mapreduce')
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/status.html'
     },
     {
+      title: 'Mappers',
+      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/mappers.html'
+    },
+    {
+      title: 'Reducers',
+      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/reducers.html'
+    },
+    {
       title: 'Logs',
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
     }];
