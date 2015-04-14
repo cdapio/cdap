@@ -32,6 +32,8 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +47,7 @@ import javax.annotation.Nullable;
  *
  * Thread safe as long as the passed into the constructor datasets are thread safe (usually is not the case).
  */
-public final class FactTable {
+public final class FactTable implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(FactTable.class);
   private static final int MAX_ROLL_TIME = 0xfffe;
 
@@ -69,6 +71,7 @@ public final class FactTable {
   };
 
   private final MetricsTable timeSeriesTable;
+  private final EntityTable entityTable;
   private final FactCodec codec;
   private final int resolution;
   // todo: should not be used outside of codec
@@ -86,10 +89,11 @@ public final class FactTable {
    *                 This value should be < 65535.
    */
   public FactTable(MetricsTable timeSeriesTable,
-            EntityTable entityTable, int resolution, int rollTime) {
+                   EntityTable entityTable, int resolution, int rollTime) {
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
 
+    this.entityTable = entityTable;
     this.timeSeriesTable = timeSeriesTable;
     this.codec = new FactCodec(entityTable, resolution, rollTime);
     this.resolution = resolution;
@@ -350,6 +354,12 @@ public final class FactTable {
     LOG.trace("search for metrics completed, scanned records: {}", scannedRecords);
 
     return measureNames;
+  }
+
+  @Override
+  public void close() throws IOException {
+    timeSeriesTable.close();
+    entityTable.close();
   }
 
   @Nullable
