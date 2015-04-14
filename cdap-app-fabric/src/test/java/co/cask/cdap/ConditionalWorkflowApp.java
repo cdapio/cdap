@@ -67,7 +67,9 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     public boolean apply(@Nullable WorkflowToken input) {
       if (input != null) {
         Map<String, Long> customCounters = input.getMapReduceCounters().get("MyCustomCounter");
-        if (customCounters.get("GoodRecord") > 5) {
+        // If number of good records are greater than the number of bad records then only
+        // return true to execute the true branch associated with this Condition node
+        if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {
           return true;
         }
       }

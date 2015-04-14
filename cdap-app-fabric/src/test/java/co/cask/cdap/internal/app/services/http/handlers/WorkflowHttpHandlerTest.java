@@ -747,14 +747,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   private String createConditionInput(String folderName, int numGoodRecords, int numBadRecords) throws IOException {
     File inputDir = tmpFolder.newFolder(folderName);
 
-    File inputFile = new File(inputDir.getPath() + "/words.txt");
+    File inputFile = new File(inputDir.getPath() + "/data.txt");
     BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
 
     try {
+      // dummy good records containing ":" separated fields
       for (int i = 0; i < numGoodRecords; i++) {
         writer.write("Afname:ALname:A:B");
         writer.newLine();
       }
+      // dummy bad records in which fields are not separated by ":"
       for (int i = 0; i < numBadRecords; i++) {
         writer.write("Afname ALname A B");
         writer.newLine();
@@ -781,8 +783,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
 
-    runtimeArguments.put("inputPath", createConditionInput("ProgramInput", 2, 2));
-    runtimeArguments.put("outputPath", new File(tmpFolder.newFolder(), "ProgramOutput").getAbsolutePath());
+    // create input data in which number of good records are lesser than the number of bad records
+    runtimeArguments.put("inputPath", createConditionInput("ConditionProgramInput", 2, 12));
+    runtimeArguments.put("outputPath", new File(tmpFolder.newFolder(), "ConditionProgramOutput").getAbsolutePath());
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // Start the workflow
@@ -806,11 +809,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, recordVerifierRuns.size());
     Assert.assertEquals(0, wordCountRuns.size());
 
-    runtimeArguments.put("inputPath", createConditionInput("AnotherProgramInput", 10, 2));
+    // create input data in which number of good records are greater than the number of bad records
+    runtimeArguments.put("inputPath", createConditionInput("AnotherConditionProgramInput", 10, 2));
     runtimeArguments.put("mapreduce.RecordVerifier.outputPath", new File(tmpFolder.newFolder(),
-                                                                         "ProgramOutput").getAbsolutePath());
+                                                                         "ConditionProgramOutput").getAbsolutePath());
     runtimeArguments.put("mapreduce.ClassicWordCount.outputPath", new File(tmpFolder.newFolder(),
-                                                                         "ProgramOutput").getAbsolutePath());
+                                                                         "ConditionProgramOutput").getAbsolutePath());
 
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
