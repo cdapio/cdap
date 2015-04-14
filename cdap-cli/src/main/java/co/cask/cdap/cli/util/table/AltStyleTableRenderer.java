@@ -15,9 +15,11 @@
  */
 package co.cask.cdap.cli.util.table;
 
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -26,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * {@link TableRenderer} implementation to print an ASCII table in the alt style. e.g.
@@ -91,27 +94,34 @@ public class AltStyleTableRenderer implements TableRenderer {
     // outer table width
     int width = config.getLineWidth();
 
-    List<String> header = table.getHeader();
+    List<String> tableHeader = table.getHeader();
+    Iterable<List<String>> tableRows = Iterables.filter(table.getRows(), new Predicate<List<String>>() {
+      @Override
+      public boolean apply(@Nullable List<String> input) {
+        return input != null;
+      }
+    });
+
     List<Row> rows = Lists.newArrayList();
 
     // Collects all output cells for all records.
     // If any record has multiple lines output, a row divider is printed between each row.
     // inner column widths
-    int[] columnWidths = calculateColumnWidths(table.getHeader(), table.getRows(), width);
+    int[] columnWidths = calculateColumnWidths(tableHeader, tableRows, width);
 
     if (columnWidths.length == 0) {
       return;
     }
 
     boolean useRowDivider = false;
-    for (List<String> row : table.getRows()) {
+    for (List<String> row : tableRows) {
       useRowDivider = generateRow(row, columnWidths, rows) || useRowDivider;
     }
 
     // If has header, prints the header.
-    if (!header.isEmpty()) {
+    if (!tableHeader.isEmpty()) {
       List<Row> headerRow = Lists.newArrayList();
-      generateRow(header, columnWidths, headerRow);
+      generateRow(tableHeader, columnWidths, headerRow);
 
       outputDivider(output, columnWidths, '=', '+');
       for (Row row : headerRow) {
@@ -257,12 +267,18 @@ public class AltStyleTableRenderer implements TableRenderer {
     int[] maxColumnWidths = new int[widths.length];
     if (!header.isEmpty()) {
       for (int i = 0; i < maxColumnWidths.length; i++) {
-        maxColumnWidths[i] = Math.max(maxColumnWidths[i], header.get(i).length());
+        String headerValue = header.get(i);
+        if (headerValue != null) {
+          maxColumnWidths[i] = Math.max(maxColumnWidths[i], headerValue.length());
+        }
       }
     }
     for (List<String> row : rows) {
       for (int i = 0; i < maxColumnWidths.length; i++) {
-        maxColumnWidths[i] = Math.max(maxColumnWidths[i], row.get(i).length());
+        String cell = row.get(i);
+        if (cell != null) {
+          maxColumnWidths[i] = Math.max(maxColumnWidths[i], cell.length());
+        }
       }
     }
 
