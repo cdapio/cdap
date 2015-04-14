@@ -16,7 +16,9 @@
 
 package co.cask.cdap.templates.etl.batch.sinks;
 
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -24,17 +26,24 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 /**
  * CDAP Table Dataset Batch Sink.
  */
-public class KVTableSink extends BatchWritableSink<byte[], byte[]> {
+public class TableSink extends BatchWritableSink<byte[], Put> {
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName("KVTableSink");
-    configurer.setDescription("CDAP Key Value Table Dataset Batch Sink");
-    configurer.addProperty(new Property(NAME, "Dataset Name", true));
+    configurer.setName("TableSink");
+    configurer.setDescription("CDAP Table Dataset Batch Sink");
+    configurer.addProperty(new Property(NAME, "Name of the table. If the table does not already exist," +
+      " one will be created.", true));
+    configurer.addProperty(
+      new Property(DatasetProperties.SCHEMA,
+                   "Optional schema of the table as a JSON Object. If the table does not already exist," +
+                     " one will be created with this schema, which will allow the table to be explored through Hive.",
+                   false));
   }
 
   @Override
   protected String getDatasetType(ETLStage config) {
-    return KeyValueTable.class.getName();
+    return Table.class.getName();
   }
+
 }
