@@ -104,7 +104,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   private void unscheduleTasks() throws Exception {
     for (KafkaLogProcessor processor : messageProcessors) {
-      processor.stop();
+      try {
+        // Catching the exception to let all the plugins a chance to stop cleanly.
+        processor.stop();
+      } catch (Throwable th) {
+        LOG.error("Error stopping processor {}",
+                  processor.getClass().getSimpleName());
+      }
     }
     cancelLogCollectorCallbacks();
   }
