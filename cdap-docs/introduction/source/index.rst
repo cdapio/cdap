@@ -23,7 +23,8 @@ the Hadoop ecosystem and using CDAP |---| a new paradigm.
 
 For each example action, we describe a current approach, the steps involved and the
 technologies required, and then show an equivalent CDAP command with the resulting output
-from the CDAP Command Line Interface.
+from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
+as required.)
 
 To try this yourself, :ref:`download a copy of CDAP SDK <standalone-index>`, install it
 and then use the resources in its ``examples`` directory as you follow along.
@@ -36,6 +37,56 @@ We'll look at these areas:
   - `Building Real World Applications`_
 
 .. highlight:: console
+
+Installation
+============
+- Download and install CDAP to run in standalone mode on a laptop
+- Startup CDAP
+- Startup CDAP Command Line Interface
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
+   * - **Current Approach**
+     - Install and startup Hadoop and other technologies, as required
+     - Hadoop
+       
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ unzip cdap-sdk-``\ |literal-release|\ ``.zip``
+
+       ``$ cd cdap-sdk-``\ |literal-release|
+       
+       ``$ ./bin/cdap.sh start``
+       ::
+
+        Starting Standalone CDAP ................
+        Standalone CDAP started successfully.
+        Connect to the Console at http://localhost:9999
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - Run Hive commands using Hive CLI
+     - HiveServer, Beeline
+       
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``$ ./bin/cdap-cli.sh``
+       ::
+
+        Successfully connected CDAP instance at http://localhost:10000
+        cdap (http://localhost:10000/default)> 
 
 Data Ingestion
 ==============
@@ -60,7 +111,7 @@ Data Ingestion
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ create stream logEventStream``
+     - ``> create stream logEventStream``
        ::
        
         Successfully created stream with ID 'logEventStream'
@@ -80,7 +131,7 @@ Data Ingestion
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ load stream logEventStream examples/resources/accesslog.txt``
+     - ``> load stream logEventStream examples/resources/accesslog.txt``
        ::
        
         Successfully sent stream event to stream 'logEventStream'
@@ -110,7 +161,7 @@ Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'describe stream_logEventStream'``
+     - ``> execute 'describe stream_logEventStream'``
        ::
     
         +=========================================================================================================+
@@ -134,25 +185,29 @@ Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'select * from stream_logEventStream limit 2'``
+     - ``> execute 'select * from stream_logEventStream limit 2'``
        ::
 
-        +=========================================================================================================+
-        | stream_logeventstream.ts: BIGINT  | stream_logeventstream.headers: | stream_logeventstream.body: STRING |
-        |                                   | map<string,string>             |                                    |
-        +=========================================================================================================+
-        | 1428100343436                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
-        |                                   |                                | 1:45:38 -0400]  "GET /cdap.html HT |
-        |                                   |                                | TP/1.0" 401 2969 " " "Mozilla/4.0  |
-        |                                   |                                | (compatible; MSIE 7.0; Windows NT  |
-        |                                   |                                | 5.1)"                              |
-        |---------------------------------------------------------------------------------------------------------|
-        | 1428100483106                     | {}                             | 255.255.255.185 - - [23/Sep/2014:1 |
-        |                                   |                                | 1:45:38 -0400] "GET /cdap.html HTT |
-        |                                   |                                | P/1.0" 401 2969 " " "Mozilla/4.0 ( |
-        |                                   |                                | compatible; MSIE 7.0; Windows NT 5 |
-        |                                   |                                | .1)"                               |
-        +=========================================================================================================+
+        +==============================================================================================================+
+        | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
+        | BIGINT                    | ders: map<string,string>  |                                                      |
+        +==============================================================================================================+
+        | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
+        |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
+        |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
+        |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
+        |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
+        |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
+        |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
+        |--------------------------------------------------------------------------------------------------------------|
+        | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
+        |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
+        |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
+        |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
+        |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
+        |                           |                           | 25.122 Safari/537.36"                                |
+        +==============================================================================================================+
+        Fetched 2 rows
 
 
 Data Exploration: Attaching schema
@@ -174,7 +229,7 @@ Data Exploration: Attaching schema
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ set stream format logEventStream clf``
+     - ``> set stream format logEventStream clf``
        ::
 
         Successfully set format of stream 'logEventStream'
@@ -192,7 +247,7 @@ Data Exploration: Attaching schema
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'describe stream_logEventStream'``
+     - ``> execute 'describe stream_logEventStream'``
        ::
 
         +=============================================================================+
@@ -210,6 +265,7 @@ Data Exploration: Attaching schema
         | referrer                  | string                  | from deserializer     |
         | user_agent                | string                  | from deserializer     |
         +=============================================================================+
+        Fetched 11 rows
 
        |non-breaking-space|
 
@@ -224,7 +280,7 @@ Data Exploration: Attaching schema
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'select * from stream_logEventStream limit 2'``
+     - ``> execute 'select * from stream_logEventStream limit 2'``
        ::
 
         +===================================================================================================================+
@@ -260,10 +316,8 @@ Data Exploration: Attaching schema
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ get stream-stats logEventStream limit 1000``
+     - ``> get stream-stats logEventStream limit 1000``
        ::
-
-        Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
 
         column: stream_logeventstream.remote_host, type: STRING
         Unique elements: 6
@@ -353,6 +407,8 @@ Data Exploration: Attaching schema
         column: stream_logeventstream.user_agent, type: STRING
         Unique elements: 4
 
+        Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
+
 
 Advanced Data Exploration
 =========================
@@ -375,7 +431,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ create stream ip2geo``
+     - ``> create stream ip2geo``
        ::
 
         Successfully created stream with ID 'ip2geo'
@@ -396,7 +452,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ load stream ip2geo examples/resources/ip2geo-maps.csv``
+     - ``> load stream ip2geo examples/resources/ip2geo-maps.csv``
        ::
 
         Successfully sent stream event to stream 'ip2geo'
@@ -414,7 +470,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ send stream ip2geo '69.181.160.120, Los Angeles, CA'``
+     - ``> send stream ip2geo '69.181.160.120, Los Angeles, CA'``
        ::
 
         Successfully sent stream event to stream 'ip2geo'
@@ -432,7 +488,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'select * from stream_ip2geo'``
+     - ``> execute 'select * from stream_ip2geo'``
        ::
 
         +===========================================================================================================+
@@ -461,6 +517,7 @@ Advanced Data Exploration
         | 1428892912060            | {"content.type":"text/csv"}               | 77.75.77.11, Austin, TX            |
         | 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |
         +===========================================================================================================+
+        Fetched 22 rows
 
        |non-breaking-space|
 
@@ -476,7 +533,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ set stream format ip2geo csv "ip string, city string, state string"``
+     - ``> set stream format ip2geo csv "ip string, city string, state string"``
        ::
 
         Successfully set format of stream 'ip2geo'
@@ -494,7 +551,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'select * from stream_ip2geo'``
+     - ``> execute 'select * from stream_ip2geo'``
        ::
 
         +================================================================================================================+
@@ -524,7 +581,8 @@ Advanced Data Exploration
         | 1428892912060    | {"content.type":"text/csv"} | 77.75.77.11      |  Austin             |  TX                  |
         | 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |
         +================================================================================================================+
-        
+        Fetched 22 rows
+
        |non-breaking-space|
         
 .. list-table::
@@ -538,7 +596,7 @@ Advanced Data Exploration
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
+     - ``> execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
        ::
 
         +===============================================================================================================+
@@ -588,6 +646,7 @@ Advanced Data Exploration
         |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
         |                              |                              |               | 23341312528 HTTP/1.1            |
         +===============================================================================================================+
+        Fetched 10 rows
 
 
 Transforming Your Data
@@ -620,7 +679,7 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ create stream-conversion adapter logEventStreamConverter on logEventStream 
+     - ``> create stream-conversion adapter logEventStreamConverter on logEventStream 
        frequency 1m format clf schema "remotehost string, remotelogname string, authuser 
        string, date string, request string, status int, contentlength int, referrer string, 
        useragent string"``       
@@ -643,7 +702,7 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ list adapters``
+     - ``> list adapters``
        ::
 
         +=============================================================================================================+
@@ -732,7 +791,7 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ load stream logEventStream examples/resources/accesslog.txt``
+     - ``> load stream logEventStream examples/resources/accesslog.txt``
        ::
 
         Successfully sent stream event to stream 'logEventStream'
@@ -776,7 +835,7 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ execute 'describe dataset_logEventStream_converted'``
+     - ``> execute 'describe dataset_logEventStream_converted'``
        ::
 
         +==========================================================================================+
@@ -846,10 +905,10 @@ Building Real World Applications
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ deploy app apps/cdap-wise-0.4.0-SNAPSHOT.jar``       
+     - ``> deploy app apps/cdap-wise-0.4.0-SNAPSHOT.jar``       
        ::
 
-        Successfully 
+        Success 
 
        |non-breaking-space|
 
@@ -866,10 +925,10 @@ Building Real World Applications
    :widths: 15 85
 
    * - **CDAP**
-     - ``$ describe app Wise``       
+     - ``> describe app Wise``       
        ::
 
-        Successfully 
+        Success
 
        |non-breaking-space|
 
@@ -877,134 +936,152 @@ Building Real World Applications
    :widths: 15 65 20
 
    * - **Current Approach**
-
-
-
-
-
-
-
-
-
-
-
-OLD
-
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ deploy app apps/cdap-wise-0.3.0-SNAPSHOT.jar``
-     - - Write and execute MR job
-       - Separate environment for processing in real-time setup stack
-       - Add ability to periodically copy datasets into SQL using Sqoop
-       - Orchestrate the Mapreduce job using Oozie
-       - Write an application to serve the data
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - Sqoop
-
-   * - ``$ describe app Wise``
-     - - Check Oozie
-       - Check YARN Console
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``$ start flow Wise.WiseFlow``
      - - Set classpath in environment variable 
        - ``CLASSPATH=/my/classpath``
        - Run the command to start the yarn application
        - ``yarn jar /path/to/myprogram.jar``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``$ get flow status Wise.WiseFlow``
-     - - Run the following commands
-       - Get the application Id from the command: 
+     - - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> start flow Wise.WiseFlow``       
+       ::
+
+        Success
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Get the application ID with the command: 
        - ``yarn application -list | grep "Wise.WiseFlow"``
        - Get the status using the command: 
        - ``yarn application -status <APP ID>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``$ get flow logs Wise.WiseFlow``
-     - - Navigate to the resouce manager UI
+     - - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> get flow status Wise.WiseFlow``       
+       ::
+
+        Success
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Navigate to the resource manager UI
        - Find the Wise.WiseFlow on UI
        - Click to the see application logs
        - Find all the node managers for the application containers
        - Navigate to all the containers in separate tabs 
        - Click on container logs
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
+     - - Resource Manager UI
        - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> get flow logs Wise.WiseFlow``       
+       ::
+
+        Success
+
 
 .. rubric:: Program Lifecycle
 
 .. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
+   :widths: 15 65 20
 
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``$ start workflow Wise.WiseWorkflow``
-     - - Start the job using oozie
+   * - 
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
+   * - **Current Approach**
+     - - Start the job using Oozie
        - ``oozie job -start <arguments>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
+     - - Oozie
        - YARN
 
-   * - ``$ get workflow status Wise.WiseWorkflow``
-     - - Get the workflow status from oozie
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> start workflow Wise.WiseWorkflow``       
+       ::
+
+        Success 
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Get the workflow status from Oozie
        - ``oozie job -info <jobid>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
+     - - Oozie
        - YARN
-   
-   * - ``$ start service Wise.WiseService``
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> get workflow status Wise.WiseWorkflow``       
+       ::
+
+        Success
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
      - - Set classpath in environment variable 
        - ``CLASSPATH=/my/classpath``
        - Run the command to start the yarn application
        - ``yarn jar /path/to/myprogram.jar``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``$ get service status Wise.WiseService``
-     - - Run these commands
-       - Get the application Id from the command: 
+     - - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> start service Wise.WiseService``       
+       ::
+
+        Success
+
+       |non-breaking-space|
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - **Current Approach**
+     - - Get the application ID with the command: 
        - ``yarn application -list | grep "Wise.WiseService"``
-       - Get the status using the following command: 
+       - Get the status using the command: 
        - ``yarn application -status <APP ID>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
+     - - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> get service status Wise.WiseService``       
+       ::
+
+        Success
+
 
 .. rubric:: Serve the processed data in real time
 
@@ -1016,7 +1093,7 @@ OLD
      - Current Approach and Required Technologies
      - 
      
-   * - ``$ get endpoints service Wise.WiseService``
+   * - ``> get endpoints service Wise.WiseService``
      - - Navigate to the resouce manager UI
        - Find the Wise.WiseService on UI
        - Click to the see application logs
@@ -1029,7 +1106,7 @@ OLD
        - Oozie
        - YARN
    
-   * - ``$ call service Wise.WiseService GET /ip/69.181.160.120/count``
+   * - ``> call service Wise.WiseService GET /ip/69.181.160.120/count``
      - - Discover the host and port where the service is running on by looking at the host 
          and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
        - Run ``curl http://hostname:port/ip/69.181.160.120/count``
@@ -1039,7 +1116,7 @@ OLD
        - Oozie
        - YARN
    
-   * - ``$ list dataset instances``
+   * - ``> list dataset instances``
          - ``cdap.user.bounceCountStore``
          - ``cdap.user.pageViewStore``
      - - Run the following command in Hbase shell
@@ -1061,7 +1138,7 @@ OLD
      - Current Approach and Required Technologies
      - 
      
-   * - ``$ execute 'SELECT * FROM user_bouncecountstore LIMIT 5'``
+   * - ``> execute 'SELECT * FROM user_bouncecountstore LIMIT 5'``
      - - Run the folllowing command in Hive CLI
        - ``"SELECT * FROM user_bouncecountstore LIMIT 5"``
      - - HDFS
@@ -1071,7 +1148,7 @@ OLD
        - YARN
        - HBase
    
-   * - ``$ stop service Wise.WiseService``
+   * - ``> stop service Wise.WiseService``
      - - Find the yarn application Id from the following command
        - ``yarn application -list | grep "Wise.WiseService"``
        - Stop the application by running the following command
@@ -1083,7 +1160,7 @@ OLD
        - YARN
        - HBase
    
-   * - ``$ stop flow Wise.WiseFlow``
+   * - ``> stop flow Wise.WiseFlow``
      - - Find the yarn application Id from the following command
        - ``yarn application -list | grep "Wise.WiseFlow"``
        - Stop the application by running the following command
@@ -1095,7 +1172,7 @@ OLD
        - YARN
        - HBase
   
-   * - ``$ delete app Wise``
+   * - ``> delete app Wise``
      - - Delete the workflow from oozie
        - Remove the service jars and flow jars
      - - HDFS
