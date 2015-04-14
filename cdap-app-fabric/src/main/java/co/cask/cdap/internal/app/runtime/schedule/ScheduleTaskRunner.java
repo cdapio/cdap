@@ -142,7 +142,6 @@ public final class ScheduleTaskRunner {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, options);
 
     final ProgramController controller = runtimeInfo.getController();
-    final Id.Namespace namespaceId = Id.Namespace.from(program.getNamespaceId());
     final Id.Program programId = program.getId();
     final String runId = controller.getRunId().getId();
     final String adapterName = options.getArguments().getOption(ProgramOptionConstants.ADAPTER_NAME);

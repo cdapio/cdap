@@ -62,6 +62,7 @@ public interface Store {
    * @param id        Info about program
    * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param adapter   name of the adapter associated with the run
    */
   void setStart(Id.Program id, String pid, long startTime, String adapter);
 
@@ -81,6 +82,7 @@ public interface Store {
    * @param pid     run id
    * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
+   * @param adapter name of adapter associated with the run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus, String adapter);
 
@@ -98,6 +100,7 @@ public interface Store {
    * Logs suspend of a program run.
    * @param id      id of the program
    * @param pid     run id
+   * @param adapter name of adapter associated with the run
    */
   void setSuspend(Id.Program id, String pid, String adapter);
 
@@ -112,6 +115,7 @@ public interface Store {
    * Logs resume of a program run.
    * @param id      id of the program
    * @param pid     run id
+   * @param adapter name of adapter associated with the run
    */
   void setResume(Id.Program id, String pid, String adapter);
 
@@ -131,6 +135,7 @@ public interface Store {
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
    * @param limit     max number of entries to fetch for this history call
+   * @param adapter   name of the adapter associated with the runs
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
@@ -154,6 +159,7 @@ public interface Store {
    *
    * @param id        program id
    * @param runid     run id of the program
+   * @param adapter   name of the adapter associated with the run
    * @return          run record for the specified program and runid, null if not found
    */
   RunRecord getRun(Id.Program id, String runid, String adapter);
@@ -496,59 +502,4 @@ public interface Store {
    * @param id Namespace id.
    */
   void removeAllAdapters(Id.Namespace id);
-
-//  /**
-//   * Logs start of adapter run.
-//   *
-//   * @param id        Info about adapter
-//   * @param pid       run id
-//   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
-//   */
-//  void setStart(Id.Adapter id, String pid, long startTime);
-//
-//  /**
-//   * Logs end of adapter run.
-//   *
-//   * @param id      id of adapter
-//   * @param pid     run id
-//   * @param endTime end timestamp in seconds
-//   * @param runStatus   {@link ProgramRunStatus} of adapter run
-//   */
-//  void setStop(Id.Adapter id, String pid, long endTime, ProgramRunStatus runStatus);
-//
-//  /**
-//   * Logs suspend of a adapter run.
-//   * @param id      id of the adapter
-//   * @param pid     run id
-//   */
-//  void setSuspend(Id.Adapter id, String pid);
-//
-//  /**
-//   * Logs resume of a adapter run.
-//   * @param id      id of the adapter
-//   * @param pid     run id
-//   */
-//  void setResume(Id.Adapter id, String pid);
-
-//  /**
-//   * Fetches run records for particular adapter. Returns only finished runs.
-//   * Returned ProgramRunRecords are sorted by their startTime.
-//   *
-//   * @param id        adapter id.
-//   * @param status    status of the program running/completed/failed or all
-//   * @param startTime fetch run history that has started after the startTime in seconds
-//   * @param endTime   fetch run history that has started before the endTime in seconds
-//   * @param limit     max number of entries to fetch for this history call
-//   * @return          list of logged runs
-//   */
-//  List<RunRecord> getRuns(Id.Adapter id, ProgramRunStatus status, long startTime, long endTime, int limit);
-//
-//  /**
-//   * Fetches the run record for particular run of a adapter.
-//   *
-//   * @param id        adapter id
-//   * @param runid     run id of the adapter
-//   * @return          run record for the specified adapter and runid, null if not found
-//   */
-//  RunRecord getRun(Id.Adapter id, String runid);
 }

@@ -190,6 +190,9 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, runRecords.size());
     List<RunRecord> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
                                                 adapter);
+    List<RunRecord> completedRuns = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE,
+                                                  Integer.MAX_VALUE, adapter);
+    Assert.assertEquals(adapterRuns, completedRuns);
     Assert.assertEquals(1, adapterRuns.size());
     Assert.assertEquals(run1.getId(), Iterables.getFirst(adapterRuns, null).getPid());
   }

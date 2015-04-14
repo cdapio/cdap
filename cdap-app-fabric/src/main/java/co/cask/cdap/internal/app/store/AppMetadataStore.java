@@ -412,7 +412,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(RunRecord record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
-        if (normalCheck && adapter != null) {
+        if (normalCheck && (adapter != null || record.getAdapterName() != null)) {
           normalCheck = record.getAdapterName() != null && record.getAdapterName().equals(adapter);
         }
         return normalCheck;
