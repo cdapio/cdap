@@ -343,6 +343,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(@Nullable RunRecord record) {
         boolean normalCheck = true;
+        // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
         if (adapter != null || (record != null && record.getAdapterName() != null)) {
           normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
         }
@@ -366,6 +367,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                   @Override
                   public boolean apply(RunRecord input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
+                    // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
                     if (normalCheck && (adapter != null || input.getAdapterName() != null)) {
                       normalCheck = input.getAdapterName() != null && input.getAdapterName().equals(adapter);
                     }
@@ -390,6 +392,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
         @Override
         public boolean apply(@Nullable RunRecord record) {
           boolean normalCheck = true;
+          // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
           if (adapter != null || (record != null && record.getAdapterName() != null)) {
             normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
           }
@@ -412,6 +415,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(RunRecord record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
+        // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
         if (normalCheck && (adapter != null || record.getAdapterName() != null)) {
           normalCheck = record.getAdapterName() != null && record.getAdapterName().equals(adapter);
         }

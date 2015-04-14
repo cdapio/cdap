@@ -173,7 +173,6 @@ public interface Store {
    */
   RunRecord getRun(Id.Program id, String runid);
 
-
   /**
    * Creates a new stream if it does not exist.
    * @param id the namespace id

@@ -156,7 +156,6 @@ public final class ScheduleTaskRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-
         store.setStart(programId, runId, startTimeInSeconds, adapterName);
         if (state == ProgramController.State.COMPLETED) {
           completed();
