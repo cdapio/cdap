@@ -16,24 +16,31 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
- * CDAP Key Value Table Dataset Batch Source.
+ * CDAP Table Dataset Batch Source.
  */
-public class KVTableSource extends BatchReadableSource<byte[], byte[]> {
+public class TableSource extends BatchReadableSource<byte[], Row> {
+
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName("KVTableSource");
-    configurer.setDescription("CDAP KeyValue Table Dataset Batch Source");
-    configurer.addProperty(new Property(NAME, "Dataset Name", true));
+    configurer.setName("TableSource");
+    configurer.setDescription("CDAP Table Dataset Batch Source");
+    configurer.addProperty(new Property(NAME, "Table Name", true));
+    configurer.addProperty(new Property(
+      DatasetProperties.SCHEMA,
+      "Optional schema for the Table, which will be used when exploring the table. " +
+        "Schema is only applied if the table does not already exist when the pipeline is created. ", false));
   }
 
   @Override
   protected String getType(ETLStage stageConfig) {
-    return KeyValueTable.class.getName();
+    return Table.class.getName();
   }
 }

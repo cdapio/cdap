@@ -23,6 +23,7 @@ import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -98,7 +99,8 @@ public class ETLMapReduceTest extends TestBase {
   }
 
   private ETLBatchConfig constructETLBatchConfig() {
-    ETLStage source = new ETLStage("KVTableSource", ImmutableMap.of("name", "table1"));
+    ETLStage source = new ETLStage(BatchReadableSource.class.getSimpleName(),
+                                   ImmutableMap.of("name", "table1", "type", KeyValueTable.class.getName()));
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
