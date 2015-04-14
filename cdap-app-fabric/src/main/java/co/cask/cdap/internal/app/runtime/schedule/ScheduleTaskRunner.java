@@ -158,10 +158,7 @@ public final class ScheduleTaskRunner {
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
 
-        store.setStart(programId, runId, startTimeInSeconds);
-        if (adapterName != null) {
-          store.setStart(Id.Adapter.from(namespaceId, adapterName), runId, startTimeInSeconds);
-        }
+        store.setStart(programId, runId, startTimeInSeconds, adapterName);
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -174,10 +171,7 @@ public final class ScheduleTaskRunner {
       public void completed() {
         long stopTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         ProgramRunStatus status = ProgramController.State.COMPLETED.getRunStatus();
-        store.setStop(programId, runId, stopTimeInSeconds, status);
-        if (adapterName != null) {
-          store.setStop(Id.Adapter.from(namespaceId, adapterName), runId, stopTimeInSeconds, status);
-        }
+        store.setStop(programId, runId, stopTimeInSeconds, status, adapterName);
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -187,10 +181,7 @@ public final class ScheduleTaskRunner {
       public void error(Throwable cause) {
         long errorTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         ProgramRunStatus status = ProgramController.State.ERROR.getRunStatus();
-        store.setStop(programId, runId, errorTimeInSeconds, status);
-        if (adapterName != null) {
-          store.setStop(Id.Adapter.from(namespaceId, adapterName), runId, errorTimeInSeconds, status);
-        }
+        store.setStop(programId, runId, errorTimeInSeconds, status, adapterName);
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
@@ -201,20 +192,14 @@ public final class ScheduleTaskRunner {
       public void suspended() {
         LOG.debug("Suspending Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
                   program.getId(), runId);
-        store.setSuspend(programId, runId);
-        if (adapterName != null) {
-          store.setSuspend(Id.Adapter.from(namespaceId, adapterName), runId);
-        }
+        store.setSuspend(programId, runId, adapterName);
       }
 
       @Override
       public void resuming() {
         LOG.debug("Resuming Program {} {} {} {}.", programId.getNamespaceId(), programId.getApplicationId(),
                   program.getId(), runId);
-        store.setResume(programId, runId);
-        if (adapterName != null) {
-          store.setResume(Id.Adapter.from(namespaceId, adapterName), runId);
-        }
+        store.setResume(programId, runId, adapterName);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
