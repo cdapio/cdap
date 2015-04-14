@@ -126,7 +126,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info("Prepare to subscribe for partitions: {}", partitions);
 
     for (KafkaLogProcessor processor : messageProcessors) {
-      processor.partitionsChanged(partitions);
+      processor.init(partitions);
     }
 
     Map<Integer, Long> partitionOffset = Maps.newHashMap();

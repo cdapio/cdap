@@ -142,7 +142,7 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
   }
 
   @Override
-  public void partitionsChanged(Set<Integer> partitions) {
+  public void init(Set<Integer> partitions) {
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-saver-log-processor")));;

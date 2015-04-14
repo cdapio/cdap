@@ -17,13 +17,20 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
-import co.cask.cdap.watchdog.election.PartitionChangeHandler;
+
+import java.util.Set;
 
 /**
  * Process {@link KafkaLogEvent} with KafkaLogProcessor. Extends PartitionChangeHandler to implement the necessary
  * changes for partitions changed events.
  */
-public interface KafkaLogProcessor extends PartitionChangeHandler {
+public interface KafkaLogProcessor {
+
+  /**
+   * Called when the leader partitions change.
+   * @param partitions new leader partitions.
+   */
+  void init(Set<Integer> partitions);
 
   /**
    * Process method will be called for each event received from Kafka from the topics published for log saver.
