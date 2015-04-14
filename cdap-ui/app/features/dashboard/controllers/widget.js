@@ -14,7 +14,8 @@ angular.module(PKG.name+'.feature.dashboard')
       this.dataSrc = null;
       this.isLive = false;
     }
-    Widget.prototype.fetchData = function(scope) {
+
+    Widget.prototype.fetchData = function(scope, startMs, endMs) {
       if (!this.dataSrc) {
         this.dataSrc = new MyDataSource(scope);
       }
@@ -22,12 +23,14 @@ angular.module(PKG.name+'.feature.dashboard')
         _cdapPath: '/metrics/query' +
           '?context=' + encodeURIComponent(this.metric.context) +
           '&metric=' + encodeURIComponent(this.metric.name) +
-          '&start=now-60s&end=now',
+          '&start=' + (startMs? (startMs/1000): 'now-60s') +
+          '&end=' + (endMs? (endMs/1000): 'now'),
 
         method: 'POST'
       })
         .then(this.processData.bind(this))
-    }
+    };
+
     Widget.prototype.startPolling = function (scope) {
       if (!this.dataSrc) {
         this.dataSrc = new MyDataSource(scope);
@@ -101,7 +104,24 @@ angular.module(PKG.name+'.feature.dashboard')
         pollingId = $scope.wdgt.startPolling();
       } else {
         $scope.wdgt.stopPolling(pollingId);
+        pollingId = null;
       }
+    });
+    $scope.$watch('startMs', function(newVal) {
+      if (!newVal) {
+        return;
+      }
+      $scope.wdgt.isLive = false;
+      $scope.wdgt.fetchData($scope, newVal, $scope.wdgt.endMs);
+      console.log('StartMs: ', newVal);
+    });
+    $scope.$watch('endMs', function(newVal) {
+      if (!newVal) {
+        return;
+      }
+      $scope.wdgt.isLive = false;
+      $scope.wdgt.fetchData($scope, $scope.wdgt.startMs, newVal);
+      console.log('EndMs: ', newVal);
     });
     $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;

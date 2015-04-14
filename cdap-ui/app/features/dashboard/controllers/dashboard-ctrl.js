@@ -9,6 +9,8 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
   $scope.liveDashboard = null;
+  $scope.startMs = null;
+  $scope.endMs = null;
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
   $scope.currentBoard = rDashboardsModel.current();
@@ -88,6 +90,24 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
       }
     }
   };
+  $scope.$watch('startMs', function(newVal) {
+    var currentColumns = rDashboardsModel.current().columns,
+        i, j;
+    for (i=0; i<currentColumns.length; i++) {
+      for (j=0; j<currentColumns[i].length; j++) {
+        currentColumns[i][j].startMs = newVal;
+      }
+    }
+  });
 
+  $scope.$watch('endMs', function(newVal) {
+    var currentColumns = rDashboardsModel.current().columns,
+        i, j;
+    for (i=0; i<currentColumns.length; i++) {
+      for (j=0; j<currentColumns[i].length; j++) {
+        currentColumns[i][j].endMs = newVal;
+      }
+    }
+  });
 
 });
