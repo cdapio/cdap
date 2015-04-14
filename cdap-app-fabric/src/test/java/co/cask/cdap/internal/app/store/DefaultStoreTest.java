@@ -158,10 +158,14 @@ public class DefaultStoreTest {
 
     // Record start through an Adapter but try to stop the run outside of an adapter.
     store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter);
+
+    // RunRecord should be available through RunRecord query for that Program.
+    RunRecord programRun = store.getRun(programId, run1.getId());
+    Assert.assertEquals(run1.getId(), programRun.getPid());
+
     try {
-      // Query RunRecord without Adapter name
-      RunRecord programRun = store.getRun(programId, run1.getId());
-      throw new Exception("RunRecord query without Adapter should have thrown an exception");
+      store.getRun(programId, run1.getId(), "invalidAdapter");
+      throw new Exception("RunRecord should be available under different adapter name");
     } catch (RuntimeException e) {
       // expected
     }
@@ -176,7 +180,7 @@ public class DefaultStoreTest {
     store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus(), adapter);
     try {
       // Query RunRecord with wrong Adapter name
-      RunRecord programRun = store.getRun(programId, run1.getId(), "lkajsda");
+      RunRecord prgRun = store.getRun(programId, run1.getId(), adapter + adapter);
       throw new Exception("RunRecord query without Adapter should have thrown an exception");
     } catch (RuntimeException e) {
       // expected
@@ -186,8 +190,11 @@ public class DefaultStoreTest {
     Assert.assertNotNull(adapterRun);
     Assert.assertEquals(run1.getId(), adapterRun.getPid());
 
+    // RunRecords query for the Program should return the RunRecord
     List<RunRecord> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertEquals(0, runRecords.size());
+    Assert.assertEquals(1, runRecords.size());
+    Assert.assertEquals(run1.getId(), Iterables.getFirst(runRecords, null).getPid());
+
     List<RunRecord> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
                                                 adapter);
     List<RunRecord> completedRuns = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE,

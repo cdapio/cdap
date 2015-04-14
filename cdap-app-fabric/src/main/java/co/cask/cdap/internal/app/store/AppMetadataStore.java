@@ -270,8 +270,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // If program is running, this will be non-null
     if (running != null) {
 
-      // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-      if (running.getAdapterName() != null && (!running.getAdapterName().equals(adapter))) {
+      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
+      if (adapter != null && !adapter.equals(running.getAdapterName())) {
         String msg = getAdapterMismatchMsg(running, program, runid, "run", adapter);
         LOG.error(msg);
         throw new IllegalArgumentException(msg);
@@ -298,8 +298,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
         .build();
 
       RunRecord completed = get(key, RunRecord.class);
-      // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-      if (completed != null && completed.getAdapterName() != null && (!completed.getAdapterName().equals(adapter))) {
+      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
+      if (adapter != null && completed != null && !adapter.equals(completed.getAdapterName())) {
         String msg = getAdapterMismatchMsg(completed, program, runid, "run", adapter);
         LOG.error(msg);
         throw new IllegalArgumentException(msg);
@@ -318,8 +318,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                }
              });
       RunRecord record = Iterables.getFirst(runRecords, null);
-      // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-      if (record != null && record.getAdapterName() != null && !record.getAdapterName().equals(adapter)) {
+      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
+      if (record != null && adapter != null && !adapter.equals(record.getAdapterName())) {
         String msg = getAdapterMismatchMsg(record, program, runid, "run", adapter);
         LOG.error(msg);
         throw new IllegalArgumentException(msg);
@@ -344,8 +344,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
       public boolean apply(@Nullable RunRecord record) {
         boolean normalCheck = true;
         // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-        if (adapter != null || (record != null && record.getAdapterName() != null)) {
-          normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
+        if (adapter != null) {
+          normalCheck = record != null && adapter.equals(record.getAdapterName());
         }
         return normalCheck;
       }
@@ -368,8 +368,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                   public boolean apply(RunRecord input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
                     // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-                    if (normalCheck && (adapter != null || input.getAdapterName() != null)) {
-                      normalCheck = input.getAdapterName() != null && input.getAdapterName().equals(adapter);
+                    if (normalCheck && adapter != null) {
+                      normalCheck = adapter.equals(input.getAdapterName());
                     }
                     return normalCheck;
                   }
@@ -393,8 +393,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
         public boolean apply(@Nullable RunRecord record) {
           boolean normalCheck = true;
           // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-          if (adapter != null || (record != null && record.getAdapterName() != null)) {
-            normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
+          if (adapter != null) {
+            normalCheck = record != null && adapter.equals(record.getAdapterName());
           }
           return normalCheck;
         }
@@ -416,8 +416,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
       public boolean apply(RunRecord record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
         // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-        if (normalCheck && (adapter != null || record.getAdapterName() != null)) {
-          normalCheck = record.getAdapterName() != null && record.getAdapterName().equals(adapter);
+        if (normalCheck && adapter != null) {
+          normalCheck = adapter.equals(record.getAdapterName());
         }
         return normalCheck;
       }
