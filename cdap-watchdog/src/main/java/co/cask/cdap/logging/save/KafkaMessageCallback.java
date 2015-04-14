@@ -78,7 +78,12 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
                                                    message.getNextOffset());
 
         for (KafkaLogProcessor processor : kafkaLogProcessors) {
-          processor.process(logEvent);
+          try {
+            processor.process(logEvent);
+          } catch (Throwable th) {
+            LOG.error("Error processing kafka log event in processor {}",
+                      processor.getClass().getSimpleName());
+          }
         }
       } catch (Throwable th) {
         LOG.error("Error processing message at topic {} parition {}",

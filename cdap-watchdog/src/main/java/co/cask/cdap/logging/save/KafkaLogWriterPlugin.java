@@ -149,7 +149,6 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
-    //TODO: Is this a good idea?
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
     countDownLatch = new CountDownLatch(1);
 
@@ -221,24 +220,19 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
   @Override
   public void stop() {
     try {
-      logFileWriter.flush();
-      logFileWriter.close();
-
-      if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
-        logWriterFuture.cancel(false);
-        logWriterFuture = null;
+      if (countDownLatch != null) {
+        countDownLatch.countDown();
       }
-
-      if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
-        cleanupFuture.cancel(false);
-        cleanupFuture = null;
-      }
-
-      countDownLatch.countDown();
 
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdown();
       }
+
+      scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
+
+      logFileWriter.flush();
+      logFileWriter.close();
+
     } catch (Exception e) {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
     }

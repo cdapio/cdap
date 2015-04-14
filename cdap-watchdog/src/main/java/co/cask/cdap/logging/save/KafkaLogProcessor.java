@@ -21,8 +21,8 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import java.util.Set;
 
 /**
- * Process {@link KafkaLogEvent} with KafkaLogProcessor. Extends PartitionChangeHandler to implement the necessary
- * changes for partitions changed events.
+ * Process {@link KafkaLogEvent} with KafkaLogProcessor. init and stop are lifecycle methods that can be called
+ * multiple times when kafka leader partitions change.
  */
 public interface KafkaLogProcessor {
 
@@ -40,8 +40,7 @@ public interface KafkaLogProcessor {
   public void process(KafkaLogEvent event);
 
   /**
-   * Called to perform cleanup tasks. This method will be called partitionChanged is called as well as during shutdown.
-   * method any further.
+   * Called to stop processing for the current set of kafka partitions. Stop can be called before init.
    */
   public void stop();
 
