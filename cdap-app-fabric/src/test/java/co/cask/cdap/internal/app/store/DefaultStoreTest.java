@@ -68,6 +68,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
@@ -145,6 +146,52 @@ public class DefaultStoreTest {
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
+  }
+
+  @Test
+  public void testAdapterLogRunHistory() throws Exception {
+    String adapter = "adapter1";
+    Id.Program programId = Id.Program.from("ns1", "app1", ProgramType.WORKER, "wrk1");
+    long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
+    RunId run1 = RunIds.generate(now - 20000);
+
+    // Record start through an Adapter but try to stop the run outside of an adapter.
+    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter);
+    try {
+      // Query RunRecord without Adapter name
+      RunRecord programRun = store.getRun(programId, run1.getId());
+      throw new Exception("RunRecord query without Adapter should have thrown an exception");
+    } catch (RuntimeException e) {
+      // expected
+    }
+
+    try {
+      store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
+      throw new Exception("Stop without Adapter should have thrown an exception.");
+    } catch (RuntimeException e) {
+      // expected
+    }
+
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus(), adapter);
+    try {
+      // Query RunRecord with wrong Adapter name
+      RunRecord programRun = store.getRun(programId, run1.getId(), "lkajsda");
+      throw new Exception("RunRecord query without Adapter should have thrown an exception");
+    } catch (RuntimeException e) {
+      // expected
+    }
+
+    RunRecord adapterRun = store.getRun(programId, run1.getId(), adapter);
+    Assert.assertNotNull(adapterRun);
+    Assert.assertEquals(run1.getId(), adapterRun.getPid());
+
+    List<RunRecord> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertEquals(0, runRecords.size());
+    List<RunRecord> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
+                                                adapter);
+    Assert.assertEquals(1, adapterRuns.size());
+    Assert.assertEquals(run1.getId(), Iterables.getFirst(adapterRuns, null).getPid());
   }
 
   @Test

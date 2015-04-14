@@ -292,8 +292,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
     if (programStartSecs > -1) {
       // If start time is found, run a get
-      return get(new MDSKey.Builder(completedKey).add(getInvertedTsKeyPart(programStartSecs)).add(runid).build(),
-                 RunRecord.class);
+      MDSKey key = new MDSKey.Builder(completedKey)
+        .add(getInvertedTsKeyPart(programStartSecs))
+        .add(runid)
+        .build();
+
+      RunRecord completed = get(key, RunRecord.class);
+      // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
+      if (completed != null && completed.getAdapterName() != null && (!completed.getAdapterName().equals(adapter))) {
+        String msg = getAdapterMismatchMsg(completed, program, runid, "run", adapter);
+        LOG.error(msg);
+        throw new IllegalArgumentException(msg);
+      }
+      return completed;
     } else {
       // If start time is not found, scan the table (backwards compatibility when run ids were random UUIDs)
       MDSKey startKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(Long.MAX_VALUE)).build();
@@ -332,7 +343,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(@Nullable RunRecord record) {
         boolean normalCheck = true;
-        if (adapter != null) {
+        if (adapter != null || (record != null && record.getAdapterName() != null)) {
           normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
         }
         return normalCheck;
@@ -355,7 +366,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                   @Override
                   public boolean apply(RunRecord input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                    if (normalCheck && adapter != null) {
+                    if (normalCheck && (adapter != null || input.getAdapterName() != null)) {
                       normalCheck = input.getAdapterName() != null && input.getAdapterName().equals(adapter);
                     }
                     return normalCheck;
@@ -379,7 +390,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
         @Override
         public boolean apply(@Nullable RunRecord record) {
           boolean normalCheck = true;
-          if (adapter != null) {
+          if (adapter != null || (record != null && record.getAdapterName() != null)) {
             normalCheck = record != null && record.getAdapterName() != null && record.getAdapterName().equals(adapter);
           }
           return normalCheck;
