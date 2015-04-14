@@ -360,3 +360,40 @@ img.bordered-image {
 ul.first.last.simple {
   padding-left: 20px;
 }
+
+/* -- Table styles used in Introduction page -------------------------------------- */
+
+div.table-block.container {
+  border-style: solid;
+  border-width: 1px;
+  margin-bottom: 20px;
+  border-color: #aaa;
+}
+
+/* -- Background and Border colors -------------------------------------- */
+
+/* Makes first row dark background */
+
+div.table-block.container table.docutils tr.row-odd:first-of-type {
+  background-color: #E0E0E0;
+}
+ 
+/* Makes even rows (second row in particular) light-grey-blue background */
+
+div.table-block.container table.docutils tr.row-even {
+  background-color: #ECF0F3;
+}
+
+/* Makes last row white border */
+
+div.table-block.container table.docutils tr:last-of-type td {
+  border-bottom: 1px solid white;
+}
+
+/* White background */
+
+div.table-block.container table.white-table.docutils tr.row-odd  {
+  background-color: white;
+}
+
+

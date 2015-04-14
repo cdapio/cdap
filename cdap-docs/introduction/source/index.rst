@@ -44,49 +44,65 @@ Installation
 - Startup CDAP
 - Startup CDAP Command Line Interface
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - Install and startup Hadoop and other technologies, as required
-     - Hadoop
+  .. list-table::
+     :widths: 15 65 20
+
+     * - 
+       - **Installation and startup**
+       - Required Technologies
        
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - Install and startup Hadoop and other technologies, as required
+       - - Hadoop
+         - Other technologies
+         
+     * - **Using CDAP**
+       - Install CDAP by downloading zipfile, unzipping and starting CDAP Server
+       - - CDAP Instance    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``$ unzip cdap-sdk-``\ |literal-release|\ ``.zip``
+     * -  
+       - | ``$ unzip cdap-sdk-``\ |literal-release|\ ``.zip``
+         | ``$ cd cdap-sdk-``\ |literal-release|
+         | ``$ ./bin/cdap.sh start``
+         
+         ::
 
-       ``$ cd cdap-sdk-``\ |literal-release|
+          Starting Standalone CDAP ................
+          Standalone CDAP started successfully.
+          Connect to the Console at http://localhost:9999
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 15 65 20
+     
+     * - 
+       - **Startup command line interface**
+       - Required Technologies
+     * - Current Approach
+       - Run Hive commands using Hive CLI
+       - - HiveServer
+         - Beeline
+     * - **Using CDAP**
+       - Start CDAP CLI (Command Line Interface)
+       - - CDAP CLI 
        
-       ``$ ./bin/cdap.sh start``
-       ::
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-        Starting Standalone CDAP ................
-        Standalone CDAP started successfully.
-        Connect to the Console at http://localhost:9999
+     * - 
+       - ``$ ./bin/cdap-cli.sh``
+         ::
 
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive commands using Hive CLI
-     - HiveServer, Beeline
-       
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``$ ./bin/cdap-cli.sh``
-       ::
-
-        Successfully connected CDAP instance at http://localhost:10000
-        cdap (http://localhost:10000/default)> 
+          Successfully connected CDAP instance at http://localhost:10000
+          cdap (http://localhost:10000/default)> 
 
 Data Ingestion
 ==============
@@ -96,45 +112,65 @@ Data Ingestion
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
 - The abstraction of Streams lets you disconnect how you ingest from how you process
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Create a Time partitioned file in HDFS
-       - Configure Kafka or Flume to write to time partitions
-     - HDFS, Kafka
+  .. list-table::
+     :widths: 15 65 20
+     :header-rows: 1
+
+     * - 
+       - Create a Stream
+       - Required Technologies
        
-.. list-table::
-   :widths: 15 85
+     * - **Current Approach**
+       - - Create a Time partitioned file in HDFS
+         - Configure Kafka or Flume to write to time partitions
+       - - HDFS
+         - Kafka
+         
+     * - **Using CDAP**
+       - ``> create stream logEventStream``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> create stream logEventStream``
-       ::
+     * -  
+       - ::
        
-        Successfully created stream with ID 'logEventStream'
+          Successfully created stream with ID 'logEventStream'
 
-       |non-breaking-space|
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - **Current Approach**
-     - - Write a custom consumer for Kafka that reads from source
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_logeventstream``
-     - HDFS, Kafka
+  .. list-table::
+     :widths: 15 65 20
+     :header-rows: 1
 
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> load stream logEventStream examples/resources/accesslog.txt``
-       ::
+     * - 
+       - Send data to the Stream
+       - Required Technologies
        
-        Successfully sent stream event to stream 'logEventStream'
+     * - **Current Approach**
+       - - Write a custom consumer for Kafka that reads from source
+         - Write the data to HDFS
+         - Create external table in Hive called ``stream_logeventstream``
+       - - HDFS
+         - Kafka
+         
+     * - **Using CDAP**
+       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+       
+          Successfully sent stream event to stream 'logEventStream'
 
 
 Data Exploration
@@ -154,8 +190,11 @@ Data Exploration
      - **Action / CDAP Command and Output**
      - **Required Technologies**
    * - **Current Approach**
-     - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventstream``
-     - HiveServer, Beeline
+     - - Run Hive command using Hive CLI:
+     
+         - ``DESCRIBE stream_logeventstream``
+     - - HiveServer
+       - Beeline
        
 .. list-table::
    :widths: 15 85
@@ -179,7 +218,8 @@ Data Exploration
 
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
-     - HiveServer, Beeline
+     - - HiveServer
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -223,7 +263,8 @@ Data Exploration: Attaching schema
      - **Required Technologies**
    * - **Current Approach**
      - Drop the external Hive table
-     - HiveServer, Beeline
+     - - HiveServer
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -241,7 +282,8 @@ Data Exploration: Attaching schema
 
    * - **Current Approach**
      - Run Hive command using Hive CLI: `DESCRIBE stream_logeventsetream``
-     - HiveServer, Beeline
+     - - HiveServer
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -274,7 +316,8 @@ Data Exploration: Attaching schema
 
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventsetream LIMIT 2``
-     - HiveCLI, Beeline
+     - - HiveCLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -310,7 +353,8 @@ Data Exploration: Attaching schema
 
    * - **Current Approach**
      - Write a code to compute the various stats: Unique, Histograms, etc.
-     - HiveServer, Beeline
+     - - HiveServer
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -425,7 +469,9 @@ Advanced Data Exploration
    * - **Current Approach**
      - - Create a Time partitioned file in HDFS
        - Configure Flume or Kafka to write to time partitions
-     - HDFS, Kafka, Hive
+     - - HDFS
+       - Kafka
+       - Hive
 
 .. list-table::
    :widths: 15 85
@@ -446,7 +492,9 @@ Advanced Data Exploration
        - Write a custom consumer that reads from source (Example: Kafka)
        - Write the data to HDFS
        - Create external table in Hive called ``stream_ip2geo``
-     - HDFS, Kafka, Hive
+     - - HDFS
+       - Kafka
+       - Hive
 
 .. list-table::
    :widths: 15 85
@@ -464,7 +512,8 @@ Advanced Data Exploration
 
    * - **Current Approach**
      - Write data to Kafka or append directly to HDFS
-     - HDFS, Kafka
+     - - HDFS
+       - Kafka
 
 .. list-table::
    :widths: 15 85
@@ -482,7 +531,8 @@ Advanced Data Exploration
 
    * - **Current Approach**
      - Run Hive command using Hive CLI ``SELECT * FROM stream_ip2geo``
-     - Hive CLI, Beeline
+     - - Hive CLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -527,7 +577,10 @@ Advanced Data Exploration
    * - **Current Approach**
      - - Drop the external Hive table
        - Recreate the Hive table with new schema
-     - HDFS, Kafka, Hive CLI, Beeline
+     - - HDFS
+       - Kafka
+       - Hive CLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -545,7 +598,8 @@ Advanced Data Exploration
 
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT * FROM stream_ip2geo``
-     - Hive CLI, Beeline
+     - - Hive CLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -590,7 +644,8 @@ Advanced Data Exploration
 
    * - **Current Approach**
      - Run Hive command using Hive CLI: ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
-     - Hive CLI, Beeline
+     - - Hive CLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -812,9 +867,10 @@ Transforming Your Data
    :widths: 15 85
 
    * - **CDAP**
-     - Dataset that is time partitioned::
+     - 
      
-        $ list dataset instances
+       ``> list dataset instances # Dataset that is time partitioned``
+       ::
 
         +======================================================================================================+
         | name                                  | type                                                         |
@@ -829,7 +885,8 @@ Transforming Your Data
 
    * - **Current Approach**
      - Run Hive query using CLI: ``'describe user_logEventStream_converted'`` 
-     - Hive CLI, Beeline
+     - - Hive CLI
+       - Beeline
 
 .. list-table::
    :widths: 15 85
@@ -905,10 +962,10 @@ Building Real World Applications
    :widths: 15 85
 
    * - **CDAP**
-     - ``> deploy app apps/cdap-wise-0.4.0-SNAPSHOT.jar``       
+     - ``> deploy app apps/cdap-wise-``\ |literal-wise-version|\ ``.zip``       
        ::
 
-        Success 
+        Insert output 
 
        |non-breaking-space|
 
@@ -928,7 +985,7 @@ Building Real World Applications
      - ``> describe app Wise``       
        ::
 
-        Success
+        Insert output
 
        |non-breaking-space|
 
@@ -949,7 +1006,7 @@ Building Real World Applications
      - ``> start flow Wise.WiseFlow``       
        ::
 
-        Success
+        Insert output
 
        |non-breaking-space|
 
@@ -957,10 +1014,8 @@ Building Real World Applications
    :widths: 15 65 20
 
    * - **Current Approach**
-     - - Get the application ID with the command: 
-       - ``yarn application -list | grep "Wise.WiseFlow"``
-       - Get the status using the command: 
-       - ``yarn application -status <APP ID>``
+     - - Retrieve the application ID with: ``yarn application -list | grep "Wise.WiseFlow"``
+       - Retrieve the status with: ``yarn application -status <APP ID>``
      - - YARN
 
 .. list-table::
@@ -970,7 +1025,7 @@ Building Real World Applications
      - ``> get flow status Wise.WiseFlow``       
        ::
 
-        Success
+        Insert output
 
        |non-breaking-space|
 
@@ -979,8 +1034,8 @@ Building Real World Applications
 
    * - **Current Approach**
      - - Navigate to the resource manager UI
-       - Find the Wise.WiseFlow on UI
-       - Click to the see application logs
+       - Find the *Wise.WiseFlow* on UI
+       - Click to see application logs
        - Find all the node managers for the application containers
        - Navigate to all the containers in separate tabs 
        - Click on container logs
@@ -994,7 +1049,7 @@ Building Real World Applications
      - ``> get flow logs Wise.WiseFlow``       
        ::
 
-        Success
+        Insert output
 
 
 .. rubric:: Program Lifecycle
@@ -1018,7 +1073,7 @@ Building Real World Applications
      - ``> start workflow Wise.WiseWorkflow``       
        ::
 
-        Success 
+        Insert output 
 
        |non-breaking-space|
 
@@ -1038,7 +1093,7 @@ Building Real World Applications
      - ``> get workflow status Wise.WiseWorkflow``       
        ::
 
-        Success
+        Insert output
 
        |non-breaking-space|
 
@@ -1059,7 +1114,7 @@ Building Real World Applications
      - ``> start service Wise.WiseService``       
        ::
 
-        Success
+        Insert output
 
        |non-breaking-space|
 
@@ -1080,8 +1135,44 @@ Building Real World Applications
      - ``> get service status Wise.WiseService``       
        ::
 
-        Success
+        Insert output
 
+
+.. rubric:: Serve the processed data in real time
+
+.. list-table::
+   :widths: 15 65 20
+
+   * - 
+     - **Action / CDAP Command and Output**
+     - **Required Technologies**
+   * - **Current Approach**
+     - - Navigate to the resouce manager UI
+       - Find the Wise.WiseService on UI
+       - Click to the see application logs
+       - Find all the node managers for the application containers
+       - Navigate to all the containers in sepearate tabs 
+       - Click on container logs
+     - - HDFS
+       - Kafka
+       - Hive
+       - Oozie
+       - YARN
+
+.. list-table::
+   :widths: 15 85
+
+   * - **CDAP**
+     - ``> get endpoints service Wise.WiseService``       
+       ::
+
+        Insert output 
+
+       |non-breaking-space|
+
+
+
+OLD
 
 .. rubric:: Serve the processed data in real time
 
