@@ -143,6 +143,7 @@ public final class ScheduleTaskRunner {
     final ProgramController controller = runtimeInfo.getController();
     final Id.Program programId = program.getId();
     final String runId = controller.getRunId().getId();
+    final String adapterName = options.getArguments().getOption(ProgramOptionConstants.ADAPTER_NAME);
     final CountDownLatch latch = new CountDownLatch(1);
 
     controller.addListener(new AbstractListener() {
@@ -154,7 +155,7 @@ public final class ScheduleTaskRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(programId, runId, startTimeInSeconds);
+        store.setStart(programId, runId, startTimeInSeconds, adapterName);
         if (state == ProgramController.State.COMPLETED) {
           completed();
         }
@@ -179,7 +180,6 @@ public final class ScheduleTaskRunner {
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
-
         latch.countDown();
       }
 
