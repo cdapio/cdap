@@ -157,32 +157,18 @@ public class ExploreTableManager {
     String datasetType = spec.getType();
     // special casing here... but we really should clean this up
     // there are two ways to refer to each dataset type...
-    if (isExplorableTable(datasetType)) {
-      String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
-      // if there is no schema, this is a no-op.
-      if (schemaStr == null) {
-        return QueryHandle.NO_OP;
-      }
-      try {
-        Schema schema = Schema.parseJson(schemaStr);
-        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
-          .setSchema(schema)
-          .setTableComment("CDAP Dataset")
-          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
-
-        return exploreService.execute(datasetID.getNamespace(), createStatement);
-      } catch (IOException e) {
-        // shouldn't happen because ObjectMappedTableDefinition is supposed to verify this,
-        // but put in for completeness
-        throw new IllegalArgumentException("Unable to parse schema for dataset " + datasetID);
-      }
+    if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
+      ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
+      return createFromSchemaProperty(spec, datasetID, serdeProperties);
     }
 
     Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
 
     // To be enabled for explore, a dataset must either be RecordScannable/Writable,
     // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
-    if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+    if (dataset instanceof Table) {
+      return createFromSchemaProperty(spec, datasetID, serdeProperties);
+    } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
       createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
         .setSchema(hiveSchemaFor(dataset))
@@ -204,11 +190,27 @@ public class ExploreTableManager {
     }
   }
 
-  private boolean isExplorableTable(String datasetType) {
-    return ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
-      ObjectMappedTableModule.SHORT_NAME.equals(datasetType) ||
-      "table".equals(datasetType) ||
-      Table.class.getName().equals(datasetType);
+  private QueryHandle createFromSchemaProperty(DatasetSpecification spec, Id.DatasetInstance datasetID,
+                                               Map<String, String> serdeProperties)
+    throws ExploreException, SQLException, UnsupportedTypeException {
+
+    String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
+    // if there is no schema, this is a no-op.
+    if (schemaStr == null) {
+      return QueryHandle.NO_OP;
+    }
+    try {
+      Schema schema = Schema.parseJson(schemaStr);
+      String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
+        .setSchema(schema)
+        .setTableComment("CDAP Dataset")
+        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+
+      return exploreService.execute(datasetID.getNamespace(), createStatement);
+    } catch (IOException e) {
+      // shouldn't happen because datasets are supposed to verify this, but just in case
+      throw new IllegalArgumentException("Unable to parse schema for dataset " + datasetID);
+    }
   }
 
   /**
