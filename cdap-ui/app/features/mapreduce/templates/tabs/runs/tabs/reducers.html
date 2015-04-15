@@ -7,9 +7,7 @@
         <th data-predicate="progress">% Complete</th>
         <th data-predicate="finishTime">Duration</th>
         <th data-predicate="counters.REDUCE_INPUT_RECORDS">Records In</th>
-        <th data-predicate="">Bytes In</th>
         <th data-predicate="counters.REDUCE_OUTPUT_RECORDS">Records Out</th>
-        <th data-predicate="">Bytes Out</th>
       </tr>
     </thead>
 
@@ -23,9 +21,7 @@
           <span ng-show="reduce.finishTime === 0">N/A</span>
         </td>
         <td>{{ reduce.counters.REDUCE_INPUT_RECORDS }}</td>
-        <td></td>
         <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS }}</td>
-        <td></td>
       </tr>
 
       <tr class="text-center" ng-if="!info.reduceTasks.length">

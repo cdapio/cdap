@@ -27,11 +27,12 @@ angular.module(PKG.name + '.feature.mapreduce')
 
 
     if ($state.params.runid) {
+      var path = '/apps/' + $state.params.appId
+                      + '/mapreduce/' + $state.params.programId
+                      + '/runs/' + $state.params.runid + '/info';
 
       dataSrc.poll({
-        _cdapNsPath: '/apps/' + $state.params.appId
-                      + '/mapreduce/' + $state.params.programId
-                      + '/runs/' + $state.params.runid + '/info'
+        _cdapNsPath: path
       }, function (res) {
 
         $scope.info = res;
