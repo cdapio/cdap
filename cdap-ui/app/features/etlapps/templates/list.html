@@ -13,22 +13,19 @@
 
 <br/>
 <div class="row" etl-apps-list>
-  <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12" ng-repeat="app in etlapps">
+  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6" ng-repeat="app in etlapps">
     <div class="well well-md">
-       <h3>
-         <i class="fa fa-heartbeat" style="/* font-size: 30px; */"></i>
-         ETL Batch
-       </h3>
-        <div class="h3">
-          <div>{{::app.name | caskCapitalizeFilter}} </div>
+        <div>
+          <h3 tooltip="{{::app.name}}">
+            <i class="fa fa-heartbeat"></i>
+            {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
+          </h3>
           <small> Type: {{::app.template}}  </small>
         </div>
       <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
         <i class="fa fa-circle"></i>
         <span> {{::app.status}} </span>
       </div>
-      <br>
-
       <p class="description" tooltip="{{::app.description}}">
         {{::app.description | myEllipsis: 50}}
       </p>
