@@ -111,6 +111,20 @@ public class AdapterServiceTests extends AppFabricTestBase {
     // Delete Adapter
     adapterService.removeAdapter(NAMESPACE, adapter1);
     adapterService.removeAdapter(NAMESPACE, adapter2);
+
+    try {
+      adapterService.getAdapter(NAMESPACE, adapter1);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapter1));
+    } catch (AdapterNotFoundException ex) {
+      // expected
+    }
+
+    try {
+      adapterService.getAdapter(NAMESPACE, adapter2);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapter2));
+    } catch (AdapterNotFoundException ex) {
+      // expected
+    }
   }
 
   @Test

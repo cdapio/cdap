@@ -369,7 +369,7 @@ public class AdapterService extends AbstractIdleService {
   private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null || appSpec.getWorkflows().size() != 1) {
+    if (appSpec == null) {
       throw new NotFoundException(appId);
     }
     String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
@@ -398,7 +398,7 @@ public class AdapterService extends AbstractIdleService {
   private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null || appSpec.getWorkers().size() != 1) {
+    if (appSpec == null) {
       throw new NotFoundException(appId);
     }
     String workflowName = Iterables.getFirst(appSpec.getWorkers().keySet(), null);
