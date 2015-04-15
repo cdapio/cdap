@@ -203,6 +203,11 @@ public class AdapterService extends AbstractIdleService {
     return adapterStatus;
   }
 
+  public boolean canDeleteApp(Id.Application id) {
+    Collection<AdapterSpecification> adapterSpecs = getAdapters(id.getNamespace(), id.getId());
+    return adapterSpecs.isEmpty();
+  }
+
   /**
    * Sets the status of an Adapter specified by the name in a given namespace.
    *
