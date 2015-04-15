@@ -35,7 +35,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryFixedModulesDatasetFramework;
+import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
@@ -192,7 +192,7 @@ public class DataSetServiceModules extends RuntimeModule {
         .build();
       // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
       //       as long as the data is durably persisted
-      return new InMemoryFixedModulesDatasetFramework(registryFactory, modulesMap, configuration);
+      return new StaticDatasetFramework(registryFactory, modulesMap, configuration);
     }
   }
 }
