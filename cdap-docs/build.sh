@@ -28,7 +28,6 @@
 
 source _common/vars
 source _common/common-build.sh
-read -a manuals <<< "$MANUALS"
 
 ARG_1="$1"
 ARG_2="$2"
@@ -36,17 +35,17 @@ ARG_3="$3"
 
 function set_project_path() {
   if [ "x$ARG_2" == "x" ]; then
-    PROJECT_PATH="$SCRIPT_PATH/../"
+    PROJECT_PATH="${SCRIPT_PATH}/../"
   else
-    PROJECT_PATH="$SCRIPT_PATH/../../$ARG_2"
+    PROJECT_PATH="${SCRIPT_PATH}/../../${ARG_2}"
   fi
 }
 
 function usage() {
-  cd $PROJECT_PATH
+  cd ${PROJECT_PATH}
   PROJECT_PATH=`pwd`
-  echo "Build script for '$PROJECT_CAPS' docs"
-  echo "Usage: $SCRIPT < option > [source test_includes]"
+  echo "Build script for '${PROJECT_CAPS}' docs"
+  echo "Usage: ${SCRIPT} < option > [source test_includes]"
   echo ""
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
@@ -60,62 +59,55 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
   echo ""
-  echo "    clean	   Clean up (previous builds)"
+  echo "    clean          Clean up (previous builds)"
   echo ""
   echo "  with"
-  echo "    source         Path to $PROJECT source, if not $PROJECT_PATH"
+  echo "    source         Path to ${PROJECT} source, if not ${PROJECT_PATH}"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo ""
 }
 
 function run_command() {
   case "$1" in
-    all )               build_all; exit 1;;
-    clean )             clean_builds; exit 1;;
-    docs )              build_docs; exit 1;;
+    all )               build_all; exit 0;;
+    clean )             clean_builds; exit 0;;
+    docs )              build_docs; exit 0;;
     docs-github-part )  build_docs_github $ARG_2 $ARG_3;;
-    docs-github )       build_docs_github $ARG_2 $ARG_3; exit 1;;
+    docs-github )       build_docs_github $ARG_2 $ARG_3; exit 0;;
     docs-web-part )     build_docs_web $ARG_2 $ARG_3;;
-    docs-web )          build_docs_web $ARG_2 $ARG_3; exit 1;;
-    javadocs )          build_javadocs; exit 1;;
-    licenses )          build_license_depends; exit 1;;
-    sdk )               build_sdk; exit 1;;
-    version )           print_version; exit 1;;
-    test )              test; exit 1;;
-    * )                 usage; exit 1;;
+    docs-web )          build_docs_web $ARG_2 $ARG_3; exit 0;;
+    javadocs )          build_javadocs; exit 0;;
+    licenses )          build_license_depends; exit 0;;
+    sdk )               build_sdk; exit 0;;
+    version )           print_version; exit 0;;
+    test )              test; exit 0;;
+    * )                 usage; exit 0;;
   esac
 }
 ################################################## new
 
 function clean() {
-  cd $SCRIPT_PATH
-  if [ -d  "${SCRIPT_PATH}/${BUILD}" ]
-  then
-    echo "do nothing" 
-    rm -rf $SCRIPT_PATH/$BUILD/*
-  fi
-  mkdir -p $SCRIPT_PATH/$BUILD/$HTML
-  mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE
-  echo "Cleaned $BUILD directory"
+  cd ${SCRIPT_PATH}
+  rm -rf ${SCRIPT_PATH}/${BUILD}/*
+  mkdir -p ${SCRIPT_PATH}/${BUILD}/${HTML}
+  mkdir -p ${SCRIPT_PATH}/${BUILD}/${SOURCE}
+  echo "Cleaned ${BUILD} directory"
   echo ""
 }
 
 function copy_source() {
-  echo "Copying source for $1 ($2) ..."
-  cd $SCRIPT_PATH
-  mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE/$1
-  rewrite $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst "<placeholder>" "$2"
+  echo "Copying source for ${1} (${2}) ..."
+  cd ${SCRIPT_PATH}
+  mkdir -p ${SCRIPT_PATH}/${BUILD}/${SOURCE}/${1}
+  rewrite ${COMMON_PLACEHOLDER} ${BUILD}/${SOURCE}/${1}/index.rst "<placeholder>" "${2}"
   echo ""
 }
 
 function copy_html() {
-  echo "Copying html for $1..."
-  cd $SCRIPT_PATH
-  if [ -d "$SCRIPT_PATH/$BUILD/$HTML/$1" ]
-  then
-    rm -rf $SCRIPT_PATH/$BUILD/$HTML/$1
-  fi
-  cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
+  echo "Copying html for ${1}..."
+  cd ${SCRIPT_PATH}
+  rm -rf ${SCRIPT_PATH}/${BUILD}/${HTML}/${1}
+  cp -r ${1}/${BUILD}/${HTML} ${BUILD}/${HTML}/${1}
   echo ""
 }
 
@@ -136,15 +128,15 @@ function build_docs_outer_level() {
   copy_source examples-manual     "Examples, Guides, and Tutorials"
 
   # Build outer-level docs
-  cd $SCRIPT_PATH
-  cp $COMMON_HIGHLEVEL_PY  $BUILD/$SOURCE/conf.py
-  cp -R $COMMON_IMAGES     $BUILD/$SOURCE/
-  cp $COMMON_SOURCE/*.rst  $BUILD/$SOURCE/
+  cd ${SCRIPT_PATH}
+  cp ${COMMON_HIGHLEVEL_PY}  ${BUILD}/${SOURCE}/conf.py
+  cp -R ${COMMON_IMAGES}     ${BUILD}/${SOURCE}/
+  cp ${COMMON_SOURCE}/*.rst  ${BUILD}/${SOURCE}/
   
-  if [ "x$1" == "x" ]; then
+  if [ "x${1}" == "x" ]; then
     sphinx-build -b html -d build/doctrees build/source build/html
   else
-    sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
+    sphinx-build -D googleanalytics_id=${1} -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
   fi
   
   echo ""
@@ -153,22 +145,22 @@ function build_docs_outer_level() {
   echo "========================================================"
   echo ""
 
-  for i in "${manuals[@]}"
+  for i in ${MANUALS}
   do
-    copy_html $i
+    copy_html ${i}
   done
 
   local project_dir
   # Rewrite 404 file, using branch if not a release
-  if [ "x$GIT_BRANCH_TYPE" == "xfeature" ]; then
-    project_dir=$PROJECT_VERSION-$GIT_BRANCH
+  if [ "x${GIT_BRANCH_TYPE}" == "xfeature" ]; then
+    project_dir=${PROJECT_VERSION}-${GIT_BRANCH}
   else
-    project_dir=$PROJECT_VERSION
+    project_dir=${PROJECT_VERSION}
   fi
-  rewrite $BUILD/$HTML/404.html "src=\"_static"  "src=\"/cdap/$project_dir/en/_static"
-  rewrite $BUILD/$HTML/404.html "src=\"_images"  "src=\"/cdap/$project_dir/en/_images"
-  rewrite $BUILD/$HTML/404.html "/href=\"http/!s|href=\"|href=\"/cdap/$project_dir/en/|g"
-  rewrite $BUILD/$HTML/404.html "action=\"search.html"  "action=\"/cdap/$project_dir/en/search.html"
+  rewrite ${BUILD}/${HTML}/404.html "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
+  rewrite ${BUILD}/${HTML}/404.html "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
+  rewrite ${BUILD}/${HTML}/404.html "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
+  rewrite ${BUILD}/${HTML}/404.html "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
 }
 
 ################################################## current
@@ -190,7 +182,7 @@ function build_all() {
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
   bell
-  exit 1
+  exit 0
 }
 
 function build_javadocs() {
@@ -224,9 +216,9 @@ function _build_docs() {
 }
 
 function build() {
-  for i in "${manuals[@]}"
+  for i in ${MANUALS}
   do
-    build_specific_doc $i $1
+    build_specific_doc ${i} ${1}
   done
 }
 
@@ -291,20 +283,14 @@ function test() {
 function clean_builds() {
   # clean everything in cdap-docs dir
   echo ""
-  if [ -d "${SCRIPT_PATH}/${BUILD}" ]
-  then
-    rm -rf $SCRIPT_PATH/$BUILD/*
-  fi
-  echo "Cleaned $SCRIPT_PATH/$BUILD directory"
+  rm -rf ${SCRIPT_PATH}/${BUILD}/*
+  echo "Cleaned ${SCRIPT_PATH}/${BUILD} directory"
 
   # clean everything in manual directories  
   echo ""
-  for i in "${manuals[@]}"
+  for i in ${MANUALS}
   do
-    if [ -d "${SCRIPT_PATH}/${i}/${BUILD}" ]
-    then
-      rm -rf $SCRIPT_PATH/$i/$BUILD/*
-    fi
+    rm -rf ${SCRIPT_PATH}/${i}/${BUILD}/*
     echo "Cleaned ${SCRIPT_PATH}/${i}/${BUILD} directory"
     echo ""
   done

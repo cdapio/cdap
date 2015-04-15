@@ -61,10 +61,10 @@ EOF`
 SCRIPT=`basename $0`
 SCRIPT_PATH=`pwd`
 
-DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
-BUILD_PATH="$SCRIPT_PATH/$BUILD"
-HTML_PATH="$BUILD_PATH/$HTML"
-SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
+DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
+BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
+HTML_PATH="${BUILD_PATH}/${HTML}"
+SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -130,35 +130,32 @@ function usage() {
 }
 
 function clean() {
-  cd $SCRIPT_PATH
-  if [ -d "${SCRIPT_PATH}/${BUILD}" ]
-  then
-    rm -rf $SCRIPT_PATH/$BUILD
-  fi
-  mkdir -p $SCRIPT_PATH/$BUILD
+  cd ${SCRIPT_PATH}
+  rm -rf ${SCRIPT_PATH}/${BUILD}
+  mkdir -p ${SCRIPT_PATH}/${BUILD}
 }
 
 function build_docs() {
   clean
-  cd $SCRIPT_PATH
+  cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -b html -d build/doctrees source build/html
 }
 
 function build_docs_google() {
   clean
-  cd $SCRIPT_PATH
+  cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
 }
 
 function build_javadocs_full() {
-  cd $PROJECT_PATH
+  cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
-  cd $PROJECT_PATH
+  cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx512m"  mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
 }
 
@@ -169,10 +166,7 @@ function build_javadocs_sdk() {
 
 function copy_javadocs_sdk() {
   cd $BUILD_PATH/$HTML
-  if [ -d "${JAVADOCS}" ]
-  then
-    rm -rf $JAVADOCS
-  fi
+  rm -rf $JAVADOCS
   cp -r $SDK_JAVADOCS .
   mv -f $APIDOCS $JAVADOCS
 }
@@ -181,10 +175,7 @@ function build_license_pdfs() {
   version
   cd $SCRIPT_PATH
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
-  if [ -d "${SCRIPT_PATH}/${LICENSES_PDF}" ]
-  then
-    rm -rf $SCRIPT_PATH/$LICENSES_PDF
-  fi
+  rm -rf $SCRIPT_PATH/$LICENSES_PDF
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   E_DEP="cdap-enterprise-dependencies"
   L_DEP="cdap-level-1-dependencies"
@@ -251,10 +242,7 @@ function check_includes() {
       echo "Confirmed that pandoc is installed; checking includes."
       # Build includes
       BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
-      if [ -d "${BUILD_INCLUDES_DIR}" ]
-      then
-        rm -rf $BUILD_INCLUDES_DIR
-      fi
+      rm -rf $BUILD_INCLUDES_DIR
       mkdir $BUILD_INCLUDES_DIR
       pandoc_includes $BUILD_INCLUDES_DIR
       # Test included files
@@ -293,10 +281,7 @@ function build_includes() {
   if hash pandoc 2>/dev/null; then
     echo "Confirmed that pandoc is installed; rebuilding the README includes."
     SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
-    if [ -d "$SOURCE_INCLUDES_DIR" ]
-    then 
-      rm -rf $SOURCE_INCLUDES_DIR
-    fi
+    rm -rf $SOURCE_INCLUDES_DIR
     mkdir $SOURCE_INCLUDES_DIR
     pandoc_includes $SOURCE_INCLUDES_DIR
   else
