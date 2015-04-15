@@ -61,6 +61,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
+
   @Inject
   public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
                             NamespaceAdmin namespaceAdmin) {

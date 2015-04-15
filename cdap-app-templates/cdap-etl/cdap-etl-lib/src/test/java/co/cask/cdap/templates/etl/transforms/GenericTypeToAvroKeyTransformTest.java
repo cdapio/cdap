@@ -66,12 +66,12 @@ public class GenericTypeToAvroKeyTransformTest {
       }
     };
     transformer.initialize(transformContext);
-    Emitter<NullWritable, AvroKey<GenericRecord>> emitter = new Emitter<NullWritable, AvroKey<GenericRecord>>() {
+    Emitter<AvroKey<GenericRecord>, NullWritable> emitter = new Emitter<AvroKey<GenericRecord>, NullWritable>() {
       @Override
-      public void emit(NullWritable key, AvroKey<GenericRecord> value) {
-        Assert.assertEquals("string1", value.datum().get("field1"));
-        Assert.assertEquals(2, value.datum().get("field2"));
-        Assert.assertEquals(3.0, value.datum().get("field3"));
+      public void emit(AvroKey<GenericRecord> key, NullWritable value) {
+        Assert.assertEquals("string1", key.datum().get("field1"));
+        Assert.assertEquals(2, key.datum().get("field2"));
+        Assert.assertEquals(3.0, key.datum().get("field3"));
       }
     };
 
