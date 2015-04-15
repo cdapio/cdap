@@ -26,17 +26,9 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
+source _common/vars
 source _common/common-build.sh
-
-BUILD_TEMP="build-temp"
-COMMON="_common"
-COMMON_HTACCESS="$COMMON/htaccess"
-COMMON_IMAGES="$COMMON/_images"
-COMMON_SOURCE="$COMMON/_source"
-COMMON_CONF_PY="$COMMON/common_conf.py"
-COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
-COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
-HTACCESS="htaccess"
+read -a manuals <<< "$MANUALS"
 
 ARG_1="$1"
 ARG_2="$2"
@@ -68,6 +60,8 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
   echo ""
+  echo "    clean	   Clean up (previous builds)"
+  echo ""
   echo "  with"
   echo "    source         Path to $PROJECT source, if not $PROJECT_PATH"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
@@ -77,9 +71,12 @@ function usage() {
 function run_command() {
   case "$1" in
     all )               build_all; exit 1;;
+    clean )             clean_builds; exit 1;;
     docs )              build_docs; exit 1;;
-    docs-github )       build_docs_github; exit 1;;
-    docs-web )          build_docs_web; exit 1;;
+    docs-github-part )  build_docs_github $ARG_2 $ARG_3;;
+    docs-github )       build_docs_github $ARG_2 $ARG_3; exit 1;;
+    docs-web-part )     build_docs_web $ARG_2 $ARG_3;;
+    docs-web )          build_docs_web $ARG_2 $ARG_3; exit 1;;
     javadocs )          build_javadocs; exit 1;;
     licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
@@ -92,7 +89,11 @@ function run_command() {
 
 function clean() {
   cd $SCRIPT_PATH
-  rm -rf $SCRIPT_PATH/$BUILD/*
+  if [ -d  "${SCRIPT_PATH}/${BUILD}" ]
+  then
+    echo "do nothing" 
+    rm -rf $SCRIPT_PATH/$BUILD/*
+  fi
   mkdir -p $SCRIPT_PATH/$BUILD/$HTML
   mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE
   echo "Cleaned $BUILD directory"
@@ -110,7 +111,10 @@ function copy_source() {
 function copy_html() {
   echo "Copying html for $1..."
   cd $SCRIPT_PATH
-  rm -rf $SCRIPT_PATH/$BUILD/$HTML/$1
+  if [ -d "$SCRIPT_PATH/$BUILD/$HTML/$1" ]
+  then
+    rm -rf $SCRIPT_PATH/$BUILD/$HTML/$1
+  fi
   cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
   echo ""
 }
@@ -149,11 +153,10 @@ function build_docs_outer_level() {
   echo "========================================================"
   echo ""
 
-  copy_html admin-manual
-  copy_html developers-manual
-  copy_html integrations
-  copy_html reference-manual
-  copy_html examples-manual
+  for i in "${manuals[@]}"
+  do
+    copy_html $i
+  done
 
   local project_dir
   # Rewrite 404 file, using branch if not a release
@@ -171,18 +174,23 @@ function build_docs_outer_level() {
 ################################################## current
 
 function build_all() {
+  echo "========================================================================="
   echo "Building GitHub Docs."
-  ./build.sh docs-github $ARG_2 $ARG_3
+  echo "========================================================================="
+  run_command docs-github-part $ARG_2 $ARG_3
   echo "Stashing GitHub Docs."
   cd $SCRIPT_PATH
   mkdir -p $SCRIPT_PATH/$BUILD_TEMP
   mv $SCRIPT_PATH/$BUILD/*.zip $SCRIPT_PATH/$BUILD_TEMP
+  echo "========================================================================="
   echo "Building Web Docs."
-  ./build.sh docs-web $ARG_2 $ARG_3
+  echo "========================================================================="
+  run_command docs-web-part $ARG_2 $ARG_3
   echo "Replacing GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
   bell
+  exit 1
 }
 
 function build_javadocs() {
@@ -216,11 +224,10 @@ function _build_docs() {
 }
 
 function build() {
-  build_specific_doc admin-manual $1
-  build_specific_doc developers-manual $1
-  build_specific_doc integrations $1
-  build_specific_doc reference-manual $1
-  build_specific_doc examples-manual $1
+  for i in "${manuals[@]}"
+  do
+    build_specific_doc $i $1
+  done
 }
 
 function build_specific_doc() {
@@ -279,6 +286,28 @@ function test() {
   echo "Test..."
   build_json
   echo "Test completed."
+}
+
+function clean_builds() {
+  # clean everything in cdap-docs dir
+  echo ""
+  if [ -d "${SCRIPT_PATH}/${BUILD}" ]
+  then
+    rm -rf $SCRIPT_PATH/$BUILD/*
+  fi
+  echo "Cleaned $SCRIPT_PATH/$BUILD directory"
+
+  # clean everything in manual directories  
+  echo ""
+  for i in "${manuals[@]}"
+  do
+    if [ -d "${SCRIPT_PATH}/${i}/${BUILD}" ]
+    then
+      rm -rf $SCRIPT_PATH/$i/$BUILD/*
+    fi
+    echo "Cleaned ${SCRIPT_PATH}/${i}/${BUILD} directory"
+    echo ""
+  done
 }
 
 set_project_path

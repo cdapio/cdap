@@ -131,8 +131,11 @@ function usage() {
 
 function clean() {
   cd $SCRIPT_PATH
-  rm -rf $SCRIPT_PATH/$BUILD
-  mkdir $SCRIPT_PATH/$BUILD
+  if [ -d "${SCRIPT_PATH}/${BUILD}" ]
+  then
+    rm -rf $SCRIPT_PATH/$BUILD
+  fi
+  mkdir -p $SCRIPT_PATH/$BUILD
 }
 
 function build_docs() {
@@ -166,7 +169,10 @@ function build_javadocs_sdk() {
 
 function copy_javadocs_sdk() {
   cd $BUILD_PATH/$HTML
-  rm -rf $JAVADOCS
+  if [ -d "${JAVADOCS}" ]
+  then
+    rm -rf $JAVADOCS
+  fi
   cp -r $SDK_JAVADOCS .
   mv -f $APIDOCS $JAVADOCS
 }
@@ -175,7 +181,10 @@ function build_license_pdfs() {
   version
   cd $SCRIPT_PATH
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
-  rm -rf $SCRIPT_PATH/$LICENSES_PDF
+  if [ -d "${SCRIPT_PATH}/${LICENSES_PDF}" ]
+  then
+    rm -rf $SCRIPT_PATH/$LICENSES_PDF
+  fi
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   E_DEP="cdap-enterprise-dependencies"
   L_DEP="cdap-level-1-dependencies"
@@ -242,7 +251,10 @@ function check_includes() {
       echo "Confirmed that pandoc is installed; checking includes."
       # Build includes
       BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
-      rm -rf $BUILD_INCLUDES_DIR
+      if [ -d "${BUILD_INCLUDES_DIR}" ]
+      then
+        rm -rf $BUILD_INCLUDES_DIR
+      fi
       mkdir $BUILD_INCLUDES_DIR
       pandoc_includes $BUILD_INCLUDES_DIR
       # Test included files
@@ -281,7 +293,10 @@ function build_includes() {
   if hash pandoc 2>/dev/null; then
     echo "Confirmed that pandoc is installed; rebuilding the README includes."
     SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
-    rm -rf $SOURCE_INCLUDES_DIR
+    if [ -d "$SOURCE_INCLUDES_DIR" ]
+    then 
+      rm -rf $SOURCE_INCLUDES_DIR
+    fi
     mkdir $SOURCE_INCLUDES_DIR
     pandoc_includes $SOURCE_INCLUDES_DIR
   else
