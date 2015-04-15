@@ -26,7 +26,9 @@ import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
+import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
@@ -36,6 +38,7 @@ import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
+import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -69,8 +72,11 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     initTable(Lists.<Class>newArrayList(KVTableSource.class,
                                         KVTableSink.class,
                                         BatchReadableSource.class,
+                                        BatchWritableSink.class,
                                         TableSource.class,
+                                        TableSink.class,
                                         IdentityTransform.class,
+                                        StructuredRecordToPutTransform.class,
                                         RowToStructuredRecordTransform.class,
                                         StructuredRecordToGenericRecordTransform.class));
   }
