@@ -370,69 +370,6 @@ Data Exploration: Attaching Schema
           Fetched 11 rows
 
 
-
-
-
-
-
-
-
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - Drop the external Hive table
-     - - HiveServer
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> set stream format logEventStream clf``
-       ::
-
-        Successfully set format of stream 'logEventStream'
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive command using Hive CLI: `DESCRIBE stream_logeventsetream``
-     - - HiveServer
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> execute 'describe stream_logEventStream'``
-       ::
-
-        +=============================================================================+
-        | col_name: STRING          | data_type: STRING       | comment: STRING       |
-        +=============================================================================+
-        | ts                        | bigint                  | from deserializer     |
-        | headers                   | map<string,string>      | from deserializer     |
-        | remote_host               | string                  | from deserializer     |
-        | remote_login              | string                  | from deserializer     |
-        | auth_user                 | string                  | from deserializer     |
-        | date                      | string                  | from deserializer     |
-        | request                   | string                  | from deserializer     |
-        | status                    | int                     | from deserializer     |
-        | content_length            | int                     | from deserializer     |
-        | referrer                  | string                  | from deserializer     |
-        | user_agent                | string                  | from deserializer     |
-        +=============================================================================+
-        Fetched 11 rows
-
-
 .. container:: table-block
 
   .. list-table::
@@ -1240,147 +1177,201 @@ Building Real World Applications
 - Service to expose the data 
 - Unified platform for different processing paradigms
 
-.. list-table::
-   :widths: 15 65 20
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Write and execute MR job
-       - Separate environment for processing in real-time setup stack
-       - Add ability to periodically copy datasets into SQL using Sqoop
-       - Orchestrate the Mapreduce job using Oozie
-       - Write an application to serve the data
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - Sqoop
+.. container:: table-block
 
-.. list-table::
-   :widths: 15 85
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-   * - **CDAP**
-     - ``> deploy app apps/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``       
-       ::
+     * - Current Approach
+       - - Write and execute MR job
+         - Separate environment for processing in real-time setup stack
+         - Add ability to periodically copy datasets into SQL using Sqoop
+         - Orchestrate the Mapreduce job using Oozie
+         - Write an application to serve the data
+       - - HDFS
+         - Kafka
+         - Hive
+         - Oozie
+         - Sqoop
+         
+     * - **Using CDAP**
+       - ``> deploy app apps/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-        Successfully deployed application 
+     * -  
+       - ::
 
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Check Oozie
-       - Check YARN Console
-     - - Oozie
-       - YARN
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> describe app Wise``       
-       ::
-
-        +=====================================================================+
-        | type      | id                    | description                     |
-        +=====================================================================+
-        | Flow      | WiseFlow              | Wise Flow                       |
-        | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
-        | Service   | WiseService           |                                 |
-        | Workflow  | WiseWorkflow          | Wise Workflow                   |
-        +=====================================================================+
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Set classpath in environment variable 
-       - ``CLASSPATH=/my/classpath``
-       - Run the command to start the yarn application
-       - ``yarn jar /path/to/myprogram.jar``
-     - - YARN
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> start flow Wise.WiseFlow``       
-       ::
-
-        Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Retrieve the application ID with: ``yarn application -list | grep "Wise.WiseFlow"``
-       - Retrieve the status with: ``yarn application -status <APP ID>``
-     - - YARN
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> get flow status Wise.WiseFlow``       
-       ::
-
-        RUNNING
-
-       |non-breaking-space|
+          Successfully deployed application
 
 
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Check Oozie
+         - Check YARN Console
+       - - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> describe app Wise``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=====================================================================+
+          | type      | id                    | description                     |
+          +=====================================================================+
+          | Flow      | WiseFlow              | Wise Flow                       |
+          | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
+          | Service   | WiseService           |                                 |
+          | Workflow  | WiseWorkflow          | Wise Workflow                   |
+          +=====================================================================+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Set classpath in environment variable 
+         - ``CLASSPATH=/my/classpath``
+         - Run the command to start the yarn application
+         - ``yarn jar /path/to/myprogram.jar``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> start flow Wise.WiseFlow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Retrieve the application ID with: ``yarn application -list | grep "Wise.WiseFlow"``
+         - Retrieve the status with: ``yarn application -status <APP ID>``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> get flow status Wise.WiseFlow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          RUNNING
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Navigate to the resource manager UI
+         - Find the *Wise.WiseFlow* on UI
+         - Click to see application logs
+         - Find all the node managers for the application containers
+         - Navigate to all the containers in separate tabs 
+         - Click on container logs
+       - - Resource Manager UI
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> get flow logs Wise.WiseFlow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
+          STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:
+          flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
+          program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
+          2015-04-15 09:22:53,779 - INFO  [FlowletRuntimeService
+          STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized:
+          flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
+          program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
+          ...
+          2015-04-15 10:07:54,708 - INFO  [FlowletRuntimeService
+          STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized: flowlet=parser,
+          instance=0, groupsize=1, namespaceId=default, applicationId=Wise, program=WiseFlow,
+          runid=f4e0e52a-e391-11e4-a467-3ee74a48f4aa
+          2015-04-15 10:07:54,709 - DEBUG [FlowletRuntimeService
+          STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser
+          f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 
 
-
-
-
-
-
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Navigate to the resource manager UI
-       - Find the *Wise.WiseFlow* on UI
-       - Click to see application logs
-       - Find all the node managers for the application containers
-       - Navigate to all the containers in separate tabs 
-       - Click on container logs
-     - - Resource Manager UI
-       - YARN
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> get flow logs Wise.WiseFlow``       
-       ::
-
-        2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
-        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:
-        flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
-        program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
-        2015-04-15 09:22:53,779 - INFO  [FlowletRuntimeService
-        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized:
-        flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
-        program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
-        ...
-        2015-04-15 10:07:54,708 - INFO  [FlowletRuntimeService
-        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized: flowlet=parser,
-        instance=0, groupsize=1, namespaceId=default, applicationId=Wise, program=WiseFlow,
-        runid=f4e0e52a-e391-11e4-a467-3ee74a48f4aa
-        2015-04-15 10:07:54,709 - DEBUG [FlowletRuntimeService
-        STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser
-        f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 
 .. rubric:: Program Lifecycle
 
