@@ -18,8 +18,6 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
 
-import java.util.Map;
-
 /**
  * Defines an interface for the conditions in the {@link Workflow}.
  * @param <T> the type of the parent configurer
@@ -50,7 +48,7 @@ public interface WorkflowConditionConfigurer<T> {
    * Adds a nested condition to the current condition.
    * @return the configurer for the nested condition
    */
-  WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Predicate<WorkflowToken> condition);
+  WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Predicate<WorkflowContext> condition);
 
   /**
    * Adds a branch to the {@link WorkflowConditionNode} which is executed if the condition evaluates to the false.

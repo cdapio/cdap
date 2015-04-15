@@ -21,12 +21,11 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.Lists;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Default implementation of the {@link WorkflowConditionConfigurer}.
@@ -69,7 +68,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
-    Predicate<WorkflowToken> predicate) {
+    Predicate<WorkflowContext> predicate) {
     String predicateClassName = predicate.getClass().getName();
     return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConditionConfigurer<T>>(this, predicateClassName);
   }

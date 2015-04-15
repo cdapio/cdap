@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -86,7 +87,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private NettyHttpService httpService;
   private volatile Thread runningThread;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
-  private final Map<String, WorkflowToken> mapReduceJobCounters = new ConcurrentHashMap<String, WorkflowToken>();
+  private final Map<String, WorkflowToken> tokenMap = new ConcurrentHashMap<String, WorkflowToken>();
   private boolean suspended;
   private Lock lock;
   private Condition condition;
@@ -172,7 +173,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
-                             InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+                             InstantiatorFactory instantiator, ClassLoader classLoader,
+                             String previousNodeId) throws Exception {
 
     WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
@@ -200,13 +202,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     status.put(node.getNodeId(), node);
 
-    WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
+    WorkflowAction action = initialize(actionSpec, classLoader, instantiator, previousNodeId);
     try {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
       try {
         action.run();
         if (actionInfo.getProgramType() == SchedulableProgramType.MAPREDUCE) {
-          mapReduceJobCounters.put(node.getNodeId(), ((ProgramWorkflowAction) action).getToken());
+          tokenMap.put(node.getNodeId(), ((ProgramWorkflowAction) action).getToken());
         }
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -268,7 +270,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader);
+        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, previousNodeId);
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader);
@@ -285,17 +287,18 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeCondition(ApplicationSpecification appSpec, WorkflowConditionNode node,
                                 InstantiatorFactory instantiator, ClassLoader classLoader,
                                 String previousNodeId) throws Exception {
-    WorkflowToken token = mapReduceJobCounters.get(previousNodeId);
-    if (previousNodeId == null || token == null) {
-      throw new IllegalStateException("Condition node is not followed by the MapReduce program.");
+    WorkflowToken token = previousNodeId == null ? null : tokenMap.get(previousNodeId);
+    if (token == null) {
+      throw new IllegalStateException("Condition node is not preceded by a MapReduce program.");
     }
 
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
-    Predicate<WorkflowToken> predicate = instantiator.get(
-      TypeToken.of((Class<? extends Predicate<WorkflowToken>>) clz)).create();
+    Predicate<WorkflowContext> predicate = instantiator.get(
+      TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs, token);
     Iterator<WorkflowNode> iterator;
-    if (predicate.apply(token)) {
+    if (predicate.apply(context)) {
       // execute the if branch
       iterator = node.getIfBranch().iterator();
     } else {
@@ -352,17 +355,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
    */
   @SuppressWarnings("unchecked")
   private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
-                                    ClassLoader classLoader, InstantiatorFactory instantiator) throws Exception {
+                                    ClassLoader classLoader, InstantiatorFactory instantiator,
+                                    String previousNodeId) throws Exception {
     Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
     try {
+      WorkflowToken token = previousNodeId == null ? null : tokenMap.get(previousNodeId);
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
                                                  logicalStartTime,
                                                  workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec),
-                                                 runtimeArgs));
+                                                 runtimeArgs, token));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);
       // this will always rethrow

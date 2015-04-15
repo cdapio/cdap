@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.Predicate;
+
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -25,6 +27,9 @@ public interface WorkflowContext {
 
   WorkflowSpecification getWorkflowSpecification();
 
+  /**
+   * @throws UnsupportedOperationException if it is called from {@link Predicate}
+   */
   WorkflowActionSpecification getSpecification();
 
   long getLogicalStartTime();
@@ -38,6 +43,7 @@ public interface WorkflowContext {
    * <p> An Exception is thrown from the {@link Callable#call()} method if the program fails </p>
    *
    * @throws IllegalArgumentException if no program with the specified name is defined in the workflow
+   * @throws UnsupportedOperationException if it is called from {@link Predicate}
    */
   Callable<WorkflowToken> getProgramRunner(String name);
 
@@ -45,4 +51,9 @@ public interface WorkflowContext {
    * @return A map of the argument's key and value.
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * @return a {@link WorkflowToken}
+   */
+  WorkflowToken getToken();
 }

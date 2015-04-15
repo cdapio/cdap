@@ -21,7 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -57,16 +57,18 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       setName("ConditionalWorkflow");
       setDescription("Workflow to test Condition nodes");
       addMapReduce("RecordVerifier");
-      condition(new MyVerificationPredicate()).addMapReduce("ClassicWordCount").end();
+      condition(new MyVerificationPredicate())
+        .addMapReduce("ClassicWordCount")
+      .end();
     }
   }
 
-  public static final class MyVerificationPredicate implements Predicate<WorkflowToken> {
+  public static final class MyVerificationPredicate implements Predicate<WorkflowContext> {
 
     @Override
-    public boolean apply(@Nullable WorkflowToken input) {
+    public boolean apply(@Nullable WorkflowContext input) {
       if (input != null) {
-        Map<String, Long> customCounters = input.getMapReduceCounters().get("MyCustomCounter");
+        Map<String, Long> customCounters = input.getToken().getMapReduceCounters().get("MyCustomCounter");
         // If number of good records are greater than the number of bad records then only
         // return true to execute the true branch associated with this Condition node
         if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {

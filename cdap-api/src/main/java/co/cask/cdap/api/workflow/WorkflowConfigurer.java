@@ -84,5 +84,5 @@ public interface WorkflowConfigurer {
    * Adds a condition to the {@link Workflow}.
    * @return the configurer for the {@link Workflow}
    */
-  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowToken> condition);
+  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
 }

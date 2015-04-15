@@ -123,7 +123,7 @@ public abstract class AbstractWorkflow implements Workflow {
    * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
    */
   protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
-    Predicate<WorkflowToken> predicate) {
+    Predicate<WorkflowContext> predicate) {
     return configurer.condition(predicate);
   }
 }
