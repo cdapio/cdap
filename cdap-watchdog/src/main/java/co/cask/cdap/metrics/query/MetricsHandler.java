@@ -40,6 +40,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -58,6 +59,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -228,7 +230,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
         Map<String, MetricQueryResult> queryFinalResponse = Maps.newHashMap();
         for (Map.Entry<String, QueryRequestFormat> query : queries.entrySet()) {
-          QueryRequest queryRequest = setTimeRangeInQueryRequest(query.getValue());
+          QueryRequest queryRequest = getQueryRequestFromFormat(query.getValue());
           queryFinalResponse.put(query.getKey(), executeQuery(queryRequest));
         }
         responder.sendJson(HttpResponseStatus.OK, queryFinalResponse);
@@ -244,7 +246,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private QueryRequest setTimeRangeInQueryRequest(QueryRequestFormat queryRequestFormat) {
+  private QueryRequest getQueryRequestFromFormat(QueryRequestFormat queryRequestFormat) {
     Map<String, List<String>> queryParams = Maps.newHashMap();
 
     for (Map.Entry<String, String> entry : queryRequestFormat.getTimeRange().entrySet()) {
@@ -381,6 +383,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private MetricQueryResult executeQuery(QueryRequest queryRequest) {
     try {
+
+      if (queryRequest.getMetrics() == null || queryRequest.getMetrics().size() == 0) {
+        throw new IllegalArgumentException("Missing metrics parameter in the query");
+      }
+
       Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
       Collection<MetricTimeSeries> queryResult = Lists.newArrayList();
@@ -398,7 +405,13 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
         queryResult.addAll(timeSerieses);
       }
 
-      MetricQueryResult result = decorate(queryResult, timeRange.getStart(), timeRange.getEnd());
+      long endTime = timeRange.getEnd();
+      if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && endTime == 0) {
+        // for aggregate query, we set the end time to be query time (current time)
+        endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+      }
+
+      MetricQueryResult result = decorate(queryResult, timeRange.getStart(), endTime);
       return result;
     } catch (IllegalArgumentException e) {
       throw Throwables.propagate(e);
@@ -670,6 +683,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     Map<String, String> timeRange;
 
     public Map<String, String> getTags() {
+      tags = (tags == null) ? Maps.<String, String>newHashMap() : tags;
       return tags;
     }
 
@@ -678,6 +692,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
 
     public List<String> getGroupBy() {
+      groupBy = (groupBy == null) ? Lists.<String>newArrayList() : groupBy;
       return groupBy;
     }
 
@@ -689,6 +704,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
      * @return
      */
     public Map<String, String> getTimeRange() {
+      timeRange = (timeRange == null || timeRange.size() == 0) ? ImmutableMap.of("aggregate", "true") : timeRange;
       return timeRange;
     }
   }
