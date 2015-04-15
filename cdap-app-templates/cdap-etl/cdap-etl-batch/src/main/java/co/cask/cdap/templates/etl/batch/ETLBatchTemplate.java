@@ -37,10 +37,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -174,20 +172,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   private boolean isAssignable(Type source, Type destination) {
-    if (source instanceof ParameterizedType) {
-      if (destination instanceof ParameterizedType) {
-        // For ex, List<T> to List<String> should be assignable. It is up to the user code to manage mismatch if any.
-        Class<?> sourceClass = TypeToken.of(source).getRawType();
-        return TypeToken.of(destination).getRawType().isAssignableFrom(sourceClass);
-      }
-      return false;
-    } else if (source instanceof Class && destination instanceof Class) {
-      // If both are type Class, then check if they are assignable
-      return TypeToken.of(destination).isAssignableFrom(source);
-    } else {
-      // Fall back. Catch any errors in runtime.
-      return true;
-    }
+    //TODO: Do correct validation.
+    return true;
   }
 
   private void validateTransforms(List<ETLStage> transformList) throws IllegalArgumentException {
