@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.services')
       });
     };
 
-    dataSrc.request({
+    dataSrc.poll({
       _cdapNsPath: path + '/status'
     }, function(res) {
       $scope.status = res.status || 'Unknown';

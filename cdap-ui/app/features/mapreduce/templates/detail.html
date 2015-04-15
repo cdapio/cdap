@@ -12,18 +12,11 @@
       <ng-pluralize data-count="activeRuns"
           data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
     </span>
-    <div ng-show="status === 'STOPPED'"
+    <div ng-hide="status === 'STARTING'"
          class="btn btn-success btn-md"
          ng-click="toggleFlow('start')">
       <span class="fa fa-play"></span>
       <span>Start</span>
-    </div>
-
-    <div ng-show="status === 'RUNNING'"
-         class="btn btn-primary btn-md"
-         ng-click="toggleFlow('stop')">
-      <span class="fa fa-stop"></span>
-      <span>Stop</span>
     </div>
 
     <div ng-show="status === 'STARTING' || status === 'STOPPING'"
