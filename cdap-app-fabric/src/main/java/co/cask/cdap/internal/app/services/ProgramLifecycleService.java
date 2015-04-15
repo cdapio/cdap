@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -89,6 +90,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                                  Map<String, String> systemArgs, Map<String, String> userArgs,
                                                  boolean debug)
     throws IOException {
+    final String adapterName = systemArgs.get(ProgramOptionConstants.ADAPTER_NAME);
     Program program = getProgram(id, programType);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -109,7 +111,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds);
+          store.setStart(id, runId, startTimeInSeconds, adapterName);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
