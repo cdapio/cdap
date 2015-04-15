@@ -40,6 +40,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -124,7 +125,8 @@ public class LogSaverTest extends KafkaTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getDistributedModules()
     );
 
     txManager = injector.getInstance(TransactionManager.class);
@@ -198,7 +200,6 @@ public class LogSaverTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    Assert.assertEquals(60, allEvents.size());
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals(String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
