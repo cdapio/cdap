@@ -15,12 +15,16 @@ angular.module(PKG.name + '.feature.mapreduce')
         } else {
           $scope.current = res[0].runid;
         }
+      } else {
+        $scope.current = 'No Run';
       }
     });
 
     $rootScope.$on('$stateChangeSuccess', function() {
       if ($state.params.runid) {
         $scope.current = $state.params.runid;
+      } else {
+        $scope.current = $scope.runs[0].runid;
       }
     });
 

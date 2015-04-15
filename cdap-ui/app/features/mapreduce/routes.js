@@ -25,21 +25,6 @@ angular.module(PKG.name + '.feature.mapreduce')
           label: '{{$state.params.programId}}'
         }
       })
-        .state('mapreduce.detail.status', {
-          url: '/status',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/status.html',
-          controller: 'MapreduceStatusController',
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'development'
-          },
-          ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
-            label: 'Mapreduce',
-            skip: true
-          }
-        })
-
         .state('mapreduce.detail.runs', {
           url: '/runs',
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',

@@ -27,6 +27,10 @@
         <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS }}</td>
         <td></td>
       </tr>
+
+      <tr class="text-center" ng-if="!info.reduceTasks.length">
+        <td colspan='8'>Not Available</td>
+      </tr>
     </tbody>
   </table>
 </div>

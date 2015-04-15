@@ -19,6 +19,12 @@ angular.module(PKG.name + '.feature.mapreduce')
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
     }];
 
+    $scope.activeTab = $scope.tabs[0];
+
+    $scope.selectTab = function(tab) {
+      $scope.activeTab = tab;
+    };
+
 
     if ($state.params.runid) {
 

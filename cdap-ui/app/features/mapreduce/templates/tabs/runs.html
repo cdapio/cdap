@@ -1,5 +1,6 @@
+<strong>View Run:</strong>
 <div class="btn-group" dropdown is-open="dropdown.isopen">
-  <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+  <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle ng-disabled="current === 'No Run'">
     {{ current }} <span class="caret"></span>
   </button>
   <ul class="dropdown-menu" role="menu">
@@ -12,4 +13,4 @@
 <div ng-if="!$state.params.runid"
   ng-include="'/assets/features/mapreduce/templates/tabs/runs/run-detail.html'" ng-controller="MapreduceRunsDetailController">
 </div>
-<ui-view ng-if="$state.params.runid"></ui-view>
+<div ui-view ng-if="$state.params.runid"></div>

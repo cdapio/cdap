@@ -27,6 +27,9 @@
         <td>{{ map.counters.MAP_OUTPUT_RECORDS }}</td>
         <td>{{ map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
       </tr>
+      <tr class="text-center" ng-if="!info.mapTasks.length">
+        <td colspan='8'>Not Available</td>
+      </tr>
     </tbody>
   </table>
 </div>

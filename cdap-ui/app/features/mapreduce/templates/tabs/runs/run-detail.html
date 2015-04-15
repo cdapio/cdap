@@ -1,28 +1,33 @@
+<div class="btn-group pull-right">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
+
 <div class="mapreduce-components">
-  <div class="row run-status" ng-if="info.state">
+  <div class="row run-status">
     <div class="col-sm-6">
       <div class="run-status-box row">
         <div class="col-sm-4 item">
-          <div class="title">Status</div>
-          <div class="entry">{{info.state}}</div>
+          <div class="title"><strong>Status</strong></div>
+          <div class="">{{info.state || 'Not Available'}}</div>
         </div>
         <div class="col-sm-4 item">
-          <div class="title">Started</div>
-          <div class="entry">{{info.startTime | date: 'medium'}}</div>
+          <div class="title"><strong>Started</strong></div>
+          <div class="">{{info.startTime || 'Not Available' | date: 'medium' }}</div>
         </div>
         <div class="col-sm-4 item">
-          <div class="title">Duration</div>
-          <div class="entry" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
-          <div class="entry" ng-hide="info.finishTime !== 0">N/A</div>
+          <div class="title"><strong>Duration</strong></div>
+          <div class="" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime) | amDurationFormat}}</div>
+          <div class="" ng-hide="info.finishTime !== 0">N/A</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<tabset>
-  <tab ng-repeat="tab in tabs" select="activeTab = true">
-    <tab-heading> {{tab.title}} </tab-heading>
-    <div ng-include="tab.template" ng-if="activeTab"></div>
-  </tab>
-</tabset>
+<div ng-include="activeTab.template"></div>
