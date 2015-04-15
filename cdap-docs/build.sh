@@ -145,8 +145,7 @@ function build_docs_outer_level() {
   echo "========================================================"
   echo ""
 
-  for i in ${MANUALS}
-  do
+  for i in ${MANUALS}; do
     copy_html ${i}
   done
 
@@ -216,8 +215,7 @@ function _build_docs() {
 }
 
 function build() {
-  for i in ${MANUALS}
-  do
+  for i in ${MANUALS}; do
     build_specific_doc ${i} ${1}
   done
 }
@@ -288,8 +286,7 @@ function clean_builds() {
   echo "Cleaned ${SCRIPT_PATH}/${BUILD} directory"
 
   echo ""
-  for i in ${MANUALS}
-  do
+  for i in ${MANUALS}; do
     rm -rf ${SCRIPT_PATH}/${i}/${BUILD}/*
     echo "Cleaned ${SCRIPT_PATH}/${i}/${BUILD} directory"
     echo ""
