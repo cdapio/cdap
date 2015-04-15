@@ -305,12 +305,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(start, stop, RunRecord.class, limit, new Predicate<RunRecord>() {
       @Override
       public boolean apply(@Nullable RunRecord record) {
-        boolean normalCheck = true;
-        // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-        if (adapter != null) {
-          normalCheck = record != null && adapter.equals(record.getAdapterName());
-        }
-        return normalCheck;
+        // Check if RunRecord matches with passed in adapter name
+        return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
       }
     });
   }
@@ -330,7 +326,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                   @Override
                   public boolean apply(RunRecord input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                    // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
+                    // Check if RunRecord matches with passed in adapter name
                     if (normalCheck && adapter != null) {
                       normalCheck = adapter.equals(input.getAdapterName());
                     }
@@ -354,7 +350,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return list(start, stop, RunRecord.class, limit, new Predicate<RunRecord>() {
         @Override
         public boolean apply(@Nullable RunRecord record) {
-          // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
+          // Check if RunRecord matches with passed in adapter name
           return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
         }
       });
@@ -374,7 +370,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(RunRecord record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
-        // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
+        // Check if RunRecord matches with passed in adapter name
         if (normalCheck && adapter != null) {
           normalCheck = adapter.equals(record.getAdapterName());
         }

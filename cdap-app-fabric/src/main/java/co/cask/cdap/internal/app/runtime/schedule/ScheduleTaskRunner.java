@@ -32,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -167,9 +166,8 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void completed() {
-        long stopTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        ProgramRunStatus status = ProgramController.State.COMPLETED.getRunStatus();
-        store.setStop(programId, runId, stopTimeInSeconds, status);
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.COMPLETED.getRunStatus());
         LOG.debug("Program {} {} {} completed successfully.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         latch.countDown();
@@ -177,9 +175,8 @@ public final class ScheduleTaskRunner {
 
       @Override
       public void error(Throwable cause) {
-        long errorTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        ProgramRunStatus status = ProgramController.State.ERROR.getRunStatus();
-        store.setStop(programId, runId, errorTimeInSeconds, status);
+        store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.ERROR.getRunStatus());
         LOG.debug("Program {} {} {} execution failed.",
                   programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                   cause);
