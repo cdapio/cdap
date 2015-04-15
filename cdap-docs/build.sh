@@ -26,7 +26,7 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
-source _common/vars
+source vars
 source _common/common-build.sh
 
 ARG_1="$1"
@@ -281,12 +281,12 @@ function test() {
 }
 
 function clean_builds() {
-  # clean everything in cdap-docs dir
+  # Removes all upper- and lower-level build directories
+
   echo ""
   rm -rf ${SCRIPT_PATH}/${BUILD}/*
   echo "Cleaned ${SCRIPT_PATH}/${BUILD} directory"
 
-  # clean everything in manual directories  
   echo ""
   for i in ${MANUALS}
   do
