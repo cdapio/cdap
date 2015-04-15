@@ -47,12 +47,16 @@ Installation
 .. container:: table-block
 
   .. list-table::
-     :widths: 15 65 20
-
-     * - 
-       - **Installation and startup**
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Installation and startup
        - Required Technologies
        
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
      * - Current Approach
        - Install and startup Hadoop and other technologies, as required
        - - Hadoop
@@ -80,11 +84,15 @@ Installation
 .. container:: table-block
 
   .. list-table::
-     :widths: 15 65 20
-     
-     * - 
-       - **Startup command line interface**
+     :widths: 80 20
+
+     * - **Startup command line interface**
        - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+     
      * - Current Approach
        - Run Hive commands using Hive CLI
        - - HiveServer
@@ -115,14 +123,16 @@ Data Ingestion
 .. container:: table-block
 
   .. list-table::
-     :widths: 15 65 20
-     :header-rows: 1
+     :widths: 80 20
 
-     * - 
-       - Create a Stream
+     * - **Create a Stream**
        - Required Technologies
        
-     * - **Current Approach**
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
        - - Create a Time partitioned file in HDFS
          - Configure Kafka or Flume to write to time partitions
        - - HDFS
@@ -145,14 +155,16 @@ Data Ingestion
 .. container:: table-block
 
   .. list-table::
-     :widths: 15 65 20
-     :header-rows: 1
+     :widths: 80 20
 
-     * - 
-       - Send data to the Stream
+     * - **Sending data to the Stream**
        - Required Technologies
        
-     * - **Current Approach**
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
        - - Write a custom consumer for Kafka that reads from source
          - Write the data to HDFS
          - Create external table in Hive called ``stream_logeventstream``

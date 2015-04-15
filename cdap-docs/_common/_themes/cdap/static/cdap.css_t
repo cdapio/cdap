@@ -374,19 +374,19 @@ div.table-block.container {
 
 /* Makes first row dark background */
 
-div.table-block.container table.docutils tr.row-odd:first-of-type {
+div.table-block.container table.docutils tr.row-odd {
   background-color: #E0E0E0;
 }
  
-/* Makes even rows (second row in particular) light-grey-blue background */
+/* Makes odd rows light-grey background */
 
-div.table-block.container table.docutils tr.row-even {
-  background-color: #ECF0F3;
+div.table-block.container table.grey-table.docutils tr.row-odd {
+  background-color: #F9FAFB;
 }
 
-/* Makes last row white border */
+/* Makes last row with white border */
 
-div.table-block.container table.docutils tr:last-of-type td {
+div.table-block.container table.grey-table.docutils tr:last-of-type td {
   border-bottom: 1px solid white;
 }
 
