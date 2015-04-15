@@ -411,6 +411,8 @@ public class AdapterService extends AbstractIdleService {
     try {
       Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
       Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      // Pass Adapter Name as a system property
+      sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
       store.setWorkerInstances(workerId, adapterSpec.getInstances());

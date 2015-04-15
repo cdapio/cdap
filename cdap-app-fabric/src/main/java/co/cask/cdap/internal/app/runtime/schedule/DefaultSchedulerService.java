@@ -72,9 +72,15 @@ public class DefaultSchedulerService {
 
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
       builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
+
+      JobDataMap jobDataMap = trigger.getJobDataMap();
+      for (Map.Entry<String, Object> entry : jobDataMap.entrySet()) {
+        builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
+      }
 
       try {
         taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType,
