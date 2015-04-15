@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.worker;
+package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
