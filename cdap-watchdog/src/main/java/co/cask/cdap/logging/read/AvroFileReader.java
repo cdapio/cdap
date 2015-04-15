@@ -41,13 +41,13 @@ import java.util.List;
 /**
  * Reads log events from an Avro file.
  */
-public class AvroFileLogReader {
-  private static final Logger LOG = LoggerFactory.getLogger(AvroFileLogReader.class);
+public class AvroFileReader {
+  private static final Logger LOG = LoggerFactory.getLogger(AvroFileReader.class);
   private static final long DEFAULT_SKIP_LEN = 50 * 1024;
 
   private final Schema schema;
 
-  public AvroFileLogReader(Schema schema) {
+  public AvroFileReader(Schema schema) {
     this.schema = schema;
   }
 
@@ -89,7 +89,7 @@ public class AvroFileLogReader {
                 && loggingEvent.getTimeStamp() != prevTimestamp) {
                 break;
               }
-              callback.handle(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
+              callback.handle(new LogEvent(loggingEvent, new LogOffset(-1, loggingEvent.getTimeStamp())));
             }
             prevTimestamp = loggingEvent.getTimeStamp();
           }
@@ -151,7 +151,7 @@ public class AvroFileLogReader {
 
             if (logFilter.match(loggingEvent)) {
               ++count;
-              logSegment.add(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
+              logSegment.add(new LogEvent(loggingEvent, new LogOffset(-1, loggingEvent.getTimeStamp())));
             }
           }
 

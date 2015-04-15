@@ -62,6 +62,16 @@ public interface Store {
    * @param id        Info about program
    * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param adapter   name of the adapter associated with the run
+   */
+  void setStart(Id.Program id, String pid, long startTime, String adapter);
+
+  /**
+   * Logs start of program run.
+   *
+   * @param id        Info about program
+   * @param pid       run id
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
   void setStart(Id.Program id, String pid, long startTime);
 
@@ -98,10 +108,24 @@ public interface Store {
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
    * @param limit     max number of entries to fetch for this history call
+   * @param adapter   name of the adapter associated with the runs
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
-                          long startTime, long endTime, int limit);
+  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+                          String adapter);
+
+  /**
+   * Fetches run records for particular program. Returns only finished runs.
+   * Returned ProgramRunRecords are sorted by their startTime.
+   *
+   * @param id        program id.
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
+   * @return          list of logged runs
+   */
+  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -440,5 +464,4 @@ public interface Store {
    * @param id Namespace id.
    */
   void removeAllAdapters(Id.Namespace id);
-
 }

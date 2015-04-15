@@ -11,14 +11,31 @@ angular.module(PKG.name+'.feature.dashboard')
       this.type = opts.type;
       this.metric = opts.metric || false;
       this.color = opts.color;
+      this.dataSrc = null;
+      this.isLive = false;
     }
+    Widget.prototype.fetchData = function(scope) {
+      if (!this.dataSrc) {
+        this.dataSrc = new MyDataSource(scope);
+      }
+      this.dataSrc.request({
+        _cdapPath: '/metrics/query' +
+          '?context=' + encodeURIComponent(this.metric.context) +
+          '&metric=' + encodeURIComponent(this.metric.name) +
+          '&start=now-60s&end=now',
 
-    Widget.prototype.fetchData = function (scope) {
-      var dataSrc = new MyDataSource(scope);
+        method: 'POST'
+      })
+        .then(this.processData.bind(this))
+    }
+    Widget.prototype.startPolling = function (scope) {
+      if (!this.dataSrc) {
+        this.dataSrc = new MyDataSource(scope);
+      }
       if(!this.metric) {
         return;
       }
-      dataSrc.poll(
+      return this.dataSrc.poll(
         {
           _cdapPath: '/metrics/query' +
             '?context=' + encodeURIComponent(this.metric.context) +
@@ -27,27 +44,33 @@ angular.module(PKG.name+'.feature.dashboard')
 
           method: 'POST'
         },
-        (function (result) {
-          var data, tempMap = {};
-          if(result.series && result.series.length) {
-            data = result.series[0].data;
-            for (var k =0 ; k<data.length; k++) {
-              tempMap[data[k].time] = data[k].value;
-            }
-          }
-          // interpolating the data since backend returns only
-          // metrics at specific timeperiods instead of for the
-          // whole range. We have to interpolate the rest with 0s to draw the graph.
-          for(var i = result.startTime; i<result.endTime; i++) {
-            if (!tempMap[i]) {
-              tempMap[i] = 0;
-            }
-          }
-          this.data = tempMap;
-        }).bind(this)
+        this.processData.bind(this)
       );
     };
 
+    Widget.prototype.stopPolling = function(id) {
+      if (!this.dataSrc) return;
+      this.dataSrc.stopPoll(id);
+    };
+
+    Widget.prototype.processData = function (result) {
+      var data, tempMap = {};
+      if(result.series && result.series.length) {
+        data = result.series[0].data;
+        for (var k =0 ; k<data.length; k++) {
+          tempMap[data[k].time] = data[k].value;
+        }
+      }
+      // interpolating the data since backend returns only
+      // metrics at specific timeperiods instead of for the
+      // whole range. We have to interpolate the rest with 0s to draw the graph.
+      for(var i = result.startTime; i<result.endTime; i++) {
+        if (!tempMap[i]) {
+          tempMap[i] = 0;
+        }
+      }
+      this.data = tempMap;
+    };
 
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
@@ -69,7 +92,17 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
-
+    var pollingId = null;
+    $scope.$watch('wdgt.isLive', function(newVal) {
+      if (!angular.isDefined(newVal)) {
+        return;
+      }
+      if (newVal) {
+        pollingId = $scope.wdgt.startPolling();
+      } else {
+        $scope.wdgt.stopPolling(pollingId);
+      }
+    });
     $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;
     $scope.stream = null;

@@ -40,7 +40,8 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.AvroFileLogReader;
+import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
@@ -124,7 +125,8 @@ public class LogSaverTest extends KafkaTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getDistributedModules()
     );
 
     txManager = injector.getInstance(TransactionManager.class);
@@ -156,8 +158,8 @@ public class LogSaverTest extends KafkaTestBase {
     Location ns2LogBaseDir = locationFactory.create(namespacesDir).append("NS_2").append(logBaseDir);
     Location systemLogBaseDir = locationFactory.create(namespacesDir).append("system").append(logBaseDir);
 
-    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(ns2LogBaseDir, "APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 119 arg1 arg2");
+    waitTillLogSaverDone(ns2LogBaseDir, "APP_2/flow-FLOW_2/%s", "Test log message 119 arg1 arg2");
     waitTillLogSaverDone(systemLogBaseDir, "services/service-metrics/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
@@ -169,20 +171,34 @@ public class LogSaverTest extends KafkaTestBase {
   @AfterClass
   public static void testCheckpoint() throws Exception {
     CheckpointManager checkpointManager = injector.getInstance(CheckpointManager.class);
-    Assert.assertEquals(120, checkpointManager.getCheckpoint(0));
-    Assert.assertEquals(60, checkpointManager.getCheckpoint(1));
+    Assert.assertEquals(180, checkpointManager.getCheckpoint(0));
+    Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
 
     txManager.stopAndWait();
   }
 
   @Test
-  public void testLogRead2() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", ""));
+  public void testLogRead1() throws Exception {
+    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
+
+    // Read with null runid should give 120 results back
+    LogCallback logCallback = new LogCallback();
+    DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
+    distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+      0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+    Assert.assertEquals(120, logCallback.getEvents().size());
   }
 
   @Test
-  public void testLogRead1() throws Exception {
-    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", ""));
+  public void testLogRead2() throws Exception {
+    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
+
+    // Read with null runid should give 120 results back
+    LogCallback logCallback = new LogCallback();
+    DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
+    distributedLogReader.getLog(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", null, "INSTANCE"),
+                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+    Assert.assertEquals(120, logCallback.getEvents().size());
   }
 
   @Test
@@ -198,7 +214,6 @@ public class LogSaverTest extends KafkaTestBase {
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    Assert.assertEquals(60, allEvents.size());
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals(String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
@@ -312,11 +327,19 @@ public class LogSaverTest extends KafkaTestBase {
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
 
-    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
-    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("system", "services", "metrics"))));
+    futures.add(executor.submit(new LogPublisher(0, new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                           "RUN1", "INSTANCE1"))));
+    futures.add(executor.submit(new LogPublisher(0, new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2",
+                                                                           "RUN1", "INSTANCE1"))));
+    futures.add(executor.submit(new LogPublisher(0, new ServiceLoggingContext("system", "services", "metrics"))));
+
+    // Make sure the final segments of logs are added at end to simplify checking for done in waitTillLogSaverDone
+    futures.add(executor.submit(new LogPublisher(60, new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                               "RUN2", "INSTANCE2"))));
+    futures.add(executor.submit(new LogPublisher(60, new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2",
+                                                                           "RUN2", "INSTANCE2"))));
 
     Futures.allAsList(futures).get();
 
@@ -326,9 +349,11 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   private static class LogPublisher implements Runnable {
+    private final int startIndex;
     private final LoggingContext loggingContext;
 
-    private LogPublisher(LoggingContext loggingContext) {
+    private LogPublisher(int startIndex, LoggingContext loggingContext) {
+      this.startIndex = startIndex;
       this.loggingContext = loggingContext;
     }
 
@@ -340,11 +365,12 @@ public class LogSaverTest extends KafkaTestBase {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
 
+      int startBatch = startIndex / 10;
       try {
-        for (int j = 0; j < 6; ++j) {
+        for (int j = startBatch; j < startBatch + 6; ++j) {
           for (int i = 0; i < 10; ++i) {
             logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
-            if (j == 0 && (i <= 3)) {
+            if (j == startIndex && (i <= 3)) {
               // For some events introduce the sleep of more than 8 seconds for windowing to take effect
               TimeUnit.MILLISECONDS.sleep(300);
             } else {
@@ -366,7 +392,7 @@ public class LogSaverTest extends KafkaTestBase {
     while (true) {
       Location latestFile = getLatestFile(logBaseDir, filePattern);
       if (latestFile != null) {
-        AvroFileLogReader logReader = new AvroFileLogReader(new LogSchema().getAvroSchema());
+        AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
         logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);

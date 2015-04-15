@@ -92,18 +92,28 @@ public class RouterPathTest {
   @Test
   public void testLogPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName/logs/";
+    String flowPath = "/v3/namespaces/default/apps//InvalidApp///flows/FlowName/logs/";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "///v2///apps/InvalidApp/flows/FlowName/////logs";
+    flowPath = "///v3/namespaces/default///apps/InvalidApp/flows/FlowName/////logs";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/logs/abcd";
+    flowPath = "v3/namespaces/default/apps/InvalidApp/procedures/ProName/logs/abcd";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    flowPath = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    flowPath = "/v3/namespaces/default/apps/InvalidApp/adapters/Adapter1/runs/7e6adc79-0f5d-b559-70817ea47698/logs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
   }

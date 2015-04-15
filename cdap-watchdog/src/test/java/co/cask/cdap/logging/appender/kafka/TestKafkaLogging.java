@@ -16,14 +16,11 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.KafkaTestBase;
@@ -48,9 +45,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 /**
  * Kafka Test for logging.
@@ -87,44 +81,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     new LogAppenderInitializer(appender).initialize("TestKafkaLogging");
 
     Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
-    Exception e1 = new Exception("Test Exception1");
-    Exception e2 = new Exception("Test Exception2", e1);
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 0; i < 40; ++i) {
-      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 0; i < 20; ++i) {
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 40; i < 80; ++i) {
-      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 20; i < 40; ++i) {
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 40; i < 60; ++i) {
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
-    for (int i = 80; i < 120; ++i) {
-      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
-
+    LoggingTester loggingTester = new LoggingTester();
+    loggingTester.generateLogs(logger, new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                 "RUN1", "INSTANCE1"));
     appender.stop();
   }
 
@@ -135,7 +94,9 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetNext() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    // Check with null runId and null instanceId
+    LoggingContext loggingContext = new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "",
+                                                              "RUN1", "INSTANCE1");
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
@@ -144,10 +105,12 @@ public class TestKafkaLogging extends KafkaTestBase {
 
   @Test
   public void testGetPrev() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
   }
+
+  // Note: LogReader.getLog is tested in LogSaverTest for distributed mode
 }

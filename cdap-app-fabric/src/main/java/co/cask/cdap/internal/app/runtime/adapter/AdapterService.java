@@ -47,15 +47,17 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterSpecification;
+import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
@@ -73,6 +75,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -374,7 +377,8 @@ public class AdapterService extends AbstractIdleService {
     throws NotFoundException, SchedulerException {
     Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
-    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                       ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);
   }
@@ -568,7 +572,17 @@ public class AdapterService extends AbstractIdleService {
     InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()));
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(2, TimeUnit.MINUTES);
-    ApplicationSpecification spec = GSON.fromJson(response.get(), ApplicationSpecification.class);
+    InputSupplier<? extends Reader> configSupplier = response.get();
+    if (response.getExitCode() != 0 || configSupplier == null) {
+      throw new IllegalArgumentException("Failed to get template info");
+    }
+    ApplicationSpecification spec;
+    Reader configReader = configSupplier.getInput();
+    try {
+      spec = GSON.fromJson(configReader, ApplicationSpecification.class);
+    } finally {
+      Closeables.closeQuietly(configReader);
+    }
 
     // verify that the name is ok
     Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
@@ -587,5 +601,4 @@ public class AdapterService extends AbstractIdleService {
 
     return new ApplicationTemplateInfo(jarFile, spec.getName(), spec.getDescription(), programType, fileHash);
   }
-
 }

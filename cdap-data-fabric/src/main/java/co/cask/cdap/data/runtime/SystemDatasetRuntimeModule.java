@@ -23,6 +23,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
@@ -101,5 +102,6 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding("timePartitionedFileSet").toInstance(new TimePartitionedFileSetModule());
     mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
     mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
+    mapBinder.addBinding("cube").toInstance(new CubeModule());
   }
 }

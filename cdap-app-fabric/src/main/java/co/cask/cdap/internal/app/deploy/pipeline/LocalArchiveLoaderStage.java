@@ -100,8 +100,10 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     InMemoryConfigurator inMemoryConfigurator =
       new InMemoryConfigurator(new LocalLocationFactory().create(input.toURI()));
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
-    //TODO: Check with Terence on how to handle this stuff.
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
+    if (response.getExitCode() != 0) {
+      throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
+    }
     ApplicationSpecification specification = adapter.fromJson(response.get());
     if (appId != null) {
       specification = new ForwardingApplicationSpecification(specification) {

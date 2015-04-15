@@ -25,24 +25,27 @@ import co.cask.cdap.logging.filter.Filter;
 public interface LogReader {
   /**
    * Read log events of a Flow, Procedure or Map Reduce program after a given offset.
+   *
    * @param loggingContext context to look up log events.
-   * @param fromOffset offset after which to start reading. -1 to get the latest log events.
+   * @param fromOffset offset after which to start reading.
+   *                   Use {@link LogOffset#LATEST_OFFSET} to get the latest log events.
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
    */
-  void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  void getLogNext(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                        Callback callback);
 
   /**
    * Read log events of a Flow, Procedure or Map Reduce program before a given offset.
    * @param loggingContext context to look up log events.
-   * @param fromOffset offset before which to start reading. -1 to get the latest log events.
+   * @param fromOffset offset before which to start reading.
+   *                   Use {@link LogOffset#LATEST_OFFSET} to get the latest log events.
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
    */
-  void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  void getLogPrev(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                        Callback callback);
 
   /**
