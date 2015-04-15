@@ -176,16 +176,13 @@ public class DefaultStore implements Store {
     setStart(id, pid, startTime, null);
   }
 
-
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus,
-                      final String adapter) {
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
-
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStop(id, pid, endTime, runStatus, adapter);
+        mds.apps.recordProgramStop(id, pid, endTime, runStatus);
         return null;
       }
     });
@@ -195,40 +192,25 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus) {
-    setStop(id, pid, endTime, runStatus, null);
-  }
-
-  @Override
-  public void setSuspend(final Id.Program id, final String pid, final String adapter) {
+  public void setSuspend(final Id.Program id, final String pid) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramSuspend(id, pid, adapter);
+        mds.apps.recordProgramSuspend(id, pid);
         return null;
       }
     });
   }
 
   @Override
-  public void setSuspend(Id.Program id, String pid) {
-    setSuspend(id, pid, null);
-  }
-
-  @Override
-  public void setResume(final Id.Program id, final String pid, final String adapter) {
+  public void setResume(final Id.Program id, final String pid) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramResumed(id, pid, adapter);
+        mds.apps.recordProgramResumed(id, pid);
         return null;
       }
     });
-  }
-
-  @Override
-  public void setResume(Id.Program id, String pid) {
-    setResume(id, pid, null);
   }
 
   @Override
@@ -255,18 +237,13 @@ public class DefaultStore implements Store {
    * @return run record for runid
    */
   @Override
-  public RunRecord getRun(final Id.Program id, final String runid, final String adapter) {
+  public RunRecord getRun(final Id.Program id, final String runid) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
       @Override
       public RunRecord apply(AppMds mds) throws Exception {
-        return mds.apps.getRun(id, runid, adapter);
+        return mds.apps.getRun(id, runid);
       }
     });
-  }
-
-  @Override
-  public RunRecord getRun(Id.Program id, String runid) {
-    return getRun(id, runid, null);
   }
 
   @Override

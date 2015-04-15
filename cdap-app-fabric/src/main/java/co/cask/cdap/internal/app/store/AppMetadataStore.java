@@ -139,15 +139,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter));
   }
 
-  public void recordProgramSuspend(Id.Program program, String pid, String adapter) {
-    recordProgramSuspendResume(program, pid, "suspend", adapter);
+  public void recordProgramSuspend(Id.Program program, String pid) {
+    recordProgramSuspendResume(program, pid, "suspend");
   }
 
-  public void recordProgramResumed(Id.Program program, String pid, String adapter) {
-    recordProgramSuspendResume(program, pid, "resume", adapter);
+  public void recordProgramResumed(Id.Program program, String pid) {
+    recordProgramSuspendResume(program, pid, "resume");
   }
 
-  private void recordProgramSuspendResume(Id.Program program, String pid, String action, String adapter) {
+  private void recordProgramSuspendResume(Id.Program program, String pid, String action) {
     String fromType = TYPE_RUN_RECORD_STARTED;
     String toType = TYPE_RUN_RECORD_SUSPENDED;
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
@@ -176,14 +176,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
       throw new IllegalArgumentException(msg);
     }
 
-    // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-    if (record.getAdapterName() != null && (!record.getAdapterName().equals(adapter))) {
-      String msg = getAdapterMismatchMsg(record, program, pid, action.equals("suspend") ? "started" : "suspended",
-                                         adapter);
-      LOG.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
     deleteAll(key);
 
     key = new MDSKey.Builder()
@@ -194,11 +186,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus, adapter));
+    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus));
   }
 
-  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus,
-                                String adapter) {
+  public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -217,13 +208,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
       throw new IllegalArgumentException(msg);
     }
 
-    // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-    if (started.getAdapterName() != null && (!started.getAdapterName().equals(adapter))) {
-      String msg = getAdapterMismatchMsg(started, program, pid, "stop", adapter);
-      LOG.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
     deleteAll(key);
 
     key = new MDSKey.Builder()
@@ -234,7 +218,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
-    write(key, new RunRecord(started, stopTs, runStatus, adapter));
+    write(key, new RunRecord(started, stopTs, runStatus));
   }
 
   public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,
@@ -254,7 +238,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public RunRecord getRun(Id.Program program, final String runid, String adapter) {
+  public RunRecord getRun(Id.Program program, final String runid) {
     // For querying running records
     MDSKey runningKey = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
@@ -269,13 +253,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     RunRecord running = get(runningKey, RunRecord.class);
     // If program is running, this will be non-null
     if (running != null) {
-
-      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
-      if (adapter != null && !adapter.equals(running.getAdapterName())) {
-        String msg = getAdapterMismatchMsg(running, program, runid, "run", adapter);
-        LOG.error(msg);
-        throw new IllegalArgumentException(msg);
-      }
       return running;
     }
 
@@ -297,14 +274,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
         .add(runid)
         .build();
 
-      RunRecord completed = get(key, RunRecord.class);
-      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
-      if (adapter != null && completed != null && !adapter.equals(completed.getAdapterName())) {
-        String msg = getAdapterMismatchMsg(completed, program, runid, "run", adapter);
-        LOG.error(msg);
-        throw new IllegalArgumentException(msg);
-      }
-      return completed;
+      return get(key, RunRecord.class);
     } else {
       // If start time is not found, scan the table (backwards compatibility when run ids were random UUIDs)
       MDSKey startKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(Long.MAX_VALUE)).build();
@@ -317,14 +287,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                  return input.getPid().equals(runid);
                }
              });
-      RunRecord record = Iterables.getFirst(runRecords, null);
-      // If passed in adapter is not null, then it should match the adapter name in RunRecord.
-      if (record != null && adapter != null && !adapter.equals(record.getAdapterName())) {
-        String msg = getAdapterMismatchMsg(record, program, runid, "run", adapter);
-        LOG.error(msg);
-        throw new IllegalArgumentException(msg);
-      }
-      return record;
+      return Iterables.getFirst(runRecords, null);
     }
   }
 
@@ -418,14 +381,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
         return normalCheck;
       }
     };
-  }
-
-  private String getAdapterMismatchMsg(RunRecord record, Id.Program program, String runId, String runState,
-                                       String adapterExpected) {
-    return String.format("Adapter Name found in Meta %s (for namespace %s app %s program type %s program %s " +
-                           "pid %s) does not match %s info adapter %s",
-                         record.getAdapterName(), program.getNamespaceId(), program.getApplicationId(),
-                         program.getType().name(), program.getId(), runId, runState, adapterExpected);
   }
 
   private long getInvertedTsKeyPart(long endTime) {

@@ -82,17 +82,6 @@ public interface Store {
    * @param pid     run id
    * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
-   * @param adapter name of adapter associated with the run
-   */
-  void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus, String adapter);
-
-  /**
-   * Logs end of program run.
-   *
-   * @param id      id of program
-   * @param pid     run id
-   * @param endTime end timestamp in seconds
-   * @param runStatus   {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
 
@@ -100,24 +89,8 @@ public interface Store {
    * Logs suspend of a program run.
    * @param id      id of the program
    * @param pid     run id
-   * @param adapter name of adapter associated with the run
-   */
-  void setSuspend(Id.Program id, String pid, String adapter);
-
-  /**
-   * Logs suspend of a program run.
-   * @param id      id of the program
-   * @param pid     run id
    */
   void setSuspend(Id.Program id, String pid);
-
-  /**
-   * Logs resume of a program run.
-   * @param id      id of the program
-   * @param pid     run id
-   * @param adapter name of adapter associated with the run
-   */
-  void setResume(Id.Program id, String pid, String adapter);
 
   /**
    * Logs resume of a program run.
@@ -153,16 +126,6 @@ public interface Store {
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
-
-  /**
-   * Fetches the run record for particular run of a program.
-   *
-   * @param id        program id
-   * @param runid     run id of the program
-   * @param adapter   name of the adapter associated with the run
-   * @return          run record for the specified program and runid, null if not found
-   */
-  RunRecord getRun(Id.Program id, String runid, String adapter);
 
   /**
    * Fetches the run record for particular run of a program.

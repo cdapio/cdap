@@ -163,32 +163,16 @@ public class DefaultStoreTest {
     RunRecord programRun = store.getRun(programId, run1.getId());
     Assert.assertEquals(run1.getId(), programRun.getPid());
 
-    try {
-      store.getRun(programId, run1.getId(), "invalidAdapter");
-      throw new Exception("RunRecord should be available under different adapter name");
-    } catch (RuntimeException e) {
-      // expected
-    }
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
 
-    try {
-      store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
-      throw new Exception("Stop without Adapter should have thrown an exception.");
-    } catch (RuntimeException e) {
-      // expected
-    }
-
-    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus(), adapter);
-    try {
-      // Query RunRecord with wrong Adapter name
-      RunRecord prgRun = store.getRun(programId, run1.getId(), adapter + adapter);
-      throw new Exception("RunRecord query without Adapter should have thrown an exception");
-    } catch (RuntimeException e) {
-      // expected
-    }
-
-    RunRecord adapterRun = store.getRun(programId, run1.getId(), adapter);
+    RunRecord adapterRun = store.getRun(programId, run1.getId());
     Assert.assertNotNull(adapterRun);
     Assert.assertEquals(run1.getId(), adapterRun.getPid());
+
+    // RunRecords query for the Program under different Adapter name should not return anything
+    List<RunRecord> records = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
+                                            "invalidAdapter");
+    Assert.assertTrue(records.isEmpty());
 
     // RunRecords query for the Program should return the RunRecord
     List<RunRecord> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE);

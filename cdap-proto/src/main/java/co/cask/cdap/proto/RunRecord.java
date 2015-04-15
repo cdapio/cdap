@@ -52,12 +52,8 @@ public final class RunRecord {
     this(pid, startTs, stopTs, status, null);
   }
 
-  public RunRecord(RunRecord started, long stopTs, ProgramRunStatus status, @Nullable String adapterName) {
-    this(started.pid, started.startTs, stopTs, status, adapterName);
-  }
-
   public RunRecord(RunRecord started, long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status, null);
+    this(started.pid, started.startTs, stopTs, status, started.getAdapterName());
   }
 
   public String getPid() {
