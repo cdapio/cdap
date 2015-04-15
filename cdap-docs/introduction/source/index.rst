@@ -1885,6 +1885,10 @@ Summary
      - Required Technologies
 
    * - - Learn a single framework that works with multiple technologies
+       - Abstraction of data in the Hadoop environment through logical representations of underlying data
+       - Portability of applications through decoupling underlying infrastructures
+       - Services and tools that enable faster application creation in development
+       - Higher degrees of operational control in production through enterprise best practices
      - - Bring in different open source technologies, each with different design principles
        - Familiarize and learn how to operate the different technologies
        - Design specific architectures to wire in different components
