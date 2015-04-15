@@ -135,13 +135,19 @@ Glossary
       CDAP system services that are run in YARN containers like Transaction Service,
       Dataset Executor, Log Saver, Metrics Processor, etc.
 
-   TimePartitioned Dataset
-      A :term:`Dataset` that consists of batches of data, differentiated by a timestamp.
-      Unlike a :term:`TimeSeries Dataset`, the schema of batches may vary from batch to
-      batch.
+   Fileset Dataset
+      A :term:`Dataset` composed of collections of files in the file system that share
+      some common attributes such as the format and schema, which abstracts from the
+      actual underlying file system interfaces.
+
+   TimePartitioned Fileset
+      A :term:`Fileset` :term:`Dataset` that uses a timestamp as the partitioning key to
+      split the data into indivividual files. Though it is not required that data in each
+      partition be organized by time, each partition is assigned a logical time. Typically
+      written to in batch mode, at a set time interval.
 
    TimeSeries Dataset
-      A :term:`Dataset` that consists of batches of data with identical schema,
-      differentiated by a timestamp. Unlike a :term:`TimePartitioned Dataset`, the schema
-      of the batches must be identical.
+      A :term:`Dataset` where time is the primary means of how data is organized, and both
+      the data model and the schema that represents the data are optimized for querying
+      and aggregating over time ranges.
 
