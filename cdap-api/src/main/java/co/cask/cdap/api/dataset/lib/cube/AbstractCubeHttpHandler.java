@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.api.dataset.lib.cube;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -36,6 +37,7 @@ import javax.ws.rs.Path;
  * Subclasses must implement {@link co.cask.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler#getCube()} that returns
  * {@link Cube} dataset.
  */
+@Beta
 public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractCubeHttpHandler.class);
 
