@@ -33,13 +33,26 @@ function guide_rewrite_sed() {
   local project_version=$PROJECT_SHORT_VERSION
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  local source2="release/cdap-$project_version-compatible/README.rst"
+  local source2="release/cdap-$project_version-compatible"
+  local rst_file="README.rst"
+  local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
 
-  local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
-  
-  mkdir $includes_dir/$guide
-  curl --silent $source1/$guide/$source2 --output $includes_dir/$guide/README_SOURCE.rst  
-  sed -e "s|image:: docs/images|image:: $redirect/$guide/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $includes_dir/$guide/README_SOURCE.rst > $includes_dir/$guide/README.rst
+  mkdir -p $includes_dir/$guide
+  curl --silent $source1/$guide/$source2/$rst_file --output $includes_dir/$guide/SOURCE_$rst_file
+   
+  sed -e "s|image:: docs/images|image:: $redirect/$guide/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $includes_dir/$guide/SOURCE_$rst_file > $includes_dir/$guide/$rst_file
+}
+
+
+function download_guide_image_file() {
+  local includes_dir=$1
+  local guide=$2
+  local image=$3
+  local md5_hash=$4
+  local docs_images="docs/images"
+  local guide_source=https://raw.githubusercontent.com/cdap-guides
+  local guide_release=release/cdap-$project_version-compatible/$docs_images
+  download_file $includes_dir/$guide/$docs_images $guide_source/$guide/$guide_release $image $md5_hash  
 }
 
 function download_file() {
@@ -52,17 +65,20 @@ function download_file() {
   local target=$includes_dir/$file_name
   
   if [ ! -d "$includes_dir" ]; then
-    mkdir $includes_dir
+    mkdir -p $includes_dir
     echo "Creating Includes Directory: $includes_dir"
   fi
 
-  echo "Downloading using curl $file_name from $source_dir"
+  echo "Downloading using curl $file_name"
+#   echo "Downloading using curl from $source_dir/$file_name"
+#   echo "  to $target"
   curl $source_dir/$file_name --output $target --silent
   
-  if [ "$OSTYPE" == "darwin"* ]; then
-    local new_md5_hash=`md5 -q $target`
+  local new_md5_hash
+  if [[ "x$OSTYPE" == "xdarwin"* ]]; then
+    new_md5_hash=`md5 -q $target`
   else
-    local new_md5_hash=`md5sum $target | awk '{print $1}'`
+    new_md5_hash=`md5sum $target | awk '{print $1}'`
   fi
   
   if [ "x$md5_hash" != "x$new_md5_hash" ]; then
@@ -96,8 +112,19 @@ function pandoc_includes() {
   download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
   download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
 
-  echo "Re-writes all the image links..."
-#   version
+  echo "Downloading Guide image files from GitHub..."
+  download_guide_image_file $1 cdap-bi-guide             app-design.png           e950be372236d429cdfa029fb0ab8c29
+  download_guide_image_file $1 cdap-bi-guide             edit-csv-input-file.png  171683816c803dc16263483aeb95f946
+  download_guide_image_file $1 cdap-bi-guide             preview-data.png         cb5f61b742a9b12ebf28570807c15455
+  download_guide_image_file $1 cdap-flow-guide           app-design.png           b6165a0f41ee365c34bafaeabc559ea6
+  download_guide_image_file $1 cdap-flume-guide          app-design.png           cbbcce3eb5d129a0224fcff0d0fcdb12
+  download_guide_image_file $1 cdap-kafka-ingest-guide   app-design.png           236ac98a8383b05b3b09b8e87299b261
+  download_guide_image_file $1 cdap-mapreduce-guide      app-design.png           1e775d088d57333eaf901bce62cd2797
+  download_guide_image_file $1 cdap-spark-guide          app-design.png           e343948ce9f0362b8eeb3dc3b10a7689
+  download_guide_image_file $1 cdap-timeseries-guide     app-design.png           e2137c6bc5a9974d1bde7cfe68aff5aa
+  download_guide_image_file $1 cdap-twitter-ingest-guide app-design.png           29de92e79a241f2659d29553b861e547
+
+  echo "Downloading Guides READMEs from GitHub...and rewriting using sed"
   guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
