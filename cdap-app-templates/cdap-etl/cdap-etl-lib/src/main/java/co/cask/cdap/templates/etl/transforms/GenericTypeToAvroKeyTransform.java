@@ -18,7 +18,6 @@ package co.cask.cdap.templates.etl.transforms;
 
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Transform;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -29,12 +28,12 @@ import javax.annotation.Nullable;
  * Transform to AvroKey<T>
  * @param <T> type to convert to AvroKey
  */
-public class GenericTypeToAvroKeyTransform<T> extends Transform<LongWritable, T,
-                                                               NullWritable, AvroKey<T>> {
+public class GenericTypeToAvroKeyTransform<T> extends Transform<LongWritable, T, AvroKey<T>, NullWritable> {
   @Override
   public void transform(@Nullable LongWritable inputKey, T value,
-                        Emitter<NullWritable, AvroKey<T>> emitter) throws Exception {
+                        Emitter<AvroKey<T>, NullWritable> emitter) throws Exception {
 
-    emitter.emit(null, new AvroKey<T>(value));
+
+    emitter.emit(new AvroKey<T>(value), NullWritable.get());
   }
 }
