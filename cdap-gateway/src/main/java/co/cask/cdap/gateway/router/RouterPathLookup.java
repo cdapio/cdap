@@ -155,10 +155,13 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         return Constants.Service.STREAMS;
       }
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
+      (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
       (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
       //Log Handler Paths:
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
       // /v3/namespaces/<namespaceid>/adapters/<adapterid>/logs
+      // /v3/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs (same as case 1)
       return Constants.Service.METRICS;
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics

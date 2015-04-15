@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers.log;
 
 import co.cask.cdap.logging.read.LogOffset;
+import com.google.common.base.Objects;
 
 /**
 * Test Log object.
@@ -40,9 +41,9 @@ class LogLine {
 
   @Override
   public String toString() {
-    return "LogLine{" +
-      "offset=" + offset +
-      ", log='" + log + '\'' +
-      '}';
+    return Objects.toStringHelper(this)
+      .add("offset", offset)
+      .add("log", log)
+      .toString();
   }
 }

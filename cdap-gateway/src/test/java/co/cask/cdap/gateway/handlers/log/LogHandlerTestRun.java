@@ -143,6 +143,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextNoFrom("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
                    MockLogReader.TEST_NAMESPACE);
     testNext("testApp1", "flows", "testFlow1", false);
+    testNextRunId("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
+                  MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
@@ -187,6 +189,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                    MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
                    MockLogReader.TEST_NAMESPACE);
+    testPrevRunId("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
+                  MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
@@ -232,6 +236,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
     testLogsFilter("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
                    MockLogReader.TEST_NAMESPACE);
+    testLogsRunId("testApp1", "flows", "testFlow1", Constants.Gateway.API_VERSION_3_TOKEN,
+                  MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
@@ -272,6 +278,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     } catch (AssertionError e) {
       // Expected exception
     }
+    testLogsRunId("testTemplate1", "mapreduce", "testMapReduce1", Constants.Gateway.API_VERSION_3_TOKEN,
+                  MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
@@ -344,6 +352,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 5;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + img + "-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -363,6 +372,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 10;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -372,7 +382,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testNextFilter(String appId, String entityType, String entityId, @Nullable String version,
                               @Nullable String namespace) throws Exception {
-    String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=EVEN",
+    String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR",
                                          appId, entityType, entityId, getOffset(12));
     HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -382,6 +392,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 12;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -400,10 +411,30 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 30;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
+    }
+  }
+
+  private void testNextRunId(String appId, String entityType, String entityId, @Nullable String version,
+                             @Nullable String namespace) throws Exception {
+    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/1/logs/next?max=100", appId, entityType, entityId);
+    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, version, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
+    Assert.assertEquals(40, logLines.size());
+    int expected = 1;
+    for (LogLine logLine : logLines) {
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
+      String log = logLine.getLog();
+      Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      expected += 2;
     }
   }
 
@@ -419,10 +450,30 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 15;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
+    }
+  }
+
+  private void testPrevRunId(String appId, String entityType, String entityId, @Nullable String version,
+                             @Nullable String namespace) throws Exception {
+    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/0/logs/prev?max=100", appId, entityType, entityId);
+    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, version, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<LogLine> logLines = GSON.fromJson(out, LIST_LOGLINE_TYPE);
+    Assert.assertEquals(40, logLines.size());
+    int expected = 0;
+    for (LogLine logLine : logLines) {
+      Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
+      String log = logLine.getLog();
+      Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      expected += 2;
     }
   }
 
@@ -450,6 +501,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 20;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -459,7 +511,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testPrevFilter(String appId, String entityType, String entityId, @Nullable String version,
                               @Nullable String namespace) throws Exception {
-    String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=EVEN",
+    String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=ERROR",
                                          appId, entityType, entityId, getOffset(41));
     HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -469,6 +521,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 26;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -487,6 +540,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     int expected = 30;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset().getKafkaOffset());
+      Assert.assertEquals(expected, logLine.getOffset().getTime());
       String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
@@ -500,8 +554,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
-    logLines.remove(logLines.size() - 1);  // Remove last element that is empty
+    List<String> logLines = Lists.newArrayList(Splitter.on("\n").omitEmptyStrings().split(out));
     Assert.assertEquals(15, logLines.size());
     int expected = 20;
     for (String log : logLines) {
@@ -511,15 +564,30 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
+  private void testLogsRunId(String appId, String entityType, String entityId, @Nullable String version,
+                             @Nullable String namespace) throws Exception {
+    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/0/logs?start=0&stop=100", appId, entityType, entityId);
+    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, version, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<String> logLines = Lists.newArrayList(Splitter.on("\n").omitEmptyStrings().split(out));
+    Assert.assertEquals(40, logLines.size());
+    int expected = 0;
+    for (String log : logLines) {
+      String expectedStr = entityId + "&lt;img&gt;-" + expected;
+      Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      expected += 2;
+    }
+  }
+
   private void testLogsFilter(String appId, String entityType, String entityId, @Nullable String version,
                               @Nullable String namespace) throws Exception {
-    String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=20&stop=35&filter=loglevel=EVEN", appId, entityType,
+    String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=20&stop=35&filter=loglevel=ERROR", appId, entityType,
                                          entityId);
     HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, version, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
-    logLines.remove(logLines.size() - 1);  // Remove last element that is empty
+    List<String> logLines = Lists.newArrayList(Splitter.on("\n").omitEmptyStrings().split(out));
     Assert.assertEquals(8, logLines.size());
     int expected = 20;
     for (String log : logLines) {
@@ -536,8 +604,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, "v3", namespaceId));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
-    List<String> logLines = Lists.newArrayList(Splitter.on("\n").split(out));
-    logLines.remove(logLines.size() - 1);  // Remove last element that is empty
+    List<String> logLines = Lists.newArrayList(Splitter.on("\n").omitEmptyStrings().split(out));
     Assert.assertEquals(15, logLines.size());
     int expected = 20;
     for (String log : logLines) {
