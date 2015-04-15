@@ -90,7 +90,7 @@ public class RowToStructuredRecordTransformTest {
 
     MockEmitter<byte[], StructuredRecord> emitter = new MockEmitter<byte[], StructuredRecord>();
     transform.transform(rowKey, input, emitter);
-    StructuredRecord actual = emitter.getEmitted(rowKey);
+    StructuredRecord actual = emitter.getEmitted().get(0).getVal();
     Assert.assertTrue((Boolean) actual.get("boolField"));
     Assert.assertEquals(512L, actual.get("longField"));
     Assert.assertTrue(Math.abs(3.14f - (Float) actual.get("floatField")) < 0.000001);

@@ -17,30 +17,44 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Mock emitter for unit tests
  */
 public class MockEmitter<K, V> implements Emitter<K, V> {
-  private final Map<K, V> emitted = Maps.newHashMap();
+  private final List<Entry<K, V>> emitted = Lists.newArrayList();
 
   @Override
   public void emit(K key, V value) {
-    emitted.put(key, value);
+    emitted.add(new Entry(key, value));
   }
 
-  public Map<K, V> getEmitted() {
+  public List<Entry<K, V>> getEmitted() {
     return emitted;
-  }
-
-  public V getEmitted(K key) {
-    return emitted.get(key);
   }
 
   public void clear() {
     emitted.clear();
+  }
+
+  public class Entry<K, V> {
+    private final K key;
+    private final V val;
+
+    public Entry(K key, V val) {
+      this.key = key;
+      this.val = val;
+    }
+
+    public K getKey() {
+      return key;
+    }
+
+    public V getVal() {
+      return val;
+    }
   }
 }
