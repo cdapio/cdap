@@ -364,7 +364,7 @@ Data Exploration: Attaching schema
    :widths: 15 65 20
 
    * - **Current Approach**
-     - Write a code to compute the various stats: Unique, Histograms, etc.
+     - Write code to compute the various stats: Unique, Histograms, etc.
      - - HiveServer
        - Beeline
 
@@ -1293,14 +1293,14 @@ Summary
    :header-rows: 1
 
    * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
+     - Current Approach 
+     - Required Technologies
 
-   * - CDAP
-     - - Bringing in different open source technologies that have different design principles
-       - Familiarize and learn how to operationalize the different technologies
-       - Design specific architecture to wire in the the various different components
-       - Revisit everything when technology changes
+   * - - Learn a single framework that works with multiple technologies
+     - - Bring in different open source technologies with different design principles
+       - Familiarize and learn how to operate the different technologies
+       - Design specific architectures to wire in different components
+       - Revisit everything whenever the technologies change
      - - HDFS
        - Kafka
        - Hive
