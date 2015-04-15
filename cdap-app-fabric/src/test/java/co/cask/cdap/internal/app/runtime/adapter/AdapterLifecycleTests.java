@@ -94,7 +94,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   private void testAdapterLifeCycle(String namespaceId, String templateId, String adapterName,
-                                    AdapterConfig adapterConfig) throws Exception{
+                                    AdapterConfig adapterConfig) throws Exception {
     String deleteURL = getVersionedAPIPath("apps/" + templateId, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId);
     HttpResponse response = createAdapter(namespaceId, adapterName, adapterConfig);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
