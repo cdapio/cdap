@@ -1,0 +1,11 @@
+BUILD_TEMP="build-temp"
+COMMON="_common"
+COMMON_HTACCESS="$COMMON/htaccess"
+COMMON_IMAGES="$COMMON/_images"
+COMMON_SOURCE="$COMMON/_source"
+COMMON_CONF_PY="$COMMON/common_conf.py"
+COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
+COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
+HTACCESS="htaccess"
+
+MANUALS="admin-manual developers-manual examples-manual integrations reference-manual"
