@@ -41,43 +41,43 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     ImmutableMap.<Schema.Type, RowKeyFunction>builder()
       .put(Schema.Type.BOOLEAN, new RowKeyFunction<Boolean>() {
         @Override
-        public Boolean get(byte[] rowKey) {
+        public Boolean convert(byte[] rowKey) {
           return Bytes.toBoolean(rowKey);
         }
       })
       .put(Schema.Type.BYTES, new RowKeyFunction<byte[]>() {
         @Override
-        public byte[] get(byte[] rowKey) {
+        public byte[] convert(byte[] rowKey) {
           return rowKey;
         }
       })
       .put(Schema.Type.INT, new RowKeyFunction<Integer>() {
         @Override
-        public Integer get(byte[] rowKey) {
+        public Integer convert(byte[] rowKey) {
           return Bytes.toInt(rowKey);
         }
       })
       .put(Schema.Type.LONG, new RowKeyFunction<Long>() {
         @Override
-        public Long get(byte[] rowKey) {
+        public Long convert(byte[] rowKey) {
           return Bytes.toLong(rowKey);
         }
       })
       .put(Schema.Type.FLOAT, new RowKeyFunction<Float>() {
         @Override
-        public Float get(byte[] rowKey) {
+        public Float convert(byte[] rowKey) {
           return Bytes.toFloat(rowKey);
         }
       })
       .put(Schema.Type.DOUBLE, new RowKeyFunction<Double>() {
         @Override
-        public Double get(byte[] rowKey) {
+        public Double convert(byte[] rowKey) {
           return Bytes.toDouble(rowKey);
         }
       })
       .put(Schema.Type.STRING, new RowKeyFunction<String>() {
         @Override
-        public String get(byte[] rowKey) {
+        public String convert(byte[] rowKey) {
           return Bytes.toString(rowKey);
         }
       })
@@ -109,7 +109,7 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     // if one of the fields should come from the row key, add it.
     if (rowFieldName != null) {
-      builder.set(rowFieldName, rowKeyFunction.get(row.getRow()));
+      builder.set(rowFieldName, rowKeyFunction.convert(row.getRow()));
     }
 
     // go through the Row columns and add their values to the record
@@ -131,8 +131,8 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     }
   }
 
-  // translates a row key into some other object.
+  // converts a row key into some other object.
   private interface RowKeyFunction<T> {
-    T get(byte[] rowKey);
+    T convert(byte[] rowKey);
   }
 }

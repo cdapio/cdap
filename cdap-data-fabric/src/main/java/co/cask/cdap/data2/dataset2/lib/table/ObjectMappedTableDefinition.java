@@ -99,6 +99,7 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
     // if the table spec did not have schema, this is an ObjectMappedTable from CDAP 2.8.
     // add the schema and row key as arguments so that explore will work
+    // TODO: remove after CDAP-2122 is done
     if (!tableSpec.getProperties().containsKey(Table.PROPERTY_SCHEMA)) {
       tableSpec = DatasetSpecification.builder(tableSpec.getName(), tableSpec.getType())
         .properties(tableSpec.getProperties())
