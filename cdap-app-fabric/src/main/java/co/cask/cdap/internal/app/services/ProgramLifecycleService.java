@@ -21,8 +21,10 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -33,7 +35,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -66,10 +67,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
     LOG.info("Shutting down ProgramLifecycleService");
   }
 
-  private Program getProgram(Id.Program id, ProgramType programType) throws IOException {
+  private Program getProgram(Id.Program id, ProgramType programType) throws IOException, ProgramNotFoundException {
     Program program = store.loadProgram(id, programType);
     if (program == null) {
-      throw new FileNotFoundException(String.format("Program not found: Id = %s; Type = %s", id, programType));
+      throw new ProgramNotFoundException(id);
     }
     return program;
   }
@@ -84,11 +85,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param debug enable debug mode
    * @return {@link ProgramRuntimeService.RuntimeInfo}
    * @throws IOException if there is an error starting the program
+   * @throws ProgramNotFoundException if program is not found
    */
   public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final ProgramType programType,
                                                  Map<String, String> systemArgs, Map<String, String> userArgs,
                                                  boolean debug)
-    throws IOException {
+    throws IOException, ProgramNotFoundException {
+    final String adapterName = systemArgs.get(ProgramOptionConstants.ADAPTER_NAME);
     Program program = getProgram(id, programType);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -109,7 +112,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds);
+          store.setStart(id, runId, startTimeInSeconds, adapterName);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }

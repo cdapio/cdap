@@ -19,6 +19,8 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import javax.annotation.Nullable;
+
 /**
  * This class records information for a particular run.
  */
@@ -35,15 +37,23 @@ public final class RunRecord {
   @SerializedName("status")
   private final ProgramRunStatus status;
 
-  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status) {
+  @SerializedName("adapter")
+  private final String adapterName;
+
+  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status, @Nullable String adapterName) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
+    this.adapterName = adapterName;
+  }
+
+  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status) {
+    this(pid, startTs, stopTs, status, null);
   }
 
   public RunRecord(RunRecord started, long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status);
+    this(started.pid, started.startTs, stopTs, status, started.getAdapterName());
   }
 
   public String getPid() {
@@ -62,6 +72,11 @@ public final class RunRecord {
     return status;
   }
 
+  @Nullable
+  public String getAdapterName() {
+    return adapterName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -76,12 +91,13 @@ public final class RunRecord {
     return Objects.equal(this.pid, that.pid) &&
       Objects.equal(this.startTs, that.startTs) &&
       Objects.equal(this.stopTs, that.stopTs) &&
-      Objects.equal(this.status, that.status);
+      Objects.equal(this.status, that.status) &&
+      Objects.equal(this.adapterName, that.adapterName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status);
+    return Objects.hashCode(pid, startTs, stopTs, status, adapterName);
   }
 
   @Override
@@ -91,6 +107,7 @@ public final class RunRecord {
       .add("startTs", startTs)
       .add("stopTs", stopTs)
       .add("status", status)
+      .add("adapter", adapterName)
       .toString();
   }
 }

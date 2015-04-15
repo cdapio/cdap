@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.DummyBatchTemplate;
+import co.cask.cdap.DummyWorkerTemplate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -61,8 +62,9 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     setupAdapter(DummyBatchTemplate.class);
+    setupAdapter(DummyWorkerTemplate.class);
     adapterService = getInjector().getInstance(AdapterService.class);
-    // this is called here because the service is already started by the test base at this po
+    // this is called here because the service is already started by the test base at this point
     adapterService.registerTemplates();
   }
 
@@ -72,7 +74,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testAdapterLifeCycle() throws Exception {
+  public void testBatchAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterName = "myStreamConverter";
     DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", "0 0 1 1 *");

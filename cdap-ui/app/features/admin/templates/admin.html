@@ -24,11 +24,19 @@
             </a>
           </li> -->
           <li>
+            <a ui-sref="admin.system.configuration"
+               ng-class="{ current: $state.includes('admin.system.configuration.**') }">
+              Configuration
+            </a>
+          </li>
+
+          <li>
             <a ui-sref="admin.system.services"
                ng-class="{ current: $state.includes('admin.system.services.**') }">
               Services
             </a>
           </li>
+
           <li>
             <a ui-sref="admin.system.preferences"
                ng-class="{ current: $state.includes('admin.system.preferences.**') }">

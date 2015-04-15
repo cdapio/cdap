@@ -26,10 +26,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * ScheduleJob class is used in quartz scheduler job store. Retaining the DefaultSchedulerService$ScheduleJob
@@ -55,8 +59,8 @@ public class DefaultSchedulerService {
     public void execute(JobExecutionContext context) throws JobExecutionException {
       LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
                 context.getTrigger().getKey().toString());
-
-      String key = context.getTrigger().getKey().getName();
+      Trigger trigger = context.getTrigger();
+      String key = trigger.getKey().getName();
       String[] parts = key.split(":");
       Preconditions.checkArgument(parts.length == 5);
 
@@ -68,9 +72,15 @@ public class DefaultSchedulerService {
 
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
       builder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(context.getScheduledFireTime().getTime()));
       builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
+
+      JobDataMap jobDataMap = trigger.getJobDataMap();
+      for (Map.Entry<String, Object> entry : jobDataMap.entrySet()) {
+        builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
+      }
 
       try {
         taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId), programType,

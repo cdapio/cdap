@@ -1,4 +1,10 @@
+
 <div class="btn-group btn-group-xs" role="toolbar" no-drag>
+
+  <label class="btn"
+         ng-model="wdgt.isLive"
+         ng-class="{'btn-success': wdgt.isLive, 'btn-default': !wdgt.isLive}"
+         btn-checkbox>Live</label>
 
   <a class="btn btn-default"
     title="rename widget"

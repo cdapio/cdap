@@ -22,6 +22,7 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.TriggerKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +30,24 @@ import org.slf4j.LoggerFactory;
 *
 */
 public class LogPrintingJob implements Job {
-
   private static final Logger LOG = LoggerFactory.getLogger(LogPrintingJob.class);
+  public static final String KEY = "key";
+  public static final String VALUE = "value";
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     try {
       LOG.info("Received Trigger at {}", context.getScheduledFireTime().toString());
-
+      JobDataMap triggerMap = context.getTrigger().getJobDataMap();
       JobDataMap map = context.getMergedJobDataMap();
       String[] keys = map.getKeys();
+
+      TriggerKey triggerKey = context.getTrigger().getKey();
+      if (triggerKey.getName().equalsIgnoreCase("g2")) {
+        Preconditions.checkArgument(triggerMap.getString(KEY).equals(VALUE));
+      } else {
+        Preconditions.checkArgument(!triggerMap.containsKey(KEY));
+      }
 
       Preconditions.checkArgument(keys != null);
       Preconditions.checkArgument(keys.length > 0);
@@ -49,6 +58,6 @@ public class LogPrintingJob implements Job {
     } catch (Throwable e) {
       throw Throwables.propagate(e);
     }
-    throw new JobExecutionException("excepion");
+    throw new JobExecutionException("exception");
   }
 }

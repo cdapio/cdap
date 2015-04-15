@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -1427,7 +1428,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
-      if (throwable instanceof FileNotFoundException) {
+      if (throwable instanceof ProgramNotFoundException) {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
       return AppFabricServiceStatus.INTERNAL_ERROR;

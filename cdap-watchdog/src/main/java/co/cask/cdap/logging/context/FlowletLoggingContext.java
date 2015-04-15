@@ -32,14 +32,15 @@ public class FlowletLoggingContext extends ApplicationLoggingContext {
    * @param applicationId application id
    * @param flowId flow id
    * @param flowletId flowlet id
+   * @param runId run id
+   * @param instanceId instance id
    */
-  public FlowletLoggingContext(final String namespaceId,
-                               final String applicationId,
-                               final String flowId,
-                               final String flowletId) {
-    super(namespaceId, applicationId, null);
+  public FlowletLoggingContext(String namespaceId, String applicationId, String flowId, String flowletId,
+                               String runId, String instanceId) {
+    super(namespaceId, applicationId, runId);
     setSystemTag(TAG_FLOW_ID, flowId);
     setSystemTag(TAG_FLOWLET_ID, flowletId);
+    setInstanceId(instanceId);
   }
 
   @Override

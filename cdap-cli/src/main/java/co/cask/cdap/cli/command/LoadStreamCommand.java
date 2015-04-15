@@ -77,7 +77,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     }
 
     streamClient.sendFile(streamId, contentType, file);
-    output.printf("Successfully send stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
   }
 
   @Override

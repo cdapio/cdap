@@ -27,11 +27,14 @@ import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
+import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
+import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -63,7 +66,12 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
     //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
     //plugins management is completed.
-    initTable(Lists.<Class>newArrayList(KVTableSource.class, KVTableSink.class, IdentityTransform.class,
+    initTable(Lists.<Class>newArrayList(KVTableSource.class,
+                                        KVTableSink.class,
+                                        BatchReadableSource.class,
+                                        TableSource.class,
+                                        IdentityTransform.class,
+                                        RowToStructuredRecordTransform.class,
                                         StructuredRecordToGenericRecordTransform.class));
   }
 

@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -113,8 +114,13 @@ public final class ScheduleTaskRunner {
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
   private ListenableFuture<?> execute(final Id.Program id, final ProgramType type, Map<String, String> sysArgs,
-                                      Map<String, String> userArgs) throws IOException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
+                                      Map<String, String> userArgs) throws IOException, TaskExecutionException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo;
+    try {
+      runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
+    } catch (ProgramNotFoundException e) {
+      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
+    }
 
     final ProgramController controller = runtimeInfo.getController();
     final CountDownLatch latch = new CountDownLatch(1);

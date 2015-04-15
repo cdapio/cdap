@@ -14,7 +14,7 @@
         <thead>
           <tr ng-class="{'sort-enabled': apps.length>0}">
             <th data-predicate="name" data-predicate-default="reverse">Name</th>
-            <!-- <th>Version</th> -->
+            <th data-predicate="version">Version</th>
             <th data-predicate="type">Type</th>
             <th data-predicate="description">Description</th>
           </tr>
@@ -23,12 +23,12 @@
             <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                 <td>
                     <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
-                        <strong ng-bind="app.name"> </strong>
+                        <strong>{{ ::app.name }} </strong>
                     </a>
                 </td>
-                <!-- <td ng-bind="app.version"></td> -->
-                <td ng-bind="app.type"></td>
-                <td ng-bind="app.description"></td>
+                <td>{{ ::app.version }}</td>
+                <td>{{ ::app.type }}</td>
+                <td>{{ ::app.description }}</td>
             </tr>
         </tbody>
     </table>

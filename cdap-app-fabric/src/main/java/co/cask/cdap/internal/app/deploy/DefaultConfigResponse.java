@@ -42,7 +42,7 @@ public final class DefaultConfigResponse implements ConfigResponse {
    */
   public DefaultConfigResponse(int exit, InputSupplier<? extends Reader> input) {
     this.exit = exit;
-    this.input = input;
+    this.input = exit == 0 ? input : null;
   }
 
   /**
@@ -50,11 +50,8 @@ public final class DefaultConfigResponse implements ConfigResponse {
    */
   @Override
   @Nullable
-  public Reader get() throws IOException {
-    if (input != null) {
-      return input.getInput();
-    }
-    return null;
+  public InputSupplier<? extends Reader> get() throws IOException {
+    return input;
   }
 
   /**

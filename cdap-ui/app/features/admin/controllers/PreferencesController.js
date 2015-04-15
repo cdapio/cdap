@@ -12,7 +12,7 @@ angular.module(PKG.name + '.feature.admin')
     } else {
       path = '/namespaces/' + $state.params.nsadmin + '/preferences';
 
-      $scope.heading = $state.params.nsadmin + ': Namespace Preferences';
+      $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
     }
 
     $scope.preferences = [];

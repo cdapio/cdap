@@ -434,6 +434,8 @@ public final class Constants {
 
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
+
+      public static final String ADAPTER = "adp";
     }
   }
 
@@ -471,6 +473,7 @@ public final class Constants {
     public static final String ADDRESS = "log.saver.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
+    public static final String MESSAGE_PROCESSORS =  "log.saver.message.processors";
   }
 
   /**

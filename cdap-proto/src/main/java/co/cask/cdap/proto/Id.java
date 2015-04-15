@@ -566,6 +566,10 @@ public abstract class Id {
     public static Worker from(Application application, String id) {
       return new Worker(application, id);
     }
+
+    public static Worker from(Namespace namespace, String appId, String id) {
+      return new Worker(new Application(namespace, appId), id);
+    }
   }
 
   /**

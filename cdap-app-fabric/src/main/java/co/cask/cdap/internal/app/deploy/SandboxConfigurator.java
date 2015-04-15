@@ -21,15 +21,12 @@ import co.cask.cdap.app.deploy.Configurator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
 
 /**
  * SandboxConfigurator spawns a seperate JVM to run configuration of an Application.
@@ -79,15 +76,6 @@ public final class SandboxConfigurator implements Configurator {
   public static ListenableFuture<ConfigResponse> config(File jarFilename) {
     SandboxConfigurator sc = new SandboxConfigurator(jarFilename);
     return sc.config();
-  }
-
-  private InputSupplier<Reader> newFileStream(final File result) {
-    return new InputSupplier<Reader>() {
-      @Override
-      public Reader getInput() throws IOException {
-        return Files.newReader(result, Charsets.UTF_8);
-      }
-    };
   }
 
   /**
@@ -152,7 +140,7 @@ public final class SandboxConfigurator implements Configurator {
           process.waitFor();
           int exit = process.exitValue();
           if (exit == 0) {
-            result.set(new DefaultConfigResponse(0, newFileStream(outputFile)));
+            result.set(new DefaultConfigResponse(0, Files.newReaderSupplier(outputFile, Charsets.UTF_8)));
           } else {
             result.set(new DefaultConfigResponse(exit, null));
           }

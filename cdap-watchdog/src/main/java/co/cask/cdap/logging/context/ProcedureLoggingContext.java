@@ -30,12 +30,14 @@ public class ProcedureLoggingContext extends ApplicationLoggingContext {
    * @param namespaceId namespace id
    * @param applicationId application id
    * @param procedureId flow id
+   * @param runId run id
+   * @param instanceId instance id
    */
-  public ProcedureLoggingContext(final String namespaceId,
-                                 final String applicationId,
-                                 final String procedureId) {
-    super(namespaceId, applicationId, null);
+  public ProcedureLoggingContext(String namespaceId, String applicationId, String procedureId,
+                                 String runId, String instanceId) {
+    super(namespaceId, applicationId, runId);
     setSystemTag(TAG_PROCEDURE_ID, procedureId);
+    setInstanceId(instanceId);
   }
 
   @Override

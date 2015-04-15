@@ -18,10 +18,14 @@
 <table class="table table-responsive">
     <tr>
         <th>Name</th>
-        <td ng-bind="apps.name"></td>
+        <td>{{ ::apps.name }}</td>
+    </tr>
+    <tr>
+        <th>Version</th>
+        <td>{{ ::apps.version}}</td>
     </tr>
     <tr>
         <th>Description</th>
-        <td ng-bind="apps.description"></td>
+        <td>{{ ::apps.description }}</td>
     </tr>
 </table>

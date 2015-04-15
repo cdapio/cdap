@@ -58,6 +58,7 @@ import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
 *
@@ -125,6 +126,29 @@ public class SchedulerTest {
 
   public static void schedulerTearDown() throws SchedulerException {
     scheduler.shutdown();
+  }
+
+  @Test
+  public void testJobProperties() throws SchedulerException, UnsupportedTypeException, InterruptedException {
+    String schedulerName = "testPropertiesScheduler";
+    schedulerSetup(true, schedulerName);
+    JobDetail job = JobBuilder.newJob(LogPrintingJob.class)
+      .withIdentity("developer:application1:mapreduce1")
+      .build();
+
+    Trigger trigger  = TriggerBuilder.newTrigger()
+      .withIdentity("g2")
+      .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
+      .startNow()
+      .withSchedule(CronScheduleBuilder.cronSchedule("0/1 * * * * ?"))
+      .build();
+
+    JobKey key =  job.getKey();
+    //Schedule job
+    scheduler.scheduleJob(job, trigger);
+    //Make sure that the job gets triggered more than once.
+    TimeUnit.SECONDS.sleep(3);
+    scheduler.deleteJob(key);
   }
 
   @Test

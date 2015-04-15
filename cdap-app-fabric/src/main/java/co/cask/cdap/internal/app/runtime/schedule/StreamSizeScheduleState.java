@@ -22,6 +22,8 @@ import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 
+import java.util.Map;
+
 /**
  * POJO containing a {@link StreamSizeSchedule} and its state.
  */
@@ -29,6 +31,7 @@ public class StreamSizeScheduleState {
   private final Id.Program programId;
   private final SchedulableProgramType programType;
   private final StreamSizeSchedule streamSizeSchedule;
+  private final Map<String, String> properties;
   private final long baseRunSize;
   private final long baseRunTs;
   private final long lastRunSize;
@@ -37,11 +40,12 @@ public class StreamSizeScheduleState {
 
   @VisibleForTesting
   public StreamSizeScheduleState(Id.Program programId, SchedulableProgramType programType,
-                                 StreamSizeSchedule streamSizeSchedule,
+                                 StreamSizeSchedule streamSizeSchedule, Map<String, String> properties,
                                  long baseRunSize, long baseRunTs, long lastRunSize, long lastRunTs, boolean running) {
     this.programId = programId;
     this.programType = programType;
     this.streamSizeSchedule = streamSizeSchedule;
+    this.properties = properties;
     this.baseRunSize = baseRunSize;
     this.baseRunTs = baseRunTs;
     this.lastRunSize = lastRunSize;
@@ -59,6 +63,10 @@ public class StreamSizeScheduleState {
 
   public StreamSizeSchedule getStreamSizeSchedule() {
     return streamSizeSchedule;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   public long getBaseRunSize() {
@@ -87,6 +95,7 @@ public class StreamSizeScheduleState {
       .add("programId", programId)
       .add("programType", programType)
       .add("streamSizeSchedule", streamSizeSchedule)
+      .add("properties", properties)
       .add("baseRunSize", baseRunSize)
       .add("baseRunTs", baseRunTs)
       .add("lastRunSize", lastRunSize)
@@ -108,6 +117,7 @@ public class StreamSizeScheduleState {
     return Objects.equal(programId, that.programId) &&
       Objects.equal(programType, that.programType) &&
       Objects.equal(streamSizeSchedule, that.streamSizeSchedule) &&
+      Objects.equal(properties, that.properties) &&
       Objects.equal(baseRunSize, that.baseRunSize) &&
       Objects.equal(baseRunTs, that.baseRunTs) &&
       Objects.equal(lastRunSize, that.lastRunSize) &&
@@ -117,7 +127,7 @@ public class StreamSizeScheduleState {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(programId, programType, streamSizeSchedule, baseRunSize,
+    return Objects.hashCode(programId, programType, streamSizeSchedule, properties, baseRunSize,
                             baseRunTs, lastRunSize, lastRunTs, running);
   }
 }

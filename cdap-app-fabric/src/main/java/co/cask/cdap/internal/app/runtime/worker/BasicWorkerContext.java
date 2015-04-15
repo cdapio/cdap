@@ -145,7 +145,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   public LoggingContext getLoggingContext() {
     //TODO: Add adapter name if present later
     return new WorkerLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getId().getId(),
-                                    null);
+                                    getRunId().getId(), String.valueOf(getInstanceId()), null);
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
