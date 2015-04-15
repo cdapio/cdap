@@ -26,27 +26,10 @@ angular.module(PKG.name + '.feature.services')
         $scope.instances = res;
       });
 
-    dataSrc.poll({
+    dataSrc.request({
       _cdapNsPath: path + '/status'
     }, function(res) {
       $scope.status = res.status || 'Unknown';
     });
-
-
-    $scope.start = function() {
-      $scope.status = 'STARTING';
-      dataSrc.request({
-        _cdapNsPath: path + '/start',
-        method: 'POST'
-      });
-    };
-
-    $scope.stop = function() {
-      $scope.status = 'STOPPING';
-      dataSrc.request({
-        _cdapNsPath: path + '/stop',
-        method: 'POST'
-      });
-    };
 
   });
