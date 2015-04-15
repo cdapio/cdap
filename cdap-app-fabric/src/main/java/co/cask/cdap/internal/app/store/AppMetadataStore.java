@@ -391,12 +391,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return list(start, stop, RunRecord.class, limit, new Predicate<RunRecord>() {
         @Override
         public boolean apply(@Nullable RunRecord record) {
-          boolean normalCheck = true;
           // If RunRecord has a valid adapterName, then it should match the adapter name passed in.
-          if (adapter != null) {
-            normalCheck = record != null && adapter.equals(record.getAdapterName());
-          }
-          return normalCheck;
+          return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
         }
       });
     }
