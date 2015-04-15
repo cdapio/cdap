@@ -1,26 +1,15 @@
-<div class="panel-group" ng-if="runs.length > 0">
-  <div class="panel panel-default" id="c{{run.runid}}" ng-repeat="run in runs">
-    <div class="panel-heading">
-      <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" class="clearfix">
-        <div>
-          <span class="pull-left">{{run.runid}}</span>
-          <span class="pull-right">
-            {{run.status}}
-            <i class="fa fa-fw"
-              ng-class="{'fa-chevron-down': run.isOpen, 'fa-chevron-right': !run.isOpen}"></i>
-          </span>
-        </div>
-      </a>
-    </div>
-    <div class="panel-body" ng-if="run.isOpen">
-      <div ui-view></div>
-    </div>
-  </div>
+<div class="btn-group" dropdown is-open="dropdown.isopen">
+  <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+    {{ current }} <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li ng-repeat="run in runs">
+      <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
+    </li>
+  </ul>
 </div>
 
-
-<div ng-hide="runs.length">
-  <div class="well well-md text-center">
-    <h3> This Mapreduce hasn't run once. Start a run! </h3>
-  </div>
+<div ng-if="!$state.params.runid"
+  ng-include="'/assets/features/mapreduce/templates/tabs/runs/run-detail.html'" ng-controller="MapreduceRunsDetailController">
 </div>
+<ui-view ng-if="$state.params.runid"></ui-view>
