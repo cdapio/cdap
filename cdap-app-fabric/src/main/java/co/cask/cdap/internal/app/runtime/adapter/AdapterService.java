@@ -31,6 +31,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -53,7 +54,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -311,7 +311,8 @@ public class AdapterService extends AbstractIdleService {
    * @throws SchedulerException if there was some error deleting the schedule for the adapter
    */
   public void stopAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, ExecutionException,
+    InterruptedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
@@ -342,9 +343,10 @@ public class AdapterService extends AbstractIdleService {
    * @throws NotFoundException if the adapter could not be found
    * @throws InvalidAdapterOperationException if the adapter is already started
    * @throws SchedulerException if there was some error creating the schedule for the adapter
+   * @throws IOException if there was some error starting worker adapter
    */
   public void startAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already started.");
@@ -405,7 +407,8 @@ public class AdapterService extends AbstractIdleService {
     return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workflowName);
   }
 
-  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+    IOException {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getWorkerId(namespace, adapterSpec);
     try {
@@ -451,31 +454,20 @@ public class AdapterService extends AbstractIdleService {
           store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
-    } catch (Throwable t) {
-      if (t instanceof FileNotFoundException) {
-        throw new NotFoundException(workerId);
-      } else {
-        Throwables.propagate(t);
-      }
+    } catch (ProgramNotFoundException e) {
+      throw new NotFoundException(workerId);
     }
   }
 
-  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
-    final Id.Adapter adapterId = Id.Adapter.from(namespace, adapterSpec.getName());
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+    ExecutionException, InterruptedException {
     final Id.Program workerId = getWorkerId(namespace, adapterSpec);
     List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
                                                adapterSpec.getName());
     RunRecord adapterRun = Iterables.getFirst(runRecords, null);
-    if (adapterRun == null) {
-      throw new NotFoundException(adapterId);
-    }
-
-    RunId runId = RunIds.fromString(adapterRun.getPid());
-    try {
+    if (adapterRun != null) {
+      RunId runId = RunIds.fromString(adapterRun.getPid());
       lifecycleService.stopProgram(runId);
-    } catch (Throwable t) {
-      LOG.error("Error while trying to stop Adapter {} which has RunId of {} : ", adapterId, runId, t);
-      Throwables.propagate(t);
     }
   }
 

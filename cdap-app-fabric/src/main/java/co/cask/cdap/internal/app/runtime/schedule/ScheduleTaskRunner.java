@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -29,8 +30,6 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -78,33 +77,31 @@ public final class ScheduleTaskRunner {
     throws TaskExecutionException, IOException {
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
-    try {
-      String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
-      Preconditions.checkNotNull(store.getApplication(programId.getApplication()), "Application Not Found");
-      ScheduleSpecification spec = store.getApplication(programId.getApplication()).getSchedules().get(scheduleName);
-      Preconditions.checkNotNull(spec, "Schedule not found");
 
-      // Schedule properties are overriden by resolved preferences
-      userArgs.putAll(spec.getProperties());
-      userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
-
-      systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
-      systemArgs.putAll(systemOverrides);
-
-      boolean runMultipleProgramInstances =
-        Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
-
-      if (!runMultipleProgramInstances) {
-        ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
-        if (existingInfo != null) {
-          throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-        }
-      }
-    } catch (Throwable t) {
-      Throwables.propagateIfInstanceOf(t, TaskExecutionException.class);
-      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
+    String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
+    ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+    if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
+      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), false);
     }
 
+    ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
+
+    // Schedule properties are overriden by resolved preferences
+    userArgs.putAll(spec.getProperties());
+    userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
+
+    systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
+    systemArgs.putAll(systemOverrides);
+
+    boolean runMultipleProgramInstances =
+      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
+
+    if (!runMultipleProgramInstances) {
+      ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
+      if (existingInfo != null) {
+        throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
+      }
+    }
     return execute(programId, programType, systemArgs, userArgs);
   }
 

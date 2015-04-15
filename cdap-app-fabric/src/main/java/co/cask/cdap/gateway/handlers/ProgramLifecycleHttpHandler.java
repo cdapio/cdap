@@ -1426,11 +1426,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, debug);
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
+    } catch (ProgramNotFoundException e) {
+      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
-      if (throwable instanceof ProgramNotFoundException) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
