@@ -1550,7 +1550,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ProgramRunStatus.valueOf(status.toUpperCase());
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
       } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");
       }
     } catch (SecurityException e) {

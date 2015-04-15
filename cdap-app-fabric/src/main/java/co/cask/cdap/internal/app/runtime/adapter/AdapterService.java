@@ -41,7 +41,9 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -348,6 +350,55 @@ public class AdapterService extends AbstractIdleService {
     }
 
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
+  }
+
+  /**
+   * Fetch RunRecords for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param status {@link ProgramRunStatus} status of the program running/completed/failed or all
+   * @param start fetch run history that has started after the startTime in seconds
+   * @param end fetch run history that has started before the endTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return list of {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public List<RunRecord> getRuns(Id.Namespace namespace, String adapterName, ProgramRunStatus status,
+                                 long start, long end, int limit) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    return store.getRuns(program, status, start, end, limit, adapterName);
+  }
+
+  /**
+   * Fetch RunRecord for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param runId run id
+   * @return {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public RunRecord getRun(Id.Namespace namespace, String adapterName, String runId) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    RunRecord runRecord = store.getRun(program, runId);
+    if (adapterName.equals(runRecord.getAdapterName())) {
+      return runRecord;
+    }
+    return null;
+  }
+
+  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    Id.Program program;
+    if (programType == ProgramType.WORKFLOW) {
+      program = getWorkflowId(namespace, adapterSpec);
+    } else {
+      // TODO: Implement for Worker Adapter
+      program = null;
+    }
+    return program;
   }
 
   private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
