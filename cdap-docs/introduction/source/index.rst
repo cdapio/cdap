@@ -32,7 +32,7 @@ and then use the resources in its ``examples`` directory as you follow along.
 We'll look at these areas:
   - `Data Ingestion`_
   - `Data Exploration`_
-  - `Data Exploration: Attaching Schema`_
+  - `Data Exploration: Attaching A Schema`_
   - `Advanced Data Exploration`_
   - `Transforming Your Data`_
   - `Building Real World Applications`_
@@ -44,6 +44,7 @@ Installation
 - Download and install CDAP to run in standalone mode on a laptop
 - Startup CDAP
 - Startup CDAP Command Line Interface
+
 
 .. container:: table-block
 
@@ -59,12 +60,12 @@ Installation
      :class: grey-table
 
      * - Current Approach
-       - Install and startup Hadoop and other technologies, as required
+       - - Install and startup Hadoop and other technologies, as required
        - - Hadoop
          - Other technologies
          
      * - **Using CDAP**
-       - Install CDAP by downloading zipfile, unzipping and starting CDAP Server
+       - - Install CDAP by downloading zipfile, unzipping and starting CDAP Server
        - - CDAP Instance    
       
   .. list-table::
@@ -82,12 +83,14 @@ Installation
           Standalone CDAP started successfully.
           Connect to the Console at http://localhost:9999
 
+
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
+     :stub-columns: 1
 
-     * - **Startup command line interface**
+     * - Start command line interface
        - Required Technologies
        
   .. list-table::
@@ -95,11 +98,11 @@ Installation
      :class: grey-table
      
      * - Current Approach
-       - Run Hive commands using Hive CLI
+       - - Run Hive commands using Hive CLI
        - - HiveServer
          - Beeline
      * - **Using CDAP**
-       - Start CDAP CLI (Command Line Interface)
+       - - Start CDAP CLI (Command Line Interface)
        - - CDAP CLI 
        
   .. list-table::
@@ -121,12 +124,14 @@ Data Ingestion
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
 - The abstraction of Streams lets you disconnect how you ingest from how you process
 
+
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
+     :stub-columns: 1
 
-     * - **Create a Stream**
+     * - Create a Stream
        - Required Technologies
        
   .. list-table::
@@ -137,7 +142,7 @@ Data Ingestion
        - - Create a Time partitioned file in HDFS
          - Configure Kafka or Flume to write to time partitions
        - - HDFS
-         - Kafka
+         - Kafka, Flume
          
      * - **Using CDAP**
        - ``> create stream logEventStream``
@@ -157,8 +162,9 @@ Data Ingestion
 
   .. list-table::
      :widths: 80 20
+     :stub-columns: 1
 
-     * - **Sending data to the Stream**
+     * - Send data to the Stream
        - Required Technologies
        
   .. list-table::
@@ -171,6 +177,7 @@ Data Ingestion
          - Create external table in Hive called ``stream_logeventstream``
        - - HDFS
          - Kafka
+         - Hive
          
      * - **Using CDAP**
        - ``> load stream logEventStream examples/resources/accesslog.txt``
@@ -193,7 +200,7 @@ Data Exploration
 - Easily inspect the quality of data by generating data stats
 - Easily associate a schema once you know your data: "schema on read"
 - Support different data formats; extensible to support custom formats
-- Supported data formats include AVRO, Text, CSV, TSV, and CLF
+- Supported data formats include Avro, Text, CSV, TSV, and CLF
 - Query using SQL
 
 
@@ -203,7 +210,7 @@ Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Describe available data
+     * - Describe ingested Data
        - Required Technologies
        
   .. list-table::
@@ -211,9 +218,8 @@ Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - - Run Hive command using Hive CLI:
-     
-           - ``DESCRIBE stream_logeventstream``
+       - - Run Hive command using Hive CLI       
+         - ``DESCRIBE stream_logeventstream``
        - - HiveServer
          - Beeline
          
@@ -251,7 +257,8 @@ Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
+       - - Run Hive command using Hive CLI
+         - ``SELECT * FROM stream_logeventstream LIMIT 2``
        - - HiveServer
          - Beeline
          
@@ -288,8 +295,8 @@ Data Exploration
           Fetched 2 rows
 
 
-Data Exploration: Attaching Schema
-==================================
+Data Exploration: Attaching A Schema
+====================================
 
 .. container:: table-block
 
@@ -297,7 +304,7 @@ Data Exploration: Attaching Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Apply an *Combined log format* schema to data in the Stream
+     * - Apply a *Combined log format* schema to data in the Stream
        - Required Technologies
        
   .. list-table::
@@ -305,7 +312,8 @@ Data Exploration: Attaching Schema
      :class: grey-table
 
      * - Current Approach
-       - Drop the external Hive table
+       - - Drop the external Hive table
+         - Recreate the Hive table with new schema
        - - HiveServer
          - Beeline
          
@@ -329,7 +337,7 @@ Data Exploration: Attaching Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve basic Stream statistics
+     * - Describe new format of the ingested Data
        - Required Technologies
        
   .. list-table::
@@ -337,7 +345,8 @@ Data Exploration: Attaching Schema
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventsetream``
+       - - Run Hive command using Hive CLI
+         - ``DESCRIBE stream_logeventsetream``
        - - HiveServer
          - Beeline
          
@@ -369,14 +378,13 @@ Data Exploration: Attaching Schema
           +=============================================================================+
           Fetched 11 rows
 
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Retrieve first two events from the Stream, in new format
        - Required Technologies
        
   .. list-table::
@@ -384,7 +392,8 @@ Data Exploration: Attaching Schema
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventsetream LIMIT 2``
+       - - Run Hive command using Hive CLI
+         - ``SELECT * FROM stream_logeventsetream LIMIT 2``
        - - HiveCLI
          - Beeline
          
@@ -419,14 +428,13 @@ Data Exploration: Attaching Schema
           |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
           +===================================================================================================================+
 
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Retrieve basic Stream statistics
        - Required Technologies
        
   .. list-table::
@@ -434,7 +442,7 @@ Data Exploration: Attaching Schema
      :class: grey-table
 
      * - Current Approach
-       - Write code to compute the various stats: Unique, Histograms, etc.
+       - Write code to compute the various stats: number of unique elements, histograms, etc.
        - - HiveServer
          - Beeline
          
@@ -543,10 +551,8 @@ Data Exploration: Attaching Schema
 Advanced Data Exploration
 =========================
 - CDAP has the ability to join multiple Streams using SQL
-- Data in a Stream can be ingested in Realtime or Batch
+- Data in a Stream can be ingested in realtime or batch
 - CDAP supports joining with other Streams using Hive SQL
-
-
 
 
 .. container:: table-block
@@ -555,7 +561,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Create an additional Stream
        - Required Technologies
        
   .. list-table::
@@ -563,11 +569,8 @@ Advanced Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - - Create a Time partitioned file in HDFS
-         - Configure Flume or Kafka to write to time partitions
+       - - Create a file in Hadoop file system called ``ip2geo``
        - - HDFS
-         - Kafka
-         - Hive
          
      * - **Using CDAP**
        - ``> create stream ip2geo``
@@ -589,7 +592,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Ingest CSV-formatted "IP-to-geo location" data into Stream
        - Required Technologies
        
   .. list-table::
@@ -597,8 +600,7 @@ Advanced Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - - Creating a file in Hadoop file system called ip2geo
-         - Write a custom consumer that reads from source (Example: Kafka)
+       - - Write a custom consumer that reads from source (example: Kafka)
          - Write the data to HDFS
          - Create external table in Hive called ``stream_ip2geo``
        - - HDFS
@@ -625,7 +627,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Send individual event to Stream
        - Required Technologies
        
   .. list-table::
@@ -650,13 +652,14 @@ Advanced Data Exploration
 
           Successfully sent stream event to stream 'ip2geo'
 
+
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Retrieve events from the Stream
        - Required Technologies
        
   .. list-table::
@@ -664,7 +667,8 @@ Advanced Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI ``SELECT * FROM stream_ip2geo``
+       - - Run Hive command using Hive CLI
+         - ``SELECT * FROM stream_ip2geo``
        - - Hive CLI
          - Beeline
          
@@ -707,13 +711,14 @@ Advanced Data Exploration
           +===========================================================================================================+
           Fetched 22 rows
 
+
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Having reviewed data, set a new format for the Stream
        - Required Technologies
        
   .. list-table::
@@ -747,7 +752,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Retrieve events from the Stream, in new format
        - Required Technologies
        
   .. list-table::
@@ -755,7 +760,8 @@ Advanced Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI: ``SELECT * FROM stream_ip2geo``
+       - - Run Hive command using Hive CLI
+         - ``SELECT * FROM stream_ip2geo``
        - - Hive CLI
          - Beeline
          
@@ -806,7 +812,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Join data in the two Streams and retrieve selected events
        - Required Technologies
        
   .. list-table::
@@ -814,7 +820,8 @@ Advanced Data Exploration
      :class: grey-table
 
      * - Current Approach
-       - Run Hive command using Hive CLI: ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
+       - - Run Hive command using Hive CLI
+         - ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
        - - Hive CLI
          - Beeline
          
@@ -883,10 +890,11 @@ Transforming Your Data
 ======================
 - CDAP Adapters are high order compositions of programs that includes MapReduce, Workflow, Services
 - Adapters provide pre-defined transformations to be applied on Streams or other datasets
-- Adapters are re-usable and extendable, easily configured and managed
-- Build your own adapters using simple APIs
-- In this example, we will apply a pre-defined transformation of converting data in streams
-  to writing to TimePartitionedDatasets (in Avro format) that can be queried using Hive or Impala
+- Adapters are re-usable, extendable, and  easily configured and managed
+- Build your own adapters, using simple APIs
+- In this example, we will apply a pre-defined transformation of converting data in
+  streams to writing to ``TimePartitionedDatasets`` (in Avro format) that can be queried
+  using either Hive or Impala
 
 
 .. container:: table-block
@@ -895,7 +903,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Create a Stream-conversion Adaptor
        - Required Technologies
        
   .. list-table::
@@ -903,10 +911,10 @@ Transforming Your Data
      :class: grey-table
 
      * - Current Approach
-       - - Write a custom consumer that reads from source (Example: Kafka)
+       - - Write a custom consumer that reads from source (example: Kafka)
          - Write the data to HDFS
-         - Create external table in Hive called ``stream_ip2geo``
-         - Orchestrate running the job periodically using Oozie
+         - Create an external table in Hive called ``stream_ip2geo``
+         - Orchestrate running the custom consumer periodically using Oozie
          - Keep track of last processed times
        - - HDFS
          - Kafka
@@ -938,7 +946,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - List the adaptors available in the CDAP instance
        - Required Technologies
        
   .. list-table::
@@ -947,7 +955,7 @@ Transforming Your Data
 
      * - Current Approach
        - 
-       - 
+       - - Not available
          
      * - **Using CDAP**
        - ``> list adapters``
@@ -1029,15 +1037,13 @@ Transforming Your Data
           +=============================================================================================================+
 
 
-
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Load data into the Stream; it will automatically be converted  
        - Required Technologies
        
   .. list-table::
@@ -1045,7 +1051,7 @@ Transforming Your Data
      :class: grey-table
 
      * - Current Approach
-       - - Write a custom consumer that reads from source (Example: Kafka)
+       - - Write a custom consumer that reads from source (example: Kafka)
          - Write the data to HDFS
          - Create external table in Hive called ``stream_ip2geo``
        - - HDFS
@@ -1072,7 +1078,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - List available Datasets
        - Required Technologies
        
   .. list-table::
@@ -1080,14 +1086,15 @@ Transforming Your Data
      :class: grey-table
 
      * - Current Approach
-       - - Run commands using HBase shell:
+       - - Run commands using HBase shell and Pig Latin
          - ``hbase shell> list``
          - ``hbase shell> hdfs fs -ls /path/to/my/files``
        - - HBase
          - HDFS
+         - Pig
          
      * - **Using CDAP**
-       - ``> list dataset instances # Dataset that is time partitioned``
+       - Dataset that is time partitioned
        - - CDAP CLI    
       
   .. list-table::
@@ -1095,7 +1102,8 @@ Transforming Your Data
      :class: white-table
 
      * -  
-       - ::
+       - ``> list dataset instances``
+         ::
 
           +======================================================================================================+
           | name                                  | type                                                         |
@@ -1109,7 +1117,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Describe the converted Dataset
        - Required Technologies
        
   .. list-table::
@@ -1117,7 +1125,8 @@ Transforming Your Data
      :class: grey-table
 
      * - Current Approach
-       - Run Hive query using CLI: ``'describe user_logEventStream_converted'`` 
+       - - Run Hive query using Hive CLI
+         - ``'describe user_logEventStream_converted'`` 
        - - Hive CLI
          - Beeline
          
@@ -1162,6 +1171,42 @@ Transforming Your Data
           +==========================================================================================+
 
 
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Retrieve the first two events from the converted data
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Run Hive query using Hive CLI
+         - ``SELECT * FROM user_logEventStream_converted LIMIT 2``
+       - - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'SELECT * FROM dataset_logEventStream_converted LIMIT 2'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +==========================================================================================+
+          | col_name: STRING                             | data_type: STRING   | comment: STRING     |
+          +==========================================================================================+
+          +==========================================================================================+
+
+
 Building Real World Applications
 ================================
 - Build Data Applications using simple-to-use CDAP APIs
@@ -1177,14 +1222,13 @@ Building Real World Applications
 - Service to expose the data 
 - Unified platform for different processing paradigms
 
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Deploy a pre-built CDAP Application: Wise App
        - Required Technologies
        
   .. list-table::
@@ -1216,14 +1260,13 @@ Building Real World Applications
 
           Successfully deployed application
 
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Describe application components
        - Required Technologies
        
   .. list-table::
@@ -1262,7 +1305,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Start the Application's Flow (for processing events)
        - Required Technologies
        
   .. list-table::
@@ -1295,7 +1338,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Check the status of the Flow
        - Required Technologies
        
   .. list-table::
@@ -1303,8 +1346,10 @@ Building Real World Applications
      :class: grey-table
 
      * - Current Approach
-       - - Retrieve the application ID with: ``yarn application -list | grep "Wise.WiseFlow"``
-         - Retrieve the status with: ``yarn application -status <APP ID>``
+       - - Retrieve the application ID
+         - ``yarn application -list | grep "Wise.WiseFlow"``
+         - Retrieve the status
+         - ``yarn application -status <APP ID>``
        - - YARN
          
      * - **Using CDAP**
@@ -1326,7 +1371,41 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - XXXXXXXX
+     * - Ingest access log data into the Wise App Stream
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Write a custom consumer for Kafka that reads from source
+         - Write the data to HDFS
+         - Create external table in Hive called ``cdap_stream_logeventstream``
+       - - HDFS
+         - Kafka
+         - Hive
+         
+     * - **Using CDAP**
+       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully sent stream event to stream 'logEventStream'  
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Retrieve 
        - Required Technologies
        
   .. list-table::
@@ -1372,91 +1451,138 @@ Building Real World Applications
           f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 
 
-
 .. rubric:: Program Lifecycle
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Start the job using Oozie
-       - ``oozie job -start <arguments>``
-     - - Oozie
-       - YARN
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Start the Wise Application Workflow to process ingested data
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - - Start the job using Oozie
+         - ``oozie job -start <arguments>``
+       - - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> start workflow Wise.WiseWorkflow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> start workflow Wise.WiseWorkflow``       
-       ::
+     * -  
+       - ::
 
-        Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}' 
+          Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
 
-       |non-breaking-space|
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - **Current Approach**
-     - - Get the workflow status from Oozie
-       - ``oozie job -info <jobid>``
-     - - Oozie
-       - YARN
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Check the status of the Workflow 
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - - Get the workflow status from Oozie
+         - ``oozie job -info <jobid>``
+       - - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> get workflow status Wise.WiseWorkflow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> get workflow status Wise.WiseWorkflow``       
-       ::
+     * -  
+       - ::
 
-        RUNNING
+          RUNNING
 
-       |non-breaking-space|
+.. container:: table-block
 
-.. list-table::
-   :widths: 15 65 20
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Start the WiseService that will be used to retrieve results
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-   * - **Current Approach**
-     - - Set classpath in environment variable 
-       - ``CLASSPATH=/my/classpath``
-       - Run the command to start the yarn application
-       - ``yarn jar /path/to/myprogram.jar``
-     - - YARN
+     * - Current Approach
+       - - Set classpath in environment variable 
+         - ``CLASSPATH=/my/classpath``
+         - Run the command to start the yarn application
+         - ``yarn jar /path/to/myprogram.jar``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> start service Wise.WiseService``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-.. list-table::
-   :widths: 15 85
+     * -  
+       - ::
 
-   * - **CDAP**
-     - ``> start service Wise.WiseService``       
-       ::
+          Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
 
-        Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+.. container:: table-block
 
-       |non-breaking-space|
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Check the status of the Service
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 65 20
+     * - Current Approach
+       - - Get the application ID
+         - ``yarn application -list | grep "Wise.WiseService"``
+         - Get the status
+         - ``yarn application -status <APP ID>``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> get service status Wise.WiseService``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **Current Approach**
-     - - Get the application ID with the command: 
-       - ``yarn application -list | grep "Wise.WiseService"``
-       - Get the status using the command: 
-       - ``yarn application -status <APP ID>``
-     - - YARN
+     * -  
+       - ::
 
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> get service status Wise.WiseService``       
-       ::
-
-        RUNNING
+          RUNNING
 
 
 .. rubric:: Serve the processed data in real time
@@ -1467,7 +1593,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Serve the processed data in real time
+     * - Discover the Wise Service's available endpoints for retrieving results
        - Required Technologies
        
   .. list-table::
@@ -1512,7 +1638,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Serve the processed data in real time
+     * - Retrieve the count of a particular IP address (``69.181.160.120``)
        - Required Technologies
        
   .. list-table::
@@ -1524,10 +1650,8 @@ Building Real World Applications
            and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
          - Run ``curl http://hostname:port/ip/69.181.160.120/count``
        - - HDFS
-         - Kafka
-         - Hive
-         - Oozie
          - YARN
+         - Zookeeper
          
      * - **Using CDAP**
        - ``> call service Wise.WiseService GET /ip/69.181.160.120/count``
@@ -1550,14 +1674,13 @@ Building Real World Applications
           |        | lication/json      |           |      |
           +================================================+
 
-
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - Serve the processed data in real time
+     * - List the Dataset instances
        - Required Technologies
        
   .. list-table::
@@ -1565,49 +1688,7 @@ Building Real World Applications
      :class: grey-table
 
      * - Current Approach
-       - - Discover the host and port where the service is running on by looking at the host 
-           and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
-         - Run ``curl http://hostname:port/ip/69.181.160.120/count``
-       - - HDFS
-         - Kafka
-         - Hive
-         - Oozie
-         - YARN
-         
-     * - **Using CDAP**
-       - ``> list dataset instances``
-       - - CDAP CLI    
-      
-  .. list-table::
-     :widths: 15 85
-     :class: white-table
-
-     * -  
-       - ::
-
-          +=================================================================+
-          | name             | type                                         |
-          +=================================================================+
-          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
-          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
-          +=================================================================+
-
-
-.. container:: table-block
-
-  .. list-table::
-     :widths: 80 20
-     :stub-columns: 1
-     
-     * - Serve the processed data in real time
-       - Required Technologies
-       
-  .. list-table::
-     :widths: 15 65 20
-     :class: grey-table
-
-     * - Current Approach
-       - - Run a command in the HBase shell:
+       - - Run a command in HBase shell
          - ``hbase shell> list "cdap.user.*"``
        - - HDFS
          - HBase
@@ -1630,6 +1711,7 @@ Building Real World Applications
           | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
           +=================================================================+
 
+
 .. rubric:: View bounce count results 
 
 .. container:: table-block
@@ -1638,7 +1720,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Serve the processed data in real time
+     * - Retrieve the first five pages with bounce counts and their statistics 
        - Required Technologies
        
   .. list-table::
@@ -1646,7 +1728,7 @@ Building Real World Applications
      :class: grey-table
 
      * - Current Approach
-       - - Run a command in the Hive CLI:
+       - - Run a command in the Hive CLI
          - ``"SELECT * FROM dataset_bouncecountstore LIMIT 5"``
        - - HDFS
          - HBase
@@ -1663,77 +1745,139 @@ Building Real World Applications
      * -  
        - ::
 
-          +=================================================================+
-          | name             | type                                         |
-          +=================================================================+
-          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
-          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
-          +=================================================================+
+          +============================================================================================================================+
+          | dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore.totalvisits:  | dataset_bouncecountstore.bounces: BIGINT |
+          |                                        | BIGINT                                 |                                          |
+          +============================================================================================================================+
+          | /CDAP-DUT-50/index.php                 | 2                                      | 2                                        |
+          |----------------------------------------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 2                                        |
+          | maries.action?planKey=CDAP-DUT&buildNu |                                        |                                          |
+          | mber=50&_=1423398146659                |                                        |                                          |
+          |----------------------------------------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
+          | mber=284&_=1423341312519               |                                        |                                          |
+          |----------------------------------------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
+          | mber=284&_=1423341312521               |                                        |                                          |
+          |----------------------------------------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
+          | mber=284&_=1423341312522               |                                        |                                          |
+          +============================================================================================================================+
+          Fetched 5 rows
 
-OLD
 
-.. rubric:: Serve the processed data in real time
+.. rubric:: Stop Application and Delete From Server
 
 
-.. rubric:: View bounce count results 
+.. container:: table-block
 
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
      
-   * - ``> execute 'SELECT * FROM user_bouncecountstore LIMIT 5'``
-     - - Run the folllowing command in Hive CLI
-       - ``"SELECT * FROM user_bouncecountstore LIMIT 5"``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-       - HBase
-   
-   * - ``> stop service Wise.WiseService``
-     - - Find the yarn application Id from the following command
-       - ``yarn application -list | grep "Wise.WiseService"``
-       - Stop the application by running the following command
-       - ``yarn application -kill <Application ID>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-       - HBase
-   
-   * - ``> stop flow Wise.WiseFlow``
-     - - Find the yarn application Id from the following command
-       - ``yarn application -list | grep "Wise.WiseFlow"``
-       - Stop the application by running the following command
-       - ``yarn application -kill <Application ID>``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-       - HBase
-  
-   * - ``> delete app Wise``
-     - - Delete the workflow from oozie
-       - Remove the service jars and flow jars
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-       - HBase
+     * - Stop the Wise Service
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Find the yarn application ID from the following command
+         - ``yarn application -list | grep "Wise.WiseService"``
+         - Stop the application by running the following command
+         - ``yarn application -kill <Application ID>``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> stop service Wise.WiseService``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+       
+          Successfully stopped Service 'WiseService' of application 'Wise'
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Stop the Wise Flow
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Find the yarn application ID from the following command
+         - ``yarn application -list | grep "Wise.WiseFlow"``
+         - Stop the application by running the following command
+         - ``yarn application -kill <Application ID>``
+       - - YARN
+         
+     * - **Using CDAP**
+       - ``> stop flow Wise.WiseFlow``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+       
+          Successfully stopped Flow 'WiseFlow' of application 'Wise'
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Delete the Application from the Server
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Delete the workflow from oozie
+         - Remove the service jars and flow jars
+       - - HDFS
+         - Oozie
+         - HBase
+         
+     * - **Using CDAP**
+       - ``> delete app Wise``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+       
+          Successfully deleted application 'Wise'
+
 
 Summary
 =======
 
 .. list-table::
-   :widths: 45 45 10
+   :widths: 40 40 20
    :header-rows: 1
 
    * - New Paradigm With CDAP
@@ -1745,11 +1889,14 @@ Summary
        - Familiarize and learn how to operate the different technologies
        - Design specific architectures to wire in different components
        - Revisit everything whenever the technologies change
-     - - HDFS
-       - Kafka
+     - - HBase
+       - HDFS
        - Hive
+       - Kafka
        - Oozie
+       - Pig
+       - Sqoop
        - YARN
-       - HBase
+       - Zookeeper
 
 
