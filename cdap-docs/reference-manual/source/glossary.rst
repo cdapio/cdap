@@ -135,7 +135,7 @@ Glossary
       CDAP system services that are run in YARN containers like Transaction Service,
       Dataset Executor, Log Saver, Metrics Processor, etc.
 
-   Fileset Dataset
+   Fileset
       A :term:`Dataset` composed of collections of files in the file system that share
       some common attributes such as the format and schema, which abstracts from the
       actual underlying file system interfaces.
