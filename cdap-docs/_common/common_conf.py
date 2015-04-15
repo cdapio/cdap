@@ -26,7 +26,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-wise_version = "0.3.0"
+cdap_apps_version = "0.4.0-SNAPSHOT"
 
 import sys
 import os
@@ -165,13 +165,13 @@ if copyright:
 .. |copyright| replace:: %(copyright)s
 """ % {'copyright': copyright}
 
-if wise_version:
+if cdap_apps_version:
     rst_epilog = rst_epilog + """
-.. |wise-version| replace:: %(wise-version)s
-""" % {'wise-version': wise_version}
+.. |cdap-apps-version| replace:: %(cdap-apps-version)s
+""" % {'cdap-apps-version': cdap_apps_version}
     rst_epilog = rst_epilog + """
-.. |literal-wise-version| replace:: ``%(wise-version)s``
-""" % {'wise-version': wise_version}
+.. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
+""" % {'cdap-apps-version': cdap_apps_version}
 
 
 # There are two options for replacing |today|: either, you set today to some

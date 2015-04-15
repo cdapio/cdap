@@ -32,6 +32,7 @@ and then use the resources in its ``examples`` directory as you follow along.
 We'll look at these areas:
   - `Data Ingestion`_
   - `Data Exploration`_
+  - `Data Exploration: Attaching Schema`_
   - `Advanced Data Exploration`_
   - `Transforming Your Data`_
   - `Building Real World Applications`_
@@ -50,7 +51,7 @@ Installation
      :widths: 80 20
      :stub-columns: 1
      
-     * - Installation and startup
+     * - Install and start Servers
        - Required Technologies
        
   .. list-table::
@@ -195,77 +196,187 @@ Data Exploration
 - Supported data formats include AVRO, Text, CSV, TSV, and CLF
 - Query using SQL
 
-.. list-table::
-   :widths: 15 65 20
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Run Hive command using Hive CLI:
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
      
-         - ``DESCRIBE stream_logeventstream``
-     - - HiveServer
-       - Beeline
+     * - Describe available data
+       - Required Technologies
        
-.. list-table::
-   :widths: 15 85
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-   * - **CDAP**
-     - ``> execute 'describe stream_logEventStream'``
-       ::
-    
-        +=========================================================================================================+
-        | col_name: STRING                 | data_type: STRING                | comment: STRING                   |
-        +=========================================================================================================+
-        | ts                               | bigint                           | from deserializer                 |
-        | headers                          | map<string,string>               | from deserializer                 |
-        | body                             | string                           | from deserializer                 |
-        +=========================================================================================================+
+     * - Current Approach
+       - - Run Hive command using Hive CLI:
+     
+           - ``DESCRIBE stream_logeventstream``
+       - - HiveServer
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'describe stream_logEventStream'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-       |non-breaking-space|
+     * -  
+       - ::
 
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
-     - - HiveServer
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> execute 'select * from stream_logEventStream limit 2'``
-       ::
-
-        +==============================================================================================================+
-        | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
-        | BIGINT                    | ders: map<string,string>  |                                                      |
-        +==============================================================================================================+
-        | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
-        |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
-        |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
-        |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
-        |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
-        |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
-        |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
-        |--------------------------------------------------------------------------------------------------------------|
-        | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
-        |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
-        |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
-        |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
-        |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
-        |                           |                           | 25.122 Safari/537.36"                                |
-        +==============================================================================================================+
-        Fetched 2 rows
+          +=========================================================================================================+
+          | col_name: STRING                 | data_type: STRING                | comment: STRING                   |
+          +=========================================================================================================+
+          | ts                               | bigint                           | from deserializer                 |
+          | headers                          | map<string,string>               | from deserializer                 |
+          | body                             | string                           | from deserializer                 |
+          +=========================================================================================================+
 
 
-Data Exploration: Attaching schema
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Retrieve first two events from the Stream
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventstream LIMIT 2``
+       - - HiveServer
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'select * from stream_logEventStream limit 2'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +==============================================================================================================+
+          | stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |
+          | BIGINT                    | ders: map<string,string>  |                                                      |
+          +==============================================================================================================+
+          | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:40 +0000] "GET |
+          |                           | in"}                      |  /ajax/planStatusHistoryNeighbouringSummaries.action |
+          |                           |                           | ?planKey=COOP-DBT&buildNumber=284&_=1423341312519 HT |
+          |                           |                           | TP/1.1" 200 508 "http://builds.cask.co/browse/COOP-D |
+          |                           |                           | BT-284/log" "Mozilla/5.0 (Macintosh; Intel Mac OS X  |
+          |                           |                           | 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chro |
+          |                           |                           | me/38.0.2125.122 Safari/537.36"                      |
+          |--------------------------------------------------------------------------------------------------------------|
+          | 1428969220987             | {"content.type":"text/pla | 69.181.160.120 - - [08/Feb/2015:04:36:47 +0000] "GET |
+          |                           | in"}                      |  /rest/api/latest/server?_=1423341312520 HTTP/1.1" 2 |
+          |                           |                           | 00 45 "http://builds.cask.co/browse/COOP-DBT-284/log |
+          |                           |                           | " "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) A |
+          |                           |                           | ppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.21 |
+          |                           |                           | 25.122 Safari/537.36"                                |
+          +==============================================================================================================+
+          Fetched 2 rows
+
+
+Data Exploration: Attaching Schema
 ==================================
-- Apply an *Combined log format* schema to data in the Stream
-- Retrieve basic Stream stats
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Apply an *Combined log format* schema to data in the Stream
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Drop the external Hive table
+       - - HiveServer
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> set stream format logEventStream clf``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully set format of stream 'logEventStream'
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Retrieve basic Stream statistics
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive command using Hive CLI: ``DESCRIBE stream_logeventsetream``
+       - - HiveServer
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'describe stream_logEventStream'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=============================================================================+
+          | col_name: STRING          | data_type: STRING       | comment: STRING       |
+          +=============================================================================+
+          | ts                        | bigint                  | from deserializer     |
+          | headers                   | map<string,string>      | from deserializer     |
+          | remote_host               | string                  | from deserializer     |
+          | remote_login              | string                  | from deserializer     |
+          | auth_user                 | string                  | from deserializer     |
+          | date                      | string                  | from deserializer     |
+          | request                   | string                  | from deserializer     |
+          | status                    | int                     | from deserializer     |
+          | content_length            | int                     | from deserializer     |
+          | referrer                  | string                  | from deserializer     |
+          | user_agent                | string                  | from deserializer     |
+          +=============================================================================+
+          Fetched 11 rows
+
+
+
+
+
+
+
+
+
 
 .. list-table::
    :widths: 15 65 20
@@ -321,149 +432,175 @@ Data Exploration: Attaching schema
         +=============================================================================+
         Fetched 11 rows
 
-       |non-breaking-space|
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - **Current Approach**
-     - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventsetream LIMIT 2``
-     - - HiveCLI
-       - Beeline
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - Run Hive command using Hive CLI: ``SELECT * FROM stream_logeventsetream LIMIT 2``
+       - - HiveCLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'select * from stream_logEventStream limit 2'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> execute 'select * from stream_logEventStream limit 2'``
-       ::
+     * -  
+       - ::
 
-        +===================================================================================================================+
-        | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_logeve |
-        | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | ntstream.user |
-        | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | _agent: STRIN |
-        | .ts: BI | .header | .remote | .remote | .auth_u | .date:  | .reques | .status | .conten | .referr | G             |
-        | GINT    | s: map< | _host:  | _login: | ser: ST | STRING  | t: STRI | : INT   | t_lengt | er: STR |               |
-        |         | string, | STRING  |  STRING | RING    |         | NG      |         | h: INT  | ING     |               |
-        |         | string> |         |         |         |         |         |         |         |         |               |
-        +===================================================================================================================+
-        | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
-        | 343436  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
-        |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
-        |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
-        |-------------------------------------------------------------------------------------------------------------------|
-        | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
-        | 483106  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
-        |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
-        |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
-        +===================================================================================================================+
+          +===================================================================================================================+
+          | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_logeve |
+          | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | ntstream.user |
+          | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | _agent: STRIN |
+          | .ts: BI | .header | .remote | .remote | .auth_u | .date:  | .reques | .status | .conten | .referr | G             |
+          | GINT    | s: map< | _host:  | _login: | ser: ST | STRING  | t: STRI | : INT   | t_lengt | er: STR |               |
+          |         | string, | STRING  |  STRING | RING    |         | NG      |         | h: INT  | ING     |               |
+          |         | string> |         |         |         |         |         |         |         |         |               |
+          +===================================================================================================================+
+          | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
+          | 343436  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
+          |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
+          |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
+          |-------------------------------------------------------------------------------------------------------------------|
+          | 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |
+          | 483106  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |
+          |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
+          |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
+          +===================================================================================================================+
 
-       |non-breaking-space|
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - **Current Approach**
-     - Write code to compute the various stats: Unique, Histograms, etc.
-     - - HiveServer
-       - Beeline
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - Write code to compute the various stats: Unique, Histograms, etc.
+       - - HiveServer
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> get stream-stats logEventStream limit 1000``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> get stream-stats logEventStream limit 1000``
-       ::
+     * -  
+       - ::
 
-        column: stream_logeventstream.remote_host, type: STRING
-        Unique elements: 6
+          column: stream_logeventstream.remote_host, type: STRING
+          Unique elements: 6
 
-        column: stream_logeventstream.remote_login, type: STRING
-        Unique elements: 0
+          column: stream_logeventstream.remote_login, type: STRING
+          Unique elements: 0
 
-        column: stream_logeventstream.auth_user, type: STRING
-        Unique elements: 0
+          column: stream_logeventstream.auth_user, type: STRING
+          Unique elements: 0
 
-        column: stream_logeventstream.date, type: STRING
-        Unique elements: 750
+          column: stream_logeventstream.date, type: STRING
+          Unique elements: 750
 
-        column: stream_logeventstream.request, type: STRING
-        Unique elements: 972
+          column: stream_logeventstream.request, type: STRING
+          Unique elements: 972
 
-        column: stream_logeventstream.status, type: INT
-        Unique elements: 4
-        Histogram:
-          [200, 299]: 977  |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-          [300, 399]: 17   |
-          [400, 499]: 6    |
+          column: stream_logeventstream.status, type: INT
+          Unique elements: 4
+          Histogram:
+            [200, 299]: 977  |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            [300, 399]: 17   |
+            [400, 499]: 6    |
 
-        column: stream_logeventstream.content_length, type: INT
-        Unique elements: 142
-        Histogram:
-          [0, 99]: 205           |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-          [100, 199]: 1          |
-          [200, 299]: 9          |+
-          [300, 399]: 9          |+
-          [400, 499]: 3          |
-          [500, 599]: 300        |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-          [600, 699]: 4          |
-          [800, 899]: 2          |
-          [900, 999]: 1          |
-          [1300, 1399]: 10       |++
-          [1400, 1499]: 206      |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-          [1500, 1599]: 2        |
-          [1600, 1699]: 2        |
-          [2500, 2599]: 1        |
-          [2700, 2799]: 1        |
-          [2800, 2899]: 1        |
-          [4200, 4299]: 1        |
-          [5700, 5799]: 5        |
-          [7100, 7199]: 1        |
-          [7300, 7399]: 4        |
-          [7800, 7899]: 1        |
-          [8200, 8299]: 5        |
-          [8700, 8799]: 3        |
-          [8800, 8899]: 12       |++
-          [8900, 8999]: 22       |+++++
-          [9000, 9099]: 16       |+++
-          [9100, 9199]: 9        |+
-          [9200, 9299]: 4        |
-          [9300, 9399]: 3        |
-          [9400, 9499]: 5        |
-          [9600, 9699]: 1        |
-          [9700, 9799]: 2        |
-          [9800, 9899]: 39       |++++++++++
-          [9900, 9999]: 4        |
-          [10000, 10099]: 1      |
-          [10100, 10199]: 8      |+
-          [10200, 10299]: 1      |
-          [10300, 10399]: 3      |
-          [10400, 10499]: 1      |
-          [10500, 10599]: 1      |
-          [10600, 10699]: 9      |+
-          [10700, 10799]: 32     |++++++++
-          [10800, 10899]: 5      |
-          [10900, 10999]: 3      |
-          [11000, 11099]: 4      |
-          [11100, 11199]: 1      |
-          [11200, 11299]: 4      |
-          [11300, 11399]: 2      |
-          [11500, 11599]: 1      |
-          [11800, 11899]: 3      |
-          [17900, 17999]: 2      |
-          [36500, 36599]: 1      |
-          [105800, 105899]: 1    |
-          [397900, 397999]: 2    |
-          [1343400, 1343499]: 1  |
-          [1351600, 1351699]: 1  |
+          column: stream_logeventstream.content_length, type: INT
+          Unique elements: 142
+          Histogram:
+            [0, 99]: 205           |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            [100, 199]: 1          |
+            [200, 299]: 9          |+
+            [300, 399]: 9          |+
+            [400, 499]: 3          |
+            [500, 599]: 300        |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            [600, 699]: 4          |
+            [800, 899]: 2          |
+            [900, 999]: 1          |
+            [1300, 1399]: 10       |++
+            [1400, 1499]: 206      |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            [1500, 1599]: 2        |
+            [1600, 1699]: 2        |
+            [2500, 2599]: 1        |
+            [2700, 2799]: 1        |
+            [2800, 2899]: 1        |
+            [4200, 4299]: 1        |
+            [5700, 5799]: 5        |
+            [7100, 7199]: 1        |
+            [7300, 7399]: 4        |
+            [7800, 7899]: 1        |
+            [8200, 8299]: 5        |
+            [8700, 8799]: 3        |
+            [8800, 8899]: 12       |++
+            [8900, 8999]: 22       |+++++
+            [9000, 9099]: 16       |+++
+            [9100, 9199]: 9        |+
+            [9200, 9299]: 4        |
+            [9300, 9399]: 3        |
+            [9400, 9499]: 5        |
+            [9600, 9699]: 1        |
+            [9700, 9799]: 2        |
+            [9800, 9899]: 39       |++++++++++
+            [9900, 9999]: 4        |
+            [10000, 10099]: 1      |
+            [10100, 10199]: 8      |+
+            [10200, 10299]: 1      |
+            [10300, 10399]: 3      |
+            [10400, 10499]: 1      |
+            [10500, 10599]: 1      |
+            [10600, 10699]: 9      |+
+            [10700, 10799]: 32     |++++++++
+            [10800, 10899]: 5      |
+            [10900, 10999]: 3      |
+            [11000, 11099]: 4      |
+            [11100, 11199]: 1      |
+            [11200, 11299]: 4      |
+            [11300, 11399]: 2      |
+            [11500, 11599]: 1      |
+            [11800, 11899]: 3      |
+            [17900, 17999]: 2      |
+            [36500, 36599]: 1      |
+            [105800, 105899]: 1    |
+            [397900, 397999]: 2    |
+            [1343400, 1343499]: 1  |
+            [1351600, 1351699]: 1  |
 
-        column: stream_logeventstream.referrer, type: STRING
-        Unique elements: 8
+          column: stream_logeventstream.referrer, type: STRING
+          Unique elements: 8
 
-        column: stream_logeventstream.user_agent, type: STRING
-        Unique elements: 4
+          column: stream_logeventstream.user_agent, type: STRING
+          Unique elements: 4
 
-        Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
+          Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
 
 
 Advanced Data Exploration
@@ -472,249 +609,338 @@ Advanced Data Exploration
 - Data in a Stream can be ingested in Realtime or Batch
 - CDAP supports joining with other Streams using Hive SQL
 
-.. list-table::
-   :widths: 15 65 20
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Create a Time partitioned file in HDFS
-       - Configure Flume or Kafka to write to time partitions
-     - - HDFS
-       - Kafka
-       - Hive
 
-.. list-table::
-   :widths: 15 85
 
-   * - **CDAP**
-     - ``> create stream ip2geo``
-       ::
+.. container:: table-block
 
-        Successfully created stream with ID 'ip2geo'
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-       |non-breaking-space|
+     * - Current Approach
+       - - Create a Time partitioned file in HDFS
+         - Configure Flume or Kafka to write to time partitions
+       - - HDFS
+         - Kafka
+         - Hive
+         
+     * - **Using CDAP**
+       - ``> create stream ip2geo``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-.. list-table::
-   :widths: 15 65 20
+     * -  
+       - ::
 
-   * - **Current Approach**
-     - - Creating a file in Hadoop file system called ip2geo
-       - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_ip2geo``
-     - - HDFS
-       - Kafka
-       - Hive
+          Successfully created stream with ID 'ip2geo'
 
-.. list-table::
-   :widths: 15 85
 
-   * - **CDAP**
-     - ``> load stream ip2geo examples/resources/ip2geo-maps.csv``
-       ::
+.. container:: table-block
 
-        Successfully sent stream event to stream 'ip2geo'
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Creating a file in Hadoop file system called ip2geo
+         - Write a custom consumer that reads from source (Example: Kafka)
+         - Write the data to HDFS
+         - Create external table in Hive called ``stream_ip2geo``
+       - - HDFS
+         - Kafka
+         - Hive
+         
+     * - **Using CDAP**
+       - ``> load stream ip2geo examples/resources/ip2geo-maps.csv``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully sent stream event to stream 'ip2geo'
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Write data to Kafka or append directly to HDFS
+       - - HDFS
+         - Kafka
+         
+     * - **Using CDAP**
+       - ``> send stream ip2geo '69.181.160.120, Los Angeles, CA'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully sent stream event to stream 'ip2geo'
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive command using Hive CLI ``SELECT * FROM stream_ip2geo``
+       - - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'select * from stream_ip2geo'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +===========================================================================================================+
+          | stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map<string,string> | stream_ip2geo.body: STRING         |
+          +===========================================================================================================+
+          | 1428892912060            | {"content.type":"text/csv"}               | 108.206.32.124, Santa Clara, CA    |
+          | 1428892912060            | {"content.type":"text/csv"}               | 109.63.206.34, San Jose, CA        |
+          | 1428892912060            | {"content.type":"text/csv"}               | 113.72.144.115, New York, New York |
+          | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.19, Palo Alto, CA       |
+          | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.27, Redwood, CA         |
+          | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.28, Los Altos, CA       |
+          | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.58, Mountain View, CA   |
+          | 1428892912060            | {"content.type":"text/csv"}               | 142.54.173.19, Houston, TX         |
+          | 1428892912060            | {"content.type":"text/csv"}               | 144.76.137.226, Dallas, TX         |
+          | 1428892912060            | {"content.type":"text/csv"}               | 144.76.201.175, Bedminister, NJ    |
+          | 1428892912060            | {"content.type":"text/csv"}               | 162.210.196.97, Milipitas, CA      |
+          | 1428892912060            | {"content.type":"text/csv"}               | 188.138.17.205, Santa Barbara, CA  |
+          | 1428892912060            | {"content.type":"text/csv"}               | 195.110.40.7, Orlando, FL          |
+          | 1428892912060            | {"content.type":"text/csv"}               | 201.91.5.170, Tampa, FL            |
+          | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.158, Miami, FL         |
+          | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.161, Chicago, IL       |
+          | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.184, Philadelphia, PA  |
+          | 1428892912060            | {"content.type":"text/csv"}               | 222.205.101.211, Indianpolis, IN   |
+          | 1428892912060            | {"content.type":"text/csv"}               | 24.4.216.155, Denver, CO           |
+          | 1428892912060            | {"content.type":"text/csv"}               | 66.249.75.153, San Diego, CA       |
+          | 1428892912060            | {"content.type":"text/csv"}               | 77.75.77.11, Austin, TX            |
+          | 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |
+          +===========================================================================================================+
+          Fetched 22 rows
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Drop the external Hive table
+         - Recreate the Hive table with new schema
+       - - HDFS
+         - Kafka
+         - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> set stream format ip2geo csv "ip string, city string, state string"``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully set format of stream 'ip2geo'
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive command using Hive CLI: ``SELECT * FROM stream_ip2geo``
+       - - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'select * from stream_ip2geo'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +================================================================================================================+
+          | stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |
+          | BIGINT           | map<string,string>          | STRING           | STRING              | STRING               |
+          +================================================================================================================+
+          | 1428892912060    | {"content.type":"text/csv"} | 108.206.32.124   |  Santa Clara        |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 109.63.206.34    |  San Jose           |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 113.72.144.115   |  New York           |  New York            |
+          | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.19    |  Palo Alto          |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.27    |  Redwood            |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.28    |  Los Altos          |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.58    |  Mountain View      |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 142.54.173.19    |  Houston            |  TX                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 144.76.137.226   |  Dallas             |  TX                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 144.76.201.175   |  Bedminister        |  NJ                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 162.210.196.97   |  Milipitas          |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 188.138.17.205   |  Santa Barbara      |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 195.110.40.7     |  Orlando            |  FL                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 201.91.5.170     |  Tampa              |  FL                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.158  |  Miami              |  FL                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.161  |  Chicago            |  IL                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.184  |  Philadelphia       |  PA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 222.205.101.211  |  Indianpolis        |  IN                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 24.4.216.155     |  Denver             |  CO                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 66.249.75.153    |  San Diego          |  CA                  |
+          | 1428892912060    | {"content.type":"text/csv"} | 77.75.77.11      |  Austin             |  TX                  |
+          | 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |
+          +================================================================================================================+
+          Fetched 22 rows
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive command using Hive CLI: ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
+       - - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +===============================================================================================================+
+          | remote_host: STRING          | city: STRING                 | state: STRING | request: STRING                 |
+          +===============================================================================================================+
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312519 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+          |                              |                              |               | 423341312520 HTTP/1.1           |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312521 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312522 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+          |                              |                              |               | 423341312523 HTTP/1.1           |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312524 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312525 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
+          |                              |                              |               | 423341312526 HTTP/1.1           |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312527 HTTP/1.1            |
+          |---------------------------------------------------------------------------------------------------------------|
+          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
+          |                              |                              |               | hbouringSummaries.action?planKe |
+          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
+          |                              |                              |               | 23341312528 HTTP/1.1            |
+          +===============================================================================================================+
+          Fetched 10 rows
         
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Write data to Kafka or append directly to HDFS
-     - - HDFS
-       - Kafka
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> send stream ip2geo '69.181.160.120, Los Angeles, CA'``
-       ::
-
-        Successfully sent stream event to stream 'ip2geo'
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive command using Hive CLI ``SELECT * FROM stream_ip2geo``
-     - - Hive CLI
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> execute 'select * from stream_ip2geo'``
-       ::
-
-        +===========================================================================================================+
-        | stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map<string,string> | stream_ip2geo.body: STRING         |
-        +===========================================================================================================+
-        | 1428892912060            | {"content.type":"text/csv"}               | 108.206.32.124, Santa Clara, CA    |
-        | 1428892912060            | {"content.type":"text/csv"}               | 109.63.206.34, San Jose, CA        |
-        | 1428892912060            | {"content.type":"text/csv"}               | 113.72.144.115, New York, New York |
-        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.19, Palo Alto, CA       |
-        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.27, Redwood, CA         |
-        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.28, Los Altos, CA       |
-        | 1428892912060            | {"content.type":"text/csv"}               | 123.125.71.58, Mountain View, CA   |
-        | 1428892912060            | {"content.type":"text/csv"}               | 142.54.173.19, Houston, TX         |
-        | 1428892912060            | {"content.type":"text/csv"}               | 144.76.137.226, Dallas, TX         |
-        | 1428892912060            | {"content.type":"text/csv"}               | 144.76.201.175, Bedminister, NJ    |
-        | 1428892912060            | {"content.type":"text/csv"}               | 162.210.196.97, Milipitas, CA      |
-        | 1428892912060            | {"content.type":"text/csv"}               | 188.138.17.205, Santa Barbara, CA  |
-        | 1428892912060            | {"content.type":"text/csv"}               | 195.110.40.7, Orlando, FL          |
-        | 1428892912060            | {"content.type":"text/csv"}               | 201.91.5.170, Tampa, FL            |
-        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.158, Miami, FL         |
-        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.161, Chicago, IL       |
-        | 1428892912060            | {"content.type":"text/csv"}               | 220.181.108.184, Philadelphia, PA  |
-        | 1428892912060            | {"content.type":"text/csv"}               | 222.205.101.211, Indianpolis, IN   |
-        | 1428892912060            | {"content.type":"text/csv"}               | 24.4.216.155, Denver, CO           |
-        | 1428892912060            | {"content.type":"text/csv"}               | 66.249.75.153, San Diego, CA       |
-        | 1428892912060            | {"content.type":"text/csv"}               | 77.75.77.11, Austin, TX            |
-        | 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |
-        +===========================================================================================================+
-        Fetched 22 rows
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Drop the external Hive table
-       - Recreate the Hive table with new schema
-     - - HDFS
-       - Kafka
-       - Hive CLI
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> set stream format ip2geo csv "ip string, city string, state string"``
-       ::
-
-        Successfully set format of stream 'ip2geo'
-        
-       |non-breaking-space|
-        
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive command using Hive CLI: ``SELECT * FROM stream_ip2geo``
-     - - Hive CLI
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> execute 'select * from stream_ip2geo'``
-       ::
-
-        +================================================================================================================+
-        | stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |
-        | BIGINT           | map<string,string>          | STRING           | STRING              | STRING               |
-        +================================================================================================================+
-        | 1428892912060    | {"content.type":"text/csv"} | 108.206.32.124   |  Santa Clara        |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 109.63.206.34    |  San Jose           |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 113.72.144.115   |  New York           |  New York            |
-        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.19    |  Palo Alto          |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.27    |  Redwood            |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.28    |  Los Altos          |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 123.125.71.58    |  Mountain View      |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 142.54.173.19    |  Houston            |  TX                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 144.76.137.226   |  Dallas             |  TX                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 144.76.201.175   |  Bedminister        |  NJ                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 162.210.196.97   |  Milipitas          |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 188.138.17.205   |  Santa Barbara      |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 195.110.40.7     |  Orlando            |  FL                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 201.91.5.170     |  Tampa              |  FL                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.158  |  Miami              |  FL                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.161  |  Chicago            |  IL                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 220.181.108.184  |  Philadelphia       |  PA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 222.205.101.211  |  Indianpolis        |  IN                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 24.4.216.155     |  Denver             |  CO                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 66.249.75.153    |  San Diego          |  CA                  |
-        | 1428892912060    | {"content.type":"text/csv"} | 77.75.77.11      |  Austin             |  TX                  |
-        | 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |
-        +================================================================================================================+
-        Fetched 22 rows
-
-       |non-breaking-space|
-        
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - Run Hive command using Hive CLI: ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
-     - - Hive CLI
-       - Beeline
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
-       ::
-
-        +===============================================================================================================+
-        | remote_host: STRING          | city: STRING                 | state: STRING | request: STRING                 |
-        +===============================================================================================================+
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312519 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-        |                              |                              |               | 423341312520 HTTP/1.1           |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312521 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312522 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-        |                              |                              |               | 423341312523 HTTP/1.1           |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312524 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312525 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-        |                              |                              |               | 423341312526 HTTP/1.1           |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312527 HTTP/1.1            |
-        |---------------------------------------------------------------------------------------------------------------|
-        | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-        |                              |                              |               | hbouringSummaries.action?planKe |
-        |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-        |                              |                              |               | 23341312528 HTTP/1.1            |
-        +===============================================================================================================+
-        Fetched 10 rows
-
 
 Transforming Your Data
 ======================
@@ -725,216 +951,278 @@ Transforming Your Data
 - In this example, we will apply a pre-defined transformation of converting data in streams
   to writing to TimePartitionedDatasets (in Avro format) that can be queried using Hive or Impala
 
-.. list-table::
-   :widths: 15 65 20
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_ip2geo``
-       - Orchestrate running the job periodically using Oozie
-       - Keep track of last processed times
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
+.. container:: table-block
 
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> create stream-conversion adapter logEventStreamConverter on logEventStream 
-       frequency 1m format clf schema "remotehost string, remotelogname string, authuser 
-       string, date string, request string, status int, contentlength int, referrer string, 
-       useragent string"``       
-       ::
-
-        Successfully created adapter named 'logEventStreamConverter' with config 
-        '{"type":"stream-conversion","properties":{"sink.name":"logEventStream.converted",
-        "source.schema":"{...}","base.path":"logEventStream.converted"}}}'
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     -  
-     - 
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> list adapters``
-       ::
-
-        +=============================================================================================================+
-        | name                | type                | sources             | sinks               | properties          |
-        +=============================================================================================================+
-        | logEventStreamConve | stream-conversion   | [{"name":"logEventS | [{"name":"logEventS | {"sink.name":"logEv |
-        | rter                |                     | tream","type":"STRE | tream.converted","t | entStream.converted |
-        |                     |                     | AM","properties":{} | ype":"DATASET","pro | ","source.schema":" |
-        |                     |                     | }]                  | perties":{"input.fo | {\"type\":\"record\ |
-        |                     |                     |                     | rmat":"org.apache.a | ",\"name\":\"rec\", |
-        |                     |                     |                     | vro.mapreduce.AvroK | \"fields\":[{\"name |
-        |                     |                     |                     | eyInputFormat","exp | \":\"remotehost\",\ |
-        |                     |                     |                     | lore.table.property | "type\":[\"string\" |
-        |                     |                     |                     | .avro.schema.litera | ,\"null\"]},{\"name |
-        |                     |                     |                     | l":"{\"type\":\"rec | \":\"remotelogname\ |
-        |                     |                     |                     | ord\",\"name\":\"ev | ",\"type\":[\"strin |
-        |                     |                     |                     | ent\",\"fields\":[{ | g\",\"null\"]},{\"n |
-        |                     |                     |                     | \"name\":\"remoteho | ame\":\"authuser\", |
-        |                     |                     |                     | st\",\"type\":[\"st | \"type\":[\"string\ |
-        |                     |                     |                     | ring\",\"null\"]},{ | ",\"null\"]},{\"nam |
-        |                     |                     |                     | \"name\":\"remotelo | e\":\"date\",\"type |
-        |                     |                     |                     | gname\",\"type\":[\ | \":[\"string\",\"nu |
-        |                     |                     |                     | "string\",\"null\"] | ll\"]},{\"name\":\" |
-        |                     |                     |                     | },{\"name\":\"authu | request\",\"type\": |
-        |                     |                     |                     | ser\",\"type\":[\"s | [\"string\",\"null\ |
-        |                     |                     |                     | tring\",\"null\"]}, | "]},{\"name\":\"sta |
-        |                     |                     |                     | {\"name\":\"date\", | tus\",\"type\":[\"i |
-        |                     |                     |                     | \"type\":[\"string\ | nt\",\"null\"]},{\" |
-        |                     |                     |                     | ",\"null\"]},{\"nam | name\":\"contentlen |
-        |                     |                     |                     | e\":\"request\",\"t | gth\",\"type\":[\"i |
-        |                     |                     |                     | ype\":[\"string\",\ | nt\",\"null\"]},{\" |
-        |                     |                     |                     | "null\"]},{\"name\" | name\":\"referrer\" |
-        |                     |                     |                     | :\"status\",\"type\ | ,\"type\":[\"string |
-        |                     |                     |                     | ":[\"int\",\"null\" | \",\"null\"]},{\"na |
-        |                     |                     |                     | ]},{\"name\":\"cont | me\":\"useragent\", |
-        |                     |                     |                     | entlength\",\"type\ | \"type\":[\"string\ |
-        |                     |                     |                     | ":[\"int\",\"null\" | ",\"null\"]}]}","so |
-        |                     |                     |                     | ]},{\"name\":\"refe | urce.format.name":" |
-        |                     |                     |                     | rrer\",\"type\":[\" | clf","frequency":"1 |
-        |                     |                     |                     | string\",\"null\"]} | m","source.format.s |
-        |                     |                     |                     | ,{\"name\":\"userag | ettings":"{}","sour |
-        |                     |                     |                     | ent\",\"type\":[\"s | ce.name":"logEventS |
-        |                     |                     |                     | tring\",\"null\"]}, | tream"}             |
-        |                     |                     |                     | {\"name\":\"ts\",\" |                     |
-        |                     |                     |                     | type\":\"long\"}]}" |                     |
-        |                     |                     |                     | ,"dataset.class":"c |                     |
-        |                     |                     |                     | o.cask.cdap.api.dat |                     |
-        |                     |                     |                     | aset.lib.TimePartit |                     |
-        |                     |                     |                     | ionedFileSet","expl |                     |
-        |                     |                     |                     | ore.serde":"org.apa |                     |
-        |                     |                     |                     | che.hadoop.hive.ser |                     |
-        |                     |                     |                     | de2.avro.AvroSerDe" |                     |
-        |                     |                     |                     | ,"base.path":"logEv |                     |
-        |                     |                     |                     | entStream.converted |                     |
-        |                     |                     |                     | ","explore.output.f |                     |
-        |                     |                     |                     | ormat":"org.apache. |                     |
-        |                     |                     |                     | hadoop.hive.ql.io.a |                     |
-        |                     |                     |                     | vro.AvroContainerOu |                     |
-        |                     |                     |                     | tputFormat","output |                     |
-        |                     |                     |                     | .format":"org.apach |                     |
-        |                     |                     |                     | e.avro.mapreduce.Av |                     |
-        |                     |                     |                     | roKeyOutputFormat", |                     |
-        |                     |                     |                     | "explore.input.form |                     |
-        |                     |                     |                     | at":"org.apache.had |                     |
-        |                     |                     |                     | oop.hive.ql.io.avro |                     |
-        |                     |                     |                     | .AvroContainerInput |                     |
-        |                     |                     |                     | Format","explore.en |                     |
-        |                     |                     |                     | abled":"true"}}]    |                     |
-        +=============================================================================================================+
-        
-       |non-breaking-space|
-
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Write a custom consumer that reads from source (Example: Kafka)
-       - Write the data to HDFS
-       - Create external table in Hive called ``stream_ip2geo``
-     - - HDFS
-       - Hive
-       - Kafka
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - ``> load stream logEventStream examples/resources/accesslog.txt``
-       ::
-
-        Successfully sent stream event to stream 'logEventStream'
-
-       |non-breaking-space|
-
-.. list-table::
-   :widths: 15 65 20
-
-   * - **Current Approach**
-     - - Run commands using HBase shell:
-       - ``hbase shell> list``
-       - ``hbase shell> hdfs fs -ls /path/to/my/files``
-     - - HBase
-       - HDFS
-
-.. list-table::
-   :widths: 15 85
-
-   * - **CDAP**
-     - 
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
      
-       ``> list dataset instances # Dataset that is time partitioned``
-       ::
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-        +======================================================================================================+
-        | name                                  | type                                                         |
-        +======================================================================================================+
-        | logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |
-        +======================================================================================================+
+     * - Current Approach
+       - - Write a custom consumer that reads from source (Example: Kafka)
+         - Write the data to HDFS
+         - Create external table in Hive called ``stream_ip2geo``
+         - Orchestrate running the job periodically using Oozie
+         - Keep track of last processed times
+       - - HDFS
+         - Kafka
+         - Hive
+         - Oozie
+         
+     * - **Using CDAP**
+       - ``> create stream-conversion adapter logEventStreamConverter on logEventStream 
+         frequency 1m format clf schema "remotehost string, remotelogname string, authuser 
+         string, date string, request string, status int, contentlength int, referrer string, 
+         useragent string"``       
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-       |non-breaking-space|
+     * -  
+       - ::
 
-.. list-table::
-   :widths: 15 65 20
+          Successfully created adapter named 'logEventStreamConverter' with config 
+          '{"type":"stream-conversion","properties":{"sink.name":"logEventStream.converted",
+          "source.schema":"{...}","base.path":"logEventStream.converted"}}}'
 
-   * - **Current Approach**
-     - Run Hive query using CLI: ``'describe user_logEventStream_converted'`` 
-     - - Hive CLI
-       - Beeline
 
-.. list-table::
-   :widths: 15 85
+.. container:: table-block
 
-   * - **CDAP**
-     - ``> execute 'describe dataset_logEventStream_converted'``
-       ::
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-        +==========================================================================================+
-        | col_name: STRING                             | data_type: STRING   | comment: STRING     |
-        +==========================================================================================+
-        | remotehost                                   | string              | from deserializer   |
-        | remotelogname                                | string              | from deserializer   |
-        | authuser                                     | string              | from deserializer   |
-        | date                                         | string              | from deserializer   |
-        | request                                      | string              | from deserializer   |
-        | status                                       | int                 | from deserializer   |
-        | contentlength                                | int                 | from deserializer   |
-        | referrer                                     | string              | from deserializer   |
-        | useragent                                    | string              | from deserializer   |
-        | ts                                           | bigint              | from deserializer   |
-        | year                                         | int                 |                     |
-        | month                                        | int                 |                     |
-        | day                                          | int                 |                     |
-        | hour                                         | int                 |                     |
-        | minute                                       | int                 |                     |
-        |                                              |                     |                     |
-        | # Partition Information                      |                     |                     |
-        | # col_name                                   | data_type           | comment             |
-        |                                              |                     |                     |
-        | year                                         | int                 |                     |
-        | month                                        | int                 |                     |
-        | day                                          | int                 |                     |
-        | hour                                         | int                 |                     |
-        | minute                                       | int                 |                     |
-        +==========================================================================================+
+     * - Current Approach
+       - 
+       - 
+         
+     * - **Using CDAP**
+       - ``> list adapters``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=============================================================================================================+
+          | name                | type                | sources             | sinks               | properties          |
+          +=============================================================================================================+
+          | logEventStreamConve | stream-conversion   | [{"name":"logEventS | [{"name":"logEventS | {"sink.name":"logEv |
+          | rter                |                     | tream","type":"STRE | tream.converted","t | entStream.converted |
+          |                     |                     | AM","properties":{} | ype":"DATASET","pro | ","source.schema":" |
+          |                     |                     | }]                  | perties":{"input.fo | {\"type\":\"record\ |
+          |                     |                     |                     | rmat":"org.apache.a | ",\"name\":\"rec\", |
+          |                     |                     |                     | vro.mapreduce.AvroK | \"fields\":[{\"name |
+          |                     |                     |                     | eyInputFormat","exp | \":\"remotehost\",\ |
+          |                     |                     |                     | lore.table.property | "type\":[\"string\" |
+          |                     |                     |                     | .avro.schema.litera | ,\"null\"]},{\"name |
+          |                     |                     |                     | l":"{\"type\":\"rec | \":\"remotelogname\ |
+          |                     |                     |                     | ord\",\"name\":\"ev | ",\"type\":[\"strin |
+          |                     |                     |                     | ent\",\"fields\":[{ | g\",\"null\"]},{\"n |
+          |                     |                     |                     | \"name\":\"remoteho | ame\":\"authuser\", |
+          |                     |                     |                     | st\",\"type\":[\"st | \"type\":[\"string\ |
+          |                     |                     |                     | ring\",\"null\"]},{ | ",\"null\"]},{\"nam |
+          |                     |                     |                     | \"name\":\"remotelo | e\":\"date\",\"type |
+          |                     |                     |                     | gname\",\"type\":[\ | \":[\"string\",\"nu |
+          |                     |                     |                     | "string\",\"null\"] | ll\"]},{\"name\":\" |
+          |                     |                     |                     | },{\"name\":\"authu | request\",\"type\": |
+          |                     |                     |                     | ser\",\"type\":[\"s | [\"string\",\"null\ |
+          |                     |                     |                     | tring\",\"null\"]}, | "]},{\"name\":\"sta |
+          |                     |                     |                     | {\"name\":\"date\", | tus\",\"type\":[\"i |
+          |                     |                     |                     | \"type\":[\"string\ | nt\",\"null\"]},{\" |
+          |                     |                     |                     | ",\"null\"]},{\"nam | name\":\"contentlen |
+          |                     |                     |                     | e\":\"request\",\"t | gth\",\"type\":[\"i |
+          |                     |                     |                     | ype\":[\"string\",\ | nt\",\"null\"]},{\" |
+          |                     |                     |                     | "null\"]},{\"name\" | name\":\"referrer\" |
+          |                     |                     |                     | :\"status\",\"type\ | ,\"type\":[\"string |
+          |                     |                     |                     | ":[\"int\",\"null\" | \",\"null\"]},{\"na |
+          |                     |                     |                     | ]},{\"name\":\"cont | me\":\"useragent\", |
+          |                     |                     |                     | entlength\",\"type\ | \"type\":[\"string\ |
+          |                     |                     |                     | ":[\"int\",\"null\" | ",\"null\"]}]}","so |
+          |                     |                     |                     | ]},{\"name\":\"refe | urce.format.name":" |
+          |                     |                     |                     | rrer\",\"type\":[\" | clf","frequency":"1 |
+          |                     |                     |                     | string\",\"null\"]} | m","source.format.s |
+          |                     |                     |                     | ,{\"name\":\"userag | ettings":"{}","sour |
+          |                     |                     |                     | ent\",\"type\":[\"s | ce.name":"logEventS |
+          |                     |                     |                     | tring\",\"null\"]}, | tream"}             |
+          |                     |                     |                     | {\"name\":\"ts\",\" |                     |
+          |                     |                     |                     | type\":\"long\"}]}" |                     |
+          |                     |                     |                     | ,"dataset.class":"c |                     |
+          |                     |                     |                     | o.cask.cdap.api.dat |                     |
+          |                     |                     |                     | aset.lib.TimePartit |                     |
+          |                     |                     |                     | ionedFileSet","expl |                     |
+          |                     |                     |                     | ore.serde":"org.apa |                     |
+          |                     |                     |                     | che.hadoop.hive.ser |                     |
+          |                     |                     |                     | de2.avro.AvroSerDe" |                     |
+          |                     |                     |                     | ,"base.path":"logEv |                     |
+          |                     |                     |                     | entStream.converted |                     |
+          |                     |                     |                     | ","explore.output.f |                     |
+          |                     |                     |                     | ormat":"org.apache. |                     |
+          |                     |                     |                     | hadoop.hive.ql.io.a |                     |
+          |                     |                     |                     | vro.AvroContainerOu |                     |
+          |                     |                     |                     | tputFormat","output |                     |
+          |                     |                     |                     | .format":"org.apach |                     |
+          |                     |                     |                     | e.avro.mapreduce.Av |                     |
+          |                     |                     |                     | roKeyOutputFormat", |                     |
+          |                     |                     |                     | "explore.input.form |                     |
+          |                     |                     |                     | at":"org.apache.had |                     |
+          |                     |                     |                     | oop.hive.ql.io.avro |                     |
+          |                     |                     |                     | .AvroContainerInput |                     |
+          |                     |                     |                     | Format","explore.en |                     |
+          |                     |                     |                     | abled":"true"}}]    |                     |
+          +=============================================================================================================+
+
+
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Write a custom consumer that reads from source (Example: Kafka)
+         - Write the data to HDFS
+         - Create external table in Hive called ``stream_ip2geo``
+       - - HDFS
+         - Hive
+         - Kafka
+         
+     * - **Using CDAP**
+       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          Successfully sent stream event to stream 'logEventStream'
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Run commands using HBase shell:
+         - ``hbase shell> list``
+         - ``hbase shell> hdfs fs -ls /path/to/my/files``
+       - - HBase
+         - HDFS
+         
+     * - **Using CDAP**
+       - ``> list dataset instances # Dataset that is time partitioned``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +======================================================================================================+
+          | name                                  | type                                                         |
+          +======================================================================================================+
+          | logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |
+          +======================================================================================================+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - XXXXXXXX
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - Run Hive query using CLI: ``'describe user_logEventStream_converted'`` 
+       - - Hive CLI
+         - Beeline
+         
+     * - **Using CDAP**
+       - ``> execute 'describe dataset_logEventStream_converted'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +==========================================================================================+
+          | col_name: STRING                             | data_type: STRING   | comment: STRING     |
+          +==========================================================================================+
+          | remotehost                                   | string              | from deserializer   |
+          | remotelogname                                | string              | from deserializer   |
+          | authuser                                     | string              | from deserializer   |
+          | date                                         | string              | from deserializer   |
+          | request                                      | string              | from deserializer   |
+          | status                                       | int                 | from deserializer   |
+          | contentlength                                | int                 | from deserializer   |
+          | referrer                                     | string              | from deserializer   |
+          | useragent                                    | string              | from deserializer   |
+          | ts                                           | bigint              | from deserializer   |
+          | year                                         | int                 |                     |
+          | month                                        | int                 |                     |
+          | day                                          | int                 |                     |
+          | hour                                         | int                 |                     |
+          | minute                                       | int                 |                     |
+          |                                              |                     |                     |
+          | # Partition Information                      |                     |                     |
+          | # col_name                                   | data_type           | comment             |
+          |                                              |                     |                     |
+          | year                                         | int                 |                     |
+          | month                                        | int                 |                     |
+          | day                                          | int                 |                     |
+          | hour                                         | int                 |                     |
+          | minute                                       | int                 |                     |
+          +==========================================================================================+
 
 
 Building Real World Applications
@@ -974,10 +1262,10 @@ Building Real World Applications
    :widths: 15 85
 
    * - **CDAP**
-     - ``> deploy app apps/cdap-wise-``\ |literal-wise-version|\ ``.zip``       
+     - ``> deploy app apps/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``       
        ::
 
-        Insert output 
+        Successfully deployed application 
 
        |non-breaking-space|
 
@@ -997,7 +1285,14 @@ Building Real World Applications
      - ``> describe app Wise``       
        ::
 
-        Insert output
+        +=====================================================================+
+        | type      | id                    | description                     |
+        +=====================================================================+
+        | Flow      | WiseFlow              | Wise Flow                       |
+        | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
+        | Service   | WiseService           |                                 |
+        | Workflow  | WiseWorkflow          | Wise Workflow                   |
+        +=====================================================================+
 
        |non-breaking-space|
 
@@ -1018,7 +1313,7 @@ Building Real World Applications
      - ``> start flow Wise.WiseFlow``       
        ::
 
-        Insert output
+        Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
        |non-breaking-space|
 
@@ -1037,9 +1332,18 @@ Building Real World Applications
      - ``> get flow status Wise.WiseFlow``       
        ::
 
-        Insert output
+        RUNNING
 
        |non-breaking-space|
+
+
+
+
+
+
+
+
+
 
 .. list-table::
    :widths: 15 65 20
@@ -1061,8 +1365,22 @@ Building Real World Applications
      - ``> get flow logs Wise.WiseFlow``       
        ::
 
-        Insert output
-
+        2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
+        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:
+        flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
+        program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
+        2015-04-15 09:22:53,779 - INFO  [FlowletRuntimeService
+        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized:
+        flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
+        program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
+        ...
+        2015-04-15 10:07:54,708 - INFO  [FlowletRuntimeService
+        STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized: flowlet=parser,
+        instance=0, groupsize=1, namespaceId=default, applicationId=Wise, program=WiseFlow,
+        runid=f4e0e52a-e391-11e4-a467-3ee74a48f4aa
+        2015-04-15 10:07:54,709 - DEBUG [FlowletRuntimeService
+        STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser
+        f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 
 .. rubric:: Program Lifecycle
 
@@ -1085,7 +1403,7 @@ Building Real World Applications
      - ``> start workflow Wise.WiseWorkflow``       
        ::
 
-        Insert output 
+        Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}' 
 
        |non-breaking-space|
 
@@ -1105,7 +1423,7 @@ Building Real World Applications
      - ``> get workflow status Wise.WiseWorkflow``       
        ::
 
-        Insert output
+        RUNNING
 
        |non-breaking-space|
 
@@ -1126,7 +1444,7 @@ Building Real World Applications
      - ``> start service Wise.WiseService``       
        ::
 
-        Insert output
+        Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
 
        |non-breaking-space|
 
@@ -1147,89 +1465,224 @@ Building Real World Applications
      - ``> get service status Wise.WiseService``       
        ::
 
-        Insert output
+        RUNNING
 
 
 .. rubric:: Serve the processed data in real time
 
-.. list-table::
-   :widths: 15 65 20
+.. container:: table-block
 
-   * - 
-     - **Action / CDAP Command and Output**
-     - **Required Technologies**
-   * - **Current Approach**
-     - - Navigate to the resouce manager UI
-       - Find the Wise.WiseService on UI
-       - Click to the see application logs
-       - Find all the node managers for the application containers
-       - Navigate to all the containers in sepearate tabs 
-       - Click on container logs
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Serve the processed data in real time
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
 
-.. list-table::
-   :widths: 15 85
+     * - Current Approach
+       - - Navigate to the resouce manager UI
+         - Find the Wise.WiseService on UI
+         - Click to the see application logs
+         - Find all the node managers for the application containers
+         - Navigate to all the containers in sepearate tabs 
+         - Click on container logs
+       - - HDFS
+         - Kafka
+         - Hive
+         - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> get endpoints service Wise.WiseService``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
 
-   * - **CDAP**
-     - ``> get endpoints service Wise.WiseService``       
-       ::
+     * -  
+       - ::
 
-        Insert output 
+          +=========================+
+          | method | path           |
+          +=========================+
+          | GET    | /ip/{ip}/count |
+          | POST   | /ip/{ip}/count |
+          +=========================+
 
-       |non-breaking-space|
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Serve the processed data in real time
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Discover the host and port where the service is running on by looking at the host 
+           and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
+         - Run ``curl http://hostname:port/ip/69.181.160.120/count``
+       - - HDFS
+         - Kafka
+         - Hive
+         - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> call service Wise.WiseService GET /ip/69.181.160.120/count``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +================================================+
+          | status | headers            | body size | body |
+          +================================================+
+          | 200    | Content-Length : 4 | 4         | 6699 |
+          |        | Connection : keep- |           |      |
+          |        | alive              |           |      |
+          |        | Content-Type : app |           |      |
+          |        | lication/json      |           |      |
+          +================================================+
 
 
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Serve the processed data in real time
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Discover the host and port where the service is running on by looking at the host 
+           and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
+         - Run ``curl http://hostname:port/ip/69.181.160.120/count``
+       - - HDFS
+         - Kafka
+         - Hive
+         - Oozie
+         - YARN
+         
+     * - **Using CDAP**
+       - ``> list dataset instances``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=================================================================+
+          | name             | type                                         |
+          +=================================================================+
+          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
+          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
+          +=================================================================+
+
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Serve the processed data in real time
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Run a command in the HBase shell:
+         - ``hbase shell> list "cdap.user.*"``
+       - - HDFS
+         - HBase
+         
+     * - **Using CDAP**
+       - ``> list dataset instances``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=================================================================+
+          | name             | type                                         |
+          +=================================================================+
+          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
+          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
+          +=================================================================+
+
+.. rubric:: View bounce count results 
+
+.. container:: table-block
+
+  .. list-table::
+     :widths: 80 20
+     :stub-columns: 1
+     
+     * - Serve the processed data in real time
+       - Required Technologies
+       
+  .. list-table::
+     :widths: 15 65 20
+     :class: grey-table
+
+     * - Current Approach
+       - - Run a command in the Hive CLI:
+         - ``"SELECT * FROM dataset_bouncecountstore LIMIT 5"``
+       - - HDFS
+         - HBase
+         - Hive
+         
+     * - **Using CDAP**
+       - ``> execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'``
+       - - CDAP CLI    
+      
+  .. list-table::
+     :widths: 15 85
+     :class: white-table
+
+     * -  
+       - ::
+
+          +=================================================================+
+          | name             | type                                         |
+          +=================================================================+
+          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
+          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
+          +=================================================================+
 
 OLD
 
 .. rubric:: Serve the processed data in real time
 
-.. list-table::
-   :widths: 45 45 10
-   :header-rows: 1
-
-   * - New Paradigm With CDAP
-     - Current Approach and Required Technologies
-     - 
-     
-   * - ``> get endpoints service Wise.WiseService``
-     - - Navigate to the resouce manager UI
-       - Find the Wise.WiseService on UI
-       - Click to the see application logs
-       - Find all the node managers for the application containers
-       - Navigate to all the containers in sepearate tabs 
-       - Click on container logs
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``> call service Wise.WiseService GET /ip/69.181.160.120/count``
-     - - Discover the host and port where the service is running on by looking at the host 
-         and port in the YARN logs or by writing a discovery client that is co-ordinated using Zookeeper
-       - Run ``curl http://hostname:port/ip/69.181.160.120/count``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-   
-   * - ``> list dataset instances``
-         - ``cdap.user.bounceCountStore``
-         - ``cdap.user.pageViewStore``
-     - - Run the following command in Hbase shell
-       - ``hbase shell> list "cdap.user.*"``
-     - - HDFS
-       - Kafka
-       - Hive
-       - Oozie
-       - YARN
-       - HBase
 
 .. rubric:: View bounce count results 
 
@@ -1297,7 +1750,7 @@ Summary
      - Required Technologies
 
    * - - Learn a single framework that works with multiple technologies
-     - - Bring in different open source technologies with different design principles
+     - - Bring in different open source technologies, each with different design principles
        - Familiarize and learn how to operate the different technologies
        - Design specific architectures to wire in different components
        - Revisit everything whenever the technologies change

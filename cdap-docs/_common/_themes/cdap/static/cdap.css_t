@@ -366,7 +366,9 @@ ul.first.last.simple {
 div.table-block.container {
   border-style: solid;
   border-width: 1px;
-  margin-bottom: 20px;
+  margin-left: 15px;
+  margin-top: 20px;
+  margin-bottom: 40px;
   border-color: #aaa;
 }
 
