@@ -17,7 +17,10 @@ package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -54,10 +57,24 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
+    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(
+      program, createProgramOptionsWithRunId(options)), program);
     addRemover(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
+  }
+
+  private ProgramOptions createProgramOptionsWithRunId(ProgramOptions options) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> systemArgument : options.getArguments().asMap().entrySet()) {
+      builder.put(systemArgument);
+    }
+    // Generate the new RunId and add it to the system arguments
+    RunId runId = RunIds.generate();
+    builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
+
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
+                                    options.isDebug());
   }
 
   @Override

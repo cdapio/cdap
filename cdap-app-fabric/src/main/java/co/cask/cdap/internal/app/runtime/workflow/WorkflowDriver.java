@@ -45,7 +45,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +86,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Lock lock;
   private Condition condition;
 
-  WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
+  WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
     this.program = program;
     this.hostname = hostname;
@@ -98,7 +97,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
-                                                                         runId, options);
+                                                                         options);
     lock = new ReentrantLock();
     condition = lock.newCondition();
   }

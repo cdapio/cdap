@@ -27,7 +27,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
 import com.google.common.base.Preconditions;
-import org.apache.twill.api.RunId;
 
 import java.util.concurrent.Callable;
 
@@ -37,8 +36,8 @@ import java.util.concurrent.Callable;
 final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                             Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
-    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions);
+                             Program workflowProgram, ProgramOptions workflowProgramOptions) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec);
   }
 
   /**
