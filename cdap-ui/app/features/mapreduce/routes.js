@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}} < History'
+            label: '{{$state.params.programId}}'
           }
         });
   });
