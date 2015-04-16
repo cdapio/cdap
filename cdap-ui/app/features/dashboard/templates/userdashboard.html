@@ -5,6 +5,27 @@
 <div class="well well-lg" ng-if="currentBoard.isEmpty">
   <h3 class="text-center"> No cool widgets in this board! <a ui-sref="dashboard.user.addwdgt"> Add one! </a>  </h3>
 </div>
+<div class="row">
+  <div class="col-xs-6"></div>
+  <div class="col-xs-6">
+    <div>From:</div>
+    <my-timestamp-picker
+      data-label="From:"
+      ng-model="startMs"
+    ></my-timestamp-picker>
+    <div>To:</div>
+    <my-timestamp-picker
+      data-label="To:"
+      ng-model="endMs"
+    ></my-timestamp-picker>
+    <br />
+
+    <my-duration-picker
+      ng-model="durationMs">
+    </my-duration-picker>
+
+  </div>
+</div>
 
 <div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">
   <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-4': colWidth.oneThird }"
