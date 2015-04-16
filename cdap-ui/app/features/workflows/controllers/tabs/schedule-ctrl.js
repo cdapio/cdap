@@ -31,6 +31,8 @@ angular.module(PKG.name + '.feature.workflows')
         });
       });
 
+      $scope.schedules[0].isOpen = true;
+
     });
 
     $scope.suspendSchedule = function (obj) {
