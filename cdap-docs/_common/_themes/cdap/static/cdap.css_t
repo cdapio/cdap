@@ -374,28 +374,29 @@ div.table-block.container {
 
 /* -- Background and Border colors -------------------------------------- */
 
-/* Makes first row dark background */
+/* Make first table dark background */
 
 div.table-block.container table.docutils tr.row-odd {
   background-color: #E0E0E0;
 }
  
-/* Makes odd rows light-grey background */
+/* Triple-table: Make even row with white border */
 
-div.table-block.container table.grey-table.docutils tr.row-odd {
-  background-color: #F9FAFB;
-}
-
-/* Makes last row with white border */
-
-div.table-block.container table.grey-table.docutils tr:last-of-type td {
+div.table-block.container table.triple-table.docutils tr.row-even td {
   border-bottom: 1px solid white;
 }
 
-/* White background */
+/* Triple-table: Make odd row with White background */
 
-div.table-block.container table.white-table.docutils tr.row-odd  {
+div.table-block.container table.triple-table.docutils tr.row-odd  {
   background-color: white;
 }
+
+/* Triple-table: Make first row light-grey background */
+
+div.table-block.container table.triple-table.docutils tr:first-of-type {
+  background-color: #F9FAFB;
+}
+
 
 
