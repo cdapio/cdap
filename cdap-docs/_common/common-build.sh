@@ -150,24 +150,15 @@ function build_docs_google() {
 }
 
 function build_javadocs_full() {
-<<<<<<< HEAD
   cd ${PROJECT_PATH}
-=======
-  cd $PROJECT_PATH
   set_mvn_environment
->>>>>>> origin/release/2.8
   MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
-<<<<<<< HEAD
   cd ${PROJECT_PATH}
-  MAVEN_OPTS="-Xmx512m"  mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
-=======
-  cd $PROJECT_PATH
   set_mvn_environment
   MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
->>>>>>> origin/release/2.8
 }
 
 function build_javadocs_sdk() {
