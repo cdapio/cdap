@@ -40,6 +40,7 @@ import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.GenericTypeToAvroKeyTransform;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
@@ -86,7 +87,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
                                         StreamToStructuredRecordTransform.class,
-                                        GenericTypeToAvroKeyTransform.class));
+                                        GenericTypeToAvroKeyTransform.class,
+                                        ScriptFilterTransform.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {

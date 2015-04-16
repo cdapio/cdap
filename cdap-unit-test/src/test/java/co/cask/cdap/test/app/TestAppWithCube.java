@@ -80,7 +80,7 @@ public class TestAppWithCube extends TestBase {
                                   .addMeasurement("count", MeasureType.COUNTER, 1),
                                 new CubeFact(tsInSec + 2)
                                   .addTag("user", "alex").addTag("action", "click")
-                                  .addMeasurement("count", MeasureType.COUNTER, 2)));
+                                  .addMeasurement("count", MeasureType.COUNTER, 1)));
 
       // search for tags
       Collection<TagValue> tags =

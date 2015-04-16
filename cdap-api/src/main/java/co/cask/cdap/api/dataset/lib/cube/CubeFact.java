@@ -41,7 +41,7 @@ public class CubeFact {
    * After creation, you can add tags e.g. via {@link #addTag(String, String)}
    * and add measurements e.g. via {@link #addMeasurement(String, MeasureType, long)}.
    *
-   * @param timestamp timestamp (epoch in sec) of the measurement
+   * @param timestamp timestamp (epoch in sec) of the measurements
    */
   public CubeFact(long timestamp) {
     this.tags = new HashMap<String, String>();

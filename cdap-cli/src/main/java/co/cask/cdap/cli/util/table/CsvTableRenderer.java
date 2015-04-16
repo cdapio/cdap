@@ -44,8 +44,10 @@ public class CsvTableRenderer implements TableRenderer {
     }
 
     for (List<String> row : table.getRows()) {
-      String string = CSV_JOINER.useForNull("").join(row);
-      output.println(string);
+      if (row != null) {
+        String string = CSV_JOINER.useForNull("").join(row);
+        output.println(string);
+      }
     }
   }
 }
