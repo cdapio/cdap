@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -96,11 +97,15 @@ public class CLIMain {
 
   @VisibleForTesting
   public static final Option SCRIPT_FILE_OPTION = new Option(
-    "f", "scriptfile", true, "Name of script file to read and execute.  " +
-    "Blank lines and comments starting with '#' are ignored.  " + 
-    "The 'break' keyword terminates the script.  " + 
-    "The 'exit' command terminates the cli, otherwise the user is left " + 
-    "at cdap-cli command prompt when the script completes.");
+    "f", "scriptfile", true, 
+    "Name of script file to read and execute.  Blank lines, " + 
+    "and comments starting with '#' are ignored.  By default the " + 
+    "cdap-cli shell terminates when the script finishes.  " + 
+    "A 'break' command causes the script to terminate early and leaves " +
+    "the user at the cdap-cli command prompt.  Commands " + 
+    "added after the script file specification on the command line " + 
+    "are run after the script completes, unless a 'break' " + 
+    "command is encountered, then they are skipped. ");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -260,7 +265,11 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
+        boolean ranScript = false;
+        boolean brokeFromScript = false;
         if (launchOptions.getScriptFile() != null) {
+
+          ranScript = true;
 
           ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
           URI baseURI = connectionConfig.getURI();
@@ -271,43 +280,48 @@ public class CLIMain {
           try {
             String line;
             br = new BufferedReader(new FileReader(launchOptions.getScriptFile()));
+            // br = Files.newReader(launchOptions.getScriptFile(), Charset.UTF_8);
             while ((line = br.readLine()) != null) {
               String ln = line.trim();
-              if ("".equals(ln) || ln.startsWith("#")) {
+              String[] lnArr = ln.split("#");
+              if (lnArr.length == 0) {
                 continue;
               }
-              if (ln.startsWith("break")) {
-                output.println(cliPrompt + ln);
-                break; // Break from script
+              String cmd = lnArr[0].trim();
+              if ("".equals(cmd)) {
+                continue;
               }
-              output.println(cliPrompt + ln);
-              cli.execute(ln, output);
+              if (cmd.equals("break")) {
+                brokeFromScript = true;
+                break; // Break from script and drop into interactive mode
+              }
+              output.println(cliPrompt + cmd);
+              cli.execute(cmd, output);
             }
             output.println("\n");
           } catch (IOException e) {
-            output.println(e.getMessage());
-            usage();
+            output.println("Couldn't read from script '" + 
+                           launchOptions.getScriptFile() + "'\n" + e.getMessage());
           } finally {
             try {
               if (br != null) {
                 br.close();
               }
             } catch (IOException e) {
-              output.println(e.getMessage());
-              usage();
+              output.println("Couldn't close script '" + 
+                             launchOptions.getScriptFile() + "'\n" + e.getMessage());
             }
           }
         }
-        if (commandArgs.length == 0) {
-          // No commands following switches; just start shell
-          cli.startInteractiveMode(output);
-        } else {
-          // Commands following switches; process them
+        if (commandArgs.length > 0 && !brokeFromScript) {
           String commandLine = Joiner.on(" ").join(commandArgs);
           String[] commandLns = commandLine.split(";");
           for (int i = 0; i < commandLns.length; i++) {
               cli.execute(commandLns[i].trim(), output);
           }
+        }
+        if ((commandArgs.length == 0 && !ranScript) || brokeFromScript) {
+          cli.startInteractiveMode(output);
         }
       } catch (Exception e) {
         e.printStackTrace(output);
