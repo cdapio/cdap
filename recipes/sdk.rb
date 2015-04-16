@@ -54,6 +54,7 @@ ark 'sdk' do
   version ver
   owner node['cdap']['sdk']['user']
   group node['cdap']['sdk']['user']
+  notifies :restart, 'service[cdap-sdk]', :delayed
 end
 
 template '/etc/init.d/cdap-sdk' do
