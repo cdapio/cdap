@@ -16,47 +16,48 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
+import com.google.common.collect.ImmutableList;
+
+import java.util.Collection;
 import java.util.Map;
 
 /**
- * Carries the "raw" emitted metric data point: metric name, context, type, value, etc.
+ * Carries the "raw" emitted metric data points: context, timestamp, collection<Measurement>
  */
 public class MetricValue {
   private final Map<String, String> tags;
-  private final String name;
+  private final Collection<Measurement> metrics;
 
   /**
    * Timestamp in seconds.
    */
   private final long timestamp;
-  private final long value;
-  private final MetricType type;
+
+  public MetricValue(Map<String, String> tags, long timestamp, Collection<Measurement> metrics) {
+    this.tags = tags;
+    this.timestamp = timestamp;
+    this.metrics = metrics;
+  }
 
   public MetricValue(Map<String, String> tags, String name, long timestamp, long value, MetricType type) {
+    MeasureType measureType = type == MetricType.GAUGE ? MeasureType.GAUGE : MeasureType.COUNTER;
     this.tags = tags;
-    this.name = name;
     this.timestamp = timestamp;
-    this.value = value;
-    this.type = type;
+    this.metrics = ImmutableList.of(new Measurement(name, measureType, value));
   }
 
   public Map<String, String> getTags() {
     return tags;
   }
 
-  public String getName() {
-    return name;
+  public Collection<Measurement> getMetrics() {
+    return metrics;
   }
 
   public long getTimestamp() {
     return timestamp;
   }
 
-  public long getValue() {
-    return value;
-  }
-
-  public MetricType getType() {
-    return type;
-  }
 }

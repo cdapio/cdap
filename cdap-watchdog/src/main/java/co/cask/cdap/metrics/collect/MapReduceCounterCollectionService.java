@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import com.google.common.base.Preconditions;
@@ -64,12 +66,13 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // escape dots with tilde
       counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue().replace(".", "~"));
     }
-
-    String counterName = getCounterName(record.getName());
-    if (record.getType() == MetricType.COUNTER) {
-      taskContext.getCounter(counterGroup.toString(), counterName).increment(record.getValue());
-    } else {
-      taskContext.getCounter(counterGroup.toString(), counterName).setValue(record.getValue());
+    for (Measurement metric : record.getMetrics()) {
+      String counterName = getCounterName(metric.getName());
+      if (metric.getType() == MeasureType.COUNTER) {
+        taskContext.getCounter(counterGroup.toString(), counterName).increment(metric.getValue());
+      } else {
+        taskContext.getCounter(counterGroup.toString(), counterName).setValue(metric.getValue());
+      }
     }
   }
 

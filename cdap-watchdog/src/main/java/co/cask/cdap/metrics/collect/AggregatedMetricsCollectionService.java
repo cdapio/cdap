@@ -15,13 +15,11 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
-import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -50,7 +48,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   private static final long CACHE_EXPIRE_MINUTES = 1;
 
   private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
-  private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
+  private final LoadingCache<Map<String, String>, AggregatedMetricsEmitter> emitters;
 
   private ScheduledExecutorService executorService;
 
@@ -61,10 +59,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     this.emitters = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-      .build(new CacheLoader<EmitterKey, AggregatedMetricsEmitter>() {
+      .build(new CacheLoader<Map<String, String>, AggregatedMetricsEmitter>() {
         @Override
-        public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getTags(), key.getMetric());
+        public AggregatedMetricsEmitter load(Map<String, String> tags) throws Exception {
+          return new AggregatedMetricsEmitter(tags);
         }
       });
   }
@@ -148,16 +146,15 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   private Iterator<MetricValue> getMetrics(final long timestamp) {
-    final Iterator<Map.Entry<EmitterKey, AggregatedMetricsEmitter>> iterator = emitters.asMap().entrySet().iterator();
+    final Iterator<AggregatedMetricsEmitter> iterator = emitters.asMap().values().iterator();
     return new AbstractIterator<MetricValue>() {
       @Override
       protected MetricValue computeNext() {
         while (iterator.hasNext()) {
-          Map.Entry<EmitterKey, AggregatedMetricsEmitter> entry = iterator.next();
-          MetricValue metricValue = entry.getValue().emit(timestamp);
-
-          if (metricValue.getValue() == 0 && MetricType.COUNTER == metricValue.getType()) {
-            // Ignore 0 values only for COUNTER Metric Type.
+          AggregatedMetricsEmitter entry = iterator.next();
+          MetricValue metricValue = entry.emit(timestamp);
+          if (metricValue.getMetrics().isEmpty()) {
+            // skip if there are no metrics to send ( we skip counters with value '0')
             continue;
           }
           LOG.trace("Emit metric {}", metricValue);
@@ -178,31 +175,23 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   private final class MetricsCollectorImpl implements MetricsCollector {
-    // Cache for minimizing creating new MetricKey object.
-    private final LoadingCache<String, EmitterKey> keys;
 
     private final Map<String, String> tags;
 
     private MetricsCollectorImpl(final Map<String, String> tags) {
       this.tags = tags;
-      this.keys = CacheBuilder.newBuilder()
-          .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-          .build(new CacheLoader<String, EmitterKey>() {
-            @Override
-            public EmitterKey load(String metric) throws Exception {
-              return new EmitterKey(tags, metric);
-            }
-          });
+      // add to cache
+      emitters.put(tags, new AggregatedMetricsEmitter(tags));
     }
 
     @Override
     public void increment(String metricName, long value) {
-      emitters.getUnchecked(keys.getUnchecked(metricName)).increment(value);
+      emitters.getUnchecked(tags).increment(metricName, value);
     }
 
     @Override
     public void gauge(String metricName, long value) {
-      emitters.getUnchecked(keys.getUnchecked(metricName)).gauge(value);
+      emitters.getUnchecked(tags).gauge(metricName, value);
     }
 
     @Override
@@ -222,49 +211,6 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       allTags.putAll(this.tags);
       allTags.putAll(tags);
       return new MetricsCollectorImpl(allTags);
-    }
-  }
-
-  /**
-   * Inner class for the cache key for looking up {@link AggregatedMetricsEmitter}.
-   */
-  private static final class EmitterKey {
-    // tags
-    private final Map<String, String> tags;
-    private final String metric;
-
-    private EmitterKey(Map<String, String> tags, String metric) {
-      this.tags = tags;
-      this.metric = metric;
-    }
-
-    private Map<String, String> getTags() {
-      return tags;
-    }
-
-    private String getMetric() {
-      return metric;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      EmitterKey other = (EmitterKey) o;
-      return Objects.equal(tags, other.tags)
-        && Objects.equal(metric, other.metric);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = tags.hashCode();
-      result = 31 * result + metric.hashCode();
-      return result;
     }
   }
 }

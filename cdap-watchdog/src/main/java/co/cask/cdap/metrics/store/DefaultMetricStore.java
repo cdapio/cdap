@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -203,11 +204,16 @@ public class DefaultMetricStore implements MetricStore {
     List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
     for (MetricValue metricValue : metricValues) {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
-      String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+      List<Measurement> metrics = Lists.newArrayList();
+      // todo improve this logic?
+      for (Measurement metric : metricValue.getMetrics()) {
+        String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
+        metrics.add(new Measurement(metric, measureName));
+      }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
         .addTags(metricValue.getTags())
-        .addMeasurement(measureName, toMeasureType(metricValue.getType()), metricValue.getValue());
+        .addMeasurements(metrics);
       facts.add(fact);
     }
     cube.get().add(facts);

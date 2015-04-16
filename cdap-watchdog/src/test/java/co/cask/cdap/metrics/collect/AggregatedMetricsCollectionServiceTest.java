@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
@@ -25,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -45,6 +47,17 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final String FLOWLET = "testflowlet";
   private static final String INSTANCE = "testInstance";
   private static final String METRIC = "metric";
+
+  private long getMetricValue(Collection<Measurement> metrics, String metricName) {
+    Iterator<Measurement> metricsItor = metrics.iterator();
+    while (metricsItor.hasNext()) {
+      Measurement measurement = metricsItor.next();
+      if (measurement.getName().equals(metricName)) {
+        return measurement.getValue();
+      }
+    }
+    return 0;
+  }
 
   @Category(SlowTests.class)
   @Test
@@ -86,7 +99,8 @@ public class AggregatedMetricsCollectionServiceTest {
 
       MetricValue record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, record.getValue());
+
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, getMetricValue(record.getMetrics(), METRIC));
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
@@ -103,7 +117,7 @@ public class AggregatedMetricsCollectionServiceTest {
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(3, record.getValue());
+      Assert.assertEquals(3, getMetricValue(record.getMetrics(), METRIC));
 
       // define collectors for non-empty tags
       MetricsCollector baseCollector = service.getCollector(baseTags);
@@ -151,10 +165,10 @@ public class AggregatedMetricsCollectionServiceTest {
     Map<String, String> tags = metricValue.getTags();
     if (tags.size() == 4) {
       // base collector
-      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, metricValue.getValue());
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, getMetricValue(metricValue.getMetrics(), METRIC));
     } else if (tags.size() == 6) {
       // flowlet collector
-      Assert.assertEquals(15L, metricValue.getValue());
+      Assert.assertEquals(15L, getMetricValue(metricValue.getMetrics(), METRIC));
     } else {
       Assert.fail("Unexpected number of tags while verifying counter metrics value - " + tags.size());
     }
@@ -165,10 +179,10 @@ public class AggregatedMetricsCollectionServiceTest {
     Map<String, String> tags = metricValue.getTags();
     if (tags.size() == 4) {
       // base collector
-      Assert.assertEquals(1L, metricValue.getValue());
+      Assert.assertEquals(1L, getMetricValue(metricValue.getMetrics(), METRIC));
     } else if (tags.size() == 6) {
       // flowlet collector
-      Assert.assertEquals((long) Integer.MAX_VALUE, metricValue.getValue());
+      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValue.getMetrics(), METRIC));
     } else {
       Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
     }
@@ -176,6 +190,6 @@ public class AggregatedMetricsCollectionServiceTest {
 
   private void verifyMetricsValue(MetricValue metricValue, long expected) {
     Assert.assertNotNull(metricValue);
-    Assert.assertEquals(expected, metricValue.getValue());
+    Assert.assertEquals(expected, getMetricValue(metricValue.getMetrics(), METRIC));
   }
 }

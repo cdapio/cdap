@@ -17,6 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -28,8 +29,10 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.test.SlowTests;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -112,11 +115,13 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricValueType,
-                           ImmutableMap.of(
-                             "tag.1", 1,
-                             "tag.2", 2,
-                             "tag.3", 3));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.1", "processed", 1L);
+    expected.put("tag.2", "processed", 2L);
+    expected.put("tag.3", "processed", 3L);
+
+    assertMetricsFromKafka(kafkaClient, schema, metricValueType, expected);
   }
 
   @Test
@@ -160,12 +165,15 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, ImmutableMap.of("tag.test", 5));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.test", "metric", 5L);
+    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, expected);
   }
 
   private void assertMetricsFromKafka(KafkaClientService kafkaClient, final Schema schema,
                                       final TypeToken<MetricValue> metricRecordType,
-                                      Map<String, Integer> expected) throws InterruptedException {
+                                      Table<String, String, Long> expected) throws InterruptedException {
 
     // Consume from kafka
     final Map<String, MetricValue> metrics = Maps.newHashMap();
@@ -208,12 +216,17 @@ public class KafkaMetricsCollectionServiceTest {
     });
 
     Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
-    Assert.assertEquals(expected.size(), metrics.size());
+    Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
-    for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
-      MetricValue metric = metrics.get(expectedEntry.getKey());
-      Assert.assertNotNull("Missing expected value for " + expectedEntry.getKey(), metric);
-      Assert.assertEquals(expectedEntry.getValue().intValue(), metric.getValue());
+    for (String expectedContext : expected.rowKeySet()) {
+      MetricValue metric = metrics.get(expectedContext);
+      Assert.assertNotNull("Missing expected value for " + expectedContext, metric);
+
+      // validate metrics and their values
+      for (Measurement measurement : metric.getMetrics()) {
+        Assert.assertNotNull(expected.contains(expectedContext, measurement));
+        Assert.assertEquals((long) expected.get(expectedContext, measurement.getName()), measurement.getValue());
+      }
     }
 
     kafkaClient.stopAndWait();
