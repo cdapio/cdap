@@ -37,7 +37,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
   private final Map<String, String> tags;
-  private Map<String, MockMeasurement> metricNameToMeasurements;
+  private Map<String, Measure> metricNameToMeasurements;
 
 
   public AggregatedMetricsEmitter(Map<String, String> tags) {
@@ -45,9 +45,9 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     this.metricNameToMeasurements = Maps.newHashMap();
   }
 
-  MockMeasurement getMeasurement(String name) {
+  private Measure getMeasurement(String name) {
     if (!metricNameToMeasurements.containsKey(name)) {
-      metricNameToMeasurements.put(name, new MockMeasurement(name));
+      metricNameToMeasurements.put(name, new Measure(name));
     }
     return metricNameToMeasurements.get(name);
   }
@@ -63,7 +63,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   @Override
   public MetricValue emit(long timestamp) {
     Collection<Measurement> metrics = Lists.newArrayList();
-    for (MockMeasurement metric : metricNameToMeasurements.values()) {
+    for (Measure metric : metricNameToMeasurements.values()) {
       // skip increment by 0
       if (metric.getMetricType() == MeasureType.COUNTER && metric.getValue() == 0) {
         continue;
@@ -72,15 +72,16 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
       metric.resetValue();
       metric.setGauge(false);
     }
+    metricNameToMeasurements.clear();
     return new MetricValue(tags, timestamp, metrics);
   }
 
-  class MockMeasurement {
+  class Measure {
     private final String name;
     private final AtomicLong value;
     private final AtomicBoolean gaugeUsed;
 
-    public MockMeasurement(String name) {
+    public Measure(String name) {
       if (name == null || name.isEmpty()) {
         LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
                    "for context " + Joiner.on(",").withKeyValueSeparator(":").join(tags));
