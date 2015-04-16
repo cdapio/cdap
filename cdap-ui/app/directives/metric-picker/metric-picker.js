@@ -26,11 +26,7 @@ angular.module(PKG.name + '.commons')
           });
         },
         getName: function() {
-          name = '';
-          this.getNames().forEach(function(el) {
-            name += el + ', ';
-          });
-          return name;
+          return this.getNames().join(', ');
         }
       };
 

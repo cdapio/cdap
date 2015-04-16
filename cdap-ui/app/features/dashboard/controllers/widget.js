@@ -17,22 +17,23 @@ angular.module(PKG.name+'.feature.dashboard')
 
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
     function contextToTags(context) {
+      var parts, tags, i;
       parts = context.split('.');
       if (parts.length % 2 != 0) {
         throw "Metrics context has uneven number of parts: " + this.metric.context
       }
       tags = {};
-      for (var i = 0; i < parts.length; i+=2) {
+      for (i = 0; i < parts.length; i+=2) {
         tags[parts[i]] = parts[i + 1]
       }
       return tags;
     }
 
     function constructQuery(queryId, tags, metrics) {
+      var timeRange, retObj;
       timeRange = {'start': 'now-60s', 'end': 'now'};
-      queryObj = {tags: tags, metrics: metrics, groupBy: [], timeRange: timeRange};
       retObj = {};
-      retObj[queryId] = queryObj;
+      retObj[queryId] = {tags: tags, metrics: metrics, groupBy: [], timeRange: timeRange};
       return retObj;
     }
 
@@ -73,31 +74,33 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.processData = function (queryResults) {
-      var data, tempMap = {};
+      var metrics, metric, data, dataPt, result;
+      var i, j;
+      var tempMap = {}
+      var tmpData = [];
       result = queryResults[queryId];
-      var metrics = this.metric.names;
-      for (var i = 0; i < metrics.length; i++) {
-        var metric = metrics[i];
+      metrics = this.metric.names;
+      for (i = 0; i < metrics.length; i++) {
+        metric = metrics[i];
         tempMap[metric] = {};
         // interpolating the data since backend returns only metrics at specific time periods instead of
         // for the whole range. We have to interpolate the rest with 0s to draw the graph.
-        for (var j = result.startTime; j < result.endTime; j++) {
+        for (j = result.startTime; j <= result.endTime; j++) {
           tempMap[metric][j] = 0;
         }
       }
-      for (var i = 0; i < result.series.length; i++) {
-        var data = result.series[i].data;
+      for (i = 0; i < result.series.length; i++) {
+        data = result.series[i].data;
         metric = result.series[i].metricName
-        for (var k = 0 ; k < data.length; k++) {
-          var dataPt = data[k];
+        for (j = 0 ; j < data.length; j++) {
+          dataPt = data[j];
           tempMap[metric][dataPt.time] = dataPt.value;
         }
       }
-      tmpdata = [];
-      for (var i = 0; i < metrics.length; i++) {
-        tmpdata.push(tempMap[metrics[i]]);
+      for (i = 0; i < metrics.length; i++) {
+        tmpData.push(tempMap[metrics[i]]);
       }
-      this.data = tmpdata;
+      this.data = tmpData;
     };
 
     Widget.prototype.getPartial = function () {
@@ -135,10 +138,11 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.chartHistory = null;
     $scope.stream = null;
     $scope.$watch('wdgt.data', function (newVal) {
+      var metricMap, arr, vs, hist;
       if(angular.isObject(newVal)) {
-        var vs = [];
+        vs = [];
         for (var i = 0; i < newVal.length; i++) {
-          var metricMap = newVal[i];
+          metricMap = newVal[i];
           vs.push(Object.keys(metricMap).map(function(key) {
             return {
               time: key,
@@ -151,10 +155,10 @@ angular.module(PKG.name+'.feature.dashboard')
           arr = [];
           for (var i = 0; i < vs.length; i++) {
             var el = vs[i];
-            var lastIndex = el.length-1;
-            arr.push(el[lastIndex])
+            var lastIndex = el.length - 1;
+            arr.push(el[lastIndex]);
           }
-          $scope.stream = [arr]
+          $scope.stream = arr;
         }
 
         hist = [];
