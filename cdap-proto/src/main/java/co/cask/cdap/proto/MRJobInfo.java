@@ -18,7 +18,6 @@ package co.cask.cdap.proto;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Simplified (filtered) representation of a MapReduce Job.
@@ -26,40 +25,41 @@ import javax.annotation.Nullable;
 public class MRJobInfo {
   private final String state;
   private final Long startTime;
-  private final Long finishTime;
+  private final Long stopTime;
   private final Float mapProgress;
   private final Float reduceProgress;
   private final Map<String, Long> counters;
   private final List<MRTaskInfo> mapTasks;
   private final List<MRTaskInfo> reduceTasks;
+  // If false, the nullable fields in the MRTaskInfo in the mapTasks and reduceTasks will be null.
+  private final boolean complete;
 
-  public MRJobInfo(@Nullable String state, @Nullable Long startTime, @Nullable Long finishTime,
+  public MRJobInfo(String state, Long startTime, Long stopTime,
                    Float mapProcess, Float reduceProgress,
                    Map<String, Long> counters,
-                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks) {
+                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks,
+                   boolean complete) {
     this.state = state;
     this.startTime = startTime;
-    this.finishTime = finishTime;
+    this.stopTime = stopTime;
     this.mapProgress = mapProcess;
     this.reduceProgress = reduceProgress;
     this.counters = counters;
     this.mapTasks = mapTasks;
     this.reduceTasks = reduceTasks;
+    this.complete = complete;
   }
 
-  @Nullable
   public String getState() {
     return state;
   }
 
-  @Nullable
   public Long getStartTime() {
     return startTime;
   }
 
-  @Nullable
-  public Long getFinishTime() {
-    return finishTime;
+  public Long getStopTime() {
+    return stopTime;
   }
 
   public Float getMapProgress() {
@@ -80,5 +80,9 @@ public class MRJobInfo {
 
   public List<MRTaskInfo> getReduceTasks() {
     return reduceTasks;
+  }
+
+  public boolean isComplete() {
+    return complete;
   }
 }

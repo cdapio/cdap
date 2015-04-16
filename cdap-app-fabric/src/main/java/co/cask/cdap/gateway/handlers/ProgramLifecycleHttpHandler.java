@@ -216,11 +216,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runs/{run-id}/info")
-  public void mapReduceInfo(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("app-id") String appId,
-                            @PathParam("mapreduce-id") String mapreduceId,
-                            @PathParam("run-id") String runId) {
+  public void getMapReduceInfo(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("mapreduce-id") String mapreduceId,
+                               @PathParam("run-id") String runId) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
       Id.Run run = new Id.Run(programId, runId);
@@ -231,17 +231,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
         throw new NotFoundException(programId);
       }
-      if (store.getRun(programId, runId) == null) {
+      RunRecord runRecord = store.getRun(programId, runId);
+      if (runRecord == null) {
         throw new NotFoundException(run);
       }
 
 
       MRJobInfo mrJobInfo;
       try {
-        mrJobInfo = mrJobClient.getMRJobInfo(run);
+        mrJobInfo = mrJobClient.getMRJobInfo(run, runRecord);
       } catch (IOException ioe) {
         LOG.warn("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
-        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run, runRecord);
       }
 
 
