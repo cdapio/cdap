@@ -9,7 +9,7 @@ angular.module(PKG.name + '.feature.datasets')
         method: 'POST'
       }).then(function () {
         $alert({
-          content: 'Succesfully truncate ' + $state.params.datasetId + ' dataset',
+          content: 'Succesfully truncated ' + $state.params.datasetId + ' dataset',
           type: 'success'
         });
       });
