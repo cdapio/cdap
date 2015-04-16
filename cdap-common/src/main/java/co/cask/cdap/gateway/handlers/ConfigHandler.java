@@ -21,9 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -32,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.ByteOrder;
-import java.util.Map;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,27 +43,23 @@ import javax.ws.rs.QueryParam;
 public class ConfigHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
-
-  private final CConfiguration cConf;
-  private final Configuration hConf;
+  private final ConfigService configService;
 
   @Inject
-  public ConfigHandler(CConfiguration cConf, Configuration hConf) {
-    this.cConf = cConf;
-    this.hConf = hConf;
+  public ConfigHandler(ConfigService configService) {
+    this.configService = configService;
   }
 
   @Path("/config/cdap")
   @GET
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                        @DefaultValue("json") @QueryParam("format") String format) {
+                         @DefaultValue("json") @QueryParam("format") String format) {
     if ("json".equals(format)) {
-      responder.sendJson(HttpResponseStatus.OK, toMap(cConf));
+      responder.sendJson(HttpResponseStatus.OK, configService.getCConf());
     } else if ("xml".equals(format)) {
       try {
-        StringWriter stringWriter = new StringWriter();
-        cConf.writeXml(stringWriter);
-        responder.sendContent(HttpResponseStatus.OK, stringWriter2ChannelBuffer(stringWriter), "application/xml", null);
+        String xmlString = configService.getCConfXMLString();
+        responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
       } catch (IOException e) {
         LOG.info("Failed to write cConf to XML", e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -77,17 +69,16 @@ public class ConfigHandler extends AbstractHttpHandler {
     }
   }
 
-  @Path("/config/hbase")
+  @Path("/config/hadoop")
   @GET
-  public void configHBase(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+  public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @DefaultValue("json") @QueryParam("format") String format) {
     if ("json".equals(format)) {
-      responder.sendJson(HttpResponseStatus.OK, toMap(hConf));
+      responder.sendJson(HttpResponseStatus.OK, configService.getHConf());
     } else if ("xml".equals(format)) {
       try {
-        StringWriter stringWriter = new StringWriter();
-        hConf.writeXml(stringWriter);
-        responder.sendContent(HttpResponseStatus.OK, stringWriter2ChannelBuffer(stringWriter), "application/xml", null);
+        String xmlString = configService.getHConfXMLString();
+        responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
       } catch (IOException e) {
         LOG.info("Failed to write hConf to XML", e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -97,15 +88,7 @@ public class ConfigHandler extends AbstractHttpHandler {
     }
   }
 
-  private ChannelBuffer stringWriter2ChannelBuffer(StringWriter stringWriter) {
-    return ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, stringWriter.toString(), Charsets.UTF_8);
-  }
-
-  private Map<String, String> toMap(Iterable<Map.Entry<String, String>> configuration) {
-    ImmutableMap.Builder<String, String> result = ImmutableMap.builder();
-    for (Map.Entry<String, String> entry : configuration) {
-      result.put(entry.getKey(), entry.getValue());
-    }
-    return result.build();
+  private ChannelBuffer newChannelBuffer(String string) {
+    return ChannelBuffers.copiedBuffer(ByteOrder.BIG_ENDIAN, string, Charsets.UTF_8);
   }
 }

@@ -73,6 +73,9 @@ angular.module(PKG.name+'.feature.dashboard')
             }).result.finally(function() {
               $state.go('dashboard.user', {tab: tab}, { reload: true });
             });
+          },
+          onExit: function($modalStack) {
+            $modalStack.dismissAll();
           }
         })
 

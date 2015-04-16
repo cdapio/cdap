@@ -13,32 +13,10 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   }
 
   $scope.apps = [];
-  $scope.datasets = [];
-  $scope.streams = [];
-  $scope.hideWelcomeMessage = false;
-  //$scope.mockData = [];
-  $scope.chartHistory = [
-    {
-      label: 'mockData',
-      values: loopGraph()
-    }
-  ];
-  $scope.appHistory = [
-    {
-      label: 'mockData',
-      values: loopGraph()
-    }
-  ];
-  function loopGraph() {
-    var arr = [];
-    for (var i = 0; i < 100; i++) {
-      arr.push({
-        time: i, y: Math.floor(Math.random() * 500 + 1)
-      });
-    }
 
-    return arr;
-  }
+  $scope.dataList = [];
+  $scope.hideWelcomeMessage = false;
+
 
   var dataSrc = new MyDataSource($scope),
       partialPath = '/assets/features/overview/templates/',
@@ -84,14 +62,14 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
     _cdapNsPath: '/data/datasets'
   })
     .then(function(res) {
-      $scope.datasets = res;
+      $scope.dataList = $scope.dataList.concat(res);
     });
 
   dataSrc.request({
     _cdapNsPath: '/streams'
   }, function(res) {
     if (angular.isArray(res) && res.length) {
-      $scope.streams = res;
+      $scope.dataList = $scope.dataList.concat(res);
     }
   });
 
