@@ -223,7 +223,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
    * @throws IOException
    */
   private HBaseQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
-    HBaseQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
+    HBaseQueueAdmin admin = get(queueName);
     try {
       if (!admin.exists(queueName)) {
         admin.create(queueName);
@@ -234,7 +234,16 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return admin;
   }
 
-  private HTable createHTable(TableId tableId) throws IOException {
+  /**
+   * Helper method to select the queue or stream admin.
+   * @param queueName name of the queue to be opened.
+   * @return the queue admin for that queue.
+   */
+  public HBaseQueueAdmin get(QueueName queueName) {
+    return queueName.isStream() ? streamAdmin : queueAdmin;
+  }
+
+  public HTable createHTable(TableId tableId) throws IOException {
     HTable consumerTable = hBaseTableUtil.createHTable(hConf, tableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
@@ -242,7 +251,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return consumerTable;
   }
 
-  private int getDistributorBuckets(HTableDescriptor htd) {
+  public int getDistributorBuckets(HTableDescriptor htd) {
     String value = htd.getValue(QueueConstants.DISTRIBUTOR_BUCKETS);
     // If the setting is not in the table meta, this is a old table, hence use the value in the cConf
     if (value == null) {
