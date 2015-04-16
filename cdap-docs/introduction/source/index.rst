@@ -1631,26 +1631,16 @@ Summary
 =======
 
 .. list-table::
-   :widths: 40 20 40
+   :widths: 50 50
    :header-rows: 1
 
    * - Without CDAP
-     - Technologies to be Mastered
      - With CDAP 
 
    * - - Bring in different open source technologies, each with different design principles
        - Familiarize and learn how to operate the different technologies
        - Design specific architectures to wire in different components
        - Revisit everything whenever the technologies change
-     - - HBase
-       - HDFS
-       - Hive
-       - Kafka
-       - Oozie
-       - Pig
-       - Sqoop
-       - YARN
-       - Zookeeper
      - - Learn a single framework that works with multiple technologies
        - Abstraction of data in the Hadoop environment through logical representations of underlying data
        - Portability of applications through decoupling underlying infrastructures
