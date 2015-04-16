@@ -190,7 +190,7 @@ such as the format and schema, while abstracting from the actual underlying file
   schema that represents the data are optimized for querying and aggregating over time
   ranges.
 
-  Time partition filesets are typically written in batch: into large files, every *N* minutes or
+  Time-partitioned FileSets are typically written in batch: into large files, every *N* minutes or
   hours...while a timeseries table is typically written in realtime, one data point at a
   time.
  
