@@ -65,7 +65,7 @@
 </div> -->
 
 <accordion close-others="true">
-  <accordion-group ng-repeat="query in queries" is-open="accordion" ng-click="fetchQuery(query)">
+  <accordion-group ng-repeat="query in queries" is-open="accordion">
     <accordion-heading >
       <span class="fa fa-fw" ng-class="{'fa-caret-down': accordion, 'fa-caret-right': !accordion}"></span>  {{ query.statement }} <span class="pull-right">{{ query.status }}</span>
     </accordion-heading>
