@@ -168,9 +168,9 @@ if copyright:
 if cdap_apps_version:
     rst_epilog = rst_epilog + """
 .. |cdap-apps-version| replace:: %(cdap-apps-version)s
-""" % {'cdap-apps-version': cdap_apps_version}
-    rst_epilog = rst_epilog + """
+
 .. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
+
 """ % {'cdap-apps-version': cdap_apps_version}
 
 

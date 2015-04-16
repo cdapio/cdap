@@ -3,7 +3,7 @@
     :description: Advanced Tutorial, Web Analytics Application
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. wise-version is set in conf.py
+.. cdap-apps-version is set in _common/common_conf.py
 
 .. _cdap-tutorial-wise:
 
@@ -29,7 +29,7 @@ server access logs, counts visits made by different IP addresses seen in the log
 realtime, and computes the bounce ratio of each web page encountered using batch
 processing.
 
-The Wise v\ |wise-version| application uses these Cask Data Application Platform (CDAP) constructs to
+The Wise v\ |cdap-apps-version| application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:
 
 - **Stream:** Ingests log data in realtime 
@@ -61,7 +61,7 @@ Running Wise
 ============
 .. highlight:: console
 
-Building and running Wise v\ |wise-version| is straightforward. We’ll assume that you have
+Building and running Wise v\ |cdap-apps-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
 :ref:`CDAP Software Development Kit (SDK) <standalone-index>`.
 
@@ -93,7 +93,7 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
   .. parsed-literal::
     |$| cd $CDAP_SDK_HOME
-    |$| ./bin/cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|wise-version|.jar
+    |$| ./bin/cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
     |$| ./bin/cdap-cli.sh start flow Wise.WiseFlow 
     |$| ./bin/cdap-cli.sh start service Wise.WiseService
 
