@@ -10,6 +10,8 @@ angular.module(PKG.name+'.feature.dashboard')
       this.title = opts.title || 'Widget';
       this.type = opts.type;
       this.metric = opts.metric || false;
+      this.startTime = 'now-60s';
+      this.endTime = 'now';
       this.color = opts.color;
       this.dataSrc = null;
       this.isLive = false;
@@ -19,26 +21,37 @@ angular.module(PKG.name+'.feature.dashboard')
       if (!this.dataSrc) {
         this.dataSrc = new MyDataSource(scope);
       }
-      var cdapPath;
-      if (startMs && !endMs) {
-        cdapPath = '/metrics/query' +
-        '?context=' + encodeURIComponent(this.metric.context) +
-        '&metric=' + encodeURIComponent(this.metric.name) +
-        '&start=' + 'now-' + startMs / 1000 + 's' +
-        '&end=' + 'now';
-      } else {
-        cdapPath = '/metrics/query' +
+      var cdapPath = '/metrics/query' +
         '?context=' + encodeURIComponent(this.metric.context) +
         '&metric=' + encodeURIComponent(this.metric.name) +
         '&start=' + (startMs? (startMs/1000): 'now-60s') +
         '&end=' + (endMs? (endMs/1000): 'now');
-      }
 
       this.dataSrc.request({
         _cdapPath: cdapPath,
         method: 'POST'
       })
-      .then(this.processData.bind(this))
+      .then(this.processData.bind(this));
+    };
+
+    Widget.prototype.fetchDuration = function(scope, durationMs) {
+      if (!this.dataSrc) {
+        this.dataSrc = new MyDataSource(scope);
+      }
+      if (durationMs) {
+        this.startTime = 'now-' + durationMs / 1000 + 's';
+        var cdapPath = '/metrics/query' +
+        '?context=' + encodeURIComponent(this.metric.context) +
+        '&metric=' + encodeURIComponent(this.metric.name) +
+        '&start=' + this.startTime +
+        '&end=' + this.endTime;
+
+        this.dataSrc.request({
+          _cdapPath: cdapPath,
+          method: 'POST'
+        })
+        .then(this.processData.bind(this));
+      }
     };
 
     Widget.prototype.startPolling = function (scope) {
@@ -53,7 +66,8 @@ angular.module(PKG.name+'.feature.dashboard')
           _cdapPath: '/metrics/query' +
             '?context=' + encodeURIComponent(this.metric.context) +
             '&metric=' + encodeURIComponent(this.metric.name) +
-            '&start=now-60s&end=now',
+            '&start=' + this.startTime +
+            '&end=now',
 
           method: 'POST'
         },
@@ -138,7 +152,7 @@ angular.module(PKG.name+'.feature.dashboard')
         return;
       }
       $scope.wdgt.isLive = false;
-      $scope.wdgt.fetchData($scope, $scope.wdgt.durationMs);
+      $scope.wdgt.fetchDuration($scope, $scope.wdgt.durationMs);
       console.log('DurationMs: ', newVal);
     });
     $scope.wdgt.fetchData($scope);
