@@ -24,7 +24,7 @@ import com.google.common.base.Objects;
  * Representing queue barrier information. It contains the consumer group information for
  * queue entry that are enqueue after the given start row.
  */
-final class QueueBarrier {
+public final class QueueBarrier {
   private final ConsumerGroupConfig groupConfig;
   private final byte[] startRow;
 

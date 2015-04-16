@@ -23,6 +23,13 @@ import com.google.common.base.Preconditions;
  */
 public final class ConsumerConfig extends ConsumerGroupConfig {
 
+  /**
+   * Instance ID, derived from {@link #groupSize}.
+   *
+   * <p>
+   * e.g. if {@link #groupSize} is 4, then within that group, there would be instance IDs of 0, 1, 2, and 3.
+   * </p>
+   */
   private final int instanceId;
 
   public ConsumerConfig(ConsumerGroupConfig groupConfig, int instanceId) {
