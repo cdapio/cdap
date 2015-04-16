@@ -50,6 +50,8 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
@@ -64,6 +66,7 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
+  private static final String DEFAULT_SCRIPT_FILE = null;
 
   @VisibleForTesting
   public static final Option HELP_OPTION = new Option(
@@ -90,6 +93,14 @@ public class CLIMain {
   @VisibleForTesting
   public static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
+
+  @VisibleForTesting
+  public static final Option SCRIPT_FILE_OPTION = new Option(
+    "f", "scriptfile", true, "Name of script file to read and execute.  " +
+    "Blank lines and comments starting with '#' are ignored.  " + 
+    "The 'break' keyword terminates the script.  " + 
+    "The 'exit' command terminates the cli, otherwise the user is left " + 
+    "at cdap-cli command prompt when the script completes.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -232,6 +243,7 @@ public class CLIMain {
 
       LaunchOptions launchOptions = LaunchOptions.builder()
         .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
+        .setScriptFile(command.getOptionValue(SCRIPT_FILE_OPTION.getOpt(), DEFAULT_SCRIPT_FILE))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
@@ -248,10 +260,54 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
+        if (launchOptions.getScriptFile() != null) {
+
+          ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+          URI baseURI = connectionConfig.getURI();
+          URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+          String cliPrompt = "\ncdap (" + uri + ")> ";
+
+          BufferedReader br = null;
+          try {
+            String line;
+            br = new BufferedReader(new FileReader(launchOptions.getScriptFile()));
+            while ((line = br.readLine()) != null) {
+              String ln = line.trim();
+              if ("".equals(ln) || ln.startsWith("#")) {
+                continue;
+              }
+              if (ln.startsWith("break")) {
+                output.println(cliPrompt + ln);
+                break; // Break from script
+              }
+              output.println(cliPrompt + ln);
+              cli.execute(ln, output);
+            }
+            output.println("\n");
+          } catch (IOException e) {
+            output.println(e.getMessage());
+            usage();
+          } finally {
+            try {
+              if (br != null) {
+                br.close();
+              }
+            } catch (IOException e) {
+              output.println(e.getMessage());
+              usage();
+            }
+          }
+        }
         if (commandArgs.length == 0) {
+          // No commands following switches; just start shell
           cli.startInteractiveMode(output);
         } else {
-          cli.execute(Joiner.on(" ").join(commandArgs), output);
+          // Commands following switches; process them
+          String commandLine = Joiner.on(" ").join(commandArgs);
+          String[] commandLns = commandLine.split(";");
+          for (int i = 0; i < commandLns.length; i++) {
+              cli.execute(commandLns[i].trim(), output);
+          }
         }
       } catch (Exception e) {
         e.printStackTrace(output);
@@ -275,6 +331,7 @@ public class CLIMain {
     addOptionalOption(options, VERIFY_SSL_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
+    addOptionalOption(options, SCRIPT_FILE_OPTION);
     return options;
   }
 
@@ -292,7 +349,8 @@ public class CLIMain {
       "[--debug] " +
       "[--help] " +
       "[--verify-ssl <true|false>] " +
-      "[--uri <arg>]";
+      "[--uri <arg>]" +
+      "[--scriptfile <arg>]";
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
