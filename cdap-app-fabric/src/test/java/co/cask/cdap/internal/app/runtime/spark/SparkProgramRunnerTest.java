@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
@@ -30,6 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -45,6 +47,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
@@ -206,8 +209,10 @@ public class SparkProgramRunnerTest {
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
 
     HashMap<String, String> userArgs = Maps.newHashMap();
-    return runner.run(program, new SimpleProgramOptions(program.getName(), new BasicArguments(),
-                                                        new BasicArguments(userArgs)));
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
+
+    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments(userArgs)));
   }
 
   private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {

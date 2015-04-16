@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -35,7 +36,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
-import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
 import java.util.Map;
@@ -57,15 +57,12 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
-  private final RunId runId;
   private final Arguments userArguments;
   private final Arguments systemArguments;
 
-  public AbstractProgramWorkflowRunner(RunId runId, Program workflowProgram,
-                                       ProgramRunnerFactory programRunnerFactory,
-                                       WorkflowSpecification workflowSpec, ProgramOptions workflowProgramOptions) {
+  public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
+                                       ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec) {
     this.userArguments = workflowProgramOptions.getUserArguments();
-    this.runId = runId;
     this.workflowProgram = workflowProgram;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowSpec = workflowSpec;
@@ -88,7 +85,8 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   protected Callable<RuntimeContext> getRuntimeContextCallable(String name, final Program program) {
     Map<String, String> systemArgumentsMap = Maps.newHashMap();
     systemArgumentsMap.putAll(systemArguments.asMap());
-    systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    // Generate the new RunId here for the program running under Workflow
+    systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, RunIds.generate().getId());
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),

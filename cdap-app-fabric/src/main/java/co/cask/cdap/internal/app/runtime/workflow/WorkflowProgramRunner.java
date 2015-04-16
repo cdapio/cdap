@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -68,11 +69,12 @@ public class WorkflowProgramRunner implements ProgramRunner {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
-    RunId runId = RunIds.generate();
-    WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, programRunnerFactory);
+
+    WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
     driver.start();
 

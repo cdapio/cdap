@@ -135,7 +135,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       int instanceCount = appSpec.getProcedures().get(program.getName()).getInstances();
       Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-      RunId runId = RunIds.generate();
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
 
       BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec,

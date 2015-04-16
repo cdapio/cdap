@@ -80,7 +80,7 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
     //RunId for worker
-    RunId runId = RunIds.generate();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     Table<String, Integer, ProgramController> components = startWorkers(program, runId, options.getUserArguments(),
                                                                         workerSpec);
     return new InMemoryProgramController(components, runId, program, workerSpec, options.getUserArguments(),

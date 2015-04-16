@@ -118,11 +118,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-    final RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
-                    ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
-                    : RunIds.generate();
+
+    final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
                                 ? Long.parseLong(arguments
