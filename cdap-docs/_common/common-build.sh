@@ -151,12 +151,14 @@ function build_docs_google() {
 
 function build_javadocs_full() {
   cd $PROJECT_PATH
+  set_mvn_environment
   MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
   cd $PROJECT_PATH
-  MAVEN_OPTS="-Xmx512m"  mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+  set_mvn_environment
+  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
 }
 
 function build_javadocs_sdk() {
@@ -236,6 +238,12 @@ function build_web() {
   build_extras
 }
 
+function set_mvn_environment() {
+  if [ "$(uname)" == "Darwin" ]; then
+    export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
+  fi
+}
+
 function check_includes() {
   if [ $CHECK_INCLUDES == $TRUE ]; then
     if hash pandoc 2>/dev/null; then
@@ -297,6 +305,7 @@ function pandoc_includes() {
 
 function build_standalone() {
   cd $PROJECT_PATH
+  set_mvn_environment
   MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
@@ -306,6 +315,7 @@ function build_sdk() {
 
 function build_dependencies() {
   cd $PROJECT_PATH
+  set_mvn_environment
   mvn clean package site -am -Pjavadocs -DskipTests
 }
 
