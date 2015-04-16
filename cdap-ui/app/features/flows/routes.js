@@ -62,19 +62,6 @@ angular.module(PKG.name + '.feature.flows')
             }
           })
 
-      .state('flows.detail.status', {
-        url: '/status',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
-        },
-        ncyBreadcrumb: {
-          label: '{{$state.params.programId}}'
-        },
-        templateUrl: '/assets/features/flows/templates/tabs/status.html',
-        controller: 'FlowsDetailController'
-      })
-
       .state('flows.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/flows/templates/tabs/runs.html',
