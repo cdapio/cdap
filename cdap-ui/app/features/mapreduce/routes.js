@@ -31,6 +31,22 @@ angular.module(PKG.name + '.feature.mapreduce')
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
             skip: true
+          },
+          resolve: {
+            rRuns: function(MyDataSource, $stateParams, $q) {
+              var defer = $q.defer();
+
+              var dataSrc = new MyDataSource();
+
+              dataSrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
+              })
+              .then(function (res) {
+                defer.resolve(res);
+              });
+
+              return defer.promise;
+            }
           }
         })
           .state('mapreduce.detail.runs.run', {
