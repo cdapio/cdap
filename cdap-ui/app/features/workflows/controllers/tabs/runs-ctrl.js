@@ -1,31 +1,19 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsController', function($scope, $state, MyDataSource, $timeout, $rootScope) {
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;;
+  .controller('WorkflowsRunsController', function($scope, $state, $filter, rRuns) {
+    var fFilter = $filter('filter');
+    $scope.runs = rRuns;
 
-    dataSrc.request({
-      _cdapNsPath: basePath + '/runs'
-    })
-      .then(function(res) {
-        $scope.runs = res;
-        angular.forEach($scope.runs, function(value) {
-          value.isOpen = $state.params.runid === value.runid;
-        });
-      });
-
-    // This is for toggling (opening/closing) accordions if state changes.
-    $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
-      if (fromState.name !== 'workflows.detail.runs.run' && toState.name !== 'workflows.detail.runs.run') {
-        return;
+    if ($state.params.runid) {
+      var match = fFilter(rRuns, {runid: $state.params.runid});
+      if (match.length) {
+        $scope.runs.selected = match[0];
       }
-      angular.forEach($scope.runs, function(value) {
-        if (value.runid === toParams.runid) {
-          value.isOpen = true;
-        }
-        if (value.runid === fromParams.runid) {
-          value.isOpen = false;
-        }
-      });
-    });
+    } else {
+      $scope.runs.selected = rRuns[0];
+    }
 
+    $scope.tabs = [{
+      title: 'Status',
+      template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
+    }];
   });
