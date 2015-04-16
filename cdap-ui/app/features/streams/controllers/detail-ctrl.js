@@ -9,7 +9,7 @@ angular.module(PKG.name + '.feature.streams')
       }).then(function () {
         $alert({
           type: 'success',
-          content: 'Successfully truncate ' + $state.params.streamId + ' stream'
+          content: 'Successfully truncated ' + $state.params.streamId + ' stream'
         });
       });
     };
