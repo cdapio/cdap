@@ -1086,12 +1086,10 @@ Transforming Your Data
      :class: grey-table
 
      * - Current Approach
-       - - Run commands using HBase shell and Pig Latin
+       - - Run commands using HBase shell
          - ``hbase shell> list``
-         - ``hbase shell> hdfs fs -ls /path/to/my/files``
        - - HBase
          - HDFS
-         - Pig
          
      * - **Using CDAP**
        - Dataset that is time partitioned
@@ -1425,6 +1423,8 @@ Building Real World Applications
      * - **Using CDAP**
        - ``> get flow logs Wise.WiseFlow``
        - - CDAP CLI    
+
+.. highlight::
       
   .. list-table::
      :widths: 15 85
@@ -1450,6 +1450,7 @@ Building Real World Applications
           STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser
           f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 
+.. highlight:: console
 
 .. rubric:: Program Lifecycle
 
@@ -1745,28 +1746,28 @@ Building Real World Applications
      * -  
        - ::
 
-          +============================================================================================================================+
-          | dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore.totalvisits:  | dataset_bouncecountstore.bounces: BIGINT |
-          |                                        | BIGINT                                 |                                          |
-          +============================================================================================================================+
-          | /CDAP-DUT-50/index.php                 | 2                                      | 2                                        |
-          |----------------------------------------------------------------------------------------------------------------------------|
-          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 2                                        |
-          | maries.action?planKey=CDAP-DUT&buildNu |                                        |                                          |
-          | mber=50&_=1423398146659                |                                        |                                          |
-          |----------------------------------------------------------------------------------------------------------------------------|
-          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
-          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
-          | mber=284&_=1423341312519               |                                        |                                          |
-          |----------------------------------------------------------------------------------------------------------------------------|
-          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
-          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
-          | mber=284&_=1423341312521               |                                        |                                          |
-          |----------------------------------------------------------------------------------------------------------------------------|
-          | /ajax/planStatusHistoryNeighbouringSum | 2                                      | 0                                        |
-          | maries.action?planKey=COOP-DBT&buildNu |                                        |                                          |
-          | mber=284&_=1423341312522               |                                        |                                          |
-          +============================================================================================================================+
+          +===============================================================================================+
+          | dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore  | dataset_bouncecountstore |
+          |                                        | .totalvisits: BIGINT      | .bounces: BIGINT         |
+          +===============================================================================================+
+          | /CDAP-DUT-50/index.php                 | 2                         | 2                        |
+          |-----------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                         | 2                        |
+          | maries.action?planKey=CDAP-DUT&buildNu |                           |                          |
+          | mber=50&_=1423398146659                |                           |                          |
+          |-----------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                           |                          |
+          | mber=284&_=1423341312519               |                           |                          |
+          |-----------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                           |                          |
+          | mber=284&_=1423341312521               |                           |                          |
+          |-----------------------------------------------------------------------------------------------|
+          | /ajax/planStatusHistoryNeighbouringSum | 2                         | 0                        |
+          | maries.action?planKey=COOP-DBT&buildNu |                           |                          |
+          | mber=284&_=1423341312522               |                           |                          |
+          +===============================================================================================+
           Fetched 5 rows
 
 
@@ -1902,5 +1903,3 @@ Summary
        - Sqoop
        - YARN
        - Zookeeper
-
-
