@@ -1,17 +1,17 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamDetailController', function($scope, MyDataSource, $state) {
+  .controller('CdapStreamDetailController', function($scope, MyDataSource, $state, $alert) {
     var dataSrc = new MyDataSource($scope);
-    // TODO: Implement Actions that can be performed in a stream
-    // This will be towards the Zero-app experience.
-    $scope.dropdown = [
-      {
-        text: 'Action',
-        href: '#'
-      },
-      {
-        text: 'Action1',
-        href: '#'
-      }
-    ];
+
+    $scope.truncate = function() {
+      dataSrc.request({
+        _cdapNsPath: '/streams/' + $state.params.streamId + '/truncate',
+        method: 'POST'
+      }).then(function () {
+        $alert({
+          type: 'success',
+          content: 'Successfully truncate ' + $state.params.streamId + ' stream'
+        });
+      });
+    };
 
   });
