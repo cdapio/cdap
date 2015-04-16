@@ -1424,7 +1424,7 @@ Building Real World Applications
        - ``> get flow logs Wise.WiseFlow``
        - - CDAP CLI    
 
-.. highlight::
+  .. highlight:: none
       
   .. list-table::
      :widths: 15 85
