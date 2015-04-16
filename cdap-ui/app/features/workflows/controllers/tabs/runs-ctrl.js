@@ -16,6 +16,14 @@ angular.module(PKG.name + '.feature.workflows')
       }
     }
 
+    $scope.$watch('runs.selected.runid', function(newVal) {
+     if ($state.params.runid) {
+       return;
+     } else {
+       $scope.runs.selected = rRuns[0];
+     }
+   });
+
     $scope.tabs = [{
       title: 'Status',
       template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
