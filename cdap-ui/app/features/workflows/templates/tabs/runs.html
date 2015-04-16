@@ -18,6 +18,9 @@
   </div>
 </div>
 <br/>
+<div ng-if="runs.length">
+
+
 <div class="panel panel-default" ng-if="!$stateParams.runid">
   <div class="panel-heading">
     <div class="panel-title">
@@ -40,7 +43,12 @@
     <div ui-view> </div>
   </div>
 </div>
-
+</div>
+<div ng-if="!runs.length">
+  <div class="well well-lg text-center h3">
+    <div>No runs yet! Start one.</div>
+  </div>
+</div>
 
 
 </div>

@@ -8,8 +8,12 @@ angular.module(PKG.name + '.feature.workflows')
       if (match.length) {
         $scope.runs.selected = match[0];
       }
-    } else {
+    } else if (rRuns.length) {
       $scope.runs.selected = rRuns[0];
+    } else {
+      $scope.runs.selected = {
+        runid: 'No Runs!'
+      }
     }
 
     $scope.tabs = [{

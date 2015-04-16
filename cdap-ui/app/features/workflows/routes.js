@@ -27,6 +27,9 @@ angular.module(PKG.name + '.feature.workflows')
             rRuns: function(MyDataSource, $stateParams, $q) {
               var defer = $q.defer();
               var dataSrc = new MyDataSource();
+              // Using _cdapPath here as $state.params is not updated with
+              // runid param when the request goes out
+              // (timing issue with re-direct from login state).
               dataSrc.request({
                 _cdapPath: '/namespaces/' + $stateParams.namespace +
                            '/apps/' + $stateParams.appId +
