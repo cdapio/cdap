@@ -2,7 +2,6 @@ angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert) {
 
     var dataSrc = new MyDataSource($scope);
-    console.log('test', $state.params);
 
     $scope.truncate = function() {
       dataSrc.request({
