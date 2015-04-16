@@ -34,8 +34,8 @@ import java.util.concurrent.Callable;
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                 Program workflowProgram, ProgramOptions workflowProgramOptions) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec);
+                                 Program workflowProgram, ProgramOptions workflowProgramOptions, String nodeId) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, nodeId);
   }
 
   /**

@@ -56,19 +56,20 @@ public class ProgramWorkflowRunnerFactory {
    * properties of the {@link WorkflowActionSpecification}.
    *
    * @param actionSpec The {@link WorkflowActionSpecification}
+   * @param nodeId The id of the node in the Workflow which represents this program
    * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
    */
-  public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec) {
+  public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, String nodeId) {
 
 
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
           return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
-                                                    workflowProgramOptions);
+                                                    workflowProgramOptions, nodeId);
         case SPARK:
           return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
-                                                workflowProgramOptions);
+                                                workflowProgramOptions, nodeId);
         default:
           LOG.debug("No workflow program runner found for this program");
       }
