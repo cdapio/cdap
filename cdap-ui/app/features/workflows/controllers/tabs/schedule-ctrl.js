@@ -31,7 +31,9 @@ angular.module(PKG.name + '.feature.workflows')
         });
       });
 
-      $scope.schedules[0].isOpen = true;
+      if ($scope.schedules.length > 0) {
+        $scope.schedules[0].isOpen = true;
+      }
 
     });
 
