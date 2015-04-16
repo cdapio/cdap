@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An implementation of {@link HBaseQueueStrategy} with sharded keys.
@@ -68,7 +69,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   // Number of bytes as the row key prefix, including salt bytes added by the row key distributor
   public static final int PREFIX_BYTES = SaltedHBaseQueueStrategy.SALT_BYTES + Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
 
-  private static final Function<byte[], byte[]> ROW_KEY_CONVERTER = new Function<byte[], byte[]>() {
+  static final Function<byte[], byte[]> ROW_KEY_CONVERTER = new Function<byte[], byte[]>() {
     @Override
     public byte[] apply(byte[] input) {
       // Instead of using rowKeyDistributor.getOriginalKey (which strip off salt bytes),
@@ -104,6 +105,12 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
                                     HTable hTable, Scan scan, int numRows) throws IOException {
+    ResultScanner scanner = createHBaseScanner(consumerConfig, hTable, scan, numRows, false);
+    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+  }
+
+  ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan,
+                                   int numRows, boolean useActualRowKeys) throws IOException {
     // Modify the scan with sharded key prefix
     Scan shardedScan = new Scan(scan);
 
@@ -111,11 +118,22 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     int caching = (int) (1.1 * numRows / distributorBuckets);
     shardedScan.setCaching(caching);
 
-    shardedScan.setStartRow(getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStartRow()));
-    shardedScan.setStopRow(getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStopRow()));
+    if (scan.getStartRow().length > 0) {
+      byte[] rowKey = getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStartRow());
+      if (useActualRowKeys) {
+        rowKey = rowKeyDistributor.getDistributedKey(rowKey);
+      }
+      shardedScan.setStartRow(rowKey);
+    }
 
-    ResultScanner scanner = DistributedScanner.create(hTable, shardedScan, rowKeyDistributor, scansExecutor);
-    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+    if (scan.getStopRow().length > 0) {
+      byte[] rowKey = getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStopRow());
+      if (useActualRowKeys) {
+        rowKey = rowKeyDistributor.getDistributedKey(rowKey);
+      }
+      shardedScan.setStopRow(rowKey);
+    }
+    return DistributedScanner.create(hTable, shardedScan, rowKeyDistributor, scansExecutor);
   }
 
   @Override
@@ -159,16 +177,18 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     scansExecutor.shutdownNow();
   }
 
-  private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId, byte[] originalRowKey) {
+  static byte[] getShardedKey(ConsumerGroupConfig groupConfig, @Nullable Integer instanceId, byte[] originalRowKey) {
     // Need to subtract the SALT_BYTES as the row key distributor will prefix the key with salted bytes
     byte[] result = new byte[PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES + originalRowKey.length];
     Bytes.putBytes(result, PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES,
                    originalRowKey, 0, originalRowKey.length);
+    Bytes.putLong(result, 0, groupConfig.getGroupId());
 
     // Default for FIFO case.
-    int shardId = groupConfig.getDequeueStrategy() == DequeueStrategy.FIFO ? -1 : instanceId;
-    Bytes.putLong(result, 0, groupConfig.getGroupId());
-    Bytes.putInt(result, Bytes.SIZEOF_LONG, shardId);
+    if (instanceId != null) {
+      int shardId = groupConfig.getDequeueStrategy() == DequeueStrategy.FIFO ? -1 : instanceId;
+      Bytes.putInt(result, Bytes.SIZEOF_LONG, shardId);
+    }
 
     return result;
   }

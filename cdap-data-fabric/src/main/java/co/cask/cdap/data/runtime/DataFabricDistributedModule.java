@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -24,31 +23,19 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.tephra.TxConstants;
-import co.cask.tephra.distributed.PooledClientProvider;
-import co.cask.tephra.distributed.ThreadLocalClientProvider;
 import co.cask.tephra.distributed.ThriftClientProvider;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Defines guice bindings for distributed modules.
  */
 public class DataFabricDistributedModule extends AbstractModule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataFabricDistributedModule.class);
-
   public DataFabricDistributedModule() {
-
   }
 
   @Override
@@ -62,45 +49,5 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     install(new TransactionModules().getDistributedModules());
 
-  }
-
-  /**
-   * Provides implementation of {@link ThriftClientProvider} based on configuration.
-   */
-  @Singleton
-  private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
-
-    private final CConfiguration cConf;
-    private final Configuration hConf;
-    private DiscoveryServiceClient discoveryServiceClient;
-
-    @Inject
-    ThriftClientProviderSupplier(CConfiguration cConf, Configuration hConf) {
-      this.cConf = cConf;
-      this.hConf = hConf;
-    }
-
-    @Inject(optional = true)
-    void setDiscoveryServiceClient(DiscoveryServiceClient discoveryServiceClient) {
-      this.discoveryServiceClient = discoveryServiceClient;
-    }
-
-    @Override
-    public ThriftClientProvider get() {
-      // configure the client provider
-      String provider = cConf.get(TxConstants.Service.CFG_DATA_TX_CLIENT_PROVIDER,
-                                  TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
-      ThriftClientProvider clientProvider;
-      if ("pool".equals(provider)) {
-        clientProvider = new PooledClientProvider(hConf, discoveryServiceClient);
-      } else if ("thread-local".equals(provider)) {
-        clientProvider = new ThreadLocalClientProvider(hConf, discoveryServiceClient);
-      } else {
-        String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
-        LOG.error(message);
-        throw new IllegalArgumentException(message);
-      }
-      return clientProvider;
-    }
   }
 }

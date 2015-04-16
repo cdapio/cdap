@@ -306,6 +306,11 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
     return true;
   }
 
+  public static long getWritePointer(byte[] rowKey, int queueRowPrefixLenght) {
+    // Row key is queue_name + writePointer + counter
+    return Bytes.toLong(rowKey, queueRowPrefixLenght, Longs.BYTES);
+  }
+
   private void populateRowCache(Set<byte[]> excludeRows, int maxBatchSize, Stopwatch stopwatch) throws IOException {
 
     long readPointer = transaction.getReadPointer();
@@ -331,7 +336,7 @@ public abstract class AbstractQueueConsumer implements QueueConsumer, Transactio
         }
 
         // Row key is queue_name + writePointer + counter
-        long writePointer = Bytes.toLong(rowKey, queueRowPrefix.length, Longs.BYTES);
+        long writePointer = getWritePointer(rowKey, queueRowPrefix.length);
 
         // If it is first row returned by the scanner and was written before the earliest in progress,
         // it's safe to advance scanStartRow to current row because nothing can be written before this row.
