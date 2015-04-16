@@ -17,6 +17,7 @@ package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -80,7 +81,7 @@ public final class FactTable implements Closeable {
   /**
    * Creates an instance of {@link FactTable}.
    *
-   * @param timeSeriesTable A table for storing facts informaction.
+   * @param timeSeriesTable A table for storing facts information.
    * @param entityTable The table for storing tag encoding mappings.
    * @param resolution Resolution in seconds
    * @param rollTime Number of resolution for writing to a new row with a new timebase.
@@ -104,14 +105,16 @@ public final class FactTable implements Closeable {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Fact agg : facts) {
-      byte[] rowKey = codec.createRowKey(agg.getTagValues(), agg.getMeasureName(), agg.getTimeValue().getTimestamp());
-      byte[] column = codec.createColumn(agg.getTimeValue().getTimestamp());
+    for (Fact fact : facts) {
+      for (Measurement measurement : fact.getMeasurements()) {
+        byte[] rowKey = codec.createRowKey(fact.getTagValues(), measurement.getName(), fact.getTimestamp());
+        byte[] column = codec.createColumn(fact.getTimestamp());
 
-      if (MeasureType.COUNTER == agg.getMeasureType()) {
-        inc(incrementsTable, rowKey, column, agg.getTimeValue().getValue());
-      } else {
-        set(gaugesTable, rowKey, column, Bytes.toBytes(agg.getTimeValue().getValue()));
+        if (MeasureType.COUNTER == measurement.getType()) {
+          inc(incrementsTable, rowKey, column, measurement.getValue());
+        } else {
+          set(gaugesTable, rowKey, column, Bytes.toBytes(measurement.getValue()));
+        }
       }
     }
 

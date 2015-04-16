@@ -205,7 +205,7 @@ public abstract class AbstractCubeTest {
   }
 
   private CubeFact getFact(String measureName, long ts, long value, String... tags) {
-    return new CubeFact(tagValuesByValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value));
+    return new CubeFact(ts).addTags(tagValuesByValues(tags)).addMeasurement(measureName, MeasureType.COUNTER, value);
   }
 
   private Map<String, String> tagValuesByValues(String... tags) {
