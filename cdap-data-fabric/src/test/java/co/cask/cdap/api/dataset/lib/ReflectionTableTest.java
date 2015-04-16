@@ -220,8 +220,8 @@ public class ReflectionTableTest {
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
-          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(schema);
-          StructuredRecord actual = rowReader.read(row, schema).build();
+          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(schema, null);
+          StructuredRecord actual = rowReader.read(row, schema);
           assertRecordEqualsUser(SAMUEL, actual);
         }
       });
@@ -251,8 +251,8 @@ public class ReflectionTableTest {
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
-          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(projSchema);
-          StructuredRecord actual = rowReader.read(row, fullSchema).build();
+          ReflectionRowRecordReader rowReader = new ReflectionRowRecordReader(projSchema, null);
+          StructuredRecord actual = rowReader.read(row, fullSchema);
           assertRecordEqualsUser(projected, actual);
         }
       });

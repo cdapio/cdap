@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -71,6 +72,12 @@ public class InMemoryTable extends BufferingTable {
    */
   public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level, CConfiguration cConf) {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name), level);
+  }
+
+  public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level,
+                       CConfiguration cConf, Schema schema, String schemaRowField) {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name),
+          level, false, schema, schemaRowField);
   }
 
   @Override

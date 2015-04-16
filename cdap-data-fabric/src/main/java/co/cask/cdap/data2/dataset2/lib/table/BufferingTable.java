@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -97,26 +98,37 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   private MetricsCollector metricsCollector;
 
   /**
-   * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   * Creates an instance of {@link BufferingTable} with row level conflict detection, without readless increments,
+   * and no schema.
+   *
+   * @param name the name of the table
    */
   public BufferingTable(String name) {
     this(name, ConflictDetection.ROW);
   }
 
   /**
-   * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   * Creates an instance of {@link BufferingTable} without readless increments disabled and no schema.
+   *
+   * @param name the name of the table
+   * @param level the conflict detection level
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, level, false);
+    this(name, level, false, null, null);
   }
 
   /**
    * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   *
+   * @param name the name of the table
+   * @param level the conflict detection level
+   * @param enableReadlessIncrements whether or not readless increments are enabled
+   * @param schema the schema of the table, or null if there is no schema
+   * @param rowFieldName the name of the schema field that the row key maps to, or null if there is none
    */
-  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
+  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements,
+                        @Nullable Schema schema, @Nullable String rowFieldName) {
+    super(schema, rowFieldName);
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
