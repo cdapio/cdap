@@ -38,7 +38,7 @@ public class Table {
    */
   private Table(@Nullable List<String> header, Iterable<List<String>> rows) {
     Preconditions.checkNotNull(rows);
-    this.header = (header == null) ? ImmutableList.<String>of() : ImmutableList.copyOf(header);
+    this.header = (header == null) ? ImmutableList.<String>of() : Lists.newArrayList(header);
     this.rows = rows;
   }
 
@@ -68,7 +68,7 @@ public class Table {
     private Iterable<List<String>> rows = null;
 
     public Builder setHeader(String... header) {
-      this.header = ImmutableList.copyOf(header);
+      this.header = Lists.newArrayList(header);
       return this;
     }
 
@@ -117,8 +117,13 @@ public class Table {
     public static final class Rows {
       private List<List<String>> rows = Lists.newArrayList();
 
+      public Rows add(List<String> row) {
+        rows.add(row);
+        return this;
+      }
+
       public Rows add(String... row) {
-        rows.add(ImmutableList.copyOf(row));
+        rows.add(Lists.newArrayList(row));
         return this;
       }
 
