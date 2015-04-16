@@ -3,12 +3,12 @@
     :description: Advanced Tutorial, Web Analytics Application
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. |wise-version| replace:: 0.3.0
+.. wise-version is set in conf.py
 
-.. _cdap-tutorial-advanced:
+.. _cdap-tutorial-wise:
 
 =========================================================
-Advanced Tutorial: Wise (Web Insights Engine Application)
+CDAP Tutorial: Wise (Web Insights Engine Application)
 =========================================================
 
 **A Case Study of Web Analytics using the Cask Data Application Platform (CDAP)**
@@ -51,8 +51,8 @@ In the examples and commands that follow, for brevity we will use these conventi
   on Windows |---| ``bin\cdap-cli.bat``. In the examples given, substitute the actual path
   as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
   environment.
-- The ``curl`` command, common on UNIX-type systems, is included in the CDAP SDK in the
-  ``libexec\bin`` directory as ``curl.exe``.
+- The ``curl`` command, common on UNIX-type systems, is included in a Windows-version in 
+  the CDAP SDK in the ``libexec\bin`` directory as ``curl.exe``.
 - Other scripts referenced below are included either in the SDK or downloaded zips as ``.bat``
   versions for Windows. Substitute these versions as appropriate in the examples below.
 
@@ -63,7 +63,7 @@ Running Wise
 
 Building and running Wise v\ |wise-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
-:ref:`Tutorial Introduction <tutorial-intro>`.
+:ref:`CDAP Software Development Kit (SDK) <standalone-index>`.
 
 Change to the directory where you have installed the CDAP SDK Standalone, and download the
 Wise source code:
@@ -111,10 +111,10 @@ Throughout this case study, we will present and explain the different constructs
 Wise application uses. Let’s first have a look at a diagram showing an overview of the
 Wise application’s architecture:
 
-.. image:: _images/wise_architecture_diagram.png
+.. image:: /../build/_includes/tutorial-wise/wise_architecture_diagram.png
    :width: 8in
    :align: center
-
+   
 - The Wise application has one Stream, ``logEventStream``, which receives Web server
   access logs. It sends the events it receives to two CDAP components: the
   Flow ``WiseFlow`` and the Workflow ``WiseWorkflow``.
@@ -188,7 +188,7 @@ byte[]>>``.
 *pageViewStore* is a custom Dataset. It is defined in the ``PageViewStore`` class such
 that it includes the use of a ``Table`` to store the data:
 
-.. literalinclude:: /../build/_includes/PageViewStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
    :language: java
    :lines: 41-51   
 
@@ -196,9 +196,10 @@ This is the common way of defining a custom Dataset. The next step is to define 
 that this Dataset exposes to store and access data. The API for storing data will be a
 single method:
 
-.. literalinclude:: /../build/_includes/PageViewStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
    :language: java
    :lines: 57-59   
+   :dedent: 2
 
 ``incrememtCount()`` takes a ``LogInfo`` object, which contains those three parts of a log that we
 are interested in |---| IP address, timestamp, and web page |---| and increments the number of
@@ -207,9 +208,10 @@ method to store this information.
 
 Let’s look at how to make the data available through our *pageViewStore* Dataset:
   
-.. literalinclude:: /../build/_includes/PageViewStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
    :language: java
    :lines: 79-89   
+   :dedent: 2
 
 This method returns the total number of visits an IP address has made. To do so, it uses
 the ``Table.get()`` method, which returns a Row object containing all the columns associated
@@ -230,7 +232,7 @@ Data is stored in a ``Table`` object with the pattern:
 
 Let’s detail the API exposed by the *bounceCountStore* Dataset to store this information:
 
-.. literalinclude:: /../build/_includes/BounceCountStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-63   
 
@@ -240,9 +242,10 @@ The ``increment()`` method adds to a web page the number of “visits” and “
 To retrieve the number of “visits” and “bounces” for a particular web page, we define a
 ``get()`` method:
 
-.. literalinclude:: /../build/_includes/BounceCountStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 71-79   
+   :dedent: 2
 
 The ``get()`` method reads the two columns ``COL_VISITS`` and ``COL_BOUNCES`` of a web page. Once
 again, we use the ``Table.get()`` method which returns a ``Row`` object. From the information
@@ -290,9 +293,10 @@ This work is realized by two Flowlets, *parser* and *pageViewCount*.
 The *parser* Flowlet (of type ``LogEventParserFlowlet``) receives the raw log data from
 the Stream and extracts useful information from it. Here is its implementation:
 
-.. literalinclude:: /../build/_includes/WiseFlow.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseFlow.java
    :language: java
    :lines: 57-81   
+   :dedent: 2
 
 A ``Flowlet`` class extends ``AbstractFlowlet``. The ``LogEventParserFlowlet`` class contains one
 method to process the data it receives from *logEventStream*. This method can have any name;
@@ -317,9 +321,10 @@ objects and updates the *pageViewStore* Dataset with the information they contai
 
 Its implementation is very brief:
 
-.. literalinclude:: /../build/_includes/WiseFlow.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseFlow.java
    :language: java
    :lines: 86-102   
+   :dedent: 2
 
 Here’s what to note about the ``PageViewCounterFlowlet`` Flowlet class:
 
@@ -345,7 +350,7 @@ let’s see how they are connected together and to the *logEventStream*.
 
 The Flowlets are defined in the ``WiseFlow`` Flow, which is defined by this small class:
 
-.. literalinclude:: /../build/_includes/WiseFlow.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseFlow.java
    :language: java
    :lines: 38-51   
 
@@ -361,7 +366,7 @@ We also define the graph of their connections:
 
 Here is how ``WiseFlow`` looks in the CDAP Console:
 
-.. image:: _images/wise_flow.png
+.. image:: /../build/_includes/tutorial-wise/wise_flow.png
    :width: 8in
    :align: center
 
@@ -375,7 +380,7 @@ The ``BounceCountsMapReduce`` class defines the MapReduce to run. It extends
 ``AbstractMapReduce`` and overrides the two methods ``configure()`` and ``beforeSubmit()``.
 The ``configure()`` method is defined as:
 
-.. literalinclude:: /../build/_includes/BounceCountsMapReduce.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
    :lines: 41-48   
 
@@ -387,9 +392,10 @@ Plugging a Stream to the Input of the MapReduce
 Traditionally in a MapReduce program, a Job configuration is set before each run. This is
 done in the ``beforeSubmit()`` method of the ``BounceCountsMapReduce`` class:
 
-.. literalinclude:: /../build/_includes/BounceCountsMapReduce.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
    :lines: 50-79   
+   :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
 connection is made above using the ``StreamBatchReadable.useStreamInput()`` method.
@@ -408,12 +414,12 @@ written to that Dataset.
 To allow that, the ``bounceCountsStore`` Dataset has to implement the ``BatchWritable``
 interface:
 
-.. literalinclude:: /../build/_includes/BounceCountStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41
    :append: . . . 
 
-.. literalinclude:: /../build/_includes/BounceCountStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 96-99   
    :prepend: . . . 
@@ -436,17 +442,19 @@ Mapper to be ``LongWritable`` and ``Text``, respectively.
 
 Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
-.. literalinclude:: /../build/_includes/BounceCountsMapReduce.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
    :lines: 84   
    :prepend: . . . 
    :append: . . . 
+   :dedent: 2
 
-.. literalinclude:: /../build/_includes/BounceCountsMapReduce.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
    :lines: 105   
    :prepend: . . . 
    :append: . . . 
+   :dedent: 2
 
 Each generic parameter of the Mapper and the Reducer contains:
 
@@ -464,19 +472,18 @@ Scheduling the MapReduce
 To schedule the ``BounceCountsMapReduce`` to run every ten minutes, we define it in the
 ``WiseWorkflow`` using its name:
 
-.. literalinclude:: /../build/_includes/WiseWorkflow.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseWorkflow.java
    :language: java
    :lines: 24-32   
 
 The ``WiseWorkflow`` can then be scheduled in the ``WiseApp``:
 
-.. literalinclude:: /../build/_includes/WiseApp.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseApp.java
    :language: java
    :lines: 44-45   
    :prepend: . . . 
    :append: . . . 
-
-..   :dedent: 4
+   :dedent: 4
 
 
 Accessing Data through WiseService
@@ -504,9 +511,10 @@ Using the ``curl`` command and the CLI, example use of the Service would be::
   
 This endpoint is defined in a class extending ``AbstractHttpServiceHandler``:
 
-.. literalinclude:: /../build/_includes/WiseService.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseService.java
    :language: java
    :lines: 46-68   
+   :dedent: 2
 
 The ``PageViewCountHandler`` class accesses the *pageViewStore* Dataset using the same
 ``@UseDataSet`` annotation used in the ``PageViewCounterFlowlet`` class.
@@ -520,15 +528,7 @@ annotation defines the URL path used to reach this endpoint. This path has a sin
 parameter: ``{ip}``. It is decoded as a ``String`` in the parameters of the ``getIPCount()`` 
 method with the help of the ``@PathParam`` annotation.
 
-The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, which has the
-implementation::
-
-  class WiseService extends AbstractService { @Override protected void configure() {
-  setName("PageViewService"); addHandler(new PageViewCountHandler());
-    }
-    }}
-
-.. literalinclude:: /../build/_includes/WiseService.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseService.java
    :language: java
    :lines: 36-41   
 
@@ -558,13 +558,13 @@ called *Explore*, can be accessed through the CDAP Console:
 1. After deploying Wise in your Standalone CDAP instance, go to the **Store** page, which is one
    of the five pages you can access from the left pane of the CDAP Console:
 
-.. image:: _images/wise_store_page.png 
+.. image:: /../build/_includes/tutorial-wise/wise_store_page.png 
     :width: 8in
     :align: center
 
 2. Click on the **Explore** button in the top-right corner of the page. You will land on this page:
 
-.. image:: _images/wise_explore_page.png
+.. image:: /../build/_includes/tutorial-wise/wise_explore_page.png
     :width: 8in
     :align: center
 
@@ -594,7 +594,7 @@ shows that it has three columns: ``uri``, ``totalvisits``, and ``bounces``.
 To understand how we managed to attach this schema to the *bounceCountStore* Dataset, let’s
 have another look at the Dataset’s class definition:
 
-.. literalinclude:: /../build/_includes/BounceCountStore.java
+.. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41   
    :append:     . . .  
@@ -612,7 +612,7 @@ Bringing the Components Together
 To create the Wise application with all these components mentioned above, define a class
 that extends ``AbstractApplication``:
 
-.. literalinclude:: /../build/_includes/WiseApp.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseApp.java
    :language: java
    :lines: 25-  
 
@@ -628,57 +628,63 @@ In a CDAP application unit tests, all CDAP components run in-memory.
 The ``WiseAppTest`` class, which extends the unit-testing framework’s ``TestBase``, tests all the
 components of the *WiseApp*. The first step is to obtain an ``ApplicationManager`` object:
 
-.. literalinclude:: /../build/_includes/WiseAppTest.java
+.. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
    :language: java
    :start-after: // Deploy an App
    :end-before: // Start a Flow
-   
+   :dedent: 4
+
 With this object, we can:
 
 - Test log event injection:
 
-  .. literalinclude:: /../build/_includes/WiseAppTest.java
+  .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java
      :lines: 98-101
      :prepend:     . . .  
-     :append:     . . .  
+     :append:     . . . 
+     :dedent: 4
 
 - Test the call to a Service endpoint:
 
-  .. literalinclude:: /../build/_includes/WiseAppTest.java
+  .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java
      :lines: 122-138
      :prepend:     . . .  
      :append:     . . .  
+     :dedent: 4
 
 - Start a MapReduce:
 
-  .. literalinclude:: /../build/_includes/WiseAppTest.java
+  .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java
      :lines: 66-67
      :prepend:     . . .  
      :append:     . . .  
+     :dedent: 4
 
 - Test the output of the MapReduce:
 
-  .. literalinclude:: /../build/_includes/WiseAppTest.java
+  .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java
      :lines: 70-73
      :prepend:     . . .  
      :append:     . . .  
+     :dedent: 4
 
 - Test a SQL query on Datasets:
 
-  .. literalinclude:: /../build/_includes/WiseAppTest.java
+  .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java
      :lines: 76-86
      :prepend:     . . .  
      :append:     . . .  
+     :dedent: 4
 
 A complete example of the test is included in the downloaded zip.
 
 Next Up
 =======
 Follow up this tutorial with the our other training resources, available at
-`CDAP Examples, Guides and Tutorials <http://docs.cask.co/cdap/current/en/examples-manual/index.html>`__.
+:ref:`CDAP Examples, Guides and Tutorials <examples-introduction-index>`.
 
