@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.SortedSet;
 
 /**
- * Persists bucketized logs stored by {@link LogCollectorCallback}.
+ * Persists bucketized logs stored by {@link KafkaMessageCallback}.
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);

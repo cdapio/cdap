@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.DataTemplate;
-import co.cask.cdap.DummyTemplate;
+import co.cask.cdap.DummyBatchTemplate;
+import co.cask.cdap.DummyWorkerTemplate;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -74,18 +75,63 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
     String adapterName = "myAdapter";
     // the template should check that the first field is not null.
-    DummyTemplate.Config config = new DummyTemplate.Config(null, "0 0 1 1 *");
-    AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config(null, "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
     adapterService.createAdapter(namespace, adapterName, adapterConfig);
   }
 
   @Test
+  public void testWorkerAdapter() throws Exception {
+    String adapter1 = "myAdapter";
+    String adapter2 = "newAdapter";
+    DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
+    DummyWorkerTemplate.Config config2 = new DummyWorkerTemplate.Config(3);
+    AdapterConfig adapterConfig1 = new AdapterConfig("desc1", DummyWorkerTemplate.NAME, GSON.toJsonTree(config1));
+    AdapterConfig adapterConfig2 = new AdapterConfig("desc2", DummyWorkerTemplate.NAME, GSON.toJsonTree(config2));
+
+    // Create Adapter
+    adapterService.createAdapter(NAMESPACE, adapter1, adapterConfig1);
+    adapterService.createAdapter(NAMESPACE, adapter2, adapterConfig2);
+
+    // Start Adapter
+    adapterService.startAdapter(NAMESPACE, adapter1);
+    adapterService.startAdapter(NAMESPACE, adapter2);
+    Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapter1));
+    Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapter2));
+
+    // Stop Adapter
+    adapterService.stopAdapter(NAMESPACE, adapter1);
+    adapterService.stopAdapter(NAMESPACE, adapter2);
+
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter1));
+    Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter2));
+
+    // Delete Adapter
+    adapterService.removeAdapter(NAMESPACE, adapter1);
+    adapterService.removeAdapter(NAMESPACE, adapter2);
+
+    try {
+      adapterService.getAdapter(NAMESPACE, adapter1);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapter1));
+    } catch (AdapterNotFoundException ex) {
+      // expected
+    }
+
+    try {
+      adapterService.getAdapter(NAMESPACE, adapter2);
+      Assert.fail(String.format("Found adapterSpec with name %s; it should be deleted.", adapter2));
+    } catch (AdapterNotFoundException ex) {
+      // expected
+    }
+  }
+
+  @Test
   public void testAdapters() throws Exception {
     String adapterName = "myAdapter";
-    DummyTemplate.Config config = new DummyTemplate.Config("somestream", "0 0 1 1 *");
-    AdapterConfig adapterConfig = new AdapterConfig("description", DummyTemplate.NAME, GSON.toJsonTree(config));
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somestream", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
     adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
@@ -106,7 +152,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     assertDummyConfigEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
+    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
     AdapterSpecification actual = adapters.iterator().next();
     assertDummyConfigEquals(adapterConfig, actual);
@@ -132,7 +178,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
       // expected
     }
 
-    adapters = adapterService.getAdapters(NAMESPACE, DummyTemplate.NAME);
+    adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertTrue(adapters.isEmpty());
   }
 
@@ -164,11 +210,12 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   private static void setupAdapters() throws IOException {
-    setupAdapter(DummyTemplate.class);
+    setupAdapter(DummyBatchTemplate.class);
     setupAdapter(DummyTemplate1.class);
     setupAdapter(DummyTemplate2.class);
     setupAdapter(BadTemplate.class);
     setupAdapter(DataTemplate.class);
+    setupAdapter(DummyWorkerTemplate.class);
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {
@@ -177,7 +224,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 
-  public static class DummyTemplate1 extends DummyTemplate {
+  public static class DummyTemplate1 extends DummyBatchTemplate {
     public static final String NAME = "template1";
 
     @Override
@@ -187,7 +234,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     }
   }
 
-  public static class DummyTemplate2 extends DummyTemplate {
+  public static class DummyTemplate2 extends DummyBatchTemplate {
     public static final String NAME = "template2";
 
     @Override

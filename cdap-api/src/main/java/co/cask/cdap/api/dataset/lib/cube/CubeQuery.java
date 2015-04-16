@@ -51,10 +51,10 @@ public final class CubeQuery {
   private final List<String> groupByTags;
   private final Interpolator interpolator;
 
-  public CubeQuery(long startTs, long endTs, int resolution,
+  public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, -1,
+    this(startTs, endTs, resolution, limit,
          measureName, measureType,
          sliceByTagValues, groupByTags, null);
   }

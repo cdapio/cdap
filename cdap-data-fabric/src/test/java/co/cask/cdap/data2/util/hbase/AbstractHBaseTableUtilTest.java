@@ -155,6 +155,7 @@ public abstract class AbstractHBaseTableUtilTest {
         deleteNamespace("namespace");
         Assert.fail("Should not be able to delete a non-empty namespace.");
       } catch (ConstraintException e) {
+        // Expected exception
       }
     }
 
@@ -213,8 +214,8 @@ public abstract class AbstractHBaseTableUtilTest {
       create(tableId);
     }
 
-    createNamespace("foobar");
-    TableId tableIdInOtherNamespace = TableId.from("foobar", "my.dataset");
+    createNamespace("foo_bar");
+    TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.dataset");
     create(tableIdInOtherNamespace);
 
 
@@ -232,7 +233,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
     drop(tableIdInOtherNamespace);
     Assert.assertEquals(0, hAdmin.listTables().length);
-    deleteNamespace("foobar");
+    deleteNamespace("foo_bar");
   }
 
   @Test

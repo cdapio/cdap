@@ -16,8 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
-import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryAdapterConfigurator;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -25,17 +24,15 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterSpecification;
-import com.google.common.io.Files;
+import com.google.common.io.Closeables;
+import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.Reader;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
@@ -71,8 +68,16 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
     InMemoryAdapterConfigurator inMemoryAdapterConfigurator =
       new InMemoryAdapterConfigurator(namespace, templateJarLocation, adapterName,
                                       deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec());
-    AdapterSpecification spec = GSON.fromJson(inMemoryAdapterConfigurator.config().get().get(),
-                                              AdapterSpecification.class);
-    emit(spec);
+    ConfigResponse configResponse = inMemoryAdapterConfigurator.config().get(120, TimeUnit.SECONDS);
+    InputSupplier<? extends Reader> configSupplier = configResponse.get();
+    if (configResponse.getExitCode() != 0 || configSupplier == null) {
+      throw new IllegalArgumentException("Failed to configure adapter: " + deploymentInfo);
+    }
+    Reader reader = configSupplier.getInput();
+    try {
+      emit(GSON.fromJson(reader, AdapterSpecification.class));
+    } finally {
+      Closeables.closeQuietly(reader);
+    }
   }
 }

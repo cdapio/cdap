@@ -82,8 +82,8 @@ public class LogHandlerV2 extends AuthenticatedHttpHandler {
                    @PathParam("entity-id") String entityId, @QueryParam("start") long fromTimeMs,
                    @QueryParam("stop") long toTimeMs, @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr) {
-    logHandler.list(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                    entityType, entityId, fromTimeMs, toTimeMs, escape, filterStr);
+    logHandler.getLogs(RESTMigrationUtils.rewriteV2RequestToV3(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                       entityType, entityId, fromTimeMs, toTimeMs, escape, filterStr);
   }
 
   @GET

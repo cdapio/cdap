@@ -146,6 +146,7 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     transform.addProperty("description", "Data Source");
     nameProperty.addProperty("name", "name");
     nameProperty.addProperty("description", "Table Name");
+    nameProperty.addProperty("type", "string");
     nameProperty.addProperty("required", true);
     properties.add(nameProperty);
     transform.add("properties", properties);
@@ -163,6 +164,7 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     transform.addProperty("description", "Data Transform");
     nameProperty.addProperty("name", "name");
     nameProperty.addProperty("description", "Name of the Data");
+    nameProperty.addProperty("type", "string");
     nameProperty.addProperty("required", false);
     properties.add(nameProperty);
     transform.add("properties", properties);
@@ -180,6 +182,7 @@ public class MockETLHandler extends AuthenticatedHttpHandler {
     transform.addProperty("description", "Data Sink");
     nameProperty.addProperty("name", "name");
     nameProperty.addProperty("description", "Table Name");
+    nameProperty.addProperty("type", "string");
     nameProperty.addProperty("required", true);
     properties.add(nameProperty);
     transform.add("properties", properties);

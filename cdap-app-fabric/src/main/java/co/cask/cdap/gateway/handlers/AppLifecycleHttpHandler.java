@@ -214,7 +214,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Application id = Id.Application.from(namespaceId, appId);
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (adapterService.getApplicationTemplateInfo(appId) != null) {
+      if (!adapterService.canDeleteApp(id)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
           "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
 

@@ -106,6 +106,7 @@ public abstract class HTableNameConverter {
     // Handle backward compatibility to not add the prefix for default namespace
     if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
       // in Default namespace, qualifier is something like 'cdap.foo.table'
+      @SuppressWarnings("ConstantConditions")
       String[] parts = qualifier.split("\\.", 2);
       Preconditions.checkArgument(parts.length == 2,
                                   String.format("expected table name to contain '.': %s", qualifier));
@@ -121,7 +122,8 @@ public abstract class HTableNameConverter {
     }
 
     // If non-default HBase namespace is used, namespace is something like 'cdap_userNS'
-    String[] parts = namespace.split("_");
+    @SuppressWarnings("ConstantConditions")
+    String[] parts = namespace.split("_", 2);
     Preconditions.checkArgument(parts.length == 2,
                                 String.format("expected hbase namespace to have a '_': %s", namespace));
     // Id.Namespace already checks for non-null namespace

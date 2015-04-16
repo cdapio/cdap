@@ -24,6 +24,7 @@ import co.cask.cdap.common.exception.ServiceNotEnabledException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.SystemServiceLiveInfo;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -58,6 +59,28 @@ public class MonitorClient {
   public MonitorClient(ClientConfig config) {
     this.config = config;
     this.restClient = new RESTClient(config);
+  }
+
+  /**
+   * Gets the live info of a system service.
+   *
+   * @param serviceName Name of the system service
+   * @return live info of the system service
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public SystemServiceLiveInfo getSystemServiceLiveInfo(String serviceName)
+    throws IOException, UnauthorizedException, NotFoundException {
+
+    Id.SystemService systemService = Id.SystemService.from(serviceName);
+    URL url = config.resolveURLV3(String.format("system/services/%s/live-info", serviceName));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    String responseBody = new String(response.getResponseBody());
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(systemService);
+    }
+    return GSON.fromJson(responseBody, SystemServiceLiveInfo.class);
   }
 
   /**

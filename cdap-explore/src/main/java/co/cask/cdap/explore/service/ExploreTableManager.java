@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -158,31 +159,16 @@ public class ExploreTableManager {
     // there are two ways to refer to each dataset type...
     if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
       ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      // ObjectMappedTable must contain a schema in its properties
-      String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
-      if (schemaStr == null) {
-        throw new IllegalArgumentException("Schema not found for dataset " + datasetID);
-      }
-      try {
-        Schema schema = Schema.parseJson(schemaStr);
-        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
-          .setSchema(schema)
-          .setTableComment("CDAP Dataset")
-          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
-
-        return exploreService.execute(datasetID.getNamespace(), createStatement);
-      } catch (IOException e) {
-        // shouldn't happen because ObjectMappedTableDefinition is supposed to verify this,
-        // but put in for completeness
-        throw new IllegalArgumentException("Unable to parse schema for dataset " + datasetID);
-      }
+      return createFromSchemaProperty(spec, datasetID, serdeProperties);
     }
 
     Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
 
     // To be enabled for explore, a dataset must either be RecordScannable/Writable,
     // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
-    if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+    if (dataset instanceof Table) {
+      return createFromSchemaProperty(spec, datasetID, serdeProperties);
+    } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
       createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
         .setSchema(hiveSchemaFor(dataset))
@@ -201,6 +187,29 @@ public class ExploreTableManager {
     } else {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;
+    }
+  }
+
+  private QueryHandle createFromSchemaProperty(DatasetSpecification spec, Id.DatasetInstance datasetID,
+                                               Map<String, String> serdeProperties)
+    throws ExploreException, SQLException, UnsupportedTypeException {
+
+    String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
+    // if there is no schema, this is a no-op.
+    if (schemaStr == null) {
+      return QueryHandle.NO_OP;
+    }
+    try {
+      Schema schema = Schema.parseJson(schemaStr);
+      String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
+        .setSchema(schema)
+        .setTableComment("CDAP Dataset")
+        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+
+      return exploreService.execute(datasetID.getNamespace(), createStatement);
+    } catch (IOException e) {
+      // shouldn't happen because datasets are supposed to verify this, but just in case
+      throw new IllegalArgumentException("Unable to parse schema for dataset " + datasetID);
     }
   }
 

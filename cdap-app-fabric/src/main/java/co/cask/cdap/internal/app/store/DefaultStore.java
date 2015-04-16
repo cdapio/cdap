@@ -161,20 +161,24 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime) {
+  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime);
+        mds.apps.recordProgramStart(id, pid, startTime, adapter);
         return null;
       }
     });
   }
 
   @Override
+  public void setStart(Id.Program id, String pid, long startTime) {
+    setStart(id, pid, startTime, null);
+  }
+
+  @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
-
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -211,13 +215,18 @@ public class DefaultStore implements Store {
 
   @Override
   public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                 final long startTime, final long endTime, final int limit) {
+                                 final long startTime, final long endTime, final int limit, final String adapter) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(id, status, startTime, endTime, limit);
+        return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
       }
     });
+  }
+
+  @Override
+  public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
+    return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   /**

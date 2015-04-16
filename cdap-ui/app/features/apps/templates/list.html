@@ -4,6 +4,7 @@
   <thead>
     <tr ng-class="{'sort-enabled': apps.length>0}">
       <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+      <th data-predicate="version"> Version </th>
       <th data-predicate="description"> Description </th>
       <th> </th>
     </tr>
@@ -11,12 +12,12 @@
   <tbody>
     <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
       <td >
-        <a ui-sref="apps.detail.overview({ appId: app.id })"
-           ng-bind="app.name"
-            >
+        <a ui-sref="apps.detail.overview({ appId: app.id })">
+          {{ ::app.name }}
         </a>
       </td>
-      <td ng-bind="app.description">  </td>
+      <td>{{ ::app.version }}</td>
+      <td> {{ ::app.description }} </td>
       <td class="text-center">
         <a ng-click="caskConfirm()"
             class="btn btn-danger btn-xs"
