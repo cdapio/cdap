@@ -4,7 +4,8 @@
       <h3 class="text-uppercase"> Data </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-5">
-          <p> Most recent </p>
+          <p ng-if="streams.concat(datasets).length < 5"> Showing {{ streams.concat(datasets).length }} out of {{ streams.concat(datasets).length }}</p>
+          <p ng-if="streams.concat(datasets).length >= 5"> Showing 5 out of {{ streams.concat(datasets).length }}</p>
         </div>
         <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
@@ -53,6 +54,7 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select> -->
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">Add Stream</a>
       </div>
     </div>
   </div>
@@ -61,7 +63,8 @@
       <h3 class="text-uppercase"> Apps </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
-          <p> Most recent </p>
+          <p ng-if="apps.length < 5"> Showing {{ apps.length }} out of {{ apps.length }}</p>
+          <p ng-if="apps.length >= 5"> Showing 5 out of {{ apps.length }}</p>
         </div>
         <div class="col-xs-12 col-sm-9 text-right">
           <div class="btn-group">
@@ -112,6 +115,7 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select>
+        <a ui-sref="etlapps.create" class="btn btn-default">Add ETL App</a>
       </div>
     </div>
   </div>
