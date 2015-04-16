@@ -386,17 +386,27 @@ div.table-block.container table.triple-table.docutils tr.row-even td {
   border-bottom: 1px solid white;
 }
 
+div.table-block.container table.triple-table.docutils th.stub {
+  border-bottom: 1px solid white;
+}
+
 /* Triple-table: Make odd row with White background */
 
-div.table-block.container table.triple-table.docutils tr.row-odd  {
+div.table-block.container table.triple-table.docutils tr.row-odd {
   background-color: white;
 }
 
-/* Triple-table: Make first row light-grey background */
+div.table-block.container table.triple-table.docutils tr.row-odd th.stub {
+  border-bottom: 1px solid #aaa;
+}
+
+/* Triple-table: Make first row light-grey background with bottom border */
 
 div.table-block.container table.triple-table.docutils tr:first-of-type {
   background-color: #F9FAFB;
 }
 
-
+div.table-block.container table.triple-table.docutils tr:first-of-type th.stub {
+  border-bottom: 1px solid #aaa;
+}
 
