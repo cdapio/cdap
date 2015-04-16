@@ -1,0 +1,24 @@
+<div class="input-group">
+  <span class="input-group-addon">
+    <span class="fa fa-calendar"></span>
+    <span ng-bind="label"></span>
+  </span>
+  <div class="row input-group">
+    <div class="col-sm-6">
+      <input type="number"
+      class="form-control"
+      placeholder="60"
+      ng-model="duration"/>
+    </div>
+    <div class="col-sm-6">
+      <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+      ng-model="durationType"
+      bs-options="t for t in durationTypes"
+      bs-select>
+        <strong ng-bind="durationType"></strong>
+        <span class="caret"></span>
+      </button>
+    </div>
+  </div>
+
+</div>

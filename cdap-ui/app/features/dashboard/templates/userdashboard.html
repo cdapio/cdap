@@ -8,14 +8,21 @@
 <div class="row">
   <div class="col-xs-6"></div>
   <div class="col-xs-6">
+    <div>From:</div>
     <my-timestamp-picker
       data-label="From:"
       ng-model="startMs"
     ></my-timestamp-picker>
+    <div>To:</div>
     <my-timestamp-picker
-      data-label="From:"
+      data-label="To:"
       ng-model="endMs"
     ></my-timestamp-picker>
+    <br />
+
+    <my-duration-picker
+      ng-model="startMs">
+    </my-duration-picker>
 
   </div>
 </div>
