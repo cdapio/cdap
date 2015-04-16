@@ -42,16 +42,16 @@ import javax.annotation.Nullable;
  * The modules cannot be changed after the creation of the DatasetFramework.
  * Since the modules are fixed, this implementation has better performance than {@link InMemoryDatasetFramework}.
  */
-public class InMemoryFixedModulesDatasetFramework extends InMemoryDatasetFramework implements DatasetFramework {
+public class StaticDatasetFramework extends InMemoryDatasetFramework implements DatasetFramework {
   private static final String REGISTRY_CACHE_KEY = "registry";
   private static final String MODULES_CACHE_KEY = "modules";
 
   // Used for caching dataset modules and registry since they do not change after creation.
   private final Cache<String, Object> cache = CacheBuilder.newBuilder().build();
 
-  public InMemoryFixedModulesDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                              Map<String, DatasetModule> modules,
-                                              CConfiguration configuration) {
+  public StaticDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
+                                Map<String, DatasetModule> modules,
+                                CConfiguration configuration) {
     super(registryFactory, modules, configuration);
   }
 
@@ -103,7 +103,7 @@ public class InMemoryFixedModulesDatasetFramework extends InMemoryDatasetFramewo
       return (DatasetDefinitionRegistry) cache.get(REGISTRY_CACHE_KEY, new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          return InMemoryFixedModulesDatasetFramework.super.createRegistry(availableModuleClasses, classLoader);
+          return StaticDatasetFramework.super.createRegistry(availableModuleClasses, classLoader);
         }
       });
     } catch (ExecutionException e) {
@@ -119,7 +119,7 @@ public class InMemoryFixedModulesDatasetFramework extends InMemoryDatasetFramewo
       LinkedHashSet<String> modules = (LinkedHashSet<String>) cache.get(MODULES_CACHE_KEY, new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          return InMemoryFixedModulesDatasetFramework.super.getAvailableModuleClasses(namespace);
+          return StaticDatasetFramework.super.getAvailableModuleClasses(namespace);
         }
       });
       return modules;
@@ -152,26 +152,31 @@ public class InMemoryFixedModulesDatasetFramework extends InMemoryDatasetFramewo
 
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) {
-    throw new UnsupportedOperationException("");
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void deleteModule(Id.DatasetModule moduleId) {
-    throw new UnsupportedOperationException("");
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void deleteAllModules(Id.Namespace namespaceId) {
-    throw new UnsupportedOperationException("");
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    throw new UnsupportedOperationException("");
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
-    throw new UnsupportedOperationException("");
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
   }
 }
