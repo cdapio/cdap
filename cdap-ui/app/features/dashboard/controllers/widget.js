@@ -133,6 +133,14 @@ angular.module(PKG.name+'.feature.dashboard')
       $scope.wdgt.fetchData($scope, $scope.wdgt.startMs, newVal);
       console.log('EndMs: ', newVal);
     });
+    $scope.$watch('durationMs', function (newVal) {
+      if (!newVal) {
+        return;
+      }
+      $scope.wdgt.isLive = false;
+      $scope.wdgt.fetchData($scope, $scope.wdgt.durationMs);
+      console.log('DurationMs: ', newVal);
+    });
     $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;
     $scope.stream = null;

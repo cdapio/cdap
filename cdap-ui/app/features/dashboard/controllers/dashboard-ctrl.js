@@ -11,6 +11,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.liveDashboard = null;
   $scope.startMs = null;
   $scope.endMs = null;
+  $scope.durationMs = null;
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
   $scope.currentBoard = rDashboardsModel.current();
@@ -106,6 +107,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     for (i=0; i<currentColumns.length; i++) {
       for (j=0; j<currentColumns[i].length; j++) {
         currentColumns[i][j].endMs = newVal;
+      }
+    }
+  });
+
+$scope.$watch('durationMs', function(newVal) {
+    var currentColumns = rDashboardsModel.current().columns,
+        i, j;
+    for (i=0; i<currentColumns.length; i++) {
+      for (j=0; j<currentColumns[i].length; j++) {
+        currentColumns[i][j].durationMs = newVal;
       }
     }
   });
