@@ -22,12 +22,16 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
+import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -36,15 +40,20 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
+import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -61,6 +70,8 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -88,7 +99,9 @@ public class AdapterService extends AbstractIdleService {
   private final ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory;
   private final CConfiguration configuration;
   private final Scheduler scheduler;
+  private final ProgramLifecycleService lifecycleService;
   private final Store store;
+  private final PropertiesResolver resolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   // template name to template info mapping
   private Map<String, ApplicationTemplateInfo> appTemplateInfos;
@@ -101,15 +114,18 @@ public class AdapterService extends AbstractIdleService {
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
                         @Named("adapters")
                         ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
-                        NamespacedLocationFactory namespacedLocationFactory) {
+                        NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService,
+                        PropertiesResolver resolver) {
     this.configuration = configuration;
     this.scheduler = scheduler;
+    this.lifecycleService = lifecycleService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.templateManagerFactory = templateManagerFactory;
     this.adapterManagerFactory = adapterManagerFactory;
     this.appTemplateInfos = Maps.newHashMap();
     this.fileToTemplateMap = Maps.newHashMap();
+    this.resolver = resolver;
   }
 
   @Override
@@ -195,7 +211,7 @@ public class AdapterService extends AbstractIdleService {
    * @return specified Adapter's previous status
    * @throws AdapterNotFoundException if the specified adapter is not found
    */
-  public AdapterStatus setAdapterStatus(Id.Namespace namespace, String adapterName, AdapterStatus status)
+  private AdapterStatus setAdapterStatus(Id.Namespace namespace, String adapterName, AdapterStatus status)
     throws AdapterNotFoundException {
     AdapterStatus existingStatus = store.setAdapterStatus(namespace, adapterName, status);
     if (existingStatus == null) {
@@ -295,7 +311,8 @@ public class AdapterService extends AbstractIdleService {
    * @throws SchedulerException if there was some error deleting the schedule for the adapter
    */
   public void stopAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, ExecutionException,
+    InterruptedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STOPPED.equals(adapterStatus)) {
@@ -326,9 +343,10 @@ public class AdapterService extends AbstractIdleService {
    * @throws NotFoundException if the adapter could not be found
    * @throws InvalidAdapterOperationException if the adapter is already started
    * @throws SchedulerException if there was some error creating the schedule for the adapter
+   * @throws IOException if there was some error starting worker adapter
    */
   public void startAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException, SchedulerException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
       throw new InvalidAdapterOperationException("Adapter is already started.");
@@ -353,7 +371,7 @@ public class AdapterService extends AbstractIdleService {
   private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null || appSpec.getWorkflows().size() != 1) {
+    if (appSpec == null) {
       throw new NotFoundException(appId);
     }
     String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
@@ -379,12 +397,78 @@ public class AdapterService extends AbstractIdleService {
     store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
   }
 
-  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
-    // TODO: implement
+  private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+    Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new NotFoundException(appId);
+    }
+    String workflowName = Iterables.getFirst(appSpec.getWorkers().keySet(), null);
+    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workflowName);
   }
 
-  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) {
-    // TODO: implement
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+    IOException {
+    final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
+    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    try {
+      Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
+      Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      // Pass Adapter Name as a system property
+      sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
+      // Override resolved preferences with adapter worker spec properties.
+      userArgs.putAll(adapterSpec.getRuntimeArgs());
+      store.setWorkerInstances(workerId, adapterSpec.getInstances());
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
+                                                                             sysArgs, userArgs, false);
+      final ProgramController controller = runtimeInfo.getController();
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void init(ProgramController.State state, @Nullable Throwable cause) {
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
+          }
+          if (state == ProgramController.State.ERROR) {
+            error(controller.getFailureCause());
+          }
+        }
+
+        @Override
+        public void completed() {
+          super.completed();
+          LOG.debug("Adapter {} completed", adapterId);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+
+        @Override
+        public void error(Throwable cause) {
+          super.error(cause);
+          LOG.debug("Adapter {} stopped with error : {}", adapterId, cause);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+
+        @Override
+        public void killed() {
+          super.killed();
+          LOG.debug("Adapter {} killed", adapterId);
+          store.setAdapterStatus(adapterId.getNamespace(), adapterId.getId(), AdapterStatus.STOPPED);
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+    } catch (ProgramNotFoundException e) {
+      throw new NotFoundException(workerId);
+    }
+  }
+
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+    ExecutionException, InterruptedException {
+    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
+                                               adapterSpec.getName());
+    RunRecord adapterRun = Iterables.getFirst(runRecords, null);
+    if (adapterRun != null) {
+      RunId runId = RunIds.fromString(adapterRun.getPid());
+      lifecycleService.stopProgram(runId);
+    }
   }
 
   // deploys an adapter. This will call configureAdapter() on the adapter's template. It may create

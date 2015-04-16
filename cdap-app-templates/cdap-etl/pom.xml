@@ -40,6 +40,7 @@
   <properties>
     <twitter4j.version>4.0.1</twitter4j.version>
     <mysql.jdbc.version>5.1.6</mysql.jdbc.version>
+    <etl.avro.version>1.7.7</etl.avro.version>
   </properties>
 
   <dependencyManagement>
@@ -178,6 +179,18 @@
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
         <version>${rs-api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro</artifactId>
+        <version>${etl.avro.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-mapred</artifactId>
+        <classifier>hadoop2</classifier>
+        <version>${etl.avro.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -57,6 +57,20 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     this.serviceStore = serviceStore;
   }
 
+  public void getServiceLiveInfo(HttpRequest request, HttpResponder responder,
+                                 String serviceName) throws Exception {
+    if (!serviceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+
+    MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
+    if (serviceManager.isServiceEnabled()) {
+      responder.sendJson(HttpResponseStatus.OK, serviceManager.getLiveInfo());
+    } else {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
+    }
+  }
 
   public void getServiceInstance(HttpRequest request, HttpResponder responder,
                                  String serviceName) throws Exception {
