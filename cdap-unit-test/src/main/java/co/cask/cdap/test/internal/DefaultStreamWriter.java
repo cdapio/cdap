@@ -18,6 +18,7 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -44,30 +45,19 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   private final Id.Stream streamId;
   private final StreamHandler streamHandler;
+  private final StreamManager streamManager;
 
   @Inject
-  public DefaultStreamWriter(StreamHandler streamHandler,
+  public DefaultStreamWriter(StreamHandler streamHandler, StreamManagerFactory streamManagerFactory,
                              @Assisted Id.Stream streamId) throws IOException {
-
     this.streamHandler = streamHandler;
+    this.streamManager = streamManagerFactory.create(streamId);
     this.streamId = streamId;
   }
 
   @Override
   public void createStream() throws IOException {
-    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
-
-    MockResponder responder = new MockResponder();
-    try {
-      streamHandler.create(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw Throwables.propagate(e);
-    }
-    if (responder.getStatus() != HttpResponseStatus.OK) {
-      throw new IOException("Failed to create stream. Status = " + responder.getStatus());
-    }
+    streamManager.createStream();
   }
 
   @Override

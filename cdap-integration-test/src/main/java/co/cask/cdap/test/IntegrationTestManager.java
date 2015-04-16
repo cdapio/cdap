@@ -136,4 +136,9 @@ public class IntegrationTestManager implements TestManager {
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
     namespaceClient.delete(namespace.getId());
   }
+
+  @Override
+  public StreamManager getStreamManager(Id.Stream streamId) {
+    throw new UnsupportedOperationException();
+  }
 }
