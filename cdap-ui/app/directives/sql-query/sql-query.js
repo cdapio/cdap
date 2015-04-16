@@ -30,7 +30,7 @@ angular.module(PKG.name + '.commons')
             })
             .then(function () {
               // $scope.getQueries();
-              $scope.panel = 2;
+              $scope.panel++;
             });
         };
 

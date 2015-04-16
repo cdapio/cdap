@@ -6,7 +6,7 @@ angular.module(PKG.name + '.feature.datasets')
       var dataSrc = new MyDataSource($scope);
       var dataModel = new QueryModel(dataSrc, 'exploreQueries');
 
-      $scope.activePanel = 0;
+      $scope.activePanel = 1;
 
       dataSrc
         .request({
