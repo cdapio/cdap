@@ -1,25 +1,51 @@
-<div class="panel-group">
-  <div class="panel panel-default" id="c{{run.runid}}" ng-repeat="run in runs">
-    <div class="panel-heading">
-      <a ui-sref="flows.detail.runs.run({runid: run.runid})" class="clearfix">
-        <div>
-          <span class="pull-left">{{run.runid}}</span>
-          <span class="pull-right">
-            {{run.status}}
-            <i class="fa fa-fw"
-              ng-class="{'fa-chevron-down': run.isOpen, 'fa-chevron-right': !run.isOpen}"></i>
-          </span>
-        </div>
-      </a>
+<div class="row">
+  <div class="col-lg-4 col-md-5 col-sm-6 col-xs-12">
+    <div class="btn-group"
+          dropdown is-open="dropdown.isopen">
+      <button type="button"
+              class="btn btn-default dropdown-toggle"
+              dropdown-toggle ng-disabled="current === 'No Run'">
+        {{ runs.selected.runid }}
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li ng-repeat="run in runs">
+          <a ui-sref="flows.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
+        </li>
+      </ul>
     </div>
-    <div class="panel-body" ng-if="run.isOpen">
-      <div ui-view></div>
-    </div>
+
   </div>
 </div>
+<br/>
+<div ng-if="runs.length">
 
-<div ng-if="runs.length === 0">
-  <div class="well well-lg text-center h2">
-    <div> The Flow {{State.params.programId}} hasn't run so far. Start a new Run!</div>
+  <div class="panel panel-default" ng-if="!$stateParams.runid">
+    <div class="panel-heading">
+      <div class="panel-title">
+        {{runs.selected.runid}}
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <div ng-include="'/assets/features/workflows/templates/tabs/runs/runs-detail.html'">
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default" ng-if="$stateParams.runid">
+    <div class="panel-heading">
+      <div class="panel-title">
+        {{$stateParams.runid}}
+      </div>
+    </div>
+    <div class="panel-body">
+      <div ui-view> </div>
+    </div>
+  </div>
+
+</div>
+<div ng-if="!runs.length">
+  <div class="well well-lg text-center h3">
+    <div>No runs yet! Start one.</div>
   </div>
 </div>
