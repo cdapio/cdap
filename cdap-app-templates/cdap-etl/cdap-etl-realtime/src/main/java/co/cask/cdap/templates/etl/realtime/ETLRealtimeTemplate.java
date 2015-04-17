@@ -32,6 +32,8 @@ import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
+import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -62,7 +64,7 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
 
     initTable(Lists.<Class>newArrayList(IdentityTransform.class,
                                         NoOpSink.class,
-                                        HelloSource.class));
+                                        TestSource.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {

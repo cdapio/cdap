@@ -18,7 +18,10 @@ package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
+import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkerManager;
@@ -48,7 +51,7 @@ public class ETLWorkerTest extends TestBase {
   public void testSimpleConfig() throws Exception {
     ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
 
-    ETLStage source = new ETLStage(HelloSource.class.getSimpleName(), ImmutableMap.<String, String>of());
+    ETLStage source = new ETLStage(TestSource.class.getSimpleName(), ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(NoOpSink.class.getSimpleName(), ImmutableMap.<String, String>of());
     List<ETLStage> transforms = Lists.newArrayList();
     ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(1, source, sink, transforms);

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime;
+package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.templates.etl.api.Emitter;
@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Realtime TestSource that emits a string with a delay.
  */
-public class HelloSource extends RealtimeSource<String> {
-  private static final Logger LOG = LoggerFactory.getLogger(HelloSource.class);
+public class TestSource extends RealtimeSource<String> {
+  private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
   private static final String COUNT = "count";
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName(HelloSource.class.getSimpleName());
+    configurer.setName(TestSource.class.getSimpleName());
   }
 
   @Nullable
