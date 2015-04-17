@@ -25,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,7 +44,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
 
   public AggregatedMetricsEmitter(Map<String, String> tags) {
     this.tags = tags;
-    this.metricNameToMeasurements = Maps.newHashMap();
+    this.metricNameToMeasurements = Maps.newConcurrentMap();
   }
 
   private Measure getMeasurement(String name) {
@@ -63,16 +65,15 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   @Override
   public MetricValue emit(long timestamp) {
     Collection<Measurement> metrics = Lists.newArrayList();
-    for (Measure metric : metricNameToMeasurements.values()) {
+    Set<String> metricNames = Collections.unmodifiableSet(metricNameToMeasurements.keySet());
+    for (String metricName : metricNames) {
+      Measure measure = metricNameToMeasurements.remove(metricName);
       // skip increment by 0
-      if (metric.getMetricType() == MeasureType.COUNTER && metric.getValue() == 0) {
+      if (measure.getMetricType() == MeasureType.COUNTER && measure.getValue() == 0) {
         continue;
       }
-      metrics.add(new Measurement(metric.getName(), metric.getMetricType(), metric.getValue()));
-      metric.resetValue();
-      metric.setGauge(false);
+      metrics.add(new Measurement(measure.getName(), measure.getMetricType(), measure.getValue()));
     }
-    metricNameToMeasurements.clear();
     return new MetricValue(tags, timestamp, metrics);
   }
 

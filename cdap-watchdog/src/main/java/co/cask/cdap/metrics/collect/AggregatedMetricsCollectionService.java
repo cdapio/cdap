@@ -23,8 +23,11 @@ import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
@@ -58,6 +61,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(createCollectorLoader());
 
     this.emitters = CacheBuilder.newBuilder()
+      // NOTE : we don't need to have removalListener to  emit metrics, as we have expireAfterAccess set for a minute,
+      // emitters.get() is used to increment/gauge and that would reset the access time,
+      // and since runOneIteration() emits all the metrics for the scheduled duration (every 1 second)
+      // there wont be any loss of emitter entries.
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
       .build(new CacheLoader<Map<String, String>, AggregatedMetricsEmitter>() {
         @Override
@@ -92,7 +99,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
     final MetricsCollectorIterator metricsItor = new MetricsCollectorIterator(getMetrics(timestamp));
+    publishMetrics(timestamp, metricsItor);
+  }
 
+  private void publishMetrics(long timestamp, MetricsCollectorIterator metricsItor) {
     try {
       publish(metricsItor);
     } catch (Throwable t) {
@@ -146,6 +156,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   private Iterator<MetricValue> getMetrics(final long timestamp) {
+    // NOTE : emitters.asMap does not reset the access time in cache,
+    // so it's the preferred way to access the cache entries. as we access and emit metrics every second.
     final Iterator<AggregatedMetricsEmitter> iterator = emitters.asMap().values().iterator();
     return new AbstractIterator<MetricValue>() {
       @Override
