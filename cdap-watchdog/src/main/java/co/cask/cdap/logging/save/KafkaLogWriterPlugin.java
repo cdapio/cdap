@@ -21,13 +21,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
+import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
@@ -52,10 +56,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Plugin that writes the log data.
  */
-public class KafkaLogWriterPlugin implements KafkaLogProcessor {
+public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   private static final long SLEEP_TIME_MS = 100;
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
+  private static final int CHECKPOINT_ROW_KEY_PREFIX = 100;
 
   private ListeningScheduledExecutorService scheduledExecutor;
   private final String logBaseDir;
@@ -66,6 +71,7 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
   private final LogCleanup logCleanup;
+  private final CheckpointManager checkpointManager;
 
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
@@ -74,7 +80,8 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
   @Inject
   public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                              CheckpointManager checkpointManager, LocationFactory locationFactory)
+                              LocationFactory locationFactory, LogSaverTableUtil tableUtil,
+                              TransactionExecutorFactory txExecutorFactory)
                               throws Exception {
 
     this.serializer = new LoggingEventSerializer();
@@ -133,6 +140,9 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
+     checkpointManager = new CheckpointManager(tableUtil, txExecutorFactory,
+                                              KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
+
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
     String namespacesDir = cConfig.get(Constants.Namespace.NAMESPACES_DIR);
@@ -143,6 +153,7 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
   @Override
   public void init(Set<Integer> partitions) {
+    super.init(partitions, checkpointManager);
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("log-saver-log-processor")));;
@@ -161,6 +172,11 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
   @Override
   public void process(KafkaLogEvent event) {
+
+    if (alreadyProcessed(event)) {
+      return;
+    }
+
     LoggingContext loggingContext = event.getLoggingContext();
     ILoggingEvent logEvent = event.getLogEvent();
     try {
@@ -226,9 +242,8 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdown();
+        scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
       }
-
-      scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
 
       logFileWriter.flush();
       logFileWriter.close();
@@ -237,5 +252,19 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
     }
     messageTable.clear();
+  }
+
+  @Override
+  public long getCheckPoint(int partition) {
+    try {
+      return checkpointManager.getCheckpoint(partition);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @VisibleForTesting
+  CheckpointManager getCheckPointManager() {
+    return this.checkpointManager;
   }
 }

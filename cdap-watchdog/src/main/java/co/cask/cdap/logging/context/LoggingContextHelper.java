@@ -30,6 +30,9 @@ import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -40,6 +43,17 @@ import javax.annotation.Nullable;
 public final class LoggingContextHelper {
 
   private static final String ACCOUNT_ID = ".accountId";
+  private static final Logger LOG = LoggerFactory.getLogger(LoggingContext.class);
+
+  private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
+    ImmutableMap.<String, String>builder()
+      .put(FlowletLoggingContext.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
+      .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
+      .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
+      .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.SERVICE_RUNNABLE)
+      .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
+ // TODO Add Workflow logging context
+    .build();
 
   private LoggingContextHelper() {}
 
@@ -230,5 +244,64 @@ public final class LoggingContextHelper {
         return entityId;
       }
     };
+  }
+
+  public static Map<String, String> getMetricsTags(LoggingContext context) throws IllegalArgumentException {
+    if (context instanceof ServiceLoggingContext) {
+     return getTagsFromSystemContext((ServiceLoggingContext) context);
+    } else {
+      return getMetricsTagsFromLoggingContext(context);
+    }
+  }
+
+  private static Map<String, String> getMetricsTagsFromLoggingContext(LoggingContext context) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    Map<String, LoggingContext.SystemTag> loggingTags = context.getSystemTagsMap();
+    String namespace = getValueFromTag(loggingTags.get(NamespaceLoggingContext.TAG_NAMESPACE_ID));
+
+    if (namespace == null || namespace.isEmpty()) {
+      throw new IllegalArgumentException("Cannot find namespace in logging context");
+    }
+    builder.put(Constants.Metrics.Tag.NAMESPACE, namespace);
+
+    String applicationId = getValueFromTag(loggingTags.get(ApplicationLoggingContext.TAG_APPLICATION_ID));
+    String adapterId = getValueFromTag(loggingTags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
+    // Must be an application or adapter
+    if (applicationId == null && adapterId == null) {
+      throw new IllegalArgumentException("Missing application or adapter id");
+    }
+    if (applicationId != null) {
+      builder.put(Constants.Metrics.Tag.APP, applicationId);
+      LoggingContext.SystemTag entityId = getEntityId(context);
+      String entityName = getMetricsTagNameFromLoggingContext(entityId);
+      if (entityName != null) {
+        builder.put(entityName, entityId.getValue());
+      }
+    } else {
+      builder.put(Constants.Metrics.Tag.ADAPTER, adapterId);
+    }
+    return builder.build();
+  }
+
+
+  private static String getMetricsTagNameFromLoggingContext(LoggingContext.SystemTag tag) {
+    return LOG_TAG_TO_METRICS_TAG_MAP.get(tag.getName());
+  }
+
+  private static String getValueFromTag(LoggingContext.SystemTag tag) {
+    if (tag == null) {
+      return null;
+    } else {
+      return tag.getValue();
+    }
+  }
+
+
+  public static Map<String, String> getTagsFromSystemContext(ServiceLoggingContext context) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+    builder.put(Constants.Metrics.Tag.COMPONENT,
+                context.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue());
+    return builder.build();
   }
 }

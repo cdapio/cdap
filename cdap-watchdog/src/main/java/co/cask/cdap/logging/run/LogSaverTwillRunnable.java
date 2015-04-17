@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -73,6 +74,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private KafkaClientService kafkaClientService;
   private MultiLeaderElection multiElection;
   private LogSaverStatusService logSaverStatusService;
+  private MetricsCollectionService metricsCollectionService;
 
   public LogSaverTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -132,6 +134,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
                                               createPartitionChangeHandler(logSaver));
 
       logSaverStatusService = injector.getInstance(LogSaverStatusService.class);
+      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -143,8 +146,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver, multiElection,
-                                             logSaverStatusService));
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, logSaver,
+                                             multiElection, logSaverStatusService));
 
     LOG.info("Runnable started " + name);
 
@@ -167,8 +170,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    Futures.getUnchecked(Services.chainStop(logSaverStatusService,
-                                            multiElection, logSaver, kafkaClientService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(logSaverStatusService, multiElection, logSaver,
+                                            metricsCollectionService, kafkaClientService, zkClientService));
     completion.set(null);
   }
 
