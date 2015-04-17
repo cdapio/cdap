@@ -45,8 +45,8 @@ public final class RunRecord {
   @SerializedName("properties")
   private final Map<String, String> properties;
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status, @Nullable String adapterName,
-                   @Nullable Map<String, String> properties) {
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
+                   @Nullable String adapterName, @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
