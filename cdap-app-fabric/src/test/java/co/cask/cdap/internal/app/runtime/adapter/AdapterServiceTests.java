@@ -231,6 +231,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+      super.configure(configurer, context);
       configurer.setName(NAME);
     }
   }
@@ -240,6 +241,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
     @Override
     public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+      super.configure(configurer, context);
       configurer.setName(NAME);
     }
   }
