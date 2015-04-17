@@ -416,8 +416,7 @@ public class AdapterService extends AbstractIdleService {
     if (programType == ProgramType.WORKFLOW) {
       program = getWorkflowId(namespace, adapterSpec);
     } else {
-      // TODO: Implement for Worker Adapter
-      program = null;
+      program = getWorkerId(namespace, adapterSpec);
     }
     return program;
   }

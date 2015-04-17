@@ -32,7 +32,10 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -43,6 +46,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -101,12 +105,35 @@ public class AdapterServiceTests extends AppFabricTestBase {
     Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapter1));
     Assert.assertEquals(AdapterStatus.STARTED, adapterService.getAdapterStatus(NAMESPACE, adapter2));
 
+    List<RunRecord> runRecords = adapterService.getRuns(NAMESPACE, adapter1, ProgramRunStatus.ALL,
+                                                        0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertTrue(runRecords.size() == 1);
+    RunRecord runRecord = Iterables.getFirst(runRecords, null);
+    Assert.assertEquals(ProgramRunStatus.RUNNING, runRecord.getStatus());
+
     // Stop Adapter
     adapterService.stopAdapter(NAMESPACE, adapter1);
     adapterService.stopAdapter(NAMESPACE, adapter2);
 
+    runRecords = adapterService.getRuns(NAMESPACE, adapter1, ProgramRunStatus.ALL,
+                                        0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertTrue(runRecords.size() == 1);
+    RunRecord stopRecord = Iterables.getFirst(runRecords, null);
+    Assert.assertEquals(ProgramRunStatus.KILLED, stopRecord.getStatus());
+    Assert.assertEquals(runRecord.getPid(), stopRecord.getPid());
+    Assert.assertTrue(stopRecord.getStopTs() >= stopRecord.getStartTs());
+
     Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter1));
     Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter2));
+
+    runRecords = adapterService.getRuns(NAMESPACE, adapter2, ProgramRunStatus.ALL,
+                                        0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertTrue(runRecords.size() == 1);
+    runRecord = Iterables.getFirst(runRecords, null);
+    Assert.assertEquals(ProgramRunStatus.KILLED, runRecord.getStatus());
+
+    stopRecord = adapterService.getRun(NAMESPACE, adapter2, runRecord.getPid());
+    Assert.assertEquals(runRecord, stopRecord);
 
     // Delete Adapter
     adapterService.removeAdapter(NAMESPACE, adapter1);
