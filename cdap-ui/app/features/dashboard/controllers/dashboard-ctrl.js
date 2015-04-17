@@ -18,9 +18,9 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.refreshRates = [
     '1 second',
     '60 seconds',
-    '10 mins',
-    '1 hour'
+    '10 mins'
   ];
+  $scope.refreshRate = '1 second';
 
   $scope.currentBoard = rDashboardsModel.current();
   if (!$scope.currentBoard) {

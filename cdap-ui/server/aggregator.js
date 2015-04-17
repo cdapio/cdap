@@ -46,7 +46,7 @@ Aggregator.prototype.log = function () {
  * schedule polling
  */
 Aggregator.prototype.planPolling = function () {
-  console.log('called plan polling');
+  console.log(JSON.stringify(this.polledResources));
   this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
 };
 
@@ -68,7 +68,6 @@ function doPoll () {
   var that = this,
       rscs = this.polledResources.toArray(),
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
-  console.log(rscs)
   //this.log('poll', rscs.length);
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;

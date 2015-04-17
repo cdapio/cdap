@@ -58,7 +58,6 @@ angular.module(PKG.name+'.feature.dashboard')
         this.dataSrc = new MyDataSource(scope);
       }
       this.stopPolling(this.pollingId);
-      this.startPolling(scope, frequency);
     };
 
     Widget.prototype.startPolling = function (scope, frequency) {
@@ -80,8 +79,8 @@ angular.module(PKG.name+'.feature.dashboard')
       if(frequency) {
         resourceObj.frequency = frequency;
       }
-      console.log(resourceObj);
-      return this.dataSrc.poll(resourceObj, this.processData.bind(this));
+      this.pollingId = this.dataSrc.poll(resourceObj, this.processData.bind(this));
+      return this.pollingId;
     };
 
     Widget.prototype.stopPolling = function(id) {
@@ -128,7 +127,7 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('WidgetTimeseriesCtrl', function ($scope) {
-    
+    $scope.parsedRefreshRate = 1000;
     var pollingId = null;
     
     $scope.$watch('wdgt.isLive', function(newVal) {
@@ -136,11 +135,9 @@ angular.module(PKG.name+'.feature.dashboard')
         return;
       }
       if (newVal) {
-        pollingId = $scope.wdgt.startPolling();
-        $scope.wdgt.pollingId = pollingId;
+        pollingId = $scope.wdgt.startPolling($scope, $scope.parsedRefreshRate);
       } else {
         $scope.wdgt.stopPolling(pollingId);
-        pollingId = null;
       }
     });
     
@@ -175,8 +172,10 @@ angular.module(PKG.name+'.feature.dashboard')
       if (!newVal || newVal === oldVal) {
         return;
       }
-      var parsedSecs = parseRefreshRate(newVal);
-      $scope.wdgt.resetPollingFrequency($scope, parsedSecs);
+      $scope.wdgt.isLive = false;
+      $scope.parsedRefreshRate = parseRefreshRate(newVal);
+      $scope.wdgt.resetPollingFrequency($scope, $scope.parsedRefreshRate);
+      console.log('refreshRate: ', newVal);
     });
 
     $scope.wdgt.fetchData($scope);
