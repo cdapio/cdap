@@ -24,9 +24,10 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -36,7 +37,7 @@ import java.util.Map;
 /**
  * Transforms {@link StreamEvent} to {@link StructuredRecord}
  */
-public class StreamToStructuredRecordTransform extends Transform<StreamEvent, StructuredRecord> {
+public class StreamToStructuredRecordTransform extends TransformStage<StreamEvent, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String FORMAT_NAME = "format.name";
 
@@ -51,10 +52,14 @@ public class StreamToStructuredRecordTransform extends Transform<StreamEvent, St
   }
 
   @Override
-  public void initialize(TransformContext context) throws Exception {
+  public void initialize(TransformContext context) {
     super.initialize(context);
-    Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));
-    schemaWrapper = getSchemaWrapper(streamBodySchema);
+    try {
+      Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));
+      schemaWrapper = getSchemaWrapper(streamBodySchema);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

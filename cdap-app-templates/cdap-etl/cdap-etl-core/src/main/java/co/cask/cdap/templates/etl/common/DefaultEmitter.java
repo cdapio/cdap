@@ -24,21 +24,23 @@ import java.util.List;
 
 /**
  * Default implementation of {@link Emitter}.
+ *
+ * @param <T> the type of object to emit
  */
-public class DefaultEmitter implements Emitter, Iterable<Object> {
-  private final List<Object> entryList;
+public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
+  private final List<T> entryList;
 
   public DefaultEmitter() {
     entryList = Lists.newArrayList();
   }
 
   @Override
-  public void emit(Object value) {
+  public void emit(T value) {
     entryList.add(value);
   }
 
   @Override
-  public Iterator<Object> iterator() {
+  public Iterator<T> iterator() {
     return entryList.iterator();
   }
 

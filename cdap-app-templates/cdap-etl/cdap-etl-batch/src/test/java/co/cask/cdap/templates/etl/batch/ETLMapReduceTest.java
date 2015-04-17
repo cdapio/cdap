@@ -32,8 +32,6 @@ import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
-import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -119,8 +117,6 @@ public class ETLMapReduceTest extends TestBase {
     // simulate pipeline creation
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
-    ETLStage source = new ETLStage(TableSource.class.getSimpleName(), ImmutableMap.of("name", "inputTable"));
-    ETLStage sink = new ETLStage(TableSink.class.getSimpleName(), ImmutableMap.of("name", "outputTable"));
     Schema schema = Schema.recordOf(
       "purchase",
       Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
@@ -129,17 +125,15 @@ public class ETLMapReduceTest extends TestBase {
       Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("item", Schema.of(Schema.Type.STRING))
     );
-    ETLStage transform1 = new ETLStage(RowToStructuredRecordTransform.class.getSimpleName(),
-                                       ImmutableMap.of(
-                                         "schema", schema.toString(),
-                                         "row.field", "rowkey"
-                                       ));
-    ETLStage transform2 = new ETLStage(StructuredRecordToPutTransform.class.getSimpleName(),
-                                       ImmutableMap.of(
-                                         "schema", schema.toString(),
-                                         "row.field", "rowkey"
-                                       ));
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.newArrayList(transform1, transform2));
+
+    ETLStage source = new ETLStage(TableSource.class.getSimpleName(),
+      ImmutableMap.of(
+        "name", "inputTable",
+        Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
+        Table.PROPERTY_SCHEMA, schema.toString()));
+    ETLStage sink = new ETLStage(TableSink.class.getSimpleName(),
+      ImmutableMap.of("name", "outputTable", Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.<ETLStage>newArrayList());
 
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
