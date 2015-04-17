@@ -131,7 +131,8 @@ public class UpgradeTool {
   private Store store;
   QuartzScheduler qs;
   private FileMetaDataManager fileMetaDataManager;
-  private AdapterService adapterService;
+  private final AdapterService adapterService;
+  private final DatasetFramework dsFramework;
   private DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
 
   /**
@@ -172,6 +173,8 @@ public class UpgradeTool {
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
     this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    this.dsFramework = injector.getInstance(DatasetFramework.class);
+    this.adapterService = injector.getInstance(AdapterService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -211,21 +214,14 @@ public class UpgradeTool {
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-          bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
+          bind(new TypeLiteral<DatasetModule>() {
+          }).annotatedWith(Names.named("serviceModule"))
             .toInstance(new HBaseKVTableDefinition.Module());
           bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
 
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
-        }
-
-        @Provides
-        @Singleton
-        public DatasetFramework getDSFramework(
-          CConfiguration cConf, DatasetDefinitionRegistryFactory registryFactory,
-          @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules)
-          throws IOException, DatasetManagementException {
-          return createRegisteredDatasetFramework(cConf, registryFactory, defaultModules);
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         }
 
         @Provides
@@ -245,14 +241,6 @@ public class UpgradeTool {
           return new LogSaverTableUtil(dsFramework, cConf);
         }
 
-        @Provides
-        @Singleton
-        @Named("scheduleStoreTableUtil")
-        public ScheduleStoreTableUtil getScheduleStoreTableUtil(DatasetFramework dsFramework,
-                                                      CConfiguration cConf) {
-          return new ScheduleStoreTableUtil(dsFramework, cConf);
-        }
-
         // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
         // expects a dsframework injection named datasetMDS
         @Provides
@@ -260,15 +248,6 @@ public class UpgradeTool {
         @Named("datasetMDS")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
-        }
-
-        @Provides
-        @Singleton
-        @Named("datasetBasedTimeScheduleStore")
-        public DatasetBasedTimeScheduleStore getDatasetBasedTimeScheduleStore(
-          TransactionExecutorFactory txExecutorFactory, @Named("scheduleStoreTableUtil")
-        ScheduleStoreTableUtil tableUtil) {
-          return new DatasetBasedTimeScheduleStore(txExecutorFactory, tableUtil);
         }
 
         @Provides
@@ -354,11 +333,11 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() throws IOException {
+  private void startUp() throws IOException, DatasetManagementException {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-
+    initializeDSFramework(cConf, dsFramework);
     createNamespaces();
   }
 
@@ -369,7 +348,9 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
-      qs.shutdown();
+      if (qs != null) {
+        qs.shutdown();
+      }
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -496,16 +477,17 @@ public class UpgradeTool {
     NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      Collection<AdapterSpecification> adapters = getAdapterService().getAdapters(Id.Namespace
-                                                                                    .from(namespaceMeta.getName()));
-      Id.Program program = Id.Program.from(namespaceMeta.getName(), "stream-conversion", ProgramType.WORKFLOW,
+      String namespace = namespaceMeta.getName();
+      Collection<AdapterSpecification> adapters = adapterService.getAdapters(Id.Namespace
+                                                                               .from(namespace));
+      Id.Program program = Id.Program.from(namespace, "stream-conversion", ProgramType.WORKFLOW,
                                            "StreamConversionWorkflow");
       for (AdapterSpecification adapter : adapters) {
         TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(
           program, SchedulableProgramType.WORKFLOW, adapter.getName() + "StreamConversionWorkflow"));
         if (datasetBasedTimeScheduleStore.removeTrigger(triggerKey)) {
           LOG.info("Removed adapter trigger: {}", triggerKey.toString());
-          store.removeAdapter(Id.Namespace.from(namespaceMeta.getName()), adapter.getName());
+          store.removeAdapter(Id.Namespace.from(namespace), adapter.getName());
         }
       }
       //delete the stream-conversion job entry
@@ -526,11 +508,8 @@ public class UpgradeTool {
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
-  private DatasetFramework createRegisteredDatasetFramework(CConfiguration cConf,
-                                                            DatasetDefinitionRegistryFactory registryFactory,
-                                                            Map<String, DatasetModule> defaultModules)
-    throws DatasetManagementException, IOException {
-    DatasetFramework datasetFramework = new InMemoryDatasetFramework(registryFactory, defaultModules, cConf);
+  private void initializeDSFramework(CConfiguration cConf, DatasetFramework datasetFramework) throws IOException,
+    DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // app metadata
@@ -545,8 +524,6 @@ public class UpgradeTool {
     // metrics data
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
     DefaultMetricDatasetFactory.setupDatasets(factory);
-
-    return datasetFramework;
   }
 
   /**
@@ -596,18 +573,6 @@ public class UpgradeTool {
   }
 
   /**
-   * gets the {@link AdapterService}
-   *
-   * @return {@link AdapterService}
-   */
-  private AdapterService getAdapterService() {
-    if (adapterService == null) {
-      adapterService = injector.getInstance(AdapterService.class);
-    }
-    return adapterService;
-  }
-
-  /**
    * gets the {@link DatasetBasedTimeScheduleStore} which stores the schedules of adapters
    *
    * @return {@link DatasetBasedTimeScheduleStore}
@@ -615,8 +580,7 @@ public class UpgradeTool {
    */
   private DatasetBasedTimeScheduleStore getDatasetBasedTimeScheduleStore() throws SchedulerException {
     if (datasetBasedTimeScheduleStore == null) {
-      datasetBasedTimeScheduleStore = injector.getInstance(Key.get(DatasetBasedTimeScheduleStore.class,
-                                                                   Names.named("datasetBasedTimeScheduleStore")));
+      datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
       // need to call initialize on datasetBasedTimeScheduleStore
       ExecutorThreadPool threadPool = new ExecutorThreadPool(1);
       threadPool.initialize();
@@ -634,7 +598,6 @@ public class UpgradeTool {
       qrs.setJobStore(datasetBasedTimeScheduleStore);
       qrs.setRunUpdateCheck(false);
       qs = new QuartzScheduler(qrs, -1, -1);
-
       ClassLoadHelper cch = new CascadingClassLoadHelper();
       cch.initialize();
 
