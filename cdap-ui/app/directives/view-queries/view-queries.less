@@ -1,4 +1,37 @@
+@import "../../styles/variables.less";
 my-view-queries {
+  .status {
+    margin-left: 5px;
+  }
+  .green {
+    color: green;
+  }
+  .red {
+    color: red;
+  }
+
+  .panel-container {
+    margin: 0 25px;
+
+    .panel.no-margin-top {
+      margin-top: 1px;
+    }
+  }
+
+  .panel-heading {
+    padding: 15px;
+  }
+
+  .panel.active {
+    .panel-heading {
+      background-color: #dcdce6;
+    }
+
+    .panel-body {
+      background-color: #9d9fab;
+    }
+  }
+
   .queries {
     font-size: 14px;
 
@@ -12,16 +45,12 @@ my-view-queries {
     }
   }
 
-  .sql-statement {
-    min-height: 150px;
-    padding: 10px 10px;
-    background-color: white;
-    border-radius: 5px;
-    margin-bottom: 10px;
-  }
 
   .results {
-    margin-top: 25px;
+
+    h3 {
+      margin-top: 0;
+    }
 
     .table-result {
       overflow: scroll;
