@@ -57,9 +57,6 @@ public class ApplicationTemplateVerificationStage extends ApplicationVerificatio
     if (!specification.getFlows().isEmpty()) {
       throw new IllegalArgumentException("Flows are not supported in application templates");
     }
-    if (!specification.getProcedures().isEmpty()) {
-      throw new IllegalArgumentException("Procedures are not supported in application templates");
-    }
     if (!specification.getServices().isEmpty()) {
       throw new IllegalArgumentException("Services are not supported in application templates");
     }

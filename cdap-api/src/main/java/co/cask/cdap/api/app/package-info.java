@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@
  * {@link co.cask.cdap.api.data.stream.Stream Streams},
  * {@link co.cask.cdap.api.dataset.Dataset Datasets},
  * {@link co.cask.cdap.api.flow.Flow Flows},
- * {@link co.cask.cdap.api.procedure.Procedure Procedures},
  * and other deployable elements.
  *
  * <h1>Application</h1>
@@ -52,7 +51,6 @@
  *     addStream(new Stream("myAppStream"));
  *     createDataset("myCounters", "KeyValueTable");
  *     addFlow(new MyAppFlow());
- *     addProcedure(new MyAppQuery());
  *     addMapReduce(new MyMapReduceJob());
  *     addWorkflow(new MyAppWorkflow());
  *   }
@@ -116,22 +114,6 @@
  *
  * <p>
  * See {@link co.cask.cdap.api.flow.flowlet.Flowlet} for details.
- * </p>
- *
- * <h1>Procedure</h1>
- *
- * <p>
- * A {@link co.cask.cdap.api.procedure.Procedure} handles queries from external
- * systems to the CDAP instance and performs arbitrary server-side processing on demand.
- * </p>
- *
- * <p>
- * To define a {@link co.cask.cdap.api.procedure.Procedure}, implement the
- * {@link co.cask.cdap.api.procedure.Procedure} interface.
- * </p>
- *
- * <p>
- * See {@link co.cask.cdap.api.procedure.Procedure} for details.
  * </p>
  */
 package co.cask.cdap.api.app;

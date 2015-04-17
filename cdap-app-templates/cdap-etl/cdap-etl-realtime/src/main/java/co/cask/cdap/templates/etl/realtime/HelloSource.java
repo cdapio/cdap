@@ -43,7 +43,7 @@ public class HelloSource extends RealtimeSource<String> {
   @Override
   public SourceState poll(Emitter<String> writer, SourceState currentState) {
     try {
-      TimeUnit.SECONDS.sleep(1);
+      TimeUnit.MILLISECONDS.sleep(100);
     } catch (InterruptedException e) {
       LOG.error("Some Error in Source");
     }

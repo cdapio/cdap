@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -115,11 +115,6 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "v3/namespaces/default/apps/InvalidApp/procedures/ProName/logs/abcd";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.METRICS, result);
-
     flowPath = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
@@ -130,45 +125,6 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
   }
-
-  @Test
-  public void testProcedurePath() throws Exception {
-    //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-    //Discoverable Service Name -> procedure.%s.%s.%s", namespaceId, appId, procedureName;
-    //TODO: Add tests that test for a non-default namespaceId
-
-    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName///methods//H?user=asd";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + Constants.DEFAULT_NAMESPACE + ".InvalidApp.ProcName", result);
-
-    flowPath = "///v2///apps/Invali_-123//procedures/Hel123@!@!//methods/Asdad?das////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + Constants.DEFAULT_NAMESPACE + ".Invali_-123.Hel123@!@!", result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods/getCustomer";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + Constants.DEFAULT_NAMESPACE + ".InvalidApp.ProName", result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-  }
-
 
   @Test
   public void testServicePath() throws Exception {
@@ -194,7 +150,6 @@ public class RouterPathTest {
     Assert.assertEquals("service." + Constants.DEFAULT_NAMESPACE + ".SomeApp_Name.CatalogLookup", result);
 
     // The following two should resort to resort to APP_FABRIC_HTTP, because there is no actual method being called.
-    // (Similar to how procedures methods are routed).
     servicePath = "v2/apps/AppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
@@ -305,14 +260,6 @@ public class RouterPathTest {
   @Test
   public void testRouterWorkFlowPathLookUp() throws Exception {
     String procPath = "/v2/apps///PurchaseHistory///workflows/PurchaseHistoryWorkflow/status";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
-  }
-
-  @Test
-  public void testRouterProcedurePathLookUp() throws Exception {
-    String procPath = "/v2//apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);

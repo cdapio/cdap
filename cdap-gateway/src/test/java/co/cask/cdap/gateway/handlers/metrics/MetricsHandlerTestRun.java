@@ -94,8 +94,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
                                                                  "run1", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getProcedureContext("yourspace", "WCount1", "RCounts"));
-    collector.increment("reads", 1);
     collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper,
                                                                        "run1", "task1"));
@@ -178,8 +176,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
                        getSearchResultExpected("flow", "WCounter",
                                                "flow", "WordCounter",
-                                               "mapreduce", "ClassicWordCount",
-                                               "procedure", "RCounts"
+                                               "mapreduce", "ClassicWordCount"
                        ));
 
     // No more tags when you specify namespace and adapter
@@ -219,8 +216,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("flow", "WCounter",
                                                        "flow", "WordCounter",
                                                        "flow", DOT_FLOW,
-                                                       "mapreduce", "ClassicWordCount",
-                                                       "procedure", "RCounts"));
+                                                       "mapreduce", "ClassicWordCount"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=flow:*",
                                getSearchResultExpected("run", "run1",
@@ -272,8 +268,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1",
                        ImmutableList.<String>of("namespace.yourspace.app.WCount1.flow.WCounter",
                                                 "namespace.yourspace.app.WCount1.flow.WordCounter",
-                                                "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount",
-                                                "namespace.yourspace.app.WCount1.procedure.RCounts"));
+                                                "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace.app.WCount1",
                        ImmutableList.<String>of());
@@ -313,8 +308,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("namespace.*.app.*.flow.WCounter",
                                                 "namespace.*.app.*.flow.WordCounter",
                                                 "namespace.*.app.*.flow." + DOT_FLOW_ESCAPED,
-                                                "namespace.*.app.*.mapreduce.ClassicWordCount",
-                                                "namespace.*.app.*.procedure.RCounts"));
+                                                "namespace.*.app.*.mapreduce.ClassicWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.*.flow.WCounter",
                        ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.run.run1"));

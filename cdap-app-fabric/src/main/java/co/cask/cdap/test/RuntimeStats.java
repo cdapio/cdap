@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,17 +68,6 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
-    return getMetrics(MetricsContexts.forProcedure(id),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
   }
 
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
