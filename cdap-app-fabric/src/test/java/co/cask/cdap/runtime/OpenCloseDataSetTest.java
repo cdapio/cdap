@@ -47,8 +47,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -69,7 +68,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * tests that flowlets, procedures and batch jobs close their data sets.
+ * tests that flowlets and batch jobs close their data sets.
  */
 @Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
@@ -108,7 +107,7 @@ public class OpenCloseDataSetTest {
     ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 
-    // start the flow and procedure
+    // start the programs
     for (Program program : app.getPrograms()) {
       if (program.getType().equals(ProgramType.MAPREDUCE)) {
         continue;
@@ -147,25 +146,24 @@ public class OpenCloseDataSetTest {
 
     // get the number of writes to the foo table
     Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
-    // only the flow has started with s single flowlet (procedure is loaded lazily on 1sy request
+    // only the flow has started with s single flowlet (service is loaded lazily on 1st request)
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "open"));
 
-    // now send a request to the procedure
+    // now send a request to the service
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyProcedure")).iterator().next();
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")).iterator().next();
 
     HttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
-                                               discoverable.getSocketAddress().getHostName(),
-                                               discoverable.getSocketAddress().getPort(),
-                                               "dummy",
-                                               "DummyProcedure",
-                                               "get"));
-    post.setEntity(new StringEntity(gson.toJson(ImmutableMap.of("key", "x1"))));
-    HttpResponse response = client.execute(post);
+    HttpGet get = new HttpGet(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
+                                            discoverable.getSocketAddress().getHostName(),
+                                            discoverable.getSocketAddress().getPort(),
+                                            "dummy",
+                                            "DummyService",
+                                            "x1"));
+    HttpResponse response = client.execute(get);
     String responseContent = gson.fromJson(
       new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8), String.class);
     client.getConnectionManager().shutdown();
@@ -176,14 +174,13 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
     Assert.assertEquals(0, TrackingTable.getTracker(tableName, "close"));
 
-    // stop flow and procedure, they shuld both close the data set foo
+    // stop all programs, they should both close the data set foo
     for (ProgramController controller : controllers) {
       controller.stop().get();
     }
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "close"));
 
     // now start the m/r job
-    // start the flow and procedure
     ProgramController controller = null;
     for (Program program : app.getPrograms()) {
       if (program.getType().equals(ProgramType.MAPREDUCE)) {

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -29,9 +28,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ProcedureClient;
-import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -71,7 +67,6 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final TransactionSystemClient txSystemClient;
   private final DatasetInstantiator datasetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
-  private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
   private final DiscoveryServiceClient discoveryServiceClient;
 
@@ -79,7 +74,6 @@ public class DefaultApplicationManager implements ApplicationManager {
   public DefaultApplicationManager(DatasetFramework datasetFramework,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
-                                   ProcedureClientFactory procedureClientFactory,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    TemporaryFolder tempFolder,
                                    AppFabricClient appFabricClient,
@@ -87,7 +81,6 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    @Assisted Location deployedJar) {
     this.applicationId = applicationId;
     this.streamWriterFactory = streamWriterFactory;
-    this.procedureClientFactory = procedureClientFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = appFabricClient;
@@ -247,32 +240,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     if (isRunning(jobId)) {
       throw new TimeoutException("Time limit reached.");
     }
-  }
-
-  @Override
-  public ProcedureManager startProcedure(final String procedureName) {
-    return startProcedure(procedureName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    final ProgramId procedureId = startProgram(procedureName, arguments, ProgramType.PROCEDURE);
-    return new ProcedureManager() {
-      @Override
-      public void stop() {
-        stopProgram(procedureId);
-      }
-
-      @Override
-      public RuntimeMetrics getMetrics() {
-        return RuntimeStats.getProcedureMetrics(applicationId.getNamespaceId(), applicationId.getId(), procedureName);
-      }
-
-      @Override
-      public ProcedureClient getClient() {
-        return procedureClientFactory.create(applicationId.getNamespaceId(), applicationId.getId(), procedureName);
-      }
-    };
   }
 
   @Override

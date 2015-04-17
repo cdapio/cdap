@@ -240,9 +240,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
         break;
       }
-      case PROCEDURE:
-        programController = new ProcedureTwillProgramController(programId, controller);
-        break;
       case MAPREDUCE:
         programController = new MapReduceTwillProgramController(programId, controller);
         break;

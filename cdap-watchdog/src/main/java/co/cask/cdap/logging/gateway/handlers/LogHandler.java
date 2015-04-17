@@ -341,8 +341,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     switch (programType) {
       case FLOW:
         return ProgramType.FLOW;
-      case PROCEDURE:
-        return ProgramType.PROCEDURE;
       case MAPREDUCE:
         return ProgramType.MAPREDUCE;
       case SPARK:

@@ -40,9 +40,7 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -50,7 +48,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -58,7 +55,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -212,7 +208,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a type specified by {flows,workflows,mapreduce,spark,procedures,services,schedules}.
+   * Returns status of a type specified by {flows,workflows,mapreduce,spark,services,schedules}.
    */
   @GET
   @Path("/apps/{app-id}/{type}/{id}/status")
@@ -395,105 +391,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns number of instances for a procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
-  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("procedure-id") final String procedureId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
-
-      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-        return;
-      }
-
-      int count = getProcedureInstances(programId);
-      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable throwable) {
-      LOG.error("Got exception : ", throwable);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Sets number of instances for a procedure.
-   */
-  @PUT
-  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
-  public void setProcedureInstances(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("procedure-id") final String procedureId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, appId, ProgramType.PROCEDURE, procedureId);
-
-      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-        return;
-      }
-
-      int instances;
-      try {
-        instances = getInstances(request);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance value in request");
-        return;
-      } catch (JsonSyntaxException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in request");
-        return;
-      }
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-
-      setProcedureInstances(programId, instances);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable throwable) {
-      LOG.error("Got exception : ", throwable);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * TODO: This method should move to {@link ProgramLifecycleHttpHandler} when set and get instances v3 APIs are
-   * implemented.
-   */
-  private void setProcedureInstances(Id.Program programId, int instances) throws Exception {
-    try {
-      store.setProcedureInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        programLifecycleHttpHandler.findRuntimeInfo(programId, ProgramType.PROCEDURE);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                            ImmutableMap.of(programId.getId(), instances)).get();
-      }
-    } catch (Throwable throwable) {
-      LOG.warn("Exception when setting instances for {}.{} to {}. {}",
-               programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
-    }
-  }
-
-  private int getProcedureInstances(Id.Program programId) throws Exception {
-    try {
-      return store.getProcedureInstances(programId);
-    } catch (Throwable throwable) {
-      LOG.warn("Exception when getting instances for {}.{} to {}.{}",
-               programId.getId(), ProgramType.PROCEDURE.getPrettyName(), throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
-    }
-  }
-
-  /**
    * Returns number of instances for a flowlet within a flow.
    */
   @GET
@@ -508,9 +405,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns the number of instances for all program runnables that are passed into the data. The data is an array of
    * Json objects where each object must contain the following three elements: appId, programType, and programId
-   * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
-   * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
-   * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
+   * (flow name, service name). Retrieving instances only applies to flows, and user
+   * services. For flows, another parameter, "runnableId", must be provided. This corresponds to the
+   * flowlet/runnable for which to retrieve the instances.
    * <p>
    * Example input:
    * <pre><code>
@@ -707,18 +604,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                               Constants.DEFAULT_NAMESPACE, appId, "schedules", scheduleName, "resume");
   }
 
-  /**
-   * Procedures directly execute v2 calls, they do not delegate to v3 handlers since they are deprecated
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
-  @SuppressWarnings("unused")
-  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") String appId,
-                                @PathParam("procedure-id") String procedureId) {
-    getLiveInfo(responder, Constants.DEFAULT_NAMESPACE, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
-  }
-
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/live-info")
   @SuppressWarnings("unused")
@@ -741,19 +626,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
                                                      Constants.DEFAULT_NAMESPACE,
                                                      appId, ProgramType.FLOW.getCategoryName(), flowId);
-  }
-
-  /**
-   * Returns specification of procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}")
-  public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("procedure-id") String procId) {
-    programLifecycleHttpHandler.programSpecification(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                     Constants.DEFAULT_NAMESPACE,
-                                                     appId, ProgramType.PROCEDURE.getCategoryName(), procId);
   }
 
   /**
@@ -943,16 +815,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of procedures associated with an account.
-   */
-  @GET
-  @Path("/procedures")
-  public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programLifecycleHttpHandler.getAllProcedures(RESTMigrationUtils.rewriteV2RequestToV3(request), responder,
-                                                 Constants.DEFAULT_NAMESPACE);
-  }
-
-  /**
    * Returns a list of map/reduces associated with an account.
    */
   @GET
@@ -1020,16 +882,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") String appId) {
     getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.FLOW.getCategoryName());
-  }
-
-  /**
-   * Returns a list of procedure associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures")
-  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") String appId) {
-    getProgramsByApp(responder, Constants.DEFAULT_NAMESPACE, appId, ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**

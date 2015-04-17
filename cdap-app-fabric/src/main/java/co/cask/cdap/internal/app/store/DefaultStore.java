@@ -26,7 +26,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -48,7 +47,6 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -288,7 +286,6 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getSpark())
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
-                                                                      .putAll(existingAppSpec.getProcedures())
                                                                       .putAll(existingAppSpec.getServices())
                                                                       .build();
 
@@ -297,7 +294,6 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
-                                                                      .putAll(appSpec.getProcedures())
                                                                       .putAll(appSpec.getServices())
                                                                       .build();
 
@@ -379,18 +375,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getProcedureInstances(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
-      @Override
-      public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
-        return specification.getInstances();
-      }
-    });
-  }
-
-  @Override
   public void setWorkerInstances(final Id.Program id, final int instances) {
     Preconditions.checkArgument(instances > 0, "cannot change number of program " +
       "instances to negative number: " + instances);
@@ -415,36 +399,6 @@ public class DefaultStore implements Store {
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
               id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
-  }
-
-  @Override
-  public void setProcedureInstances(final Id.Program id, final int count) {
-    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
-
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
-
-        ProcedureSpecification newSpecification =  new DefaultProcedureSpecification(specification.getClassName(),
-                                                                                     specification.getName(),
-                                                                                     specification.getDescription(),
-                                                                                     specification.getDataSets(),
-                                                                                     specification.getProperties(),
-                                                                                     specification.getResources(),
-                                                                                     count);
-
-        ApplicationSpecification newAppSpec = replaceProcedureInAppSpec(appSpec, id, newSpecification);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.PROCEDURE);
-
-        mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
-        return null;
-      }
-    });
-
-    LOG.trace("Setting program instances: namespace: {}, application: {}, procedure: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplicationId(), id.getId(), count);
   }
 
   @Override
@@ -796,8 +750,6 @@ public class DefaultStore implements Store {
         try {
           if (type == ProgramType.FLOW) {
             programSpecification = getFlowSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.PROCEDURE) {
-            programSpecification = getProcedureSpecOrFail(id, appSpec);
           } else if (type == ProgramType.SERVICE) {
             programSpecification = getServiceSpecOrFail(id, appSpec);
           } else if (type == ProgramType.WORKFLOW) {
@@ -1100,16 +1052,6 @@ public class DefaultStore implements Store {
     return workerSpecification;
   }
 
-  private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
-    ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
-    if (procedureSpecification == null) {
-      throw new NoSuchElementException("no such procedure @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication() +
-                                           ", procedure id: " + id.getId());
-    }
-    return procedureSpecification;
-  }
-
   private static ApplicationSpecification updateFlowletInstancesInAppSpec(ApplicationSpecification appSpec,
                                                                           Id.Program id, String flowletId, int count) {
 
@@ -1232,34 +1174,6 @@ public class DefaultStore implements Store {
       Map<String, WorkerSpecification> workers = Maps.newHashMap(super.getWorkers());
       workers.put(workerId, workerSpecification);
       return workers;
-    }
-  }
-
-  private static ApplicationSpecification replaceProcedureInAppSpec(
-                                                             final ApplicationSpecification appSpec,
-                                                             final Id.Program id,
-                                                             final ProcedureSpecification procedureSpecification) {
-    // replace the new procedure spec.
-    return new ApplicationSpecificationWithChangedProcedure(appSpec, id.getId(), procedureSpecification);
-  }
-
-  private static final class ApplicationSpecificationWithChangedProcedure extends ForwardingApplicationSpecification {
-    private final String procedureId;
-    private final ProcedureSpecification procedureSpecification;
-
-    private ApplicationSpecificationWithChangedProcedure(ApplicationSpecification delegate,
-                                                         String procedureId,
-                                                         ProcedureSpecification procedureSpecification) {
-      super(delegate);
-      this.procedureId = procedureId;
-      this.procedureSpecification = procedureSpecification;
-    }
-
-    @Override
-    public Map<String, ProcedureSpecification> getProcedures() {
-      Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
-       procedures.put(procedureId, procedureSpecification);
-      return procedures;
     }
   }
 

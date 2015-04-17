@@ -61,14 +61,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testProcedureNext() throws Exception {
-    testNext("testApp2", "procedures", "testProcedure1", true);
-    testNextNoMax("testApp2", "procedures", "testProcedure1");
-    testNextFilter("testApp2", "procedures", "testProcedure1");
-    testNextNoFrom("testApp2", "procedures", "testProcedure1");
-  }
-
-  @Test
   public void testMapReduceNext() throws Exception {
     testNext("testApp3", "mapreduce", "testMapReduce1", true);
     testNextNoMax("testApp3", "mapreduce", "testMapReduce1");
@@ -93,14 +85,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testProcedurePrev() throws Exception {
-    testPrev("testApp2", "procedures", "testProcedure1");
-    testPrevNoMax("testApp2", "procedures", "testProcedure1");
-    testPrevFilter("testApp2", "procedures", "testProcedure1");
-    testPrevNoFrom("testApp2", "procedures", "testProcedure1");
-  }
-
-  @Test
   public void testMapReducePrev() throws Exception {
     testPrev("testApp3", "mapreduce", "testMapReduce1");
     testPrevNoMax("testApp3", "mapreduce", "testMapReduce1");
@@ -118,12 +102,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   public void testServiceLogs() throws Exception {
     testLogs("testApp4", "services", "testService1");
     testLogsFilter("testApp4", "services", "testService1");
-  }
-
-  @Test
-  public void testProcedureLogs() throws Exception {
-    testLogs("testApp2", "procedures", "testProcedure1");
-    testLogsFilter("testApp2", "procedures", "testProcedure1");
   }
 
   @Test

@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -38,7 +37,6 @@ import co.cask.cdap.proto.codec.FlowSpecificationCodec;
 import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
 import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
 import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
-import co.cask.cdap.proto.codec.ProcedureSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.SparkSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
@@ -89,7 +87,6 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
       .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
       .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
-      .registerTypeAdapter(ProcedureSpecification.class, new ProcedureSpecificationCodec())
       .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
       .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
       .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
