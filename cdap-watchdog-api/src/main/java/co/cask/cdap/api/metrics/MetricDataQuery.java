@@ -43,7 +43,7 @@ public final class MetricDataQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final String metricName;
+  private final List<String> metricNames;
   // todo: should be aggregation function? e.g. also support min/max, etc.
   private final MetricType metricType;
   private final Map<String, String> sliceByTagValues;
@@ -52,49 +52,50 @@ public final class MetricDataQuery {
   private final Interpolator interpolator;
 
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         String metricName, MetricType metricType,
+                         List<String> metricNames, MetricType metricType,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, -1,
-         metricName, metricType,
+         metricNames, metricType,
          sliceByTagValues, groupByTags, null);
   }
 
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
-                         String metricName, MetricType metricType,
+                         List<String> metricNames, MetricType metricType,
                          Map<String, String> sliceByTagValues, List<String> groupByTags,
                          @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.metricName = metricName;
+    this.metricNames = metricNames;
     this.metricType = metricType;
     this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
     this.interpolator = interpolator;
   }
 
+  // todo : check if needed
   public MetricDataQuery(MetricDataQuery query, String metricName) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
-         metricName, query.metricType,
+         ImmutableList.of(metricName), query.metricType,
          query.sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricName, query.metricType,
+         query.metricNames, query.metricType,
          sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, Map<String, String> sliceByTagValues) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricName, query.metricType,
+         query.metricNames, query.metricType,
          sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, List<String> groupByTags) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricName, query.metricType,
+         query.metricNames, query.metricType,
          query.sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
@@ -110,8 +111,8 @@ public final class MetricDataQuery {
     return resolution;
   }
 
-  public String getMetricName() {
-    return metricName;
+  public List<String> getMetricNames() {
+    return metricNames;
   }
 
   public MetricType getMetricType() {
@@ -141,7 +142,7 @@ public final class MetricDataQuery {
       .add("startTs", startTs)
       .add("endTs", endTs)
       .add("resolution", resolution)
-      .add("metricName", metricName)
+      .add("metricNames", metricNames)
       .add("metricType", metricType)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .add("groupByTags", Joiner.on(",").join(groupByTags)).toString();

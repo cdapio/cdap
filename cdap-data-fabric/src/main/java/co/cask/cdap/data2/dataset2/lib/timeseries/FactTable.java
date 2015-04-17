@@ -130,12 +130,22 @@ public final class FactTable implements Closeable {
   }
 
   public FactScanner scan(FactScan scan) {
-    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs());
+    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs(), scan.getMeasureNames());
   }
 
   private Scanner getScanner(FactScan scan) {
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), scan.getMeasureName(), scan.getEndTs(), false);
+    String firstMeasureName = null;
+    String lastMeasureName = null;
+
+    if (scan.getMeasureNames() != null && !scan.getMeasureNames().isEmpty()) {
+      List<String> measures = Lists.newArrayList(scan.getMeasureNames());
+      Collections.sort(measures);
+      firstMeasureName = measures.get(0);
+      lastMeasureName = measures.get(measures.size() - 1);
+    }
+
+    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), firstMeasureName, scan.getStartTs(), false);
+    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), lastMeasureName, scan.getEndTs(), false);
     byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
@@ -245,7 +255,8 @@ public final class FactTable implements Closeable {
     byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
     byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, allTags), startRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs,
+                                                                      ImmutableList.<String>of(), allTags), startRow);
     Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     scans++;
     try {
@@ -326,7 +337,8 @@ public final class FactTable implements Closeable {
     byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
     byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs, null, allTags), startRow);
+    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs,
+                                                                      ImmutableList.<String>of(), allTags), startRow);
 
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
@@ -369,7 +381,11 @@ public final class FactTable implements Closeable {
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
-    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), scan.getMeasureName());
+    // if we are querying only one metric, we will use fixed metricName for filter,
+    // if there are no metrics or >1 metrics to query we use `ANY` fuzzy filter.
+    String measureName =
+      (scan.getMeasureNames() != null && scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().get(0) : null;
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }

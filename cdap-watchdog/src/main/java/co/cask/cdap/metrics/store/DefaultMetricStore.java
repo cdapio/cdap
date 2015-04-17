@@ -226,7 +226,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricName(),
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricNames(),
                          toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
@@ -261,7 +261,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getSliceByTags(), query.getMetricName());
+                               query.getSliceByTags(), query.getMetricNames());
   }
 
   @Override

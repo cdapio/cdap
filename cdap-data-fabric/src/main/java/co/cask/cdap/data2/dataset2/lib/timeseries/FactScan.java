@@ -28,14 +28,14 @@ import java.util.List;
  */
 public final class FactScan {
   private final List<TagValue> tagValues;
-  private final String measureName;
+  private final List<String> measureNames;
   private final long startTs;
   private final long endTs;
 
-  public FactScan(long startTs, long endTs, String measureName, List<TagValue> tagValues) {
+  public FactScan(long startTs, long endTs, List<String> measureNames, List<TagValue> tagValues) {
     this.endTs = endTs;
     this.startTs = startTs;
-    this.measureName = measureName;
+    this.measureNames = measureNames;
     this.tagValues = ImmutableList.copyOf(tagValues);
   }
 
@@ -43,8 +43,8 @@ public final class FactScan {
     return tagValues;
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public List<String> getMeasureNames() {
+    return measureNames;
   }
 
   public long getStartTs() {

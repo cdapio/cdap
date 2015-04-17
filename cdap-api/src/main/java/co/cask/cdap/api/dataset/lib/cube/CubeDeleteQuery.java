@@ -18,8 +18,10 @@ package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -31,7 +33,7 @@ public class CubeDeleteQuery {
   private final long startTs;
   private final long endTs;
   private final int resolution;
-  private final String measureName;
+  private final List<String> measureNames;
   private final Map<String, String> sliceByTagValues;
 
   /**
@@ -40,14 +42,14 @@ public class CubeDeleteQuery {
    * @param endTs end time of the data selection, in seconds since epoch
    * @param resolution resolution of the aggregations to delete from
    * @param sliceByTagValues tag name, tag value pairs that define the data selection
-   * @param measureName name of the measure to delete, {@code null} means delete all
+   * @param measureNames name of the measures to delete, {@code null} means delete all
    */
   public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> sliceByTagValues, @Nullable String measureName) {
+                         Map<String, String> sliceByTagValues, @Nullable List<String> measureNames) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
-    this.measureName = measureName;
+    this.measureNames = measureNames;
     this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
   }
 
@@ -63,8 +65,8 @@ public class CubeDeleteQuery {
     return resolution;
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public List<String> getMeasureName() {
+    return measureNames;
   }
 
   public Map<String, String> getSliceByTags() {
@@ -78,7 +80,7 @@ public class CubeDeleteQuery {
     sb.append("{startTs=").append(startTs);
     sb.append(", endTs=").append(endTs);
     sb.append(", resolution=").append(resolution);
-    sb.append(", measureName='").append(measureName == null ? "null" : measureName).append('\'');
+    sb.append(", measureNames=").append(measureNames == null ? "null" : measureNames);
     sb.append(", sliceByTagValues=").append(sliceByTagValues);
     sb.append('}');
     return sb.toString();

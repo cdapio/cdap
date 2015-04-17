@@ -45,29 +45,29 @@ public final class CubeQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final String measureName;
+  private final List<String> measureNames;
   private final MeasureType measureType;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
   private final Interpolator interpolator;
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   String measureName, MeasureType measureType,
+                   List<String> measureNames, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, limit,
-         measureName, measureType,
+         measureNames, measureType,
          sliceByTagValues, groupByTags, null);
   }
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   String measureName, MeasureType measureType,
+                   List<String> measureNames, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags,
                    @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.measureName = measureName;
+    this.measureNames = measureNames;
     this.measureType = measureType;
     this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
     this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
@@ -86,8 +86,8 @@ public final class CubeQuery {
     return resolution;
   }
 
-  public String getMeasureName() {
-    return measureName;
+  public List<String> getMeasureName() {
+    return measureNames;
   }
 
   public MeasureType getMeasureType() {
@@ -119,7 +119,7 @@ public final class CubeQuery {
     sb.append(", endTs=").append(endTs);
     sb.append(", resolution=").append(resolution);
     sb.append(", limit=").append(limit);
-    sb.append(", measureName='").append(measureName).append('\'');
+    sb.append(", measureNames=").append(measureNames);
     sb.append(", measureType=").append(measureType);
     sb.append(", sliceByTagValues=").append(sliceByTagValues);
     sb.append(", groupByTags=").append(groupByTags);

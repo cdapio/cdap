@@ -32,6 +32,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
@@ -198,7 +199,7 @@ public final class RuntimeStats {
   }
 
   private static MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
-    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, ImmutableList.of(metricName), MetricType.COUNTER,
                          context, new ArrayList<String>());
   }
 }

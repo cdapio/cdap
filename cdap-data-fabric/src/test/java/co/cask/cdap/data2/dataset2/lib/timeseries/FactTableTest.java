@@ -98,7 +98,7 @@ public class FactTableTest {
 
     // verify each metric
     for (int k = 1; k < 4; k++) {
-      FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, "metric" + k, tagValues);
+      FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, ImmutableList.of("metric" + k), tagValues);
       Table<String, List<TagValue>, List<TimeValue>> expected = HashBasedTable.create();
       expected.put("metric" + k, tagValues, ImmutableList.of(new TimeValue(ts, 11 * k),
                                                              new TimeValue(ts + resolution, 27 * k),
@@ -108,7 +108,7 @@ public class FactTableTest {
 
     // verify each metric within a single timeBase
     for (int k = 1; k < 4; k++) {
-      FactScan scan = new FactScan(ts, ts + resolution - 1, "metric" + k, tagValues);
+      FactScan scan = new FactScan(ts, ts + resolution - 1, ImmutableList.of("metric" + k), tagValues);
       Table<String, List<TagValue>, List<TimeValue>> expected = HashBasedTable.create();
       expected.put("metric" + k, tagValues, ImmutableList.of(new TimeValue(ts, 11 * k)));
       assertScan(table, expected, scan);
@@ -140,11 +140,11 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // delete metrics for "metric1" at ts0 and verify deletion
-    scan = new FactScan(ts, ts + 1, "metric1", tagValues);
+    scan = new FactScan(ts, ts + 1, ImmutableList.of("metric1"), tagValues);
     table.delete(scan);
     expected.clear();
     expected.put("metric1", tagValues, ImmutableList.of(new TimeValue(ts + resolution, 27)));
-    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, "metric1", tagValues);
+    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, ImmutableList.of("metric1"), tagValues);
     assertScan(table, expected, scan);
 
     // verify the next tags search
@@ -313,7 +313,7 @@ public class FactTableTest {
     for (int i = 1; i < 3; i++) {
       // all time points
       scan = new FactScan(ts - resolution, ts + 3 * resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          ImmutableList.of("metric" + i), tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -323,7 +323,7 @@ public class FactTableTest {
 
       // time points since second interval
       scan = new FactScan(ts + resolution, ts + 3 * resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          ImmutableList.of("metric" + i), tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -333,7 +333,7 @@ public class FactTableTest {
 
       // time points before third interval
       scan = new FactScan(ts - resolution, ts + resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          ImmutableList.of("metric" + i), tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -344,7 +344,7 @@ public class FactTableTest {
       // time points for fuzzy tag2 since second interval
       scan = new FactScan(ts + resolution, ts + 3 * resolution,
                             // null stands for any
-                            "metric" + i, tagValues("tag1", "value1", "tag2", null));
+                            ImmutableList.of("metric" + i), tagValues("tag1", "value1", "tag2", null));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -357,7 +357,7 @@ public class FactTableTest {
       // time points for fuzzy tag1 before third interval
       scan = new FactScan(ts - resolution, ts + resolution,
                             // null stands for any
-                            "metric" + i, tagValues("tag1", null, "tag2", "value3"));
+                            ImmutableList.of("metric" + i), tagValues("tag1", null, "tag2", "value3"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value3"),
@@ -370,7 +370,7 @@ public class FactTableTest {
       // time points for both fuzzy tags before third interval
       scan = new FactScan(ts - resolution, ts + resolution,
                           // null stands for any
-                          "metric" + i, tagValues("tag1", null, "tag2", null));
+                          ImmutableList.of("metric" + i), tagValues("tag1", null, "tag2", null));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -389,7 +389,7 @@ public class FactTableTest {
       // time points for both fuzzy tags since third interval
       scan = new FactScan(ts + resolution, ts + 3 * resolution,
                           // null stands for any
-                          "metric" + i, tagValues("tag1", null, "tag2", null));
+                          ImmutableList.of("metric" + i), tagValues("tag1", null, "tag2", null));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -499,7 +499,7 @@ public class FactTableTest {
 
     for (int k = 0; k < 10; k++) {
       // 0, 0 should match timestamp of all data points
-      FactScan scan = new FactScan(0, 0, "metric" + k, tagValues("tag" + k, "value" + k));
+      FactScan scan = new FactScan(0, 0, ImmutableList.of("metric" + k), tagValues("tag" + k, "value" + k));
 
       Table<String, List<TagValue>, List<TimeValue>> expected = HashBasedTable.create();
       expected.put("metric" + k, tagValues("tag" + k, "value" + k),

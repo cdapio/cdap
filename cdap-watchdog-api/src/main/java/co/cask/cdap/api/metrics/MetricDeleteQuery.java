@@ -18,9 +18,9 @@ package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,14 +30,14 @@ public class MetricDeleteQuery {
 
   private final long startTs;
   private final long endTs;
-  private final String metricName;
+  private final List<String> metricNames;
   private final Map<String, String> sliceByTagValues;
 
-  public MetricDeleteQuery(long startTs, long endTs, String metricName,
+  public MetricDeleteQuery(long startTs, long endTs, List<String> metricNames,
                            Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
-    this.metricName = metricName;
+    this.metricNames = metricNames;
     this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
   }
 
@@ -49,8 +49,8 @@ public class MetricDeleteQuery {
     return endTs;
   }
 
-  public String getMetricName() {
-    return metricName;
+  public List<String> getMetricNames() {
+    return metricNames;
   }
 
   public Map<String, String> getSliceByTags() {
@@ -62,7 +62,7 @@ public class MetricDeleteQuery {
     return Objects.toStringHelper(this)
       .add("startTs", startTs)
       .add("endTs", endTs)
-      .add("metricName", metricName)
+      .add("metricName", metricNames)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .toString();
   }
