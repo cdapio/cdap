@@ -54,9 +54,8 @@ import java.util.Map;
  *
  * class MyMapReduce implements MapReduce {
  *    public void beforeSubmit(MapReduceContext context) {
- *      context.setInput(new StreamBatchReadable("mystream"), null);
+ *      context.setInput(new StreamBatchReadable("mystream"));
  *    }
- * }
  * }
  * </pre>
  *
@@ -102,7 +101,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    */
   public static void useStreamInput(MapReduceContext context, String streamName, long startTime, long endTime) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime));
   }
 
   /**
@@ -117,7 +116,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, decoderType));
   }
 
   /**
@@ -133,7 +132,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, FormatSpecification bodyFormatSpec) {
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec).toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec));
   }
 
   /**
