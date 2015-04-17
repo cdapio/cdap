@@ -37,7 +37,7 @@ function pandoc_includes() {
     MD_INGEST="../../../cdap-ingest"
   elif [ $TEST_INCLUDES == $TEST_INCLUDES_REMOTE ]; then
     # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.md
-    # https://raw.githubusercontent.com/caskdata/cdap-ingest/release/1.0.0/cdap-file-drop-zone/README.md
+    # https://raw.githubusercontent.com/caskdata/cdap-ingest/release/1.0.0/cdap-flume/README.md
     GITHUB_URL="https://raw.githubusercontent.com/caskdata"
     MD_CLIENTS="$GITHUB_URL/cdap-clients/release/1.1.0"
     MD_INGEST="$GITHUB_URL/cdap-ingest/release/1.0.0"
@@ -52,8 +52,6 @@ function pandoc_includes() {
     pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
     pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
 
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
     pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
     pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
     pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
@@ -72,8 +70,6 @@ function test_includes () {
   # List of includes to be tested
   test_an_include cdap-authentication-clients-java.rst
   test_an_include cdap-authentication-clients-python.rst
-  test_an_include cdap-file-drop-zone.rst
-  test_an_include cdap-file-tailer.rst
   test_an_include cdap-flume.rst
   test_an_include cdap-stream-clients-java.rst
   test_an_include cdap-stream-clients-python.rst

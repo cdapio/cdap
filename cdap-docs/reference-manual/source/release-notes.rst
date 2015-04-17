@@ -30,6 +30,10 @@ Cask Data Application Platform Release Notes
 General
 -------
 
+- References to and documentation for the CDAP File DropZone and CDAP File Tailer were removed, 
+  as they have been replaced with new methods of ingesting data into CDAP.
+
+
 New Features
 ------------
 
