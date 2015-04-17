@@ -187,24 +187,23 @@ public class BatchETLDBAdapterTest extends TestBase {
     Schema nullableDouble = Schema.nullableOf(Schema.of(Schema.Type.DOUBLE));
     Schema nullableBytes = Schema.nullableOf(Schema.of(Schema.Type.BYTES));
     Schema schema = Schema.recordOf("student",
-      Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("SCORE", nullableDouble),
-      Schema.Field.of("GRADUATED", nullableBoolean),
-      Schema.Field.of("TINY", nullableInt),
-      Schema.Field.of("SMALL", nullableInt),
-      Schema.Field.of("BIG", nullableLong),
-      Schema.Field.of("FLOAT", nullableFloat),
-      Schema.Field.of("REAL", nullableFloat),
-      Schema.Field.of("NUMERIC", nullableDouble),
-      Schema.Field.of("BIT", nullableBoolean),
-      Schema.Field.of("DATE", nullableLong),
-      Schema.Field.of("TIME", nullableLong),
-      Schema.Field.of("TIMESTAMP", nullableLong),
-      Schema.Field.of("BINARY", nullableBytes),
-      Schema.Field.of("CLOB", nullableBytes));
-
+                                     Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+                                     Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("SCORE", nullableDouble),
+                                     Schema.Field.of("GRADUATED", nullableBoolean),
+                                     Schema.Field.of("TINY", nullableInt),
+                                     Schema.Field.of("SMALL", nullableInt),
+                                     Schema.Field.of("BIG", nullableLong),
+                                     Schema.Field.of("FLOAT", nullableFloat),
+                                     Schema.Field.of("REAL", nullableFloat),
+                                     Schema.Field.of("NUMERIC", nullableDouble),
+                                     Schema.Field.of("BIT", nullableBoolean),
+                                     Schema.Field.of("DATE", nullableLong),
+                                     Schema.Field.of("TIME", nullableLong),
+                                     Schema.Field.of("TIMESTAMP", nullableLong),
+                                     Schema.Field.of("BINARY", nullableBytes),
+                                     Schema.Field.of("CLOB", nullableBytes));
 
     ETLStage sink = new ETLStage("TableSink", ImmutableMap.of(
       "name", "outputTable",
