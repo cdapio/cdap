@@ -61,10 +61,10 @@ EOF`
 SCRIPT=`basename $0`
 SCRIPT_PATH=`pwd`
 
-DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
-BUILD_PATH="$SCRIPT_PATH/$BUILD"
-HTML_PATH="$BUILD_PATH/$HTML"
-SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
+DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
+BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
+HTML_PATH="${BUILD_PATH}/${HTML}"
+SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -130,33 +130,33 @@ function usage() {
 }
 
 function clean() {
-  cd $SCRIPT_PATH
-  rm -rf $SCRIPT_PATH/$BUILD
-  mkdir $SCRIPT_PATH/$BUILD
+  cd ${SCRIPT_PATH}
+  rm -rf ${SCRIPT_PATH}/${BUILD}
+  mkdir -p ${SCRIPT_PATH}/${BUILD}
 }
 
 function build_docs() {
   clean
-  cd $SCRIPT_PATH
+  cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -b html -d build/doctrees source build/html
 }
 
 function build_docs_google() {
   clean
-  cd $SCRIPT_PATH
+  cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
 }
 
 function build_javadocs_full() {
-  cd $PROJECT_PATH
+  cd ${PROJECT_PATH}
   set_mvn_environment
   MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
-  cd $PROJECT_PATH
+  cd ${PROJECT_PATH}
   set_mvn_environment
   MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
 }
