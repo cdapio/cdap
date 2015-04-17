@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.common.Properties;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -66,7 +65,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -181,7 +179,7 @@ public class BatchETLDBAdapterTest extends TestBase {
                                                    Properties.DB.IMPORT_QUERY, importQuery,
                                                    Properties.DB.COUNT_QUERY, countQuery
                                    ));
-    ETLStage sink = new ETLStage("TableSink", ImmutableMap.of("name", "outputTable"));
+
     Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
     Schema nullableInt = Schema.nullableOf(Schema.of(Schema.Type.INT));
     Schema nullableLong = Schema.nullableOf(Schema.of(Schema.Type.LONG));
@@ -189,29 +187,31 @@ public class BatchETLDBAdapterTest extends TestBase {
     Schema nullableDouble = Schema.nullableOf(Schema.of(Schema.Type.DOUBLE));
     Schema nullableBytes = Schema.nullableOf(Schema.of(Schema.Type.BYTES));
     Schema schema = Schema.recordOf("student",
-                                    Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
-                                    Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("SCORE", nullableDouble),
-                                    Schema.Field.of("GRADUATED", nullableBoolean),
-                                    Schema.Field.of("TINY", nullableInt),
-                                    Schema.Field.of("SMALL", nullableInt),
-                                    Schema.Field.of("BIG", nullableLong),
-                                    Schema.Field.of("FLOAT", nullableFloat),
-                                    Schema.Field.of("REAL", nullableFloat),
-                                    Schema.Field.of("NUMERIC", nullableDouble),
-                                    Schema.Field.of("BIT", nullableBoolean),
-                                    Schema.Field.of("DATE", nullableLong),
-                                    Schema.Field.of("TIME", nullableLong),
-                                    Schema.Field.of("TIMESTAMP", nullableLong),
-                                    Schema.Field.of("BINARY", nullableBytes),
-                                    Schema.Field.of("CLOB", nullableBytes));
+      Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("SCORE", nullableDouble),
+      Schema.Field.of("GRADUATED", nullableBoolean),
+      Schema.Field.of("TINY", nullableInt),
+      Schema.Field.of("SMALL", nullableInt),
+      Schema.Field.of("BIG", nullableLong),
+      Schema.Field.of("FLOAT", nullableFloat),
+      Schema.Field.of("REAL", nullableFloat),
+      Schema.Field.of("NUMERIC", nullableDouble),
+      Schema.Field.of("BIT", nullableBoolean),
+      Schema.Field.of("DATE", nullableLong),
+      Schema.Field.of("TIME", nullableLong),
+      Schema.Field.of("TIMESTAMP", nullableLong),
+      Schema.Field.of("BINARY", nullableBytes),
+      Schema.Field.of("CLOB", nullableBytes));
 
-    ETLStage putTransform = new ETLStage(StructuredRecordToPutTransform.class.getSimpleName(),
-                                         ImmutableMap.of("schema", schema.toString(),
-                                                         "row.field", "ID"));
-    List<ETLStage> transformList = Lists.newArrayList(putTransform);
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
+
+    ETLStage sink = new ETLStage("TableSink", ImmutableMap.of(
+      "name", "outputTable",
+      Table.PROPERTY_SCHEMA, schema.toString(),
+      Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     // add dataset instances that the source and sink added
