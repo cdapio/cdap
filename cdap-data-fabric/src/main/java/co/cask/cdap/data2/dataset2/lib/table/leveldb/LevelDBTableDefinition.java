@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -53,9 +54,18 @@ public class LevelDBTableDefinition
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    // TODO: refactor common table properties into a common class
     ConflictDetection conflictDetection =
       ConflictDetection.valueOf(spec.getProperty(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name()));
-    return new LevelDBTable(datasetContext, spec.getName(), conflictDetection, service, cConf);
+    String schemaRowField = spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD);
+    String schemaStr = spec.getProperty(Table.PROPERTY_SCHEMA);
+    Schema schema;
+    try {
+      schema = schemaStr == null ? null : Schema.parseJson(schemaStr);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Invalid schema", e);
+    }
+    return new LevelDBTable(datasetContext, spec.getName(), conflictDetection, service, cConf, schema, schemaRowField);
   }
 
   @Override

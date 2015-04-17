@@ -24,17 +24,30 @@
   </div>
 </div>
 
-<div class="input-group">
-  <span class="input-group-addon">
-    <i class="fa fa-line-chart"></i>
-  </span>
-  <input type="text" class="form-control"
-    placeholder="Metric Name"
-    ng-model="metric.name"
-    bs-options="m for m in available.names"
-    data-watch-options="1"
-    data-min-length="0"
-    data-limit="20"
-    data-container="body"
-    bs-typeahead />
+<div class="metrics-container">
+<div ng-repeat="name in metric.names" class="h6">
+  <div class="input-group">
+    <span class="input-group-addon">
+      <i class="fa fa-line-chart"></i>
+    </span>
+    <input type="text" class="form-control"
+      placeholder="Metric Name"
+      ng-model="name.name"
+      bs-options="m for m in available.names"
+      data-watch-options="1"
+      data-min-length="0"
+      data-limit="20"
+      data-container="body"
+      bs-typeahead />
+    <div class="input-group-addon" ng-click="deleteMetric($index)">
+      <span>
+        <i class="fa fa-fw fa-trash"></i>
+      </span>
+    </div>
+  </div>
 </div>
+</div>
+
+<button class="btn btn-primary" ng-click="addMetricName()" type="button" >
+  <span class="fa fa-fw fa-plus"></span>
+</button>

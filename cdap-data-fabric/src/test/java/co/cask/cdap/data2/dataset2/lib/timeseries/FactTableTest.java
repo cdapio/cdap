@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
@@ -64,18 +65,17 @@ public class FactTableTest {
     // trying adding one by one, in same (first) time resolution bucket
     for (int i = 0; i < 5; i++) {
       for (int k = 1; k < 4; k++) {
-        table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric" + k,
-                                            // note: "+i" here and below doesn't affect results, just to confirm
-                                            //       that data points are rounded to the resolution
-                                            new TimeValue(ts + i, k))));
+        // note: "+i" here and below doesn't affect results, just to confirm
+        //       that data points are rounded to the resolution
+        table.add(ImmutableList.of(new Fact(ts + i, tagValues, new Measurement("metric" + k, MeasureType.COUNTER, k))));
       }
     }
 
     // trying adding one by one, in different time resolution buckets
     for (int i = 0; i < 3; i++) {
       for (int k = 1; k < 4; k++) {
-        table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric" + k,
-                                            new TimeValue(ts + resolution * i + i, 2 * k))));
+        table.add(ImmutableList.of(new Fact(ts + resolution * i + i, tagValues,
+                                            new Measurement("metric" + k, MeasureType.COUNTER, 2 * k))));
       }
     }
 
@@ -84,13 +84,13 @@ public class FactTableTest {
     List<Fact> aggs = Lists.newArrayList();
     for (int i = 0; i < 7; i++) {
       for (int k = 1; k < 4; k++) {
-        aggs.add(new Fact(tagValues, MeasureType.COUNTER, "metric" + k, new TimeValue(ts + resolution, 3 * k)));
+        aggs.add(new Fact(ts + resolution, tagValues, new Measurement("metric" + k, MeasureType.COUNTER, 3 * k)));
       }
     }
     // then incs in different time resolution buckets
     for (int i = 0; i < 3; i++) {
       for (int k = 1; k < 4; k++) {
-        aggs.add(new Fact(tagValues, MeasureType.COUNTER, "metric" + k, new TimeValue(ts + resolution * i, 4 * k)));
+        aggs.add(new Fact(ts + resolution * i, tagValues, new Measurement("metric" + k, MeasureType.COUNTER, 4 * k)));
       }
     }
 
@@ -165,12 +165,12 @@ public class FactTableTest {
     tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
                                  new TagValue("tag2", "value5"),
                                  new TagValue("tag3", null));
-    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric", new TimeValue(ts, 10))));
+    table.add(ImmutableList.of(new Fact(ts, tagValues, new Measurement("metric", MeasureType.COUNTER, 10))));
 
     tagValues = ImmutableList.of(new TagValue("tag1", "value1"),
                                  new TagValue("tag2", null),
                                  new TagValue("tag3", "value3"));
-    table.add(ImmutableList.of(new Fact(tagValues, MeasureType.COUNTER, "metric", new TimeValue(ts, 10))));
+    table.add(ImmutableList.of(new Fact(ts, tagValues, new Measurement("metric", MeasureType.COUNTER, 10))));
 
     nextTags = table.findSingleTagValue(ImmutableList.of("tag1", "tag2", "tag3"),
                                         ImmutableMap.of("tag1", "value1"), ts, ts + 1);
@@ -520,7 +520,7 @@ public class FactTableTest {
   private void writeInc(FactTable table, String metric, long ts, int value, String... tags)
     throws Exception {
 
-    table.add(ImmutableList.of(new Fact(tagValues(tags), MeasureType.COUNTER, metric, new TimeValue(ts, value))));
+    table.add(ImmutableList.of(new Fact(ts, tagValues(tags), new Measurement(metric, MeasureType.COUNTER, value))));
   }
 
   private List<TagValue> tagValues(String... tags) {

@@ -31,15 +31,18 @@ import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
+import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
+import co.cask.cdap.templates.etl.transforms.DBRecordToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.GenericTypeToAvroKeyTransform;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
@@ -86,7 +89,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
                                         StreamToStructuredRecordTransform.class,
-                                        GenericTypeToAvroKeyTransform.class));
+                                        GenericTypeToAvroKeyTransform.class,
+                                        ScriptFilterTransform.class,
+                                        DBSource.class,
+                                        DBRecordToStructuredRecordTransform.class));
   }
 
   private void initTable(List<Class> classList) throws Exception {
@@ -154,7 +160,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
         transforms.add(transformObj);
       }
     } catch (Exception e) {
-      throw new IllegalArgumentException("Unable to load class. Check stage names. %s", e);
+      throw new IllegalArgumentException("Unable to load class. Check stage names.", e);
     }
   }
 
