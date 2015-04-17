@@ -1,8 +1,29 @@
+<div ncy-breadcrumb></div>
+
+<h2>Explore</h2>
+
 <section class="panel-group explore"
-     ng-controller="CdapDatasetExploreController"
      ng-model="activePanel"
      bs-collapse>
 
+  <!-- Choose Table -->
+  <table class="table table-responsive">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr ng-repeat="data in dataList" ng-click="click(data)">
+        <td>{{ ::data.name }}</td>
+        <td>{{ ::data.type }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- WRITE & EXECUTE SQL -->
   <div class="panel panel-explore">
     <div class="panel-heading">
       <h3 class="panel-title" bs-collapse-toggle>
@@ -15,11 +36,12 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <my-sql-query data-panel="activePanel" data-type="'dataset'" data-name="name"></my-sql-query>
+        <my-sql-query data-panel="activePanel" data-type="type" data-name="name"></my-sql-query>
       </div>
     </div>
   </div>
 
+  <!-- VIEW QUERIES -->
   <div class="panel panel-explore">
     <div class="panel-heading">
       <h3 class="panel-title" bs-collapse-toggle>
@@ -41,3 +63,4 @@
 
 
 </section>
+

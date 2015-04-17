@@ -4,20 +4,18 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        panel: '='
+        panel: '=',
+        type: '=',
+        name: '='
       },
       templateUrl: 'sql-query/sql-query.html',
       controller: function ($scope, MyDataSource, $state) {
 
         var dataSrc = new MyDataSource($scope);
-        var current = '';
-        if ($state.params.streamId) {
-          current = 'stream_' + $state.params.streamId;
-        } else {
-          current = 'dataset_' + $state.params.datasetId;
-        }
 
-        $scope.query = 'SELECT * FROM ' + current + ' LIMIT 5';
+        $scope.$watch('name', function(newVal) {
+          $scope.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
+        });
 
         $scope.execute = function() {
           dataSrc

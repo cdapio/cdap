@@ -51,7 +51,6 @@ angular.module(PKG.name + '.commons')
               })
               .then(function (result) {
                 angular.forEach(result, function(v) {
-                  console.log('v', v);
                   v.name = v.name.split('.')[1];
                 });
 
