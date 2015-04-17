@@ -55,6 +55,7 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
     cConf.set(Constants.Security.SSL_ENABLED, "true");
     cConf.set(Constants.Security.AuthenticationServer.SSL_PORT, "0");
     cConf.set(authHandlerConfigBase.concat("useLdaps"), "true");
