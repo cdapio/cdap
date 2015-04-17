@@ -45,7 +45,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +86,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Lock lock;
   private Condition condition;
 
-  WorkflowDriver(Program program, RunId runId, ProgramOptions options, InetAddress hostname,
+  WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
     this.program = program;
     this.hostname = hostname;
@@ -98,7 +97,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME))
       : System.currentTimeMillis();
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
-                                                                         runId, options);
+                                                                         options);
     lock = new ReentrantLock();
     condition = lock.newCondition();
   }
@@ -196,7 +195,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     status.put(node.getNodeId(), node);
 
-    WorkflowAction action = initialize(actionSpec, classLoader, instantiator);
+    WorkflowAction action = initialize(actionSpec, classLoader, instantiator, node.getNodeId());
     try {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
       try {
@@ -314,7 +313,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
    */
   @SuppressWarnings("unchecked")
   private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
-                                    ClassLoader classLoader, InstantiatorFactory instantiator) throws Exception {
+                                    ClassLoader classLoader, InstantiatorFactory instantiator,
+                                    String nodeId) throws Exception {
     Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
@@ -323,7 +323,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     try {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
                                                  logicalStartTime,
-                                                 workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec),
+                                                 workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec,
+                                                                                                       nodeId),
                                                  runtimeArgs));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);

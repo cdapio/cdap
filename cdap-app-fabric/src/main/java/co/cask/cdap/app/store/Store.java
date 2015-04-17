@@ -465,4 +465,16 @@ public interface Store {
    * @param id Namespace id.
    */
   void removeAllAdapters(Id.Namespace id);
+
+  /**
+   * Logs the start of the program running under Workflow
+   * @param programId           Id of the program
+   * @param programRunId        RunId generated for the program
+   * @param workflow          Id of the Workflow who started this program
+   * @param workflowRunId       Id of the Workflow run which started this program
+   * @param workflowNodeId      Id of the node in the Workflow which represents this program
+   * @param startTimeInSeconds  Start timestamp in seconds; if run id is time-based pass the time from the run id
+   */
+  void setWorkflowProgramStart(Id.Program programId, String programRunId, String workflow, String workflowRunId,
+                               String workflowNodeId, long startTimeInSeconds);
 }

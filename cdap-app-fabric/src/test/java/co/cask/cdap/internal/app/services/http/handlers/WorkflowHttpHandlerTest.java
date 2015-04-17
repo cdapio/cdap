@@ -516,8 +516,19 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, oneMRHistoryRuns.size());
     Assert.assertEquals(1, anotherMRHistoryRuns.size());
 
-    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), oneMRHistoryRuns.get(0).getPid());
-    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherMRHistoryRuns.get(0).getPid());
+    Map<String, String> workflowRunRecordProperties = workflowHistoryRuns.get(0).getProperties();
+    Map<String, String> oneMRRunRecordProperties = oneMRHistoryRuns.get(0).getProperties();
+    Map<String, String> anotherMRRunRecordProperties = anotherMRHistoryRuns.get(0).getProperties();
+
+
+    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(),
+                        oneMRRunRecordProperties.get(workflowAppWithScopedParameterWorkflow));
+
+    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(),
+                        anotherMRRunRecordProperties.get(workflowAppWithScopedParameterWorkflow));
+
+    Assert.assertEquals(workflowRunRecordProperties.get("0"), oneMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("2"), anotherMRHistoryRuns.get(0).getPid());
   }
 
   @Test

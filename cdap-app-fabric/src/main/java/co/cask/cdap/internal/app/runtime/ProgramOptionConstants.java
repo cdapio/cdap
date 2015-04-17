@@ -23,6 +23,12 @@ public final class ProgramOptionConstants {
 
   public static final String RUN_ID = "runId";
 
+  public static final String WORKFLOW_RUN_ID = "workflowRunId";
+
+  public static final String WORKFLOW_NODE_ID = "workflowNodeId";
+
+  public static final String WORKFLOW_NAME = "workflowName";
+
   public static final String INSTANCE_ID = "instanceId";
 
   public static final String INSTANCES = "instances";

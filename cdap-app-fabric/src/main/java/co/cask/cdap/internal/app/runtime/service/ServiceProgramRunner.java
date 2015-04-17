@@ -78,7 +78,7 @@ public class ServiceProgramRunner extends AbstractInMemoryProgramRunner {
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
     //RunId for the service
-    RunId runId = RunIds.generate();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     Table<String, Integer, ProgramController> components = startAllComponents(program, runId,
                                                                               options.getUserArguments(), serviceSpec);
     return new InMemoryProgramController(components, runId, program, serviceSpec, options.getUserArguments(),

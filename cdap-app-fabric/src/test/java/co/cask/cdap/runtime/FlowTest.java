@@ -23,6 +23,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -36,6 +37,7 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
@@ -114,8 +116,11 @@ public class FlowTest {
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new SimpleProgramOptions(
-        program.getName(), new BasicArguments(), new BasicArguments(ImmutableMap.of("arg", "test")))));
+      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                     RunIds.generate().getId()));
+      BasicArguments userArgs = new BasicArguments(ImmutableMap.of("arg", "test"));
+
+      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs)));
     }
 
     TimeUnit.SECONDS.sleep(1);
@@ -157,7 +162,10 @@ public class FlowTest {
         continue;
       }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new SimpleProgramOptions(program)));
+      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                     RunIds.generate().getId()));
+      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
+                                                                   new BasicArguments())));
     }
 
     TimeUnit.SECONDS.sleep(1);

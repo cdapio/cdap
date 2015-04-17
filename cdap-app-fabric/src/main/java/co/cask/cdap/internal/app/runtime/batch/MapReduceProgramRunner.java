@@ -36,7 +36,6 @@ import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -118,18 +117,29 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-    final RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
-                    ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
-                    : RunIds.generate();
+
+    final String workflowName = arguments.hasOption(ProgramOptionConstants.WORKFLOW_NAME)
+                                        ? arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME)
+                                        : null;
+
+    final RunId workflowRunId = arguments.hasOption(ProgramOptionConstants.WORKFLOW_RUN_ID)
+                                  ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID))
+                                  : null;
+
+    final String workflowNodeId = arguments.hasOption(ProgramOptionConstants.WORKFLOW_NODE_ID)
+                                    ? arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID)
+                                    : null;
+
+    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+
+    final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
                                 ? Long.parseLong(arguments
                                                    .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
     String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
     MapReduce mapReduce;
     try {
@@ -167,7 +177,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+        if (workflowNodeId == null) {
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+        } else {
+          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId.getId(),
+                                        workflowNodeId, startTimeInSeconds);
+        }
       }
 
       @Override

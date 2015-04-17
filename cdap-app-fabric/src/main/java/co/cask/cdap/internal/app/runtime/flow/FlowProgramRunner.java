@@ -95,7 +95,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       // Launch flowlet program runners
-      RunId runId = RunIds.generate();
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
       programOptions.put(runId, options);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);

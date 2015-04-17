@@ -19,6 +19,7 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -41,22 +42,33 @@ public final class RunRecord {
   @SerializedName("adapter")
   private final String adapterName;
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
-                   ProgramRunStatus status, @Nullable String adapterName) {
+  @SerializedName("properties")
+  private final Map<String, String> properties;
+
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
+                   @Nullable String adapterName, @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
     this.adapterName = adapterName;
+    this.properties = properties;
   }
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
-                   ProgramRunStatus status) {
+  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status, @Nullable String adapterName) {
+    this(pid, startTs, stopTs, status, adapterName, null);
+  }
+
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
     this(pid, startTs, stopTs, status, null);
   }
 
   public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status, started.getAdapterName());
+    this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getProperties());
+  }
+
+  public RunRecord(RunRecord started, ProgramRunStatus status) {
+    this(started.pid, started.startTs, null, status, started.getAdapterName(), started.getProperties());
   }
 
   public String getPid() {
@@ -81,6 +93,11 @@ public final class RunRecord {
     return adapterName;
   }
 
+  @Nullable
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -96,12 +113,13 @@ public final class RunRecord {
       Objects.equal(this.startTs, that.startTs) &&
       Objects.equal(this.stopTs, that.stopTs) &&
       Objects.equal(this.status, that.status) &&
-      Objects.equal(this.adapterName, that.adapterName);
+      Objects.equal(this.adapterName, that.adapterName) &&
+      Objects.equal(this.properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, adapterName);
+    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, properties);
   }
 
   @Override
@@ -112,6 +130,7 @@ public final class RunRecord {
       .add("stopTs", stopTs)
       .add("status", status)
       .add("adapter", adapterName)
+      .add("properties", properties)
       .toString();
   }
 }
