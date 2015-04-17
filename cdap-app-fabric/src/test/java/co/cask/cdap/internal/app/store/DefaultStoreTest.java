@@ -208,6 +208,10 @@ public class DefaultStoreTest {
     RunId run3 = RunIds.generate(now);
     store.setStart(programId, run3.getId(), runIdToSecs(run3));
 
+    // For a RunRecord that has not yet been completed, getStopTs should return null
+    RunRecord runRecord = store.getRun(programId, run3.getId());
+    Assert.assertNull(runRecord.getStopTs());
+
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
@@ -234,12 +238,12 @@ public class DefaultStoreTest {
     // records should be sorted by start time latest to earliest
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(nowSecs - 10, run.getStartTs());
-    Assert.assertEquals(nowSecs - 5, run.getStopTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 5), run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(nowSecs - 20, run.getStartTs());
-    Assert.assertEquals(nowSecs - 10, run.getStopTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 10), run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
 
     // Assert all history
