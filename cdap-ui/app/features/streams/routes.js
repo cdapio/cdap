@@ -34,6 +34,9 @@ angular.module(PKG.name + '.feature.streams')
           }).result.finally(function() {
             $state.go('streams.list',{}, { reload: true });
           });
+        },
+        onExit: function($modalStack) {
+          $modalStack.dismissAll();
         }
       })
 

@@ -1,14 +1,21 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout) {
+  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
+    var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
+    if ($state.params.runid) {
+      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      if (match.length) {
+        $scope.runs.selected = match[0];
+      }
+    }
     var metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
                           '&context=ns.' +
                           $state.params.namespace +
                           '.app.' + $state.params.appId +
                           '.flow.' + $state.params.programId +
-                          '.run.' + $state.params.runid +
+                          '.run.' + $scope.runs.selected.runid +
                           '.flowlet.',
         metricStreamPath = '/metrics/query?metric=system.collect.events' +
                            '&context=namespace.' +
@@ -27,15 +34,12 @@ angular.module(PKG.name + '.feature.flows')
 
     // This controller is NOT shared between the accordions.
     dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
+      _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
     }, function(res) {
-        angular.forEach(res, function(run) {
-          if (run.runid === $state.params.runid) {
-            $scope.status = run.status;
-            $scope.duration = (run.end ? run.end - run.start : (Date.now()/1000) - run.start);
-            $scope.startTime = run.start*1000;
-          }
-        });
+      var startMs = res.start * 1000;
+        $scope.startTime = new Date(startMs);
+        $scope.status = res.status;
+        $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
       });
 
     function pollMetrics() {

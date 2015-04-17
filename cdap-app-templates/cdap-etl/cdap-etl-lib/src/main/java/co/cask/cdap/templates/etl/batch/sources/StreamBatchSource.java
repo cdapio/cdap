@@ -16,10 +16,10 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link BatchSource} for {@link Stream} to use {@link Stream} as Source.
  */
-public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
+public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent, StreamEvent> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
   public static final String STREAM_NAME = "streamName";
@@ -64,9 +64,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
 
     String streamName = context.getRuntimeArguments().get(STREAM_NAME);
     LOG.info("Setting input to Stream : {}", streamName);
-    Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
     // TODO: This is not clean.
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime));
   }
 }

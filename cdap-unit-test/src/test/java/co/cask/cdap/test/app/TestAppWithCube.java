@@ -68,18 +68,19 @@ public class TestAppWithCube extends TestBase {
       tsInSec = (tsInSec / 60) * 60;
 
       // add couple facts
-      add(url, ImmutableList.of(new CubeFact(ImmutableMap.of("user", "alex", "action", "click"),
-                                             MeasureType.COUNTER, "count",
-                                             new TimeValue(tsInSec, 1))));
-      add(url, ImmutableList.of(new CubeFact(ImmutableMap.of("user", "alex", "action", "click"),
-                                             MeasureType.COUNTER, "count",
-                                             new TimeValue(tsInSec, 1)),
-                                new CubeFact(ImmutableMap.of("user", "alex", "action", "back"),
-                                             MeasureType.COUNTER, "count",
-                                             new TimeValue(tsInSec + 1, 1)),
-                                new CubeFact(ImmutableMap.of("user", "alex", "action", "click"),
-                                             MeasureType.COUNTER, "count",
-                                             new TimeValue(tsInSec + 2, 1))));
+      add(url, ImmutableList.of(new CubeFact(tsInSec)
+                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addMeasurement("count", MeasureType.COUNTER, 1)));
+
+      add(url, ImmutableList.of(new CubeFact(tsInSec)
+                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addMeasurement("count", MeasureType.COUNTER, 1),
+                                new CubeFact(tsInSec + 1)
+                                  .addTag("user", "alex").addTag("action", "back")
+                                  .addMeasurement("count", MeasureType.COUNTER, 1),
+                                new CubeFact(tsInSec + 2)
+                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addMeasurement("count", MeasureType.COUNTER, 1)));
 
       // search for tags
       Collection<TagValue> tags =

@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -411,6 +412,9 @@ public class DefaultStore implements Store {
         return null;
       }
     });
+
+    LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
+              id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
   @Override

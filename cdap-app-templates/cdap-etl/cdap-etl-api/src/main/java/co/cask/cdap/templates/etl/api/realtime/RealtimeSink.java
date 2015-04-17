@@ -61,8 +61,9 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
    * Write the given object.
    *
    * @param object object to be written
+   * @throws Exception if there was some exception writing the object
    */
-  public abstract void write(I object);
+  public abstract void write(I object) throws Exception;
 
   /**
    * Invoked when source is suspended.

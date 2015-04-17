@@ -284,6 +284,7 @@ public interface Store {
 
   /**
    * Gets the number of instances of a {@link Worker}
+   *
    * @param id program id
    * @return number of instances
    */

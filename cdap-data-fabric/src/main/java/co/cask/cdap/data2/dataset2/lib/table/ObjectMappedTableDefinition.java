@@ -68,10 +68,14 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
       String keyName = ObjectMappedTableProperties.getRowKeyExploreName(props);
       Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
       Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
+      DatasetProperties fullProperties = DatasetProperties.builder()
+        .addAll(properties.getProperties())
+        .add(Table.PROPERTY_SCHEMA, fullSchema.toString())
+        .add(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
+        .build();
       return DatasetSpecification.builder(instanceName, getName())
-        .properties(properties.getProperties())
-        .property(DatasetProperties.SCHEMA, fullSchema.toString())
-        .datasets(tableDef.configure(TABLE_NAME, properties))
+        .properties(fullProperties.getProperties())
+        .datasets(tableDef.configure(TABLE_NAME, fullProperties))
         .build();
     } catch (IOException e) {
       throw new IllegalArgumentException("Could not parse schema.", e);
@@ -90,16 +94,29 @@ public class ObjectMappedTableDefinition extends AbstractDatasetDefinition<Objec
   public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                                 Map<String, String> arguments,
                                                 ClassLoader classLoader) throws IOException {
+    String keyName = ObjectMappedTableProperties.getRowKeyExploreName(spec.getProperties());
+
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
+    // if the table spec did not have schema, this is an ObjectMappedTable from CDAP 2.8.
+    // add the schema and row key as arguments so that explore will work
+    // TODO: remove after CDAP-2122 is done
+    if (!tableSpec.getProperties().containsKey(Table.PROPERTY_SCHEMA)) {
+      tableSpec = DatasetSpecification.builder(tableSpec.getName(), tableSpec.getType())
+        .properties(tableSpec.getProperties())
+        .property(Table.PROPERTY_SCHEMA, spec.getProperty(Table.PROPERTY_SCHEMA))
+        .property(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
+        .datasets(tableSpec.getSpecifications().values())
+        .build();
+    }
+
+    // reconstruct the table schema here because of backwards compatibility
     Table table = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
     Map<String, String> properties = spec.getProperties();
 
     TypeRepresentation typeRep = GSON.fromJson(
       ObjectMappedTableProperties.getObjectTypeRepresentation(properties), TypeRepresentation.class);
-    String keyName = ObjectMappedTableProperties.getRowKeyExploreName(properties);
-    Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(properties);
     Schema objSchema = ObjectMappedTableProperties.getObjectSchema(properties);
-    return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, keyName, keyType, classLoader);
+    return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, classLoader);
   }
 
   private void validateSchema(Schema schema) throws UnsupportedTypeException {

@@ -1,8 +1,15 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter, $alert) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
+
+    if ($state.params.runid) {
+      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      if (match.length) {
+        $scope.runs.selected = match[0];
+      }
+    }
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
@@ -39,6 +46,18 @@ angular.module(PKG.name + '.feature.workflows')
         $scope.actions = programs;
       });
 
+    $scope.stop = function() {
+      $alert({
+        type: 'info',
+        content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
+      });
+      return;
+      $scope.status = 'STOPPING';
+      dataSrc.request({
+        _cdapNsPath: basePath + '/stop',
+        method: 'POST'
+      });
+    };
 
     $scope.goToDetailActionView = function(programId, programType) {
       // As of 2.7 only a mapreduce job is scheduled in a workflow.
@@ -49,22 +68,15 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
+
     dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
+      _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
     }, function(res) {
-        var run, startMs;
-        var runsThatWeCareAbout = filterFilter(res, { runid:$state.params.runid });
-        if(runsThatWeCareAbout.length) {
-          run = runsThatWeCareAbout[0];
-          startMs = run.start * 1000;
-          $scope.startTime = new Date(startMs);
-          $scope.status = run.status;
-          $scope.duration = (run.end ? (run.end * 1000) - startMs : 0);
-        }
-
-
-      });
-
+        startMs = res.start * 1000;
+        $scope.startTime = new Date(startMs);
+        $scope.status = res.status;
+        $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
+    });
   });
 
 /**

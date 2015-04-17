@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -56,9 +57,14 @@ public class ObjectStoreDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Preconditions.checkArgument(properties.getProperties().containsKey("type"));
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
+    // strip schema from the properties sent to the underlying table, since ObjectStore allows schemas
+    // that tables do not
+    Map<String, String> tableProperties = Maps.newHashMap(properties.getProperties());
+    tableProperties.remove("type");
+    tableProperties.remove("schema");
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
-      .datasets(tableDef.configure("objects", properties))
+      .datasets(tableDef.configure("objects", DatasetProperties.builder().addAll(tableProperties).build()))
       .build();
   }
 

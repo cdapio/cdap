@@ -29,7 +29,6 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
-import co.cask.cdap.templates.etl.common.TransformExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -70,21 +69,17 @@ public class ETLMapReduce extends AbstractMapReduce {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
 
     ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
-    StageSpecification sourceSpec = GSON.fromJson(runtimeArgs.get(Constants.Source.SPECIFICATION),
-                                                  StageSpecification.class);
-    StageSpecification sinkSpec = GSON.fromJson(runtimeArgs.get(Constants.Sink.SPECIFICATION),
-                                                StageSpecification.class);
 
-    prepareSource(sourceSpec, context, config.getSource());
-    prepareSink(sinkSpec, context, config.getSink());
-    prepareTransforms(context, config.getTransforms());
+    prepareSource(context, config.getSource());
+    prepareSink(context, config.getSink());
 
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }
 
-  private void prepareSource(StageSpecification sourceSpec, MapReduceContext context, ETLStage sourceStage)
-    throws Exception {
+  private void prepareSource(MapReduceContext context, ETLStage sourceStage) throws Exception {
+    StageSpecification sourceSpec = GSON.fromJson(
+      context.getRuntimeArguments().get(Constants.Source.SPECIFICATION), StageSpecification.class);
     BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec);
     LOG.info("Source Stage : {}", sourceStage);
@@ -93,24 +88,15 @@ public class ETLMapReduce extends AbstractMapReduce {
     source.prepareJob(sourceContext);
   }
 
-  private void prepareSink(StageSpecification sinkSpec, MapReduceContext context, ETLStage sinkStage) throws Exception {
+  private void prepareSink(MapReduceContext context, ETLStage sinkStage) throws Exception {
+    StageSpecification sinkSpec = GSON.fromJson(
+      context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION), StageSpecification.class);
     BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec);
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", sink.getClass().getName());
     LOG.info("Specifications of Sink : {}", sinkSpec);
     sink.prepareJob(sinkContext);
-  }
-
-  private void prepareTransforms(MapReduceContext context, List<ETLStage> transformStages) {
-    Job job = context.getHadoopJob();
-
-    //Set list of Transform specifications to be used in the Mapper
-    job.getConfiguration().set(Constants.Transform.SPECIFICATIONS,
-                               context.getRuntimeArguments().get(Constants.Transform.SPECIFICATIONS));
-
-    //Set the Transform configurations to be used in the initialization in the Mapper
-    job.getConfiguration().set(Constants.Transform.CONFIGS, GSON.toJson(transformStages));
   }
 
   @Override
@@ -124,64 +110,53 @@ public class ETLMapReduce extends AbstractMapReduce {
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceContext> {
     private static final Gson GSON = new Gson();
     private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
-    private static final Type STAGE_LIST_TYPE = new TypeToken<List<ETLStage>>() { }.getType();
 
-    private TransformExecutor transformExecutor;
-
-    private MapReduceContext mapReduceContext;
-    private List<Transform> transforms = Lists.newArrayList();
+    private BatchPipelineExecutor batchPipelineExecutor;
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
-      this.mapReduceContext = context;
-    }
+      Map<String, String> runtimeArgs = context.getRuntimeArguments();
+      ETLBatchConfig etlConfig = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
 
-    @Override
-    public void setup(Context context) throws IOException, InterruptedException {
-      super.setup(context);
-      //Get transform class names and specifications from the context.
-      String transformSpecs = context.getConfiguration().get(Constants.Transform.SPECIFICATIONS);
-      String transformStages = context.getConfiguration().get(Constants.Transform.CONFIGS);
+      List<StageSpecification> specificationList = GSON.fromJson(
+        runtimeArgs.get(Constants.Transform.SPECIFICATIONS), SPEC_LIST_TYPE);
+      StageSpecification sourceSpec = GSON.fromJson(
+        runtimeArgs.get(Constants.Source.SPECIFICATION), StageSpecification.class);
+      StageSpecification sinkSpec = GSON.fromJson(
+        runtimeArgs.get(Constants.Sink.SPECIFICATION), StageSpecification.class);
 
-      List<StageSpecification> specificationList = GSON.fromJson(transformSpecs, SPEC_LIST_TYPE);
-      List<ETLStage> stageList = GSON.fromJson(transformStages, STAGE_LIST_TYPE);
-
+      List<ETLStage> stageList = etlConfig.getTransforms();
       LOG.info("Transform Stages : {}", stageList);
       LOG.info("Specifications of Transforms : {}", specificationList);
 
       Preconditions.checkArgument(stageList.size() == specificationList.size());
       instantiateTransforms(specificationList, stageList);
-      transformExecutor = new TransformExecutor(transforms);
+      BatchSource source = instantiateStage(sourceSpec);
+      source.initialize(etlConfig.getSource());
+      BatchSink sink = instantiateStage(sinkSpec);
+      sink.initialize(etlConfig.getSink());
+      List<Transform> transforms = instantiateTransforms(specificationList, stageList);
+
+      batchPipelineExecutor = new BatchPipelineExecutor(source, transforms, sink);
     }
 
-    private void instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageList) {
+    private List<Transform> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs) {
+      List<Transform> transforms = Lists.newArrayListWithCapacity(specList.size());
       for (int i = 0; i < specList.size(); i++) {
         StageSpecification spec = specList.get(i);
-        ETLStage stage = stageList.get(i);
-        try {
-          Transform transform = (Transform) Class.forName(spec.getClassName()).newInstance();
-          DefaultTransformContext transformContext = new DefaultTransformContext(spec, stage.getProperties());
-          transform.initialize(transformContext);
-          transforms.add(transform);
-        } catch (ClassNotFoundException e) {
-          LOG.error("Unable to load Transform : {}", spec.getClassName(), e);
-          Throwables.propagate(e);
-        } catch (InstantiationException e) {
-          LOG.error("Unable to instantiate Transform : {}", spec.getClassName(), e);
-          Throwables.propagate(e);
-        } catch (IllegalAccessException e) {
-          LOG.error("Error while creating instance of Transform : {}", spec.getClassName(), e);
-          Throwables.propagate(e);
-        }
+        ETLStage stageConfig = stageConfigs.get(i);
+        Transform transform = instantiateStage(spec);
+        DefaultTransformContext transformContext = new DefaultTransformContext(spec, stageConfig.getProperties());
+        transform.initialize(transformContext);
+        transforms.add(transform);
       }
+      return transforms;
     }
 
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        for (Map.Entry entry : transformExecutor.runOneIteration(key, value)) {
-          context.write(entry.getKey(), entry.getValue());
-        }
+        batchPipelineExecutor.runOneIteration(key, value, new DefaultBatchSinkWriter(context));
       } catch (Exception e) {
         LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
         Throwables.propagate(e);
@@ -191,6 +166,22 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void destroy() {
       // no-op
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T instantiateStage(StageSpecification spec) {
+    try {
+      return (T) Class.forName(spec.getClassName()).newInstance();
+    } catch (ClassNotFoundException e) {
+      LOG.error("Unable to find class {}", spec.getClassName(), e);
+      throw Throwables.propagate(e);
+    } catch (InstantiationException e) {
+      LOG.error("Unable to instantiate {}", spec.getClassName(), e);
+      throw Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      LOG.error("Illegal access while instantiating {}", spec.getClassName(), e);
+      throw Throwables.propagate(e);
     }
   }
 }

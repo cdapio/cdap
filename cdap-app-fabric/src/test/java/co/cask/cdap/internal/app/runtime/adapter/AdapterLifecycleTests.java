@@ -186,16 +186,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
                       responseString.contains("An ApplicationTemplate exists with a conflicting name."));
-
-
-    // Users can not delete adapter applications
-    response = doDelete(getVersionedAPIPath(String.format("apps/%s", DummyBatchTemplate.NAME),
-                                            Constants.Gateway.API_VERSION_3_TOKEN,
-                                            Constants.DEFAULT_NAMESPACE));
-    responseString = readResponse(response);
-    Assert.assertTrue(String.format("Response String: %s", responseString),
-                      responseString.contains("An ApplicationTemplate exists with a conflicting name."));
-    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -229,6 +219,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testDeployTemplate() throws Exception {
+    String deleteURL = getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+                                           Constants.DEFAULT_NAMESPACE);
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/templates/%s",
                     Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
@@ -240,6 +232,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
+
+    // delete the application
+    deleteApplication(60, deleteURL, 200);
+    List<JsonObject> deployedApps = getAppList(Constants.DEFAULT_NAMESPACE);
+    Assert.assertTrue(deployedApps.isEmpty());
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {

@@ -16,6 +16,9 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
@@ -153,10 +156,10 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
   }
 
   @Override
-  public void configure() {
-    setName("etlrealtime");
-    setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
-    addWorker(new ETLWorker());
-    createDataset(STATE_TABLE, KeyValueTable.class);
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName("etlrealtime");
+    configurer.setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
+    configurer.addWorker(new ETLWorker());
+    configurer.createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
   }
 }

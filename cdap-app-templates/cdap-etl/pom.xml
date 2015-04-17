@@ -42,6 +42,7 @@
     <twitter4j.version>4.0.1</twitter4j.version>
     <mysql.jdbc.version>5.1.6</mysql.jdbc.version>
     <etl.avro.version>1.7.7</etl.avro.version>
+    <hsqldb.version>2.3.1</hsqldb.version>
   </properties>
 
   <dependencyManagement>
@@ -192,6 +193,19 @@
         <artifactId>avro-mapred</artifactId>
         <classifier>hadoop2</classifier>
         <version>${etl.avro.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hsqldb</groupId>
+        <artifactId>hsqldb</artifactId>
+        <version>${hsqldb.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- TODO: Remove when plugin management is added -->
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>${mysql.jdbc.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

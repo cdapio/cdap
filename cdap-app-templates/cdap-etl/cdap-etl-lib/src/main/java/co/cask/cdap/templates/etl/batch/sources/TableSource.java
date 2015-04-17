@@ -26,7 +26,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 /**
  * CDAP Table Dataset Batch Source.
  */
-public class TableSource extends BatchReadableSource<byte[], Row> {
+public class TableSource extends BatchReadableSource<byte[], Row, Row> {
 
   @Override
   public void configure(StageConfigurer configurer) {
