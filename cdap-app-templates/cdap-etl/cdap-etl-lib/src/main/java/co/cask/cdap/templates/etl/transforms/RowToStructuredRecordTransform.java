@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -28,12 +27,10 @@ import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
 
-import javax.annotation.Nullable;
-
 /**
- * Transforms {@link StreamEvent} to {@link StructuredRecord}
+ * Transforms {@link Row} to {@link StructuredRecord}
  */
-public class RowToStructuredRecordTransform extends Transform<byte[], Row, byte[], StructuredRecord> {
+public class RowToStructuredRecordTransform extends Transform<Row, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String ROW_FIELD = "row.field";
   private Schema schema;
@@ -96,9 +93,7 @@ public class RowToStructuredRecordTransform extends Transform<byte[], Row, byte[
   }
 
   @Override
-  public void transform(@Nullable byte[] inputKey, Row row,
-                        Emitter<byte[], StructuredRecord> emitter) throws Exception {
-
+  public void transform(Row row, Emitter<StructuredRecord> emitter) throws Exception {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     if (rowField != null) {
       setField(builder, rowField, row.getRow());
@@ -111,7 +106,7 @@ public class RowToStructuredRecordTransform extends Transform<byte[], Row, byte[
       setField(builder, field, row.get(field.getName()));
     }
 
-    emitter.emit(inputKey, builder.build());
+    emitter.emit(builder.build());
   }
 
   private void setField(StructuredRecord.Builder builder, Schema.Field field, byte[] fieldBytes) {

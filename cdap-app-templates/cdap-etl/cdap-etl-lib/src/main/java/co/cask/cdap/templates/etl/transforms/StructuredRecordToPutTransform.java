@@ -26,14 +26,8 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.io.LongWritable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
-import javax.annotation.Nullable;
 
 /**
  * Transforms a StructuredRecord into a Put object used to write to a Table. Each field in the record
@@ -41,7 +35,7 @@ import javax.annotation.Nullable;
  * all input will have the same schema, but it does assume that there will always be a field present that
  * will be the row key for the table Put.
  */
-public class StructuredRecordToPutTransform extends Transform<Object, StructuredRecord, Object, Put> {
+public class StructuredRecordToPutTransform extends Transform<StructuredRecord, Put> {
   private static final String ROW_FIELD = "row.field";
   private String rowField;
 
@@ -60,8 +54,7 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
   }
 
   @Override
-  public void transform(@Nullable Object key, StructuredRecord record,
-                        Emitter<Object, Put> emitter) throws Exception {
+  public void transform(StructuredRecord record, Emitter<Put> emitter) throws Exception {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
     Put output = createPut(record, recordSchema);
@@ -72,7 +65,7 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
       }
       setField(output, field, record.get(field.getName()));
     }
-    emitter.emit(getBytes(key), output);
+    emitter.emit(output);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -157,33 +150,6 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
         return new Put(Bytes.toBytes((String) record.get(rowField)));
       default:
         throw new IllegalArgumentException("Row key is of unsupported type " + keyType);
-    }
-  }
-
-  private byte [] getBytes(Object key) throws IOException {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutput out = null;
-    try {
-      out = new ObjectOutputStream(bos);
-      Object toWrite = key;
-      if (key instanceof LongWritable) {
-        toWrite = ((LongWritable) key).get();
-      }
-      out.writeObject(toWrite);
-      return bos.toByteArray();
-    } finally {
-      try {
-        if (out != null) {
-          out.close();
-        }
-      } catch (IOException ex) {
-        // ignore close exception
-      }
-      try {
-        bos.close();
-      } catch (IOException ex) {
-        // ignore close exception
-      }
     }
   }
 }

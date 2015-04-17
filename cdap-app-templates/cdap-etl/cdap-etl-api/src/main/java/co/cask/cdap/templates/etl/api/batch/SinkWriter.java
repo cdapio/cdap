@@ -14,19 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.api.batch;
 
 /**
- * Used to emit data to next stage.
+ * Writer for used by {@link BatchSink} to write key value pairs for a Batch job.
  *
- * @param <V> Type of the data object emitted
+ * @param <KEY> the type of key to write
+ * @param <VAL> the type of value to write
  */
-public interface ValueEmitter<V> extends Emitter<Void, V> {
+public interface SinkWriter<KEY, VAL> {
 
   /**
-   * Emit objects to the next stage.
+   * Write a key value pair
    *
-   * @param value data object.
+   * @param key the key to write
+   * @param val the value to write
    */
-  void emit(V value);
+  void write(KEY key, VAL val) throws Exception;
 }
