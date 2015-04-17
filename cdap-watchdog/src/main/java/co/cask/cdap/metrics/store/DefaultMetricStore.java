@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
@@ -197,9 +196,9 @@ public class DefaultMetricStore implements MetricStore {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
       String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
 
-      CubeFact fact = new CubeFact(metricValue.getTags(),
-                                   toMeasureType(metricValue.getType()), measureName,
-                                   new TimeValue(metricValue.getTimestamp(), metricValue.getValue()));
+      CubeFact fact = new CubeFact(metricValue.getTimestamp())
+        .addTags(metricValue.getTags())
+        .addMeasurement(measureName, toMeasureType(metricValue.getType()), metricValue.getValue());
       facts.add(fact);
     }
     cube.get().add(facts);

@@ -1,35 +1,28 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, MyDataSource, $state, $rootScope) {
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' +
-            $state.params.appId +
-            '/mapreduce/' +
-            $state.params.programId;
+  .controller('MapreduceRunsController', function($scope, MyDataSource, $state, $rootScope, rRuns) {
 
-    dataSrc.request({
-      _cdapNsPath: basePath + '/runs'
-    })
-      .then(function(res) {
-        $scope.runs = res;
-        angular.forEach($scope.runs, function(value) {
-          value.isOpen = $state.params.runid === value.runid;
-        });
-      });
+    var dataSrc = new MyDataSource($scope);
 
+    $scope.runs = rRuns;
 
-    // This is for toggling (opening/closing) accordions if state changes.
-    $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams) {
-      if (fromState.name !== 'mapreduce.detail.runs.run' && toState.name !== 'mapreduce.detail.runs.run') {
-        return;
+    if (!$state.params.runid) {
+      if ($scope.runs.length === 0) {
+        $scope.current = 'No Run';
+      } else {
+        $scope.current = rRuns[0].runid;
       }
-      angular.forEach($scope.runs, function(value) {
-        if (value.runid === toParams.runid) {
-          value.isOpen = true;
-        }
-        if (value.runid === fromParams.runid) {
-          value.isOpen = false;
-        }
-      });
+    } else {
+      $scope.current = $state.params.runid;
+    }
+
+    $rootScope.$on('$stateChangeSuccess', function() {
+      if ($state.params.runid) {
+        $scope.current = $state.params.runid;
+      } else if ($scope.runs.length === 0) {
+        $scope.current = 'No Run';
+      } else {
+        $scope.current = $scope.runs[0].runid;
+      }
     });
 
   });

@@ -42,6 +42,19 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testSystemServicePath() {
+    String path = "/v2/system/services/foo/logs";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    path = "/v3/system/services/foo/logs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+  }
+
+  @Test
   public void testMetricsPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
     String flowPath = "/v2///metrics/system/apps/InvalidApp//";

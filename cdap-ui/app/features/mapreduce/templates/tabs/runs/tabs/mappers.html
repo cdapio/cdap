@@ -1,0 +1,33 @@
+<div class="mapreduce-components">
+  <table class="table table-responsive" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': info.mapTasks.length>0}">
+        <th data-predicate="taskId">ID</th>
+        <th data-predicate="state">Status</th>
+        <th data-predicate="progress">% Complete</th>
+        <th data-predicate="finishTime">Duration</th>
+        <th data-predicate="counters.MAP_INPUT_RECORDS">Records In</th>
+        <th data-predicate="counters.MAP_OUTPUT_RECORDS">Records Out</th>
+        <th data-predicate="counters.MAP_OUTPUT_BYTES">Bytes Out</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr ng-repeat="map in info.mapTasks | orderBy:sortable.predicate:sortable.reverse">
+        <td>{{ ::map.taskId }}</td>
+        <td>{{ map.state }}</td>
+        <td>{{ map.progress * 100 }}%</td>
+        <td>
+          <span ng-show="map.finishTime !== 0">{{ (map.finishTime - map.startTime)/1000 | amDurationFormat}}</span>
+          <span ng-show="map.finishTime === 0">N/A</span>
+        </td>
+        <td>{{ map.counters.MAP_INPUT_RECORDS }}</td>
+        <td>{{ map.counters.MAP_OUTPUT_RECORDS }}</td>
+        <td>{{ map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
+      </tr>
+      <tr class="text-center" ng-if="!info.mapTasks.length">
+        <td colspan='8'>Not Available</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

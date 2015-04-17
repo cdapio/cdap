@@ -94,7 +94,7 @@ function pandoc_includes() {
   download_file $includes $project_test WiseAppTest.java           7256c18cb80f59b4a9abcb5da320b337
   download_file $includes $project_main WiseFlow.java              2deba0633a0dcca14ef426929f543872
   download_file $includes $project_main WiseWorkflow.java          8fe51eed165e85d95c4f5e25953e3489
-  download_file $includes $project_main WiseService.java           ed54e1e9952e4a880a9fc4216fdf7b4e
+  download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
   echo "Downloading image files from GitHub..."
   download_file $includes $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29

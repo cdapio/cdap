@@ -30,20 +30,16 @@ import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.io.LongWritable;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Transforms {@link StreamEvent} to {@link StructuredRecord}
  */
-public class StreamToStructuredRecordTransform extends Transform<LongWritable, StreamEvent,
-                                                                 LongWritable, StructuredRecord> {
+public class StreamToStructuredRecordTransform extends Transform<StreamEvent, StructuredRecord> {
   private static final String SCHEMA = "schema";
   private static final String FORMAT_NAME = "format.name";
-
 
   private static SchemaWrapper schemaWrapper = null;
 
@@ -67,8 +63,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
   }
 
   @Override
-  public void transform(@Nullable LongWritable inputKey, StreamEvent streamEvent,
-                        Emitter<LongWritable, StructuredRecord> emitter) throws Exception {
+  public void transform(StreamEvent streamEvent, Emitter<StructuredRecord> emitter) throws Exception {
 
     StructuredRecord streamEventRecord = schemaWrapper.format.read(streamEvent);
 
@@ -82,7 +77,7 @@ public class StreamToStructuredRecordTransform extends Transform<LongWritable, S
       builder.set(fieldName, streamEventRecord.get(fieldName));
     }
 
-    emitter.emit(inputKey, builder.build());
+    emitter.emit(builder.build());
   }
 
   private SchemaWrapper getSchemaWrapper(Schema streamBodySchema) throws Exception {

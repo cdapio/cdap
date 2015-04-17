@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
@@ -205,6 +206,10 @@ public class DefaultStoreTest {
     RunId run3 = RunIds.generate(now);
     store.setStart(programId, run3.getId(), runIdToSecs(run3));
 
+    // For a RunRecord that has not yet been completed, getStopTs should return null
+    RunRecord runRecord = store.getRun(programId, run3.getId());
+    Assert.assertNull(runRecord.getStopTs());
+
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
@@ -231,12 +236,12 @@ public class DefaultStoreTest {
     // records should be sorted by start time latest to earliest
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(nowSecs - 10, run.getStartTs());
-    Assert.assertEquals(nowSecs - 5, run.getStopTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 5), run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(nowSecs - 20, run.getStartTs());
-    Assert.assertEquals(nowSecs - 10, run.getStopTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 10), run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
 
     // Assert all history
@@ -506,6 +511,24 @@ public class DefaultStoreTest {
     Assert.assertEquals(initialInstances + 5,
                         program.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
+  }
+
+  @Test
+  public void testWorkerInstances() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    ApplicationSpecification spec = Specifications.from(new AppWithWorker());
+
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
+    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
+
+    int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
+    Assert.assertEquals(1, instancesFromSpec);
+    int instances = store.getWorkerInstances(programId);
+    Assert.assertEquals(instancesFromSpec, instances);
+
+    store.setWorkerInstances(programId, 9);
+    instances = store.getWorkerInstances(programId);
+    Assert.assertEquals(9, instances);
   }
 
   @Test

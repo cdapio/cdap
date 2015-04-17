@@ -17,8 +17,8 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.ValueEmitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
@@ -220,7 +220,7 @@ public class JmsMessageToStringSourceTest {
   // Helper method to verify
   private void verifyEmittedText(JmsSource source, int numTries, long sleepMilis) {
     // Lets verify from JMS source
-    MockValueEmitter emitter = new MockValueEmitter();
+    MockEmitter emitter = new MockEmitter();
     SourceState sourceState = new SourceState();
     source.poll(emitter, sourceState);
 
@@ -247,7 +247,7 @@ public class JmsMessageToStringSourceTest {
   /**
    * Helper class to emit JMS message to next stage
    */
-  private static class MockValueEmitter implements ValueEmitter<String> {
+  private static class MockEmitter implements Emitter<String> {
     private String currentValue;
 
     /**
@@ -258,17 +258,6 @@ public class JmsMessageToStringSourceTest {
     @Override
     public void emit(String value) {
       currentValue = value;
-    }
-
-    /**
-     * Emit a key, value pair.
-     *
-     * @param key   key object
-     * @param value value object
-     */
-    @Override
-    public void emit(Void key, String value) {
-      // no-op
     }
 
     String getCurrentValue() {

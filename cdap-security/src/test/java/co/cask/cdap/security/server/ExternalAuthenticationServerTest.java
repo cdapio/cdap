@@ -34,6 +34,7 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
     cConf.set(Constants.Security.SSL_ENABLED, "false");
     cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "0");
 

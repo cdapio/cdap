@@ -17,36 +17,44 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.batch.BatchSink;
+import co.cask.cdap.templates.etl.api.batch.BatchSource;
+import co.cask.cdap.templates.etl.api.batch.SinkWriter;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * Execution of Transforms one iteration at a time.
+ * Execution of a source and list of transforms.
  */
-public final class TransformExecutor {
+public final class PipelineExecutor {
+  private final BatchSource source;
   private final List<Transform> transformList;
+  private final BatchSink sink;
   private DefaultEmitter previousEmitter;
   private DefaultEmitter currentEmitter;
 
-  public TransformExecutor(List<Transform> transforms) {
+  public PipelineExecutor(BatchSource source, List<Transform> transforms, BatchSink sink) {
+    this.source = source;
     this.transformList = transforms;
+    this.sink = sink;
     this.previousEmitter = new DefaultEmitter();
     this.currentEmitter = new DefaultEmitter();
   }
 
-  public Iterable<Map.Entry> runOneIteration(Object key, Object value) throws Exception {
+  public void runOneIteration(Object key, Object val, SinkWriter sinkWriter) throws Exception {
     previousEmitter.reset();
-    previousEmitter.emit(key, value);
+    source.emit(key, val, previousEmitter);
     for (Transform transform : transformList) {
-      for (Map.Entry entry : previousEmitter) {
-        transform.transform(entry.getKey(), entry.getValue(), currentEmitter);
+      for (Object transformedVal : previousEmitter) {
+        transform.transform(transformedVal, currentEmitter);
       }
       previousEmitter.reset();
       DefaultEmitter temp = previousEmitter;
       previousEmitter = currentEmitter;
       currentEmitter = temp;
     }
-    return previousEmitter;
+    for (Object transformedVal : previousEmitter) {
+      sink.write(transformedVal, sinkWriter);
+    }
   }
 }

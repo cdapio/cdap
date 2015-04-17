@@ -16,6 +16,8 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
@@ -31,7 +33,7 @@ import java.util.UUID;
  * App Template to test adapter lifecycle.
  */
 public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.Config> {
-  public static final String NAME = "DummyTemplate";
+  public static final String NAME = "DummyBatchTemplate";
 
   public static class Config {
     private final String sourceName;
@@ -63,12 +65,12 @@ public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.C
   }
 
   @Override
-  public void configure() {
-    setName(NAME);
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName(NAME);
     // make the description different each time to distinguish between deployed versions in unit tests
-    setDescription(UUID.randomUUID().toString());
-    addWorkflow(new AdapterWorkflow());
-    addMapReduce(new DummyMapReduceJob());
+    configurer.setDescription(UUID.randomUUID().toString());
+    configurer.addWorkflow(new AdapterWorkflow());
+    configurer.addMapReduce(new DummyMapReduceJob());
   }
 
   @Override

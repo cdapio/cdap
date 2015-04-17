@@ -10,7 +10,7 @@ CDAP Developers’ Manual Table of Contents
    :maxdepth: 3
 
     Introduction <index>
-    Getting Started <getting-started/index>
+    Getting Started Developing <getting-started/index>
     Overview <overview/index>
     Building Blocks <building-blocks/index>
     Security <security/index>
