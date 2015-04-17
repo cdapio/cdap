@@ -30,7 +30,6 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
-import co.cask.cdap.templates.etl.common.DefaultRealtimeConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
@@ -68,7 +67,7 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
 
   private void initTable(List<Class> classList) throws Exception {
     for (Class klass : classList) {
-      DefaultRealtimeConfigurer configurer = new DefaultRealtimeConfigurer(klass);
+      DefaultStageConfigurer configurer = new DefaultStageConfigurer(klass);
       if (RealtimeSource.class.isAssignableFrom(klass)) {
         RealtimeSource source = (RealtimeSource) klass.newInstance();
         source.configure(configurer);
@@ -114,7 +113,7 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
   private void configureSource(ETLStage sourceConfig, AdapterConfigurer configurer,
                                PipelineConfigurer pipelineConfigurer) throws Exception {
     source.configurePipeline(sourceConfig, pipelineConfigurer);
-    DefaultRealtimeConfigurer realtimeConfigurer = new DefaultRealtimeConfigurer(source.getClass());
+    DefaultStageConfigurer realtimeConfigurer = new DefaultStageConfigurer(source.getClass());
     StageSpecification specification = realtimeConfigurer.createSpecification();
     configurer.addRuntimeArgument(Constants.Source.SPECIFICATION, GSON.toJson(specification));
   }
@@ -122,7 +121,7 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
   private void configureSink(ETLStage sinkConfig, AdapterConfigurer configurer,
                              PipelineConfigurer pipelineConfigurer) throws Exception {
     sink.configurePipeline(sinkConfig, pipelineConfigurer);
-    DefaultRealtimeConfigurer realtimeConfigurer = new DefaultRealtimeConfigurer(sink.getClass());
+    DefaultStageConfigurer realtimeConfigurer = new DefaultStageConfigurer(sink.getClass());
     StageSpecification specification = realtimeConfigurer.createSpecification();
     configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
   }

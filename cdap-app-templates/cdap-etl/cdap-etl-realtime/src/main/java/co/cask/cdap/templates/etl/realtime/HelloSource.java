@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class HelloSource extends RealtimeSource<String> {
   private static final Logger LOG = LoggerFactory.getLogger(HelloSource.class);
 
   @Override
-  public void configure(RealtimeConfigurer configurer) {
+  public void configure(StageConfigurer configurer) {
     configurer.setName(HelloSource.class.getSimpleName());
   }
 

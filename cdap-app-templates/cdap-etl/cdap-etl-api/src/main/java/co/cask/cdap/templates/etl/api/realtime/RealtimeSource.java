@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.api.realtime;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import javax.annotation.Nullable;
@@ -35,9 +36,9 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContex
   /**
    * Configure the Source.
    *
-   * @param configurer {@link RealtimeConfigurer}
+   * @param configurer {@link StageConfigurer}
    */
-  public void configure(RealtimeConfigurer configurer) {
+  public void configure(StageConfigurer configurer) {
     // no-op
   }
 
@@ -71,19 +72,8 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContex
   public abstract SourceState poll(Emitter<T> writer, SourceState currentState);
 
   /**
-   * Invoked when source is suspended.
+   * Destroy the Source.
    */
-  public void onSuspend() {
-    // no-op
-  }
-
-  /**
-   * Resume/reconfigure from the state of suspension.
-   */
-  public void onResume() {
-    // no-op
-  }
-
   @Override
   public void destroy() {
     // no-op

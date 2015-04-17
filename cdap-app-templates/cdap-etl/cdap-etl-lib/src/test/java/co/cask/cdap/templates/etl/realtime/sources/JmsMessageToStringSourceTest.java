@@ -16,11 +16,10 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
@@ -63,7 +62,7 @@ public class JmsMessageToStringSourceTest {
   public void beforeTest() {
     jmsSource = new JmsSource();
 
-    jmsSource.configure(new RealtimeConfigurer() {
+    jmsSource.configure(new StageConfigurer() {
       @Override
       public void setName(String name) {
         // no-op
@@ -81,11 +80,6 @@ public class JmsMessageToStringSourceTest {
 
       @Override
       public void addProperty(Property property) {
-        // no-op
-      }
-
-      @Override
-      public void setResources(Resources resources) {
         // no-op
       }
     });
@@ -107,7 +101,7 @@ public class JmsMessageToStringSourceTest {
 
     jmsSource.initialize(new SourceContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
       }
 
@@ -159,7 +153,7 @@ public class JmsMessageToStringSourceTest {
 
     jmsSource.initialize(new SourceContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
       }
 

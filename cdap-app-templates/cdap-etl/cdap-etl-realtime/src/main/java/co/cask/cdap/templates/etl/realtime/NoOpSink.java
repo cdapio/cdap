@@ -16,7 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 
 /**
@@ -27,7 +27,7 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 public class NoOpSink<T> extends RealtimeSink<T> {
 
   @Override
-  public void configure(RealtimeConfigurer configurer) {
+  public void configure(StageConfigurer configurer) {
     configurer.setName(NoOpSink.class.getSimpleName());
   }
 

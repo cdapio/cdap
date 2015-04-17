@@ -20,7 +20,6 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 
 import java.util.Map;
@@ -40,8 +39,8 @@ public class WorkerSourceContext implements SourceContext {
   }
 
   @Override
-  public RealtimeSpecification getSpecification() {
-    return (RealtimeSpecification) specification;
+  public StageSpecification getSpecification() {
+    return specification;
   }
 
   @Override

@@ -75,7 +75,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     transforms = Lists.newArrayList();
 
     //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
-    //pluginLStas management is completed.
+    //plugins management is completed.
     initTable(Lists.<Class>newArrayList(KVTableSource.class,
                                         KVTableSink.class,
                                         BatchReadableSource.class,

@@ -196,7 +196,7 @@ public class ETLWorker extends AbstractWorker {
   }
 
   @Override
-  public void destroy() {
+  public void stop() {
     running = false;
     // TODO: Better handling of exceptions thrown if any
     source.destroy();

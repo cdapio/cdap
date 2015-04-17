@@ -16,7 +16,7 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -59,10 +59,10 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
   /**
    * Configure the JMS Source.
    *
-   * @param configurer {@link RealtimeConfigurer}
+   * @param configurer {@link StageConfigurer}
    */
   @Override
-  public void configure(RealtimeConfigurer configurer) {
+  public void configure(StageConfigurer configurer) {
     configurer.setName("JMS Realtime Source");
     configurer.setDescription("CDAP JMS Realtime Source");
   }
