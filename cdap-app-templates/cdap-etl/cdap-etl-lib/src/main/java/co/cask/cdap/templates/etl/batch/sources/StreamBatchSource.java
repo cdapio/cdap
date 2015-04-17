@@ -64,9 +64,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
 
     String streamName = context.getRuntimeArguments().get(STREAM_NAME);
     LOG.info("Setting input to Stream : {}", streamName);
-    Schema schema = Schema.recordOf("streamEvent", Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
     // TODO: This is not clean.
-    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString());
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime));
   }
 }
