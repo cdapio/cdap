@@ -180,8 +180,6 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     private MetricsCollectorImpl(final Map<String, String> tags) {
       this.tags = tags;
-      // add to cache
-      emitters.put(tags, new AggregatedMetricsEmitter(tags));
     }
 
     @Override
@@ -198,7 +196,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     public MetricsCollector childCollector(String tagName, String tagValue) {
       ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
         .putAll(tags).put(tagName, tagValue).build();
-      return new MetricsCollectorImpl(allTags);
+      return collectors.getUnchecked(allTags);
     }
 
     @Override
@@ -210,7 +208,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       Map<String, String> allTags = Maps.newHashMap();
       allTags.putAll(this.tags);
       allTags.putAll(tags);
-      return new MetricsCollectorImpl(allTags);
+      return collectors.getUnchecked(allTags);
     }
   }
 }
