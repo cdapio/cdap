@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter, $state) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter, $alert) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
@@ -46,6 +46,18 @@ angular.module(PKG.name + '.feature.workflows')
         $scope.actions = programs;
       });
 
+    $scope.stop = function() {
+      $alert({
+        type: 'info',
+        content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
+      });
+      return;
+      $scope.status = 'STOPPING';
+      dataSrc.request({
+        _cdapNsPath: basePath + '/stop',
+        method: 'POST'
+      });
+    };
 
     $scope.goToDetailActionView = function(programId, programType) {
       // As of 2.7 only a mapreduce job is scheduled in a workflow.
