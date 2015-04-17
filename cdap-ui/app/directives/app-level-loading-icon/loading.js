@@ -13,11 +13,15 @@ angular.module(PKG.name + '.commons')
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
 
-        EventPipe.on('backendDown', function() {
+        EventPipe.on('backendDown', function(message) {
           if (!isBackendDown) {
             modal && modal.close();
             isBackendDown = true;
-            $scope.message = 'Waiting for CDAP services to be online...';
+            if (!message) {
+              $scope.message = 'Waiting for CDAP services to be online...';
+            } else {
+              $scope.message = message;
+            }
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
               $state.go('overview', {}, {reload: true});
