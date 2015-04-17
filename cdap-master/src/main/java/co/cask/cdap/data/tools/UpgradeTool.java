@@ -20,12 +20,15 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -33,23 +36,27 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.gateway.handlers.DatasetServiceStore;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -58,8 +65,12 @@ import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
@@ -71,6 +82,7 @@ import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -81,10 +93,22 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.quartz.JobKey;
+import org.quartz.SchedulerException;
+import org.quartz.TriggerKey;
+import org.quartz.core.JobRunShellFactory;
+import org.quartz.core.QuartzScheduler;
+import org.quartz.core.QuartzSchedulerResources;
+import org.quartz.impl.DefaultThreadExecutor;
+import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.impl.StdJobRunShellFactory;
+import org.quartz.simpl.CascadingClassLoadHelper;
+import org.quartz.spi.ClassLoadHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -105,7 +129,10 @@ public class UpgradeTool {
   private final NamespacedLocationFactory namespacedLocationFactory;
 
   private Store store;
+  QuartzScheduler qs;
   private FileMetaDataManager fileMetaDataManager;
+  private AdapterService adapterService;
+  private DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
 
   /**
    * Set of Action available in this tool.
@@ -167,8 +194,13 @@ public class UpgradeTool {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
+      new AuthModule(),
+      new ExploreClientModule(),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
+      new NotificationServiceRuntimeModule().getDistributedModules(),
+      new KafkaClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -176,16 +208,15 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-          bind(Scheduler.class).toInstance(createNoopScheduler());
-          bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
-          bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
+          bind(new TypeLiteral<DatasetModule>() { }).annotatedWith(Names.named("serviceModule"))
+            .toInstance(new HBaseKVTableDefinition.Module());
+          bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
+
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
-          bind(Store.class).to(DefaultStore.class);
-          bind(ConfigStore.class).to(DefaultConfigStore.class);
         }
 
         @Provides
@@ -212,6 +243,32 @@ public class UpgradeTool {
         public LogSaverTableUtil getLogSaverTableUtil(DatasetFramework dsFramework,
                                                       CConfiguration cConf) {
           return new LogSaverTableUtil(dsFramework, cConf);
+        }
+
+        @Provides
+        @Singleton
+        @Named("scheduleStoreTableUtil")
+        public ScheduleStoreTableUtil getScheduleStoreTableUtil(DatasetFramework dsFramework,
+                                                      CConfiguration cConf) {
+          return new ScheduleStoreTableUtil(dsFramework, cConf);
+        }
+
+        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // expects a dsframework injection named datasetMDS
+        @Provides
+        @Singleton
+        @Named("datasetMDS")
+        public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
+          return dsFramework;
+        }
+
+        @Provides
+        @Singleton
+        @Named("datasetBasedTimeScheduleStore")
+        public DatasetBasedTimeScheduleStore getDatasetBasedTimeScheduleStore(
+          TransactionExecutorFactory txExecutorFactory, @Named("scheduleStoreTableUtil")
+        ScheduleStoreTableUtil tableUtil) {
+          return new DatasetBasedTimeScheduleStore(txExecutorFactory, tableUtil);
         }
 
         @Provides
@@ -312,6 +369,7 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
+      qs.shutdown();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -423,6 +481,37 @@ public class UpgradeTool {
       metricsKafkaUpgrader.upgrade();
       hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
     }
+
+    upgradeAdapters();
+  }
+
+  /**
+   * Upgrades adapters by first deleting all the schedule triggers and the the job itself in every namespace follwed by
+   * all the adapters in the namespace
+   *
+   * @throws SchedulerException
+   */
+  private void upgradeAdapters() throws SchedulerException {
+    DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore = getDatasetBasedTimeScheduleStore();
+    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
+    for (NamespaceMeta namespaceMeta : namespaceMetas) {
+      Collection<AdapterSpecification> adapters = getAdapterService().getAdapters(Id.Namespace
+                                                                                    .from(namespaceMeta.getName()));
+      Id.Program program = Id.Program.from(namespaceMeta.getName(), "stream-conversion", ProgramType.WORKFLOW,
+                                           "StreamConversionWorkflow");
+      for (AdapterSpecification adapter : adapters) {
+        TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(
+          program, SchedulableProgramType.WORKFLOW, adapter.getName() + "StreamConversionWorkflow"));
+        if (datasetBasedTimeScheduleStore.removeTrigger(triggerKey)) {
+          LOG.info("Removed adapter trigger: {}", triggerKey.toString());
+          store.removeAdapter(Id.Namespace.from(namespaceMeta.getName()), adapter.getName());
+        }
+      }
+      //delete the stream-conversion job entry
+      datasetBasedTimeScheduleStore.removeJob(new JobKey(AbstractSchedulerService
+                                                           .programIdFor(program, SchedulableProgramType.WORKFLOW)));
+    }
   }
 
   public static void main(String[] args) {
@@ -504,5 +593,53 @@ public class UpgradeTool {
                                                          Names.named("fileMetaDataManager")));
     }
     return fileMetaDataManager;
+  }
+
+  /**
+   * gets the {@link AdapterService}
+   *
+   * @return {@link AdapterService}
+   */
+  private AdapterService getAdapterService() {
+    if (adapterService == null) {
+      adapterService = injector.getInstance(AdapterService.class);
+    }
+    return adapterService;
+  }
+
+  /**
+   * gets the {@link DatasetBasedTimeScheduleStore} which stores the schedules of adapters
+   *
+   * @return {@link DatasetBasedTimeScheduleStore}
+   * @throws SchedulerException
+   */
+  private DatasetBasedTimeScheduleStore getDatasetBasedTimeScheduleStore() throws SchedulerException {
+    if (datasetBasedTimeScheduleStore == null) {
+      datasetBasedTimeScheduleStore = injector.getInstance(Key.get(DatasetBasedTimeScheduleStore.class,
+                                                                   Names.named("datasetBasedTimeScheduleStore")));
+      // need to call initialize on datasetBasedTimeScheduleStore
+      ExecutorThreadPool threadPool = new ExecutorThreadPool(1);
+      threadPool.initialize();
+      String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
+      String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
+
+      QuartzSchedulerResources qrs = new QuartzSchedulerResources();
+      JobRunShellFactory jrsf = new StdJobRunShellFactory();
+
+      qrs.setName(schedulerName);
+      qrs.setInstanceId(schedulerInstanceId);
+      qrs.setJobRunShellFactory(jrsf);
+      qrs.setThreadPool(threadPool);
+      qrs.setThreadExecutor(new DefaultThreadExecutor());
+      qrs.setJobStore(datasetBasedTimeScheduleStore);
+      qrs.setRunUpdateCheck(false);
+      qs = new QuartzScheduler(qrs, -1, -1);
+
+      ClassLoadHelper cch = new CascadingClassLoadHelper();
+      cch.initialize();
+
+      datasetBasedTimeScheduleStore.initialize(cch, qs.getSchedulerSignaler());
+    }
+    return datasetBasedTimeScheduleStore;
   }
 }
