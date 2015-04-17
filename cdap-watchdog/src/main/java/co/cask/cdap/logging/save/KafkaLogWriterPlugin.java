@@ -171,11 +171,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public void process(KafkaLogEvent event) {
-
-    if (alreadyProcessed(event)) {
-      return;
-    }
+  public void doProcess(KafkaLogEvent event) {
 
     LoggingContext loggingContext = event.getLoggingContext();
     ILoggingEvent logEvent = event.getLogEvent();

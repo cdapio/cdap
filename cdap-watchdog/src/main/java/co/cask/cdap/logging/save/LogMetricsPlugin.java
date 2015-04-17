@@ -86,12 +86,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public void process(KafkaLogEvent event) {
-
-    if (alreadyProcessed(event)) {
-      // already processed.
-      return;
-    }
+  public void doProcess(KafkaLogEvent event) {
 
     LoggingContext context = event.getLoggingContext();
     Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
