@@ -25,27 +25,28 @@ angular.module(PKG.name + '.feature.mapreduce')
           label: '{{$state.params.programId}}'
         }
       })
-        .state('mapreduce.detail.status', {
-          url: '/status',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/status.html',
-          controller: 'MapreduceStatusController',
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'development'
-          },
-          ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
-            label: 'Mapreduce',
-            skip: true
-          }
-        })
-
         .state('mapreduce.detail.runs', {
           url: '/runs',
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
             skip: true
+          },
+          resolve: {
+            rRuns: function(MyDataSource, $stateParams, $q) {
+              var defer = $q.defer();
+
+              var dataSrc = new MyDataSource();
+
+              dataSrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
+              })
+              .then(function (res) {
+                defer.resolve(res);
+              });
+
+              return defer.promise;
+            }
           }
         })
           .state('mapreduce.detail.runs.run', {
