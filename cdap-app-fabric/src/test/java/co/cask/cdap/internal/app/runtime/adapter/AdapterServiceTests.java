@@ -214,6 +214,8 @@ public class AdapterServiceTests extends AppFabricTestBase {
   @Test
   public void testRedeploy() throws Exception {
     ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyTemplate1.NAME);
+    // Update the jar and force redeploy
+    setupAdapter(DummyTemplate1.class);
     adapterService.deployTemplate(NAMESPACE, DummyTemplate1.NAME);
     ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyTemplate1.NAME);
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
@@ -247,9 +249,12 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(DummyWorkerTemplate.class);
   }
 
-  private static void setupAdapter(Class<?> clz) throws IOException {
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz);
-    File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
+  private static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
+    // Create a temp file to be included in the jar so that the jar is different every time even the same
+    // template class is given.
+    File randomFile = tmpFolder.newFile();
+    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz, randomFile);
+    File destination =  new File(String.format("%s/%s.jar", adapterDir.getAbsolutePath(), clz.getSimpleName()));
     Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 

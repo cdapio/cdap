@@ -605,9 +605,9 @@
     </property>
 
     <property>
-      <name>app.template.dir</name>
-      <value>/opt/cdap/master/plugins</value>
-      <description>Directory where all archives for app templates are stored</description>
+        <name>app.template.dir</name>
+        <value>${local.data.dir}/plugins</value>
+        <description>Directory where all archives for app templates are stored</description>
     </property>
 
     <property>
