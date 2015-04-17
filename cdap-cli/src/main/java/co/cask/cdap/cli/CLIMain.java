@@ -33,10 +33,12 @@ import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -51,6 +53,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -68,6 +71,7 @@ public class CLIMain {
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
   private static final String DEFAULT_SCRIPT_FILE = null;
+  private static final boolean DEFAULT_SCRIPT_FILE_FIRST = false;
 
   @VisibleForTesting
   public static final Option HELP_OPTION = new Option(
@@ -106,6 +110,12 @@ public class CLIMain {
     "added after the script file specification on the command line " + 
     "are run after the script completes, unless a 'break' " + 
     "command is encountered, then they are skipped. ");
+
+  @VisibleForTesting
+  public static final Option SCRIPT_FILE_FIRST_OPTION = new Option(
+    "ff", "scriptfilefirst", false, "If \"true\", run script file before " +
+    "any command line commands are run." +
+    " Defaults to \"" + DEFAULT_SCRIPT_FILE_FIRST + "\".");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -249,6 +259,7 @@ public class CLIMain {
       LaunchOptions launchOptions = LaunchOptions.builder()
         .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
         .setScriptFile(command.getOptionValue(SCRIPT_FILE_OPTION.getOpt(), DEFAULT_SCRIPT_FILE))
+        .setScriptFileFirst(command.hasOption(SCRIPT_FILE_FIRST_OPTION.getOpt()))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
@@ -265,6 +276,16 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
+        // Execute commands entered on cdap-cli command line
+        boolean runScriptFileFirst = launchOptions.getScriptFileFirst();
+        if (commandArgs.length > 0 && !runScriptFileFirst) {
+          String commandLine = Joiner.on(" ").join(commandArgs);
+          String[] commandLns = commandLine.split(";");
+          for (int i = 0; i < commandLns.length; i++) {
+              cli.execute(commandLns[i].trim(), output);
+          }
+        }
+
         boolean ranScript = false;
         boolean brokeFromScript = false;
         if (launchOptions.getScriptFile() != null) {
@@ -279,8 +300,9 @@ public class CLIMain {
           BufferedReader br = null;
           try {
             String line;
-            br = new BufferedReader(new FileReader(launchOptions.getScriptFile()));
-            // br = Files.newReader(launchOptions.getScriptFile(), Charset.UTF_8);
+            
+            // br = new BufferedReader(new FileReader(launchOptions.getScriptFile()));
+            br = Files.newReader(new File(launchOptions.getScriptFile()), Charsets.UTF_8);
             while ((line = br.readLine()) != null) {
               String ln = line.trim();
               String[] lnArr = ln.split("#");
@@ -313,13 +335,17 @@ public class CLIMain {
             }
           }
         }
-        if (commandArgs.length > 0 && !brokeFromScript) {
+
+        // Execute commands entered on cdap-cli command line
+        if (commandArgs.length > 0 && runScriptFileFirst) {
           String commandLine = Joiner.on(" ").join(commandArgs);
           String[] commandLns = commandLine.split(";");
           for (int i = 0; i < commandLns.length; i++) {
               cli.execute(commandLns[i].trim(), output);
           }
         }
+
+        // Enter interactive cdap-cli shell
         if ((commandArgs.length == 0 && !ranScript) || brokeFromScript) {
           cli.startInteractiveMode(output);
         }
@@ -346,6 +372,7 @@ public class CLIMain {
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
     addOptionalOption(options, SCRIPT_FILE_OPTION);
+    addOptionalOption(options, SCRIPT_FILE_FIRST_OPTION);
     return options;
   }
 
@@ -364,7 +391,8 @@ public class CLIMain {
       "[--help] " +
       "[--verify-ssl <true|false>] " +
       "[--uri <arg>]" +
-      "[--scriptfile <arg>]";
+      "[--scriptfile <arg>]" +
+      "[--scriptfilefirst]";
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
