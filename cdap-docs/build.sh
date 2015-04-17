@@ -26,7 +26,7 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
-source vars
+source ./vars
 source _common/common-build.sh
 
 ARG_1="$1"
