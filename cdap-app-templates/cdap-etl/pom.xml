@@ -34,6 +34,7 @@
     <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
     <module>cdap-etl-lib</module>
+    <module>cdap-etl-realtime</module>
     <module>cdap-etl-test</module>
   </modules>
 

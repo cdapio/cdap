@@ -18,7 +18,9 @@ package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.ValueEmitter;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import javax.annotation.Nullable;
 
@@ -41,8 +43,18 @@ public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContex
   }
 
   /**
-   * Initialize the Source.
+   * Configure an ETL pipeline, adding datasets and streams that the source needs.
    *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    // no-op
+  }*
+
+  /**
+   * Initialize the Source.
+
    * @param context {@link SourceContext}
    */
   public void initialize(SourceContext context) {

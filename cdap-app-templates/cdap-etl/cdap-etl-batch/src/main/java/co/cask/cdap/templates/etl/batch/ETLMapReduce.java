@@ -54,7 +54,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   @Override
   public void configure() {
-    setName("ETLMapReduce");
+    setName(ETLMapReduce.class.getSimpleName());
     setDescription("MapReduce driver for Batch ETL Adapters");
   }
 

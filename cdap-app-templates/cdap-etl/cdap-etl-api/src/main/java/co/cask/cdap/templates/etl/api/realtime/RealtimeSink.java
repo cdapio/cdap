@@ -17,6 +17,8 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * Realtime Sink.
@@ -33,6 +35,16 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
    * @param configurer {@link RealtimeConfigurer}
    */
   public void configure(RealtimeConfigurer configurer) {
+    // no-op
+  }
+
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the source needs.
+   *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

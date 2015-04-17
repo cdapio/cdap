@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch.config;
+package co.cask.cdap.templates.etl.realtime.config;
 
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
 
 /**
- * ETL Batch Adapter Configuration.
+ * ETL Realtime Adapter Configuration.
  */
-public final class ETLBatchConfig {
-  private final String schedule;
+public class ETLRealtimeConfig {
+  private final int instances;
   private final ETLStage source;
   private final ETLStage sink;
   private final List<ETLStage> transforms;
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this.schedule = schedule;
+  public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this.instances = instances;
     this.source = source;
     this.sink = sink;
     this.transforms = transforms;
   }
 
-  public String getSchedule() {
-    return schedule;
+  public int getInstances() {
+    return instances;
   }
 
   public ETLStage getSource() {
