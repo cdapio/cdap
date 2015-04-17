@@ -140,7 +140,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
-     checkpointManager = new CheckpointManager(tableUtil, txExecutorFactory,
+    checkpointManager = new CheckpointManager(tableUtil, txExecutorFactory,
                                               KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);

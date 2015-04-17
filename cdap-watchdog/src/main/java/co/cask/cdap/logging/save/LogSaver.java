@@ -19,6 +19,7 @@ package co.cask.cdap.logging.save;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -90,7 +91,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     cancelLogCollectorCallbacks();
   }
 
-  private void scheduleTasks(Set<Integer> partitions) throws Exception {
+  @VisibleForTesting
+  void scheduleTasks(Set<Integer> partitions) throws Exception {
     // Don't schedule any tasks when not running
     if (!isRunning()) {
       LOG.info("Not scheduling when stopping!");
@@ -99,7 +101,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     subscribe(partitions);
  }
 
-  private void unscheduleTasks() throws Exception {
+  @VisibleForTesting
+  void unscheduleTasks() throws Exception {
     for (KafkaLogProcessor processor : messageProcessors) {
       try {
         // Catching the exception to let all the plugins a chance to stop cleanly.
