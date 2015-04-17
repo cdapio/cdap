@@ -554,8 +554,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     RunRecord record = get(key, RunRecord.class);
     if (record == null) {
-      String msg = String.format("No meta found for associated Workflow %s run record %s, while recording run for the " +
-                                 "namespace %s app %s type %s program %s runid %s", workflow, workflowRunId,
+      String msg = String.format("No meta found for associated Workflow %s run record %s, while recording run" +
+                                   " for the namespace %s app %s type %s program %s runid %s", workflow, workflowRunId,
                                  program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
                                  program.getId(), programRunId);
       LOG.error(msg);
