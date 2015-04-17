@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.templates.etl.api.ValueEmitter;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
@@ -41,7 +41,7 @@ import javax.jms.TextMessage;
 /**
  * <p>
  * Implementation of CDAP {@link RealtimeSource} that listen to external JMS producer by managing internal
- * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link ValueEmitter}
+ * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
 public class JmsSource extends RealtimeSource<String> implements MessageListener {
@@ -118,7 +118,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
 
   @Nullable
   @Override
-  public SourceState poll(ValueEmitter<String> writer, SourceState currentState) {
+  public SourceState poll(Emitter<String> writer, SourceState currentState) {
     // Try to get message from Queue
     Message message = messageQueue.poll();
     if (message == null) {

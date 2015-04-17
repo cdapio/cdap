@@ -32,10 +32,11 @@ import java.util.Map;
  * Source for CDAP BatchReadable Datasets. Users must provide dataset name and type plus any properties
  * that type may need. Should be used only by advanced users.
  *
- * @param <KEY> the type of key
- * @param <VALUE> the type of value
+ * @param <KEY_IN> the type of input key from the Batch job
+ * @param <VAL_IN> the type of input value from the Batch job
+ * @param <OUT> the type of output for the
  */
-public class BatchReadableSource<KEY, VALUE> extends BatchSource<KEY, VALUE> {
+public class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
   protected static final String NAME = "name";
   private static final String TYPE = "type";
 

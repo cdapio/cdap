@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.common.Properties;
-import co.cask.cdap.templates.etl.transforms.DBRecordToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -208,12 +207,10 @@ public class BatchETLDBAdapterTest extends TestBase {
                                     Schema.Field.of("BINARY", nullableBytes),
                                     Schema.Field.of("CLOB", nullableBytes));
 
-    ETLStage structuredRecordTransform = new ETLStage(DBRecordToStructuredRecordTransform.class.getSimpleName(),
-                                                      ImmutableMap.<String, String>of());
     ETLStage putTransform = new ETLStage(StructuredRecordToPutTransform.class.getSimpleName(),
                                          ImmutableMap.of("schema", schema.toString(),
                                                          "row.field", "ID"));
-    List<ETLStage> transformList = Lists.newArrayList(structuredRecordTransform, putTransform);
+    List<ETLStage> transformList = Lists.newArrayList(putTransform);
     ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);

@@ -35,7 +35,7 @@ import javax.script.ScriptException;
 /**
  * Filters records using custom javascript provided by the config.
  */
-public class ScriptFilterTransform extends Transform<Object, StructuredRecord, Object, StructuredRecord> {
+public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT = "script";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
@@ -73,12 +73,12 @@ public class ScriptFilterTransform extends Transform<Object, StructuredRecord, O
   }
 
   @Override
-  public void transform(Object keyIn, StructuredRecord input, Emitter<Object, StructuredRecord> emitter) {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
     try {
       engine.eval("var input = " + GSON.toJson(input) + "; ");
       Boolean shouldFilter = (Boolean) invocable.invokeFunction("shouldFilter");
       if (!shouldFilter) {
-        emitter.emit(keyIn, input);
+        emitter.emit(input);
       }
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);

@@ -16,10 +16,10 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link BatchSource} for {@link Stream} to use {@link Stream} as Source.
  */
-public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent> {
+public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent, StreamEvent> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
   public static final String STREAM_NAME = "streamName";

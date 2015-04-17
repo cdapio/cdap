@@ -14,26 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.batch;
 
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.batch.SinkWriter;
+import org.apache.hadoop.mapreduce.Mapper;
+
+import java.io.IOException;
 
 /**
- * Simple Identity Transform for testing.
+ * SinkWriter that writes key value pairs as output of a Mapper.
  *
- * @param <T> any type
+ * @param <KEY> the type of key to write
+ * @param <VAL> the type of value to write
  */
-public class IdentityTransform<T> extends Transform<T, T> {
+public class DefaultSinkWriter<KEY, VAL> implements SinkWriter<KEY, VAL> {
+  private final Mapper.Context context;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("IdentityTransform");
+  public DefaultSinkWriter(Mapper.Context context) {
+    this.context = context;
   }
 
   @Override
-  public void transform(T input, Emitter<T> emitter) {
-    emitter.emit(input);
+  public void write(KEY key, VAL val) throws IOException, InterruptedException {
+    context.write(key, val);
   }
 }
