@@ -67,24 +67,4 @@ public final class Resources {
   public int getMemoryMB() {
     return memoryMB;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    Resources that = (Resources) o;
-    return (this.memoryMB == that.memoryMB) && (this.virtualCores == that.virtualCores);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = memoryMB;
-    result = 31 * result + virtualCores;
-    return result;
-  }
 }
