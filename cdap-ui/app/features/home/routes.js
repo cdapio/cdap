@@ -17,7 +17,17 @@ angular.module(PKG.name+'.feature.home')
 
       .state('home', {
         url: '/',
-        templateUrl: '/assets/features/home/home.html'
+        templateUrl: '/assets/features/home/home.html',
+        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService) {
+          if (!MY_CONFIG.securityEnabled) {
+            // Skip even the login view. Don't show login if security is disabled.
+            myAuth.login({username:'admin'})
+              .then(function() {
+                myLoadingService.showLoadingIcon()
+                $state.go('overview');
+              });
+          }
+        }
       })
 
       .state('ns', {
@@ -25,11 +35,11 @@ angular.module(PKG.name+'.feature.home')
         abstract: true,
         template: '<ui-view/>',
         resolve: {
-          rNsList: function (myNamespace) {
+          rNsList: function (myNamespace, myLoadingService) {
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList, mySessionStorage) {
+        controller: function ($state, rNsList, mySessionStorage, myLoadingService) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.name === $state.params.namespace;
@@ -53,6 +63,7 @@ angular.module(PKG.name+'.feature.home')
           else {
             mySessionStorage.set(PREFKEY, $state.params.namespace);
           }
+          myLoadingService.hideLoadingIcon()
         }
       })
 
