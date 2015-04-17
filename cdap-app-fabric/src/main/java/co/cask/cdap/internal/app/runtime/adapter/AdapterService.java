@@ -423,7 +423,13 @@ public class AdapterService extends AbstractIdleService {
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
+
+      // TODO: CDAP-2146 Instances, Resources should not be set through Store
       store.setWorkerInstances(workerId, adapterSpec.getInstances());
+      if (adapterSpec.getResources() != null) {
+        store.setWorkerResources(workerId, adapterSpec.getResources());
+      }
+
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
                                                                              sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();

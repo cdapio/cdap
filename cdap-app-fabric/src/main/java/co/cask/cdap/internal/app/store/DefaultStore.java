@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -411,6 +412,9 @@ public class DefaultStore implements Store {
         return null;
       }
     });
+
+    LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
+              id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
   @Override
@@ -529,6 +533,39 @@ public class DefaultStore implements Store {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
         return workerSpec.getInstances();
+      }
+    });
+  }
+
+  @Override
+  public void setWorkerResources(final Id.Program id, final Resources resources) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
+        workerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                             workerSpec.getDescription(), workerSpec.getProperties(),
+                                             workerSpec.getDatasets(), resources, workerSpec.getInstances());
+        ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, workerSpec);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.WORKER);
+        mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+
+    LOG.trace("Setting program resources: namespace: {}, application: {}, worker: {}, new resources: {}",
+              id.getNamespaceId(), id.getApplicationId(), id.getId(), resources);
+  }
+
+  @Override
+  public Resources getWorkerResources(final Id.Program id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Resources>() {
+      @Override
+      public Resources apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
+        return workerSpec.getResources();
       }
     });
   }

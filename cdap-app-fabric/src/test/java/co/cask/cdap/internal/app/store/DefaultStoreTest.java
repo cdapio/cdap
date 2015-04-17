@@ -19,12 +19,14 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
@@ -535,7 +537,6 @@ public class DefaultStoreTest {
 
   @Test
   public void testProcedureInstances() throws Exception {
-
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
@@ -550,6 +551,42 @@ public class DefaultStoreTest {
     store.setProcedureInstances(programId, 10);
     instances = store.getProcedureInstances(programId);
     Assert.assertEquals(10, instances);
+  }
+
+  @Test
+  public void testWorkerInstances() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    ApplicationSpecification spec = Specifications.from(new AppWithWorker());
+
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
+    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
+
+    int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
+    Assert.assertEquals(1, instancesFromSpec);
+    int instances = store.getWorkerInstances(programId);
+    Assert.assertEquals(instancesFromSpec, instances);
+
+    store.setWorkerInstances(programId, 9);
+    instances = store.getWorkerInstances(programId);
+    Assert.assertEquals(9, instances);
+  }
+
+  @Test
+  public void testWorkerResources() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    ApplicationSpecification spec = Specifications.from(new AppWithWorker());
+
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
+    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
+
+    Resources resourcesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getResources();
+    Assert.assertEquals(new Resources(), resourcesFromSpec);
+    Resources resources = store.getWorkerResources(programId);
+    Assert.assertEquals(resourcesFromSpec, resources);
+
+    Resources newResources = new Resources(2048, 32);
+    store.setWorkerResources(programId, newResources);
+    Assert.assertEquals(newResources, store.getWorkerResources(programId));
   }
 
   @Test
