@@ -90,6 +90,9 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
   }
 
   $scope.$on(caskWindowManager.event.resize, render);
+  // setInterval(function() {
+  //   render();
+  // }, 3000);
 
 });
 

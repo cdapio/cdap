@@ -46,6 +46,7 @@ Aggregator.prototype.log = function () {
  * schedule polling
  */
 Aggregator.prototype.planPolling = function () {
+  console.log('called plan polling');
   this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
 };
 
@@ -53,6 +54,7 @@ Aggregator.prototype.planPolling = function () {
  * stop polling
  */
 Aggregator.prototype.stopPolling = function () {
+  console.log('called stop polling');
   clearTimeout(this.timeout);
   this.timeout = null;
 };
@@ -66,7 +68,7 @@ function doPoll () {
   var that = this,
       rscs = this.polledResources.toArray(),
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
-
+  console.log(rscs)
   //this.log('poll', rscs.length);
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;

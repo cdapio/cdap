@@ -16,7 +16,7 @@ angular.module(PKG.name + '.commons')
 
         scope.durationType = 'seconds';
 
-        scope.label = attrs.label || 'Last';
+        scope.label = attrs.label || 'Resolution';
 
         ngModel.$render = function () {
           scope.timestamp = ngModel.$viewValue;

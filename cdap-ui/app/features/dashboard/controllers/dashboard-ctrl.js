@@ -14,6 +14,14 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.durationMs = null;
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
+  // Available refresh rates.
+  $scope.refreshRates = [
+    '1 second',
+    '60 seconds',
+    '10 mins',
+    '1 hour'
+  ];
+
   $scope.currentBoard = rDashboardsModel.current();
   if (!$scope.currentBoard) {
     $scope.unknownBoard = true;
@@ -111,7 +119,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     }
   });
 
-$scope.$watch('durationMs', function(newVal) {
+  $scope.$watch('durationMs', function(newVal) {
     var currentColumns = rDashboardsModel.current().columns,
         i, j;
     for (i=0; i<currentColumns.length; i++) {

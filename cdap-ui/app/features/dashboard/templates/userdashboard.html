@@ -8,12 +8,11 @@
 <div class="row">
   <div class="col-xs-6"></div>
   <div class="col-xs-6">
-    <div>From:</div>
     <my-timestamp-picker
       data-label="From:"
       ng-model="startMs"
     ></my-timestamp-picker>
-    <div>To:</div>
+    <br />
     <my-timestamp-picker
       data-label="To:"
       ng-model="endMs"
@@ -23,6 +22,16 @@
     <my-duration-picker
       ng-model="durationMs">
     </my-duration-picker>
+
+    <div class="col-sm-6">
+      <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+      ng-model="refreshRate"
+      bs-options="t for t in refreshRates"
+      bs-select>
+        <strong ng-bind="refreshRate"></strong>
+        <span class="caret"></span>
+      </button>
+    </div>
 
   </div>
 </div>
