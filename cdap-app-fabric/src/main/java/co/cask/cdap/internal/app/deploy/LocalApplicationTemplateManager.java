@@ -29,6 +29,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationTemplateVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
@@ -97,6 +98,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     pipeline.addLast(new ApplicationTemplateVerificationStage(store, datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace,
                                                    datasetFramework, inMemoryDatasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
