@@ -52,7 +52,6 @@ public class ETLWorker extends AbstractWorker {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
   private static final Gson GSON = new Gson();
   private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
-  private static final Type SOURCE_MAP_TYPE = new TypeToken<Map<String, byte[]>>() { }.getType();
 
   private String adapterName;
   private RealtimeSource source;
@@ -96,7 +95,7 @@ public class ETLWorker extends AbstractWorker {
     initializeSource(context, config.getSource());
     initializeTransforms(context, config.getTransforms());
 
-    // Execute within a transaction? Dataset operations could be performed in the Sink?
+    // TODO: Execute within a transaction? Dataset operations could be performed in the Sink?
     initializeSink(context, config.getSink());
 
     transformExecutor = new TransformExecutor(transforms);
@@ -162,8 +161,8 @@ public class ETLWorker extends AbstractWorker {
           KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
           byte[] stateBytes = stateTable.read(adapterName);
           if (stateBytes != null) {
-            Map<String, byte[]> stateMap = GSON.fromJson(Bytes.toString(stateBytes), SOURCE_MAP_TYPE);
-            sourceState.setState(stateMap);
+            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+            sourceState.setState(state.getState());
           }
         }
       });

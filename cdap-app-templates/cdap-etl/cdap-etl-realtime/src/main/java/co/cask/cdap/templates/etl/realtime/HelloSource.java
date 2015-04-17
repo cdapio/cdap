@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
@@ -31,6 +32,7 @@ import javax.annotation.Nullable;
  */
 public class HelloSource extends RealtimeSource<String> {
   private static final Logger LOG = LoggerFactory.getLogger(HelloSource.class);
+  private static final String COUNT = "count";
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -45,8 +47,20 @@ public class HelloSource extends RealtimeSource<String> {
     } catch (InterruptedException e) {
       LOG.error("Some Error in Source");
     }
-    LOG.info("Emitting data!");
+
+    int prevCount;
+    if (currentState.getState(COUNT) != null) {
+      prevCount = Bytes.toInt(currentState.getState(COUNT));
+      prevCount++;
+      currentState.setState(COUNT, Bytes.toBytes(prevCount));
+    } else {
+      prevCount = 1;
+      currentState = new SourceState();
+      currentState.setState(COUNT, Bytes.toBytes(prevCount));
+    }
+
+    LOG.info("Emitting data! {}", prevCount);
     writer.emit("Hello");
-    return null;
+    return currentState;
   }
 }

@@ -27,11 +27,11 @@ import java.util.List;
  * Default implementation of {@link StageConfigurer}.
  */
 public class DefaultStageConfigurer implements StageConfigurer {
-  protected final List<Property> properties = Lists.newArrayList();
+  private final List<Property> properties = Lists.newArrayList();
 
-  protected String name;
-  protected String className;
-  protected String description;
+  private String name;
+  private String className;
+  private String description;
 
   public DefaultStageConfigurer(Class klass) {
     this.name = klass.getSimpleName();
