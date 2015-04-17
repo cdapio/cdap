@@ -106,9 +106,6 @@ public final class AdapterSpecification {
     return instances;
   }
 
-  // Use the Resources set while creating Adapter. If it is not set, use the Resources set in the configuration
-  // of the Program in the Template Application.
-  @Nullable
   public Resources getResources() {
     return resources;
   }

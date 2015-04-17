@@ -572,24 +572,6 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testWorkerResources() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithWorker.class);
-    ApplicationSpecification spec = Specifications.from(new AppWithWorker());
-
-    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
-    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
-
-    Resources resourcesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getResources();
-    Assert.assertEquals(new Resources(), resourcesFromSpec);
-    Resources resources = store.getWorkerResources(programId);
-    Assert.assertEquals(resourcesFromSpec, resources);
-
-    Resources newResources = new Resources(2048, 32);
-    store.setWorkerResources(programId, newResources);
-    Assert.assertEquals(newResources, store.getWorkerResources(programId));
-  }
-
-  @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     Id.Namespace namespaceId = new Id.Namespace("account1");

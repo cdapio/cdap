@@ -17,7 +17,6 @@
 package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -290,22 +289,6 @@ public interface Store {
    * @return number of instances
    */
   int getWorkerInstances(Id.Program id);
-
-  /**
-   * Sets the {@link Resources} for a {@link Worker}.
-   *
-   * @param id program id
-   * @param resources {@link Resources}
-   */
-  void setWorkerResources(Id.Program id, Resources resources);
-
-  /**
-   * Gets the {@link Resources} for a {@link Worker}.
-   *
-   * @param id program id
-   * @return {@link Resources}
-   */
-  Resources getWorkerResources(Id.Program id);
 
   /**
    * Removes all program under the given application and also the application itself.
