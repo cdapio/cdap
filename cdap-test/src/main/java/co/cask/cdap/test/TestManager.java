@@ -34,7 +34,7 @@ public interface TestManager {
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
+   * other programs defined in the application
    * must be in the same or children package as the application.
    *
    * @param namespace The namespace to deploy to

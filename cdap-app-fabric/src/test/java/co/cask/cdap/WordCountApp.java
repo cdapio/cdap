@@ -16,12 +16,12 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
@@ -35,20 +35,23 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * This is a sample word count app that is used in testing in
@@ -65,13 +68,10 @@ public class WordCountApp extends AbstractApplication {
     addStream(new Stream("text"));
     createDataset("mydataset", KeyValueTable.class);
     addFlow(new WordCountFlow());
-    addProcedure(new WordFrequency("word"));
+    addService(new WordFrequencyService());
     addMapReduce(new VoidMapReduceJob());
   }
 
-  /**
-   *
-   */
   public static final class MyRecord {
 
     private final String title;
@@ -177,7 +177,6 @@ public class WordCountApp extends AbstractApplication {
   /**
    *
    */
-//  @Async
   public static class CountByField extends AbstractFlowlet implements Callback {
     @UseDataSet("mydataset")
     private KeyValueTable counters;
@@ -225,26 +224,28 @@ public class WordCountApp extends AbstractApplication {
     }
   }
 
-  /**
-   *
-   */
-  public static class WordFrequency extends AbstractProcedure {
+  public static class WordFrequencyService extends AbstractService {
+    @Override
+    protected void configure() {
+      addHandler(new WordFrequencyHandler());
+    }
+  }
+
+  public static class WordFrequencyHandler extends AbstractHttpServiceHandler {
+
     @UseDataSet("mydataset")
     private KeyValueTable counters;
 
-    @Property
-    private final String argumentName;
-
-    public WordFrequency(String argumentName) {
-      this.argumentName = argumentName;
-    }
-
-    @Handle("wordfreq")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String word = request.getArgument(argumentName);
-      Map<String, Long> result = ImmutableMap.of(word,
-        Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
-      responder.sendJson(result);
+    @GET
+    @Path("wordfreq/{word}")
+    public void wordFrequency(HttpServiceRequest request, HttpServiceResponder responder,
+                              @PathParam("word") String word) {
+      byte[] value = counters.read(word);
+      if (value == null) {
+        responder.sendStatus(404);
+        return;
+      }
+      responder.sendJson(ImmutableMap.of(word, Bytes.toLong(value)));
     }
   }
 }

@@ -430,12 +430,6 @@ public abstract class MetricsSuiteTestBase {
                            Constants.Metrics.Tag.STREAM, streamName);
   }
 
-  protected static Map<String, String> getProcedureContext(String namespaceId, String appName, String procedureName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROCEDURE, procedureName);
-  }
-
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName) {
     return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,

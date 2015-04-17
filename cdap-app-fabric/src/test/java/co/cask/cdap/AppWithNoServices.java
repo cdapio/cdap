@@ -16,13 +16,8 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-
-import java.io.IOException;
+import co.cask.cdap.api.worker.AbstractWorker;
 
 /**
  *
@@ -35,15 +30,14 @@ public class AppWithNoServices extends AbstractApplication {
   public void configure() {
     setName("AppWithServices");
     setDescription("Application with Services");
-    addProcedure(new NoOpProcedure());
+    addWorker(new DummyWorker());
   }
 
-  public static final class NoOpProcedure extends AbstractProcedure {
-    @Handle("noop")
-    public void handle(ProcedureRequest request,
-                       ProcedureResponder responder)
-      throws IOException {
-      responder.sendJson("OK");
+  public static class DummyWorker extends AbstractWorker {
+    @Override
+    public void run() {
+      // does nothing on purpose
     }
   }
+
 }

@@ -22,7 +22,6 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
@@ -101,7 +100,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -125,7 +124,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpRequest request = HttpRequest.post(url).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -149,7 +148,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/stop", appId, programType.getCategoryName(), programName);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -202,7 +201,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/status", appId, programType.getCategoryName(), programName);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
@@ -263,7 +262,7 @@ public class ProgramClient {
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
     String path = String.format("apps/%s/%s/%s/live-info", appId, programType.getCategoryName(), programName);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -366,61 +365,6 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(Id.Worker.from(config.getNamespace(), appId, workerId));
-    }
-  }
-
-  /**
-   * Gets the number of instances that a procedure is currently running on.
-   *
-   * @param appId ID of the application that the procedure belongs to
-   * @param procedureId ID of the procedure
-   * @return number of instances that the procedure is currently running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or procedure could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  public int getProcedureInstances(String appId, String procedureId)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    Id.Procedure procedure = Id.Procedure.from(app, procedureId);
-    String path = String.format("apps/%s/procedures/%s/instances", appId, procedureId);
-    URL url = VersionMigrationUtils.resolveURL(config, ProgramType.PROCEDURE, path);
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(procedure);
-    }
-
-    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
-  }
-
-  /**
-   * Sets the number of instances that a procedure will run on.
-   *
-   * @param appId ID of the application that the procedure belongs to
-   * @param procedureId ID of the procedure
-   * @param instances number of instances for the procedure to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application or procedure could not be found
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @deprecated As of version 2.6.0, replaced by {@link Service}
-   */
-  @Deprecated
-  public void setProcedureInstances(String appId, String procedureId, int instances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    Id.Procedure procedure = Id.Procedure.from(app, procedureId);
-    String path = String.format("apps/%s/procedures/%s/instances", appId, procedureId);
-    URL url = VersionMigrationUtils.resolveURL(config, ProgramType.PROCEDURE, path);
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
-
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(procedure);
     }
   }
 
@@ -587,7 +531,7 @@ public class ProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
     String path = String.format("apps/%s/%s/%s/runs?%s", appId, programType.getCategoryName(), programId, queryParams);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -611,7 +555,7 @@ public class ProgramClient {
   public List<WorkflowActionNode> getWorkflowCurrent(String appId, String workflowId, String runId)
     throws IOException, NotFoundException, UnauthorizedException {
     String path = String.format("/apps/%s/workflows/%s/%s/current", appId, workflowId, runId);
-    URL url = VersionMigrationUtils.resolveURL(config, ProgramType.WORKFLOW, path);
+    URL url = config.resolveNamespacedURLV3(path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -650,7 +594,7 @@ public class ProgramClient {
     String path = String.format("apps/%s/%s/%s/runs?%s",
                                 appId, programType.getCategoryName(),
                                 programId, queryParams);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -682,7 +626,7 @@ public class ProgramClient {
     Id.Program program = Id.Program.from(app, programType, programId);
     String path = String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
                                 appId, programType.getCategoryName(), programId, start, stop);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(program);
@@ -709,7 +653,7 @@ public class ProgramClient {
     Id.Program program = Id.Program.from(app, programType, programId);
 
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -736,7 +680,7 @@ public class ProgramClient {
     Id.Program program = Id.Program.from(app, programType, programId);
 
     String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

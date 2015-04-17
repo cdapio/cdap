@@ -26,10 +26,9 @@ public interface ProgramRunnerFactory {
   /**
    * Types of program that could be created.
    */
-  public enum Type {
+  enum Type {
     FLOW,
     FLOWLET,
-    PROCEDURE,
     MAPREDUCE,
     SPARK,
     WORKFLOW,

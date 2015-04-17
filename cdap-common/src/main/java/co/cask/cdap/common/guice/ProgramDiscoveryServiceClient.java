@@ -46,7 +46,6 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
    * TODO: We have program type in app-fabric, but here is common. Worth to refactor Type into one place.
    */
   private enum DiscoverableProgramType {
-    PROCEDURE,
     WORKFLOW,
     WEBAPP,
     SERVICE;

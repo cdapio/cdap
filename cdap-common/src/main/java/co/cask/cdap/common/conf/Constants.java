@@ -430,8 +430,6 @@ public final class Constants {
 
       public static final String SPARK = "sp";
 
-      public static final String PROCEDURE = "pr";
-
       // who emitted: user vs system (scope is historical name)
       public static final String SCOPE = "scp";
 

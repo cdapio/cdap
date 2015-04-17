@@ -18,7 +18,8 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.procedure.AbstractProcedure;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 
 /**
  * Simple app with table dataset.
@@ -30,6 +31,6 @@ public class AppWithTable extends AbstractApplication {
     setName("AppWithTable");
     setDescription("Simple app with table dataset");
     createDataset("my_table", Table.class);
-    addProcedure(new AbstractProcedure("fooProcedure") { });
+    addService(new BasicService("fooService", new AbstractHttpServiceHandler() { }));
   }
 }

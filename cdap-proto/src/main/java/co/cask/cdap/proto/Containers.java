@@ -36,9 +36,9 @@ public interface Containers {
   public void addContainer(Containers.ContainerInfo container);
 
   /**
-   * ContainerTypes - System Service, Flowlet, Procedure and Service
+   * ContainerTypes - System Service, Flowlet and Service
    */
-  enum ContainerType { SYSTEM_SERVICE, FLOWLET, PROCEDURE, SERVICE }
+  enum ContainerType { SYSTEM_SERVICE, FLOWLET, SERVICE }
 
   /**
    * POJO holding information about container running in YARN.

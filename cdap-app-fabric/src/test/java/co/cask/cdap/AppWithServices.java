@@ -16,17 +16,13 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
 
-import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -42,8 +38,15 @@ public class AppWithServices extends AbstractApplication {
   public void configure() {
     setName("AppWithServices");
     setDescription("Application with Services");
-    addProcedure(new NoOpProcedure());
     addService(new BasicService("NoOpService", new PingHandler(), new MultiPingHandler()));
+    addWorker(new DummyWorker());
+  }
+
+  public static class DummyWorker extends AbstractWorker {
+    @Override
+    public void run() {
+      // does nothing on purpose
+    }
   }
 
   public static final class PingHandler extends AbstractHttpServiceHandler {
@@ -69,13 +72,6 @@ public class AppWithServices extends AbstractApplication {
     @Path("/ping")
     public void pingHandler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
-    }
-  }
-
-  public static final class NoOpProcedure extends AbstractProcedure {
-    @Handle("noop")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      responder.sendJson("OK");
     }
   }
 }

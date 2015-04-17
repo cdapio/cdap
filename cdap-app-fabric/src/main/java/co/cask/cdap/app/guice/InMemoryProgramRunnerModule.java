@@ -28,7 +28,6 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
-import co.cask.cdap.internal.app.runtime.procedure.ProcedureProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.ServiceComponentProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
@@ -74,7 +73,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(LogWriter.class).to(LocalLogWriter.class);
     expose(LogWriter.class);
 
-    // Bind ServiceAnnouncer for procedure.
+    // Bind ServiceAnnouncer for service.
     bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
     // For Binding queue stuff
@@ -85,7 +84,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
       MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);

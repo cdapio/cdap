@@ -78,7 +78,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
-import co.cask.cdap.test.internal.DefaultProcedureClient;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalNamespaceClient;
 import co.cask.cdap.test.internal.StreamWriterFactory;
@@ -252,8 +251,6 @@ public class ConfigurableTestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
-          install(new FactoryModuleBuilder().implement(ProcedureClient.class, DefaultProcedureClient.class)
-                    .build(co.cask.cdap.test.internal.ProcedureClientFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -348,8 +345,7 @@ public class ConfigurableTestBase {
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
-   * must be in the same or children package as the application.
+   * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
@@ -366,8 +362,7 @@ public class ConfigurableTestBase {
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
-   * must be in the same or children package as the application.
+   * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.

@@ -19,7 +19,6 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
-import co.cask.cdap.gateway.handlers.ProcedureHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import co.cask.cdap.gateway.run.StreamWriterTestRun;
@@ -60,7 +59,6 @@ import javax.annotation.Nullable;
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {
   PingHandlerTestRun.class,
-  ProcedureHandlerTestRun.class,
   MetricsReporterHookTestRun.class,
   RuntimeArgumentTestRun.class,
   StreamWriterTestRun.class

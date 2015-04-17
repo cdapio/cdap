@@ -48,7 +48,6 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
- * @see co.cask.cdap.api.procedure.Procedure Procedure
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

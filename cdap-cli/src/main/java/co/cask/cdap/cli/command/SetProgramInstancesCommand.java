@@ -68,15 +68,6 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerId, appId, numInstances);
         break;
-      case PROCEDURE:
-        if (programIdParts.length < 2) {
-          throw new CommandInputError(this);
-        }
-        String procedureId = programIdParts[1];
-        programClient.setProcedureInstances(appId, procedureId, numInstances);
-        output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
-                      procedureId, appId, numInstances);
-        break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);

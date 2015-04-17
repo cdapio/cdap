@@ -58,8 +58,7 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
             node("flowlet", "splitter"))),
           node("mapreduce", "ClassicWordCount", children(
             node("mapreduceTask", "mappers"),
-            node("mapreduceTask", "reducers"))),
-          node("procedure", "RCounts"))));
+            node("mapreduceTask", "reducers"))))));
 
     JsonObject reads = new JsonObject();
     reads.addProperty("metric", "reads");
@@ -140,8 +139,6 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
     collector.increment("reads", 1);
     collector = parentCollector.childCollector(getFlowletContext(Constants.DEFAULT_NAMESPACE, "WCount", "WCounter",
                                                                  "counter"));
-    collector.increment("reads", 1);
-    collector = parentCollector.childCollector(getProcedureContext(Constants.DEFAULT_NAMESPACE, "WCount", "RCounts"));
     collector.increment("reads", 1);
     collector = parentCollector.childCollector(getMapReduceTaskContext(Constants.DEFAULT_NAMESPACE, "WCount",
                                                                        "ClassicWordCount",

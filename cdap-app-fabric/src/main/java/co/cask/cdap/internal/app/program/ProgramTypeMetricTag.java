@@ -33,8 +33,6 @@ public final class ProgramTypeMetricTag {
     switch (programType) {
       case FLOW:
         return Constants.Metrics.Tag.FLOW;
-      case PROCEDURE:
-        return Constants.Metrics.Tag.PROCEDURE;
       case MAPREDUCE:
         return Constants.Metrics.Tag.MAPREDUCE;
       case WORKFLOW:

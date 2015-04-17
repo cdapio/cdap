@@ -62,7 +62,7 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no Flow, Procedure, Worker, MapReduce job, or Service defined; " +
+      "Application %s has no Flow, Worker, MapReduce job, or Service defined; " +
         "should have at least one of them defined"
     );
   }
@@ -98,17 +98,6 @@ public final class Err {
       "In Flow '%s', the %s '%s' has no consumer for outputs '%s'"
     );
     // Output being emitted
-  }
-
-  /**
-   * Defines Procedure specific error messages.
-   */
-  public static class Procedure {
-    /**
-     * Preventing construction.
-     */
-    private Procedure() {
-    }
   }
 
   /**

@@ -32,7 +32,7 @@ final class WebappTwillProgramController extends AbstractTwillProgramController 
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    // Procedure doesn't have any command for now.
-    LOG.info("Command ignored for procedure controller: {}, {}", name, value);
+    // Webapp doesn't have any command for now.
+    LOG.info("Command ignored for webapp controller: {}, {}", name, value);
   }
 }

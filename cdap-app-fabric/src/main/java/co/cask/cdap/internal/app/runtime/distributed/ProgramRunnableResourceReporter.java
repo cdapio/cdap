@@ -48,7 +48,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
   /**
    * Returns the metric context.  A metric context is of the form
    * {applicationId}.{programTypeId}.{programId}.{componentId}.  So for flows, it will look like
-   * appX.f.flowY.flowletZ.  For procedures, appX.p.procedureY.  For mapreduce jobs, appX.b.mapredY.{optional m|r}.
+   * appX.f.flowY.flowletZ. For mapreduce jobs, appX.b.mapredY.{optional m|r}.
    */
   private static Map<String, String> getMetricContext(Program program, TwillContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()

@@ -16,7 +16,6 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -28,13 +27,16 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * This is a sample word count app that is used in testing in
@@ -54,7 +56,7 @@ public class MultiStreamApp extends AbstractApplication {
     addStream(new Stream("stream4"));
     createDataset("table", Table.class);
     addFlow(new CounterFlow());
-    addProcedure(new CountersProcedure());
+    addService(new CountersService());
   }
 
   /**
@@ -101,16 +103,22 @@ public class MultiStreamApp extends AbstractApplication {
     }
   }
 
-  /**
-   *
-   */
-  public static class CountersProcedure extends AbstractProcedure {
+  public static class CountersService extends AbstractService {
+    @Override
+    protected void configure() {
+      addHandler(new CountersHandler());
+    }
+  }
+
+  public static class CountersHandler extends AbstractHttpServiceHandler {
     @UseDataSet("table")
     private Table table;
 
-    @Handle("get")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    @GET
+    @Path("counter")
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       responder.sendJson(table.get(new Get("row")).getLong("column"));
     }
+
   }
 }

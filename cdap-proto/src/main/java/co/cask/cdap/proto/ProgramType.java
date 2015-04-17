@@ -38,13 +38,6 @@ public enum ProgramType {
     .setListable(true)
     .build()),
 
-  @SerializedName("Procedure")
-  PROCEDURE(2, Parameters.builder()
-    .setCategoryName("procedures")
-    .setPrettyName("Procedure")
-    .setListable(true)
-    .build()),
-
   @SerializedName("Mapreduce")
   MAPREDUCE(3, Parameters.builder()
     .setCategoryName("mapreduce")

@@ -37,7 +37,7 @@ public class TrackingTable extends AbstractDataset
 
   // some counters that are incremented by the table's operations and verified by the unit test.
   // the following is ugly. but there is no way to share a static counter or similar between the unit test and the
-  // flowlets/procedures/etc, because those are loaded in a different class loader. So we use a global thing like the
+  // flowlets/services/etc, because those are loaded in a different class loader. So we use a global thing like the
   // system properties to count.
 
   public static synchronized int getTracker(String table, String op) {

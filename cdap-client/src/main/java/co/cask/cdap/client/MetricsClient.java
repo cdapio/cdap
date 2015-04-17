@@ -96,12 +96,6 @@ public class MetricsClient {
                       MetricsConstants.FLOWLET_EXCEPTIONS);
   }
 
-  public RuntimeMetrics getProcedureMetrics(Id.Program procedureId) {
-    return getMetrics(MetricsContexts.forProcedure(procedureId),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
-  }
-
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
     return getMetrics(MetricsContexts.forService(serviceId),
                       MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,

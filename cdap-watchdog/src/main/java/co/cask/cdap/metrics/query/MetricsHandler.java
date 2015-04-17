@@ -125,9 +125,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       .put(Constants.Metrics.Tag.WORKFLOW, "workflow")
 
-      .put(Constants.Metrics.Tag.SPARK, "spark")
-
-      .put(Constants.Metrics.Tag.PROCEDURE, "procedure").build();
+      .put(Constants.Metrics.Tag.SPARK, "spark").build();
 
     tagNameToHuman = mapping;
     humanToTagName = mapping.inverse();

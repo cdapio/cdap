@@ -39,14 +39,12 @@ public class FakeApp extends AbstractApplication {
   public static final int STREAM_TRIGGER_MB = 10000;
 
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
-  public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
   public static final List<String> SPARK = Lists.newArrayList(FakeSpark.NAME);
   public static final List<String> WORKFLOWS = Lists.newArrayList(FakeWorkflow.NAME);
   public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME, PrefixedEchoHandler.NAME);
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
     .addAll(FLOWS)
-    .addAll(PROCEDURES)
     .addAll(MAPREDUCES)
     .addAll(WORKFLOWS)
     .addAll(SPARK)
@@ -59,7 +57,6 @@ public class FakeApp extends AbstractApplication {
     addStream(new Stream(STREAM_NAME));
     addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
     createDataset(DS_NAME, FakeDataset.class.getName());
-    addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());

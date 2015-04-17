@@ -69,25 +69,6 @@ public interface ApplicationManager {
   SparkManager startSpark(String jobName, Map<String, String> arguments);
 
   /**
-   * Starts a procedure.
-   * @param procedureName Name of the procedure to start.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  ProcedureManager startProcedure(String procedureName);
-
-  /**
-   * Starts a procedure.
-   * @param procedureName Name of the procedure to start.
-   * @param arguments Arguments to be passed while starting a procedure.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
-
-  /**
    * Gets a {@link StreamWriter} for writing data to the given stream.
    * @param streamName Name of the stream to write to.
    * @return A {@link StreamWriter}.

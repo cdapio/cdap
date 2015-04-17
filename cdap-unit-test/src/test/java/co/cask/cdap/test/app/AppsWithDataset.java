@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -37,11 +36,10 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureContext;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -50,6 +48,10 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *
@@ -61,7 +63,7 @@ public class AppsWithDataset {
   public static class AppWithExisting extends AbstractApplication {
     @Override
     public void configure() {
-      addProcedure(new MyProcedure());
+      addService(new BasicService("MyService", new MyHandler()));
     }
   }
 
@@ -72,7 +74,7 @@ public class AppsWithDataset {
     @Override
     public void configure() {
       createDataset("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
-      addProcedure(new MyProcedure());
+      addService(new BasicService("MyService", new MyHandler()));
     }
   }
 
@@ -84,7 +86,7 @@ public class AppsWithDataset {
     public void configure() {
       createDataset("myTable", "myKeyValueTable", DatasetProperties.EMPTY);
       addDatasetModule("my-kv", KeyValueTableDefinition.Module.class);
-      addProcedure(new MyProcedure());
+      addService(new BasicService("MyService", new MyHandler()));
     }
   }
 
@@ -96,7 +98,7 @@ public class AppsWithDataset {
     public void configure() {
       createDataset("myTable", KeyValueTableDefinition.KeyValueTable.class.getName(), DatasetProperties.EMPTY);
       addDatasetType(KeyValueTableDefinition.KeyValueTable.class);
-      addProcedure(new MyProcedure());
+      addService(new BasicService("MyService", new MyHandler()));
     }
   }
 
@@ -107,45 +109,32 @@ public class AppsWithDataset {
     @Override
     public void configure() {
       createDataset("myTable", KeyValueTableDefinition.KeyValueTable.class, DatasetProperties.EMPTY);
-      addProcedure(new MyProcedure());
+      addService(new BasicService("MyService", new MyHandler()));
     }
   }
 
   /**
    *
    */
-  static class MyProcedure extends AbstractProcedure {
+  public static class MyHandler extends AbstractHttpServiceHandler {
+
+    @UseDataSet("myTable")
     private KeyValueTableDefinition.KeyValueTable table;
 
-    @Override
-    public ProcedureSpecification configure() {
-      return ProcedureSpecification.Builder.with()
-        .setName(getName())
-        .setDescription(getDescription())
-        .useDataSet("myTable")
-        .build();
-    }
-
-    @Override
-    public void initialize(ProcedureContext context) {
-      super.initialize(context);
-      table = context.getDataset("myTable");
-    }
-
-    @Handle("set")
-    public void set(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      String key = request.getArgument("key");
-      String value = request.getArgument("value");
+    @PUT
+    @Path("{key}")
+    public void set(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key) throws Exception {
+      String value = Bytes.toString(request.getContent());
       table.put(key, value);
-
       responder.sendJson("OK");
     }
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      String key = request.getArgument("key");
+    @GET
+    @Path("{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key) throws Exception {
       String value = table.get(key);
-
       responder.sendJson(value);
     }
   }
@@ -156,31 +145,31 @@ public class AppsWithDataset {
   public static class AppUsesAnnotation extends AbstractApplication {
     @Override
     public void configure() {
-      addProcedure(new MyProcedureWithUseDataSetAnnotation());
+      addService(new BasicService("MyServiceWithUseDataSetAnnotation", new MyHandlerWithUseDataSetAnnotation()));
     }
   }
 
   /**
    *
    */
-  static class MyProcedureWithUseDataSetAnnotation extends AbstractProcedure {
+  public static class MyHandlerWithUseDataSetAnnotation extends AbstractHttpServiceHandler {
     @UseDataSet("myTable")
     private KeyValueTableDefinition.KeyValueTable table;
 
-    @Handle("set")
-    public void set(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      String key = request.getArgument("key");
-      String value = request.getArgument("value");
+    @PUT
+    @Path("{key}")
+    public void set(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key) throws Exception {
+      String value = Bytes.toString(request.getContent());
       table.put(key, value);
-
       responder.sendJson("OK");
     }
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      String key = request.getArgument("key");
+    @GET
+    @Path("{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key) throws Exception {
       String value = table.get(key);
-
       responder.sendJson(value);
     }
   }

@@ -70,17 +70,6 @@ public final class RuntimeStats {
     return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
-    return getMetrics(MetricsContexts.forProcedure(id),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
-  }
-
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
     return getMetrics(MetricsContexts.forService(id),

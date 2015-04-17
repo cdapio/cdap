@@ -15,6 +15,6 @@
  */
 
 /**
- * Contains logging context objects for Flow, Procedure, Map Reduce, etc.
+ * Contains logging context objects for Flow, Map Reduce, etc.
  */
 package co.cask.cdap.logging.context;

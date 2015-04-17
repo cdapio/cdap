@@ -64,7 +64,6 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
 
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
-    PROCEDURES("p"),
     MAPREDUCE("b"),
     FLOWS("f"),
     STREAMS("stream"),
@@ -92,7 +91,6 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
     APP("app"),
     FLOW("flow"),
     FLOWLET("flowlet"),
-    PROCEDURE("procedure"),
     MAPREDUCE("mapreduce"),
     MAPREDUCE_TASK("mapreduceTask"),
     STREAM("stream"),
@@ -374,14 +372,11 @@ public final class MetricsDiscoveryHandler extends AuthenticatedHttpHandler {
     metricContexts = metricContexts.getOrAddChild(ContextNodeType.APP, appId);
 
     // different program types will have different depths in the context tree.  For example,
-    // procedures have no children, whereas flows will have flowlets as children.
+    // lows will have flowlets as children.
     ProgramType type = ProgramType.fromId(contextParts.next());
     switch (type) {
       case FLOWS:
         metricContexts.deepAdd(contextParts, ContextNodeType.FLOW, ContextNodeType.FLOWLET);
-        break;
-      case PROCEDURES:
-        metricContexts.deepAdd(contextParts, ContextNodeType.PROCEDURE);
         break;
       case MAPREDUCE:
         if (contextParts.hasNext()) {

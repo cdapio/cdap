@@ -298,26 +298,6 @@ public class MetricQueryParserTest {
   }
 
   @Test
-  public void testProcedure() throws MetricsPathException  {
-    MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/procedures/proc1/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROCEDURE, "proc1");
-    Assert.assertEquals("system.reads", query.getMetricName());
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/procedures/proc1/runs/run123/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROCEDURE, "proc1");
-    Assert.assertEquals("system.reads", query.getMetricName());
-    Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
-  }
-
-  @Test
   public void testUserServices() throws MetricsPathException  {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/reads?summary=true"));
@@ -537,8 +517,6 @@ public class MetricQueryParserTest {
       "/system/apps/appX/flows/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
-      "/system/apps/appX/procedures/metric?aggregate=true",
-      "/system/apps/appX/procedures/procedureY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mappers/metric?aggregate=true",
@@ -555,8 +533,6 @@ public class MetricQueryParserTest {
       "/system/app/appX/metric?aggregate=true",
       "/system/apps/appX/flow/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
-      "/system/apps/appX/procedure/metric?aggregate=true",
-      "/system/apps/appX/procedure/procedureY/metric?aggregate=true",
       "/system/apps/appX/mapreduces/metric?aggregate=true",
       "/system/apps/appX/mapreduces/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mapper/metric?aggregate=true",
