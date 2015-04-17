@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.DataTemplate;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -228,9 +230,9 @@ public class AdapterServiceTests extends AppFabricTestBase {
     public static final String NAME = "template1";
 
     @Override
-    public void configure() {
-      super.configure();
-      setName(NAME);
+    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+      super.configure(configurer, context);
+      configurer.setName(NAME);
     }
   }
 
@@ -238,9 +240,9 @@ public class AdapterServiceTests extends AppFabricTestBase {
     public static final String NAME = "template2";
 
     @Override
-    public void configure() {
-      super.configure();
-      setName(NAME);
+    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+      super.configure(configurer, context);
+      configurer.setName(NAME);
     }
   }
 
@@ -251,10 +253,10 @@ public class AdapterServiceTests extends AppFabricTestBase {
     public static final String NAME = "badtemplate";
 
     @Override
-    public void configure() {
-      setName(NAME);
-      addWorkflow(new SomeWorkflow1());
-      addWorkflow(new SomeWorkflow2());
+    public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+      configurer.setName(NAME);
+      configurer.addWorkflow(new SomeWorkflow1());
+      configurer.addWorkflow(new SomeWorkflow2());
     }
 
     public static class SomeWorkflow1 extends AbstractWorkflow {

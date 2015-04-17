@@ -16,6 +16,8 @@
 
 package co.cask.cdap.templates.etl.batch;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -255,10 +257,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   @Override
-  public void configure() {
-    setName("etlbatch");
-    setDescription("Batch Extract-Transform-Load (ETL) Adapter");
-    addMapReduce(new ETLMapReduce());
-    addWorkflow(new ETLWorkflow());
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName("etlbatch");
+    configurer.setDescription("Batch Extract-Transform-Load (ETL) Adapter");
+    configurer.addMapReduce(new ETLMapReduce());
+    configurer.addWorkflow(new ETLWorkflow());
   }
 }

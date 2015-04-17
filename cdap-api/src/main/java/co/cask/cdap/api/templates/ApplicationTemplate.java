@@ -17,7 +17,7 @@
 package co.cask.cdap.api.templates;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import javax.annotation.Nullable;
@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 //TODO: Add more description about what an app template is.
 @Beta
-public abstract class ApplicationTemplate<T> extends AbstractApplication {
+public abstract class ApplicationTemplate<T> implements Application {
 
   /**
    * Given the adapter configuration, configures the {@link AdapterConfigurer}.
