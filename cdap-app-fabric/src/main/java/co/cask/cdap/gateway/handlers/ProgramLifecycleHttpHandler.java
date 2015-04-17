@@ -239,10 +239,24 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       MRJobInfo mrJobInfo;
       try {
-        mrJobInfo = mrJobClient.getMRJobInfo(run, runRecord);
+        mrJobInfo = mrJobClient.getMRJobInfo(run);
       } catch (IOException ioe) {
-        LOG.warn("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
-        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run, runRecord);
+        LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      } catch (NotFoundException nfe) {
+        // Even if we ran the MapReduce program, there is no guarantee that the JobClient will be able to find it.
+        // For example, if the MapReduce program fails before it successfully submits the job.
+        LOG.debug("Failed to find run history from JobClient for runId: {}. Falling back to Metrics system.", run, nfe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      }
+
+      mrJobInfo.setState(runRecord.getStatus().name());
+      // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
+      // in milliseconds. RunRecord returns seconds value.
+      mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecord.getStartTs()));
+      Long stopTs = runRecord.getStopTs();
+      if (stopTs != null) {
+        mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
       }
 
 

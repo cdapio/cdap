@@ -23,7 +23,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -62,12 +61,11 @@ public class MRJobClient {
 
   /**
    * @param runId for which information will be returned.
-   * @param runRecord for the run (we already keep track of information such as job-level state, start/end time).
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    * @throws IOException if there is failure to communicate through the JobClient.
    * @throws NotFoundException if a Job with the given runId is not found.
    */
-  public MRJobInfo getMRJobInfo(Id.Run runId, RunRecord runRecord) throws IOException, NotFoundException {
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
     JobClient jobClient;
@@ -86,9 +84,7 @@ public class MRJobClient {
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());
     TaskReport[] reduceTaskReports = jobClient.getReduceTaskReports(thisJob.getJobID());
 
-    return new MRJobInfo(runRecord.getStatus().name(),
-                         runRecord.getStartTs(), runRecord.getStopTs(),
-                         thisJob.getMapProgress(), thisJob.getReduceProgress(),
+    return new MRJobInfo(thisJob.getMapProgress(), thisJob.getReduceProgress(),
                          groupToMap(counters.getGroup(TaskCounter.class.getName())),
                          toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports), true);
   }

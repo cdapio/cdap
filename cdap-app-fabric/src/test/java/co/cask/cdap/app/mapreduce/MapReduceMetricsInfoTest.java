@@ -27,9 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
@@ -67,11 +65,7 @@ public class MapReduceMetricsInfoTest {
   @Test
   public void testGetMRJobInfo() throws Exception {
     Id.Program programId = Id.Program.from("fooNamespace", "testApp", ProgramType.MAPREDUCE, "fooMapReduce");
-    String run = "run10878";
-    Id.Run runId = new Id.Run(programId, run);
-    Long stopTime = System.currentTimeMillis();
-    Long startTime = stopTime - 10000;
-    RunRecord runRecord = new RunRecord(run, startTime, stopTime, ProgramRunStatus.COMPLETED);
+    Id.Run runId = new Id.Run(programId, "run10878");
 
     Map<String, String> runContext = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId(),
                                                      Constants.Metrics.Tag.APP, programId.getApplicationId(),
@@ -115,14 +109,11 @@ public class MapReduceMetricsInfoTest {
 
 
     MapReduceMetricsInfo mapReduceMetricsInfo = injector.getInstance(MapReduceMetricsInfo.class);
-    MRJobInfo mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(runId, runRecord);
+    MRJobInfo mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(runId);
 
 
     // Incomplete because MapReduceMetricsInfo does not provide task-level state and start/end times.
     Assert.assertFalse(mrJobInfo.isComplete());
-    Assert.assertEquals(startTime, mrJobInfo.getStartTime());
-    Assert.assertEquals(stopTime, mrJobInfo.getStopTime());
-    Assert.assertEquals(ProgramRunStatus.COMPLETED.name(), mrJobInfo.getState());
 
     // Check job-level counters
     Map<String, Long> jobCounters = mrJobInfo.getCounters();

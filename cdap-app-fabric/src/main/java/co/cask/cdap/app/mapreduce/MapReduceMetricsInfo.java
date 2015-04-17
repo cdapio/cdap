@@ -27,7 +27,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +58,7 @@ public class MapReduceMetricsInfo {
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
-  public MRJobInfo getMRJobInfo(Id.Run runId, RunRecord runRecord) throws Exception {
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws Exception {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
     // baseTags has tag keys: ns.app.mr.runid
@@ -113,7 +112,7 @@ public class MapReduceMetricsInfo {
                                          reduceProgress.get(reduceTaskId) / 100.0F, taskEntry.getValue()));
     }
 
-    return getJobCounters(runRecord, mapTags, reduceTags, mapTaskInfos, reduceTaskInfos);
+    return getJobCounters(mapTags, reduceTags, mapTaskInfos, reduceTaskInfos);
   }
 
 
@@ -132,7 +131,7 @@ public class MapReduceMetricsInfo {
     }
   }
 
-  private MRJobInfo getJobCounters(RunRecord runRecord, Map<String, String> mapTags, Map<String, String> reduceTags,
+  private MRJobInfo getJobCounters(Map<String, String> mapTags, Map<String, String> reduceTags,
                                    List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos) throws Exception {
     HashMap<String, Long> metrics = Maps.newHashMap();
     // Use batch-querying when it is available on the MetricStore. https://issues.cask.co/browse/CDAP-2045
@@ -152,9 +151,7 @@ public class MapReduceMetricsInfo {
     float reduceProgress = getAggregates(reduceTags, MapReduceMetrics.METRIC_COMPLETION) / 100.0F;
 
 
-    return new MRJobInfo(runRecord.getStatus().name(), runRecord.getStartTs(), runRecord.getStopTs(),
-                         mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos,
-                         false);
+    return new MRJobInfo(mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos, false);
   }
 
   private String prependSystem(String metric) {

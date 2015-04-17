@@ -18,14 +18,19 @@ package co.cask.cdap.proto;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Simplified (filtered) representation of a MapReduce Job.
  */
 public class MRJobInfo {
-  private final String state;
-  private final Long startTime;
-  private final Long stopTime;
+  @Nullable
+  private String state;
+  @Nullable
+  private Long startTime;
+  @Nullable
+  private Long stopTime;
+
   private final Float mapProgress;
   private final Float reduceProgress;
   private final Map<String, Long> counters;
@@ -34,14 +39,8 @@ public class MRJobInfo {
   // If false, the nullable fields in the MRTaskInfo in the mapTasks and reduceTasks will be null.
   private final boolean complete;
 
-  public MRJobInfo(String state, Long startTime, Long stopTime,
-                   Float mapProcess, Float reduceProgress,
-                   Map<String, Long> counters,
-                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks,
-                   boolean complete) {
-    this.state = state;
-    this.startTime = startTime;
-    this.stopTime = stopTime;
+  public MRJobInfo(Float mapProcess, Float reduceProgress, Map<String, Long> counters,
+                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks, boolean complete) {
     this.mapProgress = mapProcess;
     this.reduceProgress = reduceProgress;
     this.counters = counters;
@@ -50,14 +49,29 @@ public class MRJobInfo {
     this.complete = complete;
   }
 
+  public void setState(@Nullable String state) {
+    this.state = state;
+  }
+
+  public void setStartTime(@Nullable Long startTime) {
+    this.startTime = startTime;
+  }
+
+  public void setStopTime(@Nullable Long stopTime) {
+    this.stopTime = stopTime;
+  }
+
+  @Nullable
   public String getState() {
     return state;
   }
 
+  @Nullable
   public Long getStartTime() {
     return startTime;
   }
 
+  @Nullable
   public Long getStopTime() {
     return stopTime;
   }
