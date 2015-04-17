@@ -25,14 +25,13 @@ angular.module(PKG.name + '.feature.mapreduce')
       $scope.activeTab = tab;
     };
 
-
-    if ($state.params.runid) {
-      var path = '/apps/' + $state.params.appId
-                      + '/mapreduce/' + $state.params.programId
-                      + '/runs/' + $state.params.runid + '/info';
+    if ($scope.current !== 'No Run') {
+      var runid = $scope.current;
 
       dataSrc.poll({
-        _cdapNsPath: path
+        _cdapNsPath: '/apps/' + $state.params.appId
+                      + '/mapreduce/' + $state.params.programId
+                      + '/runs/' + runid + '/info'
       }, function (res) {
 
         $scope.info = res;
@@ -43,34 +42,6 @@ angular.module(PKG.name + '.feature.mapreduce')
         $scope.mapperStats = getStats($scope.info.mapTasks);
         $scope.reducerStats = getStats($scope.info.reduceTasks);
       });
-
-    } else {
-
-      dataSrc.request({
-        _cdapNsPath: '/apps/' + $state.params.appId
-                      + '/mapreduce/' + $state.params.programId
-                      + '/runs'
-      }).then(function(list) {
-        if (list.length > 0) {
-          var runid = list[0].runid;
-
-          dataSrc.poll({
-            _cdapNsPath: '/apps/' + $state.params.appId
-                          + '/mapreduce/' + $state.params.programId
-                          + '/runs/' + runid + '/info'
-          }, function (res) {
-
-            $scope.info = res;
-            // To Be used when progress is fixed in the backend
-            // $scope.mapProgress = Math.floor(res.mapProgress * 100);
-            // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
-
-            $scope.mapperStats = getStats($scope.info.mapTasks);
-            $scope.reducerStats = getStats($scope.info.reduceTasks);
-          });
-        }
-      });
-
     }
 
     $scope.getCompletedPercentage = function(tasks) {

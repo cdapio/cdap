@@ -9,8 +9,10 @@ angular.module(PKG.name + '.feature.mapreduce')
       if ($scope.runs.length === 0) {
         $scope.current = 'No Run';
       } else {
-        $scope.current = $scope.runs[0].runid;
+        $scope.current = rRuns[0].runid;
       }
+    } else {
+      $scope.current = $state.params.runid;
     }
 
     $rootScope.$on('$stateChangeSuccess', function() {
@@ -21,7 +23,6 @@ angular.module(PKG.name + '.feature.mapreduce')
       } else {
         $scope.current = $scope.runs[0].runid;
       }
-
     });
 
   });
