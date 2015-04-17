@@ -32,6 +32,8 @@ angular.module(PKG.name + '.feature.mapreduce')
       dataSrc.request({
         method: 'POST',
         _cdapNsPath: basePath + '/' + action
+      }).then(function () {
+        $state.go('mapreduce.detail.runs', {}, { reload: true });
       });
     };
   });

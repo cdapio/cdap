@@ -1077,8 +1077,14 @@
     </property>
 
     <property>
+      <name>security.auth.server.address</name>
+      <value></value>
+      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
+    </property>
+
+    <property>
       <name>security.auth.server.bind.address</name>
-      <value>127.0.0.1</value>
+      <value>0.0.0.0</value>
     </property>
 
     <property>
@@ -1202,6 +1208,5 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
-
 
 </configuration>

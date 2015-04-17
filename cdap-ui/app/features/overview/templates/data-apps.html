@@ -1,10 +1,11 @@
 <div class="row">
   <div class="col-xs-12 col-md-6">
-    <div ng-if="datasets.length > 0 || streams.length > 0">
+    <div ng-if="dataList.length > 0">
       <h3 class="text-uppercase"> Data </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-5">
-          <p> Most recent </p>
+          <p ng-if="dataList.length < 5"> Showing {{ dataList.length }} out of {{ dataList.length }}</p>
+          <p ng-if="dataList.length >= 5"> Showing 5 out of {{ dataList.length }}</p>
         </div>
         <div class="col-xs-12 col-sm-7 text-right">
           <div class="btn-group">
@@ -12,16 +13,16 @@
               <span class="fa fa-bars"></span>
               <span>All Datasets</span>
             </a>
-            <a ui-sref="data.list" class="btn btn-default" disabled>
+            <a ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})" class="btn btn-default">
               <span class="fa fa-plus"></span>
-              <span>Add Data</span>
+              <span>Add Stream</span>
             </a>
           </div>
         </div>
       </div>
 
       <ul class="list-group" >
-        <li class="list-group-item" ng-repeat="data in combined = streams.concat(datasets) | orderBy:'name' | limitTo: 5 track by $index ">
+        <li class="list-group-item" ng-repeat="data in dataList | orderBy:'name' | limitTo: 5 track by $index ">
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <div class="title-type-image">
@@ -40,7 +41,7 @@
       </ul>
     </div>
 
-    <div ng-if="datasets.length === 0 && streams.length === 0">
+    <div ng-if="dataList.length === 0">
       <div class="clearfix">
         <h3 class="text-uppercase"> Data </h3>
         <p> You haven't deployed any datasets. Add one! </p>
@@ -53,6 +54,7 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select> -->
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">Add Stream</a>
       </div>
     </div>
   </div>
@@ -61,7 +63,8 @@
       <h3 class="text-uppercase"> Apps </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
-          <p> Most recent </p>
+          <p ng-if="apps.length < 5"> Showing {{ apps.length }} out of {{ apps.length }}</p>
+          <p ng-if="apps.length >= 5"> Showing 5 out of {{ apps.length }}</p>
         </div>
         <div class="col-xs-12 col-sm-9 text-right">
           <div class="btn-group">
@@ -112,6 +115,7 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select>
+        <a ui-sref="etlapps.create" class="btn btn-default">Add ETL App</a>
       </div>
     </div>
   </div>

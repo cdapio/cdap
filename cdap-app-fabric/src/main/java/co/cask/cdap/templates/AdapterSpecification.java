@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -40,6 +41,7 @@ public final class AdapterSpecification {
   private final Map<String, DatasetCreationSpec> datasets;
   private final Map<String, String> datasetModules;
   private final Map<String, String> runtimeArgs;
+  private final Resources resources;
   // this is a json representation of some config that templates will use to configure
   // an adapter. At configuration time it will be translated into the correct object,
   // but the platform itself never interprets it but just passes it along.
@@ -50,7 +52,8 @@ public final class AdapterSpecification {
                                Map<String, StreamSpecification> streams,
                                Map<String, DatasetCreationSpec> datasets,
                                Map<String, String> datasetModules,
-                               Map<String, String> runtimeArgs, JsonElement config) {
+                               Map<String, String> runtimeArgs, Resources resources,
+                               JsonElement config) {
     this.name = name;
     this.description = description;
     this.template = template;
@@ -62,6 +65,7 @@ public final class AdapterSpecification {
       ImmutableMap.<String, String>of() : ImmutableMap.copyOf(datasetModules);
     this.runtimeArgs = runtimeArgs == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(runtimeArgs);
     this.config = config;
+    this.resources = resources;
   }
 
   public String getName() {
@@ -102,6 +106,10 @@ public final class AdapterSpecification {
     return instances;
   }
 
+  public Resources getResources() {
+    return resources;
+  }
+
   public JsonElement getConfig() {
     return config;
   }
@@ -123,6 +131,7 @@ public final class AdapterSpecification {
     private Map<String, DatasetCreationSpec> datasets;
     private Map<String, String> datasetModules;
     private int instances;
+    private Resources resources;
     private JsonElement config;
 
     public Builder(String name, String template) {
@@ -175,9 +184,14 @@ public final class AdapterSpecification {
       return this;
     }
 
+    public Builder setResources(Resources resources) {
+      this.resources = resources;
+      return this;
+    }
+
     public AdapterSpecification build() {
       return new AdapterSpecification(name, description, template, schedule, instances,
-                                      streams, datasets, datasetModules, runtimeArgs, config);
+                                      streams, datasets, datasetModules, runtimeArgs, resources, config);
     }
   }
 

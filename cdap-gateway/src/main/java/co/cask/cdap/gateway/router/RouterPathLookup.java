@@ -107,7 +107,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
       //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
       return Constants.Service.METRICS;
-    } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
+    } else if (matches(uriParts, "v2", "system", "services", null, "logs")) {
       //Log Handler Path /v2/system/services/<service-id>/logs
       return Constants.Service.METRICS;
     } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
@@ -189,8 +189,37 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return Constants.Service.DATASET_MANAGER;
+    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+      //Log Handler Path /v3/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
+  }
+
+  /**
+   * Determines if actual matches expected.
+   *
+   * - actual may be longer than expected, but we'll return true as long as expected was found
+   * - null in expected means "accept any string"
+   *
+   * @param actual actual string array to check
+   * @param expected expected string array format
+   * @return true if actual matches expected
+   */
+  private boolean matches(String[] actual, String... expected) {
+    if (actual.length < expected.length) {
+      return false;
+    }
+
+    for (int i = 0; i < expected.length; i++) {
+      if (expected[i] == null) {
+        continue;
+      }
+      if (!expected[i].equals(actual[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private HttpRequest rewriteRequest(HttpRequest request) {

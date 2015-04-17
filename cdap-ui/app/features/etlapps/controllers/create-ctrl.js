@@ -1,6 +1,9 @@
 angular.module(PKG.name + '.feature.etlapps')
   .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory) {
     var apiFactory = new ETLAppsApiFactory($scope);
+
+    $scope.ETLMetadataTabOpen = true;
+
     // Loading flag to indicate source & sinks have
     // not been loaded yet (after/before choosing an etl template)
     $scope.loadingEtlSourceProps = false;

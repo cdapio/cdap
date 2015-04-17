@@ -18,6 +18,25 @@ angular.module(PKG.name + '.feature.flows')
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
         },
+        resolve : {
+          rRuns: function(MyDataSource, $stateParams, $q) {
+            var defer = $q.defer();
+            var dataSrc = new MyDataSource();
+            // Using _cdapPath here as $state.params is not updated with
+            // runid param when the request goes out
+            // (timing issue with re-direct from login state).
+            dataSrc.request({
+              _cdapPath: '/namespaces/' + $stateParams.namespace +
+                         '/apps/' + $stateParams.appId +
+                         '/flows/' + $stateParams.programId +
+                         '/runs'
+            })
+              .then(function(res) {
+                defer.resolve(res);
+              });
+            return defer.promise;
+          }
+        },
         ncyBreadcrumb: {
           parent: 'apps.detail.overview',
           label: 'Flows',
@@ -42,19 +61,6 @@ angular.module(PKG.name + '.feature.flows')
               label: '{{$state.params.flowletid}}'
             }
           })
-
-      .state('flows.detail.status', {
-        url: '/status',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
-        },
-        ncyBreadcrumb: {
-          label: '{{$state.params.programId}}'
-        },
-        templateUrl: '/assets/features/flows/templates/tabs/status.html',
-        controller: 'FlowsDetailController'
-      })
 
       .state('flows.detail.runs', {
         url: '/runs',

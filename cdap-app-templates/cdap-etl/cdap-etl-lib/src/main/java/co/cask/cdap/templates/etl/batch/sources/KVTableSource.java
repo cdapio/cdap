@@ -16,7 +16,9 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -24,7 +26,8 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 /**
  * CDAP Key Value Table Dataset Batch Source.
  */
-public class KVTableSource extends BatchReadableSource<byte[], byte[]> {
+public class KVTableSource extends BatchReadableSource<byte[], byte[], KeyValue<byte[], byte[]>> {
+
   @Override
   public void configure(StageConfigurer configurer) {
     configurer.setName("KVTableSource");
@@ -35,5 +38,10 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[]> {
   @Override
   protected String getType(ETLStage stageConfig) {
     return KeyValueTable.class.getName();
+  }
+
+  @Override
+  public void emit(byte[] key, byte[] val, Emitter<KeyValue<byte[], byte[]>> emitter) {
+    emitter.emit(new KeyValue<byte[], byte[]>(key, val));
   }
 }

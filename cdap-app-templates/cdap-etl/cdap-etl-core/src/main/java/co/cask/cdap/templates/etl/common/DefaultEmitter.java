@@ -18,29 +18,27 @@ package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Emitter;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Default implementation of {@link Emitter}.
  */
-public class DefaultEmitter implements Emitter, Iterable<Map.Entry> {
-  private final List<Map.Entry> entryList;
+public class DefaultEmitter implements Emitter, Iterable<Object> {
+  private final List<Object> entryList;
 
   public DefaultEmitter() {
     entryList = Lists.newArrayList();
   }
 
   @Override
-  public void emit(Object key, Object value) {
-    entryList.add(Maps.immutableEntry(key, value));
+  public void emit(Object value) {
+    entryList.add(value);
   }
 
   @Override
-  public Iterator iterator() {
+  public Iterator<Object> iterator() {
     return entryList.iterator();
   }
 

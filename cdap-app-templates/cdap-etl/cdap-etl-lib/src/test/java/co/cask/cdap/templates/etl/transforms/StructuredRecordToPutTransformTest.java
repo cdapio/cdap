@@ -45,8 +45,8 @@ public class StructuredRecordToPutTransformTest {
 
     StructuredRecord record = StructuredRecord.builder(schema).build();
 
-    MockEmitter<Object, Put> emitter = new MockEmitter<Object, Put>();
-    transform.transform(0L, record, emitter);
+    MockEmitter<Put> emitter = new MockEmitter<Put>();
+    transform.transform(record, emitter);
   }
 
   @Test
@@ -69,9 +69,9 @@ public class StructuredRecordToPutTransformTest {
       .set("non_nullable", "foo")
       .build();
 
-    MockEmitter<Object, Put> emitter = new MockEmitter<Object, Put>();
-    transform.transform(0L, record, emitter);
-    Put transformed = emitter.getEmitted().get(0).getVal();
+    MockEmitter<Put> emitter = new MockEmitter<Put>();
+    transform.transform(record, emitter);
+    Put transformed = emitter.getEmitted().get(0);
 
     Assert.assertEquals(1, Bytes.toInt(transformed.getRow()));
     // expect a null value for the nullable field
@@ -108,9 +108,9 @@ public class StructuredRecordToPutTransformTest {
       .set("stringField", "key")
       .build();
 
-    MockEmitter<Object, Put> emitter = new MockEmitter<Object, Put>();
-    transform.transform(0L, record, emitter);
-    Put transformed = emitter.getEmitted().get(0).getVal();
+    MockEmitter<Put> emitter = new MockEmitter<Put>();
+    transform.transform(record, emitter);
+    Put transformed = emitter.getEmitted().get(0);
 
     Assert.assertEquals("key", Bytes.toString(transformed.getRow()));
     Map<byte[], byte[]> values = transformed.getValues();
