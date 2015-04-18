@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../_includes/cdap-authentication-clients-python.rst
+.. include:: ../../build/_includes/cdap-authentication-clients-python.rst
