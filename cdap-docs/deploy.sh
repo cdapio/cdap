@@ -28,8 +28,8 @@ PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
 RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
 WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
 GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
-JOB_DIR=/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1
-FILE_PATH=${JOB_DIR}/${PROJECT}/${PROJECT_DOCS}/build
+BUILD_WORKING_DIR=${BUILD_WORKING_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1}
+FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 USER=bamboo
 DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
 DOCS_SERVER2=${DOCS_SERVER2:-docs2.cask.co}
@@ -73,6 +73,7 @@ function unzip_archive () {
 }
 
 function deploy () {
+  decho "Deploying to ${2}" 
   make_remote_dir ${1} ${2} ${3}
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
@@ -84,13 +85,13 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
-  decho "deploying to stg"
+  decho "deploying to ${STG_SERVER}"
   deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
-  decho "deploying to docs"
+  decho "deploying to Docs servers"
   for i in ${DOCS_SERVERS}; do
     deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${WEB_FILE} ${FILE_PATH}
   done
