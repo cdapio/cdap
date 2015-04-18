@@ -24,7 +24,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
@@ -54,10 +53,6 @@ public class MockLogReader implements LogReader {
     // Add logs for app testApp1, flow testFlow1
     generateLogs(new FlowletLoggingContext(Constants.DEFAULT_NAMESPACE,
                                            "testApp1", "testFlow1", "testFlowlet1", "", ""));
-
-    // Add logs for app testApp2, procedure testProcedure1
-    generateLogs(new ProcedureLoggingContext(Constants.DEFAULT_NAMESPACE,
-                                             "testApp2", "testProcedure1", "", ""));
 
     // Add logs for app testApp3, mapreduce testMapReduce1
     generateLogs(new MapReduceLoggingContext(Constants.DEFAULT_NAMESPACE,

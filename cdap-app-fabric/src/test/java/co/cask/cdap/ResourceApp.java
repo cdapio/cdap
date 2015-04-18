@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,12 +25,10 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 
 /**
  * This is an Application used for only testing that sets various resources for different
- * flowlets and procedures.
+ * flowlets and mapreduce tasks.
  */
 public class ResourceApp extends AbstractApplication {
   @Override
@@ -39,19 +37,7 @@ public class ResourceApp extends AbstractApplication {
     setDescription("Resource Application");
     addStream(new Stream("X"));
     addFlow(new ResourceFlow());
-    addProcedure(new DummyProcedure());
     addMapReduce(new DummyBatch());
-  }
-
-  private class DummyProcedure extends AbstractProcedure {
-    @Override
-    public ProcedureSpecification configure() {
-      return ProcedureSpecification.Builder.with()
-        .setName("dummy")
-        .setDescription("dummy procedure")
-        .withResources(new Resources(128, 3))
-        .build();
-    }
   }
 
   /**

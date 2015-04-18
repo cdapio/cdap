@@ -72,7 +72,6 @@ public class DeletePreferencesCommand extends AbstractCommand {
         break;
 
       case FLOW:
-      case PROCEDURE:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:

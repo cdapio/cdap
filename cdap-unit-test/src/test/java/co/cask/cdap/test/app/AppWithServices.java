@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -24,10 +23,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.BasicService;
@@ -62,7 +57,6 @@ public class AppWithServices extends AbstractApplication {
   public static final String DATASET_TEST_KEY_STOP_2 = "testKeyStop2";
   public static final String DATASET_TEST_VALUE_STOP = "testValueStop";
   public static final String DATASET_TEST_VALUE_STOP_2 = "testValueStop2";
-  public static final String PROCEDURE_DATASET_KEY = "key";
 
   private static final String DATASET_NAME = "AppWithServicesDataset";
   private static final String INIT_KEY = "init";
@@ -79,7 +73,7 @@ public class AppWithServices extends AbstractApplication {
     public void configure() {
       setName(APP_NAME);
       addStream(new Stream("text"));
-      addProcedure(new NoOpProcedure());
+      addService(new BasicService("NoOpService", new NoOpHandler()));
       addService(new BasicService(SERVICE_NAME, new ServerService()));
       addService(new DatasetUpdateService());
       addService(new TransactionalHandlerService());
@@ -87,16 +81,15 @@ public class AppWithServices extends AbstractApplication {
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
 
-
-  public static final class NoOpProcedure extends AbstractProcedure {
-
+  public static final class NoOpHandler extends AbstractHttpServiceHandler {
     @UseDataSet(DATASET_NAME)
     private KeyValueTable table;
 
-    @Handle("ping")
-    public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String key = request.getArgument(PROCEDURE_DATASET_KEY);
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(key)));
+    @GET
+    @Path("ping/{key}")
+    public void ping(HttpServiceRequest request, HttpServiceResponder responder,
+                     @PathParam("key") String key) throws IOException {
+      responder.sendJson(Bytes.toString(table.read(key)));
     }
   }
 

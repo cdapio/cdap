@@ -83,6 +83,16 @@ public class CubeFact {
   }
 
   /**
+   * Adds a {@link Measurement} to this {@link CubeFact}.
+   * @param measurement a {@link Measurement} to add
+   * @return this {@link CubeFact}
+   */
+  public CubeFact addMeasurement(Measurement measurement) {
+    measurements.add(measurement);
+    return this;
+  }
+
+  /**
    * Adds multiple {@link Measurement}s to this {@link CubeFact}
    * @param measurements {@link Measurement}s to add
    * @return this {@link CubeFact}

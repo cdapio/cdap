@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,7 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/start", null);
+    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/services/Count/start", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     //Send two values - 25 and 35; Since threshold is 30, expected count is 1
@@ -53,8 +53,8 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     response = GatewayFastTestsSuite.doPost("/v2/streams/inputvalue", "35");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
-    // Check the procedure status. Make sure it is running before querying it
-    waitState("procedures", "HighPassFilterApp", "Count", "RUNNING");
+    // Check the service status. Make sure it is running before querying it
+    waitState("services", "HighPassFilterApp", "Count", "RUNNING");
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("1");
@@ -101,15 +101,15 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("3");
 
-    //Stop all flows and procedures and reset the state of the cdap
+    //Stop all flows and services and reset the state of the cdap
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/stop", null);
+    response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/services/Count/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
 
     // Wait for program states. Make sure they are stopped before deletion
     waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
-    waitState("procedures", "HighPassFilterApp", "Count", "STOPPED");
+    waitState("services", "HighPassFilterApp", "Count", "STOPPED");
 
     response = GatewayFastTestsSuite.doDelete("/v2/apps/HighPassFilterApp");
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
@@ -118,8 +118,8 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
   private void checkCount(String expected) throws Exception {
     int trials = 0;
     while (trials++ < 5) {
-      HttpResponse response = GatewayFastTestsSuite.doPost(
-        "/v2/apps/HighPassFilterApp/procedures/Count/methods/result", null);
+      HttpResponse response = GatewayFastTestsSuite.doGet(
+        "/v2/apps/HighPassFilterApp/services/Count/methods/result", null);
       if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
         String count = EntityUtils.toString(response.getEntity());
         if (expected.equals(count)) {

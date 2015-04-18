@@ -62,7 +62,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
       resolutionPropValue.append(",").append(resolution);
     }
     // .substring(1) for removing first comma
-    builder.add(CubeDatasetDefinition.PROPERTY_RESOLUTIONS, resolutionPropValue.substring(1));
+    builder.add(Cube.PROPERTY_RESOLUTIONS, resolutionPropValue.substring(1));
 
     // add aggregation props
     int aggName = 0;
@@ -144,6 +144,11 @@ public class CubeDatasetTest extends AbstractCubeTest {
           return delegate.findMeasureNames(query);
         }
       });
+    }
+
+    @Override
+    public void write(Object ignored, CubeFact cubeFact) {
+      add(cubeFact);
     }
 
     @Override

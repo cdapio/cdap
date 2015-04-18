@@ -82,11 +82,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -104,9 +106,9 @@ public class AdapterService extends AbstractIdleService {
   private final PropertiesResolver resolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   // template name to template info mapping
-  private Map<String, ApplicationTemplateInfo> appTemplateInfos;
+  private final AtomicReference<Map<String, ApplicationTemplateInfo>> appTemplateInfos;
   // jar file name to template info mapping
-  private Map<String, ApplicationTemplateInfo> fileToTemplateMap;
+  private final AtomicReference<Map<File, ApplicationTemplateInfo>> fileToTemplateMap;
 
   @Inject
   public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
@@ -123,8 +125,10 @@ public class AdapterService extends AbstractIdleService {
     this.store = store;
     this.templateManagerFactory = templateManagerFactory;
     this.adapterManagerFactory = adapterManagerFactory;
-    this.appTemplateInfos = Maps.newHashMap();
-    this.fileToTemplateMap = Maps.newHashMap();
+    this.appTemplateInfos = new AtomicReference<Map<String, ApplicationTemplateInfo>>(
+      new HashMap<String, ApplicationTemplateInfo>());
+    this.fileToTemplateMap = new AtomicReference<Map<File, ApplicationTemplateInfo>>(
+      new HashMap<File, ApplicationTemplateInfo>());
     this.resolver = resolver;
   }
 
@@ -151,7 +155,7 @@ public class AdapterService extends AbstractIdleService {
    */
   public void deployTemplate(Id.Namespace namespace, String templateName)
     throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
-    ApplicationTemplateInfo templateInfo = appTemplateInfos.get(templateName);
+    ApplicationTemplateInfo templateInfo = appTemplateInfos.get().get(templateName);
     if (templateInfo == null) {
       throw new NotFoundException(Id.ApplicationTemplate.from(templateName));
     }
@@ -168,7 +172,7 @@ public class AdapterService extends AbstractIdleService {
    */
   @Nullable
   public ApplicationTemplateInfo getApplicationTemplateInfo(String templateName) {
-    return appTemplateInfos.get(templateName);
+    return appTemplateInfos.get().get(templateName);
   }
 
   /**
@@ -267,7 +271,7 @@ public class AdapterService extends AbstractIdleService {
   public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
     throws IllegalArgumentException, AdapterAlreadyExistsException {
 
-    ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterConfig.getTemplate());
+    ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get().get(adapterConfig.getTemplate());
     Preconditions.checkArgument(applicationTemplateInfo != null,
                                 "Application template %s not found", adapterConfig.getTemplate());
 
@@ -326,7 +330,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -359,7 +363,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -371,6 +375,54 @@ public class AdapterService extends AbstractIdleService {
     }
 
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
+  }
+
+  /**
+   * Fetch RunRecords for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param status {@link ProgramRunStatus} status of the program running/completed/failed or all
+   * @param start fetch run history that has started after the startTime in seconds
+   * @param end fetch run history that has started before the endTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return list of {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public List<RunRecord> getRuns(Id.Namespace namespace, String adapterName, ProgramRunStatus status,
+                                 long start, long end, int limit) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    return store.getRuns(program, status, start, end, limit, adapterName);
+  }
+
+  /**
+   * Fetch RunRecord for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param runId run id
+   * @return {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public RunRecord getRun(Id.Namespace namespace, String adapterName, String runId) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    RunRecord runRecord = store.getRun(program, runId);
+    if (adapterName.equals(runRecord.getAdapterName())) {
+      return runRecord;
+    }
+    return null;
+  }
+
+  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
+    Id.Program program;
+    if (programType == ProgramType.WORKFLOW) {
+      program = getWorkflowId(namespace, adapterSpec);
+    } else {
+      program = getWorkerId(namespace, adapterSpec);
+    }
+    return program;
   }
 
   private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
@@ -419,11 +471,15 @@ public class AdapterService extends AbstractIdleService {
     try {
       Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
       Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
+      sysArgs.put(ProgramOptionConstants.INSTANCES, String.valueOf(adapterSpec.getInstances()));
+      sysArgs.put(ProgramOptionConstants.RESOURCES, GSON.toJson(adapterSpec.getResources()));
+
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
-      store.setWorkerInstances(workerId, adapterSpec.getInstances());
+
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
                                                                              sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();
@@ -541,9 +597,8 @@ public class AdapterService extends AbstractIdleService {
       throw new FileNotFoundException(msg);
     }
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    Location destination = namespaceHomeLocation.append(appFabricDir)
+    return namespaceHomeLocation.append(appFabricDir)
       .append(Constants.ARCHIVE_DIR).append(templateInfo.getFile().getName());
-    return destination;
   }
 
   // Reads all the jars from the adapter directory and sets up required internal structures.
@@ -552,7 +607,7 @@ public class AdapterService extends AbstractIdleService {
     try {
       // generate a completely new map in case some templates were removed
       Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();
-      Map<String, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
+      Map<File, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
 
       File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
       Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
@@ -560,13 +615,13 @@ public class AdapterService extends AbstractIdleService {
         try {
           ApplicationTemplateInfo info = getTemplateInfo(file);
           newInfoMap.put(info.getName(), info);
-          newFileTemplateMap.put(info.getFile().getName(), info);
+          newFileTemplateMap.put(info.getFile().getAbsoluteFile(), info);
         } catch (IllegalArgumentException e) {
           LOG.error("Application template from file {} in invalid. Skipping it.", file.getName(), e);
         }
       }
-      appTemplateInfos = newInfoMap;
-      fileToTemplateMap = newFileTemplateMap;
+      appTemplateInfos.set(newInfoMap);
+      fileToTemplateMap.set(newFileTemplateMap);
     } catch (Exception e) {
       LOG.warn("Unable to read the plugins directory");
     }
@@ -574,7 +629,7 @@ public class AdapterService extends AbstractIdleService {
 
   private ApplicationTemplateInfo getTemplateInfo(File jarFile)
     throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    ApplicationTemplateInfo existing = fileToTemplateMap.get(jarFile.getAbsolutePath());
+    ApplicationTemplateInfo existing = fileToTemplateMap.get().get(jarFile.getAbsoluteFile());
     HashCode fileHash = Files.hash(jarFile, Hashing.md5());
     // if the file is the same, just return
     if (existing != null && fileHash.equals(existing.getFileHash())) {

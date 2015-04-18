@@ -31,6 +31,7 @@ public final class RunRecord {
   @SerializedName("start")
   private final long startTs;
 
+  @Nullable
   @SerializedName("end")
   private final Long stopTs;
 
@@ -40,7 +41,8 @@ public final class RunRecord {
   @SerializedName("adapter")
   private final String adapterName;
 
-  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status, @Nullable String adapterName) {
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
+                   ProgramRunStatus status, @Nullable String adapterName) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
@@ -48,11 +50,12 @@ public final class RunRecord {
     this.adapterName = adapterName;
   }
 
-  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status) {
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
+                   ProgramRunStatus status) {
     this(pid, startTs, stopTs, status, null);
   }
 
-  public RunRecord(RunRecord started, long stopTs, ProgramRunStatus status) {
+  public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
     this(started.pid, started.startTs, stopTs, status, started.getAdapterName());
   }
 
@@ -64,7 +67,8 @@ public final class RunRecord {
     return startTs;
   }
 
-  public long getStopTs() {
+  @Nullable
+  public Long getStopTs() {
     return stopTs;
   }
 

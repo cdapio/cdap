@@ -16,6 +16,8 @@
 
 package co.cask.cdap.client.app;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
@@ -31,11 +33,11 @@ public class TemplateApp extends ApplicationTemplate<Map<String, String>> {
   public static final String NAME = "dummyAdapter";
 
   @Override
-  public void configure() {
-    setName(NAME);
-    setDescription("Application for to test Adapter lifecycle");
-    addWorkflow(new AdapterWorkflow());
-    addMapReduce(new DummyMapReduceJob());
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName(NAME);
+    configurer.setDescription("Application for to test Adapter lifecycle");
+    configurer.addWorkflow(new AdapterWorkflow());
+    configurer.addMapReduce(new DummyMapReduceJob());
   }
 
   @Override

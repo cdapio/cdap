@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -26,18 +25,19 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletException;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureContext;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- * Flow and Procedure that checks if arguments
+ * Flow that checks if arguments
  * are passed correctly. Only used for checking args functionality.
  */
 public class ArgumentCheckApp extends AbstractApplication {
@@ -47,7 +47,7 @@ public class ArgumentCheckApp extends AbstractApplication {
     setName("ArgumentCheckApp");
     setDescription("Checks if arguments are passed correctly");
     addFlow(new SimpleFlow());
-    addProcedure(new SimpleProcedure());
+    addService(new BasicService("SimpleService", new DummyHandler()));
   }
 
   private class SimpleFlow implements Flow {
@@ -100,30 +100,23 @@ public class ArgumentCheckApp extends AbstractApplication {
     }
   }
 
-  private class SimpleProcedure extends AbstractProcedure {
-    private ProcedureContext context;
+  /**
+   * A handler.
+   */
+  public static class DummyHandler extends AbstractHttpServiceHandler {
 
     @Override
-    public ProcedureSpecification configure() {
-      return ProcedureSpecification.Builder.with()
-        .setName("SimpleProcedure")
-        .setDescription(getDescription())
-        .build();
-    }
-
-    @Override
-    public void initialize(ProcedureContext context) {
-      this.context = context;
+    public void initialize(HttpServiceContext context) throws Exception {
       if (!context.getRuntimeArguments().containsKey("arg")) {
-        throw new IllegalArgumentException("User runtime argument fuctionality not working.");
+        throw new IllegalArgumentException("User runtime argument functionality not working.");
       }
     }
 
-    @Handle("argtest")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      // Don't need to do much here. As we want to test if the context carries runtime arguments.
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS),
-                         context.getSpecification().getProperties());
+    @GET
+    @Path("ping")
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+      responder.sendStatus(200);
     }
   }
+
 }

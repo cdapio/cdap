@@ -8,37 +8,38 @@
     </div>
   </div>
 
-
-  <table class="table table-striped table-responsive" cask-sortable>
-    <thead>
-      <tr ng-class="{'sort-enabled': datasets.length>0}">
-        <th data-predicate="name">Name</th>
-        <th data-predicate="type">Type</th>
-        <th>Edit</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
-        <td>
-          <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})" ng-bind="dataset.name"></a>
-        </td>
-        <td ng-bind="dataset.type"></td>
-
-      </tr>
-      <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
-        <td>
-          <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})" ng-bind="stream.name"></a>
-        </td>
-        <td ng-bind="stream.type"></td>
-        <td>
-          <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': datasets.length>0}">
+          <th data-predicate="name">Name</th>
+          <th data-predicate="type">Type</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
+          </td>
+          <td ng-bind="dataset.type"></td>
+          <td></td>
+        </tr>
+        <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
+          </td>
+          <td ng-bind="stream.type"></td>
+          <td>
+            <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
   <p> You haven't created any streams. </p>
-  <a class="btn btn-success" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</a>
+  <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</a>
 </div>

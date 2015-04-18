@@ -25,13 +25,11 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
-import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -53,7 +51,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
-  private static final Gson GSON = new Gson();
 
   private final LogReader logReader;
   private final String logPattern;
@@ -158,7 +155,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
-      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -205,7 +203,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       Filter filter = FilterParser.parse(filterStr);
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -304,7 +303,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -326,7 +326,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -341,8 +342,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     switch (programType) {
       case FLOW:
         return ProgramType.FLOW;
-      case PROCEDURE:
-        return ProgramType.PROCEDURE;
       case MAPREDUCE:
         return ProgramType.MAPREDUCE;
       case SPARK:
@@ -354,12 +353,5 @@ public class LogHandler extends AuthenticatedHttpHandler {
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }
-  }
-
-  private LogOffset parseLogOffset(String offsetStr) {
-    if (offsetStr.isEmpty()) {
-      return LogOffset.LATEST_OFFSET;
-    }
-    return GSON.fromJson(offsetStr, LogOffset.class);
   }
 }

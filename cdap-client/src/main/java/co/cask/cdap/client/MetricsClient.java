@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,12 +94,6 @@ public class MetricsClient {
     return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
                       MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
                       MetricsConstants.FLOWLET_EXCEPTIONS);
-  }
-
-  public RuntimeMetrics getProcedureMetrics(Id.Program procedureId) {
-    return getMetrics(MetricsContexts.forProcedure(procedureId),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {

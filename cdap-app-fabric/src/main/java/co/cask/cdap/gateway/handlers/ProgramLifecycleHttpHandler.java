@@ -256,7 +256,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,procedures,services,schedules}.
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
    */
   @GET
   @Path("/apps/{app-id}/{type}/{id}/status")
@@ -622,9 +622,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns the number of instances for all program runnables that are passed into the data. The data is an array of
    * Json objects where each object must contain the following three elements: appId, programType, and programId
-   * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
-   * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
-   * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
+   * (flow name, service name). Retrieving instances only applies to flows, and user
+   * services. For flows, another parameter, "runnableId", must be provided. This corresponds to the
+   * flowlet/runnable for which to retrieve the instances.
    * <p>
    * Example input:
    * <pre><code>
@@ -676,7 +676,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         String programTypeStr = requestedObj.getProgramType();
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-        // cant get instances for things that are not flows, services, or procedures
+        // cant get instances for things that are not flows or services
         if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
                        "Program type: " + programType + " is not a valid program type to get instances");
@@ -708,16 +708,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.FLOW, null, store);
-  }
-
-  /**
-   * Returns a list of procedures associated with a namespace.
-   */
-  @GET
-  @Path("/procedures")
-  public void getAllProcedures(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.PROCEDURE, null, store);
   }
 
   /**
@@ -1129,7 +1119,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Populates requested and provisioned instances for a program type.
-   * The program type passed here should be one that can have instances (flows, services or procedures)
+   * The program type passed here should be one that can have instances (flows, services, ...)
    * Requires caller to do this validation.
    */
   private void populateProgramInstances(BatchEndpointInstances requestedObj, String namespaceId, String appId,
@@ -1137,23 +1127,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         String programId) {
     int requested;
     String runnableId;
-    if (programType == ProgramType.PROCEDURE) {
-      // the "runnable" for procedures has the same id as the procedure name
-      runnableId = programId;
-      if (!spec.getProcedures().containsKey(programId)) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Procedure: " + programId + " not found");
-        return;
-      }
-      requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
-    } else if (programType == ProgramType.WORKER) {
+    if (programType == ProgramType.WORKER) {
       runnableId = programId;
       if (!spec.getWorkers().containsKey(programId)) {
         addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                      "Worker: " + programId + " not found");
         return;
       }
-      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
+      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, programId));
     } else {
       // services and flows must have runnable id
       if (requestedObj.getRunnableId() == null) {
@@ -1328,8 +1309,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramSpecification programSpec;
       if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programId)) {
         programSpec = appSpec.getFlows().get(id.getId());
-      } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(programId)) {
-        programSpec = appSpec.getProcedures().get(id.getId());
       } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programId)) {
         programSpec = appSpec.getMapReduce().get(id.getId());
       } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programId)) {
@@ -1480,7 +1459,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ProgramRunStatus.valueOf(status.toUpperCase());
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
       } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");
       }
     } catch (SecurityException e) {
@@ -1734,13 +1713,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   private boolean canHaveInstances(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   // deletes the process metrics for a flow

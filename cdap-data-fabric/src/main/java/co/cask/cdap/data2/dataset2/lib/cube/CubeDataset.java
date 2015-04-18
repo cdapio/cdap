@@ -88,6 +88,11 @@ public class CubeDataset extends AbstractDataset implements Cube {
   }
 
   @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
+  }
+
+  @Override
   public void close() throws IOException {
     entityTable.close();
     for (Table table : resolutionTables.values()) {

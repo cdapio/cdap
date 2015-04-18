@@ -1,3 +1,4 @@
+
 <div class="panel-container">
   <div class="panel no-margin-top" ng-repeat="query in queries" ng-class="{ 'active': query.isOpen }">
     <div class="panel-heading"  ng-click="fetchResult(query)">
@@ -34,8 +35,9 @@
             </div>
 
           </div>
-          <div class="table-result">
-            <table class="table table-responsive">
+          <div class="table-responsive">
+            <table class="table table-curved table-explore">
+
               <thead>
                 <tr>
                   <th ng-repeat="header in responses.schema">{{ header.name }}</th>
@@ -48,14 +50,18 @@
                     <span ng-if="!result">null</span>
                   </td>
                 </tr>
+                <tr class="text-center">
+                  <td colspan="{{ responses.schema.length }}">No Result</td>
+                </tr>
               </tbody>
             </table>
-            <div class="text-center" ng-show="responses.results.length === 0">
-              No Result
-            </div>
           </div>
+
         </div>
 
+      </div>
+      <div ng-hide="responses.request.status === 'FINISHED'" class="text-center">
+        <p>(Select Query)</p>
       </div>
     </div>
 

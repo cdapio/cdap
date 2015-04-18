@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -35,6 +36,11 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage, StageSpecification specification) {
     super(context, specification);
     this.sourceStage = sourceStage;
+  }
+
+  @Override
+  public void setInput(StreamBatchReadable stream) {
+    mrContext.setInput(stream);
   }
 
   @Override
