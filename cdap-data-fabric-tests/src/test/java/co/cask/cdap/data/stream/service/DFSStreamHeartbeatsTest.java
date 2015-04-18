@@ -190,7 +190,8 @@ public class DFSStreamHeartbeatsTest {
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
       HttpURLConnection urlConn =
-        openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
+        openURL(String.format("http://%s:%d/v3/namespaces/default/streams/%s", hostname, port, streamName),
+                HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);

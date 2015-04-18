@@ -14,28 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.realtime.sinks;
 
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
-import org.apache.hadoop.mapreduce.Mapper;
-
-import java.io.IOException;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 
 /**
- * SinkWriter that writes key value pairs as output of a Mapper.
+ * Generic NoOp Sink.
  *
- * @param <KEY> the type of key to write
- * @param <VAL> the type of value to write
+ * @param <T> any object
  */
-public class DefaultSinkWriter<KEY, VAL> implements SinkWriter<KEY, VAL> {
-  private final Mapper.Context context;
+public class NoOpSink<T> extends RealtimeSink<T> {
 
-  public DefaultSinkWriter(Mapper.Context context) {
-    this.context = context;
+  @Override
+  public void configure(StageConfigurer configurer) {
+    configurer.setName(NoOpSink.class.getSimpleName());
   }
 
   @Override
-  public void write(KEY key, VAL val) throws IOException, InterruptedException {
-    context.write(key, val);
+  public void write(Iterable<T> object) {
+    // no-op
   }
 }

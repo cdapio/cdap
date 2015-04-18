@@ -3,15 +3,19 @@
     <div ng-if="dataList.length > 0">
       <h3 class="text-uppercase"> Data </h3>
       <div class="row">
-        <div class="col-xs-12 col-sm-5">
-          <p ng-if="dataList.length < 5"> Showing {{ dataList.length }} out of {{ dataList.length }}</p>
-          <p ng-if="dataList.length >= 5"> Showing 5 out of {{ dataList.length }}</p>
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="dataList.length < 5"> Showing {{ dataList.length }} of {{ dataList.length }}</p>
+          <p ng-if="dataList.length >= 5"> Showing 5 of {{ dataList.length }}</p>
         </div>
-        <div class="col-xs-12 col-sm-7 text-right">
+        <div class="col-xs-12 col-sm-9 text-right">
           <div class="btn-group">
             <a ui-sref="data.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
               <span>All Datasets</span>
+            </a>
+            <a ui-sref="explore" class="btn btn-default">
+              <span class="fa fa-eye"></span>
+              <span>Explore</span>
             </a>
             <a ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})" class="btn btn-default">
               <span class="fa fa-plus"></span>
@@ -47,14 +51,14 @@
         <p> You haven't deployed any datasets. Add one! </p>
       </div>
       <hr />
-      <div class="text-center" ng-controller="AppsSectionCtrl">
+      <div class="text-left" ng-controller="AppsSectionCtrl">
         <!-- <my-file-select
             data-button-label="Add Data"
             data-button-disabled="true"
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select> -->
-        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">Add Stream</a>
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})"><span class="fa fa-plus"></span> Add Stream</a>
       </div>
     </div>
   </div>
@@ -63,8 +67,8 @@
       <h3 class="text-uppercase"> Apps </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
-          <p ng-if="apps.length < 5"> Showing {{ apps.length }} out of {{ apps.length }}</p>
-          <p ng-if="apps.length >= 5"> Showing 5 out of {{ apps.length }}</p>
+          <p ng-if="apps.length < 5"> Showing {{ apps.length }} of {{ apps.length }}</p>
+          <p ng-if="apps.length >= 5"> Showing 5 of {{ apps.length }}</p>
         </div>
         <div class="col-xs-12 col-sm-9 text-right">
           <div class="btn-group">
@@ -109,13 +113,13 @@
         <p> You haven't deployed any apps. Add one! </p>
       </div>
       <hr />
-      <div class="text-center" ng-controller="AppsSectionCtrl">
+      <div class="text-left" ng-controller="AppsSectionCtrl">
         <my-file-select
             data-button-label="Add App"
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select>
-        <a ui-sref="etlapps.create" class="btn btn-default">Add ETL App</a>
+        <a ui-sref="etlapps.create" class="btn btn-default"><span class="fa fa-plus"></span> Add ETL App</a>
       </div>
     </div>
   </div>

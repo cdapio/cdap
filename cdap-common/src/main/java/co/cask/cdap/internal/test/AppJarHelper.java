@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.test;
 
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -49,13 +50,22 @@ public final class AppJarHelper {
                                                                          "org.apache.spark"),
                                                         ImmutableList.of("org.apache.hadoop.hbase"));
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
-    bundler.createBundle(jarLocation, clz);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
+    try {
+      bundler.createBundle(jarLocation, clz);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
 
     Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
+    Manifest jarManifest = new Manifest(manifest);
+    jarManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    jarManifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, clz.getName());
+
 
     // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
     // by the ApplicationBundler inside Twill.
-    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), manifest);
+    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
     try {
       JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
       try {
@@ -106,8 +116,6 @@ public final class AppJarHelper {
                                              Class<?> clz, File... bundleEmbeddedJars) throws IOException {
     // Creates Manifest
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, clz.getName());
     return createDeploymentJar(locationFactory, clz, manifest, bundleEmbeddedJars);
   }
 }

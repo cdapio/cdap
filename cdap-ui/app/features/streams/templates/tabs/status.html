@@ -1,5 +1,8 @@
 <div class="container" ng-controller="StreamsDetailStatusController">
   <div class="row">
+  <div class="col-xs-6">
+    <h2> Schema </h2>
+  </div>
     <div class="col-xs-6">
       <table class="table table-curved table-status">
         <thead>
@@ -14,11 +17,12 @@
         </tbody>
       </table>
     </div>
+
   </div>
 
   <div class="row">
     <div class="col-xs-12">
-      <h2> Schema </h2>
+
       <table class="table table-curved" cask-sortable ng-show="schema.length > 0">
         <thead>
           <tr ng-class="{'sort-enabled': schema.length > 1}">

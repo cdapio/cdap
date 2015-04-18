@@ -195,9 +195,9 @@ public class GatewayFastTestsSuite {
 
     HttpEntityEnclosingRequestBase request;
     if (appName == null) {
-      request = getPost("/v2/apps");
+      request = getPost("/v3/namespaces/default/apps");
     } else {
-      request = getPut("/v2/apps/" + appName);
+      request = getPut("/v3/namespaces/default/apps/" + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");

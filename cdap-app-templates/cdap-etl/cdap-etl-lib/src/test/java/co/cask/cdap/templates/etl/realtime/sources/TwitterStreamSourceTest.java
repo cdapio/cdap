@@ -16,11 +16,10 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.Tweet;
@@ -44,11 +43,7 @@ public class TwitterStreamSourceTest {
   @Test
   public void testIntegratedTwitterStream() throws Exception {
     TwitterStreamSource source = new TwitterStreamSource();
-    source.configure(new RealtimeConfigurer() {
-      @Override
-      public void setResources(Resources resources) {
-        // No-op
-      }
+    source.configure(new StageConfigurer() {
 
       @Override
       public void setName(String name) {
@@ -73,7 +68,7 @@ public class TwitterStreamSourceTest {
 
     source.initialize(new SourceContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
       }
 

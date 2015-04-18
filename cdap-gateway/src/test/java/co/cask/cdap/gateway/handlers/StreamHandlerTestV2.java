@@ -16,6 +16,11 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.gateway.GatewayFastTestsSuite;
+import org.apache.http.HttpResponse;
+import org.junit.After;
+import org.junit.Assert;
+
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -24,6 +29,13 @@ import java.net.URL;
  * Tests v2 stream endpoints
  */
 public class StreamHandlerTestV2 extends StreamHandlerTest {
+
+  @After
+  public void reset() throws Exception {
+    HttpResponse httpResponse = GatewayFastTestsSuite.doPost("/v2/unrecoverable/reset", null);
+    Assert.assertEquals(200, httpResponse.getStatusLine().getStatusCode());
+  }
+
   @Override
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v2/%s", path)).toURL();
