@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchContext;
 

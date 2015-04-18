@@ -16,12 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import co.cask.cdap.templates.etl.common.NoopMetrics;
 import co.cask.cdap.templates.etl.common.Tweet;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
@@ -70,6 +72,11 @@ public class TwitterStreamSourceTest {
       @Override
       public StageSpecification getSpecification() {
         return null;
+      }
+
+      @Override
+      public Metrics getMetrics() {
+        return NoopMetrics.INSTANCE;
       }
 
       @Override

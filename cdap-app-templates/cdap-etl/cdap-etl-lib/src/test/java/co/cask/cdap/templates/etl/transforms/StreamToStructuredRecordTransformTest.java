@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -45,7 +45,7 @@ public class StreamToStructuredRecordTransformTest {
   public void testStreamToStrucuturedRecordTransform() throws Exception {
 
     StreamToStructuredRecordTransform transformer = new StreamToStructuredRecordTransform();
-    TransformContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockTransformContext(
       ImmutableMap.of("format.name", Formats.CSV, "schema", eventSchema.toString()));
     transformer.initialize(transformContext);
     StreamEvent streamEvent = new StreamEvent(ImmutableMap.of("header1", "one"),

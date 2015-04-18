@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -122,7 +122,7 @@ public class StructuredRecordToCubeFactTransform extends TransformStage<Structur
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     String configAsString = context.getRuntimeArguments().get(MAPPING_CONFIG_PROPERTY);
     Preconditions.checkArgument(configAsString != null && !configAsString.isEmpty(),
                                 "the mapping config must be given");

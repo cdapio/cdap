@@ -18,37 +18,27 @@ package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
-import com.google.common.collect.Lists;
-
-import java.util.Iterator;
-import java.util.List;
+import co.cask.cdap.templates.etl.api.Transform;
 
 /**
- * Default implementation of {@link Emitter}. Tracks how many records were emitted.
+ * A {@link Transform} that delegates transform operations to another Transform while emitting metrics
+ * around how many records were input into the transform.
  *
- * @param <T> the type of object to emit
+ * @param <IN> Type of input object
+ * @param <OUT> Type of output object
  */
-public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
-  private final List<T> entryList;
+public class TrackedTransform<IN, OUT> implements Transform<IN, OUT> {
+  private final Transform transform;
   private final Metrics metrics;
 
-  public DefaultEmitter(Metrics metrics) {
-    this.entryList = Lists.newArrayList();
+  public TrackedTransform(Transform transform, Metrics metrics) {
+    this.transform = transform;
     this.metrics = metrics;
   }
 
   @Override
-  public void emit(T value) {
-    entryList.add(value);
-    metrics.count("records.out", 1);
-  }
-
-  @Override
-  public Iterator<T> iterator() {
-    return entryList.iterator();
-  }
-
-  public void reset() {
-    entryList.clear();
+  public void transform(IN input, Emitter<OUT> emitter) throws Exception {
+    metrics.count("records.in", 1);
+    transform.transform(input, emitter);
   }
 }

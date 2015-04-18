@@ -24,7 +24,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
 import com.google.common.base.Throwables;
@@ -52,7 +52,7 @@ public class StreamToStructuredRecordTransform extends TransformStage<StreamEven
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     super.initialize(context);
     try {
       Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));

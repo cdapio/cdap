@@ -54,10 +54,11 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext>, 
   /**
    * Write the given object.
    *
-   * @param object {@link Iterable} of T
+   * @param objects {@link Iterable} of T to write
+   * @return the number of items written. Used by metrics to report how many records written by the sink.
    * @throws Exception if there was some exception writing the object
    */
-  public abstract void write(Iterable<I> object) throws Exception;
+  public abstract int write(Iterable<I> objects) throws Exception;
 
   @Override
   public void destroy() {

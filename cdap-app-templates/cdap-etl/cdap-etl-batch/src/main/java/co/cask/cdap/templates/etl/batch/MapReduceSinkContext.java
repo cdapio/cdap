@@ -18,9 +18,11 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.StageMetrics;
 
 import java.util.Map;
 
@@ -29,10 +31,13 @@ import java.util.Map;
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
   private final ETLStage sinkStage;
+  private final Metrics metrics;
 
-  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage, StageSpecification specification) {
+  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage,
+                              StageSpecification specification, Metrics metrics) {
     super(context, specification);
     this.sinkStage = sinkStage;
+    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SINK, specification.getName());
   }
 
   @Override
@@ -48,5 +53,10 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   @Override
   public Map<String, String> getRuntimeArguments() {
     return sinkStage.getProperties();
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 }

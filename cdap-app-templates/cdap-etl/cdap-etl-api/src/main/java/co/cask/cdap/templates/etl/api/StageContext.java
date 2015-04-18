@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.batch;
+package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 
 /**
- * Context passed to Batch Source and Sink.
+ * Context passed to ETL stages.
  */
-public interface BatchContext extends RuntimeContext, DatasetContext, StageContext {
+public interface StageContext extends RuntimeContext {
 
   /**
-   * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
+   * Return the specification of this state.
    *
-   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
+   * @return {@link StageSpecification}
    */
-  long getLogicalStartTime();
+  StageSpecification getSpecification();
 
   /**
+   * Get an instance of {@link Metrics}, which allows collecting metrics specific to the stage. Any metric emitted
+   * will be prefixed by '[type].[name]', where name is the name of the stage, and type is 'source', 'sink', or
+   * 'transform'.
+   *
+   * @return {@link Metrics} for collecting transform metrics
    */
-  <T> T getHadoopJob();
+  Metrics getMetrics();
 }

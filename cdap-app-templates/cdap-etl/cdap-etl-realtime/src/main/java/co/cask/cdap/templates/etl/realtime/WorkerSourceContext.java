@@ -16,11 +16,13 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.common.StageMetrics;
 
 import java.util.Map;
 
@@ -31,16 +33,24 @@ public class WorkerSourceContext implements SourceContext {
   private final WorkerContext context;
   private final StageSpecification specification;
   private final ETLStage stage;
+  private final Metrics metrics;
 
-  public WorkerSourceContext(WorkerContext context, ETLStage sourceStage, StageSpecification specification) {
+  public WorkerSourceContext(WorkerContext context, ETLStage sourceStage,
+                             StageSpecification specification, Metrics metrics) {
     this.context = context;
     this.specification = specification;
     this.stage = sourceStage;
+    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SOURCE, specification.getName());
   }
 
   @Override
   public StageSpecification getSpecification() {
     return specification;
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 
   @Override

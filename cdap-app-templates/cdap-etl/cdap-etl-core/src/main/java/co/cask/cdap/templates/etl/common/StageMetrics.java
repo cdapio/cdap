@@ -17,38 +17,41 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.Emitter;
-import com.google.common.collect.Lists;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
- * Default implementation of {@link Emitter}. Tracks how many records were emitted.
- *
- * @param <T> the type of object to emit
+ * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL context the metric
+ * was emitted from.
  */
-public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
-  private final List<T> entryList;
+public class StageMetrics implements Metrics {
   private final Metrics metrics;
+  private final String prefix;
 
-  public DefaultEmitter(Metrics metrics) {
-    this.entryList = Lists.newArrayList();
+  /**
+   * Types of ETL stages.
+   */
+  public enum Type {
+    SOURCE,
+    SINK,
+    TRANSFORM;
+
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
+  }
+
+  public StageMetrics(Metrics metrics, Type stageType, String name) {
     this.metrics = metrics;
+    this.prefix = stageType.toString() + "." + name + ".";
   }
 
   @Override
-  public void emit(T value) {
-    entryList.add(value);
-    metrics.count("records.out", 1);
+  public void count(String s, int i) {
+    metrics.count(prefix + s, i);
   }
 
   @Override
-  public Iterator<T> iterator() {
-    return entryList.iterator();
-  }
-
-  public void reset() {
-    entryList.clear();
+  public void gauge(String s, long l) {
+    metrics.gauge(prefix + s, l);
   }
 }

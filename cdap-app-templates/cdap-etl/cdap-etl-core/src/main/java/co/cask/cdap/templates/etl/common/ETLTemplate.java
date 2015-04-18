@@ -82,19 +82,39 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
   protected void instantiateStages(ETLStage sourceStage, ETLStage sinkStage, List<ETLStage> transformList)
     throws IllegalArgumentException {
+    String sourceClassName = sourceClassMap.get(sourceStage.getName());
+    String sinkClassName = sinkClassMap.get(sinkStage.getName());
+    if (sourceClassName == null) {
+      throw new IllegalArgumentException(String.format("No source named %s found.", sourceStage.getName()));
+    }
+    if (sinkClassName == null) {
+      throw new IllegalArgumentException(String.format("No sink named %s found.", sinkStage.getName()));
+    }
     try {
-      String sourceClassName = sourceClassMap.get(sourceStage.getName());
-      String sinkClassName = sinkClassMap.get(sinkStage.getName());
       source = (EndPointStage) Class.forName(sourceClassName).newInstance();
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+        String.format("Unable to instantiate source %s: %s", sourceClassName, e.getMessage()), e);
+    }
+    try {
       sink = (EndPointStage) Class.forName(sinkClassName).newInstance();
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+        String.format("Unable to instantiate sink %s: %s", sinkClassName, e.getMessage()), e);
+    }
 
-      for (ETLStage etlStage : transformList) {
-        String transformName = transformClassMap.get(etlStage.getName());
+    for (ETLStage etlStage : transformList) {
+      String transformName = transformClassMap.get(etlStage.getName());
+      if (transformName == null) {
+        throw new IllegalArgumentException(String.format("No transform named %s found.", etlStage.getName()));
+      }
+      try {
         TransformStage transformObj = (TransformStage) Class.forName(transformName).newInstance();
         transforms.add(transformObj);
+      } catch (Exception e) {
+        throw new IllegalArgumentException(
+          String.format("Unable to instantiate transform %s: %s", transformName, e.getMessage()), e);
       }
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Unable to load class. Check stage names. %s", e);
     }
   }
 
