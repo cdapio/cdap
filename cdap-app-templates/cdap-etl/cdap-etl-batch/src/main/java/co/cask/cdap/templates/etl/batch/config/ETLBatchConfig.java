@@ -34,6 +34,10 @@ public final class ETLBatchConfig extends ETLConfig {
     this.schedule = schedule;
   }
 
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(schedule, source, sink, transforms, null);
+  }
+
   public String getSchedule() {
     return schedule;
   }
