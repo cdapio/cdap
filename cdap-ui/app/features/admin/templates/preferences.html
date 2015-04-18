@@ -18,7 +18,6 @@
               </div>
               <div class="col-sm-7">
                 <input type="text" class="form-control" ng-model="preference.value" placeholder="value"/>
-
               </div>
               <div class="col-sm-1">
                 <a href="" class="btn btn-danger" ng-click="removePreference(preference)">
@@ -33,7 +32,7 @@
 
     <div ng-show="preferences.length === 0">
       <div class="well well-sm text-center h4">
-        <button class="btn btn-primary" ng-click="addPreference()">
+        <button class="btn btn-default" ng-click="addPreference()">
           <span class="fa fa-fw fa-plus"></span> Add a preference
         </button>
       </div>
@@ -53,22 +52,22 @@
     <div class="system-preferences" ng-if="systemPreferences.length > 0">
       <hr/>
       <h4>System Preferences</h4>
-
-      <table class="table table-bordered table-responsive" cask-sortable>
-        <thead>
-          <tr ng-class="{'sort-enabled': systemPreferences.length>0}">
-            <th data-predicate="key" data-predicate-default="reverse">Name</th>
-            <th data-predicate="value" data-predicate-default="reverse">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat="pref in systemPreferences | orderBy:sortable.predicate:sortable.reverse">
-            <td>{{ pref.key }}</td>
-            <td>{{ pref.value }}</td>
-          </tr>
-        </tbody>
-      </table>
-
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': systemPreferences.length>0}">
+              <th data-predicate="key" data-predicate-default="reverse">Name</th>
+              <th data-predicate="value" data-predicate-default="reverse">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="pref in systemPreferences | orderBy:sortable.predicate:sortable.reverse">
+              <td>{{ pref.key }}</td>
+              <td>{{ pref.value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>

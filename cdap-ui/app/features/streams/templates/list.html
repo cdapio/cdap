@@ -1,20 +1,22 @@
 <div ncy-breadcrumb></div>
 <a ui-sref=".create" class="btn btn-default"> Create Stream </a>
-<table class="table table-responsive" cask-sortable>
-  <thead>
-    <tr ng-class="{'sort-enabled': streams.length>0}">
-      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-      <th data-predicate="type"> Type </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
-      <td>
-        <a ui-sref="streams.detail.overview({streamId: stream.name})"
-            ng-bind="stream.name | caskCapitalizeFilter">
-        </a>
-      </td>
-      <td ng-bind="stream.type">  </td>
-    </tr>
-  <tbody>
-</table>
+<div class="table-responsive">
+  <table class="table table-curved" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': streams.length>0}">
+        <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+        <th data-predicate="type"> Type </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
+        <td>
+          <a ui-sref="streams.detail.overview({streamId: stream.name})">
+              <strong ng-bind="stream.name | caskCapitalizeFilter"></strong>
+          </a>
+        </td>
+        <td ng-bind="stream.type">  </td>
+      </tr>
+    <tbody>
+  </table>
+</div>
