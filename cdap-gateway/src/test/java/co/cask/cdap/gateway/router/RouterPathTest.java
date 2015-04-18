@@ -52,6 +52,12 @@ public class RouterPathTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
+
+    // this clashes with a rule for stream handler and fails if the rules are evaluated in wrong order [CDAP-2159]
+    path = "/v3/system/services/streams/logs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
   @Test
