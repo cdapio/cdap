@@ -16,11 +16,10 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
@@ -44,7 +43,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
-import javax.naming.NamingException;
 
 /**
  * Unit test for JMS ETL realtime source
@@ -63,7 +61,7 @@ public class JmsMessageToStringSourceTest {
   public void beforeTest() {
     jmsSource = new JmsSource();
 
-    jmsSource.configure(new RealtimeConfigurer() {
+    jmsSource.configure(new StageConfigurer() {
       @Override
       public void setName(String name) {
         // no-op
@@ -83,11 +81,6 @@ public class JmsMessageToStringSourceTest {
       public void addProperty(Property property) {
         // no-op
       }
-
-      @Override
-      public void setResources(Resources resources) {
-        // no-op
-      }
     });
   }
 
@@ -100,14 +93,14 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleQueueMessages() throws NamingException, JMSException {
+  public void testSimpleQueueMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     jmsSource.initialize(new SourceContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
       }
 
@@ -152,14 +145,14 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleTopicMessages() throws NamingException, JMSException {
+  public void testSimpleTopicMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
     jmsSource.initialize(new SourceContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
       }
 

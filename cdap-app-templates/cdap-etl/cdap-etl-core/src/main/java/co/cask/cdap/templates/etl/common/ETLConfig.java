@@ -14,25 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch.config;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.common.ETLConfig;
 
 import java.util.List;
 
 /**
- * ETL Batch Adapter Configuration.
+ * Common ETL Config.
  */
-public final class ETLBatchConfig extends ETLConfig {
-  private final String schedule;
+public class ETLConfig {
+  private final ETLStage source;
+  private final ETLStage sink;
+  private final List<ETLStage> transforms;
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    super(source, sink, transforms);
-    this.schedule = schedule;
+  public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this.source = source;
+    this.sink = sink;
+    this.transforms = transforms;
   }
 
-  public String getSchedule() {
-    return schedule;
+  public ETLStage getSource() {
+    return source;
+  }
+
+  public ETLStage getSink() {
+    return sink;
+  }
+
+  public List<ETLStage> getTransforms() {
+    return transforms;
   }
 }

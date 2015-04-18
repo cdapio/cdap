@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -30,7 +31,7 @@ import java.lang.reflect.Type;
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> {
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> implements EndPointStage {
 
   private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
 
@@ -43,21 +44,12 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> {
     return inputType;
   }
 
-  /**
-   * Configure the Sink.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
+  @Override
   public void configure(StageConfigurer configurer) {
     // no-op
   }
 
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
+  @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
@@ -84,7 +76,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> {
    *
    * @param input the value to write as a key value pair
    */
-  public void write(IN input, SinkWriter<KEY_OUT, VAL_OUT> writer) throws Exception {
+  public void write(IN input, BatchSinkWriter<KEY_OUT, VAL_OUT> writer) throws Exception {
     writer.write((KEY_OUT) input, null);
   }
 }

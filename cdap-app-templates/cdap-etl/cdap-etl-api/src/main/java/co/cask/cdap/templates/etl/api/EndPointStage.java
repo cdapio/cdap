@@ -14,25 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch.config;
+package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.common.ETLConfig;
-
-import java.util.List;
 
 /**
- * ETL Batch Adapter Configuration.
+ * Base class for ETL Source, Sink Stages.
  */
-public final class ETLBatchConfig extends ETLConfig {
-  private final String schedule;
+public interface EndPointStage {
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    super(source, sink, transforms);
-    this.schedule = schedule;
-  }
+  /**
+   * Configure the Edge stage.
+   *
+   * @param configurer {@link StageConfigurer}
+   */
+  public void configure(StageConfigurer configurer);
 
-  public String getSchedule() {
-    return schedule;
-  }
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer);
 }

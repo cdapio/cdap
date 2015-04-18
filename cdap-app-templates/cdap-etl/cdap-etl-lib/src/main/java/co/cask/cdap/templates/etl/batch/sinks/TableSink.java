@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
+import co.cask.cdap.templates.etl.api.batch.BatchSinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
@@ -48,7 +48,7 @@ public class TableSink extends BatchWritableSink<Put, byte[], Put> {
   }
 
   @Override
-  public void write(Put input, SinkWriter<byte[], Put> writer) throws Exception {
+  public void write(Put input, BatchSinkWriter<byte[], Put> writer) throws Exception {
     writer.write(input.getRow(), input);
   }
 }

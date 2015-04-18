@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
+import co.cask.cdap.templates.etl.api.batch.BatchSinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
@@ -46,7 +46,7 @@ public class CubeSink extends BatchWritableSink<CubeFact, byte[], CubeFact> {
   }
 
   @Override
-  public void write(CubeFact input, SinkWriter<byte[], CubeFact> writer) throws Exception {
+  public void write(CubeFact input, BatchSinkWriter<byte[], CubeFact> writer) throws Exception {
     writer.write(null, input);
   }
 }
