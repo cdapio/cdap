@@ -134,6 +134,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
+    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+      //Log Handler Path /v3/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("streams")) {
       //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
       //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
@@ -183,9 +186,6 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return Constants.Service.DATASET_MANAGER;
-    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
-      //Log Handler Path /v3/system/services/<service-id>/logs
-      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
