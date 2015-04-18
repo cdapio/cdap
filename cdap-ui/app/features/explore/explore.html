@@ -1,8 +1,31 @@
+<div ncy-breadcrumb></div>
+
+<h2>Explore</h2>
+
 <section class="panel-group explore"
-     ng-controller="CdapDatasetExploreController"
      ng-model="activePanel"
      bs-collapse>
 
+  <!-- Choose Table -->
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': dataList.length>0}">
+          <th data-predicate="name">Name</th>
+          <th data-predicate="type">Type</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse" ng-click="click(data)">
+          <td>{{ ::data.name }}</td>
+          <td>{{ ::data.type }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- WRITE & EXECUTE SQL -->
   <div class="panel panel-explore">
     <div class="panel-heading">
       <h3 class="panel-title" bs-collapse-toggle>
@@ -15,13 +38,12 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-
-        <my-sql-query data-panel="activePanel" data-type="'dataset'" data-name="name"></my-sql-query>
-
+        <my-sql-query data-panel="activePanel" data-type="type" data-name="name"></my-sql-query>
       </div>
     </div>
   </div>
 
+  <!-- VIEW QUERIES -->
   <div class="panel panel-explore">
     <div class="panel-heading">
       <h3 class="panel-title" bs-collapse-toggle>
@@ -43,3 +65,4 @@
 
 
 </section>
+
