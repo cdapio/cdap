@@ -670,20 +670,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
 
         @Override
-        public void ttlDeleted(Id.Stream streamId) {
-          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
-          suspendAndResume();
-        }
-
-        @Override
         public void generationChanged(Id.Stream streamId, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamId, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationDeleted(Id.Stream streamId) {
-          LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
+        public void deleted(Id.Stream streamId) {
+          LOG.debug("Properties deleted for stream '{}'", streamId);
           suspendAndResume();
         }
       };
