@@ -23,13 +23,12 @@ DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
 PROJECT=${PROJECT:-cdap}
 PROJECT_DOCS=${PROJECT}-docs
-#PROJECT_PATH=
 VERSION=${VERSION:-2.8.1}
 PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
 RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
 WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
 GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
-JOB_DIR=${JOB_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1}
+JOB_DIR=/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1
 FILE_PATH=${JOB_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 USER=bamboo
 DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
