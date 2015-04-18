@@ -18,8 +18,7 @@
 ### Deploy script for docs
 # Deploys zip files created by build scripts
 ################################################################################
-#DEBUG=${DEBUG:-no}
-DEBUG=yes
+DEBUG=${DEBUG:-no}
 DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
 PROJECT=${PROJECT:-cdap}
@@ -30,7 +29,7 @@ PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
 RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
 WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
 GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
-JOB_DIR=/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1
+JOB_DIR=${JOB_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1}
 FILE_PATH=${JOB_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 USER=bamboo
 DOCS_SERVER1=docs1.cask.co
@@ -54,21 +53,21 @@ decho () {
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 ################################################################################
 function make_remote_dir () {
-  decho "make sure remote directory exists"
+  decho "Make sure remote directory ${3} exists on ${2}"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
   ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
   decho ""
 }
 
 function rsync_zip_file () {
-  decho "rsync archive"
+  decho "rsync archive ${4}"
   decho "rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path=\"sudo rsync\" ${5}/${4} \"${1}@${2}:${3}/.\""
   rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
   decho ""
 }
 
 function unzip_archive () {
-  decho "going to new staging server and unzipping the file"
+  decho "Unzipping ${4} on ${2}"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
   ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
   decho ""
@@ -79,12 +78,10 @@ function deploy () {
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
 }
-
 ################################################################################
 decho "######################### DEPLOYING #########################"
 decho "DEPLOY_TO_STG=${DEPLOY_TO_STG}"
 decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
-decho "buildResultKey=${bamboo.buildResultKey}"
 
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
