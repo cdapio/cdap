@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
-import javax.annotation.Nullable;
 
 /**
  * Transforms a StructuredRecord into a Put object used to write to a Table. Each field in the record
@@ -36,7 +35,7 @@ import javax.annotation.Nullable;
  * all input will have the same schema, but it does assume that there will always be a field present that
  * will be the row key for the table Put.
  */
-public class StructuredRecordToPutTransform extends Transform<Object, StructuredRecord, Object, Put> {
+public class StructuredRecordToPutTransform extends Transform<StructuredRecord, Put> {
   private static final String ROW_FIELD = "row.field";
   private String rowField;
 
@@ -55,8 +54,7 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
   }
 
   @Override
-  public void transform(@Nullable Object key, StructuredRecord record,
-                        Emitter<Object, Put> emitter) throws Exception {
+  public void transform(StructuredRecord record, Emitter<Put> emitter) throws Exception {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
     Put output = createPut(record, recordSchema);
@@ -67,7 +65,7 @@ public class StructuredRecordToPutTransform extends Transform<Object, Structured
       }
       setField(output, field, record.get(field.getName()));
     }
-    emitter.emit(key, output);
+    emitter.emit(output);
   }
 
   @SuppressWarnings("ConstantConditions")

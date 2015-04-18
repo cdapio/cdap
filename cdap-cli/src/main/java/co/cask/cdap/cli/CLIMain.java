@@ -309,7 +309,10 @@ public class CLIMain {
               for (String cmd : cmds) {
                 if (cmd.equals("break")) {
                   brokeFromScript = true;
-                  break; // Break from script and drop into interactive mode
+                  break;
+                }
+                if (brokeFromScript) {
+                  break; // Break from script processing and drop into interactive mode
                 }
                 output.println(cliPrompt + cmd);
                 cli.execute(cmd, output);

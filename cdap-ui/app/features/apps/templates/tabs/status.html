@@ -1,37 +1,47 @@
 <br />
 <div class="status" ng-controller="CdapAppDetailStatusController">
-      <!-- <div class="btn-group pull-right">
-        <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
-        <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
-        <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
-      </div> -->
+  <!-- <div class="btn-group pull-right">
+    <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
+    <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
+    <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
+  </div> -->
+  <div class="row">
+    <div class="col-xs-12">
       <h2> Programs </h2>
-      <table class="table table-condensed" cask-sortable>
-        <thead>
-          <tr ng-class="{'sort-enabled': programs.length>0}">
-            <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-            <th data-predicate="status"> Status </th>
-            <th data-predicate="description"> Description </th>
-            <th data-predicate="type"> Type </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
-            <td>
-              <a ng-bind="program.name"
-                  ng-if="program.type === 'Flow'" ui-sref="flows.detail.status({programId: program.name})"></a>
-              <a ng-bind="program.name"
-                  ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.status({programId: program.name})"></a>
-              <a ng-bind="program.name"
-                  ng-if="program.type === 'Service'" ui-sref="services.detail.status({programId: program.name})"></a>
-              <a ng-bind="program.name"
-                  ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.status({programId: program.name})"></a>
-            </td>
-            <td ng-bind="program.status"></td>
-            <td ng-bind="program.description"></td>
-            <td ng-bind="program.type">
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': programs.length>0}">
+              <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+              <th data-predicate="status"> Status </th>
+              <th data-predicate="description"> Description </th>
+              <th data-predicate="type"> Type </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
+              <td>
+                <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+              </td>
+              <td ng-bind="program.status"></td>
+              <td ng-bind="program.description"></td>
+              <td ng-bind="program.type">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>

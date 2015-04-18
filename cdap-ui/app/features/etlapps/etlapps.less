@@ -1,6 +1,7 @@
 @import '../../styles/variables.less';
 
-body.state-etlapps-create {
+
+body.theme-cdap.state-etlapps-create {
   .etlflowcontainer {
     width: 100%;
     background: @cdap-header;
@@ -48,7 +49,7 @@ body.state-etlapps-create {
     > div.overlay {
       display: none;
     }
-    
+
     &.over {
       > div.overlay {
         display: block;
@@ -58,6 +59,40 @@ body.state-etlapps-create {
       }
       color: black;
       background: white;
+    }
+  }
+}
+
+body.theme-cdap.state-etlapps-list {
+  [etl-apps-list] {
+    [class*="col-"] {
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+    .well.well-md {
+      box-shadow: none;
+      background-image: none;
+      margin-bottom: 10px;
+
+      h3 {
+        margin: 0;
+      }
+
+      p {
+        margin: 0;
+      }
+    }
+    .running {
+      color: green;
+    }
+    .stopped {
+      color: darkgrey;
+    }
+    .killed {
+      color: red;
+    }
+    .description {
+      color: #777777;
     }
   }
 }

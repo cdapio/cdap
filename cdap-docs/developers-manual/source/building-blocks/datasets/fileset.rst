@@ -364,7 +364,7 @@ Additionally:
 Using TimePartitionedFileSets in MapReduce
 ==========================================
 
-Using time partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
+Using time-partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
 setting an input partition filter and an output partition key, you configure an input time range and an
 output partition time in the ``beforeSubmit()`` of the MapReduce::
 

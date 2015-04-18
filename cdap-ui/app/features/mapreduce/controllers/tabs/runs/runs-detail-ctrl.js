@@ -7,25 +7,42 @@ angular.module(PKG.name + '.feature.mapreduce')
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/status.html'
     },
     {
+      title: 'Mappers',
+      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/mappers.html'
+    },
+    {
+      title: 'Reducers',
+      template: '/assets/features/mapreduce/templates/tabs/runs/tabs/reducers.html'
+    },
+    {
       title: 'Logs',
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
     }];
 
-    dataSrc.poll({
-      _cdapNsPath: '/apps/' + $state.params.appId
-                    + '/mapreduce/' + $state.params.programId
-                    + '/runs/' + $state.params.runid + '/info'
-    }, function (res) {
+    $scope.activeTab = $scope.tabs[0];
 
-      $scope.info = res;
-      // To Be used when progress is fixed in the backend
-      // $scope.mapProgress = Math.floor(res.mapProgress * 100);
-      // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+    $scope.selectTab = function(tab) {
+      $scope.activeTab = tab;
+    };
 
-      $scope.mapperStats = getStats($scope.info.mapTasks);
-      $scope.reducerStats = getStats($scope.info.reduceTasks);
-    });
+    if ($scope.current !== 'No Run') {
+      var runid = $scope.current;
 
+      dataSrc.poll({
+        _cdapNsPath: '/apps/' + $state.params.appId
+                      + '/mapreduce/' + $state.params.programId
+                      + '/runs/' + runid + '/info'
+      }, function (res) {
+
+        $scope.info = res;
+        // To Be used when progress is fixed in the backend
+        // $scope.mapProgress = Math.floor(res.mapProgress * 100);
+        // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+
+        $scope.mapperStats = getStats($scope.info.mapTasks);
+        $scope.reducerStats = getStats($scope.info.reduceTasks);
+      });
+    }
 
     $scope.getCompletedPercentage = function(tasks) {
       var aggregate = 0;

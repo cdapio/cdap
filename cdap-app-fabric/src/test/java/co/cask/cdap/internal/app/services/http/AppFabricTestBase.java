@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -135,15 +136,11 @@ public abstract class AppFabricTestBase {
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
 
-  private static final String adapterFolder = "adapter";
-
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    File adapterDir = tmpFolder.newFolder(adapterFolder);
-
     CConfiguration conf = CConfiguration.create();
 
     conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
@@ -153,7 +150,8 @@ public abstract class AppFabricTestBase {
     conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
+
+    DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
 
@@ -609,7 +607,13 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
+  protected static void resetNamespaces() throws Exception {
+    deleteNamespaces();
+    createNamespaces();
+  }
+
   private static void createNamespaces() throws Exception {
+
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());

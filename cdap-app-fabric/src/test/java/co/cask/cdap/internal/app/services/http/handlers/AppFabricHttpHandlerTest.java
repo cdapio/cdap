@@ -247,14 +247,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   }
 
   /**
-   * Tests history of a procedure.
-   */
-  @Test
-  public void testProcedureHistory() throws Exception {
-    testHistory(WordCountApp.class, createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency"));
-  }
-
-  /**
    * Tests history of a mapreduce.
    */
   @Category(XSlowTests.class)
@@ -394,14 +386,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     stopProgram(flowId);
     waitState(flowId, "STOPPED");
 
-    // Check the start/stop endpoints for procedures
-    Id.Program procedureId = createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency");
-    Assert.assertEquals("STOPPED", getRunnableStatus(procedureId));
-    startProgram(procedureId);
-    waitState(procedureId, "RUNNING");
-    stopProgram(procedureId);
-    waitState(procedureId, "STOPPED");
-
     // removing apps
     Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
   }
@@ -427,12 +411,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertNotNull(result);
       Assert.assertTrue(result.contains("WordCountFlow"));
 
-      // verify procedure
-      response = doGet("/v2/apps/WordCountApp/procedures/WordFrequency");
+      // verify service
+      response = doGet("/v2/apps/WordCountApp/services/WordFrequencyService");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       result = EntityUtils.toString(response.getEntity());
       Assert.assertNotNull(result);
-      Assert.assertTrue(result.contains("WordFrequency"));
+      Assert.assertTrue(result.contains("WordFrequencyService"));
 
       //verify mapreduce
       response = doGet("/v2/apps/WordCountApp/mapreduce/VoidMapReduceJob");
@@ -485,27 +469,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
 
-      // verify procedures
-      response = doGet("/v2/procedures");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertEquals(1, o.size());
-      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
-                                                   "name", "WordFrequency", "description",
-                                                   "Procedure for executing WordFrequency.")));
-
-      // verify procedures by app
-      response = doGet("/v2/apps/WordCountApp/procedures");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertEquals(1, o.size());
-      Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
-                                                   "name", "WordFrequency", "description",
-                                                   "Procedure for executing WordFrequency.")));
-
-
       // verify mapreduces
       response = doGet("/v2/mapreduce");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -531,7 +494,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       // verify programs by non-existent app
       response = doGet("/v2/apps/NonExistenyApp/flows");
       Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-      response = doGet("/v2/apps/NonExistenyApp/procedures");
+      response = doGet("/v2/apps/NonExistenyApp/services");
       Assert.assertEquals(404, response.getStatusLine().getStatusCode());
       response = doGet("/v2/apps/NonExistenyApp/mapreduce");
       Assert.assertEquals(404, response.getStatusLine().getStatusCode());
@@ -540,11 +503,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
       // verify programs by app that does not have that program type
       response = doGet("/v2/apps/AppWithWorkflow/flows");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
-      Assert.assertTrue(o.isEmpty());
-      response = doGet("/v2/apps/AppWithWorkflow/procedures");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
       o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
@@ -676,59 +634,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     }
   }
 
-  /**
-   * Tests procedure instances.
-   */
-  @Test
-  public void testProcedureInstances () throws Exception {
-    Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
-    Assert.assertEquals(200, doPost("/v2/unrecoverable/reset").getStatusLine().getStatusCode());
-
-    HttpResponse response = deploy(WordCountApp.class);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
-
-    JsonObject json = new JsonObject();
-    json.addProperty("instances", 10);
-
-    response = doPut("/v2/apps/WordCountApp/procedures/WordFrequency/instances", json.toString());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = doGet("/v2/apps/WordCountApp/procedures/WordFrequency/instances");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    s = EntityUtils.toString(response.getEntity());
-    result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, result.size());
-    Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
-
-
-    // Get instances for a non-existent procedure and app.
-    response = doGet("/v2/apps/WordCountApp/procedures/XXXX/instances");
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    response = doGet("/v2/apps/XXXX/procedures/WordFrequency/instances");
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    // PUT instances for non-existent procedure and app.
-    String payload = "{instances: 1}";
-    response = doPut("/v2/apps/WordCountApp/procedures/XXXX/instances", payload);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-    response = doPut("/v2/apps/XXXX/procedures/WordFrequency/instances", payload);
-    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-
-
-    Assert.assertEquals(200, doDelete("/v2/apps/WordCountApp").getStatusLine().getStatusCode());
-  }
-
   private String getWebappStatus(String appId) throws Exception {
     HttpResponse response = doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -746,11 +651,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testWorkflowRuntimeArgs() throws Exception {
     testRuntimeArgs(SleepingWorkflowApp.class,
                     createProgramId(ProgramType.WORKFLOW, "SleepWorkflowApp", "SleepWorkflow"));
-  }
-
-  @Test
-  public void testProcedureRuntimeArgs() throws Exception {
-    testRuntimeArgs(WordCountApp.class, createProgramId(ProgramType.PROCEDURE, "WordCountApp", "WordFrequency"));
   }
 
   @Test
@@ -872,14 +772,12 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testProgramList() throws Exception {
-    //Test :: /flows /procedures /mapreduce /workflows
-    //App  :: /apps/AppName/flows /procedures /mapreduce /workflows
+    //Test :: /flows /mapreduce /workflows
+    //App  :: /apps/AppName/flows /mapreduce /workflows
     //App Info :: /apps/AppName
     //All Apps :: /apps
 
     HttpResponse response = doGet("/v2/flows");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -893,12 +791,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     String json = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> flows = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, flows.size());
-
-    response = doGet("/v2/apps/WordCountApp/procedures");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> procedures = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
-    Assert.assertEquals(1, procedures.size());
 
     response = doGet("/v2/apps/WordCountApp/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -1161,7 +1053,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("STOPPED", returnedBody.get(1).get("status").getAsString());
     HttpResponse response = doPost(url,
                                    "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
-      "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
     // test valid cases
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -1214,7 +1106,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(url, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
-      "{'appId': 'WordCountApp', 'programType': 'procedure', 'programId': 'WordFrequency'}]")
+      "{'appId': 'WordCountApp', 'programType': 'service', 'programId': 'WordFrequency'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(url, "[{'appId':'WordCountApp', 'programType':'NotExist', " +
       "'programId':'WordCountFlow'}]").getStatusLine().getStatusCode());
@@ -1232,7 +1124,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, returnedBody.get(0).get("statusCode").getAsInt());
     HttpResponse response = doPost(url,
       "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow', 'runnableId': 'StreamSource'}," +
-      "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService', " +
+        "'runnableId': 'WordFrequencyService'}," +
       "{'appId': 'AppWithServices', 'programType':'Service', 'programId':'NoOpService', 'runnableId':'NoOpService'}]");
     // test valid cases
     returnedBody = readResponse(response, typeToken);
@@ -1253,9 +1146,10 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     // start the service
     Id.Program serviceId = createProgramId(ProgramType.SERVICE, "AppWithServices", "NoOpService");
     startProgram(serviceId);
-    response = doPost(url, "[{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':" +
-      "'StreamSource'}, {'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService', 'runnableId':" +
-      "'NoOpService'}, {'appId': 'WordCountApp', 'programType': 'Procedure','programId': 'VoidMapReduceJob'}]");
+    response = doPost(url, "[" +
+      "{'appId':'WordCountApp', 'programType':'Flow','programId':'WordCountFlow','runnableId':'StreamSource'}, " +
+      "{'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService','runnableId':'NoOpService'}, " +
+      "{'appId': 'WordCountApp', 'programType': 'Service','programId': 'NotExist','runnableId':'NotExist'}]");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());

@@ -282,7 +282,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/" + txId + "/invalidate");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/" + txId + "/invalidate");
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       if (accessToken != null) {
@@ -316,7 +316,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/state");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/state");
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       if (accessToken != null) {
@@ -411,7 +411,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/state");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/state");
       connection = (HttpURLConnection) url.openConnection();
       if (accessToken != null) {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);

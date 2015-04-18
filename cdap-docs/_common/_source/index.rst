@@ -4,6 +4,7 @@
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-relations: true
+
 :hide-global-toc: true
 
 .. _documentation-index:
@@ -12,7 +13,7 @@
 CDAP Documentation v\ |version|
 ==================================================
 
-.. rubric:: Introduction to the Cask Data Application Platform
+.. .. rubric:: Introduction to the Cask Data Application Platform
 
 The Cask |(TM)| Data Application Platform (CDAP) is an integrated, open source application
 development platform for the Hadoop ecosystem that provides developers with data and
@@ -44,12 +45,21 @@ It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
 
 
+.. |introduction| replace:: **Introduction to CDAP:**
+.. _introduction: introduction/index.html
+
+- |introduction|_
+
+  - **Simple Access to Powerful Technology:** A comparison between using the current 
+    technologies available from the Hadoop ecosystem and using CDAP
+
+
 .. |developers-manual| replace:: **Developers’ Manual:**
 .. _developers-manual: developers-manual/index.html
 
 - |developers-manual|_
 
-  - **Getting Started:** A quick, hands-on introduction to CDAP
+  - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
   - **Overview:** The overall architecture and technology behind CDAP
   - **Building Blocks:** The two core abstractions in CDAP: Data and Applications, and their components
   - **Security:** Perimeter security, configuration and client authentication

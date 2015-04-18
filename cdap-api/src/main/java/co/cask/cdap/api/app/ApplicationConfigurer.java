@@ -108,27 +108,6 @@ public interface ApplicationConfigurer {
   void addFlow(Flow flow);
 
   /**
-   * Adds a {@link co.cask.cdap.api.procedure.Procedure} to the Application with a single instance.
-   *
-   * @param procedure The {@link co.cask.cdap.api.procedure.Procedure} to include in the Application
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  void addProcedure(co.cask.cdap.api.procedure.Procedure procedure);
-
-  /**
-   * Adds a {@link co.cask.cdap.api.procedure.Procedure} to the Application with a number of instances.
-   *
-   * @param procedure The {@link co.cask.cdap.api.procedure.Procedure} to include in the Application
-   * @param instances Number of instances to be included
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  void addProcedure(co.cask.cdap.api.procedure.Procedure procedure, int instances);
-
-  /**
    * Adds a {@link MapReduce MapReduce job} to the Application. Use it when you need to re-use existing MapReduce jobs
    * that rely on Hadoop MapReduce APIs.
    *

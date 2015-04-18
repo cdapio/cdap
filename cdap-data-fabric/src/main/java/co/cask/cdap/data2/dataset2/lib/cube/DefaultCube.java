@@ -87,9 +87,9 @@ public class DefaultCube implements Cube {
         if (agg.accept(fact)) {
           List<TagValue> tagValues = Lists.newArrayList();
           for (String tagName : agg.getTagNames()) {
-            tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+            tagValues.add(new TagValue(tagName, fact.getTags().get(tagName)));
           }
-          toWrite.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
+          toWrite.add(new Fact(fact.getTimestamp(), tagValues, fact.getMeasurements()));
         }
       }
     }
@@ -323,6 +323,11 @@ public class DefaultCube implements Cube {
     }
 
     return result;
+  }
+
+  @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
   }
 
   @Override

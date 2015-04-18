@@ -139,7 +139,6 @@ public class MDSUpgrader extends AbstractUpgrader {
     handlePrograms(appId, appSpec.getSpark().keySet(), ProgramType.SPARK);
     handlePrograms(appId, appSpec.getWorkflows().keySet(), ProgramType.WORKFLOW);
     handlePrograms(appId, appSpec.getServices().keySet(), ProgramType.SERVICE);
-    handlePrograms(appId, appSpec.getProcedures().keySet(), ProgramType.PROCEDURE);
   }
 
   /**

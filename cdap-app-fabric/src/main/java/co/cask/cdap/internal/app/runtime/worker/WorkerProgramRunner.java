@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -31,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -40,6 +42,7 @@ import org.apache.twill.internal.RunIds;
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
 public class WorkerProgramRunner implements ProgramRunner {
+  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
@@ -80,14 +83,24 @@ public class WorkerProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(programType, "Missing processor type.");
     Preconditions.checkArgument(programType == ProgramType.WORKER, "Only Worker process type is supported.");
 
-    WorkerSpecification spec = appSpec.getWorkers().get(program.getName());
-    Preconditions.checkArgument(spec != null, "Missing Worker specification for {}", program.getId());
+    WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
+    Preconditions.checkArgument(workerSpec != null, "Missing Worker specification for {}", program.getId());
+    String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
+                                                        String.valueOf(workerSpec.getInstances()));
+    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
+    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
+      workerSpec.getResources();
 
-    BasicWorkerContext context = new BasicWorkerContext(spec, program, runId, instanceId, instanceCount,
+    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                                                workerSpec.getDescription(), workerSpec.getProperties(),
+                                                                workerSpec.getDatasets(), newResources,
+                                                                Integer.valueOf(instances));
+
+    BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, runId, instanceId, instanceCount,
                                                         options.getUserArguments(), cConf,
                                                         metricsCollectionService, datasetFramework,
                                                         txClient, discoveryServiceClient);
-    WorkerDriver worker = new WorkerDriver(program, spec, context);
+    WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
     worker.start();

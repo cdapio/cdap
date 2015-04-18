@@ -26,30 +26,21 @@ import java.lang.reflect.Type;
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline.
  *
- * @param <KEY> Batch Output Key class
- * @param <VALUE> Batch Output Value class
+ * @param <IN> the type of input object to the sink
+ * @param <KEY_OUT> the type of key the sink outputs
+ * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class BatchSink<KEY, VALUE> {
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> {
 
-  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
-  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link KEY}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getKeyType() {
-    return keyType;
-  }
+  private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
 
   /**
-   * Get the Type of {@link VALUE}.
+   * Get the Type of {@link IN}.
    *
-   * @return {@link Type}
+   * @return {@link Type} of input object
    */
-  public final Type getValueType() {
-    return valueType;
+  public final Type getInputType() {
+    return inputType;
   }
 
   /**
@@ -77,4 +68,23 @@ public abstract class BatchSink<KEY, VALUE> {
    * @param context {@link BatchSinkContext}
    */
   public abstract void prepareJob(BatchSinkContext context);
+
+  /**
+   * Initialize the sink. This is called once each time the Hadoop Job runs, before any
+   * calls to {@link #write} are made.
+   *
+   * @param stageConfig the configuration for the stage.
+   */
+  public void initialize(ETLStage stageConfig) {
+    // no-op
+  }
+
+  /**
+   * Write the given input as a key value pair. By default the given input as the key and null as the value.
+   *
+   * @param input the value to write as a key value pair
+   */
+  public void write(IN input, SinkWriter<KEY_OUT, VAL_OUT> writer) throws Exception {
+    writer.write((KEY_OUT) input, null);
+  }
 }

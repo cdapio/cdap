@@ -19,10 +19,8 @@ import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 /**
  * Discoverable that resolves 0.0.0.0 to a routable interface.
@@ -52,13 +50,13 @@ public class ResolvingDiscoverable implements Discoverable {
   }
 
   private InetSocketAddress resolve(InetSocketAddress bindAddress) {
+    try {
       if (bindAddress.getAddress().isAnyLocalAddress()) {
-        try {
-          return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
-        } catch (UnknownHostException e) {
-          LOG.warn("Unable to resolve localhost", e);
-        }
+        return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
       }
+    } catch (Exception e) {
+      LOG.warn("Unable to resolve bindAddress", e);
+    }
     return bindAddress;
   }
 }

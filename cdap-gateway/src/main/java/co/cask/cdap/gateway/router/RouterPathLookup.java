@@ -54,9 +54,10 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
-      //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
-      if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-        && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
+      //But stream calls issued by the UI should be routed to the appropriate CDAP service
+      if (fallbackService.contains("$HOST") && (uriParts.length >= 1) &&
+        (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)
+          || ("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)))) {
         return fallbackService;
       }
 
@@ -93,7 +94,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
       // /v2/streams should go to AppFabricHttp
       // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
-      // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
+      // GET /v2/streams/<stream-id>/flows should go to AppFabricHttp, rest should go Stream Handler
       if (uriParts.length == 2) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else if (uriParts.length == 3) {
@@ -107,15 +108,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
       //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
       return Constants.Service.METRICS;
-    } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
+    } else if (matches(uriParts, "v2", "system", "services", null, "logs")) {
       //Log Handler Path /v2/system/services/<service-id>/logs
       return Constants.Service.METRICS;
-    } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
-      //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-      //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
-      String serviceName = String.format("procedure.%s.%s.%s", getAuthenticatedAccountId(request), uriParts[2],
-                                         uriParts[4]);
-      return serviceName;
     } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
       //User defined services handle methods on them:
       //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
@@ -140,16 +135,19 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
+    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+      //Log Handler Path /v3/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("streams")) {
       //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
       //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
-      // GET /v3/namespaces/<namespace>/streams/flows should go to AppFabricHttp
+      // GET /v3/namespaces/<namespace>/streams/<stream-id>/flows should go to AppFabricHttp
       // All else go to Stream Handler
       if (uriParts.length == 4) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else if (uriParts.length == 5) {
         return Constants.Service.STREAMS;
-      } else if ((uriParts.length == 6) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
+      } else if ((uriParts.length == 6) && uriParts[5].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else {
         return Constants.Service.STREAMS;
@@ -191,6 +189,32 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       return Constants.Service.DATASET_MANAGER;
     }
     return Constants.Service.APP_FABRIC_HTTP;
+  }
+
+  /**
+   * Determines if actual matches expected.
+   *
+   * - actual may be longer than expected, but we'll return true as long as expected was found
+   * - null in expected means "accept any string"
+   *
+   * @param actual actual string array to check
+   * @param expected expected string array format
+   * @return true if actual matches expected
+   */
+  private boolean matches(String[] actual, String... expected) {
+    if (actual.length < expected.length) {
+      return false;
+    }
+
+    for (int i = 0; i < expected.length; i++) {
+      if (expected[i] == null) {
+        continue;
+      }
+      if (!expected[i].equals(actual[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private HttpRequest rewriteRequest(HttpRequest request) {
