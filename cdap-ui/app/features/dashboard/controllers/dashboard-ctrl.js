@@ -17,8 +17,10 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   // Available refresh rates.
   $scope.refreshRates = [
     '1 second',
+    '5 seconds',
+    '10 seconds',
     '60 seconds',
-    '10 mins'
+    '5 mins'
   ];
   $scope.refreshRate = '1 second';
 

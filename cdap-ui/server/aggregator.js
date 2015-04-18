@@ -3,7 +3,8 @@
 var _ = require('lodash'),
     request = require('request'),
     colors = require('colors/safe'),
-    HashTable = require('object-hash').HashTable;
+    hash = require('object-hash'),
+    HashTable = hash.HashTable;
 
 
 var POLL_INTERVAL = 1000;
@@ -27,6 +28,7 @@ function Aggregator (conn) {
   this.connection = conn;
   this.polledResources = new HashTable();
   this.bodyCache = {};
+  this.timeouts = {};
 
   // this.log('init');
 }
@@ -46,15 +48,13 @@ Aggregator.prototype.log = function () {
  * schedule polling
  */
 Aggregator.prototype.planPolling = function () {
-  console.log(JSON.stringify(this.polledResources));
-  this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
+  _.bind(doPoll, this)();
 };
 
 /**
- * stop polling
+ * Clear all polling
  */
-Aggregator.prototype.stopPolling = function () {
-  console.log('called stop polling');
+Aggregator.prototype.clearPolling = function () {
   clearTimeout(this.timeout);
   this.timeout = null;
 };
@@ -65,27 +65,37 @@ Aggregator.prototype.stopPolling = function () {
  * requests all the polled resources
  */
 function doPoll () {
-  var that = this,
+  var self = this,
       rscs = this.polledResources.toArray(),
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
-  //this.log('poll', rscs.length);
+  this.log('poll', rscs.length);
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;
-    request(resource, function(error, response, body){
-      if(_.isEqual(that.bodyCache[one.hash], body)) {
-        // that.log('not emitting', resource.url);
-        return; // we do not send down identical bodies
-      } else if (error) {
-        that.bodyCache[one.hash] = body;
-        emitResponse.call(that, resource, error);
-        return;
-      }
+    if (self.timeouts[k]) {
+      clearTimeout(self.timeouts[k]);
+    }
+    (function(resource) {
+      var timeoutId = setTimeout(function () {
+        console.log(resource);
+        request(resource, function(error, response, body){
+          if(_.isEqual(self.bodyCache[one.hash], body)) {
+            // self.log('not emitting', resource.url);
+            return; // we do not send down identical bodies
+          } else if (error) {
+            self.bodyCache[one.hash] = body;
+            emitResponse.call(self, resource, error);
+            return;
+          }
 
-      that.bodyCache[one.hash] = body;
-      emitResponse.call(that, resource, false, response, body);
+          self.bodyCache[one.hash] = body;
+          emitResponse.call(self, resource, false, response, body);
 
-    }).on('response', pollAgain)
-    .on('error', pollAgain);
+        }).on('response', pollAgain)
+        .on('error', pollAgain);
+      }, resource.frequency || POLL_INTERVAL);
+      self.timeouts[k] = timeoutId;
+    })(resource);
+
   });
 }
 
@@ -148,7 +158,7 @@ function onSocketData (message) {
       case 'poll-stop':
         this.polledResources.remove(r);
         if(!Object.keys(this.polledResources.table()).length) {
-          this.stopPolling();
+          this.clearPolling();
         }
         break;
     }
@@ -164,7 +174,7 @@ function onSocketData (message) {
  */
 function onSocketClose () {
   this.log('closed');
-  this.stopPolling();
+  this.clearPolling();
   this.polledResources.reset();
 }
 

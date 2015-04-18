@@ -210,12 +210,15 @@ angular.module(PKG.name+'.feature.dashboard')
       switch(val) {
         case '1 second':
           return 1000;
+        case '5 seconds':
+          return 1000 * 5;
+        case '10 seconds':
+          return 1000 * 10;
         case '60 seconds':
           return 1000 * 60;
-        case '10 mins':
-          return 1000 * 60 * 10;
-        case '1 hour':
-          return 1000 * 60 * 60;
+        case '5 mins':
+          return 1000 * 60 * 5;
+
       }
     }
   })
