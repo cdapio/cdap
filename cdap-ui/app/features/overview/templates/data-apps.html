@@ -58,7 +58,10 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select> -->
-        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})"><span class="fa fa-plus"></span> Add Stream</a>
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
+          <span class="fa fa-plus"></span>
+          <span>Add Stream</span>
+        </a>
       </div>
     </div>
   </div>
@@ -119,7 +122,14 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select>
+<<<<<<< HEAD
         <a ui-sref="etlapps.create" class="btn btn-default"><span class="fa fa-plus"></span> Add ETL App</a>
+=======
+        <a ui-sref="etlapps.create" class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span>Add ETL App</span>
+        </a>
+>>>>>>> ea0b982... Fixes fileselect directive + mapreduce css + empty data & apps overview
       </div>
     </div>
   </div>
