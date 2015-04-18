@@ -42,7 +42,7 @@ public class ClientConfig {
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
 
-  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
   @Nullable
   private ConnectionConfig connectionConfig;

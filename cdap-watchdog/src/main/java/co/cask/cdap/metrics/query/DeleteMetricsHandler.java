@@ -39,8 +39,10 @@ import javax.ws.rs.QueryParam;
 /**
  * Handlers for clearing metrics.
  */
-// todo: expire metrics where possible instead of explicit delete: CDAP-1124
-@Path(Constants.Gateway.API_VERSION_2 + "/metrics")
+// TODO: expire metrics where possible instead of explicit delete: CDAP-1124
+// TODO: this can be removed after the two remaining places where we call this internally are refactored: CDAP-2163
+//       (DeletedProgramHandlerStage, ProgramLifecycleHttpHandler)
+@Path(Constants.Gateway.API_VERSION_3 + "/metrics")
 public class DeleteMetricsHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
