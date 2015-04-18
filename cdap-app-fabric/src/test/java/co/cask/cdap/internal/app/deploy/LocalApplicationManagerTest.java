@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ToyApp;
-import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
@@ -29,7 +28,6 @@ import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -37,7 +35,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.concurrent.ExecutionException;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
@@ -48,12 +49,10 @@ public class LocalApplicationManagerTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static LocationFactory lf;
-  private static File temp;
 
   @BeforeClass
   public static void before() throws Exception {
     lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    temp = TMP_FOLDER.newFolder("pipeline");
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
@@ -64,15 +63,19 @@ public class LocalApplicationManagerTest {
    */
   @Test(expected = ExecutionException.class)
   public void testImproperOrNoManifestFile() throws Exception {
-    Location deployedJar = AppJarHelper.createDeploymentJar(lf, WebCrawlApp.class, new Manifest());
-    Location destination = new LocalLocationFactory().create(temp.toURI());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
-
+    // Create an JAR without the MainClass set.
+    File deployFile = TMP_FOLDER.newFile();
+    JarOutputStream output = new JarOutputStream(new FileOutputStream(deployFile), new Manifest());
     try {
-      AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+      output.putNextEntry(new JarEntry("dummy"));
     } finally {
-      deployedJar.delete(true);
+      output.close();
     }
+
+    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
+    DeploymentInfo info = new DeploymentInfo(deployFile, destination);
+
+    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
   }
 
   /**
@@ -81,7 +84,7 @@ public class LocalApplicationManagerTest {
   @Test
   public void testGoodPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
-    Location destination = new LocalLocationFactory().create(temp.toURI()).append("test.jar");
+    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
     DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
 
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
@@ -90,10 +93,4 @@ public class LocalApplicationManagerTest {
     Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
     Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
   }
-
-  @AfterClass
-  public static void cleanup() {
-    TMP_FOLDER.delete();
-  }
-
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
@@ -28,7 +29,12 @@ import java.util.List;
  * Basic operations include adding {@link CubeFact}s and querying data.
  */
 @Beta
-public interface Cube extends Dataset {
+public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
+  /**
+   * Property set to configure resolutions to aggregate for. Value is a comma-separated list of resolutions in seconds.
+   */
+  String PROPERTY_RESOLUTIONS = "dataset.cube.resolutions";
+
   /**
    * Adds {@link CubeFact} to this {@link Cube}.
    * @param fact fact to add.
