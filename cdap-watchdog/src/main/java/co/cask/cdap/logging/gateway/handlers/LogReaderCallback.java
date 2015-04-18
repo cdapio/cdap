@@ -20,7 +20,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.LogOffset;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -34,7 +33,7 @@ import java.util.List;
  * Callback to handle log events from LogReader.
  */
 class LogReaderCallback implements Callback {
-  private final List<FormattedEvent> logResults;
+  private final List<FormattedLogEvent> logResults;
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
@@ -63,32 +62,12 @@ class LogReaderCallback implements Callback {
     String log = patternLayout.doLayout(event.getLoggingEvent());
     log = escape ? StringEscapeUtils.escapeHtml(log) : log;
 
-    logResults.add(new FormattedEvent(log, event.getOffset()));
+    logResults.add(new FormattedLogEvent(log, event.getOffset()));
   }
 
   @Override
   public void close() {
     patternLayout.stop();
     responder.sendJson(HttpResponseStatus.OK, logResults);
-  }
-
-  private static final class FormattedEvent {
-    private final String log;
-    private final LogOffset offset;
-
-    public FormattedEvent(String log, LogOffset offset) {
-      this.log = log;
-      this.offset = offset;
-    }
-
-    @SuppressWarnings("UnusedDeclaration")
-    public String getLog() {
-      return log;
-    }
-
-    @SuppressWarnings("UnusedDeclaration")
-    public LogOffset getOffset() {
-      return offset;
-    }
   }
 }

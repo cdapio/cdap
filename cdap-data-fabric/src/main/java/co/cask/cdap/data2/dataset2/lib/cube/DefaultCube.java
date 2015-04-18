@@ -326,6 +326,11 @@ public class DefaultCube implements Cube {
   }
 
   @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
+  }
+
+  @Override
   public void close() throws IOException {
     for (FactTable factTable : resolutionToFactTable.values()) {
       factTable.close();
