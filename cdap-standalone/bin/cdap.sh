@@ -29,8 +29,7 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
-ALPHA_WEB_APP_PATH=${ALPHA_WEB_APP_PATH:-"web-app/alpha/server.js"}
+WEB_APP_PATH=${WEB_APP_PATH:-"web-app/alpha/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`
@@ -210,7 +209,6 @@ rotate_log () {
 
 start() {
     debug=$1; shift
-    alpha_ui=$1; shift
     port=$1; shift
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_OPTS
@@ -222,10 +220,6 @@ start() {
     if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
         ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
-
-    if [ "$alpha_ui" == "true" ]; then
-      WEB_APP_PATH=$ALPHA_WEB_APP_PATH
-    fi 
 
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
         --web-app-path ${WEB_APP_PATH} \
@@ -308,12 +302,10 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
-    alpha_ui=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
-        --enable-alpha-ui) shift; alpha_ui=true;;
         *) shift; break;;
       esac
     done
@@ -328,7 +320,7 @@ case "$1" in
       fi
       CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    $command $debug $alpha_ui $port
+    $command $debug $port
   ;;
 
   stop)
