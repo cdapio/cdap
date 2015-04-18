@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/cdap-stream-clients-java.rst
+.. include:: ../../build/_includes/cdap-file-drop-zone.rst

@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../_includes/cdap-flume.rst
+.. include:: ../../build/_includes/cdap-flume.rst

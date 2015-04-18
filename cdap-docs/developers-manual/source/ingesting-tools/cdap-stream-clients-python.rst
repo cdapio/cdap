@@ -4,4 +4,4 @@
 
 .. highlight:: console
 
-.. include:: ../_includes/cdap-stream-clients-python.rst
+.. include:: ../../build/_includes/cdap-stream-clients-python.rst
