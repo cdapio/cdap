@@ -140,7 +140,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       batchPipelineExecutor = new BatchPipelineExecutor(source, transforms, sink);
     }
 
-    private List<Transform> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs) {
+    private List<Transform> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs)
+      throws Exception {
       List<Transform> transforms = Lists.newArrayListWithCapacity(specList.size());
       for (int i = 0; i < specList.size(); i++) {
         StageSpecification spec = specList.get(i);

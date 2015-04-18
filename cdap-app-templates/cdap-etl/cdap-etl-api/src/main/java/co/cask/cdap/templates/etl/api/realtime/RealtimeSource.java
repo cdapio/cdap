@@ -18,9 +18,7 @@ package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 
 import javax.annotation.Nullable;
 
@@ -29,35 +27,17 @@ import javax.annotation.Nullable;
  *
  * @param <T> Type of object that the source emits
  */
-public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContext> {
+public abstract class RealtimeSource<T> extends EndPointStage implements ProgramLifecycle<SourceContext> {
 
   private SourceContext context;
-
-  /**
-   * Configure the Source.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    // no-op
-  }
 
   /**
    * Initialize the Source.
 
    * @param context {@link SourceContext}
    */
-  public void initialize(SourceContext context) {
+  @Override
+  public void initialize(SourceContext context) throws Exception {
     this.context = context;
   }
 

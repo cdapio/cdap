@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
@@ -31,6 +30,7 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
+import co.cask.cdap.templates.etl.common.StageConfigurator;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
@@ -62,6 +62,8 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
     transformClassMap = Maps.newHashMap();
     transforms = Lists.newArrayList();
 
+    // Add class from lib here to be made available for use in the ETL Worker.
+    // TODO : Remove this when plugins management is available.
     initTable(Lists.<Class>newArrayList(IdentityTransform.class,
                                         NoOpSink.class,
                                         TestSource.class));
@@ -91,8 +93,6 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
   @Override
   public void configureAdapter(String adapterName, ETLRealtimeConfig etlConfig, AdapterConfigurer configurer)
     throws Exception {
-    int instances = etlConfig.getInstances();
-
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
@@ -100,42 +100,16 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
     // Instantiate Source, Transforms, Sink stages.
     instantiateStages(sourceConfig, sinkConfig, transformConfigs);
 
-    // TODO: Validate Adapter
+    // TODO: Validate Adapter by making sure the key-value types of stages match.
 
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
-    configureSource(sourceConfig, configurer, pipelineConfigurer);
-    configureSink(sinkConfig, configurer, pipelineConfigurer);
-    configureTransforms(configurer);
+    StageConfigurator.configure(source, sourceConfig, configurer, pipelineConfigurer, Constants.Source.SPECIFICATION);
+    StageConfigurator.configure(sink, sinkConfig, configurer, pipelineConfigurer, Constants.Sink.SPECIFICATION);
+    StageConfigurator.configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
-    configurer.setInstances(instances);
-  }
-
-  private void configureSource(ETLStage sourceConfig, AdapterConfigurer configurer,
-                               PipelineConfigurer pipelineConfigurer) throws Exception {
-    source.configurePipeline(sourceConfig, pipelineConfigurer);
-    DefaultStageConfigurer realtimeConfigurer = new DefaultStageConfigurer(source.getClass());
-    StageSpecification specification = realtimeConfigurer.createSpecification();
-    configurer.addRuntimeArgument(Constants.Source.SPECIFICATION, GSON.toJson(specification));
-  }
-
-  private void configureSink(ETLStage sinkConfig, AdapterConfigurer configurer,
-                             PipelineConfigurer pipelineConfigurer) throws Exception {
-    sink.configurePipeline(sinkConfig, pipelineConfigurer);
-    DefaultStageConfigurer realtimeConfigurer = new DefaultStageConfigurer(sink.getClass());
-    StageSpecification specification = realtimeConfigurer.createSpecification();
-    configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
-  }
-
-  private void configureTransforms(AdapterConfigurer configurer) {
-    List<StageSpecification> transformSpecs = Lists.newArrayList();
-    for (Transform transformObj : transforms) {
-      DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
-      StageSpecification specification = stageConfigurer.createSpecification();
-      transformSpecs.add(specification);
-    }
-    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATIONS, GSON.toJson(transformSpecs));
+    configurer.setInstances(etlConfig.getInstances());
   }
 
   private void instantiateStages(ETLStage sourceStage, ETLStage sinkStage, List<ETLStage> transformList)

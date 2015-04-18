@@ -71,7 +71,7 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
   }
 
   @Override
-  public void initialize(SourceContext context) {
+  public void initialize(SourceContext context) throws Exception {
     super.initialize(context);
 
     statusListener = new StatusListener() {

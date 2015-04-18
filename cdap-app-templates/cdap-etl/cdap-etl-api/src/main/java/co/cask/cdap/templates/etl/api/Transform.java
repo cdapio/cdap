@@ -66,7 +66,8 @@ public abstract class Transform<IN, OUT> implements ProgramLifecycle<TransformCo
    *
    * @param context {@link TransformContext}
    */
-  public void initialize(TransformContext context) {
+  @Override
+  public void initialize(TransformContext context) throws Exception {
     this.context = context;
   }
 

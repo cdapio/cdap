@@ -43,7 +43,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
-import javax.naming.NamingException;
 
 /**
  * Unit test for JMS ETL realtime source
@@ -94,7 +93,7 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleQueueMessages() throws NamingException, JMSException {
+  public void testSimpleQueueMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
@@ -146,7 +145,7 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleTopicMessages() throws NamingException, JMSException {
+  public void testSimpleTopicMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);

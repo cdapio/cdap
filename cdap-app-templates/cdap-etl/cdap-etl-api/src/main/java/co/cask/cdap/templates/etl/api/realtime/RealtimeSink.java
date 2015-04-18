@@ -17,68 +17,34 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 
 /**
  * Realtime Sink.
  *
  * @param <I> Object sink operates on
  */
-public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
+public abstract class RealtimeSink<I> extends EndPointStage implements ProgramLifecycle<SinkContext> {
 
   private SinkContext context;
-
-  /**
-   * Configure the Sink.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    // no-op
-  }
 
   /**
    * Initialize the Sink.
    *
    * @param context {@link SinkContext}
    */
-  public void initialize(SinkContext context) {
+  @Override
+  public void initialize(SinkContext context) throws Exception {
     this.context = context;
   }
 
   /**
    * Write the given object.
    *
-   * @param object object to be written
+   * @param object {@link Iterable} of T
    * @throws Exception if there was some exception writing the object
    */
-  public abstract void write(I object) throws Exception;
-
-  /**
-   * Invoked when source is suspended.
-   */
-  public void onSuspend() {
-    // no-op
-  }
-
-  /**
-   * Resume/reconfigure from the state of suspension.
-   */
-  public void onResume() {
-    // no-op
-  }
+  public abstract void write(Iterable<I> object) throws Exception;
 
   @Override
   public void destroy() {

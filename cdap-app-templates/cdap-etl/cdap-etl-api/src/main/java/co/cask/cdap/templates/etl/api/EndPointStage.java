@@ -14,25 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime.sinks;
+package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
- * Generic NoOp Sink.
- *
- * @param <T> any object
+ * Base class for ETL Source, Sink Stages.
  */
-public class NoOpSink<T> extends RealtimeSink<T> {
+public class EndPointStage {
 
-  @Override
+  /**
+   * Configure the Edge stage.
+   *
+   * @param configurer {@link StageConfigurer}
+   */
   public void configure(StageConfigurer configurer) {
-    configurer.setName(NoOpSink.class.getSimpleName());
+    // no-op
   }
 
-  @Override
-  public void write(Iterable<T> object) {
+  /**
+   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   *
+   * @param stageConfig the configuration for the source
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   */
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 }

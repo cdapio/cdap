@@ -70,7 +70,7 @@ public class JmsSource extends RealtimeSource<String> {
    *
    * @param context {@link SourceContext}
    */
-  public void initialize(SourceContext context) {
+  public void initialize(SourceContext context) throws Exception {
     super.initialize(context);
 
     // Bootstrap the JMS consumer

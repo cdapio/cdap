@@ -22,7 +22,6 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
@@ -40,6 +39,7 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
+import co.cask.cdap.templates.etl.common.StageConfigurator;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
@@ -47,12 +47,10 @@ import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -74,8 +72,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     transformClassMap = Maps.newHashMap();
     transforms = Lists.newArrayList();
 
-    //TODO: Add classes from Lib here to be available for use in the ETL Adapter. Remove this when
-    //plugins management is completed.
+    // Add classes from Lib here to be available for use in the ETL Adapter.
+    // TODO: Remove this when plugins management is available.
     initTable(Lists.<Class>newArrayList(KVTableSource.class,
                                         KVTableSink.class,
                                         BatchReadableSource.class,
@@ -115,11 +113,8 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   @Override
-  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig, AdapterConfigurer adapterConfigurer)
+  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig, AdapterConfigurer configurer)
     throws Exception {
-    // Get cronEntry string for ETL Batch Adapter
-    String cronEntry = etlBatchConfig.getSchedule();
-
     ETLStage sourceConfig = etlBatchConfig.getSource();
     ETLStage sinkConfig = etlBatchConfig.getSink();
     List<ETLStage> transformConfigs = etlBatchConfig.getTransforms();
@@ -127,21 +122,22 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     // Instantiate Source, Transform, Sink Stages.
     instantiateStages(sourceConfig, sinkConfig, transformConfigs);
 
-    // Validate Adapter by making sure the key-value types of stages match.
-    validateAdapter(sourceConfig, sinkConfig, transformConfigs);
+    // TODO: Validate Adapter by making sure the key-value types of stages match.
 
     // pipeline configurer is just a wrapper around an adapter configurer that limits what can be added,
     // since we don't want sources and sinks setting schedules or anything like that.
-    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(adapterConfigurer);
-    configureSource(sourceConfig, adapterConfigurer, pipelineConfigurer);
-    configureSink(sinkConfig, adapterConfigurer, pipelineConfigurer);
-    configureTransforms(adapterConfigurer);
+    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
+    StageConfigurator.configure(batchSource, sourceConfig, configurer, pipelineConfigurer,
+                                Constants.Source.SPECIFICATION);
+    StageConfigurator.configure(batchSink, sinkConfig, configurer, pipelineConfigurer,
+                                Constants.Sink.SPECIFICATION);
+    StageConfigurator.configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
 
-    adapterConfigurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
-    adapterConfigurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
-    adapterConfigurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
+    configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
+    configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
+    configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                                    String.format("Schedule for %s Adapter", adapterName),
-                                                   cronEntry));
+                                                   etlBatchConfig.getSchedule()));
   }
 
   private void instantiateStages(ETLStage source, ETLStage sink, List<ETLStage> transformList)
@@ -160,92 +156,6 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     } catch (Exception e) {
       throw new IllegalArgumentException("Unable to load class. Check stage names.", e);
     }
-  }
-
-  private void validateAdapter(ETLStage source, ETLStage sink, List<ETLStage> transformList)
-    throws IllegalArgumentException {
-    if (transformList.size() == 0) {
-      // No transforms. Check only source and sink.
-      if (!(isAssignable(batchSource.getOutputType(), batchSink.getInputType()))) {
-        throw new IllegalArgumentException(String.format("Source %s and Sink %s Types don't match",
-                                                         source.getName(), sink.getName()));
-      }
-    } else {
-      // Check the first and last transform with source and sink.
-      ETLStage firstStage = Iterables.getFirst(transformList, null);
-      ETLStage lastStage = Iterables.getLast(transformList);
-      Transform firstTransform = Iterables.getFirst(transforms, null);
-      Transform lastTransform = Iterables.getLast(transforms);
-
-      if (!(isAssignable(batchSource.getOutputType(), firstTransform.getInputType()))) {
-        throw new IllegalArgumentException(String.format("Source %s and Transform %s Types don't match",
-                                                         source.getName(), firstStage.getName()));
-      }
-
-      if (!(isAssignable(lastTransform.getOutputType(), batchSink.getInputType()))) {
-        throw new IllegalArgumentException(String.format("Sink %s and Transform %s Types don't match",
-                                                         sink.getName(), lastStage.getName()));
-      }
-
-      if (transformList.size() > 1) {
-        // Check transform stages.
-        validateTransforms(transformList);
-      }
-    }
-  }
-
-  private boolean isAssignable(Type source, Type destination) {
-    //TODO: Do correct validation.
-    return true;
-  }
-
-  private void validateTransforms(List<ETLStage> transformList) throws IllegalArgumentException {
-    for (int i = 0; i < transformList.size() - 1; i++) {
-      ETLStage currStage = transformList.get(i);
-      ETLStage nextStage = transformList.get(i + 1);
-      Transform firstTransform = transforms.get(i);
-      Transform secondTransform = transforms.get(i + 1);
-
-      if (!(isAssignable(firstTransform.getOutputType(), secondTransform.getInputType()))) {
-        throw new IllegalArgumentException(String.format("Transform %s and Transform %s Types don't match",
-                                                         currStage.getName(), nextStage.getName()));
-      }
-    }
-  }
-
-  private void configureSource(ETLStage sourceConfig, AdapterConfigurer configurer,
-                               PipelineConfigurer pipelineConfigurer) throws Exception {
-    batchSource.configurePipeline(sourceConfig, pipelineConfigurer);
-
-    // TODO: after a few more use cases, determine if the spec is really needed at runtime
-    //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSource.getClass());
-    StageSpecification specification = stageConfigurer.createSpecification();
-    configurer.addRuntimeArgument(Constants.Source.SPECIFICATION, GSON.toJson(specification));
-  }
-
-  private void configureSink(ETLStage sinkConfig, AdapterConfigurer configurer,
-                             PipelineConfigurer pipelineConfigurer) throws Exception {
-    batchSink.configurePipeline(sinkConfig, pipelineConfigurer);
-
-    // TODO: after a few more use cases, determine if the spec is really needed at runtime
-    //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(batchSink.getClass());
-    StageSpecification specification = stageConfigurer.createSpecification();
-    configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
-  }
-
-  private void configureTransforms(AdapterConfigurer configurer) throws Exception {
-    List<StageSpecification> transformSpecs = Lists.newArrayList();
-    for (Transform transformObj : transforms) {
-
-      // TODO: after a few more use cases, determine if the spec is really needed at runtime
-      //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
-      DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
-      StageSpecification specification = stageConfigurer.createSpecification();
-      transformSpecs.add(specification);
-    }
-    configurer.addRuntimeArgument(Constants.Transform.SPECIFICATIONS, GSON.toJson(transformSpecs));
   }
 
   @Override

@@ -70,7 +70,7 @@ public class ETLWorker extends AbstractWorker {
   }
 
   @Override
-  public void initialize(WorkerContext context) throws Exception {
+  public void initialize(final WorkerContext context) throws Exception {
     super.initialize(context);
     Map<String, String> runtimeArgs = context.getRuntimeArguments();
 
@@ -82,21 +82,26 @@ public class ETLWorker extends AbstractWorker {
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
     transforms = Lists.newArrayList();
-    ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
+    final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
 
     getContext().execute(new TxRunnable() {
       @Override
-      public void run(DatasetContext context) throws Exception {
-        datasetContext = context;
+      public void run(DatasetContext dsContext) throws Exception {
+        datasetContext = dsContext;
       }
     });
 
     initializeSource(context, config.getSource());
     initializeTransforms(context, config.getTransforms());
 
-    // TODO: Execute within a transaction? Dataset operations could be performed in the Sink?
-    initializeSink(context, config.getSink());
+    // Execute within a transaction since Dataset operations could be performed in the Sink.
+    getContext().execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetCtx) throws Exception {
+        initializeSink(context, config.getSink());
+      }
+    });
 
     transformExecutor = new TransformExecutor(transforms);
     defaultEmitter = new DefaultEmitter();
@@ -124,7 +129,7 @@ public class ETLWorker extends AbstractWorker {
     sink.initialize(sinkContext);
   }
 
-  private void initializeTransforms(WorkerContext context, List<ETLStage> stages) {
+  private void initializeTransforms(WorkerContext context, List<ETLStage> stages) throws Exception {
     List<StageSpecification> specs = GSON.fromJson(context.getRuntimeArguments().get(
       Constants.Transform.SPECIFICATIONS), SPEC_LIST_TYPE);
     for (int i = 0; i < specs.size(); i++) {
@@ -133,6 +138,9 @@ public class ETLWorker extends AbstractWorker {
       try {
         Transform transform = (Transform) Class.forName(spec.getClassName()).newInstance();
         DefaultTransformContext transformContext = new DefaultTransformContext(spec, stage.getProperties());
+        LOG.info("Transform Stage : {}", stage.getName());
+        LOG.info("Transform Class : {}", stage.getClass().getName());
+        LOG.info("Specifications of Transform : {}", spec);
         transform.initialize(transformContext);
         transforms.add(transform);
       } catch (ClassNotFoundException e) {
@@ -174,9 +182,7 @@ public class ETLWorker extends AbstractWorker {
           getContext().execute(new TxRunnable() {
             @Override
             public void run(DatasetContext context) throws Exception {
-              for (Object object : dataToSink) {
-                sink.write(object);
-              }
+              sink.write(dataToSink);
 
               //Persist sourceState
               KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
@@ -197,7 +203,6 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void stop() {
     running = false;
-    // TODO: Better handling of exceptions thrown if any
     source.destroy();
     for (Transform transform : transforms) {
       transform.destroy();
