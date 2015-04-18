@@ -248,7 +248,7 @@ public final class LoggingContextHelper {
 
   public static Map<String, String> getMetricsTags(LoggingContext context) throws IllegalArgumentException {
     if (context instanceof ServiceLoggingContext) {
-     return getTagsFromSystemContext((ServiceLoggingContext) context);
+     return getMetricsTagsFromSystemContext((ServiceLoggingContext) context);
     } else {
       return getMetricsTagsFromLoggingContext(context);
     }
@@ -289,15 +289,10 @@ public final class LoggingContextHelper {
   }
 
   private static String getValueFromTag(LoggingContext.SystemTag tag) {
-    if (tag == null) {
-      return null;
-    } else {
-      return tag.getValue();
-    }
+    return tag == null ? null : tag.getValue();
   }
 
-
-  public static Map<String, String> getTagsFromSystemContext(ServiceLoggingContext context) {
+  private static Map<String, String> getMetricsTagsFromSystemContext(ServiceLoggingContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
     builder.put(Constants.Metrics.Tag.COMPONENT,

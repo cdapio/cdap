@@ -34,6 +34,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.Integer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -53,7 +54,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   private final CheckpointManager checkpointManager;
   private final MetricsCollectionService metricsCollectionService;
 
-  private Map<Integer, Long> partitionOffsets = Maps.newHashMap();
+  private Map<Integer, Long> partitionOffsets = new ConcurrentHashMap<Integer, Long>();
   private ListeningScheduledExecutorService scheduledExecutor;
   private ScheduledFuture<?> checkPointerFuture;
   private CheckPointWriter checkPointWriter;
