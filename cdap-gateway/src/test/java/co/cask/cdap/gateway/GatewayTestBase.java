@@ -247,7 +247,7 @@ public abstract class GatewayTestBase {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v2/apps/%s/%s/%s/status",
+      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
                                                                         appId, runnableType, runnableId));
       JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
       if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {

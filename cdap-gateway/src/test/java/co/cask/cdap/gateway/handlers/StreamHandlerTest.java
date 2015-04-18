@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
@@ -34,10 +33,8 @@ import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -71,12 +68,6 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
 
     return urlConn;
-  }
-
-  @After
-  public void reset() throws Exception {
-    HttpResponse httpResponse = GatewayFastTestsSuite.doPost("/v2/unrecoverable/reset", null);
-    Assert.assertEquals(200, httpResponse.getStatusLine().getStatusCode());
   }
 
   @Test

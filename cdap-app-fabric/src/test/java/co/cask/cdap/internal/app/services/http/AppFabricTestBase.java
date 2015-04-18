@@ -609,7 +609,13 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
+  protected static void resetNamespaces() throws Exception {
+    deleteNamespaces();
+    createNamespaces();
+  }
+
   private static void createNamespaces() throws Exception {
+
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
