@@ -167,7 +167,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     ScheduleSpecification scheduleSpec = null;
     String programName;
     if (programType == ProgramType.WORKFLOW) {
-       programName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
+      programName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
       scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
         SchedulableProgramType.WORKFLOW, programName), runtimeArgs);
     } else {

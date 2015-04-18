@@ -26,17 +26,17 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
-import com.sun.istack.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Specification of an adapter.
  */
 public final class AdapterSpecification {
   private static final HashSet<ProgramType> ADAPTER_PROGRAM_TYPES = Sets.newHashSet(ProgramType.WORKFLOW,
-                                                                               ProgramType.WORKER);
+                                                                                    ProgramType.WORKER);
   private final String name;
   private final String description;
   private final String template;
@@ -156,8 +156,8 @@ public final class AdapterSpecification {
     public Builder(String name, String template, ProgramType programType, String programName) {
       Preconditions.checkArgument(name != null, "Adapter name must be specified.");
       Preconditions.checkArgument(template != null, "Adapter template must be specified.");
-      Preconditions.checkArgument(ADAPTER_PROGRAM_TYPES.contains(programType), "Adapter program type must be on these: "
-        + ADAPTER_PROGRAM_TYPES.toString());
+      Preconditions.checkArgument(ADAPTER_PROGRAM_TYPES.contains(programType), "Adapter program type must be one of " +
+        "these: %s" , ADAPTER_PROGRAM_TYPES);
       Preconditions.checkArgument(programName != null, "Program name must be specified.");
       this.name = name;
       this.template = template;
