@@ -143,11 +143,6 @@
       <dependencies>
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-web-app</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-ui</artifactId>
           <version>${project.version}</version>
         </dependency>
@@ -314,11 +309,6 @@
                         <include>server.js</include>
                         <include>package.json</include>
                       </includes>
-                    </resource>
-                    <!-- Copy web-app -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-web-app/target/local</directory>
-                      <targetPath>web-app/local</targetPath>
                     </resource>
                     <!-- Copy api javadocs -->
                     <resource>
