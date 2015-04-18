@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -26,7 +25,6 @@ import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
@@ -37,7 +35,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
@@ -77,6 +74,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     prepareSource(context, config.getSource());
     prepareSink(context, config.getSink());
 
+    context.setMapperResources(config.getResources());
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }

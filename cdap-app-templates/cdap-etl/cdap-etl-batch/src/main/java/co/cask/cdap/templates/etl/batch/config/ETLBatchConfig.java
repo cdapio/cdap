@@ -16,8 +16,8 @@
 
 package co.cask.cdap.templates.etl.batch.config;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.base.Objects;
 
 import java.util.List;
 
@@ -29,12 +29,19 @@ public final class ETLBatchConfig {
   private final ETLStage source;
   private final ETLStage sink;
   private final List<ETLStage> transforms;
+  private final Resources resources;
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                        Resources resources) {
     this.schedule = schedule;
     this.source = source;
     this.sink = sink;
     this.transforms = transforms;
+    this.resources = resources;
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(schedule, source, sink, transforms, null);
   }
 
   public String getSchedule() {
@@ -51,5 +58,9 @@ public final class ETLBatchConfig {
 
   public List<ETLStage> getTransforms() {
     return transforms;
+  }
+
+  public Resources getResources() {
+    return resources;
   }
 }

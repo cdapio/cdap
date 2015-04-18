@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.templates.AdapterConfigurer;
@@ -142,6 +143,10 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     adapterConfigurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                                    String.format("Schedule for %s Adapter", adapterName),
                                                    cronEntry));
+    Resources resources = etlBatchConfig.getResources();
+    if (resources != null) {
+      adapterConfigurer.setResources(resources);
+    }
   }
 
   private void instantiateStages(ETLStage source, ETLStage sink, List<ETLStage> transformList)
