@@ -24,7 +24,6 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -41,7 +40,6 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
-import co.cask.cdap.templates.etl.common.DefaultTransformContext;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
@@ -133,7 +131,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(adapterConfigurer);
     configureSource(sourceConfig, adapterConfigurer, pipelineConfigurer);
     configureSink(sinkConfig, adapterConfigurer, pipelineConfigurer);
-    configureTransforms(adapterConfigurer, transformConfigs);
+    configureTransforms(adapterConfigurer);
 
     adapterConfigurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     adapterConfigurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
@@ -233,21 +231,14 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
   }
 
-  private void configureTransforms(AdapterConfigurer configurer, List<ETLStage> transformConfigs) {
+  private void configureTransforms(AdapterConfigurer configurer) {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
-    for (int i = 0; i < transforms.size(); i++) {
-      Transform transformObj = transforms.get(i);
-      ETLStage transformConfig = transformConfigs.get(i);
+    for (Transform transformObj : transforms) {
       // TODO: after a few more use cases, determine if the spec is really needed at runtime
       //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
       StageSpecification specification = stageConfigurer.createSpecification();
       transformSpecs.add(specification);
-
-      // initialize transforms here so that invalid configurations can fail creation of the pipeline instead
-      // of failing at runtime
-      TransformContext context = new DefaultTransformContext(specification, transformConfig.getProperties());
-      transformObj.initialize(context);
     }
     configurer.addRuntimeArgument(Constants.Transform.SPECIFICATIONS, GSON.toJson(transformSpecs));
   }

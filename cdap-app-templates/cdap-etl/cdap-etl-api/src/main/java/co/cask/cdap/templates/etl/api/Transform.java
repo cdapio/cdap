@@ -62,10 +62,8 @@ public abstract class Transform<IN, OUT> implements ProgramLifecycle<TransformCo
   }
 
   /**
-   * Initialize the Transform Stage. Transforms are initialized once when the program starts up. Initialization
-   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made. Transforms are also
-   * initialized once during pipeline creation, so property validation should be done here in order to fail creation
-   * of pipelines with invalid config.
+   * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
+   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
    *
    * @param context {@link TransformContext}
    */
