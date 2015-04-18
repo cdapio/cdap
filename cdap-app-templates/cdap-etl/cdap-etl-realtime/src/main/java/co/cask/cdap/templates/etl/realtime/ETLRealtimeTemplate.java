@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -110,6 +111,11 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setInstances(etlConfig.getInstances());
+
+    Resources resources = etlConfig.getResources();
+    if (resources != null) {
+      configurer.setResources(resources);
+    }
   }
 
   private void instantiateStages(ETLStage sourceStage, ETLStage sinkStage, List<ETLStage> transformList)

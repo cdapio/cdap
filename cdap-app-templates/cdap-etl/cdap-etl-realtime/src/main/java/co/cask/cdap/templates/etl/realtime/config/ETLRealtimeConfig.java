@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime.config;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
@@ -28,12 +29,23 @@ public class ETLRealtimeConfig {
   private final ETLStage source;
   private final ETLStage sink;
   private final List<ETLStage> transforms;
+  private final Resources resources;
 
-  public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+  public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                           Resources resources) {
     this.instances = instances;
     this.source = source;
     this.sink = sink;
     this.transforms = transforms;
+    this.resources = resources;
+  }
+
+  public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(instances, source, sink, transforms, null);
+  }
+
+  public ETLRealtimeConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(1, source, sink, transforms);
   }
 
   public int getInstances() {
@@ -50,5 +62,9 @@ public class ETLRealtimeConfig {
 
   public List<ETLStage> getTransforms() {
     return transforms;
+  }
+
+  public Resources getResources() {
+    return resources;
   }
 }

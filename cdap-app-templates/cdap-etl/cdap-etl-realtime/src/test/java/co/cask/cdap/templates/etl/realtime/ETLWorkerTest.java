@@ -54,7 +54,7 @@ public class ETLWorkerTest extends TestBase {
     ETLStage source = new ETLStage(TestSource.class.getSimpleName(), ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(NoOpSink.class.getSimpleName(), ImmutableMap.<String, String>of());
     List<ETLStage> transforms = Lists.newArrayList();
-    ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(1, source, sink, transforms);
+    ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(source, sink, transforms);
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
 
