@@ -22,11 +22,12 @@ import co.cask.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -44,38 +45,39 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsSuccess() throws Exception {
-    String path = "/system/services/appfabric/handlers/PingHandler/methods/ping";
+    String context = "namespace.system.component.appfabric.handler.PingHandler.method.ping";
 
-    long received = getMetricValue(path, "request.received");
-    long successful = getMetricValue(path, "response.successful");
-    long clientError = getMetricValue(path, "response.client-error");
+    long received = getMetricValue(context, "system.request.received");
+    long successful = getMetricValue(context, "system.response.successful");
+    long clientError = getMetricValue(context, "system.response.client-error");
 
     // Make a successful call
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // received and successful should have increased by one, clientError should be the same
-    verifyMetrics(received + 1, path, "request.received");
-    verifyMetrics(successful + 1, path, "response.successful");
-    verifyMetrics(clientError, path, "response.client-error");
+    verifyMetrics(received + 1, context, "system.request.received");
+    verifyMetrics(successful + 1, context, "system.response.successful");
+    verifyMetrics(clientError, context, "system.response.client-error");
   }
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String path = "/system/services/stream.handler/handlers/StreamHandlerV2/methods/getInfo";
+    String context = "namespace.system.component.appfabric.handler.StreamHandler.method.getInfo";
 
-    long received = getMetricValue(path, "request.received");
-    long successful = getMetricValue(path, "response.successful");
-    long clientError = getMetricValue(path, "response.client-error");
+    long received = getMetricValue(context, "system.request.received");
+    long successful = getMetricValue(context, "system.response.successful");
+    long clientError = getMetricValue(context, "system.response.client-error");
 
     // Get info of non-existent stream
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/streams/metrics-hook-test-non-existent-stream/info");
+    HttpResponse response = GatewayFastTestsSuite.doGet(
+      "/v3/namespaces/default/streams/metrics-hook-test-non-existent-stream");
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     // received and clientError should have increased by one, successful should be the same
-    verifyMetrics(received + 1, path, "request.received");
-    verifyMetrics(successful, path, "response.successful");
-    verifyMetrics(clientError + 1, path, "response.client-error");
+    verifyMetrics(received + 1, context, "system.request.received");
+    verifyMetrics(successful, context, "system.response.successful");
+    verifyMetrics(clientError + 1, context, "system.response.client-error");
   }
 
   /**
@@ -95,20 +97,28 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     Assert.assertEquals(expected, metrics);
   }
 
-  // todo: use v3 apis
-  private static long getMetricValue(String contextPath, String metricName) throws Exception {
-    HttpResponse response = doGet("/v2/metrics" + contextPath + "/" + metricName + "?aggregate=true");
-    Assert.assertEquals("GET " + contextPath + " did not return 200 status.",
+  private static long getMetricValue(String context, String metricName) throws Exception {
+    HttpResponse response = doPost("/v3/metrics/query?context=" + context + "&metric=" + metricName);
+    Assert.assertEquals("POST " + context + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
+    // response has the form:
+    // {"startTime":0,"endTime":...,"series":[{"metricName":"...","grouping":{},"data":[{"time":0,"value":<value>}]}]}
     JsonObject json = new Gson().fromJson(content, JsonObject.class);
-    return json.get("data").getAsInt();
+    JsonArray array = json.getAsJsonArray("series");
+    if (array.size() > 0) {
+      array = array.get(0).getAsJsonObject().getAsJsonArray("data");
+      if (array.size() > 0) {
+        return array.get(0).getAsJsonObject().get("value").getAsLong();
+      }
+    }
+    return 0L;
   }
 
-  public static HttpResponse doGet(String resource) throws Exception {
+  public static HttpResponse doPost(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(getEndPoint(resource));
-    get.setHeader(AUTH_HEADER);
-    return client.execute(get);
+    HttpPost post = new HttpPost(getEndPoint(resource));
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
   }
 }
