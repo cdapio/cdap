@@ -45,14 +45,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LogMetricsPlugin.class);
+  private static final int ROW_KEY_PREFIX = 101;
+  private static final String SYSTEM_METRIC_PREFIX = "services.log";
+  private static final String APP_METRIC_PREFIX = "app.log";
+
+  private final CheckpointManager checkpointManager;
   private final MetricsCollectionService metricsCollectionService;
 
-  public static final String SYSTEM_METRIC_PREFIX = "services.log";
-  public static final String APP_METRIC_PREFIX = "app.log";
-  private final CheckpointManager checkpointManager;
-  private static final int ROW_KEY_PREFIX = 101;
   private Map<Integer, Long> partitionOffsets = Maps.newHashMap();
-  private static final Logger LOG = LoggerFactory.getLogger(LogMetricsPlugin.class);
   private ListeningScheduledExecutorService scheduledExecutor;
   private ScheduledFuture<?> checkPointerFuture;
   private CheckPointWriter checkPointWriter;
@@ -105,11 +106,9 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
-      return String.format("%s.%s", SYSTEM_METRIC_PREFIX, logLevel);
-    } else {
-      return String.format("%s.%s", APP_METRIC_PREFIX, logLevel);
-    }
+    return namespace.equals(Constants.SYSTEM_NAMESPACE) ?
+           String.format("%s.%s", SYSTEM_METRIC_PREFIX, logLevel) :
+           String.format("%s.%s", APP_METRIC_PREFIX, logLevel);
   }
 
   @Override
