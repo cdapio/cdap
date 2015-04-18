@@ -41,11 +41,9 @@ import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
-import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -83,8 +81,6 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
                                         TableSource.class,
                                         TableSink.class,
                                         IdentityTransform.class,
-                                        StructuredRecordToPutTransform.class,
-                                        RowToStructuredRecordTransform.class,
                                         StructuredRecordToGenericRecordTransform.class,
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
@@ -214,7 +210,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   private void configureSource(ETLStage sourceConfig, AdapterConfigurer configurer,
-                               PipelineConfigurer pipelineConfigurer) throws Exception {
+                               PipelineConfigurer pipelineConfigurer) {
     batchSource.configurePipeline(sourceConfig, pipelineConfigurer);
 
     // TODO: after a few more use cases, determine if the spec is really needed at runtime
@@ -225,7 +221,7 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
   }
 
   private void configureSink(ETLStage sinkConfig, AdapterConfigurer configurer,
-                             PipelineConfigurer pipelineConfigurer) throws Exception {
+                             PipelineConfigurer pipelineConfigurer) {
     batchSink.configurePipeline(sinkConfig, pipelineConfigurer);
 
     // TODO: after a few more use cases, determine if the spec is really needed at runtime
@@ -235,10 +231,9 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
     configurer.addRuntimeArgument(Constants.Sink.SPECIFICATION, GSON.toJson(specification));
   }
 
-  private void configureTransforms(AdapterConfigurer configurer) throws Exception {
+  private void configureTransforms(AdapterConfigurer configurer) {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
     for (Transform transformObj : transforms) {
-
       // TODO: after a few more use cases, determine if the spec is really needed at runtime
       //       since everything in the spec must be known at compile time, it seems like there shouldn't be a need
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());

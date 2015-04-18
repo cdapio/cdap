@@ -14,63 +14,49 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
 
 /**
- * Transforms {@link Row} to {@link StructuredRecord}
+ * Transforms Rows into Records.
  */
-public class RowToStructuredRecordTransform extends Transform<Row, StructuredRecord> {
-  private static final String SCHEMA = "schema";
-  private static final String ROW_FIELD = "row.field";
-  private Schema schema;
-  private Schema.Field rowField;
+public class RowRecordTransformer {
+  private final Schema schema;
+  private final Schema.Field rowField;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(RowToStructuredRecordTransform.class.getSimpleName());
-    configurer.setDescription("Transforms a Row to a StructuredRecord.");
-    configurer.addProperty(new Property(
-      SCHEMA,
-      "The schema of the record. Row columns map to record fields. For example, if the schema contains a field named " +
-        "'user' of type string, the value of that field will be taken from the value stored in the 'user' column. " +
-        "Only simple types are allowed (boolean, int, long, float, double, bytes, string).",
-      true));
-    configurer.addProperty(new Property(
-      ROW_FIELD,
-      "Optional field name indicating that the field value should come from the row key instead of a row column. " +
-        "The field name specified must be present in the schema, and must not be nullable.",
-      false));
-  }
-
-  @Override
-  public void initialize(TransformContext context) {
-    String schemaStr = context.getRuntimeArguments().get(SCHEMA);
-    Preconditions.checkArgument(schemaStr != null && !schemaStr.isEmpty(), "Schema must be specified.");
-    try {
-      schema = Schema.parseJson(schemaStr);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Schema is invalid", e);
-    }
+  public RowRecordTransformer(Schema schema, String rowFieldName) {
     validateSchema(schema);
+    this.schema = schema;
 
-    String rowFieldName = context.getRuntimeArguments().get(ROW_FIELD);
     if (rowFieldName != null) {
       rowField = schema.getField(rowFieldName);
       // if row field was given, it must be present in the schema and it must be a simple type
       Preconditions.checkArgument(rowField != null, "Row field must be present in the schema.");
       Preconditions.checkArgument(rowField.getSchema().getType().isSimpleType(), "Row field must be a simple type.");
+    } else {
+      rowField = null;
     }
+  }
+
+  public StructuredRecord toRecord(Row row) {
+    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+    if (rowField != null) {
+      setField(builder, rowField, row.getRow());
+    }
+
+    for (Schema.Field field : schema.getFields()) {
+      if (rowField != null && field.getName().equals(rowField.getName())) {
+        continue;
+      }
+      setField(builder, field, row.get(field.getName()));
+    }
+
+    return builder.build();
   }
 
   // schema must be a record and must contain only simple types
@@ -90,23 +76,6 @@ public class RowToStructuredRecordTransform extends Transform<Row, StructuredRec
         }
       }
     }
-  }
-
-  @Override
-  public void transform(Row row, Emitter<StructuredRecord> emitter) throws Exception {
-    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
-    if (rowField != null) {
-      setField(builder, rowField, row.getRow());
-    }
-
-    for (Schema.Field field : schema.getFields()) {
-      if (rowField != null && field.getName().equals(rowField.getName())) {
-        continue;
-      }
-      setField(builder, field, row.get(field.getName()));
-    }
-
-    emitter.emit(builder.build());
   }
 
   private void setField(StructuredRecord.Builder builder, Schema.Field field, byte[] fieldBytes) {

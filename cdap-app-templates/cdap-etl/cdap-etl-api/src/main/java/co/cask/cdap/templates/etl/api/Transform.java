@@ -62,7 +62,8 @@ public abstract class Transform<IN, OUT> implements ProgramLifecycle<TransformCo
   }
 
   /**
-   * Initialize the Transform Stage. Called during the runtime with context of the Transform.
+   * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
+   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
    *
    * @param context {@link TransformContext}
    */

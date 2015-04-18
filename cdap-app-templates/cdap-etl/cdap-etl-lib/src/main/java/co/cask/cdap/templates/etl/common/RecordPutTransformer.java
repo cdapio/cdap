@@ -14,47 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 
 /**
- * Transforms a StructuredRecord into a Put object used to write to a Table. Each field in the record
- * will be added as a column in the Put. Only simple types are supported. The transform does not assume that
- * all input will have the same schema, but it does assume that there will always be a field present that
- * will be the row key for the table Put.
+ * Transforms records into Puts.
  */
-public class StructuredRecordToPutTransform extends Transform<StructuredRecord, Put> {
-  private static final String ROW_FIELD = "row.field";
-  private String rowField;
+public class RecordPutTransformer {
+  private final String rowField;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(StructuredRecordToPutTransform.class.getSimpleName());
-    configurer.setDescription("Transforms a StructuredRecord to a Put object used to write to a Table.");
-    configurer.addProperty(new Property(ROW_FIELD, "the name of the record field that should be used as the row key" +
-      " for the table put.", true));
+  public RecordPutTransformer(String rowField) {
+    this.rowField = rowField;
   }
 
-  @Override
-  public void initialize(TransformContext context) {
-    rowField = context.getRuntimeArguments().get(ROW_FIELD);
-    Preconditions.checkArgument(rowField != null && !rowField.isEmpty(), "the row key must be given");
-  }
-
-  @Override
-  public void transform(StructuredRecord record, Emitter<Put> emitter) throws Exception {
+  public Put toPut(StructuredRecord record) {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
     Put output = createPut(record, recordSchema);
@@ -65,7 +45,7 @@ public class StructuredRecordToPutTransform extends Transform<StructuredRecord, 
       }
       setField(output, field, record.get(field.getName()));
     }
-    emitter.emit(output);
+    return output;
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -118,7 +98,7 @@ public class StructuredRecordToPutTransform extends Transform<StructuredRecord, 
       type = field.getSchema().getType();
     }
     Preconditions.checkArgument(type.isSimpleType(),
-                                "only simple types are supported (boolean, int, long, float, double, bytes).");
+        "only simple types are supported (boolean, int, long, float, double, bytes).");
     return type;
   }
 
@@ -152,4 +132,5 @@ public class StructuredRecordToPutTransform extends Transform<StructuredRecord, 
         throw new IllegalArgumentException("Row key is of unsupported type " + keyType);
     }
   }
+
 }
