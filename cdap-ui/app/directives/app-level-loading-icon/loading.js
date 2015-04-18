@@ -18,7 +18,7 @@ angular.module(PKG.name + '.commons')
             modal && modal.close();
             isBackendDown = true;
             if (!message) {
-              $scope.message = 'CDAP services online now';
+              $scope.message = 'CDAP service(s) are offline';
             } else {
               $scope.message = message;
             }
@@ -37,7 +37,7 @@ angular.module(PKG.name + '.commons')
             $alert({
               title: 'We\'re Back!',
               type: 'success',
-              content: 'CDAP services are offline'
+              content: 'CDAP services are online'
             });
           }
         }.bind($scope));
