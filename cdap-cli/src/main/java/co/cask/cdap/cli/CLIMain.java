@@ -60,7 +60,9 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.net.ssl.SSLHandshakeException;
 
 /**
@@ -276,13 +278,18 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
+        ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+        URI baseURI = connectionConfig.getURI();
+        URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+        String cliPrompt = "\ncdap (" + uri + ")> ";
+
         // Execute commands entered on cdap-cli command line
         boolean runScriptFileFirst = launchOptions.getScriptFileFirst();
         if (commandArgs.length > 0 && !runScriptFileFirst) {
-          String commandLine = Joiner.on(" ").join(commandArgs);
-          String[] commandLns = commandLine.split(";");
-          for (int i = 0; i < commandLns.length; i++) {
-              cli.execute(commandLns[i].trim(), output);
+          ArrayList<String> cmds = parseCmdStr(Joiner.on(" ").join(commandArgs));
+          for (String cmd : cmds) {
+            output.println(cliPrompt + cmd);
+            cli.execute(cmd, output);
           }
         }
 
@@ -292,33 +299,21 @@ public class CLIMain {
 
           ranScript = true;
 
-          ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
-          URI baseURI = connectionConfig.getURI();
-          URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
-          String cliPrompt = "\ncdap (" + uri + ")> ";
-
           BufferedReader br = null;
           try {
             String line;
             
-            // br = new BufferedReader(new FileReader(launchOptions.getScriptFile()));
             br = Files.newReader(new File(launchOptions.getScriptFile()), Charsets.UTF_8);
             while ((line = br.readLine()) != null) {
-              String ln = line.trim();
-              String[] lnArr = ln.split("#");
-              if (lnArr.length == 0) {
-                continue;
+              ArrayList<String> cmds = parseCmdStr(line);
+              for (String cmd : cmds) {
+                if (cmd.equals("break")) {
+                  brokeFromScript = true;
+                  break; // Break from script and drop into interactive mode
+                }
+                output.println(cliPrompt + cmd);
+                cli.execute(cmd, output);
               }
-              String cmd = lnArr[0].trim();
-              if ("".equals(cmd)) {
-                continue;
-              }
-              if (cmd.equals("break")) {
-                brokeFromScript = true;
-                break; // Break from script and drop into interactive mode
-              }
-              output.println(cliPrompt + cmd);
-              cli.execute(cmd, output);
             }
             output.println("\n");
           } catch (IOException e) {
@@ -338,10 +333,10 @@ public class CLIMain {
 
         // Execute commands entered on cdap-cli command line
         if (commandArgs.length > 0 && runScriptFileFirst) {
-          String commandLine = Joiner.on(" ").join(commandArgs);
-          String[] commandLns = commandLine.split(";");
-          for (int i = 0; i < commandLns.length; i++) {
-              cli.execute(commandLns[i].trim(), output);
+          ArrayList<String> cmds = parseCmdStr(Joiner.on(" ").join(commandArgs));
+          for (String cmd : cmds) {
+            output.println(cliPrompt + cmd);
+            cli.execute(cmd, output);
           }
         }
 
@@ -356,6 +351,89 @@ public class CLIMain {
       output.println(e.getMessage());
       usage();
     }
+  }
+
+  private static ArrayList<String> parseCmdStr(String str) {
+    ArrayList<String> cmds = new ArrayList<String>();
+    boolean isEscaped = false;
+    boolean inSingleQuote = false;
+    boolean inDoubleQuote = false;
+    boolean isMulti = false;
+    for (int i = 0; i < str.length(); ++i) {
+      if (str.charAt(i) == '"' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == '\'' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == '\'' && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+        continue;
+      }
+      if (inSingleQuote) {
+        continue;
+      }
+      if (str.charAt(i) == '"' && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
+        continue;
+      }
+      if (inDoubleQuote) {
+        continue;
+      }
+      if (str.charAt(i) == '\\') {
+        isEscaped = !isEscaped;
+        continue;
+      }
+      if (str.charAt(i) == '#' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+      }
+      if (str.charAt(i) == '#' && !isEscaped && !inSingleQuote && !inDoubleQuote) {
+        str = str.substring(0, i);
+        isEscaped = false;
+        break;
+      }
+      if (str.charAt(i) == ';' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == ';' && !isEscaped && !inSingleQuote && !inDoubleQuote) {
+        String str1 = str.substring(0, i).trim();
+        String str2;
+        if (str.length() > i + 1) {
+          str2 = str.substring(i + 1).trim();
+        } else {
+          str2 = "";
+        }
+        if (!"".equals(str1)) {
+          cmds.add(str1);
+        }
+        if (!"".equals(str2)) {
+          ArrayList<String> subCmds = parseCmdStr(str2);
+          for (String subStr : subCmds) {
+            String str3 = subStr.trim();
+            if (!"".equals(str3)) {
+              cmds.add(str3);
+            }
+          }
+        }
+        isMulti = true;
+        break;
+      }
+      isEscaped = false;
+    }
+    if (!isMulti) {
+      String str4 = str.trim();
+      if (!"".equals(str4)) {
+        cmds.add(str4);
+      }
+    }
+    return cmds;
   }
 
   private static boolean parseBooleanOption(CommandLine command, Option option, boolean defaultValue) {
