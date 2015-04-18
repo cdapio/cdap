@@ -1723,6 +1723,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
     String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
