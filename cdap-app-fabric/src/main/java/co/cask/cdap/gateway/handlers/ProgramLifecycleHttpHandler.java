@@ -43,6 +43,7 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -121,6 +122,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final PropertiesResolver propertiesResolver;
+  private final AdapterService adapterService;
   private MRJobClient mrJobClient;
   private MapReduceMetricsInfo mapReduceMetricsInfo;
 
@@ -195,7 +197,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
                                      MapReduceMetricsInfo mapReduceMetricsInfo,
-                                     PropertiesResolver propertiesResolver) {
+                                     PropertiesResolver propertiesResolver, AdapterService adapterService) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
@@ -209,6 +211,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.mrJobClient = mrJobClient;
     this.mapReduceMetricsInfo = mapReduceMetricsInfo;
     this.propertiesResolver = propertiesResolver;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -327,6 +330,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) {
+    // If the app is deployed and it is an Application Template, then don't allow any action.
+    // Operations are only allowed through Adapter Lifecycle management.
+    if (store.getApplication(Id.Application.from(namespaceId, appId)) != null &&
+      adapterService.getApplicationTemplateInfo(appId) != null) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           "Operations on Application Templates are allowed only through Adapters.");
+      return;
+    }
+
     if (type.equals("schedules")) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);
       return;
