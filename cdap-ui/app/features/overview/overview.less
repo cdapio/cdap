@@ -57,7 +57,10 @@ body.state-overview {
       color: @cdap-header;
       &.cdap-health {
         color: @cdap-bluegray;
-        .box-shadow(0 8px 6px -6px @cdap-darkness);
+        padding: 10px;
+        //.box-shadow(0 8px 6px -6px @cdap-darkness);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+        h2 { font-size: 24px; padding-left: 30px; }
         svg {
           + canvas {
             background-color: #E8E9EE;
@@ -72,6 +75,12 @@ body.state-overview {
       &.data-apps {
         h3 {
           font-weight: 600;
+        }
+        .col-xs-12.col-sm-3 {
+          p {
+            font-weight: bold;
+            line-height: 32px;
+          }
         }
         .col-xs-12.col-md-6 {
           @media (min-width: @screen-sm-min) {

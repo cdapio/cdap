@@ -38,7 +38,7 @@
 </div>
 
 <section class="cdap-health"> <!-- ng-show="isEnterprise" -->
-  <h2> CDAP Health </h2>
+  <h2> System Health </h2>
   <div class="row">
     <div class="col-xs-12 col-lg-4">
       <div>
@@ -46,20 +46,20 @@
           <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="{{systemStatus}}" />
         </svg>
         <p ng-if="systemStatus === 'yellow'">
-          Please Check! Some <a ui-sref="admin.system.services"> Services</a> might be down.
+          Some <a ui-sref="admin.system.services"> services</a> might have an issue.
         </p>
         <p ng-if="systemStatus === 'red'">
-          Please Check! All <a ui-sref="admin.system.services"> Services</a> are down.
+          All <a ui-sref="admin.system.services"> services</a> are down.
         </p>
         <p ng-if="systemStatus === 'green'">
-          All services are OK!
+          All services are up and running
         </p>
       </div>
     </div>
 
     <div class="col-xs-12 col-lg-8">
       <div>
-        <p class="text-left"> Errors last hour </p>
+        <p class="text-left"> <strong>Errors last hour</strong> </p>
         <img src="assets/img/health_graph.png" alt="" />
         <p class="text-center"> System </p>
       </div>
