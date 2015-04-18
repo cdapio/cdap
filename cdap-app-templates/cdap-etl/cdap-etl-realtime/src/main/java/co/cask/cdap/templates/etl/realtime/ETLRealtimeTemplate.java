@@ -22,16 +22,13 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.Constants;
-import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
-import co.cask.cdap.templates.etl.common.StageConfigurator;
+import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
@@ -47,7 +44,7 @@ import java.util.Map;
 /**
  * ETL Realtime Template.
  */
-public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> {
+public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
   public static final String STATE_TABLE = "etlrealtimesourcestate";
   private static final Gson GSON = new Gson();
   private final Map<String, String> sourceClassMap;
@@ -103,10 +100,9 @@ public class ETLRealtimeTemplate extends ApplicationTemplate<ETLRealtimeConfig> 
 
     // TODO: Validate Adapter by making sure the key-value types of stages match.
 
-    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
-    StageConfigurator.configure(source, sourceConfig, configurer, pipelineConfigurer, Constants.Source.SPECIFICATION);
-    StageConfigurator.configure(sink, sinkConfig, configurer, pipelineConfigurer, Constants.Sink.SPECIFICATION);
-    StageConfigurator.configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
+    configure(source, sourceConfig, configurer, Constants.Source.SPECIFICATION);
+    configure(sink, sinkConfig, configurer, Constants.Sink.SPECIFICATION);
+    configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));

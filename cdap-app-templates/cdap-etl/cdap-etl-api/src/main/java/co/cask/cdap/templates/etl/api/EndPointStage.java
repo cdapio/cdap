@@ -21,16 +21,14 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 /**
  * Base class for ETL Source, Sink Stages.
  */
-public class EndPointStage {
+public interface EndPointStage {
 
   /**
    * Configure the Edge stage.
    *
    * @param configurer {@link StageConfigurer}
    */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
+  public void configure(StageConfigurer configurer);
 
   /**
    * Configure an ETL pipeline, adding datasets and streams that the stage needs.
@@ -38,7 +36,5 @@ public class EndPointStage {
    * @param stageConfig the configuration for the source
    * @param pipelineConfigurer the configurer used to add required datasets and streams
    */
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    // no-op
-  }
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer);
 }

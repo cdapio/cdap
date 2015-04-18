@@ -17,6 +17,8 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.templates.etl.api.EndPointStage;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.reflect.TypeToken;
 
@@ -29,7 +31,7 @@ import java.lang.reflect.Type;
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends EndPointStage {
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> implements EndPointStage {
 
   private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
 
@@ -42,7 +44,15 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends EndPointStage {
     return inputType;
   }
 
+  @Override
+  public void configure(StageConfigurer configurer) {
+    // no-op
+  }
 
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    // no-op
+  }
 
   /**
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.

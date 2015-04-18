@@ -19,9 +19,7 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
@@ -37,9 +35,8 @@ import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
-import co.cask.cdap.templates.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.templates.etl.common.DefaultStageConfigurer;
-import co.cask.cdap.templates.etl.common.StageConfigurator;
+import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
@@ -57,7 +54,7 @@ import java.util.Map;
 /**
  * ETL Batch Template.
  */
-public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
+public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
   private static final Gson GSON = new Gson();
   private final Map<String, String> sourceClassMap;
   private final Map<String, String> sinkClassMap;
@@ -126,18 +123,16 @@ public class ETLBatchTemplate extends ApplicationTemplate<ETLBatchConfig> {
 
     // pipeline configurer is just a wrapper around an adapter configurer that limits what can be added,
     // since we don't want sources and sinks setting schedules or anything like that.
-    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
-    StageConfigurator.configure(batchSource, sourceConfig, configurer, pipelineConfigurer,
-                                Constants.Source.SPECIFICATION);
-    StageConfigurator.configure(batchSink, sinkConfig, configurer, pipelineConfigurer,
-                                Constants.Sink.SPECIFICATION);
-    StageConfigurator.configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
+
+    configure(batchSource, sourceConfig, configurer, Constants.Source.SPECIFICATION);
+    configure(batchSink, sinkConfig, configurer, Constants.Sink.SPECIFICATION);
+    configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
     configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
-                                                   String.format("Schedule for %s Adapter", adapterName),
-                                                   etlBatchConfig.getSchedule()));
+                                            String.format("Schedule for %s Adapter", adapterName),
+                                            etlBatchConfig.getSchedule()));
   }
 
   private void instantiateStages(ETLStage source, ETLStage sink, List<ETLStage> transformList)

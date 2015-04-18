@@ -18,6 +18,8 @@ package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.reflect.TypeToken;
 
@@ -30,7 +32,7 @@ import java.lang.reflect.Type;
  * @param <VAL_IN> the type of input value from the Batch job
  * @param <OUT> the type of output for the source
  */
-public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends EndPointStage {
+public abstract class BatchSource<KEY_IN, VAL_IN, OUT> implements EndPointStage {
 
   private final Type outputType = new TypeToken<OUT>(getClass()) { }.getType();
 
@@ -41,6 +43,16 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends EndPointStage {
    */
   public final Type getOutputType() {
     return outputType;
+  }
+
+  @Override
+  public void configure(StageConfigurer configurer) {
+    // no-op
+  }
+
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    // no-op
   }
 
   /**

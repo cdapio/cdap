@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -28,20 +29,24 @@ import com.google.gson.Gson;
 import java.util.List;
 
 /**
- * Configurator utility class that has helper methods to configure Source/Sink and Transform stages.
+ * Base ETL Template.
+ *
+ * @param <T> type of the configuration object
  */
-public class StageConfigurator {
+public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
+
   private static final Gson GSON = new Gson();
 
-  public static void configure(EndPointStage stage, ETLStage stageConfig, AdapterConfigurer configurer,
-                               PipelineConfigurer pipelineConfigurer, String specKey) throws Exception {
+  protected void configure(EndPointStage stage, ETLStage stageConfig, AdapterConfigurer configurer,
+                               String specKey) throws Exception {
+    PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
     stage.configurePipeline(stageConfig, pipelineConfigurer);
     DefaultStageConfigurer defaultStageConfigurer = new DefaultStageConfigurer(stage.getClass());
     StageSpecification specification = defaultStageConfigurer.createSpecification();
     configurer.addRuntimeArgument(specKey, GSON.toJson(specification));
   }
 
-  public static void configureTransforms(List<Transform> transformList, AdapterConfigurer configurer, String specKey) {
+  protected void configureTransforms(List<Transform> transformList, AdapterConfigurer configurer, String specKey) {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
     for (Transform transformObj : transformList) {
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
