@@ -41,9 +41,9 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
 import com.google.inject.Guice;
@@ -163,7 +163,7 @@ public class TestResilientLogging {
 
     // Verify - we should have at least 5 events.
     LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "", "RUN", "INSTANCE");
-    StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
+    FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER,
                        logCallback1);
