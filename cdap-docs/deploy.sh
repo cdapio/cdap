@@ -17,16 +17,16 @@
 ################################################################################
 ### Deploy script for docs
 # Deploys zip files created by build scripts
-# First parameter is cdap (default)
-# Second parameter is version
-# third parameter is the remote directory to be created on the web/doc server
 ################################################################################
-DEBUG=${DEBUG:-no}
-PROJECT=${1:-cdap}
+#DEBUG=${DEBUG:-no}
+DEBUG=yes
+DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
+DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
+PROJECT=${PROJECT:-cdap}
 PROJECT_DOCS=${PROJECT}-docs
 #PROJECT_PATH=
-VERSION=${2:-2.8.1}
-PROJECT_VERSION=${3:-2.8.1}
+VERSION=${VERSION:-2.8.1}
+PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
 RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
 WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
 GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
@@ -79,14 +79,24 @@ function deploy () {
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
 }
+
 ################################################################################
-decho "DEPLOYING"
+decho "######################### DEPLOYING #########################"
+decho "DEPLOY_TO_STG=${DEPLOY_TO_STG}"
+decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
+decho "buildResultKey=${bamboo.buildResultKey}"
 
 ### DEVELOP => Staging
-deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}
+if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
+  decho "deploying to stg"
+  deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}
+fi
 
 ### RELEASE => Docs Servers
-for i in ${DOCS_SERVERS}; do
-  decho "not deploying to $i"
-#  deploy ${USER} ${i} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}  
-done
+if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
+  decho "deploying to docs"
+  for i in ${DOCS_SERVERS}; do
+    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${WEB_FILE} ${FILE_PATH}
+  done
+fi
+decho "######################### DEPLOYING DONE #########################"
