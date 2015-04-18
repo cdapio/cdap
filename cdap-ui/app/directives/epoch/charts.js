@@ -44,6 +44,21 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
       }]}];
     }
 
+    var formatDate = function (date) {
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      var seconds = date.getSeconds();
+      var ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      // example format: 1:09:11 PM
+      return hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+    }
+
+    options.tickFormats = { bottom: function(d) { return formatDate(new Date(d * 1000)); } };
+
     $scope.type = type;
     $scope.options = options;
 
@@ -101,7 +116,7 @@ ngEpoch.directive('epochPie', function () {
 
 
 
-ngEpoch.directive('epochBar', function () {
+ngEpoch.directive('epochTimeBar', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.bar', attr);
@@ -110,7 +125,7 @@ ngEpoch.directive('epochBar', function () {
 });
 
 
-ngEpoch.directive('epochLine', function () {
+ngEpoch.directive('epochTimeLine', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.line', attr);
@@ -119,8 +134,17 @@ ngEpoch.directive('epochLine', function () {
 });
 
 
+ngEpoch.directive('epochLine', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initEpoch(elem, 'line', attr);
+    }
+  }, baseDirective);
+});
 
-ngEpoch.directive('epochArea', function () {
+
+
+ngEpoch.directive('epochTimeArea', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.area', attr);

@@ -103,6 +103,40 @@ angular.module(PKG.name+'.feature.dashboard')
       this.data = tmpData;
     };
 
+    Widget.prototype.updateChart = function (newVal) {
+     // this should be bound to $scope of widget
+     var metricMap, arr, vs, hist;
+     if(angular.isObject(newVal)) {
+       vs = [];
+       for (var i = 0; i < newVal.length; i++) {
+         metricMap = newVal[i];
+         vs.push(Object.keys(metricMap).map(function(key) {
+           return {
+             time: key,
+             x: key,
+             y: metricMap[key]
+           };
+         }));
+       }
+
+       if (this.chartHistory) {
+         arr = [];
+         for (var i = 0; i < vs.length; i++) {
+           var el = vs[i];
+           var lastIndex = el.length - 1;
+           arr.push(el[lastIndex]);
+         }
+         this.stream = arr;
+       }
+
+       hist = [];
+       for (var i = 0; i < vs.length; i++) {
+         hist.push({label: this.wdgt.metric.names[i], values: vs[i]});
+       }
+       this.chartHistory = hist;
+     }
+   }
+
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
@@ -137,37 +171,17 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.wdgt.fetchData($scope);
     $scope.chartHistory = null;
     $scope.stream = null;
-    $scope.$watch('wdgt.data', function (newVal) {
-      var metricMap, arr, vs, hist;
-      if(angular.isObject(newVal)) {
-        vs = [];
-        for (var i = 0; i < newVal.length; i++) {
-          metricMap = newVal[i];
-          vs.push(Object.keys(metricMap).map(function(key) {
-            return {
-              time: key,
-              y: metricMap[key]
-            };
-          }));
-        }
+    $scope.$watch('wdgt.data', $scope.wdgt.updateChart.bind($scope));
 
-        if ($scope.chartHistory) {
-          arr = [];
-          for (var i = 0; i < vs.length; i++) {
-            var el = vs[i];
-            var lastIndex = el.length - 1;
-            arr.push(el[lastIndex]);
-          }
-          $scope.stream = arr;
-        }
+  })
 
-        hist = [];
-        for (var i = 0; i < vs.length; i++) {
-          hist.push({label: $scope.wdgt.metric.names[i], values: vs[i]});
-        }
-        $scope.chartHistory = hist;
-      }
-    });
+  .controller('WidgetSeriesCtrl', function ($scope) {
+    // Updating non-TimeSeries is not currently supported.
+    // It is not complex, but it is pending variable-polling times functionality.
+    $scope.wdgt.fetchData($scope);
+    $scope.chartHistory = null;
+    $scope.stream = null;
+    $scope.$watch('wdgt.data', $scope.wdgt.updateChart.bind($scope));
 
   })
 
