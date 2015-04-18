@@ -56,21 +56,21 @@ die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 function make_remote_dir () {
   decho "make sure remote directory exists"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
-  ssh ${1}@${2} "sudo mkdir -p ${3}"
+  ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
   decho ""
 }
 
 function rsync_zip_file () {
   decho "rsync archive"
   decho "rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path=\"sudo rsync\" ${5}/${4} \"${1}@${2}:${3}/.\""
-  rsync -a -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/."
+  rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
   decho ""
 }
 
 function unzip_archive () {
   decho "going to new staging server and unzipping the file"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
-  ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}"
+  ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
   decho ""
 }
 
