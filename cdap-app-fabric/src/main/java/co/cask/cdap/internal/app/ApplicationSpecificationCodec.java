@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -56,7 +55,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
     jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetCreationSpec.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
-    jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
@@ -88,8 +86,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                                        DatasetCreationSpec.class);
     Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
                                                           context, FlowSpecification.class);
-    Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
-                                                                    context, ProcedureSpecification.class);
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"),
                                                                     context, MapReduceSpecification.class);
     Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"),
@@ -108,7 +104,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
 
     return new DefaultApplicationSpecification(name, version, description, streams,
                                                datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces, sparks,
+                                               flows, mapReduces, sparks,
                                                workflows, services, schedules, workers);
   }
 }

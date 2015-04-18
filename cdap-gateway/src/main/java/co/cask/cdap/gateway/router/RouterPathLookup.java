@@ -54,7 +54,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
-      //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
+      //But stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
         && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
         return fallbackService;
@@ -110,12 +110,6 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if (matches(uriParts, "v2", "system", "services", null, "logs")) {
       //Log Handler Path /v2/system/services/<service-id>/logs
       return Constants.Service.METRICS;
-    } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
-      //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-      //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
-      String serviceName = String.format("procedure.%s.%s.%s", getAuthenticatedAccountId(request), uriParts[2],
-                                         uriParts[4]);
-      return serviceName;
     } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
       //User defined services handle methods on them:
       //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"

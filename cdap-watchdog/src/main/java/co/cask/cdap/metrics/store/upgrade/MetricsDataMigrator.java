@@ -76,11 +76,6 @@ public class MetricsDataMigrator {
                                  Constants.Metrics.Tag.MAPREDUCE,
                                  Constants.Metrics.Tag.MR_TASK_TYPE,
                                  Constants.Metrics.Tag.INSTANCE_ID))
-      .put("p", ImmutableList.of(Constants.Metrics.Tag.APP,
-                                 TYPE,
-                                 Constants.Metrics.Tag.PROCEDURE,
-                                 Constants.Metrics.Tag.INSTANCE_ID))
-
       .put("s", ImmutableList.of(Constants.Metrics.Tag.APP,
                                  TYPE,
                                  Constants.Metrics.Tag.SPARK,

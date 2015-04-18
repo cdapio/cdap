@@ -65,6 +65,7 @@ public class ConfigHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } else {
+
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
     }
   }

@@ -24,16 +24,13 @@ import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.hadoop.io.LongWritable;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Transform {@link StructuredRecord} to {@link GenericRecord}
  */
-public class StructuredRecordToGenericRecordTransform extends Transform<LongWritable, StructuredRecord,
-                                                               LongWritable, GenericRecord> {
+public class StructuredRecordToGenericRecordTransform extends Transform<StructuredRecord, GenericRecord> {
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
 
   @Override
@@ -43,8 +40,7 @@ public class StructuredRecordToGenericRecordTransform extends Transform<LongWrit
   }
 
   @Override
-  public void transform(@Nullable LongWritable inputKey, StructuredRecord structuredRecord,
-                        Emitter<LongWritable, GenericRecord> emitter) throws Exception {
+  public void transform(StructuredRecord structuredRecord, Emitter<GenericRecord> emitter) throws Exception {
     co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
 
     int hashCode = structuredRecordSchema.hashCode();
@@ -62,6 +58,6 @@ public class StructuredRecordToGenericRecordTransform extends Transform<LongWrit
       String fieldName = field.name();
       recordBuilder.set(fieldName, structuredRecord.get(fieldName));
     }
-    emitter.emit(inputKey, recordBuilder.build());
+    emitter.emit(recordBuilder.build());
   }
 }

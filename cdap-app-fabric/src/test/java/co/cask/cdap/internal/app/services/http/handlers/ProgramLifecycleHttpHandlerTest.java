@@ -328,8 +328,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // test valid cases for namespace1
     HttpResponse response = doPost(statusUrl1,
                                    "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
-                                     "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': " +
-                                     "'WordFrequency'}]");
+                                     "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': " +
+                                     "'WordFrequencyService'}]");
     verifyInitialBatchStatusOutput(response);
 
     // test valid cases for namespace2
@@ -373,7 +373,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // try posting a status request with namespace2 for apps in namespace1
     response = doPost(statusUrl2, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
-      "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': 'WordFrequency'}," +
+      "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
     Assert.assertEquals("App: WordCountApp not found", returnedBody.get(0).get("error").getAsString());
@@ -405,7 +405,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programId':'WordCountFlow'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'programType':'Flow', 'programId':'WordCountFlow'}," +
-      "{'appId': 'WordCountApp', 'programType': 'procedure', 'programId': 'WordFrequency'}]")
+      "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'WordFrequency'}]")
       .getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'NotExist', " +
       "'programId':'WordCountFlow'}]").getStatusLine().getStatusCode());
@@ -432,8 +432,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doPost(instancesUrl1,
                                    "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow', " +
                                      "'runnableId': 'StreamSource'}," +
-                                     "{'appId': 'WordCountApp', 'programType': 'Procedure', 'programId': " +
-                                     "'WordFrequency'}]");
+                                     "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': " +
+                                     "'WordFrequencyService', 'runnableId': 'WordFrequencyService'}]");
 
     verifyInitialBatchInstanceOutput(response);
 

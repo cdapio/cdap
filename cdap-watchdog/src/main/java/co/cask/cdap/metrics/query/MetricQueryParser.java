@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,6 @@ final class MetricQueryParser {
   public enum ProgramType {
     FLOWS("f", Constants.Metrics.Tag.FLOW),
     MAPREDUCE("b", Constants.Metrics.Tag.MAPREDUCE),
-    PROCEDURES("p", Constants.Metrics.Tag.PROCEDURE),
     HANDLERS("h", Constants.Metrics.Tag.HANDLER),
     SERVICES("u", Constants.Metrics.Tag.SERVICE),
     SPARK("s", Constants.Metrics.Tag.SPARK);
@@ -315,7 +314,7 @@ final class MetricQueryParser {
       return;
     }
 
-    // request-type: flows, procedures, or mapreduce or handlers or services(user)
+    // request-type: flows, mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
     ProgramType programType;
     try {
@@ -363,13 +362,6 @@ final class MetricQueryParser {
         break;
       case SERVICES:
         buildComponentTypeContext(pathParts, tagValues, "runnables", "service", Constants.Metrics.Tag.SERVICE_RUNNABLE);
-        break;
-      case PROCEDURES:
-        if (pathParts.hasNext()) {
-          if (pathParts.next().equals(RUN_ID)) {
-            parseRunId(pathParts, tagValues);
-          }
-        }
         break;
       case SPARK:
         if (pathParts.hasNext()) {

@@ -1,38 +1,41 @@
 <div ncy-breadcrumb></div>
-<h1><span ng-bind="$state.params.programId | caskCapitalizeFilter"></span></h1>
-<p> Type: Tigon </p>
 
-
-<div class="row">
-  <div class="col-sm-6 h4">
-
-      <ng-pluralize data-count="activeRuns"
-          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+      <small> <em>Type: Tigon </em></small>
+    </h2>
   </div>
   <div class="col-sm-6 text-right">
-
-    <a ng-show = "activeRuns === 0"
-         class="btn btn-success"
+    <span class="programTitle">
+      <ng-pluralize data-count="activeRuns"
+          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
+    </span>
+    <div ng-show="activeRuns === 0 && status === null"
+         class="btn btn-success btn-md"
          ng-click="do('start')">
-      Start a new run
-    </a>
+      <span class="fa fa-play"></span>
+      <span>Start</span>
+    </div>
 
-    <a ng-show="activeRuns > 0"
-        class="btn btn-default"
-        ng-click="do('stop')">
-      <i class="fa fa-stop"></i>
-    </a>
+    <div ng-show="activeRuns > 0 && status === null"
+         class="btn btn-primary btn-md"
+         ng-click="do('stop')">
+      <span class="fa fa-stop"></span>
+      <span>Stop</span>
+    </div>
 
-    <a ng-show="status == 'start' || status == 'stop'"
-         class="btn btn-default">
+    <div ng-show="status == 'start' || status == 'stop'"
+          ng-class="{'btn-success': status === 'start', 'btn-primary': status === 'stop'}"
+          class="btn btn-md">
       <span class="fa fa-refresh fa-spin"></span>
-    </a>
-
+      <span>{{status | caskCapitalizeFilter}}</span>
+    </div>
   </div>
 </div>
 
-<br />
+<div class="cdap-subnav-end"></div>
 
 <ul class="nav nav-tabs" role="tablist">
 

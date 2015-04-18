@@ -48,8 +48,8 @@ public class ScriptFilterTransformTest {
 
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
-    MockEmitter<byte[], StructuredRecord> emitter = new MockEmitter<byte[], StructuredRecord>();
-    transform.transform(null, input, emitter);
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    transform.transform(input, emitter);
   }
 
   @Test
@@ -61,14 +61,14 @@ public class ScriptFilterTransformTest {
       ImmutableMap.of("script", "return input.x * 1024 < 2048"));
     transform.initialize(transformContext);
 
-    MockEmitter<byte[], StructuredRecord> emitter = new MockEmitter<byte[], StructuredRecord>();
-    transform.transform(null, input, emitter);
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    transform.transform(input, emitter);
     Assert.assertTrue(emitter.getEmitted().isEmpty());
     emitter.clear();
 
     input = StructuredRecord.builder(schema).set("x", 2).build();
-    transform.transform(null, input, emitter);
-    Assert.assertEquals(input, emitter.getEmitted().iterator().next().getVal());
+    transform.transform(input, emitter);
+    Assert.assertEquals(input, emitter.getEmitted().iterator().next());
   }
 
   @Test
@@ -127,8 +127,8 @@ public class ScriptFilterTransformTest {
       "script", "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > e.val;"));
     transform.initialize(transformContext);
 
-    MockEmitter<byte[], StructuredRecord> emitter = new MockEmitter<byte[], StructuredRecord>();
-    transform.transform(null, input, emitter);
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    transform.transform(input, emitter);
     Assert.assertTrue(emitter.getEmitted().isEmpty());
     emitter.clear();
 
@@ -136,7 +136,7 @@ public class ScriptFilterTransformTest {
     transformContext = new MockTransformContext(ImmutableMap.of(
       "script", "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > 10 * e.val;"));
     transform.initialize(transformContext);
-    transform.transform(null, input, emitter);
-    Assert.assertEquals(input, emitter.getEmitted().iterator().next().getVal());
+    transform.transform(input, emitter);
+    Assert.assertEquals(input, emitter.getEmitted().iterator().next());
   }
 }

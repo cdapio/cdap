@@ -21,12 +21,13 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.batch.SinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * CDAP Table Dataset Batch Sink.
  */
-public class TableSink extends BatchWritableSink<byte[], Put> {
+public class TableSink extends BatchWritableSink<Put, byte[], Put> {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -46,4 +47,8 @@ public class TableSink extends BatchWritableSink<byte[], Put> {
     return Table.class.getName();
   }
 
+  @Override
+  public void write(Put input, SinkWriter<byte[], Put> writer) throws Exception {
+    writer.write(input.getRow(), input);
+  }
 }

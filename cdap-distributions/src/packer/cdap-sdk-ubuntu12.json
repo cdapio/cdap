@@ -1,0 +1,86 @@
+{
+  "builders":[
+    {
+      "type": "virtualbox-iso",
+      "guest_os_type": "Ubuntu_64",
+      "iso_url": "http://releases.ubuntu.com/12.04/ubuntu-12.04.5-server-amd64.iso",
+      "iso_checksum": "769474248a3897f4865817446f9a4a53",
+      "iso_checksum_type": "md5",
+      "ssh_username": "root",
+      "ssh_password": "cdap",
+      "ssh_wait_timeout": "30m",
+      "shutdown_command": "shutdown -P now",
+      "format": "ova",
+      "headless": true,
+      "guest_additions_mode": "upload",
+      "http_directory": "files",
+      "boot_command": [
+        "<esc><esc><enter><wait>",
+        "/install/vmlinuz noapic ",
+        "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+        "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+        "hostname={{ .Name }}.cask.co ",
+        "fb=false debconf/frontend=noninteractive ",
+        "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+        "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+        "initrd=/install/initrd.gz -- <enter>"
+      ],
+      "vboxmanage_post": [
+        ["modifyvm", "{{.Name}}", "--memory", "4096"]
+      ],
+      "vm_name": "cdap-standalone-vm",
+      "name": "cdap-standalone-vm-ubuntu"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/apt-setup.sh",
+        "scripts/cookbook-dir.sh"
+      ],
+      "pause_before": "10s"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "reboot"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "pause_before": "10s"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/cookbook-setup.sh"
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[nodejs],recipe[maven],recipe[idea],recipe[cdap::sdk]",
+      "prevent_sudo": true,
+      "skip_install": true,
+      "json": {
+        "idea": {
+          "setup_dir": "/opt"
+        }
+      }
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/xorg.sh",
+        "scripts/fluxbox.sh",
+        "scripts/slim.sh",
+        "scripts/firefox.sh",
+        "scripts/vbox-guest-additions.sh",
+        "scripts/remove-chef.sh",
+        "scripts/random-root-password.sh",
+        "scripts/apt-cleanup.sh",
+        "scripts/zero-disk.sh"
+      ]
+    }
+  ]
+}

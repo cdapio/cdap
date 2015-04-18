@@ -27,8 +27,9 @@ import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
-import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
+import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
@@ -66,9 +67,8 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage(BatchReadableSource.class.getSimpleName(),
-                                   ImmutableMap.of("name", "table1", "type", KeyValueTable.class.getName()));
-    ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
+    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of("name", "table1"));
+    ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
     ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);

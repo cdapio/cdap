@@ -138,15 +138,6 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER)));
 
-    // procedure
-    aggs.add(new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROCEDURE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
-      // i.e. for procedure only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROCEDURE)));
-
     // workflow
     aggs.add(new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,

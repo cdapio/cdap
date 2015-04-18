@@ -16,8 +16,6 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -25,13 +23,8 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-
-import java.io.IOException;
 
 /**
  * App that contains all program types. Used to test Metadata store.
@@ -45,7 +38,6 @@ public class AllProgramsApp extends AbstractApplication {
     addStream(new Stream("stream"));
     createDataset("kvt", KeyValueTable.class);
     addFlow(new NoOpFlow());
-    addProcedure(new NoOpProcedure());
     addMapReduce(new NoOpMR());
     addWorkflow(new NoOpWorkflow());
   }
@@ -73,21 +65,6 @@ public class AllProgramsApp extends AbstractApplication {
   public static final class A extends AbstractFlowlet {
     public A() {
       super("A");
-    }
-  }
-
-  /**
-   *
-   */
-  private static class NoOpProcedure extends AbstractProcedure {
-    @UseDataSet("kvt")
-    private KeyValueTable counters;
-
-    @Handle("dummy")
-    public void handle(ProcedureRequest request,
-                       ProcedureResponder responder)
-      throws IOException {
-      responder.sendJson("OK");
     }
   }
 
