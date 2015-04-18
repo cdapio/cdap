@@ -404,7 +404,7 @@ public abstract class AppFabricTestBase {
         String.format("Unsupported version '%s'. Only v3 is supported.", version));
     }
     Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
-    return String.format("/%s/namespace/%s/%s", version, namespace, nonVersionedApiPath);
+    return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
   }
 
   protected List<JsonObject> getAppList(String namespace) throws Exception {
