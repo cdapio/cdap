@@ -21,11 +21,12 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   $scope.model = new Widget();
 
   $scope.widgetTypes = [
-    { name: 'Timeseries (line)',     type: 'line' },
-    { name: 'Histogram (bar)',       type: 'bar' },
-    { name: 'Timeseries (area)',     type: 'area' },
+    { name: 'Timeseries (line)',     type: 'time-line' },
+    { name: 'Timeseries (bar)',      type: 'time-bar' },
+    { name: 'Timeseries (area)',     type: 'time-area' },
     { name: 'Pie Chart',             type: 'pie' },
-    { name: 'Debug',                 type: 'json' }
+    { name: 'Debug',                 type: 'json' },
+    { name: 'Line',                 type: 'line' }
   ];
 
   $scope.$watch('model.metric.name', function (newVal) {

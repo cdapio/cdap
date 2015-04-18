@@ -58,12 +58,12 @@
           <strong ng-bind="input.total | myNumber: 1"></strong> events/s
         </td>
         <td class="table-graph">
-          <epoch-line
+          <epoch-time-line
             data-history="input.history"
             data-stream="input.stream"
             chart-height="100"
             chart-axes="['left', 'bottom']"
-            ></epoch-line>
+            ></epoch-time-line>
         </td>
         <td>
           {{ input.max }}
@@ -128,12 +128,12 @@
     <tbody>
       <tr ng-repeat="output in outputs track by $index">
         <td class="table-graph">
-          <epoch-line
+          <epoch-time-line
             data-history="outputHistory"
             data-stream="outputStream"
             chart-height="100"
             chart-axes="['left', 'bottom']"
-            ></epoch-line>
+            ></epoch-time-line>
         </td>
         <td>
           {{ total | myNumber: 0 }} tuples
