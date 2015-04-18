@@ -135,6 +135,9 @@ angular.module(PKG.name + '.feature.admin')
                 });
 
               });
+            },
+            onExit: function($modalStack) {
+              $modalStack.dismissAll();
             }
           })
 
@@ -192,6 +195,9 @@ angular.module(PKG.name + '.feature.admin')
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
+                },
+                onExit: function($modalStack) {
+                  $modalStack.dismissAll();
                 }
               })
               .state('admin.namespace.detail.data.streamproperties', {
@@ -206,6 +212,9 @@ angular.module(PKG.name + '.feature.admin')
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
+                },
+                onExit: function($modalStack) {
+                  $modalStack.dismissAll();
                 }
               })
 

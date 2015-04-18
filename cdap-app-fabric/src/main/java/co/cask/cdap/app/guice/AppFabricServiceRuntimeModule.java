@@ -36,6 +36,7 @@ import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MockETLHandler;
@@ -294,6 +295,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
+      handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);

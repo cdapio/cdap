@@ -23,4 +23,4 @@
 
 </div>
 
-<span ng-bind="wdgt.title"></span>
+<span ng-bind="wdgt.title | myEllipsis: 25 " tooltip="{{wdgt.title}}"></span>

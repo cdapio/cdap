@@ -74,12 +74,28 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   }
 
   @Test
+  public void testRealtimeAdapterLifeCycle() throws Exception {
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String adapterName = "realtimeAdapter";
+    String templateId = DummyWorkerTemplate.NAME;
+    DummyWorkerTemplate.Config config = new DummyWorkerTemplate.Config(2);
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyWorkerTemplate.NAME, GSON.toJsonTree(config));
+    testAdapterLifeCycle(namespaceId, templateId, adapterName, adapterConfig);
+  }
+
+  @Test
   public void testBatchAdapterLifeCycle() throws Exception {
     String namespaceId = Constants.DEFAULT_NAMESPACE;
     String adapterName = "myStreamConverter";
+    String templateId = DummyBatchTemplate.NAME;
     DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", "0 0 1 1 *");
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
+    testAdapterLifeCycle(namespaceId, templateId, adapterName, adapterConfig);
+  }
 
+  private void testAdapterLifeCycle(String namespaceId, String templateId, String adapterName,
+                                    AdapterConfig adapterConfig) throws Exception {
+    String deleteURL = getVersionedAPIPath("apps/" + templateId, Constants.Gateway.API_VERSION_3_TOKEN, namespaceId);
     HttpResponse response = createAdapter(namespaceId, adapterName, adapterConfig);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -101,7 +117,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     List<JsonObject> deployedApps = getAppList(namespaceId);
     Assert.assertEquals(1, deployedApps.size());
     JsonObject deployedApp = deployedApps.get(0);
-    Assert.assertEquals(DummyBatchTemplate.NAME, deployedApp.get("id").getAsString());
+    Assert.assertEquals(templateId, deployedApp.get("id").getAsString());
 
     response = getAdapterStatus(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -119,17 +135,41 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     status = readResponse(response);
     Assert.assertEquals("STARTED", status);
 
+    // Deleting App should fail
+    deleteApplication(1, deleteURL, 400);
+
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    // Deleting App should fail
+    deleteApplication(1, deleteURL, 400);
+
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // delete the application
+    deleteApplication(60, deleteURL, 200);
+    deployedApps = getAppList(namespaceId);
+    Assert.assertTrue(deployedApps.isEmpty());
+
+    // Check if we are able to deploy Adapter after Template app is deleted
+    response = createAdapter(namespaceId, adapterName, adapterConfig);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // Delete Adpater
+    response = deleteAdapter(namespaceId, adapterName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // delete the application
+    deleteApplication(60, deleteURL, 200);
+    deployedApps = getAppList(namespaceId);
+    Assert.assertTrue(deployedApps.isEmpty());
   }
 
   private void checkIsExpected(AdapterConfig config, AdapterSpecification spec) {
@@ -146,16 +186,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
                       responseString.contains("An ApplicationTemplate exists with a conflicting name."));
-
-
-    // Users can not delete adapter applications
-    response = doDelete(getVersionedAPIPath(String.format("apps/%s", DummyBatchTemplate.NAME),
-                                            Constants.Gateway.API_VERSION_3_TOKEN,
-                                            Constants.DEFAULT_NAMESPACE));
-    responseString = readResponse(response);
-    Assert.assertTrue(String.format("Response String: %s", responseString),
-                      responseString.contains("An ApplicationTemplate exists with a conflicting name."));
-    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -189,6 +219,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testDeployTemplate() throws Exception {
+    String deleteURL = getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+                                           Constants.DEFAULT_NAMESPACE);
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/templates/%s",
                     Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
@@ -200,6 +232,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
     Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
+
+    // delete the application
+    deleteApplication(60, deleteURL, 200);
+    List<JsonObject> deployedApps = getAppList(Constants.DEFAULT_NAMESPACE);
+    Assert.assertTrue(deployedApps.isEmpty());
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {

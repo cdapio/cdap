@@ -17,17 +17,13 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -45,6 +41,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a CentralService, which other programs will hit via their context's getServiceURL method.
@@ -55,7 +52,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String CENTRAL_SERVICE = "CentralService";
   public static final String LIFECYCLE_WORKER = "LifecycleWorker";
   public static final String PINGING_WORKER = "PingingWorker";
-  public static final String PROCEDURE = "ForwardingProcedure";
+  public static final String FORWARDING = "ForwardingService";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
   public static final String DATASET_WHICH_KEY = "WhichKey";
@@ -65,7 +62,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   @Override
   public void configure() {
     setName(APP_NAME);
-    addProcedure(new ForwardingProcedure());
+    addService(new BasicService("ForwardingService", new ForwardingHandler()));
     addService(new CentralService());
     addWorker(new PingingWorker());
     addWorker(new LifecycleWorker());
@@ -76,17 +73,18 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   /**
    *
    */
-  public static final class ForwardingProcedure extends AbstractProcedure {
+  public static final class ForwardingHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet(DATASET_NAME)
     private KeyValueTable table;
 
-    @Handle("ping")
-    public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    @GET
+    @Path("ping")
+    public void ping(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       // Discover the CatalogLookup service via discovery service
       URL serviceURL = getContext().getServiceURL(CENTRAL_SERVICE);
       if (serviceURL == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
+        responder.sendError(404, "serviceURL is null");
         return;
       }
       URL url = new URL(serviceURL, "ping");
@@ -94,25 +92,25 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           String response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-          responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
+          responder.sendJson(response);
         } else {
-          responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");
+          responder.sendError(500, "Failed to retrieve a response from the service");
         }
       } finally {
           conn.disconnect();
       }
-
     }
 
-    @Handle("readDataSet")
-    public void readDataSet(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String key = request.getArgument(DATASET_WHICH_KEY);
+    @GET
+    @Path("read/{key}")
+    public void readDataSet(HttpServiceRequest request, HttpServiceResponder responder,
+                            @PathParam("key") String key) throws IOException {
       byte[] value = table.read(key);
       if (value == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "Table returned null for value: " + key);
+        responder.sendError(404, "Table returned null for value: " + key);
         return;
       }
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(value));
+      responder.sendJson(Bytes.toString(value));
     }
   }
 

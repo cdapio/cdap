@@ -9,10 +9,10 @@
 CDAP Developers’ Manual
 ==================================================
 
-.. |getting-started| replace:: **Getting Started:**
+.. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html
 
-- |getting-started|_ **A quick, hands-on introduction to CDAP,**  which guides you through
+- |getting-started|_ **A quick, hands-on introduction to developing with CDAP,**  which guides you through
   installing the CDAP SDK, setting up your development environment, starting and stopping CDAP, 
   and building and running example applications.
   

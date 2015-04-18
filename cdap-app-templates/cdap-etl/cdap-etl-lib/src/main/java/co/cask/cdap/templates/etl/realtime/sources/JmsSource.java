@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.templates.etl.api.ValueEmitter;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
@@ -24,8 +24,6 @@ import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import javax.annotation.Nullable;
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -34,27 +32,27 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
 /**
  * <p>
  * Implementation of CDAP {@link RealtimeSource} that listen to external JMS producer by managing internal
- * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link ValueEmitter}
+ * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
-public class JmsSource extends RealtimeSource<String> implements MessageListener {
+public class JmsSource extends RealtimeSource<String> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
-  // TODO Need option to add Max size of the internal queue
-  private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<Message>();
+  private static final long JMS_CONSUMER_TIMEOUT_MS = 30000;
+  private static final String CDAP_JMS_SOURCE_NAME = "JMS Realtime Source";
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
 
   private transient Connection connection;
   private transient Session session;
+  private MessageConsumer consumer;
 
   /**
    * Configure the JMS Source.
@@ -63,7 +61,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
    */
   @Override
   public void configure(RealtimeConfigurer configurer) {
-    configurer.setName("JMS Realtime Source");
+    configurer.setName(CDAP_JMS_SOURCE_NAME);
     configurer.setDescription("CDAP JMS Realtime Source");
   }
 
@@ -93,8 +91,7 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
       connection = connectionFactory.createConnection();
       session = connection.createSession(false, jmsAcknowledgeMode);
       Destination destination = jmsProvider.getDestination();
-      MessageConsumer consumer = session.createConsumer(destination);
-      consumer.setMessageListener(this);
+      consumer = session.createConsumer(destination);
       connection.start();
     } catch (JMSException ex) {
       if (session != null) {
@@ -118,19 +115,24 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
 
   @Nullable
   @Override
-  public SourceState poll(ValueEmitter<String> writer, SourceState currentState) {
+  public SourceState poll(Emitter<String> writer, SourceState currentState) {
     // Try to get message from Queue
-    Message message = messageQueue.poll();
+    Message message = null;
+    try {
+      message = consumer.receive(JMS_CONSUMER_TIMEOUT_MS);
+    } catch (JMSException e) {
+      LOG.warn("Exception when trying to receive message from JMS consumer: {}", CDAP_JMS_SOURCE_NAME);
+    }
     if (message == null) {
       return currentState;
     }
 
+    String text;
     try {
       if (message instanceof TextMessage) {
         TextMessage textMessage = (TextMessage) message;
-        String text = textMessage.getText();
-        LOG.trace("Process JMS TextMessage : " + text);
-        writer.emit(text);
+        text = textMessage.getText();
+        LOG.trace("Process JMS TextMessage : ", text);
       } else if (message instanceof BytesMessage) {
         BytesMessage bytesMessage = (BytesMessage) message;
         int bodyLength = (int) bytesMessage.getBodyLength();
@@ -139,18 +141,20 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
         if (bytesRead != bodyLength) {
           LOG.warn("Number of bytes read {} not same as expected {}", bytesRead, bodyLength);
         }
-        writer.emit(new String(data));
+        text = new String(data).intern();
+        LOG.trace("Processing JMS ByteMessage : {}", text);
       } else {
         // Different kind of messages, just get String for now
         // TODO Process different kind of JMS messages
-        String text = message.toString();
-        LOG.trace("Processing JMS message : " + text);
-        writer.emit(text);
+        text = message.toString();
+        LOG.trace("Processing JMS message : ", text);
       }
     }  catch (JMSException e) {
       LOG.error("Unable to read text from a JMS Message.");
       return currentState;
     }
+
+    writer.emit(text);
 
     return new SourceState(currentState.getState());
   }
@@ -158,9 +162,14 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
   @Override
   public void destroy() {
     try {
+      if (consumer != null) {
+        consumer.close();
+      }
+
       if (session != null) {
         session.close();
       }
+
       if (connection != null) {
         connection.close();
       }
@@ -202,27 +211,5 @@ public class JmsSource extends RealtimeSource<String> implements MessageListener
    */
   public void setJmsProvider(JmsProvider provider) {
     jmsProvider = provider;
-  }
-
-  /**
-   * <p>
-   * The {@link javax.jms.MessageListener} implementation that will store the messages to be processed by next poll
-   * to this {@link JmsSource}
-   * </p>
-   */
-  @Override
-  public void onMessage(Message message) {
-    String messageID = "";
-    try {
-      messageID = message.getJMSMessageID();
-    } catch (JMSException e) {
-      LOG.warn("Encountered exception when trying to get message ID for JMS message.");
-    }
-
-    LOG.trace("Attempt to add message: {}", messageID);
-
-    messageQueue.add(message);
-
-    LOG.trace("Success adding message: {}", messageID);
   }
 }

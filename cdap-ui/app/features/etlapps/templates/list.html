@@ -12,24 +12,27 @@
 </div>
 
 <br/>
+<div class="row" etl-apps-list>
+  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6" ng-repeat="app in etlapps">
+    <div class="well well-md">
+        <div>
+          <h3 tooltip="{{::app.name}}">
+            <i class="fa fa-heartbeat"></i>
+            {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
+          </h3>
+          <small> Type: {{::app.template}}  </small>
+        </div>
+      <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
+        <i class="fa fa-circle"></i>
+        <span> {{::app.status}} </span>
+      </div>
+      <p class="description" tooltip="{{::app.description}}">
+        {{::app.description | myEllipsis: 50}}
+      </p>
 
-<table class="table table-responsive table-striped" ng-if="etlapps.length > 0">
-  <thead>
-    <tr>
-      <th> Name </th>
-      <th> Template </th>
-      <th> Instances </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat="app in etlapps">
-      <td> {{app.name | caskCapitalizeFilter}} </td>
-      <td> {{app.template}} </td>
-      <td> {{app.instances}} </td>
-    </tr>
-  </tbody>
-</table>
-
+    </div>
+  </div>
+</div>
 
 <div class="well well-lg text-center" ng-if="etlapps.length === 0">
   <h4> No Etl Apps created yet! </h4>

@@ -57,19 +57,8 @@ public class ApplicationTemplateVerificationStage extends ApplicationVerificatio
     if (!specification.getFlows().isEmpty()) {
       throw new IllegalArgumentException("Flows are not supported in application templates");
     }
-    if (!specification.getProcedures().isEmpty()) {
-      throw new IllegalArgumentException("Procedures are not supported in application templates");
-    }
     if (!specification.getServices().isEmpty()) {
       throw new IllegalArgumentException("Services are not supported in application templates");
-    }
-    if (!specification.getDatasets().isEmpty()) {
-      throw new IllegalArgumentException(
-        "Datasets cannot be created by application templates, but can be created by adapters.");
-    }
-    if (!specification.getStreams().isEmpty()) {
-      throw new IllegalArgumentException(
-        "Streams cannot be created by application templates, but can be created by adapters.");
     }
 
     int numWorkflows = specification.getWorkflows().size();

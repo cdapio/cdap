@@ -57,8 +57,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(
-      program, createProgramOptionsWithRunId(options)), program);
+    ProgramOptions optionsWithRunId = createProgramOptionsWithRunId(options);
+    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, optionsWithRunId), program);
     addRemover(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
@@ -137,7 +137,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
-  private RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
+  protected RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 
@@ -159,7 +159,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return runtimeInfo;
   }
 
-  private synchronized void remove(RuntimeInfo info) {
+  protected synchronized void remove(RuntimeInfo info) {
     LOG.debug("Removing RuntimeInfo: {} {} {}",
               info.getType(), info.getProgramId().getId(), info.getController().getRunId());
     RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());

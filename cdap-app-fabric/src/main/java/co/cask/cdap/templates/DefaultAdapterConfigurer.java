@@ -180,7 +180,8 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
         .setStreams(streams)
         .setRuntimeArgs(runtimeArgs)
         .setScheduleSpec(scheduleSpec)
-        .setInstances(instances);
+        .setInstances(instances)
+        .setResources(resources);
     return builder.build();
   }
 }

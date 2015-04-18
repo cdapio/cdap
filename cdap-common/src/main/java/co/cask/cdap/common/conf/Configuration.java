@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.gson.stream.JsonWriter;
@@ -995,6 +996,41 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     } else {
       set(name, pattern.pattern());
     }
+  }
+
+
+  /**
+   * Gets information about why a property was set.  Typically this is the
+   * path to the resource objects (file, URL, etc.) the property came from, but
+   * it can also indicate that it was set programatically, or because of the
+   * command line.
+   *
+   * @param name - The property name to get the source of.
+   * @return null - If the property or its source wasn't found. Otherwise,
+   * returns a list of the sources of the resource.  The older sources are
+   * the first ones in the list.  So for example if a configuration is set from
+   * the command line, and then written out to a file that is read back in the
+   * first entry would indicate that it was set from the command line, while
+   * the second one would indicate the file that the new configuration was read
+   * in from.
+   */
+  @Beta
+  public synchronized String[] getPropertySources(String name) {
+    if (properties == null) {
+      // If properties is null, it means a resource was newly added
+      // but the props were cleared so as to load it upon future
+      // requests. So lets force a load by asking a properties list.
+      getProps();
+    }
+
+    // Return a null right away if our properties still
+    // haven't loaded or the resource mapping isn't defined
+    if (properties == null || updatingResource == null) {
+      return new String[0];
+    }
+
+    String resource = updatingResource.get(name);
+    return (resource == null) ? new String[0] : new String[] { resource };
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -39,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -51,6 +53,7 @@ import java.util.Map;
  */
 public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryWorkerRunner.class);
+  private static final Gson GSON = new Gson();
 
   @Inject
   InMemoryWorkerRunner(ProgramRunnerFactory programRunnerFactory) {
@@ -79,10 +82,21 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
+    String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
+                                                        String.valueOf(workerSpec.getInstances()));
+    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
+    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
+      workerSpec.getResources();
+
+    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                                                workerSpec.getDescription(), workerSpec.getProperties(),
+                                                                workerSpec.getDatasets(), newResources,
+                                                                Integer.valueOf(instances));
+
     //RunId for worker
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     Table<String, Integer, ProgramController> components = startWorkers(program, runId, options.getUserArguments(),
-                                                                        workerSpec);
+                                                                        newWorkerSpec);
     return new InMemoryProgramController(components, runId, program, workerSpec, options.getUserArguments(),
                                          ProgramRunnerFactory.Type.WORKER_COMPONENT);
   }

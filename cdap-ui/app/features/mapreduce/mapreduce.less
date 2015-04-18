@@ -1,4 +1,12 @@
 body.state-mapreduce{
+    .run-status {
+      margin-bottom: 25px;
+    }
+
+    .entry {
+      font-weight: 700;
+    }
+
   .panel-group {
     .panel.panel-default {
       > .panel-heading {
@@ -18,5 +26,8 @@ body.state-mapreduce{
     .task-item:nth-child(-n+7) {
       border-right: 1px solid black;
     }
+  }
+  &.theme-cdap {
+    .table.table-status { margin-top: 0; }
   }
 }

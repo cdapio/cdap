@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +27,13 @@ final class WebappTwillProgramController extends AbstractTwillProgramController 
 
   private static final Logger LOG = LoggerFactory.getLogger(WebappTwillProgramController.class);
 
-  WebappTwillProgramController(String programName, TwillController controller) {
-    super(programName, controller);
+  WebappTwillProgramController(String programName, TwillController controller, RunId runId) {
+    super(programName, controller, runId);
   }
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    // Procedure doesn't have any command for now.
-    LOG.info("Command ignored for procedure controller: {}, {}", name, value);
+    // Webapp doesn't have any command for now.
+    LOG.info("Command ignored for webapp controller: {}, {}", name, value);
   }
 }

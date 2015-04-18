@@ -16,42 +16,44 @@
 
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.ImmutableList;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Represents measure in time with tags assigned to it
  */
 public final class Fact {
+  /** in seconds */
+  private final long timestamp;
   private final List<TagValue> tagValues;
-  private final MeasureType measureType;
-  private final String measureName;
-  private final TimeValue timeValue;
+  private final Collection<Measurement> measurements;
 
-  public Fact(List<TagValue> tagValues, MeasureType measureType, String measureName, TimeValue timeValue) {
+  public Fact(long timestamp, List<TagValue> tagValues, Collection<Measurement> measurements) {
+    this.timestamp = timestamp;
     this.tagValues = ImmutableList.copyOf(tagValues);
-    this.measureType = measureType;
-    this.measureName = measureName;
-    this.timeValue = timeValue;
+    this.measurements = measurements;
+  }
+
+  public Fact(long timestamp, List<TagValue> tagValues, Measurement measurement) {
+    this.timestamp = timestamp;
+    this.tagValues = ImmutableList.copyOf(tagValues);
+    this.measurements = ImmutableList.of(measurement);
   }
 
   public List<TagValue> getTagValues() {
-    return tagValues;
+    return Collections.unmodifiableList(tagValues);
   }
 
-  public MeasureType getMeasureType() {
-    return measureType;
+  public Collection<Measurement> getMeasurements() {
+    return Collections.unmodifiableCollection(measurements);
   }
 
-  public String getMeasureName() {
-    return measureName;
-  }
-
-  public TimeValue getTimeValue() {
-    return timeValue;
+  public long getTimestamp() {
+    return timestamp;
   }
 }

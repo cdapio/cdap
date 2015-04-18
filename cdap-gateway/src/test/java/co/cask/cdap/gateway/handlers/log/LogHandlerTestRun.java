@@ -18,10 +18,12 @@ package co.cask.cdap.gateway.handlers.log;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
+import co.cask.cdap.logging.gateway.handlers.FormattedLogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -31,7 +33,6 @@ import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
-import java.net.URLEncoder;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -40,7 +41,8 @@ import javax.annotation.Nullable;
  */
 public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
 
   @Test
   public void testFlowNext() throws Exception {
@@ -58,14 +60,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testApp4", "services", "testService1");
     testNextNoFrom("testApp4", "services", "testService1");
     testNext("testApp4", "services", "testService1", false);
-  }
-
-  @Test
-  public void testProcedureNext() throws Exception {
-    testNext("testApp2", "procedures", "testProcedure1", true);
-    testNextNoMax("testApp2", "procedures", "testProcedure1");
-    testNextFilter("testApp2", "procedures", "testProcedure1");
-    testNextNoFrom("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -93,14 +87,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testProcedurePrev() throws Exception {
-    testPrev("testApp2", "procedures", "testProcedure1");
-    testPrevNoMax("testApp2", "procedures", "testProcedure1");
-    testPrevFilter("testApp2", "procedures", "testProcedure1");
-    testPrevNoFrom("testApp2", "procedures", "testProcedure1");
-  }
-
-  @Test
   public void testMapReducePrev() throws Exception {
     testPrev("testApp3", "mapreduce", "testMapReduce1");
     testPrevNoMax("testApp3", "mapreduce", "testMapReduce1");
@@ -118,12 +104,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   public void testServiceLogs() throws Exception {
     testLogs("testApp4", "services", "testService1");
     testLogsFilter("testApp4", "services", "testService1");
-  }
-
-  @Test
-  public void testProcedureLogs() throws Exception {
-    testLogs("testApp2", "procedures", "testProcedure1");
-    testLogsFilter("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -615,6 +595,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private String getOffset(long offset) throws UnsupportedEncodingException {
-    return URLEncoder.encode(GSON.toJson(new LogOffset(offset, offset)), "utf-8");
+    return FormattedLogEvent.formatLogOffset(new LogOffset(offset, offset));
   }
 }

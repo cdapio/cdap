@@ -19,11 +19,14 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
@@ -57,6 +60,7 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     LOG.info("Launching distributed webapp: " + program.getName());
     TwillController controller = launcher.launch(new WebappTwillApplication(program, hConfFile,
                                                                             cConfFile, eventHandler));
-    return new WebappTwillProgramController(program.getName(), controller).startListen();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    return new WebappTwillProgramController(program.getName(), controller, runId).startListen();
   }
 }

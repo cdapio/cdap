@@ -16,7 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.templates.etl.api.ValueEmitter;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -45,7 +45,7 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
 
   @Nullable
   @Override
-  public SourceState poll(ValueEmitter<Tweet> writer, SourceState currentState) {
+  public SourceState poll(Emitter<Tweet> writer, SourceState currentState) {
     if (!tweetQ.isEmpty()) {
       Tweet tweet = tweetQ.remove();
       writer.emit(tweet);

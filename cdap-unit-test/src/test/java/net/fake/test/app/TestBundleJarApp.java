@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,21 +19,26 @@ package net.fake.test.app;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.ProcedureClient;
-import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -61,26 +66,31 @@ public class TestBundleJarApp extends TestBase {
     flowManager.stop();
 
     // Query the result
-    ProcedureManager procedureManager = applicationManager.startProcedure("SimpleGetInput");
-    ProcedureClient procedureClient = procedureManager.getClient();
+    ServiceManager serviceManager = applicationManager.startService("SimpleGetInput");
 
     // Verify the query result
-    String queryResult = procedureClient.query("get", ImmutableMap.of("key", "test1"));
+    String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
     String expectedQueryResult = new Gson().toJson(
       ImmutableMap.of("test1", "1" + BundleJarApp.EXPECTED_LOAD_TEST_CLASSES_OUTPUT));
     Assert.assertEquals(expectedQueryResult, queryResult);
-    procedureManager.stop();
+    serviceManager.stop();
 
-    procedureManager = applicationManager.startProcedure("PrintProcedure");
+    serviceManager = applicationManager.startService("PrintService");
 
     String helloWorldClassName = "hello.HelloWorld";
-    String result = procedureManager.getClient().query("load", ImmutableMap.of("class", helloWorldClassName));
-
+    String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
     String expected = new Gson().toJson(
-      ImmutableMap.builder()
-        .put("Class.forName", helloWorldClassName)
-        .build());
-
+      ImmutableMap.of("Class.forName", helloWorldClassName));
     Assert.assertEquals(expected, result);
+  }
+
+  private String callServiceGet(URL serviceURL, String path) throws IOException {
+    URLConnection connection = new URL(serviceURL.toString() + path).openConnection();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
+    try {
+      return reader.readLine();
+    } finally {
+      Closeables.closeQuietly(reader);
+    }
   }
 }

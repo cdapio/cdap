@@ -17,9 +17,12 @@
 package co.cask.cdap.examples.profiles;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.Tables;
 
 /**
@@ -38,7 +41,24 @@ public class UserProfiles extends AbstractApplication {
     addFlow(new ActivityFlow());
     addService(new UserProfileService());
     createDataset("counters", KeyValueTable.class);
-    // create the profiles table with column-level conflict detection
-    Tables.createTable(getConfigurer(), "profiles", ConflictDetection.COLUMN);
+
+    // create the profiles table with a schema so that it can be explored via Hive
+    Schema profileSchema = Schema.recordOf(
+      "profile",
+      // id, name, and email are never null and are set when a user profile is created
+      Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("email", Schema.of(Schema.Type.STRING)),
+      // login and active are never set when a profile is created but are set later, so they are nullable.
+      Schema.Field.of("login", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("active", Schema.nullableOf(Schema.of(Schema.Type.LONG)))
+    );
+    createDataset("profiles", Table.class.getName(), DatasetProperties.builder()
+      // create the profiles table with column-level conflict detection
+      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
+      .add(Table.PROPERTY_SCHEMA, profileSchema.toString())
+      // to indicate that the id field should come from the row key and not a row column
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .build());
   }
 }

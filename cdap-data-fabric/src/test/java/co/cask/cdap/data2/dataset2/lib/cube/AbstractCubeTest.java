@@ -67,8 +67,9 @@ public abstract class AbstractCubeTest {
     writeInc(cube, "metric1",  5,  5, null, null,  "1");
     writeInc(cube, "metric1",  6,  6,  "1", null, null);
     writeInc(cube, "metric1",  7,  3,  "1",  "1", null);
-    writeInc(cube, "metric1",  8,  2, null,  "1", null);
-    writeInc(cube, "metric1",  9,  1, null, null, null);
+    // writing using BatchWritable APIs
+    writeIncViaBatchWritable(cube, "metric1",  8,  2, null,  "1", null);
+    writeIncViaBatchWritable(cube, "metric1",  9,  1, null, null, null);
     // writing in batch
     cube.add(ImmutableList.of(
       getFact("metric1", 10,  2,  "1",  "1",  "1",  "1"),
@@ -204,8 +205,14 @@ public abstract class AbstractCubeTest {
     cube.add(getFact(measureName, ts, value, tags));
   }
 
+  private void writeIncViaBatchWritable(Cube cube, String measureName, long ts,
+                                        long value, String... tags) throws Exception {
+    // null for key: it is ignored
+    cube.write(null, getFact(measureName, ts, value, tags));
+  }
+
   private CubeFact getFact(String measureName, long ts, long value, String... tags) {
-    return new CubeFact(tagValuesByValues(tags), MeasureType.COUNTER, measureName, new TimeValue(ts, value));
+    return new CubeFact(ts).addTags(tagValuesByValues(tags)).addMeasurement(measureName, MeasureType.COUNTER, value);
   }
 
   private Map<String, String> tagValuesByValues(String... tags) {

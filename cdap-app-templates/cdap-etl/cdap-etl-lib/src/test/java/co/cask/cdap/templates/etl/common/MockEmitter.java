@@ -24,37 +24,19 @@ import java.util.List;
 /**
  * Mock emitter for unit tests
  */
-public class MockEmitter<K, V> implements Emitter<K, V> {
-  private final List<Entry<K, V>> emitted = Lists.newArrayList();
+public class MockEmitter<T> implements Emitter<T> {
+  private final List<T> emitted = Lists.newArrayList();
 
   @Override
-  public void emit(K key, V value) {
-    emitted.add(new Entry(key, value));
+  public void emit(T value) {
+    emitted.add(value);
   }
 
-  public List<Entry<K, V>> getEmitted() {
+  public List<T> getEmitted() {
     return emitted;
   }
 
   public void clear() {
     emitted.clear();
-  }
-
-  public class Entry<K, V> {
-    private final K key;
-    private final V val;
-
-    public Entry(K key, V val) {
-      this.key = key;
-      this.val = val;
-    }
-
-    public K getKey() {
-      return key;
-    }
-
-    public V getVal() {
-      return val;
-    }
   }
 }

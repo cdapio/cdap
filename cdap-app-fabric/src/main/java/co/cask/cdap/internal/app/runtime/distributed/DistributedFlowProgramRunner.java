@@ -20,12 +20,14 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -35,6 +37,7 @@ import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
@@ -90,7 +93,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       DistributedFlowletInstanceUpdater instanceUpdater =
         new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory);
-      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater).startListen();
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater, runId).startListen();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

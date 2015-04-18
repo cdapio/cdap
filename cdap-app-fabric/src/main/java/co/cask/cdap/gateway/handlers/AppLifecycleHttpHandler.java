@@ -214,7 +214,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Application id = Id.Application.from(namespaceId, appId);
 
       // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (adapterService.getApplicationTemplateInfo(appId) != null) {
+      if (!adapterService.canDeleteApp(id)) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
           "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
 
@@ -336,9 +336,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       switch (type) {
         case FLOW:
-          stopProgramIfRunning(programId, type);
-          break;
-        case PROCEDURE:
           stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
@@ -515,7 +512,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationSpecification appSpec = store.getApplication(appId);
     return Iterables.concat(appSpec.getFlows().values(),
                             appSpec.getMapReduce().values(),
-                            appSpec.getProcedures().values(),
                             appSpec.getServices().values(),
                             appSpec.getSpark().values(),
                             appSpec.getWorkers().values(),
@@ -580,10 +576,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getProcedures().values()) {
-      programs.add(new ProgramRecord(ProgramType.PROCEDURE, spec.getName(),
                                      programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {

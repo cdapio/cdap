@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,15 +67,6 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         programClient.setWorkerInstances(appId, workerId, numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerId, appId, numInstances);
-        break;
-      case PROCEDURE:
-        if (programIdParts.length < 2) {
-          throw new CommandInputError(this);
-        }
-        String procedureId = programIdParts[1];
-        programClient.setProcedureInstances(appId, procedureId, numInstances);
-        output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
-                      procedureId, appId, numInstances);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {

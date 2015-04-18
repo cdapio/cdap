@@ -1,26 +1,5 @@
 <div class="mapreduce-components">
 
-  <div class="row" ng-if="info.state">
-
-    <div class="col-sm-6">
-      <div class="run-status-box row">
-        <div class="col-sm-4 item">
-          <div class="title">Status</div>
-          <div class="entry">{{info.state}}</div>
-        </div>
-        <div class="col-sm-4 item">
-          <div class="title">Started</div>
-          <div class="entry">{{info.startTime | date: 'medium'}}</div>
-        </div>
-        <div class="col-sm-4 item">
-          <div class="title">Duration</div>
-          <div class="entry" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime)  | amDurationFormat}}</div>
-          <div class="entry" ng-hide="info.finishTime !== 0">N/A</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <h3>Mappers</h3>
   <p>{{ getCompletedPercentage(info.mapTasks) }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
 
@@ -31,35 +10,35 @@
     <div class="row component-box">
       <div class="task-item">
         <div class="title">Completed</div>
-        <div class="entry">{{mapperStats.completed}}</div>
+        <div class="entry">{{mapperStats.completed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Running</div>
-        <div class="entry">{{mapperStats.running}}</div>
+        <div class="entry">{{mapperStats.running | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Pending</div>
-        <div class="entry">{{mapperStats.pending}}</div>
+        <div class="entry">{{mapperStats.pending | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Killed</div>
-        <div class="entry">{{mapperStats.killed}}</div>
+        <div class="entry">{{mapperStats.killed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Failed</div>
-        <div class="entry">{{mapperStats.failed}}</div>
+        <div class="entry">{{mapperStats.failed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records in</div>
         <div class="entry">{{info.counters.MAP_INPUT_RECORDS | myNumber: 0}}</div>
       </div>
       <div class="task-item">
-        <div class="title">Bytes in</div>
-        <div class="entry">0</div>
+        <div class="title">Records out</div>
+        <div class="entry">{{info.counters.MAP_OUTPUT_RECORDS | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Total</div>
-        <div class="entry">{{mapperStats.total}}</div>
+        <div class="entry">{{mapperStats.total | myNumber: 0}}</div>
       </div>
     </div>
   </div>
@@ -74,35 +53,35 @@
     <div class="row component-box">
       <div class="task-item">
         <div class="title">Completed</div>
-        <div class="entry">{{reducerStats.completed}}</div>
+        <div class="entry">{{reducerStats.completed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Running</div>
-        <div class="entry">{{reducerStats.running}}</div>
+        <div class="entry">{{reducerStats.running | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Pending</div>
-        <div class="entry">{{reducerStats.pending}}</div>
+        <div class="entry">{{reducerStats.pending | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Killed</div>
-        <div class="entry">{{reducerStats.killed}}</div>
+        <div class="entry">{{reducerStats.killed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Failed</div>
-        <div class="entry">{{reducerStats.failed}}</div>
+        <div class="entry">{{reducerStats.failed | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records in</div>
         <div class="entry">{{info.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</div>
       </div>
       <div class="task-item">
-        <div class="title">Bytes in</div>
-        <div class="entry">0</div>
+        <div class="title">Records out</div>
+        <div class="entry">{{info.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</div>
       </div>
       <div class="task-item">
         <div class="title">Total</div>
-        <div class="entry">{{reducerStats.total}}</div>
+        <div class="entry">{{reducerStats.total | myNumber: 0}}</div>
       </div>
 
     </div>

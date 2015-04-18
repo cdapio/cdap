@@ -50,4 +50,6 @@ public final class ProgramOptionConstants {
   public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
 
   public static final String ADAPTER_NAME = "adapterName";
+
+  public static final String RESOURCES = "resources";
 }

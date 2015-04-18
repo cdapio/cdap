@@ -22,19 +22,16 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import org.apache.hadoop.io.LongWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
- * Tests {@link StreamToStructuredRecordTransform#transform(LongWritable, StreamEvent, Emitter)}
+ * Tests {@link StreamToStructuredRecordTransform#transform(StreamEvent, Emitter)}
  */
 public class StreamToStructuredRecordTransformTest {
 
@@ -48,32 +45,17 @@ public class StreamToStructuredRecordTransformTest {
   public void testStreamToStrucuturedRecordTransform() throws Exception {
 
     StreamToStructuredRecordTransform transformer = new StreamToStructuredRecordTransform();
-    TransformContext transformContext = new TransformContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        Map<String, String> runtimeArgs = Maps.newHashMap();
-        runtimeArgs.put("format.name", Formats.CSV);
-        runtimeArgs.put("schema", eventSchema.toString());
-        return runtimeArgs;
-      }
-    };
+    TransformContext transformContext = new MockTransformContext(
+      ImmutableMap.of("format.name", Formats.CSV, "schema", eventSchema.toString()));
     transformer.initialize(transformContext);
     StreamEvent streamEvent = new StreamEvent(ImmutableMap.of("header1", "one"),
                                               ByteBuffer.wrap(Bytes.toBytes("String1,2,3.0")));
-    Emitter<LongWritable, StructuredRecord> emitter = new Emitter<LongWritable, StructuredRecord>() {
-      @Override
-      public void emit(LongWritable key, StructuredRecord value) {
-        Assert.assertNotNull(value.get("headers"));
-        Assert.assertEquals("String1", value.get("field1"));
-        Assert.assertEquals(2, value.get("field2"));
-        Assert.assertEquals(3.0, value.get("field3"));
-      }
-    };
-    transformer.transform(null, streamEvent, emitter);
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    transformer.transform(streamEvent, emitter);
+    StructuredRecord value = emitter.getEmitted().get(0);
+    Assert.assertNotNull(value.get("headers"));
+    Assert.assertEquals("String1", value.get("field1"));
+    Assert.assertEquals(2, value.get("field2"));
+    Assert.assertEquals(3.0, value.get("field3"));
   }
 }

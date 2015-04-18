@@ -111,8 +111,7 @@ public class FlowTest {
                                                                                         TEMP_FOLDER_SUPPLIER);
    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
 
-    // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
-    // load on procedure.
+    // Only running flow is good. But, in case of service, we need to send something to service as it's lazy loading
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
@@ -129,19 +128,18 @@ public class FlowTest {
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
                                                     getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s",
-                    DefaultId.NAMESPACE.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
+      String.format("service.%s.%s.%s",
+                    DefaultId.NAMESPACE.getId(), "ArgumentCheckApp", "SimpleService")).iterator().next();
 
-    URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
+    URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
                                     "ArgumentCheckApp",
-                                    "SimpleProcedure",
-                                    "argtest"));
+                                    "SimpleService",
+                                    "ping"));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setDoOutput(true);
-    urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
-    Assert.assertTrue(urlConn.getResponseCode() == 200);
+    // this would fail had the service been started without the argument (initialize would have thrown)
+    Assert.assertEquals(200, urlConn.getResponseCode());
 
     for (ProgramController controller : controllers) {
       controller.stop().get();
@@ -193,37 +191,36 @@ public class FlowTest {
     ((TransactionAware) producer).commitTx();
     txSystemClient.commit(tx);
 
-    // Query the procedure for at most 10 seconds for the expected result
+    // Query the service for at most 10 seconds for the expected result
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered procedureDiscovered = discoveryServiceClient.discover(
-      String.format("procedure.%s.%s.%s", DefaultId.NAMESPACE.getId(), "WordCountApp", "WordFrequency"));
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(procedureDiscovered);
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "WordCountApp", "WordFrequencyService"));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
     int trials = 0;
     while (trials++ < 10) {
       Discoverable discoverable = endpointStrategy.pick(2, TimeUnit.SECONDS);
-      URL url = new URL(String.format("http://%s:%d/apps/%s/procedures/%s/methods/%s",
+      URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s/%s",
                                       discoverable.getSocketAddress().getHostName(),
                                       discoverable.getSocketAddress().getPort(),
                                       "WordCountApp",
-                                      "WordFrequency",
-                                      "wordfreq"));
+                                      "WordFrequencyService",
+                                      "wordfreq",
+                                      "text:Testing"));
       try {
         HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-        urlConn.setDoOutput(true);
-        urlConn.getOutputStream().write(gson.toJson(ImmutableMap.of("word", "text:Testing")).getBytes(Charsets.UTF_8));
         Map<String, Long> responseContent = gson.fromJson(
           new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8),
           new TypeToken<Map<String, Long>>() { }.getType());
 
-        LOG.info("Procedure response: " + responseContent);
+        LOG.info("Service response: " + responseContent);
         if (ImmutableMap.of("text:Testing", 10L).equals(responseContent)) {
           break;
         }
 
       } catch (Throwable t) {
-        LOG.info("Exception when trying to query procedure.", t);
+        LOG.info("Exception when trying to query service.", t);
       }
 
       TimeUnit.SECONDS.sleep(1);

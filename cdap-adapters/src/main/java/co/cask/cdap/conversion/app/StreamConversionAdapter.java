@@ -16,6 +16,8 @@
 
 package co.cask.cdap.conversion.app;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
@@ -31,13 +33,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
   static final String CONFIG_KEY = "adapter.args";
-
-  @Override
-  public void configure() {
-    setDescription("Periodically reads stream events and writes them to a time partitioned fileset");
-    addMapReduce(new StreamConversionMapReduce());
-    addWorkflow(new StreamConversionWorkflow());
-  }
 
   @Override
   public void configureAdapter(String adapterName, AdapterArgs args,
@@ -60,4 +55,10 @@ public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
     configurer.setSchedule(Schedules.createTimeSchedule("test", "adapter schedule", "*/" + minutes + " * * * *"));
   }
 
+  @Override
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setDescription("Periodically reads stream events and writes them to a time partitioned fileset");
+    configurer.addMapReduce(new StreamConversionMapReduce());
+    configurer.addWorkflow(new StreamConversionWorkflow());
+  }
 }

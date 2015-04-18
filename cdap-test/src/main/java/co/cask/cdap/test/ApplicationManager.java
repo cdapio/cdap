@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,25 +67,6 @@ public interface ApplicationManager {
    * @return A {@link SparkManager} for controlling the started spark job.
    */
   SparkManager startSpark(String jobName, Map<String, String> arguments);
-
-  /**
-   * Starts a procedure.
-   * @param procedureName Name of the procedure to start.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  ProcedureManager startProcedure(String procedureName);
-
-  /**
-   * Starts a procedure.
-   * @param procedureName Name of the procedure to start.
-   * @param arguments Arguments to be passed while starting a procedure.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
 
   /**
    * Gets a {@link StreamWriter} for writing data to the given stream.
