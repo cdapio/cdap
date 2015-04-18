@@ -165,14 +165,17 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
 
   public AdapterSpecification createSpecification() {
     ScheduleSpecification scheduleSpec = null;
+    String programName;
     if (programType == ProgramType.WORKFLOW) {
-      String workflowName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
+       programName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
       scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
-        SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs);
+        SchedulableProgramType.WORKFLOW, programName), runtimeArgs);
+    } else {
+      programName = Iterables.getFirst(templateSpec.getWorkers().keySet(), null);
     }
 
     AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, adapterConfig.getTemplate())
+      AdapterSpecification.builder(adapterName, adapterConfig.getTemplate(), programType, programName)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
