@@ -23,7 +23,6 @@ import co.cask.cdap.DummyWorkerTemplate;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -54,7 +53,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * AdapterService life cycle tests.
@@ -169,55 +167,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     } catch (AdapterNotFoundException ex) {
       // expected
     }
-  }
-
-  @Test
-  public void testBatchRunRecords() throws Exception {
-    String adapterName = "myAdap";
-    ActionBatchTemplate.Config config = new ActionBatchTemplate.Config("some", "0/1 * * * * ?");
-    AdapterConfig adapterConfig = new AdapterConfig("desc", ActionBatchTemplate.NAME, GSON.toJsonTree(config));
-
-    // Create Adapter
-    adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
-    adapterService.startAdapter(NAMESPACE, adapterName);
-    AdapterSpecification adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
-    Id.Program programId = adapterService.getProgramId(NAMESPACE, adapterName);
-
-    schedulerService.resumeSchedule(programId, SchedulableProgramType.WORKFLOW,
-                                    adapterSpec.getScheduleSpec().getSchedule().getName());
-    TimeUnit.SECONDS.sleep(10);
-
-    List<RunRecord> runRecords = adapterService.getRuns(NAMESPACE, adapterName, ProgramRunStatus.RUNNING, 0,
-                                                        Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertTrue(!runRecords.isEmpty());
-
-    // Some runs should be running
-    adapterService.stopAdapter(NAMESPACE, adapterName);
-    runRecords = adapterService.getRuns(NAMESPACE, adapterName, ProgramRunStatus.RUNNING, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertTrue(runRecords.isEmpty());
-
-    // Some runs should have completed successfully
-    runRecords = adapterService.getRuns(NAMESPACE, adapterName, ProgramRunStatus.COMPLETED, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertTrue(!runRecords.isEmpty());
-
-    // Some runs should have been killed
-    runRecords = adapterService.getRuns(NAMESPACE, adapterName, ProgramRunStatus.KILLED, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertTrue(!runRecords.isEmpty());
-
-    runRecords = adapterService.getRuns(NAMESPACE, adapterName, ProgramRunStatus.ALL, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE);
-
-    for (RunRecord record : runRecords) {
-      Assert.assertEquals(adapterName, record.getAdapterName());
-    }
-
-    // We can't find the ProgramId of the adapter after it is removed and so remove the adapter only after all
-    // the tests are complete.
-    adapterService.removeAdapter(NAMESPACE, adapterName);
-    Assert.assertTrue(adapterService.canDeleteApp(Id.Application.from(NAMESPACE, adapterConfig.getTemplate())));
   }
 
   @Test
