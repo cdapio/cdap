@@ -330,6 +330,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
+    LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
     ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
@@ -340,8 +341,8 @@ public class AdapterService extends AbstractIdleService {
       LOG.warn("Invalid program type {}.", programType);
       throw new InvalidAdapterOperationException("Invalid program type " + programType);
     }
-
     setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
+    LOG.info("Stopped Adapter {} in namespace {}", adapterName, namespace.getId());
   }
 
   /**
@@ -413,7 +414,8 @@ public class AdapterService extends AbstractIdleService {
     return null;
   }
 
-  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+  @VisibleForTesting
+  Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     Id.Program program;
@@ -446,12 +448,17 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
-    throws NotFoundException, SchedulerException {
+    throws NotFoundException, SchedulerException, InterruptedException, ExecutionException {
     Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
     scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
     store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+    List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
+                                         Integer.MAX_VALUE);
+    for (RunRecord record : activeRuns) {
+      lifecycleService.stopProgram(RunIds.fromString(record.getPid()));
+    }
   }
 
   private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {

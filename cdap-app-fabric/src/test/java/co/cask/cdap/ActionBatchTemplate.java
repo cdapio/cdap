@@ -18,22 +18,24 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
- * App Template to test adapter lifecycle.
+ * App Template to test batch adapter lifecycle.
  */
-public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.Config> {
-  public static final String NAME = DummyBatchTemplate.class.getSimpleName();
+public class ActionBatchTemplate extends ApplicationTemplate<ActionBatchTemplate.Config> {
+  public static final String NAME = ActionBatchTemplate.class.getSimpleName();
 
   public static class Config {
     private final String sourceName;
@@ -57,20 +59,23 @@ public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.C
 
       return Objects.equal(sourceName, that.sourceName) && Objects.equal(crontab, that.crontab);
     }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(sourceName, crontab);
-    }
   }
+
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
     configurer.setName(NAME);
-    // make the description different each time to distinguish between deployed versions in unit tests
-    configurer.setDescription(UUID.randomUUID().toString());
-    configurer.addWorkflow(new AdapterWorkflow());
-    configurer.addMapReduce(new DummyMapReduceJob());
+    configurer.addWorkflow(new ActionWorkflow());
+  }
+
+  public static class ActionWorkflow extends AbstractWorkflow {
+    public static final String NAME = ActionWorkflow.class.getSimpleName();
+
+    @Override
+    protected void configure() {
+      setName(NAME);
+      addAction(new Action());
+    }
   }
 
   @Override
@@ -83,28 +88,17 @@ public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.C
     configurer.setSchedule(schedule);
   }
 
-  /**
-   *
-   */
-  public static class AdapterWorkflow extends AbstractWorkflow {
-    public static final String NAME = "AdapterWorkflow";
-    @Override
-    protected void configure() {
-      setName(NAME);
-      setDescription("Workflow to test Adapter");
-      addMapReduce(DummyMapReduceJob.NAME);
-    }
-  }
+  public static class Action extends AbstractWorkflowAction {
+    public static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
-  /**
-   *
-   */
-  public static class DummyMapReduceJob extends AbstractMapReduce {
-    public static final String NAME = "DummyMapReduceJob";
     @Override
-    protected void configure() {
-      setName(NAME);
-      setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here to test Adapter lifecycle");
+    public void run() {
+      LOG.info("Action Ran!");
+      try {
+        TimeUnit.SECONDS.sleep(4);
+      } catch (InterruptedException e) {
+        LOG.error("Interrupted in Action", e);
+      }
     }
   }
 }
