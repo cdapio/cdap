@@ -331,7 +331,7 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
     LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
-    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
+    ProgramType programType = adapterSpec.getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -364,7 +364,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
+    ProgramType programType = adapterSpec.getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -415,31 +415,23 @@ public class AdapterService extends AbstractIdleService {
   }
 
   @VisibleForTesting
-  Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
-    ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
-    Id.Program program;
-    if (programType == ProgramType.WORKFLOW) {
-      program = getWorkflowId(namespace, adapterSpec);
-    } else {
-      program = getWorkerId(namespace, adapterSpec);
-    }
-    return program;
+  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+    return getProgramId(namespace, getAdapter(namespace, adapterName));
   }
 
-  private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+  private Id.Program getProgramId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKFLOW, workflowName);
+    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
+                           adapterSpec.getProgramType(), adapterSpec.getProgramName());
   }
 
   private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
     throws NotFoundException, SchedulerException {
-    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
+    Id.Program workflowId = getProgramId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
@@ -448,8 +440,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
-    throws NotFoundException, SchedulerException, InterruptedException, ExecutionException {
-    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
+    throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
+    Id.Program workflowId = getProgramId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
     scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
@@ -461,20 +453,10 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
-    Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      throw new NotFoundException(appId);
-    }
-    String workflowName = Iterables.getFirst(appSpec.getWorkers().keySet(), null);
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workflowName);
-  }
-
   private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
     IOException {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
-    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    final Id.Program workerId = getProgramId(namespace, adapterSpec);
     try {
       Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
       Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
@@ -529,7 +511,7 @@ public class AdapterService extends AbstractIdleService {
 
   private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
     ExecutionException, InterruptedException {
-    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    final Id.Program workerId = getProgramId(namespace, adapterSpec);
     List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
                                                adapterSpec.getName());
     RunRecord adapterRun = Iterables.getFirst(runRecords, null);
