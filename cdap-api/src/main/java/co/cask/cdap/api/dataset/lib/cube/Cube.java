@@ -17,6 +17,8 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,49 +28,50 @@ import java.util.List;
  * <p/>
  * Basic operations include adding {@link CubeFact}s and querying data.
  */
-// todo: methods should throw IOException instead of Exception
 @Beta
-public interface Cube {
+public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
+  /**
+   * Property set to configure resolutions to aggregate for. Value is a comma-separated list of resolutions in seconds.
+   */
+  String PROPERTY_RESOLUTIONS = "dataset.cube.resolutions";
+
   /**
    * Adds {@link CubeFact} to this {@link Cube}.
    * @param fact fact to add.
    */
-  void add(CubeFact fact) throws Exception;
+  void add(CubeFact fact);
 
   /**
    * Adds {@link CubeFact}s to this {@link Cube}.
    * @param facts facts to add.
    */
-  void add(Collection<? extends CubeFact> facts) throws Exception;
+  void add(Collection<? extends CubeFact> facts);
 
   /**
    * Queries data in this {@link Cube}.
    * @param query query to perform.
    * @return {@link List} of {@link TimeSeries} that are result of the query.
    */
-  Collection<TimeSeries> query(CubeQuery query) throws Exception;
+  Collection<TimeSeries> query(CubeQuery query);
 
   /**
    * Deletes the data specified by {@link CubeQuery} from all the fact tables.
    * @param query query specifies parameters for deletion.
-   * @throws Exception
    */
-  void delete(CubeDeleteQuery query) throws Exception;
+  void delete(CubeDeleteQuery query);
 
   /**
    * Queries data for next available tags after the given list of tags specified by
    * {@link CubeExploreQuery}
    * @param query query to perform
    * @return {@link Collection} of {@link TagValue} that are result of the query
-   * @throws Exception
    */
-  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception;
+  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query);
 
   /**
    * Queries data for available measureNames for the query specified by {@link CubeExploreQuery}
    * @param query query to perform
    * @return {@link Collection} of measureName string that are result of the query
-   * @throws Exception
    */
-  Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception;
+  Collection<String> findMeasureNames(CubeExploreQuery query);
 }

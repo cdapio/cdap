@@ -16,7 +16,6 @@
 
 package co.cask.cdap.cli.commandset;
 
-import co.cask.cdap.cli.command.CallProcedureCommand;
 import co.cask.cdap.cli.command.ExecuteQueryCommand;
 import co.cask.cdap.cli.command.PreferencesCommandSet;
 import co.cask.common.cli.Command;
@@ -35,8 +34,6 @@ public class DefaultCommands extends CommandSet<Command> {
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(ExecuteQueryCommand.class))
-          // TODO: remove procedures (?)
-        .add(injector.getInstance(CallProcedureCommand.class))
         .build(),
       ImmutableList.<CommandSet<Command>>builder()
         .add(injector.getInstance(GeneralCommands.class))

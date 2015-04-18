@@ -160,6 +160,31 @@ public abstract class StreamCoordinatorTestBase {
     Assert.assertEquals(99000L, config.getTTL());
   }
 
+  @Test
+  public void testDeleteStream() throws Exception {
+    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "test");
+
+    StreamAdmin streamAdmin = getStreamAdmin();
+    streamAdmin.create(streamId);
+
+    Assert.assertTrue(streamAdmin.exists(streamId));
+
+    StreamCoordinatorClient streamCoordinator = getStreamCoordinator();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    streamCoordinator.addListener(streamId, new StreamPropertyListener() {
+      @Override
+      public void deleted(Id.Stream id) {
+        if (id.equals(streamId)) {
+          latch.countDown();
+        }
+      }
+    });
+
+    streamAdmin.drop(streamId);
+    Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+  }
+
   private <T> boolean validateLastElement(BlockingDeque<T> deque, T value) throws InterruptedException {
     int count = 0;
     T peekValue = deque.peekLast();

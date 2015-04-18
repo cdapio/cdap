@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,4 +48,8 @@ public final class ProgramOptionConstants {
   public static final String RUN_BASE_COUNT_SIZE = "runBaseCountSize";
 
   public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
+
+  public static final String ADAPTER_NAME = "adapterName";
+
+  public static final String RESOURCES = "resources";
 }

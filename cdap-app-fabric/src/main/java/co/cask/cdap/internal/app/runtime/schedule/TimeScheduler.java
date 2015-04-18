@@ -20,11 +20,10 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -32,6 +31,7 @@ import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 /**
@@ -62,22 +63,20 @@ final class TimeScheduler implements Scheduler {
 
   private org.quartz.Scheduler scheduler;
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
-  private final ProgramRuntimeService programRuntimeService;
-  private final PreferencesStore preferencesStore;
-  private final CConfiguration cConf;
+  private final ProgramLifecycleService lifecycleService;
+  private final PropertiesResolver propertiesResolver;
   private ListeningExecutorService taskExecutorService;
   private boolean schedulerStarted;
   private final Store store;
 
   @Inject
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
-                ProgramRuntimeService programRuntimeService, PreferencesStore preferencesStore, CConfiguration cConf) {
+                ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver) {
     this.schedulerSupplier = schedulerSupplier;
     this.store = store;
-    this.programRuntimeService = programRuntimeService;
+    this.lifecycleService = lifecycleService;
     this.scheduler = null;
-    this.preferencesStore = preferencesStore;
-    this.cConf = cConf;
+    this.propertiesResolver = propertiesResolver;
     this.schedulerStarted = false;
   }
 
@@ -119,18 +118,30 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
-    schedule(programId, programType, ImmutableList.of(schedule));
+    schedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                       Map<String, String> properties) throws SchedulerException {
+    schedule(program, programType, ImmutableList.of(schedule), properties);
   }
 
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
     throws SchedulerException {
+    schedule(programId, programType, schedules, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       Map<String, String> properties) throws SchedulerException {
     checkInitialized();
     Preconditions.checkNotNull(schedules);
 
-    String jobKey = jobKeyFor(programId, programType).getName();
+    String jobKey = jobKeyFor(program, programType).getName();
     JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
       .withIdentity(jobKey)
       .storeDurably(true)
@@ -145,19 +156,23 @@ final class TimeScheduler implements Scheduler {
       TimeSchedule timeSchedule = (TimeSchedule) schedule;
       String scheduleName = timeSchedule.getName();
       String cronEntry = timeSchedule.getCronEntry();
-      String triggerKey = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
+      String triggerKey = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
 
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
-      Trigger trigger = TriggerBuilder.newTrigger()
+      TriggerBuilder trigger = TriggerBuilder.newTrigger()
         .withIdentity(triggerKey)
         .forJob(job)
         .withSchedule(CronScheduleBuilder
                         .cronSchedule(getQuartzCronExpression(cronEntry))
-                        .withMisfireHandlingInstructionDoNothing())
-        .build();
+                        .withMisfireHandlingInstructionDoNothing());
+      if (properties != null) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+          trigger.usingJobData(entry.getKey(), entry.getValue());
+        }
+      }
       try {
-        scheduler.scheduleJob(trigger);
+        scheduler.scheduleJob(trigger.build());
       } catch (org.quartz.SchedulerException e) {
         throw new SchedulerException(e);
       }
@@ -226,9 +241,15 @@ final class TimeScheduler implements Scheduler {
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
+    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                             Map<String, String> properties) throws NotFoundException, SchedulerException {
     // TODO modify the update flow [CDAP-1618]
     deleteSchedule(program, programType, schedule.getName());
-    schedule(program, programType, schedule);
+    schedule(program, programType, schedule, properties);
   }
 
   @Override
@@ -341,8 +362,8 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, programRuntimeService, preferencesStore,
-                                                          cConf, taskExecutorService);
+          return new DefaultSchedulerService.ScheduledJob(store, lifecycleService, propertiesResolver,
+                                                          taskExecutorService);
         } else {
           try {
             return jobClass.newInstance();

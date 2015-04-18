@@ -33,6 +33,11 @@ angular.module(PKG.name + '.feature.admin')
             templateUrl: '/assets/features/admin/templates/system/instance.html',
             controller: 'AdminInstanceController'
           })
+          .state('admin.system.configuration', {
+            url: '/configuration',
+            templateUrl: '/assets/features/admin/templates/system/configuration.html',
+            controller: 'ConfigurationController'
+          })
 
           .state('admin.system.services', {
             url: '/services',
@@ -130,6 +135,9 @@ angular.module(PKG.name + '.feature.admin')
                 });
 
               });
+            },
+            onExit: function($modalStack) {
+              $modalStack.dismissAll();
             }
           })
 
@@ -187,6 +195,9 @@ angular.module(PKG.name + '.feature.admin')
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
+                },
+                onExit: function($modalStack) {
+                  $modalStack.dismissAll();
                 }
               })
               .state('admin.namespace.detail.data.streamproperties', {
@@ -201,6 +212,9 @@ angular.module(PKG.name + '.feature.admin')
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
+                },
+                onExit: function($modalStack) {
+                  $modalStack.dismissAll();
                 }
               })
 

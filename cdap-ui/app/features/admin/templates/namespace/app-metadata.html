@@ -15,13 +15,19 @@
     </div>
 </div>
 
-<table class="table table-responsive">
-    <tr>
-        <th>Name</th>
-        <td ng-bind="apps.name"></td>
-    </tr>
-    <tr>
-        <th>Description</th>
-        <td ng-bind="apps.description"></td>
-    </tr>
-</table>
+<div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+        <thead>
+            <tr>
+              <th>Name</th>
+              <th>Version</th>
+              <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <td>{{ ::apps.name }}</td>
+            <td>{{ ::apps.version}}</td>
+            <td>{{ ::apps.description }}</td>
+        </tbody>
+    </table>
+</div>

@@ -42,6 +42,7 @@ import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -74,21 +75,21 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public void add(CubeFact fact) throws Exception {
+  public void add(CubeFact fact) {
     add(ImmutableList.of(fact));
   }
 
   @Override
-  public void add(Collection<? extends CubeFact> facts) throws Exception {
+  public void add(Collection<? extends CubeFact> facts) {
     List<Fact> toWrite = Lists.newArrayList();
     for (CubeFact fact : facts) {
       for (Aggregation agg : aggregations) {
         if (agg.accept(fact)) {
           List<TagValue> tagValues = Lists.newArrayList();
           for (String tagName : agg.getTagNames()) {
-            tagValues.add(new TagValue(tagName, fact.getTagValues().get(tagName)));
+            tagValues.add(new TagValue(tagName, fact.getTags().get(tagName)));
           }
-          toWrite.add(new Fact(tagValues, fact.getMeasureType(), fact.getMeasureName(), fact.getTimeValue()));
+          toWrite.add(new Fact(fact.getTimestamp(), tagValues, fact.getMeasurements()));
         }
       }
     }
@@ -99,7 +100,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public Collection<TimeSeries> query(CubeQuery query) throws Exception {
+  public Collection<TimeSeries> query(CubeQuery query) {
     /*
       CubeQuery example: "dataset read ops for app per dataset". Or:
 
@@ -159,7 +160,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public void delete(CubeDeleteQuery query) throws Exception {
+  public void delete(CubeDeleteQuery query) {
     //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
     List<TagValue> tagValues = Lists.newArrayList();
     // find all the aggregations that match the sliceByTags in the query and
@@ -177,7 +178,7 @@ public class DefaultCube implements Cube {
     }
   }
 
-  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) throws Exception {
+  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) {
     LOG.trace("Searching for next-level context, query: {}", query);
 
     // In each aggregation that matches given tags, try to fill in value in a single null-valued given tag.
@@ -203,7 +204,7 @@ public class DefaultCube implements Cube {
   }
 
   @Override
-  public Collection<String> findMeasureNames(CubeExploreQuery query) throws Exception {
+  public Collection<String> findMeasureNames(CubeExploreQuery query) {
     LOG.trace("Searching for metrics, query: {}", query);
 
     // In each aggregation that matches given tags, try to find metric names
@@ -322,6 +323,18 @@ public class DefaultCube implements Cube {
     }
 
     return result;
+  }
+
+  @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
+  }
+
+  @Override
+  public void close() throws IOException {
+    for (FactTable factTable : resolutionToFactTable.values()) {
+      factTable.close();
+    }
   }
 
   private static final class TagValueComparator implements Comparator<TagValue> {

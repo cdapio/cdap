@@ -47,6 +47,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * Jetty service for External Authentication.
@@ -67,7 +68,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final AbstractAuthenticationHandler authenticationHandler;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
-  private InetAddress address;
+  private InetAddress bindAddress;
+
+  @Nullable
+  private String announceAddress;
 
   /**
    * Constants for a valid JSON response.
@@ -92,6 +96,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
+    this.announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
     this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
       configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
@@ -133,6 +138,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
+        if (announceAddress != null) {
+          return new InetSocketAddress(announceAddress, connector.getLocalPort());
+        }
         return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
     }));
@@ -144,7 +152,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server = new Server();
 
       try {
-        address = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
+        bindAddress = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
       } catch (UnknownHostException e) {
         LOG.error("Error finding host to connect to.", e);
         throw Throwables.propagate(e);
@@ -188,12 +196,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        sslConnector.setHost(address.getCanonicalHostName());
+        sslConnector.setHost(bindAddress.getCanonicalHostName());
         sslConnector.setPort(port);
         server.setConnectors(new Connector[]{sslConnector});
       } else {
         SelectChannelConnector connector = new SelectChannelConnector();
-        connector.setHost(address.getCanonicalHostName());
+        connector.setHost(bindAddress.getCanonicalHostName());
         connector.setPort(port);
         server.setConnectors(new Connector[]{connector});
       }

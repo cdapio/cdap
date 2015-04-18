@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
   /**
    * Returns the metric context.  A metric context is of the form
    * {applicationId}.{programTypeId}.{programId}.{componentId}.  So for flows, it will look like
-   * appX.f.flowY.flowletZ.  For procedures, appX.p.procedureY.  For mapreduce jobs, appX.b.mapredY.{optional m|r}.
+   * appX.f.flowY.flowletZ. For mapreduce jobs, appX.b.mapredY.{optional m|r}.
    */
   private static Map<String, String> getMetricContext(Program program, TwillContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()

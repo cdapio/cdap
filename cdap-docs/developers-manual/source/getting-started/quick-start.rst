@@ -54,8 +54,8 @@ is already built and packaged:
 
   .. parsed-literal::
     |$| cd <CDAP-SDK-HOME>
-    |$| curl -w'\\n' -O |http:|//repository.cask.co/downloads/co/cask/cdap/apps/|wise-version|/cdap-wise-|wise-version|.zip
-    |$| unzip cdap-wise-|wise-version|.zip
+    |$| curl -w'\\n' -O |http:|//repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+    |$| unzip cdap-wise-|cdap-apps-version|.zip
 
 If you clone the source code from GitHub, you will need to build and package the
 application with these commands::
@@ -69,7 +69,7 @@ In both cases, the packaged application is in the ``target/`` directory with the
 .. container:: highlight
 
   .. parsed-literal::
-    cdap-wise-|wise-version|.jar
+    cdap-wise-|cdap-apps-version|.jar
 
 **Learn More:** *A detailed description of the application and its implementation is
 available in the* :ref:`Web Analytics Application documentation <examples-web-analytics>`.
@@ -83,7 +83,7 @@ You can deploy the application into your running instance of CDAP either by usin
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-cli.sh deploy app cdap-wise-|wise-version|/target/cdap-wise-|wise-version|.jar
+    |$| cdap-cli.sh deploy app cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
     Successfully deployed application
 
 or using ``curl`` to directly make an HTTP request:
@@ -91,8 +91,8 @@ or using ``curl`` to directly make an HTTP request:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| curl -w'\\n' -H "X-Archive-Name: cdap-wise-|wise-version|.jar" localhost:10000/v3/namespaces/default/apps \
-      --data-binary @cdap-wise-|wise-version|/target/cdap-wise-|wise-version|.jar
+    |$| curl -w'\\n' -H "X-Archive-Name: cdap-wise-|cdap-apps-version|.jar" localhost:10000/v3/namespaces/default/apps \
+      --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
     Deploy Complete
     
 (If you cloned the source code and built the app, you'll need to adjust the above paths to
@@ -147,7 +147,7 @@ the application to send events to the stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-wise-|wise-version|/bin/inject-data.sh
+    |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
 
 This will run for a number of seconds until all events are inserted.
 
@@ -241,7 +241,7 @@ repeating the injection of events into the Stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-wise-|wise-version|/bin/inject-data.sh
+    |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
   
 You can change the type of metrics being displayed using the dropdown menu on the left. If
 you change it from *Flowlet Processed* to *Flowlet Rate*, you see the current number of

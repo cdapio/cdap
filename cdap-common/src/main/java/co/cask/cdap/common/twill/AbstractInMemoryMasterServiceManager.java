@@ -16,10 +16,19 @@
 
 package co.cask.cdap.common.twill;
 
+import co.cask.cdap.proto.Containers;
+import co.cask.cdap.proto.SystemServiceLiveInfo;
+import com.google.common.collect.ImmutableList;
+
 /**
  * InMemory CDAP Service Management class.
  */
 public abstract class AbstractInMemoryMasterServiceManager implements MasterServiceManager {
+
+  @Override
+  public SystemServiceLiveInfo getLiveInfo() {
+    return new SystemServiceLiveInfo(ImmutableList.<Containers.ContainerInfo>of());
+  }
 
   @Override
   public int getInstances() {

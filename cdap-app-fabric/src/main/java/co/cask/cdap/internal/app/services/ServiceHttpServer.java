@@ -21,7 +21,6 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -179,7 +178,8 @@ public class ServiceHttpServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getNamespaceId(),
                                                                            program.getApplicationId(),
                                                                            program.getId().getId(),
-                                                                           program.getId().getId()));
+                                                                           program.getId().getId(), runId.getId(),
+                                                                           String.valueOf(instanceId)));
     LOG.debug("Starting HTTP server for Service {}", program.getId());
     Id.Program programId = program.getId();
     service.startAndWait();

@@ -117,7 +117,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
       Scanner scan = table.scan(startKey, stopKey);
       Row next;
-      while ((limit-- > 0) && (next = scan.next()) != null) {
+      while ((limit > 0) && (next = scan.next()) != null) {
         byte[] columnValue = next.get(COLUMN);
         if (columnValue == null) {
           continue;
@@ -127,6 +127,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         if (filter.apply(value)) {
           MDSKey key = new MDSKey(next.getRow());
           map.put(key, value);
+          --limit;
         }
       }
       return map;

@@ -17,8 +17,11 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
@@ -29,16 +32,21 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableSplit;
+import co.cask.cdap.internal.io.ReflectionRowRecordReader;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Implements some of the methods in a generic way (not necessarily in most efficient way).
@@ -51,6 +59,16 @@ public abstract class AbstractTable implements Table, TransactionAware {
   // Hadoop, which uses an older version of guava without that method.
   protected static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
     ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
+
+  // the full table schema, which can include the row key
+  private final Schema tableSchema;
+  // the name of the row field in the table schema, if it is present
+  private final String rowFieldName;
+
+  protected AbstractTable(@Nullable Schema tableSchema, @Nullable String rowFieldName) {
+    this.tableSchema = tableSchema;
+    this.rowFieldName = rowFieldName;
+  }
 
   @Override
   public byte[] get(byte[] row, byte[] column) {
@@ -161,6 +179,53 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @Override
   public SplitReader<byte[], Row> createSplitReader(Split split) {
     return new TableScanner();
+  }
+
+  @Override
+  public Type getRecordType() {
+    return StructuredRecord.class;
+  }
+
+  @Override
+  public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
+    Preconditions.checkArgument(tableSchema != null, "Table has no schema and is not record scannable.");
+    return new StructuredRecordScanner(createSplitReader(split));
+  }
+
+  private class StructuredRecordScanner extends RecordScanner<StructuredRecord> {
+    private final ReflectionRowRecordReader rowReader;
+    private final SplitReader<byte[], Row> tableSplitReader;
+
+    private StructuredRecordScanner(SplitReader<byte[], Row> tableSplitReader) {
+      this.tableSplitReader = tableSplitReader;
+      this.rowReader = new ReflectionRowRecordReader(tableSchema, rowFieldName);
+    }
+
+    @Override
+    public void initialize(Split split) throws InterruptedException {
+      tableSplitReader.initialize(split);
+    }
+
+    @Override
+    public boolean nextRecord() throws InterruptedException {
+      return tableSplitReader.nextKeyValue();
+    }
+
+    @Override
+    public StructuredRecord getCurrentRecord() throws InterruptedException {
+      Row row = tableSplitReader.getCurrentValue();
+      try {
+        return rowReader.read(row, tableSchema);
+      } catch (IOException e) {
+        LOG.error("Unable to read row.", e);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void close() {
+      tableSplitReader.close();
+    }
   }
 
   /**

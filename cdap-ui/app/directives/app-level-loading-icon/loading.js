@@ -13,11 +13,15 @@ angular.module(PKG.name + '.commons')
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
 
-        EventPipe.on('backendDown', function() {
+        EventPipe.on('backendDown', function(message) {
           if (!isBackendDown) {
             modal && modal.close();
             isBackendDown = true;
-            $scope.message = 'Waiting for CDAP services to be online...';
+            if (!message) {
+              $scope.message = 'CDAP service(s) are offline';
+            } else {
+              $scope.message = message;
+            }
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
               $state.go('overview', {}, {reload: true});
@@ -33,7 +37,7 @@ angular.module(PKG.name + '.commons')
             $alert({
               title: 'We\'re Back!',
               type: 'success',
-              content: 'CDAP Services are back online'
+              content: 'CDAP services are online'
             });
           }
         }.bind($scope));
@@ -51,7 +55,7 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('showLoadingIcon', function() {
           if(!modal && !isBackendDown) {
-            $scope.message = 'Loading the Application... ';
+            $scope.message = ''
             modal = $bootstrapModal.open(modalObj);
           }
         }.bind($scope));

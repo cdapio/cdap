@@ -161,9 +161,11 @@ While these Tables have rows and columns similar to relational database tables, 
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
 
-
 A |fileset|_ represents a collections of files in the file system that share some common attributes
 such as the format and schema, while abstracting from the actual underlying file system interfaces.
+
+.. |fileset| replace:: **FileSet**
+.. _fileset: fileset.html
 
 - Every file in a FileSet is in a location relative to the FileSet's base directory.
 
@@ -175,12 +177,23 @@ such as the format and schema, while abstracting from the actual underlying file
   the input and output format to use, or configuration for these |---| the FileSet dataset provides this
   information to the MapReduce runtime system.
 
-- An extension of FileSets, ``PartitionedFileSets`` allow the associating of meta data (partitioning keys)
+- An abstraction of FileSets, ``PartitionedFileSets`` allow the associating of meta data (partitioning keys)
   with each file. The file can then be addressed through its meta data, removing the need for programs to
   be aware of actual file paths.
+  
+- A ``TimePartitionedFileSet`` is a further variation that uses a timestamp as the partitioning key.
+  Though it is not required that data in each partition be organized by time,
+  each partition is assigned a logical time. 
 
-.. |fileset| replace:: **FileSet**
-.. _fileset: fileset.html
+  This is in contrast to a :ref:`Timeseries Table <cdap-timeseries-guide>` dataset, where
+  time is the primary means of how data is organized, and both the data model and the
+  schema that represents the data are optimized for querying and aggregating over time
+  ranges.
+
+  Time-partitioned FileSets are typically written in batch: into large files, every *N* minutes or
+  hours...while a timeseries table is typically written in realtime, one data point at a
+  time.
+ 
 
 .. rubric::  Examples of Using Datasets
 
@@ -200,6 +213,12 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 
 - For an example of a **FileSet dataset,** see the :ref:`FileSet <examples-fileset>` example.
 
+- For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
+  example.
+
+- For an example of a **TimePartitionedFileSet,** see the :ref:`Stream Conversion 
+  <examples-stream-conversion>` example.
+
 - For examples of **key-value Table datasets,** see the
   :ref:`Hello World <examples-hello-world>`,
   :ref:`Count Random <examples-count-random>`,
@@ -213,3 +232,4 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 
 - For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.
 
+  

@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -26,17 +25,15 @@ import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.mapreduce.MRJobClient;
 import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.RunIds;
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -45,11 +42,10 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -68,7 +64,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -77,7 +72,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -121,11 +115,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
+  private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
-  private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final PropertiesResolver propertiesResolver;
   private MRJobClient mrJobClient;
   private MapReduceMetricsInfo mapReduceMetricsInfo;
 
@@ -195,22 +190,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
                                      CConfiguration cConf, ProgramRuntimeService runtimeService,
+                                     ProgramLifecycleService lifecycleService,
                                      DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
-                                     MapReduceMetricsInfo mapReduceMetricsInfo) {
+                                     MapReduceMetricsInfo mapReduceMetricsInfo,
+                                     PropertiesResolver propertiesResolver) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
+    this.lifecycleService = lifecycleService;
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.mrJobClient = mrJobClient;
     this.mapReduceMetricsInfo = mapReduceMetricsInfo;
+    this.propertiesResolver = propertiesResolver;
   }
 
   /**
@@ -258,7 +256,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,procedures,services,schedules}.
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
    */
   @GET
   @Path("/apps/{app-id}/{type}/{id}/status")
@@ -624,9 +622,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns the number of instances for all program runnables that are passed into the data. The data is an array of
    * Json objects where each object must contain the following three elements: appId, programType, and programId
-   * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
-   * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
-   * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
+   * (flow name, service name). Retrieving instances only applies to flows, and user
+   * services. For flows, another parameter, "runnableId", must be provided. This corresponds to the
+   * flowlet/runnable for which to retrieve the instances.
    * <p>
    * Example input:
    * <pre><code>
@@ -678,7 +676,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         String programTypeStr = requestedObj.getProgramType();
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-        // cant get instances for things that are not flows, services, or procedures
+        // cant get instances for things that are not flows or services
         if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
                        "Program type: " + programType + " is not a valid program type to get instances");
@@ -710,16 +708,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.FLOW, null, store);
-  }
-
-  /**
-   * Returns a list of procedures associated with a namespace.
-   */
-  @GET
-  @Path("/procedures")
-  public void getAllProcedures(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.PROCEDURE, null, store);
   }
 
   /**
@@ -1131,7 +1119,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Populates requested and provisioned instances for a program type.
-   * The program type passed here should be one that can have instances (flows, services or procedures)
+   * The program type passed here should be one that can have instances (flows, services, ...)
    * Requires caller to do this validation.
    */
   private void populateProgramInstances(BatchEndpointInstances requestedObj, String namespaceId, String appId,
@@ -1139,23 +1127,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         String programId) {
     int requested;
     String runnableId;
-    if (programType == ProgramType.PROCEDURE) {
-      // the "runnable" for procedures has the same id as the procedure name
-      runnableId = programId;
-      if (!spec.getProcedures().containsKey(programId)) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Procedure: " + programId + " not found");
-        return;
-      }
-      requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
-    } else if (programType == ProgramType.WORKER) {
+    if (programType == ProgramType.WORKER) {
       runnableId = programId;
       if (!spec.getWorkers().containsKey(programId)) {
         addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                      "Worker: " + programId + " not found");
         return;
       }
-      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
+      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, programId));
     } else {
       // services and flows must have runnable id
       if (requestedObj.getRunnableId() == null) {
@@ -1330,8 +1309,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramSpecification programSpec;
       if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programId)) {
         programSpec = appSpec.getFlows().get(id.getId());
-      } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(programId)) {
-        programSpec = appSpec.getProcedures().get(id.getId());
       } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programId)) {
         programSpec = appSpec.getMapReduce().get(id.getId());
       } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programId)) {
@@ -1416,90 +1393,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      final Program program = store.loadProgram(id, type);
-      if (program == null) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
-
       if (isRunning(id, type)) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
-                                                                            type.getCategoryName(), id.getId());
+      Map<String, String> sysArgs = propertiesResolver.getSystemProperties(id, type);
+      Map<String, String> userArgs = propertiesResolver.getUserProperties(id, type);
       if (overrides != null) {
-        for (Map.Entry<String, String> entry : overrides.entrySet()) {
-          userArgs.put(entry.getKey(), entry.getValue());
-        }
+        userArgs.putAll(overrides);
       }
 
-      BasicArguments userArguments = new BasicArguments(userArgs);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), getSystemArguments(id.getNamespaceId()),
-                                                             userArguments, debug));
-
-      final ProgramController controller = runtimeInfo.getController();
-      final String runId = controller.getRunId().getId();
-
-      if (type != ProgramType.MAPREDUCE) {
-        // MapReduce state recording is done by the MapReduceProgramRunner
-        // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
-        controller.addListener(new AbstractListener() {
-          @Override
-          public void init(ProgramController.State state, @Nullable Throwable cause) {
-            // Get start time from RunId
-            long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
-            if (startTimeInSeconds == -1) {
-              // If RunId is not time-based, use current time as start time
-              startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-            }
-            store.setStart(id, runId, startTimeInSeconds);
-            if (state == ProgramController.State.COMPLETED) {
-              completed();
-            }
-            if (state == ProgramController.State.ERROR) {
-              error(controller.getFailureCause());
-            }
-          }
-
-          @Override
-          public void completed() {
-            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                          ProgramController.State.COMPLETED.getRunStatus());
-          }
-
-          @Override
-          public void killed() {
-            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                          ProgramController.State.KILLED.getRunStatus());
-          }
-
-          @Override
-          public void suspended() {
-            store.setSuspend(id, runId);
-          }
-
-          @Override
-          public void resuming() {
-            store.setResume(id, runId);
-          }
-
-          @Override
-          public void error(Throwable cause) {
-            LOG.info("Program stopped with error {}, {}", id, runId, cause);
-            store.setStop(id, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                          ProgramController.State.ERROR.getRunStatus());
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-      }
-      return AppFabricServiceStatus.OK;
-    } catch (DatasetInstantiationException e) {
-      return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, debug);
+      return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
+    } catch (ProgramNotFoundException e) {
+      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
-      if (throwable instanceof FileNotFoundException) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
@@ -1550,7 +1459,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ProgramRunStatus.valueOf(status.toUpperCase());
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
       } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");
       }
     } catch (SecurityException e) {
@@ -1804,13 +1713,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   private boolean canHaveInstances(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   // deletes the process metrics for a flow
@@ -1845,37 +1752,5 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } finally {
       client.close();
     }
-  }
-
-  private BasicArguments getSystemArguments(String namespaceId) {
-    // Get Configs from Cconf
-    Map<String, String> systemConfigsFromCDAP = getDefaultSystemArguments();
-    // Override the Configs from configs at namespace level.
-    return new BasicArguments(getResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
-  }
-
-  // Get default system arguments from Cconfiguration.
-  private Map<String, String> getDefaultSystemArguments() {
-
-    Map<String, String> configs = Maps.newHashMap();
-
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getDefaultQueue();
-    if (schedulerQueue != null) {
-      configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-
-    return configs;
-  }
-
-  // Get system arguments resolved at namespace level, fall back to default
-  private Map<String, String> getResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
-    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-    return resolvedConfigs;
   }
 }

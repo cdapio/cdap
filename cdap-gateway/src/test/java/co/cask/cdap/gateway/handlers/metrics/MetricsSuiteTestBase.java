@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -430,12 +430,6 @@ public abstract class MetricsSuiteTestBase {
                            Constants.Metrics.Tag.STREAM, streamName);
   }
 
-  protected static Map<String, String> getProcedureContext(String namespaceId, String appName, String procedureName) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
-                           Constants.Metrics.Tag.APP, appName,
-                           Constants.Metrics.Tag.PROCEDURE, procedureName);
-  }
-
   protected static Map<String, String> getUserServiceContext(String namespaceId, String appName, String serviceName,
                                                              String runnableName) {
     return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId,
@@ -465,6 +459,20 @@ public abstract class MetricsSuiteTestBase {
       .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
       .put(Constants.Metrics.Tag.RUN_ID, runId)
       .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .build();
+  }
+
+  protected static Map<String, String> getAdapterContext(String namespaceId, String appName, String jobName,
+                                                         MapReduceMetrics.TaskType type, String runId,
+                                                         String instanceId, String adapterName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
+      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
       .build();
   }
 }

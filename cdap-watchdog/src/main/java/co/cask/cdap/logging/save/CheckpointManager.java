@@ -31,7 +31,6 @@ import com.google.inject.Inject;
  */
 public final class CheckpointManager {
 
-  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
 
   private final Transactional<DatasetContext<Table>, Table> mds;
@@ -39,8 +38,8 @@ public final class CheckpointManager {
 
   @Inject
   public CheckpointManager(final LogSaverTableUtil tableUtil,
-                           TransactionExecutorFactory txExecutorFactory, String topic) {
-    this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));
+                           TransactionExecutorFactory txExecutorFactory, String topic, int prefix) {
+    this.rowKeyPrefix = Bytes.add(Bytes.toBytes(prefix), Bytes.toBytes(topic));
     this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
       public DatasetContext<Table> get() {

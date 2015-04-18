@@ -71,10 +71,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
           $scope.me.update(newVal);
         }
         else if (newVal && newVal.length) {
-          for (var i = 0; i < newVal.length; i++) {
-            $scope.me.push([newVal[i]]);
-          }
-
+          $scope.me.push(newVal);
         }
       });
     }

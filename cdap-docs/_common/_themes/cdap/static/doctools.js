@@ -156,7 +156,7 @@ var Documentation = {
    * workaround a firefox stupidity
    */
   fixFirefoxAnchorBug : function() {
-    if (document.location.hash && $.browser.mozilla)
+    if (document.location.hash)
       window.setTimeout(function() {
         document.location.href += '';
       }, 10);

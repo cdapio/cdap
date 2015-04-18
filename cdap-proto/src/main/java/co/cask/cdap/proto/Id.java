@@ -524,28 +524,15 @@ public abstract class Id {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("ProgramId(");
-
-      sb.append("namespaceId:");
-      if (this.application.getNamespaceId() == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.application.getNamespaceId());
-      }
-      sb.append(", applicationId:");
-      if (this.application.getId() == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.application.getId());
-      }
-      sb.append(", runnableId:");
-      if (this.id == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.id);
-      }
-      sb.append(")");
-      return sb.toString();
+      return new StringBuilder("ProgramId(")
+        .append("namespaceId:")
+        .append(this.application.getNamespaceId())
+        .append(", applicationId:")
+        .append(this.application.getId())
+        .append(", runnableId:")
+        .append(this.id)
+        .append(")")
+        .toString();
     }
 
     @Override
@@ -565,6 +552,10 @@ public abstract class Id {
 
     public static Worker from(Application application, String id) {
       return new Worker(application, id);
+    }
+
+    public static Worker from(Namespace namespace, String appId, String id) {
+      return new Worker(new Application(namespace, appId), id);
     }
   }
 
@@ -667,60 +658,6 @@ public abstract class Id {
       @Override
       protected Id getParent() {
         return flow;
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
-    }
-  }
-
-  /**
-   * Uniquely identifies a Procedure.
-   */
-  public static class Procedure extends Program {
-
-    private Procedure(Application application, String id) {
-      super(application, ProgramType.PROCEDURE, id);
-    }
-
-    public static Procedure from(Application application, String id) {
-      return new Procedure(application, id);
-    }
-
-    public static Procedure from(String appId, String procedureId) {
-      return new Procedure(Id.Application.from(Namespace.DEFAULT, appId), procedureId);
-    }
-
-    /**
-     * Uniquely identifies a Procedure Handler.
-     */
-    public static class Method extends NamespacedId {
-
-      private final Procedure procedure;
-      private final String id;
-
-      private Method(Procedure procedure, String id) {
-        Preconditions.checkArgument(procedure != null, "procedure cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
-        this.procedure = procedure;
-        this.id = id;
-      }
-
-      public static Method from(Procedure procedure, String id) {
-        return new Method(procedure, id);
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return procedure.getNamespace();
-      }
-
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return procedure;
       }
 
       @Override

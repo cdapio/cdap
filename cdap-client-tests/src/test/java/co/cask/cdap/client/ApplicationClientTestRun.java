@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,19 +90,16 @@ public class ApplicationClientTestRun extends ClientTestBase {
       LOG.info("Checking program list for app");
       Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(FakeApp.NAME);
       verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
-      verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
       verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
 
       verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
-      verifyProgramNames(FakeApp.PROCEDURES, appClient.listPrograms(FakeApp.NAME, ProgramType.PROCEDURE));
       verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
 
       verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
-      verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
       verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));

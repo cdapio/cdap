@@ -143,7 +143,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   protected void verifyPrograms(Id.Application appId, ApplicationSpecification specification) {
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
                                                                    specification.getMapReduce().values(),
-                                                                   specification.getProcedures().values(),
                                                                    specification.getWorkflows().values());
     VerifyResult result;
     for (ProgramSpecification programSpec : programSpecs) {

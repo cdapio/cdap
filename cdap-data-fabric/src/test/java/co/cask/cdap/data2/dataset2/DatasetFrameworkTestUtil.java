@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.Id;
@@ -48,7 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public class DatasetFrameworkTestUtil extends ExternalResource {
+public final class DatasetFrameworkTestUtil extends ExternalResource {
   public static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
   private static final Id.DatasetModule inMemory = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
@@ -57,6 +58,7 @@ public class DatasetFrameworkTestUtil extends ExternalResource {
   private static final Id.DatasetModule tpfs = Id.DatasetModule.from(NAMESPACE_ID, "tpfs");
   private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
   private static final Id.DatasetModule omt = Id.DatasetModule.from(NAMESPACE_ID, "objectMappedTable");
+  private static final Id.DatasetModule cube = Id.DatasetModule.from(NAMESPACE_ID, "cube");
 
   private TemporaryFolder tmpFolder;
   private DatasetFramework framework;
@@ -87,6 +89,7 @@ public class DatasetFrameworkTestUtil extends ExternalResource {
     framework.addModule(tpfs, new TimePartitionedFileSetModule());
     framework.addModule(pfs, new PartitionedFileSetModule());
     framework.addModule(omt, new ObjectMappedTableModule());
+    framework.addModule(cube, new CubeModule());
   }
 
   @Override
@@ -94,6 +97,7 @@ public class DatasetFrameworkTestUtil extends ExternalResource {
     Exception error = null;
     try {
       if (framework != null) {
+        framework.deleteModule(cube);
         framework.deleteModule(omt);
         framework.deleteModule(pfs);
         framework.deleteModule(tpfs);

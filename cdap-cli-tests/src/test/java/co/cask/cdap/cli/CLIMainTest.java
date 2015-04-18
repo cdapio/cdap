@@ -29,7 +29,6 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
@@ -195,7 +194,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully send stream event");
+    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully sent stream event");
     testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
     testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
@@ -225,7 +224,7 @@ public class CLIMainTest extends StandaloneTestBase {
       writer.close();
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully send stream event to stream");
+                              "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               String.format("No schema found for Stream '%s'", streamId));
@@ -277,51 +276,6 @@ public class CLIMainTest extends StandaloneTestBase {
     } finally {
       testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted dataset");
     }
-  }
-
-  @Test
-  public void testProcedure() throws Exception {
-    String originalApiVersion = cliConfig.getClientConfig().getApiVersion();
-    try {
-      cliConfig.getClientConfig().setApiVersion(Constants.Gateway.API_VERSION_2_TOKEN);
-      testCommandOutputContains(cli, "use namespace " + Constants.DEFAULT_NAMESPACE, "using namespace");
-
-      String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
-      testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
-      try {
-        testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-          + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
-      } finally {
-        testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
-        assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
-      }
-    } finally {
-      cliConfig.getClientConfig().setApiVersion(originalApiVersion);
-    }
-  }
-
-  @Test
-  public void testProcedureInNonDefaultNamespace() throws Exception {
-    testCommandOutputContains(cli, "create namespace foo", "Namespace 'foo' created successfully");
-    testCommandOutputContains(cli, "use namespace foo", "Now using namespace 'foo'");
-
-    String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
-
-    String expectedErrMsg = "Error: Procedure operations are only supported in the default namespace.";
-    testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "get procedure status " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "get procedure live " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "get procedure instances " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "set procedure instances " + qualifiedProcedureId + " 2", expectedErrMsg);
-    testCommandOutputContains(cli, "set procedure runtimeargs " + qualifiedProcedureId + " key=1", expectedErrMsg);
-    testCommandOutputContains(cli, "get procedure runtimeargs " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "get procedure logs " + qualifiedProcedureId, expectedErrMsg);
-    testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-      + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", expectedErrMsg);
-    testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, expectedErrMsg);
-
-    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
   }
 
   @Test

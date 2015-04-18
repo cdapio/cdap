@@ -24,6 +24,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Maps;
@@ -53,17 +54,19 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
   }
 
   private final StreamClient streamClient;
+  private final FilePathResolver resolver;
 
   @Inject
-  public LoadStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  public LoadStreamCommand(StreamClient streamClient, CLIConfig cliConfig, FilePathResolver resolver) {
     super(cliConfig);
     this.streamClient = streamClient;
+    this.resolver = resolver;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.STREAM.toString());
-    File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
+    File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
     String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
 
     if (!file.isFile()) {
@@ -77,7 +80,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     }
 
     streamClient.sendFile(streamId, contentType, file);
-    output.printf("Successfully send stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
   }
 
   @Override

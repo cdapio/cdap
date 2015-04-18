@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -30,6 +31,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,6 +45,13 @@ import java.util.concurrent.TimeUnit;
  * Tests v3 stream endpoints with default namespace
  */
 public class StreamHandlerTestV3 extends StreamHandlerTest {
+
+  @After
+  public void reset() throws Exception {
+    org.apache.http.HttpResponse httpResponse = GatewayFastTestsSuite.doDelete("/v3/unrecoverable/namespaces/default");
+    Assert.assertEquals(200, httpResponse.getStatusLine().getStatusCode());
+  }
+
   @Override
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
     return createURL(Constants.DEFAULT_NAMESPACE, path);

@@ -28,10 +28,14 @@ public class WorkerLoggingContext extends ApplicationLoggingContext {
 
   public static final String TAG_WORKER_ID = ".workerid";
 
-  public WorkerLoggingContext(final String namespaceId, final String appId, final String workerId,
-                              @Nullable String adapterId) {
-    super(namespaceId, appId, adapterId);
+  public WorkerLoggingContext(String namespaceId, String appId, String workerId,
+                              String runId, String instanceId, @Nullable String adapterId) {
+    super(namespaceId, appId, runId);
     setSystemTag(TAG_WORKER_ID, workerId);
+    setInstanceId(instanceId);
+    if (adapterId != null) {
+      setAdapterId(adapterId);
+    }
   }
 
   @Override

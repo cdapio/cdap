@@ -16,14 +16,11 @@
 
 package co.cask.cdap.logging.appender.file;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -33,9 +30,9 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.Guice;
@@ -51,8 +48,6 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -85,23 +80,13 @@ public class TestFileLogging {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-
     LogAppender appender = injector.getInstance(LogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
-    for (int i = 0; i < 60; ++i) {
-      Exception e1 = new Exception("Test Exception1");
-      Exception e2 = new Exception("Test Exception2", e1);
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
-
+    LoggingTester loggingTester = new LoggingTester();
+    loggingTester.generateLogs(logger, new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                 "RUN1", "INSTANCE1"));
     appender.stop();
   }
 
@@ -112,26 +97,25 @@ public class TestFileLogging {
 
   @Test
   public void testGetLogNext() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logReader = injector.getInstance(StandaloneLogReader.class);
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLogPrev() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logReader = injector.getInstance(StandaloneLogReader.class);
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLog() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
+    // LogReader.getLog is tested in LogSaverTest for distributed mode
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 60, Filter.EMPTY_FILTER,
                        logCallback1);
@@ -188,6 +172,11 @@ public class TestFileLogging {
     Assert.assertEquals(allEvents.get(58).getLoggingEvent().getFormattedMessage(),
                         events.get(17).getLoggingEvent().getFormattedMessage());
 
+    // Try with null run id, should get all logs for FLOW_1
+    LoggingContext loggingContext1 = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE1");
+    LoggingTester.LogCallback logCallback7 = new LoggingTester.LogCallback();
+    logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback7);
+    events = logCallback7.getEvents();
+    Assert.assertEquals(100, events.size());
   }
-
 }

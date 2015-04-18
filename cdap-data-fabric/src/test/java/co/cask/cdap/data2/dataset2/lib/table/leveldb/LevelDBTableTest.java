@@ -65,7 +65,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   @Override
   protected LevelDBTable getTable(DatasetContext datasetContext, String name,
                                   ConflictDetection level) throws IOException {
-    return new LevelDBTable(datasetContext, name, ConflictDetection.valueOf(level.name()), service, cConf);
+    return new LevelDBTable(datasetContext, name, ConflictDetection.valueOf(level.name()), service, cConf, null, null);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,9 +36,9 @@ public interface Containers {
   public void addContainer(Containers.ContainerInfo container);
 
   /**
-   * ContainerTypes - Flowlet, Procedure and Service
+   * ContainerTypes - System Service, Flowlet and Service
    */
-  enum ContainerType { FLOWLET, PROCEDURE, SERVICE }
+  enum ContainerType { SYSTEM_SERVICE, FLOWLET, SERVICE }
 
   /**
    * POJO holding information about container running in YARN.

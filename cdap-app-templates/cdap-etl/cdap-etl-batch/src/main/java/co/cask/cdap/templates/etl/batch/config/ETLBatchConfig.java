@@ -17,39 +17,22 @@
 package co.cask.cdap.templates.etl.batch.config;
 
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.base.Objects;
+import co.cask.cdap.templates.etl.common.ETLConfig;
 
 import java.util.List;
 
 /**
- * ETL Adapter Configuration.
+ * ETL Batch Adapter Configuration.
  */
-public final class ETLBatchConfig {
+public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
-  private final ETLStage source;
-  private final ETLStage sink;
-  private final List<ETLStage> transforms;
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    super(source, sink, transforms);
     this.schedule = schedule;
-    this.source = source;
-    this.sink = sink;
-    this.transforms = transforms;
   }
 
   public String getSchedule() {
     return schedule;
-  }
-
-  public ETLStage getSource() {
-    return source;
-  }
-
-  public ETLStage getSink() {
-    return sink;
-  }
-
-  public List<ETLStage> getTransforms() {
-    return transforms;
   }
 }
