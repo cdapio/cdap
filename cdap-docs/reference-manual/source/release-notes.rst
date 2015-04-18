@@ -30,7 +30,8 @@ Cask Data Application Platform Release Notes
 General
 -------
 
-- The :ref:`File DropZone <cdap-file-drop-zone>` and :ref:`File Tailer <cdap-file-tailer>`
+- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
+  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
   are no longer supported as of Release 3.0.
 
 

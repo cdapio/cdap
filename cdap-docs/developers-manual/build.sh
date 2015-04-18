@@ -78,8 +78,6 @@ function download_includes() {
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
   local ingest_url="${github_url}/cdap-ingest/${branch}"
 
-  download_readme_file_and_test ${includes_dir} ${ingest_url} b1ef01a18acd5408c7ac6578cd868a8f cdap-file-drop-zone
-  download_readme_file_and_test ${includes_dir} ${ingest_url} 360e88f2fe639857c86b49f8d987a5a4 cdap-file-tailer
   download_readme_file_and_test ${includes_dir} ${ingest_url} 0d56d354a14260806e150732792ba96d cdap-flume
   download_readme_file_and_test ${includes_dir} ${ingest_url} a3b24fee83ef104c075e58e1401517f2 cdap-stream-clients/java
   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
