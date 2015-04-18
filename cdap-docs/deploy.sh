@@ -62,8 +62,8 @@ function make_remote_dir () {
 
 function rsync_zip_file () {
   decho "rsync archive"
-  decho "rsync -a --human-readable --progress --rsync-path=\"sudo rsync\" ${5}/${4} \"${1}@${2}:${3}/.\""
-  rsync -a --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/."
+  decho "rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path=\"sudo rsync\" ${5}/${4} \"${1}@${2}:${3}/.\""
+  rsync -a -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/."
   decho ""
 }
 
