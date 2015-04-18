@@ -4,4 +4,6 @@
 
 .. highlight:: console
 
+.. _cdap-file-drop-zone:
+
 .. include:: ../../build/_includes/cdap-file-drop-zone.rst

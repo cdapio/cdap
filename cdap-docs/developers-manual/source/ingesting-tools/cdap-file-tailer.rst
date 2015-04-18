@@ -4,4 +4,6 @@
 
 .. highlight:: console
 
+.. _cdap-file-tailer:
+
 .. include:: ../../build/_includes/cdap-file-tailer.rst
