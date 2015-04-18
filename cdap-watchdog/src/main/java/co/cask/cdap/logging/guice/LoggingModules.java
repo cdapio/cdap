@@ -28,6 +28,7 @@ import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.save.LogMetricsPlugin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -75,6 +76,7 @@ public class LoggingModules extends RuntimeModule {
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
         handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
+        handlerBinder.addBinding().to(LogMetricsPlugin.class);
       }
     };
   }
