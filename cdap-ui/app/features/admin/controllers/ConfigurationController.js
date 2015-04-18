@@ -8,12 +8,7 @@ angular.module(PKG.name + '.feature.admin')
       _cdapPath: '/config/cdap'
     })
     .then(function (res) {
-      angular.forEach(res, function(v, k) {
-        $scope.config.push({
-          key: k,
-          value: v
-        });
-      });
+      $scope.config = res;
     });
 
   });
