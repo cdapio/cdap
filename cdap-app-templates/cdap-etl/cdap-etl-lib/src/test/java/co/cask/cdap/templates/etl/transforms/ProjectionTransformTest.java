@@ -48,6 +48,27 @@ public class ProjectionTransformTest {
     .build();
 
   @Test(expected = IllegalArgumentException.class)
+  public void testSameFieldMultipleConverts() throws Exception {
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
+    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("convert", "x:int,x:long"));
+    transform.initialize(transformContext);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSameFieldMultipleRenames() throws Exception {
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
+    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,x:y"));
+    transform.initialize(transformContext);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testMultipleRenamesToSameField() throws Exception {
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
+    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,y:z"));
+    transform.initialize(transformContext);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testInvalidSyntax() throws Exception {
     Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
     TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x,y"));

@@ -27,6 +27,8 @@ import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.KeyValueListParser;
 import com.google.common.base.Splitter;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -46,7 +48,7 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
   private static final String CONVERT = "convert";
   private static final Pattern fieldDelimiter = Pattern.compile("\\s*,\\s*");
   private Set<String> fieldsToDrop = Sets.newHashSet();
-  private Map<String, String> fieldsToRename = Maps.newHashMap();
+  private BiMap<String, String> fieldsToRename = HashBiMap.create();
   private Map<String, Schema.Type> fieldsToConvert = Maps.newHashMap();
   // cache input schema hash to output schema so we don't have to build it each time
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
@@ -93,7 +95,17 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
     String renameStr = properties.get(RENAME);
     if (renameStr != null) {
       for (KeyValue<String, String> keyVal : kvParser.parse(renameStr)) {
-        fieldsToRename.put(keyVal.getKey(), keyVal.getValue());
+        String key = keyVal.getKey();
+        String val = keyVal.getValue();
+        try {
+          String oldVal = fieldsToRename.put(key, val);
+          if (oldVal != null) {
+            throw new IllegalArgumentException(String.format("Cannot rename %s to both %s and %s.", key, oldVal, val));
+          }
+        } catch (IllegalArgumentException e) {
+          // purely so that we can give a more descriptive error message
+          throw new IllegalArgumentException(String.format("Cannot rename more than one field to %s.", val));
+        }
       }
     }
 
@@ -105,6 +117,9 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
         Schema.Type type = Schema.Type.valueOf(typeStr.toUpperCase());
         if (!type.isSimpleType() || type == Schema.Type.NULL) {
           throw new IllegalArgumentException("Only non-null simple types are supported.");
+        }
+        if (fieldsToConvert.containsKey(name)) {
+          throw new IllegalArgumentException(String.format("Cannot convert %s to multiple types.", name));
         }
         fieldsToConvert.put(name, type);
       }
