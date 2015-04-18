@@ -26,18 +26,18 @@ import java.util.Collection;
 // todo: methods should throw IOException instead of Exception
 public interface MetricStore {
   /**
-   * Adds {@link MetricValue} to the store.
-   * @param metricValue metric value to add.
-   * @throws Exception
-   */
-  void add(MetricValue metricValue) throws Exception;
-
-  /**
-   * Adds {@link MetricValue}s to the store.
+   * Adds {@link MetricValues} to the store.
    * @param metricValues metric values to add.
    * @throws Exception
    */
-  void add(Collection<? extends MetricValue> metricValues) throws Exception;
+  void add(MetricValues metricValues) throws Exception;
+
+  /**
+   * Adds {@link MetricValues}s to the store.
+   * @param metricValues metric values to add.
+   * @throws Exception
+   */
+  void add(Collection<? extends MetricValues> metricValues) throws Exception;
 
   /**
    * Queries metrics data.

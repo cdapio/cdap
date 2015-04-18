@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,51 +13,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import com.google.common.collect.ImmutableList;
-
-import java.util.Collection;
-import java.util.Map;
-
 /**
- * Carries the "raw" emitted metric data points: context, timestamp, collection<Measurement>
+ * Carries the "raw" emitted metric data point: metric name, type, and value
  */
 public class MetricValue {
-  private final Map<String, String> tags;
-  private final Collection<Measurement> metrics;
 
-  /**
-   * Timestamp in seconds.
-   */
-  private final long timestamp;
+  String name;
+  MetricType type;
+  long value;
 
-  public MetricValue(Map<String, String> tags, long timestamp, Collection<Measurement> metrics) {
-    this.tags = tags;
-    this.timestamp = timestamp;
-    this.metrics = metrics;
+  public MetricValue (String name, MetricType type, long value) {
+    this.name = name;
+    this.type = type;
+    this.value = value;
   }
 
-  public MetricValue(Map<String, String> tags, String name, long timestamp, long value, MetricType type) {
-    MeasureType measureType = type == MetricType.GAUGE ? MeasureType.GAUGE : MeasureType.COUNTER;
-    this.tags = tags;
-    this.timestamp = timestamp;
-    this.metrics = ImmutableList.of(new Measurement(name, measureType, value));
+  public String getName() {
+    return name;
   }
 
-  public Map<String, String> getTags() {
-    return tags;
+  public MetricType getType() {
+    return type;
   }
 
-  public Collection<Measurement> getMetrics() {
-    return metrics;
-  }
-
-  public long getTimestamp() {
-    return timestamp;
+  public long getValue() {
+    return value;
   }
 
 }

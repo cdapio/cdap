@@ -18,7 +18,7 @@ package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -632,12 +632,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     long start = System.currentTimeMillis() / 1000;
     long end = start + 3;
     Map<String, String> sliceBy = getFlowletContext("interspace", "WordCount1", "WordCounter", "run1", "splitter");
-    MetricValue value =
-      new MetricValue(sliceBy, "reads", start, 100, MetricType.COUNTER);
+    MetricValues value =
+      new MetricValues(sliceBy, "reads", start, 100, MetricType.COUNTER);
     metricStore.add(value);
 
     value =
-      new MetricValue(sliceBy, "reads", end, 400, MetricType.COUNTER);
+      new MetricValues(sliceBy, "reads", end, 400, MetricType.COUNTER);
     metricStore.add(value);
 
     verifyRangeQueryResult(
@@ -662,17 +662,17 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
     // 30 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
     // 1 minute
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
     // 10 minutes
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
     // 1 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
     // 10 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
 
     // seconds
     verifyRangeQueryResult(
@@ -959,15 +959,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
     // 30 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
     // 1 minute
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
     // 10 minutes
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
     // 1 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
 
     // count is one record
     verifyRangeQueryResult(

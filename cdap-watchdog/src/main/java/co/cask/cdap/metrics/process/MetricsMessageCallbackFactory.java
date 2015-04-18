@@ -18,7 +18,7 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -30,12 +30,12 @@ import com.google.inject.name.Named;
 import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**
- * A {@link MessageCallbackFactory} that creates MessageCallback for processing {@link MetricValue}s
- * with offset persists to {@link KafkaConsumerMetaTable}.
+ * A {@link MessageCallbackFactory} that creates MessageCallback for processing
+ * {@link co.cask.cdap.api.metrics.MetricValues} with offset persists to {@link KafkaConsumerMetaTable}.
  */
 public final class MetricsMessageCallbackFactory implements MessageCallbackFactory {
 
-  private final DatumReader<MetricValue> datumReader;
+  private final DatumReader<MetricValues> datumReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
   private final int persistThreshold;
@@ -46,8 +46,8 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
-      this.recordSchema = schemaGenerator.generate(MetricValue.class);
-      this.datumReader = readerFactory.create(TypeToken.of(MetricValue.class), recordSchema);
+      this.recordSchema = schemaGenerator.generate(MetricValues.class);
+      this.datumReader = readerFactory.create(TypeToken.of(MetricValues.class), recordSchema);
       this.metricStore = metricStore;
       this.persistThreshold = persistThreshold;
 

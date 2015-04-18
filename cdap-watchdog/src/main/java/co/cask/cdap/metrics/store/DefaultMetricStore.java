@@ -32,6 +32,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
@@ -195,20 +196,21 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public void add(MetricValue metricValue) throws Exception {
-    add(ImmutableList.of(metricValue));
+  public void add(MetricValues metricValues) throws Exception {
+    add(ImmutableList.of(metricValues));
   }
 
   @Override
-  public void add(Collection<? extends MetricValue> metricValues) throws Exception {
+  public void add(Collection<? extends MetricValues> metricValues) throws Exception {
     List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
-    for (MetricValue metricValue : metricValues) {
+    for (MetricValues metricValue : metricValues) {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
       List<Measurement> metrics = Lists.newArrayList();
       // todo improve this logic?
-      for (Measurement metric : metricValue.getMetrics()) {
+      for (MetricValue metric : metricValue.getMetrics()) {
         String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
-        metrics.add(new Measurement(metric, measureName));
+        MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
+        metrics.add(new Measurement(measureName, type, metric.getValue()));
       }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())

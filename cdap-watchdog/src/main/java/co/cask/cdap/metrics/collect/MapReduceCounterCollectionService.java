@@ -15,10 +15,9 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -30,7 +29,7 @@ import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService} that publish
- * {@link MetricValue} to MapReduce counters.
+ * {@link co.cask.cdap.api.metrics.MetricValues} to MapReduce counters.
  */
 @Singleton
 public final class MapReduceCounterCollectionService extends AggregatedMetricsCollectionService {
@@ -48,14 +47,14 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
     while (metrics.hasNext()) {
-      MetricValue record = metrics.next();
+      MetricValues record = metrics.next();
       publishMetric(record);
     }
   }
 
-  private void publishMetric(MetricValue record) {
+  private void publishMetric(MetricValues record) {
     // The format of the counters:
     // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
     // * counter name: metric name
@@ -66,9 +65,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       // escape dots with tilde
       counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue().replace(".", "~"));
     }
-    for (Measurement metric : record.getMetrics()) {
+    for (MetricValue metric : record.getMetrics()) {
       String counterName = getCounterName(metric.getName());
-      if (metric.getType() == MeasureType.COUNTER) {
+      if (metric.getType() == MetricType.COUNTER) {
         taskContext.getCounter(counterGroup.toString(), counterName).increment(metric.getValue());
       } else {
         taskContext.getCounter(counterGroup.toString(), counterName).setValue(metric.getValue());

@@ -16,7 +16,7 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.metrics.MetricsConstants;
 import com.google.common.base.Throwables;
@@ -51,9 +51,9 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
     while (metrics.hasNext()) {
-      MetricValue metric = metrics.next();
+      MetricValues metric = metrics.next();
       metricStore.add(metric);
     }
   }

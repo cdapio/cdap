@@ -17,6 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.test.SlowTests;
@@ -48,12 +49,12 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final String INSTANCE = "testInstance";
   private static final String METRIC = "metric";
 
-  private long getMetricValue(Collection<Measurement> metrics, String metricName) {
-    Iterator<Measurement> metricsItor = metrics.iterator();
+  private long getMetricValue(Collection<MetricValue> metrics, String metricName) {
+    Iterator<MetricValue> metricsItor = metrics.iterator();
     while (metricsItor.hasNext()) {
-      Measurement measurement = metricsItor.next();
-      if (measurement.getName().equals(metricName)) {
-        return measurement.getValue();
+      MetricValue metricValue = metricsItor.next();
+      if (metricValue.getName().equals(metricName)) {
+        return metricValue.getValue();
       }
     }
     return 0;
@@ -62,11 +63,11 @@ public class AggregatedMetricsCollectionServiceTest {
   @Category(SlowTests.class)
   @Test
   public void testPublish() throws InterruptedException {
-    final BlockingQueue<MetricValue> published = new LinkedBlockingQueue<MetricValue>();
+    final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<MetricValues>();
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(Iterator<MetricValue> metrics) {
+      protected void publish(Iterator<MetricValues> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -97,7 +98,7 @@ public class AggregatedMetricsCollectionServiceTest {
       service.getCollector(EMPTY_TAGS).increment(METRIC, 3);
       service.getCollector(EMPTY_TAGS).increment(METRIC, 4);
 
-      MetricValue record = published.poll(10, TimeUnit.SECONDS);
+      MetricValues record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
 
       Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, getMetricValue(record.getMetrics(), METRIC));
@@ -160,36 +161,36 @@ public class AggregatedMetricsCollectionServiceTest {
     }
   }
 
-  private void verifyCounterMetricsValue(MetricValue metricValue) {
-    Assert.assertNotNull(metricValue);
-    Map<String, String> tags = metricValue.getTags();
+  private void verifyCounterMetricsValue(MetricValues metricValues) {
+    Assert.assertNotNull(metricValues);
+    Map<String, String> tags = metricValues.getTags();
     if (tags.size() == 4) {
       // base collector
-      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, getMetricValue(metricValue.getMetrics(), METRIC));
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, getMetricValue(metricValues.getMetrics(), METRIC));
     } else if (tags.size() == 6) {
       // flowlet collector
-      Assert.assertEquals(15L, getMetricValue(metricValue.getMetrics(), METRIC));
+      Assert.assertEquals(15L, getMetricValue(metricValues.getMetrics(), METRIC));
     } else {
       Assert.fail("Unexpected number of tags while verifying counter metrics value - " + tags.size());
     }
   }
 
-  private void verifyGaugeMetricsValue(MetricValue metricValue) {
-    Assert.assertNotNull(metricValue);
-    Map<String, String> tags = metricValue.getTags();
+  private void verifyGaugeMetricsValue(MetricValues metricValues) {
+    Assert.assertNotNull(metricValues);
+    Map<String, String> tags = metricValues.getTags();
     if (tags.size() == 4) {
       // base collector
-      Assert.assertEquals(1L, getMetricValue(metricValue.getMetrics(), METRIC));
+      Assert.assertEquals(1L, getMetricValue(metricValues.getMetrics(), METRIC));
     } else if (tags.size() == 6) {
       // flowlet collector
-      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValue.getMetrics(), METRIC));
+      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValues.getMetrics(), METRIC));
     } else {
       Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
     }
   }
 
-  private void verifyMetricsValue(MetricValue metricValue, long expected) {
-    Assert.assertNotNull(metricValue);
-    Assert.assertEquals(expected, getMetricValue(metricValue.getMetrics(), METRIC));
+  private void verifyMetricsValue(MetricValues metricValues, long expected) {
+    Assert.assertNotNull(metricValues);
+    Assert.assertEquals(expected, getMetricValue(metricValues.getMetrics(), METRIC));
   }
 }

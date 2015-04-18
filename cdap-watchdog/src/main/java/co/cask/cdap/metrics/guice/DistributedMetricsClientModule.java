@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.io.DatumWriter;
@@ -58,10 +58,10 @@ public final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  public DatumWriter<MetricValue> providesDatumWriter(SchemaGenerator schemaGenerator,
+  public DatumWriter<MetricValues> providesDatumWriter(SchemaGenerator schemaGenerator,
                                                         DatumWriterFactory datumWriterFactory) {
     try {
-      TypeToken<MetricValue> metricRecordType = TypeToken.of(MetricValue.class);
+      TypeToken<MetricValues> metricRecordType = TypeToken.of(MetricValues.class);
       return datumWriterFactory.create(metricRecordType, schemaGenerator.generate(metricRecordType.getType()));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
