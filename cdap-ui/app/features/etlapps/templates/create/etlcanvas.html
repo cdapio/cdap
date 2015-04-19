@@ -1,61 +1,45 @@
 <div class="etlflowcontainer">
   <div class="row">
     <div class="col-xs-4">
-      <div class="sourceDropZone text-center"
+      <div class="wrapper"
            drop="handleSourceDrop"
            id="sourceDropZone"
            ng-click="editSourceProperties()"
            droppable>
         <div class="template">
-          <h4 ng-if="source.name === ''"
-              class="dropZoneEmptyMessage">
-             No Source Added
-          </h4>
-          <h4 ng-if="source.name.length > 0"
-              class="dropZoneEmptyMessage">
-            {{source.name}}
-          </h4>
+          <div>{{source.name}}</div>
         </div>
-        <div class="overlay">
-          <h4>Drop to Add Source</h4>
+        <div class="default">
+          <div>Drop to Add a Source</div>
         </div>
       </div>
     </div>
     <div class="col-xs-4">
-      <div class="transformDropZone text-center"
+      <div class="wrapper transform-wrapper"
             drop="handleTransformDrop"
             id="transformDropZone"
-            ng-click="editTransformProperties()"
             droppable>
-          <div class="template">
-            <h4 ng-if="transforms.length === 0"
-                class="dropZoneEmptyMessage"> No Transforms Added</h4>
-            <h4 class="dropZoneEmptyMessage"
-                ng-repeat="transform in transforms">
-                {{transform.name}}
-            </h4>
+        <div class="template transforms">
+          <div class="default">
+            <div>Drop To Add A Transforms</div>
           </div>
-          <div class="overlay">
-            <h4>Drop to Add Transform</h4>
+          <div ng-repeat="transform in transforms" ng-click="editTransformProperty(transform)">
+            {{transform.name}}
           </div>
+        </div>
       </div>
     </div>
     <div class="col-xs-4">
-      <div class="sinkDropZone text-center"
+      <div class="wrapper"
             drop="handleSinkDrop"
             id="sinkDropZone"
             ng-click="editSinkProperties()"
             droppable>
         <div class="template">
-          <h4 ng-if="sink.name === ''"
-              class="dropZoneEmptyMessage"> No Sinks Added</h4>
-          <h4 ng-if="sink.name.length > 0"
-              class="dropZoneEmptyMessage">
-            {{sink.name}}
-          </h4>
+          <div>{{sink.name}}</div>
         </div>
-        <div class="overlay">
-          <h4>Drop to Add Sink</h4>
+        <div class="default">
+          <div>Drag &amp; Drop to Add a Sink</div>
         </div>
       </div>
     </div>

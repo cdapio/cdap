@@ -1,5 +1,5 @@
 <div class="row">
-  
+
     <div class="panel panel-default">
       <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
         <span class="pull-left"> Metadata</span>
@@ -56,7 +56,7 @@
 
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
-        <span class=pull-left>Adapter Canvas</span>
+        <span class=pull-left>{{metadata.name}}</span>
         <button type="button"
                 name="button"
                 class="btn btn-success pull-right"
@@ -69,7 +69,7 @@
           <div ng-include="'/assets/features/etlapps/templates/create/plugins.html'">
           </div>
         </div>
-        <div class="col-lg-8 col-md-8 col-sm-12">
+        <div class="col-lg-8 col-md-8 col-sm-12" etl-canvas-template>
           <div ng-include="'/assets/features/etlapps/templates/create/etlcanvas.html'">
 
           </div>
