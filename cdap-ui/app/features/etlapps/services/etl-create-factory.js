@@ -67,21 +67,17 @@ angular.module(PKG.name + '.feature.etlapps')
       this.scope.loadingEtlSinkProps = etlSink || false;
     }
 
-    ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform) {
+    ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform, index) {
       if(!etlTransform) return;
       this.dataSrc.request({
         _cdapPath: '/templates/etl.' + this.scope.metadata.type + '/transforms/' + etlTransform
       })
         .then(function(res) {
           var obj = {};
-          var match = filterFilter(this.scope.transforms, {name: res.name});
-          if(match.length) {
-            angular.forEach(res.properties, function(property) {
-              obj[property.name] = '';
-            });
-            match[0].properties = obj;
-          }
-          this.scope.transforms[this.scope.transforms.indexOf(match[0])].properties = obj;
+          angular.forEach(res.properties, function(property) {
+            obj[property.name] = '';
+          });
+          this.scope.transforms[index].properties = obj;
         }.bind(this));
     }
 
