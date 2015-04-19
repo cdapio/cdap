@@ -18,18 +18,13 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.ResetFailureException;
-import co.cask.cdap.common.exception.ResetNotEnabledException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import javax.inject.Inject;
 
 /**
@@ -58,24 +53,5 @@ public class MetaClient {
   public Version getVersion() throws IOException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
-  }
-
-  public void resetUnrecoverably()
-    throws ResetFailureException, IOException, UnauthorizedException, ResetNotEnabledException {
-
-    // TODO in v2/ APIs, this only reset the default namespace. This should reset all namespaces [CDAP-2179]
-    URL url = config.resolveURL(String.format("unrecoverable/namespaces/default"));
-    HttpRequest request = HttpRequest.delete(url).build();
-
-    HttpResponse response = restClient.execute(request, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_BAD_REQUEST,
-                                               HttpURLConnection.HTTP_FORBIDDEN);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new UnauthorizedException();
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new ResetFailureException(response.getResponseMessage());
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
-      throw new ResetNotEnabledException();
-    }
   }
 }

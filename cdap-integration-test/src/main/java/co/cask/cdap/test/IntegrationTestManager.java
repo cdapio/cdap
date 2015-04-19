@@ -94,7 +94,7 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void clear() throws Exception {
     programClient.stopAll();
-    metaClient.resetUnrecoverably();
+    namespaceClient.deleteAll();
   }
 
   @Override
