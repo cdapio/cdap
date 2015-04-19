@@ -266,7 +266,7 @@ public class AdapterService extends AbstractIdleService {
    * @param adapterName name of the adapter to create
    * @param adapterConfig config for the adapter to create
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
-   * @throws IllegalArgumentException on other input errors.
+   * @throws IllegalArgumentException if the adapter config is invalid.
    */
   public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
     throws IllegalArgumentException, AdapterAlreadyExistsException {
@@ -298,7 +298,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws CannotBeDeletedException if the adapter is not stopped.
    */
   public void removeAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, CannotBeDeletedException {
+    throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
@@ -543,7 +543,8 @@ public class AdapterService extends AbstractIdleService {
   // datasets and streams. At the end it will write to the store with the adapter spec.
   private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
                                              ApplicationTemplateInfo applicationTemplateInfo,
-                                             ApplicationSpecification templateSpec, AdapterConfig adapterConfig) {
+                                             ApplicationSpecification templateSpec,
+                                             AdapterConfig adapterConfig) throws IllegalArgumentException {
 
     Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
@@ -553,18 +554,18 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-    try {
-      AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
-        adapterConfig, applicationTemplateInfo, templateSpec);
-      Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
-      if (!namespaceHomeLocation.exists()) {
-        String msg = String.format("Home directory %s for namespace %s not found",
-                                   namespaceHomeLocation.toURI().getPath(), namespace);
-        LOG.error(msg);
-        throw new FileNotFoundException(msg);
-      }
+    AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
+      adapterConfig, applicationTemplateInfo, templateSpec);
 
+    try {
       return manager.deploy(namespace, adapterName, deploymentInfo).get();
+    } catch (ExecutionException e) {
+      // error handling for manager could use some work...
+      Throwable cause = e.getCause();
+      if (cause instanceof IllegalArgumentException) {
+        throw (IllegalArgumentException) cause;
+      }
+      throw new RuntimeException(e);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

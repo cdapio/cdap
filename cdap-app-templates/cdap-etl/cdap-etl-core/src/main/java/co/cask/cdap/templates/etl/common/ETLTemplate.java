@@ -118,8 +118,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
   }
 
   @Override
-  public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer)
-    throws Exception {
+  public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer) throws Exception {
     ETLConfig etlConfig = (ETLConfig) config;
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();

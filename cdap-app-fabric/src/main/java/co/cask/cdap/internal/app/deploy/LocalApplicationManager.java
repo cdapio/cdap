@@ -111,7 +111,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    pipeline.setFinally(new CreateSchedulesStage(scheduler));
+    pipeline.addLast(new CreateSchedulesStage(scheduler));
     return pipeline.execute(input);
   }
 }
