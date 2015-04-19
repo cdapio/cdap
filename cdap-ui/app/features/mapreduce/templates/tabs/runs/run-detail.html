@@ -21,7 +21,7 @@
           <td> {{info.state || 'Not Available'}} </td>
           <td> {{info.startTime || 'Not Available' | date: 'medium' }} </td>
           <td ng-show="info.finishTime !== 0"> {{ (info.finishTime - info.startTime) | amDurationFormat}} </td>
-          <td ng-hide="info.finishTime !== 0"> N/A </td>
+          <td ng-hide="info.finishTime !== 0"> &mdash; </td>
         </tbody>
       </table>
     </div>

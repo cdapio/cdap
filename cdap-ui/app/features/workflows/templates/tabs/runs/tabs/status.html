@@ -11,7 +11,7 @@
     <div class="col-sm-3">
       <span> Duration </span>
       <div ng-show="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"></div>
-      <div ng-show="!duration"> N/A </div>
+      <div ng-show="!duration"> &mdash; </div>
     </div>
     <div class="col-sm-3 text-right">
       <div ng-show="status == 'RUNNING'"

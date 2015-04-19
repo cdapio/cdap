@@ -15,11 +15,11 @@
         <td> {{ (run.start * 1000) | date: 'medium'}}</td>
         <td>
           <span ng-show="run.end">{{ (run.end * 1000) | date: 'medium'}}</span>
-          <span ng-hide="run.end"> N/A </span>
+          <span ng-hide="run.end"> &mdash; </span>
           </td>
         <td>
           <span ng-show="run.end"> {{ (run.end - run.start) * 1000  | amDurationFormat}}</span>
-          <span ng-hide="run.end"> N/A </span>
+          <span ng-hide="run.end"> &mdash; </span>
         </td>
         <td> {{run.status}}</td>
       </tr>
