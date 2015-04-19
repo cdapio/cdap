@@ -20,7 +20,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -43,8 +42,6 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   private String programName;
   private Runnable programRunner;
   private SchedulableProgramType programType;
-  private WorkflowContext context;
-  private WorkflowToken token;
 
   public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
     this.name = name;
@@ -66,8 +63,6 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   @Override
   public void initialize(WorkflowContext context) throws Exception {
-    this.context = context;
-
     programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
     Preconditions.checkNotNull(programName, "No Program name provided.");
 
@@ -99,9 +94,5 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   @Override
   public void destroy() {
     // No-op
-  }
-
-  public WorkflowToken getToken() throws Exception {
-    return token;
   }
 }

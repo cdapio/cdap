@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -35,5 +36,19 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
     this.mapReduceCounters = mapReduceCounters;
+  }
+
+  /**
+   * Make a deep copy of the WorkflowToken. Currently only copies the MapReduce counters.
+   * @param token WorkflowToken to be copy
+   * @return copied WorkflowToken
+   */
+  public static WorkflowToken deepCopy(WorkflowToken token) {
+    BasicWorkflowToken copiedToken = new BasicWorkflowToken();
+    if (token.getMapReduceCounters() != null) {
+      Map<String, Map<String, Long>> copiedMap = new HashMap<String, Map<String, Long>>(token.getMapReduceCounters());
+      copiedToken.setMapReduceCounters(copiedMap);
+    }
+    return copiedToken;
   }
 }
