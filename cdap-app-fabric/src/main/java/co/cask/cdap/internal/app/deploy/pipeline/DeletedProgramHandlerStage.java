@@ -72,6 +72,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
                                                                                     appSpec.getSpecification());
 
+    // TODO: this should also delete logs and run records (or not?), and do it for all prohgram types [CDAP-2187]
+
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
