@@ -62,7 +62,7 @@ public class ETLWorker extends AbstractWorker {
   private List<TransformStage> transforms;
   private TransformExecutor transformExecutor;
   private DefaultEmitter defaultEmitter;
-  private String matchKey;
+  private String stateStoreKey;
 
   private volatile boolean running;
 
@@ -85,7 +85,7 @@ public class ETLWorker extends AbstractWorker {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Realtime.UNIQUE_ID));
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
-    matchKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
+    stateStoreKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
     transforms = Lists.newArrayList();
     final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
@@ -101,7 +101,7 @@ public class ETLWorker extends AbstractWorker {
           while (rows.hasNext()) {
             KeyValue<byte[], byte[]> row = rows.next();
             String rowKey = Bytes.toString(row.getKey());
-            if (!rowKey.equals(matchKey)) {
+            if (!rowKey.equals(stateStoreKey)) {
               stateTable.delete(row.getKey());
             }
           }
@@ -186,7 +186,7 @@ public class ETLWorker extends AbstractWorker {
         @Override
         public void run(DatasetContext context) throws Exception {
           KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(matchKey);
+          byte[] stateBytes = stateTable.read(stateStoreKey);
           if (stateBytes != null) {
             SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
             sourceState.setState(state.getState());
@@ -206,7 +206,7 @@ public class ETLWorker extends AbstractWorker {
               //Persist sourceState
               KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
               if (nextState != null) {
-                stateTable.write(matchKey, GSON.toJson(nextState));
+                stateTable.write(stateStoreKey, GSON.toJson(nextState));
               }
             }
           });
