@@ -39,6 +39,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
+import com.google.gson.JsonObject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -139,7 +140,16 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
     // Delete Adapter
     adapterService.removeAdapter(NAMESPACE, adapter1);
+
+    // check the template still exists
+    List<JsonObject> deployedApps = getAppList(NAMESPACE.getId());
+    Assert.assertEquals(1, deployedApps.size());
+
     adapterService.removeAdapter(NAMESPACE, adapter2);
+
+    // check if the template got deleted when we deleted the second and last adapter of that type
+    deployedApps = getAppList(NAMESPACE.getId());
+    Assert.assertEquals(0, deployedApps.size());
 
     try {
       adapterService.getAdapter(NAMESPACE, adapter1);
