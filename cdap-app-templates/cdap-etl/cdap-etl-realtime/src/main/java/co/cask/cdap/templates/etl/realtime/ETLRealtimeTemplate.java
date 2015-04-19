@@ -52,6 +52,8 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
     super.configureAdapter(adapterName, etlConfig, configurer);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setInstances(etlConfig.getInstances());
+    // Generate unique id for this adapter creation.
+    configurer.addRuntimeArgument(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
   }
 
   @Override

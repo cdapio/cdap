@@ -44,4 +44,11 @@ public final class Constants {
   public static final class Transform {
     public static final String SPECIFICATIONS = "templates.etl.adapter.transform.specifications";
   }
+
+  /**
+   * Constants related to Realtime Adapter.
+   */
+  public static final class Realtime {
+    public static final String UNIQUE_ID = "uniqueid";
+  }
 }
