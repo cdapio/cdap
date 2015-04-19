@@ -19,6 +19,8 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
@@ -31,7 +33,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -65,6 +66,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -72,10 +74,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -117,12 +115,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final String appFabricDir;
   private final ProgramLifecycleService lifecycleService;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final PropertiesResolver propertiesResolver;
   private final AdapterService adapterService;
+  private final MetricStore metricStore;
   private MRJobClient mrJobClient;
   private MapReduceMetricsInfo mapReduceMetricsInfo;
 
@@ -193,18 +191,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
                                      CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      ProgramLifecycleService lifecycleService,
-                                     DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                     QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
                                      MapReduceMetricsInfo mapReduceMetricsInfo,
-                                     PropertiesResolver propertiesResolver, AdapterService adapterService) {
+                                     PropertiesResolver propertiesResolver, AdapterService adapterService,
+                                     MetricStore metricStore) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
     this.lifecycleService = lifecycleService;
+    this.metricStore = metricStore;
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
-    this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
@@ -974,7 +973,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
         // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-        deleteProcessMetricsForFlow(appId, flowId);
+        deleteProcessMetricsForFlow(namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1739,37 +1738,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   // deletes the process metrics for a flow
-  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(3L, TimeUnit.SECONDS);
+  private void deleteProcessMetricsForFlow(String namespaceId,
+                                           String application,
+                                           String flow) throws Exception {
 
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
-    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
-    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.API_VERSION_3,
-                               application, flow);
-
-    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) timeout)
-      .build();
-
-    try {
-      client.delete().get(timeout, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
+    long endTs = System.currentTimeMillis() / 1000;
+    String metricNamePrefix = "process";
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
+    tags.put(Constants.Metrics.Tag.APP, application);
+    tags.put(Constants.Metrics.Tag.FLOW, flow);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, metricNamePrefix, tags);
+    metricStore.delete(deleteQuery);
   }
 }

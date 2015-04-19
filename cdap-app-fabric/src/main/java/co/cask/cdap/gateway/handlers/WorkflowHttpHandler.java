@@ -79,7 +79,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              AdapterService adapterService) {
     super(authenticator, store, configuration, runtimeService, lifecycleService, discoveryServiceClient,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient,
-          mapReduceMetricsInfo, resolver, adapterService);
+          mapReduceMetricsInfo, resolver, adapterService, metricStore);
     this.workflowClient = workflowClient;
   }
 
