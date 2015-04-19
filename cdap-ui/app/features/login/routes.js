@@ -78,13 +78,13 @@ angular.module(PKG.name+'.feature.login')
             eventType: 'danger',
             title: 'Authentication required',
             message: 'This page needs user to be authenticated. Please login to this page.'
-          },
-          {
-            event: MYAUTH_EVENT.loginSuccess,
-            eventType: 'success',
-            title: 'Login Success!',
-            message: 'You have been authenticated!'
           }
+          // {
+          //   event: MYAUTH_EVENT.loginSuccess,
+          //   eventType: 'success',
+          //   title: 'Login Success!',
+          //   message: 'You have been authenticated!'
+          // }
         ],
         function (v) {
           $rootScope.$on(v.event, function (event) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,6 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
- * @see co.cask.cdap.api.procedure.Procedure Procedure
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

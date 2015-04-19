@@ -16,14 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -35,77 +34,25 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A {@link ClassLoader} for YARN application isolation. Classes from
  * the application JARs are loaded in preference to the parent loader.
  */
-public class MapReduceClassLoader extends ClassLoader {
+public class MapReduceClassLoader extends CombineClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceClassLoader.class);
-
-  private final List<ClassLoader> delegates;
 
   public MapReduceClassLoader() {
     this(createProgramClassLoader());
   }
 
   public MapReduceClassLoader(ClassLoader programClassLoader) {
-    super(null);
-    delegates = ImmutableList.of(programClassLoader, MapReduceClassLoader.class.getClassLoader());
+    super(null, ImmutableList.of(programClassLoader, MapReduceClassLoader.class.getClassLoader()));
   }
 
   public ClassLoader getProgramClassLoader() {
-    return delegates.get(0);
-  }
-
-  @Override
-  protected Class<?> findClass(String name) throws ClassNotFoundException {
-    for (ClassLoader classLoader : delegates) {
-      try {
-        return classLoader.loadClass(name);
-      } catch (ClassNotFoundException e) {
-        LOG.trace("Class {} not found in ClassLoader {}", name, classLoader);
-      }
-    }
-
-    throw new ClassNotFoundException("Class not found in all delegated ClassLoaders: " + name);
-  }
-
-  @Override
-  protected URL findResource(String name) {
-    for (ClassLoader classLoader : delegates) {
-      URL url = classLoader.getResource(name);
-      if (url != null) {
-        return url;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  protected Enumeration<URL> findResources(String name) throws IOException {
-    Set<URL> urls = Sets.newHashSet();
-    for (ClassLoader classLoader : delegates) {
-      Iterators.addAll(urls, Iterators.forEnumeration(classLoader.getResources(name)));
-    }
-    return Iterators.asEnumeration(urls.iterator());
-  }
-
-  @Override
-  public InputStream getResourceAsStream(String name) {
-    for (ClassLoader classLoader : delegates) {
-      InputStream is = classLoader.getResourceAsStream(name);
-      if (is != null) {
-        return is;
-      }
-    }
-    return null;
+    return getDelegates().get(0);
   }
 
   /**

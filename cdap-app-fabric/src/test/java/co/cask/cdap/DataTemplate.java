@@ -16,6 +16,8 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -41,6 +43,12 @@ import java.util.Map;
  */
 public class DataTemplate extends ApplicationTemplate<DataTemplate.Config> {
   public static final String NAME = "dsTemplate";
+
+  @Override
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName(NAME);
+    configurer.addWorker(new DWorker());
+  }
 
   public static class Config {
     private final String streamName;
@@ -69,12 +77,6 @@ public class DataTemplate extends ApplicationTemplate<DataTemplate.Config> {
     public int hashCode() {
       return Objects.hashCode(streamName, datasetName);
     }
-  }
-
-  @Override
-  public void configure() {
-    setName(NAME);
-    addWorker(new DWorker());
   }
 
   @Override

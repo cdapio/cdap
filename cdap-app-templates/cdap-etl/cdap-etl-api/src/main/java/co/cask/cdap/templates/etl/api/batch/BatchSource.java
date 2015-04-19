@@ -16,6 +16,8 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -26,47 +28,29 @@ import java.lang.reflect.Type;
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline.
  *
- * @param <KEY> Batch Input Key class
- * @param <VALUE> Batch Input Value class
+ * @param <KEY_IN> the type of input key from the Batch job
+ * @param <VAL_IN> the type of input value from the Batch job
+ * @param <OUT> the type of output for the source
  */
-public abstract class BatchSource<KEY, VALUE> {
+public abstract class BatchSource<KEY_IN, VAL_IN, OUT> implements EndPointStage {
 
-  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
-  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
+  private final Type outputType = new TypeToken<OUT>(getClass()) { }.getType();
 
   /**
-   * Get the Type of {@link KEY}.
+   * Get the Type of {@link OUT}.
    *
    * @return {@link Type}
    */
-  public final Type getKeyType() {
-    return keyType;
+  public final Type getOutputType() {
+    return outputType;
   }
 
-  /**
-   * Get the Type of {@link VALUE}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getValueType() {
-    return valueType;
-  }
-
-  /**
-   * Configure the Batch Source stage.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
+  @Override
   public void configure(StageConfigurer configurer) {
     // no-op
   }
 
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
+  @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
@@ -77,4 +61,26 @@ public abstract class BatchSource<KEY, VALUE> {
    * @param context {@link BatchSourceContext}
    */
   public abstract void prepareJob(BatchSourceContext context);
+
+  /**
+   * Initialize the source. This is called once each time the Hadoop Job runs, before any
+   * calls to {@link #emit} are made.
+   *
+   * @param stageConfig the configuration for the stage.
+   */
+  public void initialize(ETLStage stageConfig) {
+    // no-op
+  }
+
+  /**
+   * Emit values for the given key and value returned by the Hadoop Job prepared in {@link #prepareJob}.
+   * By default it assumes that the key is ignored and the value is emitted.
+   *
+   * @param key the key from the Hadoop Job
+   * @param val the value from the Hadoop Job
+   * @param emitter the emitter to use to emit values
+   */
+  public void emit(KEY_IN key, VAL_IN val, Emitter<OUT> emitter) {
+    emitter.emit((OUT) val);
+  }
 }

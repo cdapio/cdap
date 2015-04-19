@@ -22,10 +22,10 @@ import co.cask.cdap.templates.etl.api.Transform;
 
 /**
  * Simple Identity Transform for testing.
- * @param <A> any type
- * @param <B> any type
+ *
+ * @param <T> any type
  */
-public class IdentityTransform<A, B> extends Transform<A, B, A, B> {
+public class IdentityTransform<T> extends Transform<T, T> {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -33,7 +33,7 @@ public class IdentityTransform<A, B> extends Transform<A, B, A, B> {
   }
 
   @Override
-  public void transform(A keyIn, B valueIn, Emitter<A, B> emitter) {
-    emitter.emit(keyIn, valueIn);
+  public void transform(T input, Emitter<T> emitter) {
+    emitter.emit(input);
   }
 }

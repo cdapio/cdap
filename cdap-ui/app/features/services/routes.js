@@ -22,6 +22,7 @@ angular.module(PKG.name + '.feature.services')
       })
       .state('services.detail', {
         url: '/:programId',
+        controller: 'ServicesDetailController',
         templateUrl: '/assets/features/services/templates/detail.html',
         onEnter: function($state, $timeout) {
 
@@ -42,7 +43,7 @@ angular.module(PKG.name + '.feature.services')
           templateUrl: '/assets/features/services/templates/tabs/status.html',
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}} / Status'
+            label: '{{$state.params.programId}}'
           }
         })
           .state('services.detail.status.makerequest', {

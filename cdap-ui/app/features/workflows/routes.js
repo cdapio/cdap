@@ -23,22 +23,28 @@ angular.module(PKG.name + '.feature.workflows')
             label: 'Workflows',
             skip: true
           },
+          resolve : {
+            rRuns: function(MyDataSource, $stateParams, $q) {
+              var defer = $q.defer();
+              var dataSrc = new MyDataSource();
+              // Using _cdapPath here as $state.params is not updated with
+              // runid param when the request goes out
+              // (timing issue with re-direct from login state).
+              dataSrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace +
+                           '/apps/' + $stateParams.appId +
+                           '/workflows/' + $stateParams.programId +
+                           '/runs'
+              })
+                .then(function(res) {
+                  defer.resolve(res);
+                });
+              return defer.promise;
+            }
+          },
           templateUrl: '/assets/features/workflows/templates/detail.html',
           controller: 'WorkflowsDetailController'
         })
-
-          .state('workflows.detail.status', {
-            url: '/status',
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'development'
-            },
-            ncyBreadcrumb: {
-              label: '{{$state.params.programId}}'
-            },
-            templateUrl: '/assets/features/workflows/templates/tabs/status.html',
-            controller: 'WorkflowsStatusController'
-          })
 
           .state('workflows.detail.runs', {
             url: '/runs',

@@ -103,11 +103,6 @@ public final class LoggingContextHelper {
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
         return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
-    } else if (tags.containsKey(ProcedureLoggingContext.TAG_PROCEDURE_ID)) {
-      return new ProcedureLoggingContext(namespaceId, applicationId,
-                                         tags.get(ProcedureLoggingContext.TAG_PROCEDURE_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(UserServiceLoggingContext.TAG_USERSERVICE_ID)) {
       if (!tags.containsKey(UserServiceLoggingContext.TAG_RUNNABLE_ID)) {
         return null;
@@ -156,8 +151,6 @@ public final class LoggingContextHelper {
     switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
-      case PROCEDURE:
-        return new ProcedureLoggingContext(namespaceId, applicationId, entityId, runId, null);
       case MAPREDUCE:
         return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
       case SPARK:
@@ -218,8 +211,6 @@ public final class LoggingContextHelper {
     final String tagName;
     if (loggingContext instanceof FlowletLoggingContext) {
       tagName = FlowletLoggingContext.TAG_FLOW_ID;
-    } else if (loggingContext instanceof ProcedureLoggingContext) {
-      tagName = ProcedureLoggingContext.TAG_PROCEDURE_ID;
     } else if (loggingContext instanceof MapReduceLoggingContext) {
       tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
     } else if (loggingContext instanceof SparkLoggingContext) {

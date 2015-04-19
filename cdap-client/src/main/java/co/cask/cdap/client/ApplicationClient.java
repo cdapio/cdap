@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.client.util.VersionMigrationUtils;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
@@ -203,7 +202,7 @@ public class ApplicationClient {
     Preconditions.checkArgument(programType.isListable());
 
     String path = programType.getCategoryName();
-    URL url = VersionMigrationUtils.resolveURL(config, programType, path);
+    URL url = config.resolveNamespacedURLV3(path);
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
@@ -223,7 +222,7 @@ public class ApplicationClient {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
-      if (programType.isListable() && VersionMigrationUtils.isProgramSupported(config, programType)) {
+      if (programType.isListable()) {
         List<ProgramRecord> programRecords = Lists.newArrayList();
         programRecords.addAll(listAllPrograms(programType));
         allPrograms.put(programType, programRecords);

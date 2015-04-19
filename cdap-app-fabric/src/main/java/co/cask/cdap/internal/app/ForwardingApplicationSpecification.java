@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -64,15 +63,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, FlowSpecification> getFlows() {
     return delegate.getFlows();
-  }
-
-  /*
-  * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  @Override
-  public Map<String, ProcedureSpecification> getProcedures() {
-    return delegate.getProcedures();
   }
 
   @Override

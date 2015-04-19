@@ -24,8 +24,8 @@ import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.standalone.StandaloneLogAppender;
 import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.logging.save.LogMetricsPlugin;
@@ -50,7 +50,7 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
+        bind(LogReader.class).to(FileLogReader.class);
         bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
@@ -64,7 +64,7 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
+        bind(LogReader.class).to(FileLogReader.class);
         bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
@@ -88,8 +88,9 @@ public class LoggingModules extends RuntimeModule {
     };
   }
 
+
   /**
-   * Provider for Async log appender and plugins to be used in singlenode.
+   * Provider for Async log appender and plugins to be used in standalone.
    */
   public static class LogAppenderProvider implements Provider<LogAppender> {
     private final LogAppender fileLogAppender;

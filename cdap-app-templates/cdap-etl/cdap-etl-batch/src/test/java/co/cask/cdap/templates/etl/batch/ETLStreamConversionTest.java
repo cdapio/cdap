@@ -25,7 +25,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
-import co.cask.cdap.templates.etl.transforms.GenericTypeToAvroKeyTransform;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.ApplicationManager;
@@ -123,14 +123,11 @@ public class ETLStreamConversionTest extends TestBase {
                                        ImmutableMap.of("format.name", Formats.CSV, "schema", BODY_SCHEMA.toString()));
     ETLStage structuredRecordToGeneric = new ETLStage(StructuredRecordToGenericRecordTransform.class.getSimpleName(),
                                        ImmutableMap.<String, String>of());
-    ETLStage genericToAvro = new ETLStage(GenericTypeToAvroKeyTransform.class.getSimpleName(),
-                                       ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getSimpleName(),
                                  ImmutableMap.of("schema", EVENT_SCHEMA.toString(), "name", fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(streamToStructuredRecord);
     transformList.add(structuredRecordToGeneric);
-    transformList.add(genericToAvro);
     return new ETLBatchConfig("", source, sink, transformList);
   }
 

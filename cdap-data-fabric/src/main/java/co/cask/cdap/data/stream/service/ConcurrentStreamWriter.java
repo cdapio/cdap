@@ -279,7 +279,16 @@ public final class ConcurrentStreamWriter implements Closeable {
     @Override
     public void generationChanged(Id.Stream streamId, int generation) {
       LOG.debug("Generation for stream '{}' changed to {} for stream writer", streamId, generation);
+      closeEventQueue(streamId);
+    }
 
+    @Override
+    public void deleted(Id.Stream streamId) {
+      LOG.debug("Properties deleted for stream '{}' for stream writer", streamId);
+      closeEventQueue(streamId);
+    }
+
+    private void closeEventQueue(Id.Stream streamId) {
       EventQueue eventQueue = eventQueues.remove(streamId);
       if (eventQueue != null) {
         try {
@@ -288,11 +297,6 @@ public final class ConcurrentStreamWriter implements Closeable {
           LOG.warn("Failed to close writer.", e);
         }
       }
-    }
-
-    @Override
-    public void generationDeleted(Id.Stream streamId) {
-      LOG.debug("Generation for stream '{}' deleted for stream writer", streamId);
     }
 
     /**

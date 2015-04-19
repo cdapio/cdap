@@ -338,9 +338,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         case FLOW:
           stopProgramIfRunning(programId, type);
           break;
-        case PROCEDURE:
-          stopProgramIfRunning(programId, type);
-          break;
         case WORKFLOW:
           scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
           break;
@@ -515,7 +512,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationSpecification appSpec = store.getApplication(appId);
     return Iterables.concat(appSpec.getFlows().values(),
                             appSpec.getMapReduce().values(),
-                            appSpec.getProcedures().values(),
                             appSpec.getServices().values(),
                             appSpec.getSpark().values(),
                             appSpec.getWorkers().values(),
@@ -580,10 +576,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getProcedures().values()) {
-      programs.add(new ProgramRecord(ProgramType.PROCEDURE, spec.getName(),
                                      programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {

@@ -19,17 +19,19 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
-import co.cask.cdap.templates.etl.batch.sources.BatchReadableSource;
+import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
@@ -66,9 +68,8 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage(BatchReadableSource.class.getSimpleName(),
-                                   ImmutableMap.of("name", "table1", "type", KeyValueTable.class.getName()));
-    ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
+    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of("name", "table1"));
+    ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
     ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
@@ -189,10 +190,10 @@ public class ETLMapReduceTest extends TestBase {
   }
 
   private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
-    for (Map.Entry<String, ImmutablePair<String, DatasetProperties>> entry :
+    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
       configurer.getDatasetInstances().entrySet()) {
-      String typeName = entry.getValue().getFirst();
-      DatasetProperties properties = entry.getValue().getSecond();
+      String typeName = entry.getValue().getKey();
+      DatasetProperties properties = entry.getValue().getValue();
       String instanceName = entry.getKey();
       addDatasetInstance(typeName, instanceName, properties);
     }

@@ -76,20 +76,6 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
   }
 
-  protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getProcedureInstances(appId, procedureId);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
-  }
-
   protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
                                         int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {

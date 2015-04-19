@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import co.cask.cdap.logging.filter.Filter;
  */
 public interface LogReader {
   /**
-   * Read log events of a Flow, Procedure or Map Reduce program after a given offset.
+   * Read log events of a Flow or Map Reduce program after a given offset.
    *
    * @param loggingContext context to look up log events.
    * @param fromOffset offset after which to start reading.
@@ -37,7 +37,7 @@ public interface LogReader {
                        Callback callback);
 
   /**
-   * Read log events of a Flow, Procedure or Map Reduce program before a given offset.
+   * Read log events of a Flow or Map Reduce program before a given offset.
    * @param loggingContext context to look up log events.
    * @param fromOffset offset before which to start reading.
    *                   Use {@link LogOffset#LATEST_OFFSET} to get the latest log events.
@@ -49,7 +49,7 @@ public interface LogReader {
                        Callback callback);
 
   /**
-   * Returns log events of a Flow, Procedure or Map between given times.
+   * Returns log events of a Flow or Map between given times.
    * @param loggingContext context to look up log events.
    * @param fromTimeMs start time.
    * @param toTimeMs end time.
@@ -58,9 +58,4 @@ public interface LogReader {
    */
   void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                    Callback callback);
-
-  /**
-   * Releases any resources associated with the reader.
-   */
-  void close();
 }
