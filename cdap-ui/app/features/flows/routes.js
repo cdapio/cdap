@@ -63,10 +63,7 @@ angular.module(PKG.name + '.feature.flows')
             label: '{{$state.params.runid}}'
           }
         })
-          .state('flows.detail.runs.run.log', {
-            url:'/log',
-            templateUrl:'/assets/features/flows/templates/tabs/runs/tabs/log.html'
-          })
+
 
       .state('flows.detail.history', {
         url: '/history',
