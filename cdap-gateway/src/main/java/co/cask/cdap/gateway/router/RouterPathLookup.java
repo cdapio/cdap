@@ -81,7 +81,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return Constants.Service.METRICS;
-    } else if ((uriParts.length >= 4) && uriParts[3].equals("streams")) {
+    } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
       //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
       //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
       // GET /v3/namespaces/<namespace>/streams/<stream-id>/flows should go to AppFabricHttp
