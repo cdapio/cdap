@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-query:
 
 ===========================================================
 Query HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 This interface supports submitting SQL queries over Datasets. Queries are
 processed asynchronously; to obtain query results, perform these steps:

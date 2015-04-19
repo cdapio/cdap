@@ -3,14 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. highlight:: console
+
 .. _http-restful-api-namespace:
 .. _http-restful-api-v3-namespace:
 
 ===========================================================
 Namespace HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 Use the CDAP Namespace HTTP API to create, list or delete namespaces in the CDAP instance.
 

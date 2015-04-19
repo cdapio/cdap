@@ -28,6 +28,7 @@ CDAP HTTP RESTful API v3
     Metrics <metrics>
     Monitor <monitor>
     Transactions <transactions>
+    Single Page <single-page>
     
 
 .. highlight:: console
@@ -54,3 +55,5 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
 - :doc:`Transactions: <transactions>` interacting with the Transaction Service
+
+The :doc:`Single Page <single-page>` is a listing of all the APIs together on a single page.

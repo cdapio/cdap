@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+
+.. highlight:: console
+
 .. _http-restful-api-dataset:
 
 ===========================================================
 Dataset HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 The Dataset API allows you to interact with Datasets through HTTP. You can list, create,
 delete, and truncate Datasets. For details, see the 
