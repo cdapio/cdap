@@ -62,7 +62,7 @@ Aggregator.prototype.startPolling = function (resource) {
   // WARN: This assumes that the browser side ids are unique for a websocket session.
   // This check is needed for Safari.
   if(this.polledResources[resource.id]) {
-    console.log("Resource id " + resource.id + " already registered.");
+    // console.log("Resource id " + resource.id + " already registered.");
     return;
   }
   resource.interval = resource.interval || POLL_INTERVAL;
