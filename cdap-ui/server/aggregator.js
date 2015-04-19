@@ -82,8 +82,8 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
     // Don't reschedule another iteration if the resource has been stopped
     return;
   }
-  console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
-      ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
+  // console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
+  //    ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
   resource.timerId = setTimeout(_.bind(doPoll, this, resource), resource.interval);
 };
 
