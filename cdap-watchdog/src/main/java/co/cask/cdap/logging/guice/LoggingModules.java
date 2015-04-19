@@ -24,10 +24,11 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.save.LogMetricsPlugin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -44,7 +45,7 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
+        bind(LogReader.class).to(FileLogReader.class);
         bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
           .to(FileLogAppender.class).in(Scopes.SINGLETON);
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
@@ -57,7 +58,7 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
+        bind(LogReader.class).to(FileLogReader.class);
         bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
           .to(FileLogAppender.class).in(Scopes.SINGLETON);
         bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
@@ -75,6 +76,7 @@ public class LoggingModules extends RuntimeModule {
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
         handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
+        handlerBinder.addBinding().to(LogMetricsPlugin.class);
       }
     };
   }

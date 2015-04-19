@@ -58,9 +58,4 @@ public interface LogReader {
    */
   void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                    Callback callback);
-
-  /**
-   * Releases any resources associated with the reader.
-   */
-  void close();
 }

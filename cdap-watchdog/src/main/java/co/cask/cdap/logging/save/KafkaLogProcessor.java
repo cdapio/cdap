@@ -44,4 +44,14 @@ public interface KafkaLogProcessor {
    */
   public void stop();
 
+
+  /**
+   * Get the checkpoint offset for a given partition. This will be used to figure out the lowest offset to read
+   * from for any given partition across multiple plugins. If the plugin doesn't care about check pointing offset
+   * the implementations can just return -1;
+   *
+   * @param partition partition number in kafka
+   * @return checkpoint offset
+   */
+ public long getCheckPoint(int partition);
 }

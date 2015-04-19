@@ -41,23 +41,39 @@ body.state-overview {
         }
         img { max-width: 300px; }
         .epoch svg { max-height: 75px; }
-        p {
-          margin: 0;
-        }
+        p { margin: 0; }
       }
     }
   }
   &.theme-cdap {
     .panel-message {
+      position: relative;
+      .btn-close {
+        position: absolute;
+        right: 10px;
+        z-index: 10;
+      }
       p { color: @cdap-bluegray; }
-      .panel-heading {
+      h2 {
+        font-weight: 500;
+        padding-bottom: 20px;
+      }
+      h3 { margin: 5px auto; }
+      .col-xs-12.col-sm-3:first-child > div { padding-left: 30px; }
+      .panel-heading { padding: 0; }
+      .panel-body {
+        padding: 0;
+        p:first-child { text-align: left; }
+        img { max-width: 120px; }
       }
     }
     section {
       color: @cdap-header;
       &.cdap-health {
         color: @cdap-bluegray;
-        .box-shadow(0 8px 6px -6px @cdap-darkness);
+        padding: 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+        h2 { font-size: 24px; padding-left: 30px; }
         svg {
           + canvas {
             background-color: #E8E9EE;
@@ -70,8 +86,13 @@ body.state-overview {
         }
       }
       &.data-apps {
-        h3 {
-          font-weight: 600;
+        h3 { font-weight: 600; }
+        .col-xs-12.col-sm-3 {
+          p {
+            font-weight: bold;
+            line-height: 32px;
+            margin-bottom: 0;
+          }
         }
         .col-xs-12.col-md-6 {
           @media (min-width: @screen-sm-min) {
@@ -86,14 +107,12 @@ body.state-overview {
         .list-group {
           background-color: white;
           border: 1px solid lightgray;
-          margin-top: 20px;
+          margin-top: 10px;
           padding: 10px;
           .border-radius(@border-radius-base);
 
           .title-type-image {
-            span {
-              vertical-align: middle;
-            }
+            span { vertical-align: middle; }
           }
         }
         .list-group-item {
@@ -113,8 +132,13 @@ body.state-overview {
           p {
             color: white;
             margin-bottom: 0;
-            // &:last-child { font-size: 12px; }
+            font-size: 15px;
+            font-weight: 700;
           }
+        }
+        my-file-select button {
+          .border-radius(0 4px 4px 0);
+          margin-left: -1px;
         }
       }
     }
