@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.DataTemplate;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
+import co.cask.cdap.ExtendedBatchTemplate;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -39,6 +40,8 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -76,6 +79,14 @@ public class AdapterServiceTests extends AppFabricTestBase {
     adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "badAdapter", adapterConfig);
   }
 
+  @Test
+  public void testMultilevelTemplate() throws Exception {
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("abcd", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("desc", ExtendedBatchTemplate.class.getSimpleName(),
+                                                    GSON.toJsonTree(config));
+    adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap", adapterConfig);
+  }
+
   @Test(expected = RuntimeException.class)
   public void testInvalidAdapter() throws Exception {
     Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
@@ -86,6 +97,52 @@ public class AdapterServiceTests extends AppFabricTestBase {
 
     // Create Adapter
     adapterService.createAdapter(namespace, adapterName, adapterConfig);
+  }
+
+  @Test
+  public void checkForbiddenOperations() throws Exception {
+    String adapterName = "myAdp";
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("some", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("desc", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
+
+    // Create an adapter to deploy template application.
+    adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
+    AdapterSpecification adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
+    Assert.assertNotNull(adapterSpec);
+
+    // We should not be able to delete the application since we have created an adapter.
+    Assert.assertFalse(adapterService.canDeleteApp(Id.Application.from(NAMESPACE, DummyBatchTemplate.NAME)));
+
+    // Remove adapter but this does not delete the template app automatically.
+    adapterService.removeAdapter(NAMESPACE, adapterName);
+
+    // We should be able to delete the application since no adapters exist.
+    Assert.assertTrue(adapterService.canDeleteApp(Id.Application.from(NAMESPACE, DummyBatchTemplate.NAME)));
+
+    // This request should fail since the application is a template application.
+    HttpResponse response = doPost(String.format("%s/namespaces/%s/apps/%s/workflows/%s/start",
+                                                 Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
+                                                 adapterConfig.getTemplate(), DummyBatchTemplate.AdapterWorkflow.NAME));
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getStatusLine().getStatusCode());
+
+    // But should be able to delete the application
+    response = doDelete(String.format("%s/namespaces/%s/apps/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
+                                      adapterConfig.getTemplate()));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+
+    String workerAdapter = "workAdapter";
+    DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
+    AdapterConfig adapterConfig1 = new AdapterConfig("desc1", DummyWorkerTemplate.NAME, GSON.toJsonTree(config1));
+    adapterService.createAdapter(NAMESPACE, workerAdapter, adapterConfig1);
+    adapterSpec = adapterService.getAdapter(NAMESPACE, workerAdapter);
+    Assert.assertNotNull(adapterSpec);
+
+    // This request should fail since the application is a template application.
+    response = doPost(String.format("%s/namespaces/%s/apps/%s/workers/%s/stop",
+                                    Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
+                                    adapterConfig1.getTemplate(), DummyWorkerTemplate.TWorker.NAME));
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getStatusLine().getStatusCode());
+    adapterService.removeAdapter(NAMESPACE, workerAdapter);
   }
 
   @Test
@@ -247,6 +304,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(BadTemplate.class);
     setupAdapter(DataTemplate.class);
     setupAdapter(DummyWorkerTemplate.class);
+    setupAdapter(ExtendedBatchTemplate.class);
   }
 
   private static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {

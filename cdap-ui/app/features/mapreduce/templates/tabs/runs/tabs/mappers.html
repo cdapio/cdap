@@ -20,7 +20,7 @@
           <td>{{ map.progress * 100 }}%</td>
           <td>
             <span ng-show="map.finishTime !== 0">{{ (map.finishTime - map.startTime)/1000 | amDurationFormat}}</span>
-            <span ng-show="map.finishTime === 0">N/A</span>
+            <span ng-show="map.finishTime === 0"> &mdash; </span>
           </td>
           <td>{{ map.counters.MAP_INPUT_RECORDS }}</td>
           <td>{{ map.counters.MAP_OUTPUT_RECORDS }}</td>

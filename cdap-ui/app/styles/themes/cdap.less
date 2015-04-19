@@ -10,14 +10,33 @@
 
 html {  }
 body.theme-cdap {
-  // font-family: @font-regular;
-  // font-size: 100%;
   visibility: visible;
 
   main.container {
     @cdap-tabs-height: 20px;
     @cdap-tabs-hpad: extract(@nav-link-padding, 1);
     @cdap-subnav-height: 300px;
+
+
+    h1, h2 {
+      small {
+        display: block;
+        padding: 5px 0 12px;
+        font-size: 16px;
+        color: @brand-primary;
+      }
+    }
+    h2 > span {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+    section.tab-pane h2 {
+        margin: 0;
+        font-weight: 400px;
+        font-size: 20px;
+    }
 
     /* we need to be able to calc tab height
         for .cdap-subnav-end to work */
@@ -41,11 +60,6 @@ body.theme-cdap {
       }
     }
     blockquote { border: 0; }
-    // h2 { color: @cdap-header; }
-    // h3 { color: @cdap-header; }
-    // h4 { color: @cdap-header; }
-    // h5 { color: @brand-primary;  }
-
   } // end main.container
 
   footer {
