@@ -73,6 +73,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     prepareSource(context, config.getSource());
     prepareSink(context, config.getSink());
 
+    if (config.getResources() != null) {
+      context.setMapperResources(config.getResources());
+    }
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }

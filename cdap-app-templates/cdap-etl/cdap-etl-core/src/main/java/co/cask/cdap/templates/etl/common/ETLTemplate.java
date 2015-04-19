@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.api.EndPointStage;
@@ -132,5 +133,10 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     configure(sink, sinkConfig, configurer, Constants.Sink.SPECIFICATION);
     configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
+
+    Resources resources = etlConfig.getResources();
+    if (resources != null) {
+      configurer.setResources(resources);
+    }
   }
 }
