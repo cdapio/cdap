@@ -1,7 +1,6 @@
 /*global require, module */
 
-var _ = require('lodash'),
-    request = require('request'),
+var request = require('request'),
     colors = require('colors/safe');
 
 /**
@@ -26,8 +25,8 @@ function Aggregator (conn) {
     return new Aggregator(conn);
   }
 
-  conn.on('data', _.bind(onSocketData, this));
-  conn.on('close', _.bind(onSocketClose, this));
+  conn.on('data', onSocketData.bind(this));
+  conn.on('close', onSocketClose.bind(this));
 
   this.connection = conn;
 
@@ -36,17 +35,6 @@ function Aggregator (conn) {
   // the resource id is unique within a websocket connection.
   this.polledResources = {};
 }
-
-/**
- * Logs the error message to console.
- */
-Aggregator.prototype.log = function () {
-  console.log(
-    colors.cyan('sock'),
-    colors.dim(this.connection.id),
-    _(arguments).join(' ')
-  );
-};
 
 /**
  * Checks if the 'id' received from the client is already registered -- This
@@ -67,7 +55,7 @@ Aggregator.prototype.startPolling = function (resource) {
   }
   resource.interval = resource.interval || POLL_INTERVAL;
   this.polledResources[resource.id] = resource;
-  _.bind(doPoll, this, resource)();
+  doPoll.bind(this, resource)();
 }
 
 /**
@@ -84,7 +72,7 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
   }
   // console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
   //    ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
-  resource.timerId = setTimeout(_.bind(doPoll, this, resource), resource.interval);
+  resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
 
 /**
@@ -129,7 +117,7 @@ function removeFromObj(obj, key) {
  */
 function doPoll (resource) {
     var that = this,
-        callBack = _.bind(this.scheduleAnotherIteration, that, resource);
+        callBack = this.scheduleAnotherIteration.bind(that, resource);
 
     request(resource, function(error, response, body) {
       if (error) {
@@ -157,7 +145,6 @@ function emitResponse (resource, error, response, body) {
   resource.timerId = undefined;
   resource.stop = undefined;
   if(error) { // still emit a warning
-    this.log(resource.url, error);
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -166,7 +153,6 @@ function emitResponse (resource, error, response, body) {
 
   } else {
 
-    // this.log('emit', resource.url);
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,
@@ -189,7 +175,7 @@ function onSocketData (message) {
         this.startPolling(r);
         break;
       case 'request':
-        request(r, _.bind(emitResponse, this, r));
+        request(r, emitResponse.bind(this, r));
         break;
       case 'poll-stop':
         this.stopPolling(r);
@@ -205,7 +191,6 @@ function onSocketData (message) {
  * @private onSocketClose
  */
 function onSocketClose () {
-  this.log('socket closed');
   this.stopPollingAll();
   this.polledResources = {};
 }
