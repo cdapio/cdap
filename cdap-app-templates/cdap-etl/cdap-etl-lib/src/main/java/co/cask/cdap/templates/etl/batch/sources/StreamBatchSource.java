@@ -45,7 +45,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, StreamEvent, St
     configurer.setName(StreamBatchSource.class.getSimpleName());
     configurer.setDescription("Use Stream as Source");
     configurer.addProperty(new Property("streamName", "Name of the stream to use as Source", true));
-    configurer.addProperty(new Property("frequency", "Frequency of the schedule", false));
+    configurer.addProperty(new Property("frequency", "Frequency of the schedule to be used to read from Source. " +
+      "Must be equal to the schedule of the adapter", true));
   }
 
   @Override
