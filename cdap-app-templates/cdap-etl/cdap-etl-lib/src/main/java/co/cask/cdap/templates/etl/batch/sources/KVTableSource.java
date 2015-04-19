@@ -41,7 +41,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], KeyValue<
   }
 
   @Override
-  public void emit(byte[] key, byte[] val, Emitter<KeyValue<byte[], byte[]>> emitter) {
-    emitter.emit(new KeyValue<byte[], byte[]>(key, val));
+  public void transform(KeyValue<byte[], byte[]> input, Emitter<KeyValue<byte[], byte[]>> emitter) throws Exception {
+    emitter.emit(input);
   }
 }

@@ -23,14 +23,21 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +45,10 @@ import javax.annotation.Nullable;
  * its dependency jars inside.
  */
 public class ProgramClassLoader extends DirectoryClassLoader {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramClassLoader.class);
+
+  private final Manifest manifest;
 
   /**
    * Constructs an instance that load classes from the given directory, without program type. See
@@ -81,6 +92,28 @@ public class ProgramClassLoader extends DirectoryClassLoader {
 
   private ProgramClassLoader(File dir, ClassLoader parent) {
     super(dir, parent, "lib");
+
+    // Load the Manifest from the unpacked directory (the directory should be unpacked from a JAR)
+    Manifest manifest = null;
+    try {
+      InputStream input = new FileInputStream(new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)));
+      try {
+        manifest = new Manifest(input);
+      } finally {
+        Closeables.closeQuietly(input);
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to load manifest from program.", e);
+    }
+    this.manifest = manifest;
+  }
+
+  /**
+   * Returns the {@link Manifest} in the program jar or {@code null} if there is no manifest available.
+   */
+  @Nullable
+  public Manifest getManifest() {
+    return manifest;
   }
 
   /**

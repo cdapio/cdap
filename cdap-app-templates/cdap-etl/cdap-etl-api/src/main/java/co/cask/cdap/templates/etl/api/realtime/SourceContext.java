@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 
 /**
  * Context passed to the Source stages.
@@ -26,9 +27,9 @@ public interface SourceContext extends RuntimeContext {
   /**
    * Get the specification of the source stage, set during the configuration.
    *
-   * @return {@link RealtimeSpecification}
+   * @return {@link StageSpecification}
    */
-  RealtimeSpecification getSpecification();
+  StageSpecification getSpecification();
 
   /**
    * Get Instance Id.

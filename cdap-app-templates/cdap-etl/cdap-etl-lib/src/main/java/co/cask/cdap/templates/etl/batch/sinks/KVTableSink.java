@@ -18,9 +18,10 @@ package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
+import co.cask.cdap.templates.etl.api.batch.BatchSinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
@@ -41,7 +42,7 @@ public class KVTableSink extends BatchWritableSink<KeyValue<byte[], byte[]>, byt
   }
 
   @Override
-  public void write(KeyValue<byte[], byte[]> input, SinkWriter<byte[], byte[]> writer) throws Exception {
-    writer.write(input.getKey(), input.getValue());
+  public void transform(KeyValue<byte[], byte[]> input, Emitter<KeyValue<byte[], byte[]>> emitter) throws Exception {
+    emitter.emit(input);
   }
 }

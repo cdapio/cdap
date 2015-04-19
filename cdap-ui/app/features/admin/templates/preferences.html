@@ -38,14 +38,16 @@
       </div>
     </div>
 
-    <div ng-hide="preferences.length === 0">
-      <button class="btn btn-primary" ng-click="addPreference()" >
-        <span class="fa fa-fw fa-plus"></span>
-      </button>
+    <div class="row">
+      <div class="col-xs-12">
+        <button class="btn btn-primary" ng-click="addPreference()" ng-hide="preferences.length === 0">
+          <span class="fa fa-fw fa-plus"></span>
+        </button>
 
-      <div class="pull-right">
-        <button class="btn btn-default" ng-click="loadProperties()">Reset</button>
-        <button class="btn btn-success" ng-click="save()" >Save</button>
+        <div class="pull-right">
+          <button class="btn btn-default" ng-click="loadProperties()">Reset</button>
+          <button class="btn btn-success" ng-click="save()" >Save</button>
+        </div>
       </div>
     </div>
 

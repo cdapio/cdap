@@ -16,7 +16,7 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -57,10 +57,10 @@ public class JmsSource extends RealtimeSource<String> {
   /**
    * Configure the JMS Source.
    *
-   * @param configurer {@link RealtimeConfigurer}
+   * @param configurer {@link StageConfigurer}
    */
   @Override
-  public void configure(RealtimeConfigurer configurer) {
+  public void configure(StageConfigurer configurer) {
     configurer.setName(CDAP_JMS_SOURCE_NAME);
     configurer.setDescription("CDAP JMS Realtime Source");
   }
@@ -70,7 +70,7 @@ public class JmsSource extends RealtimeSource<String> {
    *
    * @param context {@link SourceContext}
    */
-  public void initialize(SourceContext context) {
+  public void initialize(SourceContext context) throws Exception {
     super.initialize(context);
 
     // Bootstrap the JMS consumer

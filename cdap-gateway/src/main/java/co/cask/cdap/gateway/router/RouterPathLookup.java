@@ -55,8 +55,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
       //But stream calls issued by the UI should be routed to the appropriate CDAP service
-      if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-        && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
+      if (fallbackService.contains("$HOST") && (uriParts.length >= 1) &&
+        (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)
+          || ("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)))) {
         return fallbackService;
       }
 
@@ -93,7 +94,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
       // /v2/streams should go to AppFabricHttp
       // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
-      // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
+      // GET /v2/streams/<stream-id>/flows should go to AppFabricHttp, rest should go Stream Handler
       if (uriParts.length == 2) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else if (uriParts.length == 3) {
@@ -134,16 +135,19 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
       String serviceName = String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
       return serviceName;
+    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+      //Log Handler Path /v3/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("streams")) {
       //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
       //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
-      // GET /v3/namespaces/<namespace>/streams/flows should go to AppFabricHttp
+      // GET /v3/namespaces/<namespace>/streams/<stream-id>/flows should go to AppFabricHttp
       // All else go to Stream Handler
       if (uriParts.length == 4) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else if (uriParts.length == 5) {
         return Constants.Service.STREAMS;
-      } else if ((uriParts.length == 6) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
+      } else if ((uriParts.length == 6) && uriParts[5].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else {
         return Constants.Service.STREAMS;
@@ -183,9 +187,6 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return Constants.Service.DATASET_MANAGER;
-    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
-      //Log Handler Path /v3/system/services/<service-id>/logs
-      return Constants.Service.METRICS;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }

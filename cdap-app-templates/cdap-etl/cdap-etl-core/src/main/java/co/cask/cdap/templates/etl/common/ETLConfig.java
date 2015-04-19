@@ -14,24 +14,39 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.realtime;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
 
 /**
- * Contains the specification of the realtime source/sink stage, set during configuration.
+ * Common ETL Config.
  */
-public class RealtimeSpecification extends StageSpecification {
+public class ETLConfig {
+  private final ETLStage source;
+  private final ETLStage sink;
+  private final List<ETLStage> transforms;
   private final Resources resources;
 
-  public RealtimeSpecification(String className, String name, String description, List<Property> properties,
-                               Resources resources) {
-    super(className, name, description, properties);
+  public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms, Resources resources) {
+    this.source = source;
+    this.sink = sink;
+    this.transforms = transforms;
     this.resources = resources;
+  }
+
+  public ETLStage getSource() {
+    return source;
+  }
+
+  public ETLStage getSink() {
+    return sink;
+  }
+
+  public List<ETLStage> getTransforms() {
+    return transforms;
   }
 
   public Resources getResources() {

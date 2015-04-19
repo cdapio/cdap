@@ -19,16 +19,16 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sources.DBSource;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Properties;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -66,7 +66,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -181,7 +180,7 @@ public class BatchETLDBAdapterTest extends TestBase {
                                                    Properties.DB.IMPORT_QUERY, importQuery,
                                                    Properties.DB.COUNT_QUERY, countQuery
                                    ));
-    ETLStage sink = new ETLStage("TableSink", ImmutableMap.of("name", "outputTable"));
+
     Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
     Schema nullableInt = Schema.nullableOf(Schema.of(Schema.Type.INT));
     Schema nullableLong = Schema.nullableOf(Schema.of(Schema.Type.LONG));
@@ -207,11 +206,12 @@ public class BatchETLDBAdapterTest extends TestBase {
                                     Schema.Field.of("BINARY", nullableBytes),
                                     Schema.Field.of("CLOB", nullableBytes));
 
-    ETLStage putTransform = new ETLStage(StructuredRecordToPutTransform.class.getSimpleName(),
-                                         ImmutableMap.of("schema", schema.toString(),
-                                                         "row.field", "ID"));
-    List<ETLStage> transformList = Lists.newArrayList(putTransform);
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
+    ETLStage sink = new ETLStage("TableSink", ImmutableMap.of(
+      "name", "outputTable",
+      Table.PROPERTY_SCHEMA, schema.toString(),
+      Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     // add dataset instances that the source and sink added
@@ -287,10 +287,10 @@ public class BatchETLDBAdapterTest extends TestBase {
   }
 
   private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
-    for (Map.Entry<String, ImmutablePair<String, DatasetProperties>> entry :
+    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
       configurer.getDatasetInstances().entrySet()) {
-      String typeName = entry.getValue().getFirst();
-      DatasetProperties properties = entry.getValue().getSecond();
+      String typeName = entry.getValue().getKey();
+      DatasetProperties properties = entry.getValue().getValue();
       String instanceName = entry.getKey();
       addDatasetInstance(typeName, instanceName, properties);
     }

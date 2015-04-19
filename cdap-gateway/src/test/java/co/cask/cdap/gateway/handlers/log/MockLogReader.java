@@ -158,10 +158,6 @@ public class MockLogReader implements LogReader {
                (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
   }
 
-  @Override
-  public void close() {
-  }
-
   private static final Function<LoggingContext.SystemTag, String> TAG_TO_STRING_FUNCTION =
     new Function<LoggingContext.SystemTag, String>() {
       @Override

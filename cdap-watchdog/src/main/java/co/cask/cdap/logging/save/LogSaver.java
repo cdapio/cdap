@@ -19,6 +19,7 @@ package co.cask.cdap.logging.save;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -47,15 +48,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final String topic;
   private final KafkaClientService kafkaClient;
 
-  private final CheckpointManager checkpointManager;
-
   private Map<Integer, Cancellable> kafkaCancelMap;
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
   private Set<KafkaLogProcessor> messageProcessors;
 
 
   @Inject
-  public LogSaver(CheckpointManager checkpointManager, KafkaClientService kafkaClient,
+  public LogSaver(KafkaClientService kafkaClient,
                   @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors)
                   throws Exception {
     LOG.info("Initializing LogSaver...");
@@ -63,7 +62,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     this.topic = KafkaTopic.getTopic();
     LOG.info(String.format("Kafka topic is %s", this.topic));
 
-    this.checkpointManager = checkpointManager;
     this.kafkaClient = kafkaClient;
     this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
     this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
@@ -93,7 +91,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     cancelLogCollectorCallbacks();
   }
 
-  private void scheduleTasks(Set<Integer> partitions) throws Exception {
+  @VisibleForTesting
+  void scheduleTasks(Set<Integer> partitions) throws Exception {
     // Don't schedule any tasks when not running
     if (!isRunning()) {
       LOG.info("Not scheduling when stopping!");
@@ -102,7 +101,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     subscribe(partitions);
  }
 
-  private void unscheduleTasks() throws Exception {
+  @VisibleForTesting
+  void unscheduleTasks() throws Exception {
     for (KafkaLogProcessor processor : messageProcessors) {
       try {
         // Catching the exception to let all the plugins a chance to stop cleanly.
@@ -138,7 +138,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
-      long offset = checkpointManager.getCheckpoint(part);
+      long offset = getLowestCheckPoint(part);
       partitionOffset.put(part, offset);
 
       if (offset >= 0) {
@@ -155,11 +155,29 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
 
+  private long getLowestCheckPoint(int partition) {
+    long lowestCheckpoint = -1L;
+
+    for (KafkaLogProcessor processor : messageProcessors) {
+      long checkpoint = processor.getCheckPoint(partition);
+      // If checkpoint is -1; then ignore the checkpoint
+      if (checkpoint != -1) {
+        lowestCheckpoint =  (lowestCheckpoint == -1 || checkpoint < lowestCheckpoint) ?
+                             checkpoint :
+                             lowestCheckpoint;
+      }
+    }
+    return lowestCheckpoint;
+  }
+
+
   private void waitForDatasetAvailability() throws InterruptedException {
     boolean isDatasetAvailable = false;
     while (!isDatasetAvailable) {
       try {
-        checkpointManager.getCheckpoint(0);
+         for (KafkaLogProcessor processor : messageProcessors) {
+           processor.getCheckPoint(0);
+         }
         isDatasetAvailable = true;
       } catch (Exception e) {
         LOG.warn(String.format("Cannot discover dataset service. Retry after %d seconds timeout.", TIMEOUT_SECONDS));

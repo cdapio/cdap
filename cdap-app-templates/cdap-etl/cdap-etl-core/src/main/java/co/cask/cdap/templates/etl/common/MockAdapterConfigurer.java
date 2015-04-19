@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -40,7 +40,7 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
   private final Set<Stream> streams;
   private final Set<Class<? extends Dataset>> datasetTypes;
   private final Map<String, Class<? extends DatasetModule>> datasetModules;
-  private final Map<String, ImmutablePair<String, DatasetProperties>> datasetInstances;
+  private final Map<String, KeyValue<String, DatasetProperties>> datasetInstances;
   private Schedule schedule;
   private int instances;
   private Resources resources;
@@ -95,12 +95,12 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    datasetInstances.put(datasetName, ImmutablePair.of(typeName, properties));
+    datasetInstances.put(datasetName, new KeyValue<String, DatasetProperties>(typeName, properties));
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    datasetInstances.put(datasetName, ImmutablePair.of(datasetClass.getName(), props));
+    datasetInstances.put(datasetName, new KeyValue<String, DatasetProperties>(datasetClass.getName(), props));
   }
 
   public Schedule getSchedule() {
@@ -131,7 +131,7 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
     return datasetModules;
   }
 
-  public Map<String, ImmutablePair<String, DatasetProperties>> getDatasetInstances() {
+  public Map<String, KeyValue<String, DatasetProperties>> getDatasetInstances() {
     return datasetInstances;
   }
 }

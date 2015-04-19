@@ -14,16 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
-import co.cask.cdap.templates.etl.common.MockEmitter;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,30 +28,21 @@ import java.util.Map;
 /**
  */
 @SuppressWarnings("unchecked")
-public class StructuredRecordToPutTransformTest {
+public class RecordPutTransformerTest {
   
   @Test(expected = IllegalArgumentException.class)
   public void testNullRowkeyThrowsException() throws Exception {
-    // initialize transform
-    Transform transform = new StructuredRecordToPutTransform();
-    TransformContext context = new MockTransformContext(ImmutableMap.of("row.field", "key"));
-    transform.initialize(context);
+    RecordPutTransformer transformer = new RecordPutTransformer("key");
 
     Schema schema = Schema.recordOf("record", Schema.Field.of("key", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
 
     StructuredRecord record = StructuredRecord.builder(schema).build();
-
-    MockEmitter<Put> emitter = new MockEmitter<Put>();
-    transform.transform(record, emitter);
+    transformer.toPut(record);
   }
 
   @Test
   public void testNullableFields() throws Exception {
-    // initialize the transform
-    Transform transform = new StructuredRecordToPutTransform();
-    TransformContext context = new MockTransformContext(ImmutableMap.of("row.field", "key"));
-    transform.initialize(context);
-
+    RecordPutTransformer transformer = new RecordPutTransformer("key");
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("key", Schema.of(Schema.Type.INT)),
@@ -69,9 +56,7 @@ public class StructuredRecordToPutTransformTest {
       .set("non_nullable", "foo")
       .build();
 
-    MockEmitter<Put> emitter = new MockEmitter<Put>();
-    transform.transform(record, emitter);
-    Put transformed = emitter.getEmitted().get(0);
+    Put transformed = transformer.toPut(record);
 
     Assert.assertEquals(1, Bytes.toInt(transformed.getRow()));
     // expect a null value for the nullable field
@@ -82,10 +67,7 @@ public class StructuredRecordToPutTransformTest {
 
   @Test
   public void testTransform() throws Exception {
-    // initialize the transform
-    Transform transform = new StructuredRecordToPutTransform();
-    TransformContext context = new MockTransformContext(ImmutableMap.of("row.field", "stringField"));
-    transform.initialize(context);
+    RecordPutTransformer transformer = new RecordPutTransformer("stringField");
 
     Schema schema = Schema.recordOf(
       "record",
@@ -108,9 +90,7 @@ public class StructuredRecordToPutTransformTest {
       .set("stringField", "key")
       .build();
 
-    MockEmitter<Put> emitter = new MockEmitter<Put>();
-    transform.transform(record, emitter);
-    Put transformed = emitter.getEmitted().get(0);
+    Put transformed = transformer.toPut(record);
 
     Assert.assertEquals("key", Bytes.toString(transformed.getRow()));
     Map<byte[], byte[]> values = transformed.getValues();

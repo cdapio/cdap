@@ -150,7 +150,8 @@ public class MapReduceMetricsInfo {
     float mapProgress = getAggregates(mapTags, MapReduceMetrics.METRIC_COMPLETION) / 100.0F;
     float reduceProgress = getAggregates(reduceTags, MapReduceMetrics.METRIC_COMPLETION) / 100.0F;
 
-    return new MRJobInfo(null, null, null, mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos);
+
+    return new MRJobInfo(mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos, false);
   }
 
   private String prependSystem(String metric) {
