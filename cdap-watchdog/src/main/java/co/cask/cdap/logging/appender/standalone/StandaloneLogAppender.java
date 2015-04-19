@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.appender.standalone;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
@@ -43,6 +44,21 @@ public class StandaloneLogAppender extends LogAppender {
     for (KafkaLogProcessor plugin : plugins) {
       plugin.process(getKafkaLogEvent(logMessage));
     }
+  }
+
+  @Override
+  public void doAppend(ILoggingEvent eventObject) {
+    append(eventObject);
+  }
+
+  @Override
+  public void start() {
+    appender.start();
+  }
+
+  @Override
+  public void stop() {
+    appender.stop();
   }
 
   private KafkaLogEvent getKafkaLogEvent(LogMessage message) {
