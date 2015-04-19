@@ -73,7 +73,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    *
    * @param stageConfig the configuration for the stage.
    */
-  public void initialize(ETLStage stageConfig) {
+  public void initialize(ETLStage stageConfig) throws Exception {
     // no-op
   }
 

@@ -73,7 +73,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    *
    * @param stageConfig the configuration for the stage.
    */
-  public void initialize(ETLStage stageConfig) {
+  public void initialize(ETLStage stageConfig) throws Exception {
     // no-op
   }
 

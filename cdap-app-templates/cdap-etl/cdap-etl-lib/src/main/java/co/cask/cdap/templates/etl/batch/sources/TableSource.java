@@ -61,17 +61,13 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) {
+  public void initialize(ETLStage stageConfig) throws Exception {
     super.initialize(stageConfig);
     String schemaStr = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA);
     Preconditions.checkArgument(schemaStr != null && !schemaStr.isEmpty(), "Schema must be specified.");
-    try {
-      Schema schema = Schema.parseJson(schemaStr);
-      String rowFieldName = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA_ROW_FIELD);
-      rowRecordTransformer = new RowRecordTransformer(schema, rowFieldName);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Schema is invalid", e);
-    }
+    Schema schema = Schema.parseJson(schemaStr);
+    String rowFieldName = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA_ROW_FIELD);
+    rowRecordTransformer = new RowRecordTransformer(schema, rowFieldName);
   }
 
   @Override

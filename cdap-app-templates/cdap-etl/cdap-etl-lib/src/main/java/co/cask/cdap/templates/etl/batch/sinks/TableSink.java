@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.BatchSinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
@@ -53,7 +52,7 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) {
+  public void initialize(ETLStage stageConfig) throws Exception {
     super.initialize(stageConfig);
     String rowField = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA_ROW_FIELD);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(rowField), "row field must be given as a property.");
