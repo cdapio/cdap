@@ -65,7 +65,7 @@ public class CubeDeleteQuery {
     return resolution;
   }
 
-  public List<String> getMeasureName() {
+  public List<String> getMeasureNames() {
     return measureNames;
   }
 

@@ -46,7 +46,7 @@ public final class FactScanner implements Iterator<FactScanResult> {
   // Use an internal iterator to avoid leaking AbstractIterator methods to outside.
   private final Iterator<FactScanResult> internalIterator;
 
-  // use a set of measureNames which will be useful to filter measures that are not requested for querying.
+  // set of measureNames - useful to process measures that are requested while scanning.
   private final ImmutableSet<String> measureNames;
 
   /**

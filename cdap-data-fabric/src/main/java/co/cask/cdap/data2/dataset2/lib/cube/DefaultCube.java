@@ -152,7 +152,7 @@ public class DefaultCube implements Cube {
       tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
     }
 
-    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
     FactTable table = resolutionToFactTable.get(query.getResolution());
     FactScanner scanner = table.scan(scan);
     Map<Map<String, String>, Table<String, Long, Long>> resultMap = getTimeSeries(query, scanner);
@@ -172,7 +172,7 @@ public class DefaultCube implements Cube {
           tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
         }
         FactTable factTable = resolutionToFactTable.get(query.getResolution());
-        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
         factTable.delete(scan);
       }
     }
@@ -246,8 +246,8 @@ public class DefaultCube implements Cube {
   }
 
   private Map<Map<String, String>, Table<String, Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
-    // tag values -> time -> values
-    Map<Map<String, String>, Table<String, Long, Long>> mapOfGroupingToMeasureValues = Maps.newHashMap();
+    // tag values -> { metrics -> time -> values}
+    Map<Map<String, String>, Table<String, Long, Long>> mapOfGroupingToMeasureValuesTable = Maps.newHashMap();
 
     int count = 0;
     while (scanner.hasNext()) {
@@ -280,19 +280,19 @@ public class DefaultCube implements Cube {
         continue;
       }
 
-      if (mapOfGroupingToMeasureValues.get(seriesTags) == null) {
-        mapOfGroupingToMeasureValues.put(seriesTags, HashBasedTable.<String, Long, Long>create());
+      if (mapOfGroupingToMeasureValuesTable.get(seriesTags) == null) {
+        mapOfGroupingToMeasureValuesTable.put(seriesTags, HashBasedTable.<String, Long, Long>create());
       }
 
       for (TimeValue timeValue : next) {
         if (MeasureType.COUNTER == query.getMeasureType()) {
-          Long value = mapOfGroupingToMeasureValues.get(seriesTags).get(next.getMeasureName(),
+          Long value = mapOfGroupingToMeasureValuesTable.get(seriesTags).get(next.getMeasureName(),
                                                                         timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
-          mapOfGroupingToMeasureValues.get(seriesTags).put(next.getMeasureName(), timeValue.getTimestamp(), value);
+          mapOfGroupingToMeasureValuesTable.get(seriesTags).put(next.getMeasureName(), timeValue.getTimestamp(), value);
         } else if (MeasureType.GAUGE == query.getMeasureType()) {
-          mapOfGroupingToMeasureValues.get(seriesTags).put(next.getMeasureName(),
+          mapOfGroupingToMeasureValuesTable.get(seriesTags).put(next.getMeasureName(),
                                                            timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
@@ -303,7 +303,7 @@ public class DefaultCube implements Cube {
         break;
       }
     }
-    return mapOfGroupingToMeasureValues;
+    return mapOfGroupingToMeasureValuesTable;
   }
 
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
@@ -311,8 +311,11 @@ public class DefaultCube implements Cube {
                                                         Table<String, Long, Long>> aggValuesToTimeValues) {
 
     List<TimeSeries> result = Lists.newArrayList();
+    // iterating each groupValue tags
     for (Map.Entry<Map<String, String>, Table<String, Long, Long>> row : aggValuesToTimeValues.entrySet()) {
+      // iterating each metrics
       for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().rowMap().entrySet()) {
+        // generating time series for a grouping and a metric
         int count = 0;
         List<TimeValue> timeValues = Lists.newArrayList();
         for (Map.Entry<Long, Long> timeValue : metricEntry.getValue().entrySet()) {

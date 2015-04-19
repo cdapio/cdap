@@ -86,7 +86,7 @@ public final class CubeQuery {
     return resolution;
   }
 
-  public List<String> getMeasureName() {
+  public List<String> getMeasureNames() {
     return measureNames;
   }
 
