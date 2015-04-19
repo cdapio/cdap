@@ -15,7 +15,7 @@ You can scale CDAP components using:
 - the :ref:`Get/Set Commands<cli-available-commands>` of the 
   :ref:`Command Line Interface<cli>`.
 
-The examples given below use the :ref:`HTTP RESTful API<http-restful-api-lifecycle-scale>`.
+The examples given below use the :ref:`Lifecycle HTTP RESTful API<http-restful-api-lifecycle-scale>`.
 
 .. highlight:: console
 
@@ -32,10 +32,21 @@ with the arguments as a JSON string in the body::
   { "instances" : <quantity> }
 
 Where:
-  :<app-id>: Name of the application
-  :<flow-id>: Name of the Flow
-  :<flowlet-id>: Name of the Flowlet
-  :<quantity>: Number of instances to be used
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<flow-id>``
+     - Name of the Flow
+   * - ``<flowlet-id>``
+     - Name of the Flowlet
+   * - ``<quantity>``
+     - Number of instances to be used
 
 Example: Find out the number of instances of the Flowlet *saver* in
 the Flow *WhoFlow* of the application *HelloWorld*::
@@ -66,10 +77,21 @@ with the arguments as a JSON string in the body::
   { "instances" : <quantity> }
 
 Where:
-  :<app-id>: Name of the application
-  :<service-id>: Name of the Service
-  :<runnable-id>: Name of the Service
-  :<quantity>: Number of handler instances requested
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<service-id>``
+     - Name of the Service
+   * - ``<runnable-id>``
+     - Name of the Service
+   * - ``<quantity>``
+     - Number of handler instances requested
   
 **Note:** In this release, the ``runnable-id`` is the same as the ``service-id``.
 
@@ -87,8 +109,7 @@ with the arguments as a JSON string in the body::
 
   { "instances" : 2 }
   
-Example using the :ref:`CDAP Standalone SDK<standalone-index>` and ``curl`` (reformatted to fit)::
+Example using the :ref:`CDAP Standalone SDK <standalone-index>` and ``curl`` (reformatted to fit)::
 
-  curl -vw'\n' -XPUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
+  curl -w'\n' -X PUT 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/runnables/RetrieveCounts/instances' \
     -d '{ "instances" : 2 }'
-
