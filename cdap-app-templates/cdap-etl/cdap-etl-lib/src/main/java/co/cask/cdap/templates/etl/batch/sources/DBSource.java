@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.batch.sources;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
@@ -134,7 +135,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
-  public void emit(LongWritable key, DBRecord val, Emitter<StructuredRecord> emitter) {
-    emitter.emit(val.getRecord());
+  public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
+    emitter.emit(input.getValue().getRecord());
   }
 }

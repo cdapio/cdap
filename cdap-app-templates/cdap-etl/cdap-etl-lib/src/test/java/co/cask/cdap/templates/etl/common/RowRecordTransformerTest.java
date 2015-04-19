@@ -14,17 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
-import co.cask.cdap.templates.etl.common.MockEmitter;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,16 +30,13 @@ import java.util.Map;
 /**
  */
 @SuppressWarnings("unchecked")
-public class RowToStructuredRecordTransformTest {
+public class RowRecordTransformerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testBadRowFieldThrowsException() throws Exception {
     final Schema schema = Schema.recordOf("record", Schema.Field.of("intField", Schema.of(Schema.Type.INT)));
 
-    Transform transform = new RowToStructuredRecordTransform();
-    TransformContext transformContext =
-      new MockTransformContext(ImmutableMap.of("row.field", "missing", "schema", schema.toString()));
-    transform.initialize(transformContext);
+   new RowRecordTransformer(schema, "missing");
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -52,9 +45,7 @@ public class RowToStructuredRecordTransformTest {
       "record",
       Schema.Field.of("mapField", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
 
-    Transform transform = new RowToStructuredRecordTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("schema", schema.toString()));
-    transform.initialize(transformContext);
+    new RowRecordTransformer(schema, null);
   }
 
   @Test
@@ -83,14 +74,9 @@ public class RowToStructuredRecordTransformTest {
     inputColumns.put(Bytes.toBytes("extraField"), Bytes.toBytes("bar"));
     Row input = new Result(rowKey, inputColumns);
 
-    Transform transform = new RowToStructuredRecordTransform();
-    TransformContext transformContext =
-      new MockTransformContext(ImmutableMap.of("row.field", "intField", "schema", schema.toString()));
-    transform.initialize(transformContext);
+    RowRecordTransformer transformer = new RowRecordTransformer(schema, "intField");
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
-    transform.transform(input, emitter);
-    StructuredRecord actual = emitter.getEmitted().get(0);
+    StructuredRecord actual = transformer.toRecord(input);
     Assert.assertTrue((Boolean) actual.get("boolField"));
     Assert.assertEquals(512L, actual.get("longField"));
     Assert.assertTrue(Math.abs(3.14f - (Float) actual.get("floatField")) < 0.000001);
