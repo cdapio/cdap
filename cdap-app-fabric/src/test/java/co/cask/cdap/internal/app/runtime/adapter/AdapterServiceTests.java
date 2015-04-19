@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.DataTemplate;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
+import co.cask.cdap.ExtendedBatchTemplate;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -76,6 +77,14 @@ public class AdapterServiceTests extends AppFabricTestBase {
   public void testInvalidTemplate() throws Exception {
     AdapterConfig adapterConfig = new AdapterConfig("description", BadTemplate.NAME, null);
     adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "badAdapter", adapterConfig);
+  }
+
+  @Test
+  public void testMultilevelTemplate() throws Exception {
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("abcd", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("desc", ExtendedBatchTemplate.class.getSimpleName(),
+                                                    GSON.toJsonTree(config));
+    adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap", adapterConfig);
   }
 
   @Test(expected = RuntimeException.class)
@@ -295,6 +304,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(BadTemplate.class);
     setupAdapter(DataTemplate.class);
     setupAdapter(DummyWorkerTemplate.class);
+    setupAdapter(ExtendedBatchTemplate.class);
   }
 
   private static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
