@@ -66,7 +66,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -325,8 +324,7 @@ public class CLIMainTest extends StandaloneTestBase {
     }
   }
 
-  @Test @Ignore
-  // JIRA to track the ignore: CDAP-2177
+  @Test
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
