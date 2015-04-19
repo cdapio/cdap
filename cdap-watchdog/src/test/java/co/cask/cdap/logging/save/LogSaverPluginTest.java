@@ -450,7 +450,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }
 
     LOG.info("Done waiting!");
-    TimeUnit.SECONDS.sleep(1);
+    TimeUnit.SECONDS.sleep(3);
   }
 
   private static Location getLatestFile(Location logBaseDir, String filePattern) throws Exception {
