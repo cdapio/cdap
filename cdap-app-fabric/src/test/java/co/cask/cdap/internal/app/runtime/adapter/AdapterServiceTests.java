@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.ActionBatchTemplate;
 import co.cask.cdap.DataTemplate;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
@@ -31,7 +30,6 @@ import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
@@ -43,7 +41,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,7 +59,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
-  private static SchedulerService schedulerService;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -70,17 +66,8 @@ public class AdapterServiceTests extends AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     setupAdapters();
-    schedulerService = getInjector().getInstance(SchedulerService.class);
-    schedulerService.startAndWait();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerTemplates();
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    if (schedulerService != null) {
-      schedulerService.stopAndWait();
-    }
   }
 
   @Test(expected = RuntimeException.class)
@@ -260,7 +247,6 @@ public class AdapterServiceTests extends AppFabricTestBase {
     setupAdapter(BadTemplate.class);
     setupAdapter(DataTemplate.class);
     setupAdapter(DummyWorkerTemplate.class);
-    setupAdapter(ActionBatchTemplate.class);
   }
 
   private static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
