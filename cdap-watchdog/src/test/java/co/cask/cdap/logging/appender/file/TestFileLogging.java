@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -35,6 +37,7 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -74,13 +77,19 @@ public class TestFileLogging {
       new TransactionModules().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    LogAppender appender = injector.getInstance(LogAppender.class);
+    LogAppender appender = injector.getInstance(FileLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
