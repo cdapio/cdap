@@ -116,6 +116,10 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     }
   }
 
+  public DatasetFramework getFramework() {
+    return framework;
+  }
+
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
     framework.addModule(moduleId, module);
   }
