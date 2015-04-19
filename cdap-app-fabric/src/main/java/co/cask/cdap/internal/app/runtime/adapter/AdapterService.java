@@ -290,7 +290,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Remove adapter identified by the namespace and name.
+   * Remove adapter identified by the namespace and name and also deletes the template if this was last adapter
+   * of that type
    *
    * @param namespace namespace id
    * @param adapterName adapter name
@@ -301,12 +302,24 @@ public class AdapterService extends AbstractIdleService {
     throws NotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
       throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
     }
     store.removeAdapter(namespace, adapterName);
 
-    // TODO: Delete the application if this is the last adapter
+    // delete the template if this was the last adapter of that type
+    deleteApp(Id.Application.from(namespace, adapterSpec.getTemplate()));
+  }
+
+  /**
+   * deletes the app if it has no associated adapters
+   * @param templateId the {@link Id.Application} of the template
+   */
+  private void deleteApp(Id.Application templateId) {
+    if (canDeleteApp(templateId)) {
+      store.removeApplication(templateId);
+    }
   }
 
   /**
