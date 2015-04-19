@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package co.cask.cdap.common.app;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
