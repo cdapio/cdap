@@ -1,9 +1,14 @@
 <div ng-controller="WidgetPieCtrl" class="text-center">
 
-  <epoch-pie
-    data-history="pieChartData"
-    chart-height="328"
-    chart-width="328"
-  ></epoch-pie>
+  <div ng-show="show">
+    <epoch-pie
+      data-history="chartHistory"
+      chart-height="200"
+      chart-width="200"
+    ></epoch-pie>
+  </div>
+  <div ng-hide="show" class="no-data">
+    <p>All metrics have zero values.</p>
+  </div>
 
 </div>
