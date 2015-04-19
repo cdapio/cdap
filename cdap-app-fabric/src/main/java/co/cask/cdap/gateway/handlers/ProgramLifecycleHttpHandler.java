@@ -992,12 +992,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId) {
-    getServiceInstances(responder, namespaceId, appId, serviceId, serviceId);
-  }
-
-  void getServiceInstances(HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
+                                  @PathParam("service-id") String serviceId)  {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1013,21 +1008,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
-      int instances;
-      if (specification.getName().equals(runnableName)) {
-        instances = specification.getInstances();
-      } else {
-        ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
-        if (workerSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          return;
-        }
-        instances = workerSpec.getInstances();
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceInstances(instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE,
-                                                                          serviceId, runnableName)));
+      int instances = specification.getInstances();
+      responder.sendJson(HttpResponseStatus.OK, new ServiceInstances(
+        instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE, serviceId, serviceId)));
 
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1046,12 +1029,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) {
-    setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
-  }
-
-  void setServiceInstances(HttpRequest request, HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
-
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1074,24 +1051,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      // If the runnable name is the same as the service name, it's setting the service instances
-      // TODO: This REST API is bad, need to update (CDAP-388)
-      int oldInstances = (runnableName.equals(serviceId)) ? store.getServiceInstances(programId)
-        : store.getServiceWorkerInstances(programId, runnableName);
+      int oldInstances = store.getServiceInstances(programId);
       if (oldInstances != instances) {
-        if (runnableName.equals(serviceId)) {
-          store.setServiceInstances(programId, instances);
-        } else {
-          store.setServiceWorkerInstances(programId, runnableName, instances);
-        }
-
+        store.setServiceInstances(programId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
                                                                         ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(runnableName, String.valueOf(instances))).get();
+                                              ImmutableMap.of(serviceId, String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
