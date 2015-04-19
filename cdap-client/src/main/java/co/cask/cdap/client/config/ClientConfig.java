@@ -108,6 +108,13 @@ public class ClientConfig {
   }
 
   /**
+   * Resolves a path aginst the CDAP server, without applying an API version. For example, /ping
+   */
+  public URL resolveURLNoVersion(String path) throws MalformedURLException {
+    return getConnectionConfig().resolveURI(path).toURL();
+  }
+
+  /**
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
