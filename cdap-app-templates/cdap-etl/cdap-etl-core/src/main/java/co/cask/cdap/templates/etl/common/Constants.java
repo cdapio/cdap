@@ -24,7 +24,6 @@ public final class Constants {
   public static final String ADAPTER_NAME = "name";
   public static final String CONFIG_KEY = "config";
 
-
   /**
    * Constants related to Source.
    */

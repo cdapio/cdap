@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
@@ -76,7 +75,7 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void initialize(final WorkerContext context) throws Exception {
     super.initialize(context);
-    final Map<String, String> runtimeArgs = context.getRuntimeArguments();
+    Map<String, String> runtimeArgs = context.getRuntimeArguments();
 
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
