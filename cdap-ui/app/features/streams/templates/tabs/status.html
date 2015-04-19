@@ -1,28 +1,26 @@
 <div class="container" ng-controller="StreamsDetailStatusController">
   <div class="row">
-  <div class="col-xs-6">
-    <h2> Schema </h2>
-  </div>
-    <div class="col-xs-6">
-      <table class="table table-curved table-status">
-        <thead>
-          <th>Storage</th>
-          <th>Total Events</th>
-        </thead>
-        <tbody>
-          <td ng-if="storage"> {{storage | bytes}} </td>
-          <td ng-if="!storage"> N/A </td>
-          <td ng-if="events"> {{events}} </td>
-          <td ng-if="!events"> N/A </td>
-        </tbody>
-      </table>
+    <div class="col-xs-8 h2">
+      <h2><span> Schema </span></h2>
     </div>
-
+    <div class="col-xs-4">
+        <table class="table table-curved table-status">
+          <thead>
+            <th>Storage</th>
+            <th>Total Events</th>
+          </thead>
+          <tbody>
+            <td ng-if="storage"> {{storage | bytes}} </td>
+            <td ng-if="!storage"> &mdash; </td>
+            <td ng-if="events"> {{events}} </td>
+            <td ng-if="!events"> &mdash; </td>
+          </tbody>
+        </table>
+    </div>
   </div>
 
   <div class="row">
     <div class="col-xs-12">
-
       <table class="table table-curved" cask-sortable ng-show="schema.length > 0">
         <thead>
           <tr ng-class="{'sort-enabled': schema.length > 1}">
