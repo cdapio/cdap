@@ -418,7 +418,7 @@ To query a metric within a given context, perform an HTTP POST request::
      - 
    * - HTTP Method
      - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting``
-       ``&tag=runnables:WhoFlow&metric=user.names.bytes'``
+       ``&metric=user.names.bytes'``
    * - Description
      - Using a *user-defined* metric, *names.bytes* in a Service's Handler
 
