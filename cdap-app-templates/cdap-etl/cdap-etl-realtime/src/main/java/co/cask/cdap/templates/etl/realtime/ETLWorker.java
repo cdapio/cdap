@@ -24,6 +24,7 @@ import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
@@ -56,7 +57,7 @@ public class ETLWorker extends AbstractWorker {
   private String adapterName;
   private RealtimeSource source;
   private RealtimeSink sink;
-  private List<Transform> transforms;
+  private List<TransformStage> transforms;
   private DatasetContext datasetContext;
   private TransformExecutor transformExecutor;
   private DefaultEmitter defaultEmitter;
@@ -136,7 +137,7 @@ public class ETLWorker extends AbstractWorker {
       StageSpecification spec = specs.get(i);
       ETLStage stage = stages.get(i);
       try {
-        Transform transform = (Transform) Class.forName(spec.getClassName()).newInstance();
+        TransformStage transform = (TransformStage) Class.forName(spec.getClassName()).newInstance();
         DefaultTransformContext transformContext = new DefaultTransformContext(spec, stage.getProperties());
         LOG.info("Transform Stage : {}", stage.getName());
         LOG.info("Transform Class : {}", stage.getClass().getName());
@@ -204,7 +205,7 @@ public class ETLWorker extends AbstractWorker {
   public void stop() {
     running = false;
     source.destroy();
-    for (Transform transform : transforms) {
+    for (TransformStage transform : transforms) {
       transform.destroy();
     }
     sink.destroy();

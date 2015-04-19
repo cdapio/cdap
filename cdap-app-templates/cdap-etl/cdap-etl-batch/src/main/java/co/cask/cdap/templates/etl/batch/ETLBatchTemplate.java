@@ -33,11 +33,9 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
-import co.cask.cdap.templates.etl.transforms.RowToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
@@ -59,8 +57,6 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         TableSource.class,
                                         TableSink.class,
                                         IdentityTransform.class,
-                                        StructuredRecordToPutTransform.class,
-                                        RowToStructuredRecordTransform.class,
                                         StructuredRecordToGenericRecordTransform.class,
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,

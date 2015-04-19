@@ -16,22 +16,28 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
 /**
- * Batch Sink forms the last stage of a Batch ETL Pipeline.
+ * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch job, the sink
+ * also transforms a single input object into a key value pair that the Batch job will output. By default, the input
+ * object is used as the key and null is used as the value.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> implements EndPointStage {
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
+  implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>> {
 
   private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
 
@@ -63,20 +69,16 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> implements EndPointStage {
 
   /**
    * Initialize the sink. This is called once each time the Hadoop Job runs, before any
-   * calls to {@link #write} are made.
+   * calls to {@link #transform(Object, Emitter)} are made.
    *
    * @param stageConfig the configuration for the stage.
    */
-  public void initialize(ETLStage stageConfig) {
+  public void initialize(ETLStage stageConfig) throws Exception {
     // no-op
   }
 
-  /**
-   * Write the given input as a key value pair. By default the given input as the key and null as the value.
-   *
-   * @param input the value to write as a key value pair
-   */
-  public void write(IN input, BatchSinkWriter<KEY_OUT, VAL_OUT> writer) throws Exception {
-    writer.write((KEY_OUT) input, null);
+  @Override
+  public void transform(IN input, Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
+    emitter.emit(new KeyValue<KEY_OUT, VAL_OUT>((KEY_OUT) input, null));
   }
 }

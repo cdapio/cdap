@@ -16,12 +16,14 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -48,7 +50,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
   protected EndPointStage source;
   protected EndPointStage sink;
-  protected List<Transform> transforms;
+  protected List<TransformStage> transforms;
 
   public ETLTemplate() {
     sourceClassMap = Maps.newHashMap();
@@ -69,8 +71,8 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
         sink.configure(configurer);
         sinkClassMap.put(configurer.createSpecification().getName(), configurer.createSpecification().getClassName());
       } else {
-        Preconditions.checkArgument(Transform.class.isAssignableFrom(klass));
-        Transform transform = (Transform) klass.newInstance();
+        Preconditions.checkArgument(TransformStage.class.isAssignableFrom(klass));
+        TransformStage transform = (TransformStage) klass.newInstance();
         transform.configure(configurer);
         transformClassMap.put(configurer.createSpecification().getName(),
                               configurer.createSpecification().getClassName());
@@ -88,7 +90,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
       for (ETLStage etlStage : transformList) {
         String transformName = transformClassMap.get(etlStage.getName());
-        Transform transformObj = (Transform) Class.forName(transformName).newInstance();
+        TransformStage transformObj = (TransformStage) Class.forName(transformName).newInstance();
         transforms.add(transformObj);
       }
     } catch (Exception e) {
@@ -105,7 +107,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     configurer.addRuntimeArgument(specKey, GSON.toJson(specification));
   }
 
-  protected void configureTransforms(List<Transform> transformList, AdapterConfigurer configurer, String specKey) {
+  protected void configureTransforms(List<TransformStage> transformList, AdapterConfigurer configurer, String specKey) {
     List<StageSpecification> transformSpecs = Lists.newArrayList();
     for (Transform transformObj : transformList) {
       DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(transformObj.getClass());
@@ -132,5 +134,10 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     configure(sink, sinkConfig, configurer, Constants.Sink.SPECIFICATION);
     configureTransforms(transforms, configurer, Constants.Transform.SPECIFICATIONS);
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
+
+    Resources resources = etlConfig.getResources();
+    if (resources != null) {
+      configurer.setResources(resources);
+    }
   }
 }

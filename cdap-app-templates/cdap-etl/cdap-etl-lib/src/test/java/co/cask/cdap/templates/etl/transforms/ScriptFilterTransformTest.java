@@ -18,8 +18,8 @@ package co.cask.cdap.templates.etl.transforms;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -33,7 +33,7 @@ public class ScriptFilterTransformTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidScript() throws Exception {
-    Transform transform = new ScriptFilterTransform();
+    TransformStage transform = new ScriptFilterTransform();
     TransformContext transformContext = new MockTransformContext(
       ImmutableMap.of("script", "funtion() { return false; }"));
     transform.initialize(transformContext);
@@ -41,7 +41,7 @@ public class ScriptFilterTransformTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidFilter() throws Exception {
-    Transform transform = new ScriptFilterTransform();
+    TransformStage transform = new ScriptFilterTransform();
     TransformContext transformContext = new MockTransformContext(
       ImmutableMap.of("script", "return 'foobar'"));
     transform.initialize(transformContext);
@@ -56,7 +56,7 @@ public class ScriptFilterTransformTest {
   public void testSimple() throws Exception {
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
-    Transform transform = new ScriptFilterTransform();
+    TransformStage transform = new ScriptFilterTransform();
     TransformContext transformContext = new MockTransformContext(
       ImmutableMap.of("script", "return input.x * 1024 < 2048"));
     transform.initialize(transformContext);
@@ -122,7 +122,7 @@ public class ScriptFilterTransformTest {
       .set("inner1", inner1)
       .build();
 
-    Transform transform = new ScriptFilterTransform();
+    TransformStage transform = new ScriptFilterTransform();
     TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
       "script", "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > e.val;"));
     transform.initialize(transformContext);

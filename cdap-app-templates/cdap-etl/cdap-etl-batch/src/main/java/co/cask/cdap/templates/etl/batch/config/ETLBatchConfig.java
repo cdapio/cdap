@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.batch.config;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLConfig;
 
@@ -27,9 +28,14 @@ import java.util.List;
 public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    super(source, sink, transforms);
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                        Resources resources) {
+    super(source, sink, transforms, resources);
     this.schedule = schedule;
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(schedule, source, sink, transforms, null);
   }
 
   public String getSchedule() {
