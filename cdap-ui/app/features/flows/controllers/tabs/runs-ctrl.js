@@ -27,5 +27,15 @@ angular.module(PKG.name + '.feature.flows')
    $scope.tabs = [{
      title: 'Status',
      template: '/assets/features/flows/templates/tabs/runs/tabs/status.html'
+   },
+   {
+     title: 'Logs',
+     template: '/assets/features/flows/templates/tabs/runs/tabs/log.html'
    }];
+
+   $scope.activeTab = $scope.tabs[0];
+
+   $scope.selectTab = function(tab) {
+     $scope.activeTab = tab;
+   };
  });
