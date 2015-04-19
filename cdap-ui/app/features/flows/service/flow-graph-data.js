@@ -33,6 +33,7 @@ angular.module(PKG.name + '.feature.flows')
           });
 
           this.data[flowId] = {
+            flowlets: res.flowlets,
             nodes: nodes,
             edges: res.connections,
             metrics: {}

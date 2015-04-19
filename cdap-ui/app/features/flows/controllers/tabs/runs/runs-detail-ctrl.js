@@ -1,9 +1,13 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailController', function($scope) {
+  .controller('FlowsRunDetailController', function($scope, $state) {
 
     $scope.tabs = [{
       title: 'Status',
       template: '/assets/features/flows/templates/tabs/runs/tabs/status.html'
+    },
+    {
+      title: 'Flowlets',
+      template: '/assets/features/flows/templates/tabs/runs/tabs/flowlets.html'
     },
     {
       title: 'Logs',
@@ -16,7 +20,11 @@ angular.module(PKG.name + '.feature.flows')
       event.targetScope.runs.selected = null;
     });
 
-    $scope.selectTab = function(tab) {
+    $scope.selectTab = function(tab, node) {
+      if (tab.title === 'Flowlets') {
+        $scope.activeFlowlet = node;
+      }
       $scope.activeTab = tab;
+
     };
   });
