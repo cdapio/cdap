@@ -15,14 +15,18 @@
 # the License.
 
 ################################################################################
-### Deploy script for docs
+# Deployment script for docs
 # Deploys zip files created by build scripts
+#
+# 'PROJECT' (e.g. cdap) environment variable must be set or the script will exit
+#
+# function variables reference: (these were kept consistent throughout)
+# $1 user name (typically bamboo)
+# $2 remote server (docs or docs staging servers)
+# $3 remote web directory
+# $4 zip archive file
+# $5 local path to zip archive file
 ################################################################################
-DEBUG=${DEBUG:-no}
-DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
-DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
-PROJECT=${PROJECT}
-PROJECT_DOCS=${PROJECT}-docs
 
 function get_version () {
   TMP_VERSION=`grep "<version>" ../pom.xml`
@@ -31,21 +35,33 @@ function get_version () {
 }
 
 get_version
-PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
-RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
-WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
-GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
+
+# parameters that can be passed to this script (as environment variables)
+DEBUG=${DEBUG:-no}
+DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
+DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
+PROJECT=${PROJECT}   # mandatory
+DOC_DIR=${DOC_DIR:-${VERSION}}
 BUILD_WORKING_DIR=${BUILD_WORKING_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1}
-FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
-USER=bamboo
 DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
 DOCS_SERVER2=${DOCS_SERVER2:-docs2.cask.co}
-DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
 STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
-REMOTE_DOCS_BASE=/var/www/docs/cdap
-REMOTE_STG_BASE=/var/www/html/cdap
-REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${PROJECT_VERSION}"
-REMOTE_STG_DIR="${REMOTE_STG_BASE}/${PROJECT_VERSION}"
+REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/cdap}
+REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/cdap}
+
+#
+USER=bamboo
+PROJECT_DOCS=${PROJECT}-docs
+WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
+GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
+FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
+DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
+REMOTE_STG_DIR="${REMOTE_STG_BASE}/${DOC_DIR}"
+REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${DOC_DIR}"
+
+RSYNC_OPTS='-aPh'
+SSH_OPTS='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+RSYNC_PATH='sudo rsync'
 
 # output trimmer
 decho () {
@@ -64,17 +80,18 @@ if [ "${PROJECT}" == '' ]; then
 fi
 
 ################################################################################
+
 function make_remote_dir () {
-  decho "make sure remote directory ${3} exists on ${2}"
+  decho "making sure remote directory ${3} exists on ${2}"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
   ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
   decho ""
 }
 
 function rsync_zip_file () {
-  decho "rsync archive ${4}"
-  decho "rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path=\"sudo rsync\" ${5}/${4} \"${1}@${2}:${3}/.\""
-  rsync -a -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' --human-readable --progress --rsync-path="sudo rsync" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
+  decho "rsyncing archive ${4} to ${2}"
+  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" || die "could not rsync ${4} to ${2}"
+  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
   decho ""
 }
 
@@ -91,7 +108,9 @@ function deploy () {
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
 }
+
 ################################################################################
+
 decho "######################### DEPLOYING #########################"
 decho "DEPLOY_TO_STG=${DEPLOY_TO_STG}"
 decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
@@ -109,4 +128,5 @@ if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
     deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${WEB_FILE} ${FILE_PATH}
   done
 fi
-decho "######################### DEPLOYING DONE #########################"
+decho "####################### DEPLOYING DONE #######################"
+
