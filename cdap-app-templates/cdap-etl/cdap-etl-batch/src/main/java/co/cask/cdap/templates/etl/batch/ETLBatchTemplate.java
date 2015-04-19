@@ -22,6 +22,7 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
+import co.cask.cdap.templates.etl.batch.sinks.DBSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
@@ -62,7 +63,8 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         TimePartitionedFileSetDatasetAvroSink.class,
                                         StreamToStructuredRecordTransform.class,
                                         ScriptFilterTransform.class,
-                                        DBSource.class));
+                                        DBSource.class,
+                                        DBSink.class));
   }
 
   @Override
