@@ -63,6 +63,7 @@ public class ETLWorker extends AbstractWorker {
   private TransformExecutor transformExecutor;
   private DefaultEmitter defaultEmitter;
   private String stateStoreKey;
+  private byte[] stateStoreKeyBytes;
 
   private volatile boolean running;
 
@@ -86,6 +87,7 @@ public class ETLWorker extends AbstractWorker {
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
     stateStoreKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
+    stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
     transforms = Lists.newArrayList();
     final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
@@ -100,8 +102,7 @@ public class ETLWorker extends AbstractWorker {
         try {
           while (rows.hasNext()) {
             KeyValue<byte[], byte[]> row = rows.next();
-            String rowKey = Bytes.toString(row.getKey());
-            if (!rowKey.equals(stateStoreKey)) {
+            if (Bytes.compareTo(stateStoreKeyBytes, row.getKey()) != 0) {
               stateTable.delete(row.getKey());
             }
           }
@@ -186,7 +187,7 @@ public class ETLWorker extends AbstractWorker {
         @Override
         public void run(DatasetContext context) throws Exception {
           KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(stateStoreKey);
+          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
           if (stateBytes != null) {
             SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
             sourceState.setState(state.getState());
