@@ -157,7 +157,7 @@ public class AdapterServiceTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testAdapters() throws Exception {
+  public void testBatchAdapters() throws Exception {
     String adapterName = "myAdapter";
     DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somestream", "0 0 1 1 *");
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));

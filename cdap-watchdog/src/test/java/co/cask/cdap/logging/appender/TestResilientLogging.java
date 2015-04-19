@@ -38,6 +38,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -120,7 +121,7 @@ public class TestResilientLogging {
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    LogAppender appender = injector.getInstance(LogAppender.class);
+    LogAppender appender = new AsyncLogAppender(injector.getInstance(FileLogAppender.class));
     new LogAppenderInitializer(appender).initialize("TestResilientLogging");
 
     Logger logger = LoggerFactory.getLogger("TestResilientLogging");
@@ -168,7 +169,7 @@ public class TestResilientLogging {
     logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER,
                        logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
-    Assert.assertTrue(allEvents.size() >= 5);
+    Assert.assertTrue(allEvents.toString(), allEvents.size() >= 5);
 
     // Finally - stop all services
     Services.chainStop(dsService, opExecutorService, txManager);
