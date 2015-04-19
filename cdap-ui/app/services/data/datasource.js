@@ -93,7 +93,7 @@ angular.module(PKG.name+'.services')
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
-            if(b.resource.id == data.resource.id) {
+            if(b.resource.id === data.resource.id) {
               if(b.errorCallback) {
                 scope.$apply(b.errorCallback.bind(null, data));
               }
@@ -102,7 +102,7 @@ angular.module(PKG.name+'.services')
           return; // errors are handled at $rootScope level
         }
         angular.forEach(self.bindings, function (b) {
-          if(b.resource.id == data.resource.id) {
+          if(b.resource.id === data.resource.id) {
             scope.$apply(b.callback.bind(null, data.response));
           }
         });
