@@ -251,7 +251,7 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Represnts a Dataset - Program mapping.
+   * Represents a Dataset - Program mapping.
    */
   private static final class DatasetProgram {
     private static final String PREFIX = "dp_";

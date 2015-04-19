@@ -79,6 +79,22 @@ public class UsageDatasetTest {
                         usageDataset.getDatasets(flow11.getApplication()));
     Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
                         usageDataset.getDatasets(flow21.getApplication()));
+
+    // Delete app1
+    usageDataset.unregister(flow11.getApplication());
+
+    // There should be no mappings for programs of app1 now
+    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
+    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
+    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(service11));
+
+    Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow21));
+    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service21));
+
+    // Verify app mappings
+    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11.getApplication()));
+    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
+                        usageDataset.getDatasets(flow21.getApplication()));
   }
 
   private static UsageDataset getUsageDataset(String instanceId) throws Exception {
