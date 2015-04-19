@@ -112,6 +112,9 @@ public class MapReduceMetricsInfoTest {
     MRJobInfo mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(runId);
 
 
+    // Incomplete because MapReduceMetricsInfo does not provide task-level state and start/end times.
+    Assert.assertFalse(mrJobInfo.isComplete());
+
     // Check job-level counters
     Map<String, Long> jobCounters = mrJobInfo.getCounters();
     Assert.assertEquals((Long) 38L, jobCounters.get(TaskCounter.MAP_INPUT_RECORDS.name()));
