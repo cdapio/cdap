@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -42,7 +41,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   private final String name;
   private String programName;
-  private Callable<WorkflowToken> programRunner;
+  private Runnable programRunner;
   private SchedulableProgramType programType;
   private WorkflowContext context;
   private WorkflowToken token;
@@ -84,7 +83,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   public void run() {
     try {
       LOG.info("Starting Program for workflow action: {}", programName);
-      token = programRunner.call();
+      programRunner.run();
 
       // TODO (terence) : Put something back to context.
 

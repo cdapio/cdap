@@ -35,59 +35,58 @@ import org.apache.twill.api.RunId;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
- * A {@link ProgramWorkflowRunner} that creates {@link Callable} for executing MapReduce job from Workflow.
+ * A {@link ProgramWorkflowRunner} that creates {@link Runnable} for executing MapReduce job from Workflow.
  */
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
-    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions);
+                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions,
+                                 WorkflowToken token) {
+    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions, token);
   }
 
   /**
    * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
    * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * * {@link AbstractWorkflowProgram} and then gets the {@link Callable} for the program
+   * * {@link AbstractWorkflowProgram} and then gets the {@link Runnable} for the program
    * which can be called to execute the program
    *
    * @param name name of the program in the workflow
-   * @return {@link Callable} associated with this program run.
+   * @return {@link Runnable} associated with this program run.
    */
   @Override
-  public Callable<WorkflowToken> create(String name) {
+  public Runnable create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Application %s", name, spec.getName());
 
     final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
-    return getRuntimeContextCallable(name, mapReduceProgram);
+    return getProgramRunnable(name, mapReduceProgram);
   }
 
   /**
    * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   * On completion, return the {@link Map} of hadoop counters for the program run.
    *
    * @throws Exception if execution failed.
    */
   @Override
-  public WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception {
+  public void runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
                                                                                                         options);
     if (controller instanceof MapReduceProgramController) {
       MapReduceContext context = ((MapReduceProgramController) controller).getContext();
       executeProgram(controller, context);
-      return getCounterMap(context);
+      updateWorkflowToken(context);
     } else {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "MapReduceProgramController");
     }
   }
 
-  private WorkflowToken getCounterMap(MapReduceContext context) throws Exception {
+  private void updateWorkflowToken(MapReduceContext context) throws Exception {
     Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
     Counters counters = ((Job) context.getHadoopJob()).getCounters();
     for (CounterGroup group : counters) {
@@ -96,6 +95,6 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
       }
     }
-    return new BasicWorkflowToken(mapReduceCounters);
+    ((BasicWorkflowToken) token).setMapReduceCounters(mapReduceCounters);
   }
 }

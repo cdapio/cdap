@@ -27,50 +27,46 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramController;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 /**
- * Creates {@link Callable} for executing {@link Spark} programs from {@link Workflow}.
+ * Creates {@link Runnable} for executing {@link Spark} programs from {@link Workflow}.
  */
 final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                             Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
-    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions);
+                             Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions,
+                             WorkflowToken token) {
+    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions, token);
   }
 
   /**
    * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
    * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * {@link AbstractWorkflowProgram} and then gets the {@link Callable} of {@link WorkflowToken} for the
-   * program which can be called to execute the program.
+   * {@link AbstractWorkflowProgram} and then gets the {@link Runnable} for the program which can be called
+   * to execute the program.
    *
    * @param name name of the program in the workflow
-   * @return {@link Callable} of {@link WorkflowToken} associated with this program run.
+   * @return {@link Runnable} for the program.
    */
   @Override
-  public Callable<WorkflowToken> create(String name) {
+  public Runnable create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final SparkSpecification sparkSpec = spec.getSpark().get(name);
     Preconditions.checkArgument(sparkSpec != null,
                                 "No Spark with name %s found in Workflow %s", name, workflowSpec.getName());
 
     final Program sparkProgram = new WorkflowSparkProgram(workflowProgram, sparkSpec);
-    return getRuntimeContextCallable(name, sparkProgram);
+    return getProgramRunnable(name, sparkProgram);
   }
 
   /**
    * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   * On completion, currently this always returns the null.
    *
    * @throws Exception if execution failed.
    */
   @Override
-  public WorkflowToken runAndWait(Program program, ProgramOptions options) throws Exception {
+  public void runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SPARK).run(program, options);
 
     if (controller instanceof SparkProgramController) {
@@ -79,7 +75,5 @@ final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "SparkProgramController");
     }
-    // TODO: currently Spark program returns the null token
-    return null;
   }
 }

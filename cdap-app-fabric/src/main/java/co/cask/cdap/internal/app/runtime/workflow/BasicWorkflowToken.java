@@ -19,19 +19,21 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link WorkflowToken} interface.
  */
 public class BasicWorkflowToken implements WorkflowToken {
-  private final Map<String, Map<String, Long>> mapReduceCounters;
+  private Map<String, Map<String, Long>> mapReduceCounters;
 
-  public BasicWorkflowToken(Map<String, Map<String, Long>> mapReduceCounters) {
-    this.mapReduceCounters = mapReduceCounters;
-  }
-
+  @Nullable
   @Override
   public Map<String, Map<String, Long>> getMapReduceCounters() {
     return mapReduceCounters;
+  }
+
+  public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
+    this.mapReduceCounters = mapReduceCounters;
   }
 }

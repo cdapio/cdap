@@ -22,7 +22,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -67,7 +66,7 @@ final class BasicWorkflowContext implements WorkflowContext {
   }
 
   @Override
-  public Callable<WorkflowToken> getProgramRunner(String name) {
+  public Runnable getProgramRunner(String name) {
     if (programWorkflowRunner == null) {
       throw new UnsupportedOperationException("Operation not allowed.");
     }
