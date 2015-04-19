@@ -3,10 +3,10 @@
 var _ = require('lodash'),
     request = require('request'),
     colors = require('colors/safe'),
-    HashTable = require('object-hash').HashTable;
+    HashTable = require('object-hash').HashTable; // TODO: remove this dependency
 
 
-var POLL_INTERVAL = 1000;
+var POLL_INTERVAL = 3000;
 
 /**
  * Aggregator
@@ -25,8 +25,7 @@ function Aggregator (conn) {
   conn.on('close', _.bind(onSocketClose, this));
 
   this.connection = conn;
-  this.polledResources = new HashTable();
-  this.bodyCache = {};
+  this.polledResources = {};
 
   // this.log('init');
 }
@@ -43,49 +42,75 @@ Aggregator.prototype.log = function () {
 };
 
 /**
+ * Polls immediately and schedules a timer to be trigger
+ */
+Aggregator.prototype.startPolling = function (resource) {
+  console.log('registering ID: ' + resource.id);
+  resource.interval = resource.interval || POLL_INTERVAL;
+  this.polledResources[resource.id] = resource;
+  _.bind(doPoll, this, resource)();
+}
+
+/**
  * schedule polling
  */
-Aggregator.prototype.planPolling = function () {
-  this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
+Aggregator.prototype.scheduleAnotherIteration = function (resource) {
+  if (resource.stop) {
+    // Don't reschedule another iteration if the resource has been stopped
+    return;
+  }
+  console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) + ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
+  resource.timerId = setTimeout(_.bind(doPoll, this, resource), resource.interval);
 };
 
 /**
  * stop polling
  */
-Aggregator.prototype.stopPolling = function () {
-  clearTimeout(this.timeout);
-  this.timeout = null;
+Aggregator.prototype.stopPolling = function (resource) {
+  console.log('Stopped polling:' + resource.id);
+  var thisResource = removeFromObj(this.polledResources, resource.id);
+  if (thisResource === undefined) {
+    console.log('ERROR' + thisResource);
+    return;
+  }
+  clearTimeout(thisResource.timerId);
+  thisResource.stop = true;
 };
+
+Aggregator.prototype.stopPollingAll = function() {
+  for (var id in this.polledResources) {
+    var resource = this.polledResources[id];
+    clearTimeout(resource.timerId);
+    resource.stop = true;
+  }
+  this.polledResources = {};
+}
+
+function removeFromObj(obj, key) {
+  var el = obj[key];
+  delete obj[key];
+  return el;
+}
 
 
 /**
  * @private doPoll
  * requests all the polled resources
  */
-function doPoll () {
-  var that = this,
-      rscs = this.polledResources.toArray(),
-      pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
+function doPoll (resource) {
+    var that = this,
+        callBack = _.bind(this.scheduleAnotherIteration, that, resource);
 
-  //this.log('poll', rscs.length);
-  _.forEach(rscs, function(one){
-    var resource = one.value, k = one.hash;
-    request(resource, function(error, response, body){
-      if(_.isEqual(that.bodyCache[one.hash], body)) {
-        // that.log('not emitting', resource.url);
-        return; // we do not send down identical bodies
-      } else if (error) {
-        that.bodyCache[one.hash] = body;
+    request(resource, function(error, response, body) {
+      if (error) {
         emitResponse.call(that, resource, error);
         return;
       }
 
-      that.bodyCache[one.hash] = body;
       emitResponse.call(that, resource, false, response, body);
 
-    }).on('response', pollAgain)
-    .on('error', pollAgain);
-  });
+    }).on('response', callBack)
+    .on('error', callBack);
 }
 
 
@@ -95,7 +120,6 @@ function doPoll () {
  * @private emitResponse
  *
  * sends data back to the client through socket
- * TODO: only send it down if it changed
  *
  * @param  {object} resource that was requested
  * @param  {error|null} error
@@ -103,6 +127,8 @@ function doPoll () {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
+  resource.timerId = undefined;
+  resource.stop = undefined;
   if(error) { // still emit a warning
     this.log(resource.url, error);
     this.connection.write(JSON.stringify({
@@ -136,19 +162,14 @@ function onSocketData (message) {
 
     switch(message.action) {
       case 'poll-start':
-        this.polledResources.add(r);
-        if(!this.timeout) {
-          this.planPolling();
-        }
-        /* falls through */
+        this.startPolling(r);
+        break;
       case 'request':
+        console.log('requesting: ' + r.id + ' ' + r.url);
         request(r, _.bind(emitResponse, this, r));
         break;
       case 'poll-stop':
-        this.polledResources.remove(r);
-        if(!Object.keys(this.polledResources.table()).length) {
-          this.stopPolling();
-        }
+        this.stopPolling(r);
         break;
     }
 
@@ -162,9 +183,8 @@ function onSocketData (message) {
  * @private onSocketClose
  */
 function onSocketClose () {
-  this.log('closed');
-  this.stopPolling();
-  this.polledResources.reset();
+  this.log('socket closed');
+  this.stopPollingAll();
 }
 
 

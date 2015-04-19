@@ -31,6 +31,14 @@ angular.module(PKG.name+'.services')
     MYSOCKET_EVENT, $q, $filter) {
 
     var instances = {}; // keyed by scopeid
+    var counter = 0;
+    var generateId = function() {
+    //TODO: revisit
+      // Very fundamental (naive) unique id. Wouldn't
+      // work on a cluster environment if two browser sessions
+      // access the same metric from different computers
+      return Date.now() + '-' + counter++;
+    }
 
     function _pollStart (resource) {
       mySocket.send({
@@ -71,7 +79,7 @@ angular.module(PKG.name+'.services')
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
-            if(angular.equals(b.resource, data.resource)) {
+            if(b.resource.id == data.resource.id) {
               if(b.errorCallback) {
                 scope.$apply(b.errorCallback.bind(null, data));
               }
@@ -80,7 +88,7 @@ angular.module(PKG.name+'.services')
           return; // errors are handled at $rootScope level
         }
         angular.forEach(self.bindings, function (b) {
-          if(angular.equals(b.resource, data.resource)) {
+          if(b.resource.id == data.resource.id) {
             scope.$apply(b.callback.bind(null, data.response));
           }
         });
@@ -115,10 +123,8 @@ angular.module(PKG.name+'.services')
      * poll a resource
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
-      // Very fundamental (naive) unique id. Wouldn't
-      // work on a cluster environment if two browser sessions
-      // access the same metric from different computers
-      var id = Date.now();
+      var id = generateId()
+      resource.id = id;
       this.bindings.push({
         poll: true,
         resource: resource,
@@ -126,7 +132,6 @@ angular.module(PKG.name+'.services')
         callback: cb,
         errorCallback: errorCb
       });
-      resource.id = id;
 
       this.scope.$on('$destroy', function () {
         _pollStop(resource);
@@ -151,24 +156,20 @@ angular.module(PKG.name+'.services')
      * fetch a resource
      */
     DataSource.prototype.request = function (resource, cb) {
-      var once = false,
-          deferred = $q.defer();
+      var deferred = $q.defer();
 
+      var id = generateId();
+      resource.id = id;
       this.bindings.push({
         resource: resource,
+        id: id,
         callback: function (result) {
-          if(!once) {
-            once = true;
-            /*jshint -W030 */
-            cb && cb.apply(this, arguments);
-            deferred.resolve(result);
-          }
+          /*jshint -W030 */
+          cb && cb.apply(this, arguments);
+          deferred.resolve(result);
         },
         errorCallback: function (err) {
-          if(!once) {
-            once = true;
-            deferred.reject(err);
-          }
+          deferred.reject(err);
         }
       });
 
