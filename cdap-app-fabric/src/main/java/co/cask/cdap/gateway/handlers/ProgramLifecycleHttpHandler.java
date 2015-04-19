@@ -1261,7 +1261,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * 'protected' only to support v2 webapp APIs
+   * 'protected' for the workflow handler to use
    */
   protected ProgramStatus getProgramStatus(Id.Program id, ProgramType type) {
     try {
@@ -1370,45 +1370,37 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
-                                             String appId, ProgramType programType, String programId,
+                                             String appId, ProgramType type, String programId,
                                              String action) {
-    if (programType == null) {
+    if (type == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
-                action, appId, programType, programId);
-      programStartStop(request, responder, namespaceId, appId, programId, programType, action);
-    }
-  }
+                action, appId, type, programId);
+      try {
+        Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
+        AppFabricServiceStatus status;
+        if ("start".equals(action)) {
+          status = start(id, type, decodeArguments(request), false);
+        } else if ("debug".equals(action)) {
+          status = start(id, type, decodeArguments(request), true);
+        } else if ("stop".equals(action)) {
+          status = stop(id, type);
+        } else {
+          throw new IllegalArgumentException("action must be start, stop, or debug, but is: " + action);
+        }
+        if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
+          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
 
-  /**
-   * Protected temporarily until all v2 APIs are migrated (webapp APIs in this case).
-   */
-  protected void programStartStop(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
-                                  String programId, ProgramType type, String action) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-      AppFabricServiceStatus status;
-      if ("start".equals(action)) {
-        status = start(id, type, decodeArguments(request), false);
-      } else if ("debug".equals(action)) {
-        status = start(id, type, decodeArguments(request), true);
-      } else if ("stop".equals(action)) {
-        status = stop(id, type);
-      } else {
-        throw new IllegalArgumentException("action must be start, stop, or debug, but is: " + action);
-      }
-      if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
+        responder.sendString(status.getCode(), status.getMessage());
+      } catch (SecurityException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      } catch (Throwable e) {
+        LOG.error("Got exception:", e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
       }
-
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1757,10 +1749,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
     String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.API_VERSION_2,
+                               Constants.Gateway.API_VERSION_3,
                                application, flow);
 
     long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);

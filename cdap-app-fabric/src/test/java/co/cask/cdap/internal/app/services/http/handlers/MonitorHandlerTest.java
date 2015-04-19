@@ -37,24 +37,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Abstract monitor handler tests.
+ * Monitor handler tests.
  */
-public abstract class AbstractMonitorHandlerTest extends AppFabricTestBase {
+public class MonitorHandlerTest extends AppFabricTestBase {
 
-  protected HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
-    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+  protected HttpURLConnection openURL(String path, HttpMethod method) throws IOException, URISyntaxException {
+    HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
     urlConn.setRequestMethod(method.getName());
     return urlConn;
   }
 
-  protected abstract URL createURL(String path) throws URISyntaxException, MalformedURLException;
+  protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
+    return getEndPoint(String.format("/v3/%s", path)).toURL();
+  }
 
   @Test
   public void testSystemServices() throws Exception {
 
     Type token = new TypeToken<List<SystemServiceMeta>>() { }.getType();
 
-    HttpURLConnection urlConn = openURL(createURL("system/services"), HttpMethod.GET);
+    HttpURLConnection urlConn = openURL("system/services", HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     List<SystemServiceMeta> actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), token);
@@ -69,7 +71,7 @@ public abstract class AbstractMonitorHandlerTest extends AppFabricTestBase {
 
     Type token = new TypeToken<Map<String, String>>() { }.getType();
 
-    HttpURLConnection urlConn = openURL(createURL("system/services/status"), HttpMethod.GET);
+    HttpURLConnection urlConn = openURL("system/services/status", HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
 
     Map<String, String> result = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
@@ -85,7 +87,7 @@ public abstract class AbstractMonitorHandlerTest extends AppFabricTestBase {
     Type token = new TypeToken<Map<String, Integer>>() { }.getType();
 
     String path = String.format("system/services/%s/instances", Constants.Service.APP_FABRIC_HTTP);
-    HttpURLConnection urlConn = openURL(createURL(path), HttpMethod.GET);
+    HttpURLConnection urlConn = openURL(path, HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
 
     Map<String, Integer> result = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),

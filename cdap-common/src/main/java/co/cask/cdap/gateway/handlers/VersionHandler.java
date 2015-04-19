@@ -44,12 +44,6 @@ public class VersionHandler extends AbstractHttpHandler {
     this.version = determineVersion();
   }
 
-  @Path(Constants.Gateway.API_VERSION_2 + "/version")
-  @GET
-  public void oldVersion(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, new Version(version));
-  }
-
   @Path(Constants.Gateway.API_VERSION_3 + "/version")
   @GET
   public void version(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {

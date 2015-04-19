@@ -52,7 +52,7 @@ public class MetaClient {
   }
 
   public void ping() throws IOException, UnauthorizedException {
-    restClient.execute(HttpMethod.GET, config.resolveURL("ping"), config.getAccessToken());
+    restClient.execute(HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
   }
 
   public Version getVersion() throws IOException, UnauthorizedException {
@@ -63,8 +63,9 @@ public class MetaClient {
   public void resetUnrecoverably()
     throws ResetFailureException, IOException, UnauthorizedException, ResetNotEnabledException {
 
-    URL url = config.resolveURL(String.format("unrecoverable/reset"));
-    HttpRequest request = HttpRequest.post(url).build();
+    // TODO in v2/ APIs, this only reset the default namespace. This should reset all namespaces [CDAP-2179]
+    URL url = config.resolveURL(String.format("unrecoverable/namespaces/default"));
+    HttpRequest request = HttpRequest.delete(url).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
                                                HttpURLConnection.HTTP_UNAUTHORIZED, HttpURLConnection.HTTP_BAD_REQUEST,
