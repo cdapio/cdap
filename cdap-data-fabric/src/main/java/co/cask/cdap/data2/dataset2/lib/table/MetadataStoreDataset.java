@@ -137,7 +137,7 @@ public class MetadataStoreDataset extends AbstractDataset {
       Scanner scan = table.scan(startKey, stopKey);
       try {
         Row next;
-        while ((limit-- > 0) && (next = scan.next()) != null) {
+        while ((limit > 0) && (next = scan.next()) != null) {
           byte[] columnValue = next.get(COLUMN);
           if (columnValue == null) {
             continue;
