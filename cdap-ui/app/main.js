@@ -148,7 +148,8 @@ angular
               MY_CONFIG.cdap.routerServerUrl,
               ':',
               MY_CONFIG.cdap.routerServerPort,
-              '/status'].join('')
+              '/status'].join(''),
+        interval: 2000
       }, function(res) {
         EventPipe.emit('backendUp');
       }, function(res) {
