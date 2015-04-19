@@ -64,7 +64,7 @@ public class ETLWorkerTest extends TestBase {
     }
 
     WorkerManager workerManager = templateManager.startWorker(ETLWorker.class.getSimpleName(), workerArgs);
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(2);
     workerManager.stop();
     templateManager.stopAll();
   }

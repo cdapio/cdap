@@ -31,6 +31,8 @@ import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
+import java.util.UUID;
+
 /**
  * ETL Realtime Template.
  */
@@ -53,6 +55,9 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
     super.configureAdapter(adapterName, etlConfig, configurer);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setInstances(etlConfig.getInstances());
+
+    // Generate unique id for this adapter creation.
+    configurer.addRuntimeArgument(Constants.Realtime.UNIQUE_ID, UUID.randomUUID().toString());
 
     Resources resources = etlConfig.getResources();
     if (resources != null) {

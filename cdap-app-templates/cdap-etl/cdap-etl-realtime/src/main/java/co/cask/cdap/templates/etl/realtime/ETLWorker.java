@@ -19,6 +19,8 @@ package co.cask.cdap.templates.etl.realtime;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
@@ -52,14 +54,15 @@ public class ETLWorker extends AbstractWorker {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
   private static final Gson GSON = new Gson();
   private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
+  private static final String SEPARATOR = ":";
 
   private String adapterName;
   private RealtimeSource source;
   private RealtimeSink sink;
   private List<Transform> transforms;
-  private DatasetContext datasetContext;
   private TransformExecutor transformExecutor;
   private DefaultEmitter defaultEmitter;
+  private String matchKey;
 
   private volatile boolean running;
 
@@ -72,23 +75,39 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void initialize(final WorkerContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArgs = context.getRuntimeArguments();
+    final Map<String, String> runtimeArgs = context.getRuntimeArguments();
 
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Realtime.UNIQUE_ID));
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
+    matchKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
     transforms = Lists.newArrayList();
     final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
-
+    // Cleanup the rows in statetable for runs with same adapter name but other runids.
     getContext().execute(new TxRunnable() {
       @Override
       public void run(DatasetContext dsContext) throws Exception {
-        datasetContext = dsContext;
+        KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeTemplate.STATE_TABLE);
+        byte[] startKey = Bytes.toBytes(String.format("%s%s", adapterName, SEPARATOR));
+        // Scan the table for adaptername: prefixes and remove rows which doesn't match the unique id of this adapter.
+        CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
+        try {
+          while (rows.hasNext()) {
+            KeyValue<byte[], byte[]> row = rows.next();
+            String rowKey = Bytes.toString(row.getKey());
+            if (!rowKey.equals(matchKey)) {
+              stateTable.delete(row.getKey());
+            }
+          }
+        } finally {
+          rows.close();
+        }
       }
     });
 
@@ -99,7 +118,7 @@ public class ETLWorker extends AbstractWorker {
     getContext().execute(new TxRunnable() {
       @Override
       public void run(DatasetContext datasetCtx) throws Exception {
-        initializeSink(context, config.getSink());
+        initializeSink(context, config.getSink(), datasetCtx);
       }
     });
 
@@ -118,7 +137,7 @@ public class ETLWorker extends AbstractWorker {
     source.initialize(sourceContext);
   }
 
-  private void initializeSink(WorkerContext context, ETLStage stage) throws Exception {
+  private void initializeSink(WorkerContext context, ETLStage stage, DatasetContext datasetContext) throws Exception {
     StageSpecification spec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
                                             StageSpecification.class);
     sink = (RealtimeSink) Class.forName(spec.getClassName()).newInstance();
@@ -167,7 +186,7 @@ public class ETLWorker extends AbstractWorker {
         @Override
         public void run(DatasetContext context) throws Exception {
           KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(adapterName);
+          byte[] stateBytes = stateTable.read(matchKey);
           if (stateBytes != null) {
             SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
             sourceState.setState(state.getState());
@@ -187,7 +206,7 @@ public class ETLWorker extends AbstractWorker {
               //Persist sourceState
               KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
               if (nextState != null) {
-                stateTable.write(adapterName, GSON.toJson(nextState));
+                stateTable.write(matchKey, GSON.toJson(nextState));
               }
             }
           });

@@ -24,6 +24,7 @@ public final class Constants {
   public static final String ADAPTER_NAME = "name";
   public static final String CONFIG_KEY = "config";
 
+
   /**
    * Constants related to Source.
    */
@@ -43,5 +44,12 @@ public final class Constants {
    */
   public static final class Transform {
     public static final String SPECIFICATIONS = "templates.etl.adapter.transform.specifications";
+  }
+
+  /**
+   * Constants related to Realtime Adapter.
+   */
+  public static final class Realtime {
+    public static final String UNIQUE_ID = "uniqueid";
   }
 }
