@@ -136,7 +136,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals("STARTED", status);
 
     // Deleting App should fail
-    deleteApplication(1, deleteURL, 400);
+    deleteApplication(1, deleteURL, 403);
 
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
@@ -145,7 +145,7 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // Deleting App should fail
-    deleteApplication(1, deleteURL, 400);
+    deleteApplication(1, deleteURL, 403);
 
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -215,28 +215,6 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testInvalidConfigReturns400() throws Exception {
     // TODO: implement once adapter creation calls configureTemplate()
-  }
-
-  @Test
-  public void testDeployTemplate() throws Exception {
-    String deleteURL = getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
-                                           Constants.DEFAULT_NAMESPACE);
-    HttpResponse response = doPut(
-      String.format("%s/namespaces/%s/templates/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    ApplicationTemplateInfo info1 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
-    response = doPut(
-      String.format("%s/namespaces/%s/templates/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), "{}");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    ApplicationTemplateInfo info2 = adapterService.getApplicationTemplateInfo(DummyBatchTemplate.NAME);
-    Assert.assertNotEquals(info1.getDescription(), info2.getDescription());
-
-    // delete the application
-    deleteApplication(60, deleteURL, 200);
-    List<JsonObject> deployedApps = getAppList(Constants.DEFAULT_NAMESPACE);
-    Assert.assertTrue(deployedApps.isEmpty());
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {
