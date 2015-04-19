@@ -58,7 +58,10 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
   protected abstract void doProcess(KafkaLogEvent event);
 
   public boolean alreadyProcessed(KafkaLogEvent event) {
+    // If the offset is -1 then it is not processed.
     // if the event offset is less than what is already checkpointed then the event is already processed
-    return event.getNextOffset() < partitionOffsets.get(event.getPartition()) ? true : false;
+    return event.getNextOffset() != -1 && event.getNextOffset() < partitionOffsets.get(event.getPartition()) ?
+           true :
+           false;
   }
 }

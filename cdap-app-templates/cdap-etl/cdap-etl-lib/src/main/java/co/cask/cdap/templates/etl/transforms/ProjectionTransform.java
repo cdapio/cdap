@@ -23,8 +23,8 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.KeyValueListParser;
 import com.google.common.base.Splitter;
 import com.google.common.collect.BiMap;
@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
 /**
  * Projection transform that allows dropping, renaming, and converting field types.
  */
-public class ProjectionTransform extends Transform<StructuredRecord, StructuredRecord> {
+public class ProjectionTransform extends TransformStage<StructuredRecord, StructuredRecord> {
   private static final String DROP = "drop";
   private static final String RENAME = "rename";
   private static final String CONVERT = "convert";

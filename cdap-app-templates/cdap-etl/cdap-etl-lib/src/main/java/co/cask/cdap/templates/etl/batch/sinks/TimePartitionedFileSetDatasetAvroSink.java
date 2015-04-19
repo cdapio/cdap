@@ -17,14 +17,15 @@
 package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.batch.BatchSinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -92,8 +93,9 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   }
 
   @Override
-  public void write(GenericRecord input, BatchSinkWriter<AvroKey<GenericRecord>, NullWritable> writer)
-    throws Exception {
-    writer.write(new AvroKey<GenericRecord>(input), NullWritable.get());
+  public void transform(GenericRecord input, Emitter<KeyValue<AvroKey<GenericRecord>,
+    NullWritable>> emitter) throws Exception {
+    emitter.emit(new KeyValue<AvroKey<GenericRecord>, NullWritable>(
+      new AvroKey<GenericRecord>(input), NullWritable.get()));
   }
 }

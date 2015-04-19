@@ -27,13 +27,11 @@ import java.util.List;
  */
 public final class ETLRealtimeConfig extends ETLConfig {
   private final int instances;
-  private final Resources resources;
 
   public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                            Resources resources) {
-    super(source, sink, transforms);
+    super(source, sink, transforms, resources);
     this.instances = instances;
-    this.resources = resources;
   }
 
   public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
@@ -46,9 +44,5 @@ public final class ETLRealtimeConfig extends ETLConfig {
 
   public int getInstances() {
     return instances;
-  }
-
-  public Resources getResources() {
-    return resources;
   }
 }

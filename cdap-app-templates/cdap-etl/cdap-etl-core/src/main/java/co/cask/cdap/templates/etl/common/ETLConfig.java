@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
@@ -27,11 +28,13 @@ public class ETLConfig {
   private final ETLStage source;
   private final ETLStage sink;
   private final List<ETLStage> transforms;
+  private final Resources resources;
 
-  public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+  public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms, Resources resources) {
     this.source = source;
     this.sink = sink;
     this.transforms = transforms;
+    this.resources = resources;
   }
 
   public ETLStage getSource() {
@@ -44,5 +47,9 @@ public class ETLConfig {
 
   public List<ETLStage> getTransforms() {
     return transforms;
+  }
+
+  public Resources getResources() {
+    return resources;
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.batch;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -50,11 +49,6 @@ public abstract class MapReduceBatchContext implements BatchContext {
   @Override
   public <T> T getHadoopJob() {
     return mrContext.getHadoopJob();
-  }
-
-  @Override
-  public void setResources(Resources resources) {
-    mrContext.setMapperResources(resources);
   }
 
   @Override

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -55,14 +54,8 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
     super.configureAdapter(adapterName, etlConfig, configurer);
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setInstances(etlConfig.getInstances());
-
     // Generate unique id for this adapter creation.
     configurer.addRuntimeArgument(Constants.Realtime.UNIQUE_ID, UUID.randomUUID().toString());
-
-    Resources resources = etlConfig.getResources();
-    if (resources != null) {
-      configurer.setResources(resources);
-    }
   }
 
   @Override

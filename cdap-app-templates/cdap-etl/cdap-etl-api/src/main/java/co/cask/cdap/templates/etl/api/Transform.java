@@ -16,60 +16,13 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-
 /**
- * Transform Stage.
+ * Transforms an input object into zero or more output objects.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public abstract class Transform<IN, OUT> implements ProgramLifecycle<TransformContext> {
-
-  private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
-  private final Type outputType = new TypeToken<OUT>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link IN}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getInputType() {
-    return inputType;
-  }
-
-  /**
-   * Get the Type of {@link OUT}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getOutputType() {
-    return outputType;
-  }
-
-  private TransformContext context;
-
-  /**
-   * Configure the Transform stage. Used to provide information about the Transform.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  /**
-   * Initialize the Transform Stage. Called during the runtime with context of the Transform.
-   *
-   * @param context {@link TransformContext}
-   */
-  @Override
-  public void initialize(TransformContext context) throws Exception {
-    this.context = context;
-  }
+public interface Transform<IN, OUT> {
 
   /**
    * Process input and emit output using {@link Emitter}.
@@ -78,15 +31,5 @@ public abstract class Transform<IN, OUT> implements ProgramLifecycle<TransformCo
    * @param emitter {@link Emitter} to emit data to the next stage
    * @throws Exception
    */
-  public abstract void transform(IN input, Emitter<OUT> emitter) throws Exception;
-
-
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected TransformContext getContext() {
-    return context;
-  }
+  void transform(IN input, Emitter<OUT> emitter) throws Exception;
 }

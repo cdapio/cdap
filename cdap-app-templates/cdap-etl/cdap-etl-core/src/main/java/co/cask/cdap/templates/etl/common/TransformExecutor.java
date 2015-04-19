@@ -22,8 +22,11 @@ import java.util.List;
 
 /**
  * Execution of Transforms one iteration at a time.
+ *
+ * @param <IN> the type of input object to the first transform
+ * @param <OUT> the type of object output by the last transform
  */
-public class TransformExecutor {
+public class TransformExecutor<IN, OUT> {
   private final List<Transform> transformList;
   private DefaultEmitter previousEmitter;
   private DefaultEmitter currentEmitter;
@@ -34,7 +37,7 @@ public class TransformExecutor {
     this.currentEmitter = new DefaultEmitter();
   }
 
-  public Iterable<Object> runOneIteration(Object input) throws Exception {
+  public Iterable<OUT> runOneIteration(IN input) throws Exception {
     previousEmitter.reset();
     previousEmitter.emit(input);
     for (Transform transform : transformList) {
