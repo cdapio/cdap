@@ -6,6 +6,9 @@ var _ = require('lodash'),
     HashTable = require('object-hash').HashTable; // TODO: remove this dependency
 
 
+/**
+ * Default Poll Interval used by the backend.
+ */
 var POLL_INTERVAL = 3000;
 
 /**
@@ -25,13 +28,15 @@ function Aggregator (conn) {
   conn.on('close', _.bind(onSocketClose, this));
 
   this.connection = conn;
-  this.polledResources = {};
 
-  // this.log('init');
+  // WebSocket local resource pool. Key here is the resource id
+  // as send from the backend. The FE has to guarantee that the
+  // the resource id is unique within a websocket connection.
+  this.polledResources = {};
 }
 
 /**
- * log something
+ * Logs the error message to console.
  */
 Aggregator.prototype.log = function () {
   console.log(
@@ -42,60 +47,83 @@ Aggregator.prototype.log = function () {
 };
 
 /**
- * Polls immediately and schedules a timer to be trigger
+ * Checks if the 'id' received from the client is already registered -- This
+ * check was added because for whatever reason 'Safari' was sending multiple
+ * requests to backend with same ids. As this is happens only once during
+ * the start of poll, it's safe to make this check. The assumption here is
+ * that the frontend is sending in unique ids within the websocket session.
+ *
+ * Upon check if it's not duplicate, we invoke doPoll that would make the
+ * first call and set the interval for the timeout.
  */
 Aggregator.prototype.startPolling = function (resource) {
-  console.log('registering ID: ' + resource.id);
+  // WARN: This assumes that the browser side ids are unique for a websocket session.
+  // This check is needed for Safari.
+  if(this.polledResources[resource.id]) {
+    console.log("Resource id " + resource.id + " already registered.");
+    return;
+  }
   resource.interval = resource.interval || POLL_INTERVAL;
   this.polledResources[resource.id] = resource;
   _.bind(doPoll, this, resource)();
 }
 
 /**
- * schedule polling
+ * This method is called regularly by 'doPoll' to register the next interval
+ * for timeout. Every resource handle has a flag is used to indicate if the
+ * the resource has been requested to be stopped, if it's already stopped, then
+ * there is nothing for us to do. If it's not then we go ahead and register
+ * the interval timeout.
  */
 Aggregator.prototype.scheduleAnotherIteration = function (resource) {
   if (resource.stop) {
     // Don't reschedule another iteration if the resource has been stopped
     return;
   }
-  console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) + ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
+  console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
+      ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
   resource.timerId = setTimeout(_.bind(doPoll, this, resource), resource.interval);
 };
 
 /**
- * stop polling
+ * Stops the polling of a resource. The resources that has been requested to be stopped
+ * is removed from the websocket local poll and the timeouts are cleared and stop flag
+ * is set to true.
  */
 Aggregator.prototype.stopPolling = function (resource) {
-  console.log('Stopped polling:' + resource.id);
   var thisResource = removeFromObj(this.polledResources, resource.id);
   if (thisResource === undefined) {
-    console.log('ERROR' + thisResource);
     return;
   }
   clearTimeout(thisResource.timerId);
   thisResource.stop = true;
 };
 
+/**
+ * Iterates through the websocket local resources and clears the timers and sets
+ * the flag. This is called when the websocket is closing the connection.
+ */
 Aggregator.prototype.stopPollingAll = function() {
   for (var id in this.polledResources) {
     var resource = this.polledResources[id];
     clearTimeout(resource.timerId);
     resource.stop = true;
   }
-  this.polledResources = {};
 }
 
+/**
+ * Removes the resource id from the websocket connection local resource pool.
+ */
 function removeFromObj(obj, key) {
   var el = obj[key];
   delete obj[key];
   return el;
 }
 
-
 /**
- * @private doPoll
- * requests all the polled resources
+ * 'doPoll' is the doer - it makes the resource request call to backend and
+ * sends the response back once it receives it. Upon completion of the request
+ * it schedulers the interval for next trigger.
  */
 function doPoll (resource) {
     var that = this,
@@ -112,9 +140,6 @@ function doPoll (resource) {
     }).on('response', callBack)
     .on('error', callBack);
 }
-
-
-
 
 /**
  * @private emitResponse
@@ -165,7 +190,6 @@ function onSocketData (message) {
         this.startPolling(r);
         break;
       case 'request':
-        console.log('requesting: ' + r.id + ' ' + r.url);
         request(r, _.bind(emitResponse, this, r));
         break;
       case 'poll-stop':
@@ -185,6 +209,7 @@ function onSocketData (message) {
 function onSocketClose () {
   this.log('socket closed');
   this.stopPollingAll();
+  this.polledResources = {};
 }
 
 
