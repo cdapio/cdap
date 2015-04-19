@@ -22,7 +22,7 @@ package co.cask.cdap.templates.etl.api.batch;
  * @param <KEY> the type of key to write
  * @param <VAL> the type of value to write
  */
-public interface SinkWriter<KEY, VAL> {
+public interface BatchSinkWriter<KEY, VAL> {
 
   /**
    * Write a key value pair

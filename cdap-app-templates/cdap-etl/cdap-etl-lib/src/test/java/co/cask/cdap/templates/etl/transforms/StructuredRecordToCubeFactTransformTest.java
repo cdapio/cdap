@@ -289,7 +289,7 @@ public class StructuredRecordToCubeFactTransformTest {
     return config;
   }
 
-  private void verifyInvalidConfigDetected(StructuredRecordToCubeFactTransform.MappingConfig config) {
+  private void verifyInvalidConfigDetected(StructuredRecordToCubeFactTransform.MappingConfig config) throws Exception {
     Transform transform = new StructuredRecordToCubeFactTransform();
     TransformContext context =
       new MockTransformContext(config == null ? new HashMap<String, String>() :

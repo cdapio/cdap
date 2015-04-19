@@ -27,7 +27,6 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.transforms.formats.RecordFormats;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -52,14 +51,10 @@ public class StreamToStructuredRecordTransform extends Transform<StreamEvent, St
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
-    try {
-      Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));
-      schemaWrapper = getSchemaWrapper(streamBodySchema);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    Schema streamBodySchema = Schema.parseJson(getContext().getRuntimeArguments().get(SCHEMA));
+    schemaWrapper = getSchemaWrapper(streamBodySchema);
   }
 
   @Override

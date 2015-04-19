@@ -17,6 +17,8 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.Property;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -43,6 +45,21 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
   private StatusListener statusListener;
   private Queue<Tweet> tweetQ = new ConcurrentLinkedQueue<Tweet>();
 
+  /**
+   * Configure the Twitter Source.
+   *
+   * @param configurer {@link StageConfigurer}
+   */
+  @Override
+  public void configure(StageConfigurer configurer) {
+    configurer.setName(TwitterStreamSource.class.getSimpleName());
+    configurer.setDescription("Twitter Realtime Source");
+    configurer.addProperty(new Property("ConsumerKey", "Consumer Key", true));
+    configurer.addProperty(new Property("ConsumerSecret", "Consumer Secret", true));
+    configurer.addProperty(new Property("AccessToken", "Access Token", true));
+    configurer.addProperty(new Property("AccessTokenSecret", "Access Token Secret", true));
+  }
+
   @Nullable
   @Override
   public SourceState poll(Emitter<Tweet> writer, SourceState currentState) {
@@ -54,7 +71,7 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
   }
 
   @Override
-  public void initialize(SourceContext context) {
+  public void initialize(SourceContext context) throws Exception {
     super.initialize(context);
 
     statusListener = new StatusListener() {

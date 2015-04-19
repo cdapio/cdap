@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -26,18 +25,15 @@ import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
-import co.cask.cdap.templates.etl.common.PipelineExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
@@ -57,7 +53,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   @Override
   public void configure() {
-    setName("ETLMapReduce");
+    setName(ETLMapReduce.class.getSimpleName());
     setDescription("MapReduce driver for Batch ETL Adapters");
   }
 
@@ -115,7 +111,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Gson GSON = new Gson();
     private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
 
-    private PipelineExecutor pipelineExecutor;
+    private BatchPipelineExecutor batchPipelineExecutor;
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
@@ -141,10 +137,11 @@ public class ETLMapReduce extends AbstractMapReduce {
       sink.initialize(etlConfig.getSink());
       List<Transform> transforms = instantiateTransforms(specificationList, stageList);
 
-      pipelineExecutor = new PipelineExecutor(source, transforms, sink);
+      batchPipelineExecutor = new BatchPipelineExecutor(source, transforms, sink);
     }
 
-    private List<Transform> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs) {
+    private List<Transform> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs)
+      throws Exception {
       List<Transform> transforms = Lists.newArrayListWithCapacity(specList.size());
       for (int i = 0; i < specList.size(); i++) {
         StageSpecification spec = specList.get(i);
@@ -160,7 +157,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        pipelineExecutor.runOneIteration(key, value, new DefaultSinkWriter(context));
+        batchPipelineExecutor.runOneIteration(key, value, new DefaultBatchSinkWriter(context));
       } catch (Exception e) {
         LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
         Throwables.propagate(e);

@@ -25,6 +25,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.ApplicationManager;
