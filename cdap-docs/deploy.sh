@@ -21,9 +21,16 @@
 DEBUG=${DEBUG:-no}
 DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
-PROJECT=${PROJECT:-cdap}
+PROJECT=${PROJECT}
 PROJECT_DOCS=${PROJECT}-docs
-VERSION=${VERSION:-2.8.1}
+
+function get_version () {
+  TMP_VERSION=`grep "<version>" ../pom.xml`
+  TMP_VERSION=${TMP_VERSION#*<version>}
+  VERSION=${TMP_VERSION%%</version>*}
+}
+
+get_version
 PROJECT_VERSION=${PROJECT_VERSION:-${VERSION}}
 RSYNC_OPTS='-a --human-readable --progress --stats --rsync-path="sudo rsync"'
 WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
@@ -50,9 +57,15 @@ decho () {
 }
 
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
+
+if [ "${PROJECT}" == '' ]; then
+  echo "PROJECT not defined"
+  exit 1
+fi
+
 ################################################################################
 function make_remote_dir () {
-  decho "Make sure remote directory ${3} exists on ${2}"
+  decho "make sure remote directory ${3} exists on ${2}"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
   ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
   decho ""
@@ -66,14 +79,14 @@ function rsync_zip_file () {
 }
 
 function unzip_archive () {
-  decho "Unzipping ${4} on ${2}"
+  decho "unzipping ${4} on ${2}"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
   ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
   decho ""
 }
 
 function deploy () {
-  decho "Deploying to ${2}" 
+  decho "deploying to ${2}"
   make_remote_dir ${1} ${2} ${3}
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
@@ -85,13 +98,13 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
-  decho "deploying to ${STG_SERVER}"
+  decho "Deploying to Staging server"
   deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
-  decho "deploying to Docs servers"
+  decho "Deploying to Docs servers"
   for i in ${DOCS_SERVERS}; do
     deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${WEB_FILE} ${FILE_PATH}
   done
