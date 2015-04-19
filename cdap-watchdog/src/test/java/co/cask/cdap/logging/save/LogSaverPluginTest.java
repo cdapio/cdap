@@ -73,6 +73,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -96,6 +97,8 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
  * Test LogSaver plugin.
  */
 @Category(SlowTests.class)
+// TODO: This test will be fixed as part of https://issues.cask.co/browse/CDAP-2177
+@Ignore
 public class LogSaverPluginTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
