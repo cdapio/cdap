@@ -1,5 +1,8 @@
 angular.module(PKG.name+'.services')
-  /*
+
+  /**
+    Example Usage:
+
     MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
@@ -7,7 +10,8 @@ angular.module(PKG.name+'.services')
     // polling a namespaced resource example:
     dataSrc.poll({
         method: 'GET',
-        _cdapNsPath: '/foo/bar'
+        _cdapNsPath: '/foo/bar',
+        interval: 5000 // in milliseconds.
       },
       function(result) {
         $scope.foo = result;
@@ -26,20 +30,26 @@ angular.module(PKG.name+'.services')
         $scope.foo = result;
       }
     ); // will post to <host>:<port>/v3/system/config
+
    */
+
   .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
     MYSOCKET_EVENT, $q, $filter) {
 
     var instances = {}; // keyed by scopeid
-    var counter = 0;
-    var generateId = function() {
-    //TODO: revisit
-      // Very fundamental (naive) unique id. Wouldn't
-      // work on a cluster environment if two browser sessions
-      // access the same metric from different computers
-      return Date.now() + '-' + counter++;
+
+    /**
+     * Generates unique id's for each request that is being sent on
+     * the websocket connection. 
+     */
+    var generateUUID = function() {
+      return uuid.v4();
     }
 
+    /**
+     * Start polling of the resource - sends the action 'poll-start' to 
+     * the node backend. 
+     */
     function _pollStart (resource) {
       mySocket.send({
         action: 'poll-start',
@@ -47,6 +57,10 @@ angular.module(PKG.name+'.services')
       });
     }
 
+    /**
+     * Stops polling of the resource - sends the actions 'poll-stop' to
+     * the node backend. 
+     */
     function _pollStop (resource) {
       mySocket.send({
         action: 'poll-stop',
@@ -117,13 +131,11 @@ angular.module(PKG.name+'.services')
       this.scope = scope;
     }
 
-
-
     /**
-     * poll a resource
+     * Start polling of a resource when in scope. 
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
-      var id = generateId()
+      var id = generateUUID()
       resource.id = id;
       this.bindings.push({
         poll: true,
@@ -141,7 +153,9 @@ angular.module(PKG.name+'.services')
       return id;
     };
 
-
+    /**
+     * Stop polling of a resource when requested or when out of scope. 
+     */
     DataSource.prototype.stopPoll = function(id) {
       var filterFilter = $filter('filter');
       var match = filterFilter(this.bindings, {id: id});
@@ -153,12 +167,13 @@ angular.module(PKG.name+'.services')
     };
 
     /**
-     * fetch a resource
+     * Fetch a resource on-demand. Send the action 'request' to 
+     * the node backend.
      */
     DataSource.prototype.request = function (resource, cb) {
       var deferred = $q.defer();
 
-      var id = generateId();
+      var id = generateUUID();
       resource.id = id;
       this.bindings.push({
         resource: resource,

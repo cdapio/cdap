@@ -2,14 +2,16 @@
 
 var _ = require('lodash'),
     request = require('request'),
-    colors = require('colors/safe'),
-    HashTable = require('object-hash').HashTable; // TODO: remove this dependency
-
+    colors = require('colors/safe');
 
 /**
  * Default Poll Interval used by the backend.
+ * We set the default poll interval to high, so 
+ * if any of the frontend needs faster than this
+ * time, then would have to pass in the 'interval'
+ * in their request.
  */
-var POLL_INTERVAL = 3000;
+var POLL_INTERVAL = 10*1000; 
 
 /**
  * Aggregator
@@ -180,10 +182,7 @@ function emitResponse (resource, error, response, body) {
 function onSocketData (message) {
   try {
     message = JSON.parse(message);
-    // this.log('data', message.action);
-
     var r = message.resource;
-    // @TODO whitelist resources
 
     switch(message.action) {
       case 'poll-start':
@@ -196,7 +195,6 @@ function onSocketData (message) {
         this.stopPolling(r);
         break;
     }
-
   }
   catch (e) {
     console.error(e);
@@ -211,6 +209,5 @@ function onSocketClose () {
   this.stopPollingAll();
   this.polledResources = {};
 }
-
 
 module.exports = Aggregator;
