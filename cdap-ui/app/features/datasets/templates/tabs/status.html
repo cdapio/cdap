@@ -1,6 +1,9 @@
 <div class="container" ng-controller="CdapDatasetDetailStatusController">
   <div class="row">
-    <div class="col-xs-9">
+    <div class="col-xs-8 h2">
+      <h2><span> Schema </span></h2>
+    </div>
+    <div class="col-xs-4">
       <table class="table table-curved table-status">
         <thead>
           <th> Storage </th>
@@ -10,15 +13,15 @@
         <tbody>
           <td>
             <em ng-if="storage"> {{storage | bytes}} </em>
-            <em ng-if="!storage"> N/A </em>
+            <em ng-if="!storage"> &mdash; </em>
           </td>
           <td>
             <em ng-if="writes"> {{writes | bytes}}/s </em>
-            <em ng-if="!writes"> N/A </em>
+            <em ng-if="!writes"> &mdash; </em>
           </td>
           <td>
             <em ng-if="reads"> {{reads | bytes}}/s </em>
-            <em ng-if="!reads"> N/A </em>
+            <em ng-if="!reads"> &mdash; </em>
           </td>
         </tbody>
       </table>
@@ -26,7 +29,6 @@
   </div>
   <div class="row">
     <div class="col-xs-12">
-      <h2> Schema </h2>
       <div class="table responsive">
         <table class="table table-curved" cask-sortable ng-show="schema.length > 0">
           <thead>
