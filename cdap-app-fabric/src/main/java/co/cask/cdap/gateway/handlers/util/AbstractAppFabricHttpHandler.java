@@ -121,6 +121,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     public static final AppFabricServiceStatus INTERNAL_ERROR =
       new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
 
+    public static final AppFabricServiceStatus ADAPTER_CONFLICT =
+      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "An ApplicationTemplate exists with conflicting name.");
+
     private final HttpResponseStatus code;
     private final String message;
 

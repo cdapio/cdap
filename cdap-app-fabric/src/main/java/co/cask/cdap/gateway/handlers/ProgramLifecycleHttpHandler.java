@@ -345,10 +345,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) {
-    // If the app is deployed and it is an Application Template, then don't allow any action.
+    // If the app is an Application Template, then don't allow any action.
     // Operations are only allowed through Adapter Lifecycle management.
-    if (store.getApplication(Id.Application.from(namespaceId, appId)) != null &&
-      adapterService.getApplicationTemplateInfo(appId) != null) {
+    if (adapterService.getApplicationTemplateInfo(appId) != null) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            "Operations on Application Templates are allowed only through Adapters.");
       return;
