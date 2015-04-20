@@ -19,7 +19,11 @@
       <tbody>
         <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse" ng-click="click(data)">
           <td>{{ ::data.name }}</td>
-          <td>{{ ::data.type }}</td>
+          <td>
+            <img ng-if="data.type === 'Stream'" class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
+            <img ng-if="data.type !== 'Stream'" class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
+            <span> {{ ::data.type }} </span>
+          </td>
         </tr>
       </tbody>
     </table>
