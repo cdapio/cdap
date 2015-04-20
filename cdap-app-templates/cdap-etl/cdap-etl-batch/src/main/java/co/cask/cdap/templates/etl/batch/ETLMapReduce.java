@@ -55,6 +55,7 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
+  private Metrics mrMetrics;
 
   @Override
   public void configure() {
@@ -89,7 +90,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sourceSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Source.SPECIFICATION), StageSpecification.class);
     BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec, null);
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec,
+      new StageMetrics(mrMetrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
     LOG.info("Source Stage : {}", sourceStage);
     LOG.info("Source Class : {}", source.getClass().getName());
     LOG.info("Specifications of Source : {}", sourceSpec);
@@ -100,7 +102,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sinkSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION), StageSpecification.class);
     BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
-    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec, null);
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec,
+      new StageMetrics(mrMetrics, StageMetrics.Type.SINK, sinkSpec.getName()));
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", sink.getClass().getName());
     LOG.info("Specifications of Sink : {}", sinkSpec);
@@ -120,7 +123,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
 
     private TransformExecutor<KeyValue, KeyValue> transformExecutor;
-    private Metrics metrics;
+    private Metrics mapperMetrics;
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
@@ -144,14 +147,14 @@ public class ETLMapReduce extends AbstractMapReduce {
       BatchSource source = instantiateStage(sourceSpec);
       source.initialize(etlConfig.getSource());
       pipeline.add(source);
-      stageMetrics.add(new StageMetrics(metrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
 
       addTransforms(specificationList, stageList, pipeline, stageMetrics);
 
       BatchSink sink = instantiateStage(sinkSpec);
       sink.initialize(etlConfig.getSink());
       pipeline.add(sink);
-      stageMetrics.add(new StageMetrics(metrics, StageMetrics.Type.SINK, sinkSpec.getName()));
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, sinkSpec.getName()));
 
       transformExecutor = new TransformExecutor<KeyValue, KeyValue>(pipeline, stageMetrics);
     }
@@ -165,11 +168,11 @@ public class ETLMapReduce extends AbstractMapReduce {
         ETLStage stageConfig = stageConfigs.get(i);
         TransformStage transform = instantiateStage(spec);
         DefaultTransformContext transformContext =
-          new DefaultTransformContext(spec, stageConfig.getProperties(), metrics);
+          new DefaultTransformContext(spec, stageConfig.getProperties(), mapperMetrics);
         transform.initialize(transformContext);
 
         pipeline.add(transform);
-        stageMetrics.add(new StageMetrics(metrics, StageMetrics.Type.TRANSFORM, spec.getName()));
+        stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, spec.getName()));
       }
     }
 
