@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -32,16 +33,24 @@ public class WorkerRealtimeContext implements RealtimeContext {
   private final WorkerContext context;
   private final StageSpecification specification;
   private final ETLStage stage;
+  private final Metrics metrics;
 
-  public WorkerRealtimeContext(WorkerContext context, StageSpecification specification, ETLStage stage) {
+  public WorkerRealtimeContext(WorkerContext context, StageSpecification specification,
+                               ETLStage sourceStage, Metrics metrics) {
     this.context = context;
     this.specification = specification;
-    this.stage = stage;
+    this.stage = sourceStage;
+    this.metrics = metrics;
   }
 
   @Override
   public StageSpecification getSpecification() {
     return specification;
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 
   @Override

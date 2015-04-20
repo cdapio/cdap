@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -27,8 +28,9 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
 
-  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage, StageSpecification specification) {
-    super(context, sinkStage, specification);
+  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage,
+                              StageSpecification specification, Metrics metrics) {
+    super(context, sinkStage, specification, metrics);
   }
 
   @Override
@@ -40,5 +42,4 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   public void setOutput(String datasetName, Dataset dataset) {
     mrContext.setOutput(datasetName, dataset);
   }
-
 }

@@ -19,8 +19,7 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableMap;
@@ -51,35 +50,35 @@ public class ProjectionTransformTest {
   @Test(expected = IllegalArgumentException.class)
   public void testSameFieldMultipleConverts() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("convert", "x:int,x:long"));
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of("convert", "x:int,x:long"));
     transform.initialize(transformContext);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testSameFieldMultipleRenames() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,x:y"));
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,x:y"));
     transform.initialize(transformContext);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testMultipleRenamesToSameField() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,y:z"));
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x:z,y:z"));
     transform.initialize(transformContext);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidSyntax() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x,y"));
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of("rename", "x,y"));
     transform.initialize(transformContext);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidConversion() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of("convert", "x:int"));
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of("convert", "x:int"));
     transform.initialize(transformContext);
 
     Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.Type.LONG)));
@@ -100,7 +99,7 @@ public class ProjectionTransformTest {
       .set("z", new int[] { 1, 2, 3 })
       .build();
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockTransformContext(
       ImmutableMap.of("drop", "y, z"));
     transform.initialize(transformContext);
 
@@ -125,7 +124,7 @@ public class ProjectionTransformTest {
       .set("z", new int[] { 1, 2, 3 })
       .build();
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockTransformContext(
       ImmutableMap.of("rename", "x:y,y:z,z:x"));
     transform.initialize(transformContext);
 
@@ -154,7 +153,7 @@ public class ProjectionTransformTest {
       .build();
 
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "drop", "x", "rename", "y:x", "convert", "y:string"));
     transform.initialize(transformContext);
 
@@ -171,7 +170,7 @@ public class ProjectionTransformTest {
   @Test
   public void testConvertToString() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert",
       "booleanField:string,intField:string,longField:string," +
         "floatField:string,doubleField:string,bytesField:string,stringField:string"));
@@ -210,7 +209,7 @@ public class ProjectionTransformTest {
       Schema.Field.of("bytesField", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("stringField", Schema.of(Schema.Type.STRING)));
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert",
       "booleanField:boolean,intField:int,longField:long," +
         "floatField:float,doubleField:double,bytesField:bytes,stringField:string"));
@@ -243,7 +242,7 @@ public class ProjectionTransformTest {
   @Test
   public void testConvertToBytes() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert",
       "booleanField:bytes,intField:bytes,longField:bytes," +
         "floatField:bytes,doubleField:bytes,bytesField:bytes,stringField:bytes"));
@@ -292,7 +291,7 @@ public class ProjectionTransformTest {
       .build();
 
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert",
       "booleanField:boolean,intField:int,longField:long," +
         "floatField:float,doubleField:double,bytesField:bytes,stringField:string"));
@@ -315,7 +314,7 @@ public class ProjectionTransformTest {
   @Test
   public void testConvertToLong() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert", "intField:long"));
     transform.initialize(transformContext);
 
@@ -345,7 +344,7 @@ public class ProjectionTransformTest {
   @Test
   public void testConvertToFloat() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert", "intField:float,longField:float"));
     transform.initialize(transformContext);
 
@@ -375,7 +374,7 @@ public class ProjectionTransformTest {
   @Test
   public void testConvertToDouble() throws Exception {
     TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
       "convert", "intField:double,longField:double,floatField:double"));
     transform.initialize(transformContext);
 

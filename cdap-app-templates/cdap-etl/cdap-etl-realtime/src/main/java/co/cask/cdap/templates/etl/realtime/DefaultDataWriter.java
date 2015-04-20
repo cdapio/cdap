@@ -20,8 +20,11 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 
 import java.io.File;

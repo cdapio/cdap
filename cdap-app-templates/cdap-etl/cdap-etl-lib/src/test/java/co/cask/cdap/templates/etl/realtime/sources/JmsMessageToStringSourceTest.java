@@ -19,9 +19,8 @@ package co.cask.cdap.templates.etl.realtime.sources;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.junit.After;
 import org.junit.Assert;
@@ -31,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -98,27 +96,8 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new RealtimeContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
 
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     QueueConnection queueConn = null;
@@ -150,27 +129,7 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new RealtimeContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     TopicConnection topicConn = null;

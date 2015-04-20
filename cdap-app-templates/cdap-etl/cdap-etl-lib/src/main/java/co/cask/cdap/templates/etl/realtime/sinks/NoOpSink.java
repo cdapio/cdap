@@ -33,7 +33,7 @@ public class NoOpSink<T> extends RealtimeSink<T> {
   }
 
   @Override
-  public void write(Iterable<T> object, DataWriter dataWriter) throws Exception {
-    // no-op
+  public int write(Iterable<T> objects, DataWriter dataWriter) throws Exception {
+    return 0;
   }
 }

@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -31,8 +32,9 @@ import java.util.List;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
 
-  public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage, StageSpecification specification) {
-    super(context, sourceStage, specification);
+  public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage,
+                                StageSpecification specification, Metrics metrics) {
+    super(context, sourceStage, specification, metrics);
   }
 
   @Override

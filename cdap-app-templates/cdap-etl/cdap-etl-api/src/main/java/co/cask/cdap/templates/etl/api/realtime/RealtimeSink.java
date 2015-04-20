@@ -50,13 +50,14 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContex
   }
 
   /**
-   * Write the given object.
+   * Write the given objects.
    *
-   * @param object {@link Iterable} of T
+   * @param objects {@link Iterable} of I
    * @param dataWriter {@link DataWriter} write to CDAP streams and datasets
-   * @throws Exception if there was some exception writing the object
+   * @return the number of items written. Used by metrics to report how many records written by the sink
+   * @throws Exception if there was some exception writing the objects
    */
-  public abstract void write(Iterable<I> object, DataWriter dataWriter) throws Exception;
+  public abstract int write(Iterable<I> objects, DataWriter dataWriter) throws Exception;
 
   @Override
   public void destroy() {
