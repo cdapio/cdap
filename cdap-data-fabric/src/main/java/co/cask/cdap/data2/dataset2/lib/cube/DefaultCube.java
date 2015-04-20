@@ -155,7 +155,7 @@ public class DefaultCube implements Cube {
     FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
     FactTable table = resolutionToFactTable.get(query.getResolution());
     FactScanner scanner = table.scan(scan);
-    Map<Map<String, String>, Table<String, Long, Long>> resultMap = getTimeSeries(query, scanner);
+    Table<Map<String, String>, String, Map<Long, Long>> resultMap = getTimeSeries(query, scanner);
     return convertToQueryResult(query, resultMap);
   }
 
@@ -245,9 +245,9 @@ public class DefaultCube implements Cube {
     return currentBest;
   }
 
-  private Map<Map<String, String>, Table<String, Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
-    // tag values -> { metrics -> time -> values}
-    Map<Map<String, String>, Table<String, Long, Long>> mapOfGroupingToMeasureValuesTable = Maps.newHashMap();
+  private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
+    // {tag values, metric} -> {time -> value}s
+    Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
 
     int count = 0;
     while (scanner.hasNext()) {
@@ -280,20 +280,19 @@ public class DefaultCube implements Cube {
         continue;
       }
 
-      if (mapOfGroupingToMeasureValuesTable.get(seriesTags) == null) {
-        mapOfGroupingToMeasureValuesTable.put(seriesTags, HashBasedTable.<String, Long, Long>create());
-      }
-
       for (TimeValue timeValue : next) {
+        Map<Long, Long> timeValues = result.get(seriesTags, next.getMeasureName());
+        if (timeValues == null) {
+          result.put(seriesTags, next.getMeasureName(), Maps.<Long, Long>newHashMap());
+        }
+
         if (MeasureType.COUNTER == query.getMeasureType()) {
-          Long value = mapOfGroupingToMeasureValuesTable.get(seriesTags).get(next.getMeasureName(),
-                                                                        timeValue.getTimestamp());
+          Long value =  result.get(seriesTags, next.getMeasureName()).get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
-          mapOfGroupingToMeasureValuesTable.get(seriesTags).put(next.getMeasureName(), timeValue.getTimestamp(), value);
+          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (MeasureType.GAUGE == query.getMeasureType()) {
-          mapOfGroupingToMeasureValuesTable.get(seriesTags).put(next.getMeasureName(),
-                                                           timeValue.getTimestamp(), timeValue.getValue());
+          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
           throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
@@ -303,18 +302,18 @@ public class DefaultCube implements Cube {
         break;
       }
     }
-    return mapOfGroupingToMeasureValuesTable;
+    return result;
   }
 
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
-                                                      Map<Map<String, String>,
-                                                        Table<String, Long, Long>> aggValuesToTimeValues) {
+                                                      Table<Map<String, String>, String,
+                                                        Map<Long, Long>> resultTable) {
 
     List<TimeSeries> result = Lists.newArrayList();
     // iterating each groupValue tags
-    for (Map.Entry<Map<String, String>, Table<String, Long, Long>> row : aggValuesToTimeValues.entrySet()) {
+    for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
       // iterating each metrics
-      for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().rowMap().entrySet()) {
+      for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().entrySet()) {
         // generating time series for a grouping and a metric
         int count = 0;
         List<TimeValue> timeValues = Lists.newArrayList();

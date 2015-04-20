@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -43,7 +44,7 @@ public final class MetricDataQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final List<String> metricNames;
+  private final Collection<String> metricNames;
   // todo: should be aggregation function? e.g. also support min/max, etc.
   private final MetricType metricType;
   private final Map<String, String> sliceByTagValues;
@@ -52,15 +53,19 @@ public final class MetricDataQuery {
   private final Interpolator interpolator;
 
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         List<String> metricNames, MetricType metricType,
+                         String metricName, MetricType metricType,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, -1,
-         metricNames, metricType,
-         sliceByTagValues, groupByTags, null);
+    this(startTs, endTs, resolution, -1, ImmutableList.of(metricName), metricType, sliceByTagValues, groupByTags, null);
+  }
+
+  public MetricDataQuery(long startTs, long endTs, int resolution,
+                         Collection<String> metricNames, MetricType metricType,
+                         Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, -1, metricNames, metricType, sliceByTagValues, groupByTags, null);
   }
 
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
-                         List<String> metricNames, MetricType metricType,
+                         Collection<String> metricNames, MetricType metricType,
                          Map<String, String> sliceByTagValues, List<String> groupByTags,
                          @Nullable Interpolator interpolator) {
     this.startTs = startTs;
@@ -74,7 +79,11 @@ public final class MetricDataQuery {
     this.interpolator = interpolator;
   }
 
-  // todo : check if needed
+  public MetricDataQuery(long startTs, long endTs, int resolution, MetricType metricType,
+                         Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, -1, ImmutableList.<String>of(), metricType, sliceByTagValues, groupByTags, null);
+  }
+
   public MetricDataQuery(MetricDataQuery query, String metricName) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
          ImmutableList.of(metricName), query.metricType,
@@ -111,7 +120,7 @@ public final class MetricDataQuery {
     return resolution;
   }
 
-  public List<String> getMetricNames() {
+  public Collection<String> getMetricNames() {
     return metricNames;
   }
 

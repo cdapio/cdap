@@ -159,7 +159,7 @@ public class MapReduceMetricsInfo {
 
   private long getAggregates(Map<String, String> tags, String metric) throws Exception {
     MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, ImmutableList.of(prependSystem(metric)),
+      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, prependSystem(metric),
                           MetricType.COUNTER, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     if (query.isEmpty()) {

@@ -17,8 +17,10 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,14 +47,14 @@ public final class CubeQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final List<String> measureNames;
+  private final Collection<String> measureNames;
   private final MeasureType measureType;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
   private final Interpolator interpolator;
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   List<String> measureNames, MeasureType measureType,
+                   Collection<String> measureNames, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, limit,
          measureNames, measureType,
@@ -60,7 +62,7 @@ public final class CubeQuery {
   }
 
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   List<String> measureNames, MeasureType measureType,
+                   Collection<String> measureNames, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags,
                    @Nullable Interpolator interpolator) {
     this.startTs = startTs;
@@ -72,6 +74,34 @@ public final class CubeQuery {
     this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
     this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
     this.interpolator = interpolator;
+  }
+
+  // query for a single metric
+  public CubeQuery(long startTs, long endTs, int resolution, int limit,
+                   String measureName, MeasureType measureType,
+                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, limit,
+         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
+         sliceByTagValues, groupByTags, null);
+  }
+
+  // query for a single metric
+  public CubeQuery(long startTs, long endTs, int resolution, int limit,
+                   String measureName, MeasureType measureType,
+                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   @Nullable Interpolator interpolator) {
+    this(startTs, endTs, resolution, limit,
+         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
+         sliceByTagValues, groupByTags, interpolator);
+  }
+
+  // query all metrics in the given tags context
+  public CubeQuery(long startTs, long endTs, int resolution, int limit,
+                   MeasureType measureType,
+                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   @Nullable Interpolator interpolator) {
+    this(startTs, endTs, resolution, limit, ImmutableList.<String>of(), measureType,
+         sliceByTagValues, groupByTags, interpolator);
   }
 
   public long getStartTs() {
@@ -86,7 +116,7 @@ public final class CubeQuery {
     return resolution;
   }
 
-  public List<String> getMeasureNames() {
+  public Collection<String> getMeasureNames() {
     return measureNames;
   }
 

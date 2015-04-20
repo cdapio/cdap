@@ -645,7 +645,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         + end, 4, 1000);
 
     // delete the added metrics for testing interpolator
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, null, sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, sliceBy);
     metricStore.delete(deleteQuery);
   }
 
@@ -693,7 +693,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         + (start + 36000), 3, 6);
 
     // delete the added metrics for testing auto resolutions
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), null, sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), sliceBy);
     metricStore.delete(deleteQuery);
   }
 

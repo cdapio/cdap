@@ -25,9 +25,11 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Scans facts in a {@link FactTable}.
@@ -47,18 +49,18 @@ public final class FactScanner implements Iterator<FactScanResult> {
   private final Iterator<FactScanResult> internalIterator;
 
   // set of measureNames - useful to process measures that are requested while scanning.
-  private final ImmutableSet<String> measureNames;
+  private final Set<String> measureNames;
 
   /**
    * Construct a FactScanner. Should only be called by FactTable.
    */
-  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs, List<String> measureNames) {
+  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs, Collection<String> measureNames) {
     this.scanner = scanner;
     this.codec = codec;
     this.internalIterator = createIterator();
     this.startTs = startTs;
     this.endTs = endTs;
-    this.measureNames = (measureNames == null) ? ImmutableSet.<String>of() : ImmutableSet.copyOf(measureNames);
+    this.measureNames = ImmutableSet.copyOf(measureNames);
   }
 
   public void close() {
@@ -95,6 +97,7 @@ public final class FactScanner implements Iterator<FactScanResult> {
 
           // Decode context and metric from key
           String measureName = codec.getMeasureName(rowKey);
+          // if measureNames is empty we include all metrics
           if (!measureNames.isEmpty() && !measureNames.contains(measureName)) {
             continue;
           }

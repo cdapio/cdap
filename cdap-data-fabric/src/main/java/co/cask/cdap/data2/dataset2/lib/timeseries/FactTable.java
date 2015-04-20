@@ -134,18 +134,11 @@ public final class FactTable implements Closeable {
   }
 
   private Scanner getScanner(FactScan scan) {
-    String firstMeasureName = null;
-    String lastMeasureName = null;
+    // use null if no metrics or more than one metrics are provided in the scan
+    String measureName = scan.getMeasureNames().size() == 1 ? scan.getMeasureNames().iterator().next() : null;
 
-    if (scan.getMeasureNames() != null && !scan.getMeasureNames().isEmpty()) {
-      List<String> measures = Lists.newArrayList(scan.getMeasureNames());
-      Collections.sort(measures);
-      firstMeasureName = measures.get(0);
-      lastMeasureName = measures.get(measures.size() - 1);
-    }
-
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), firstMeasureName, scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), lastMeasureName, scan.getEndTs(), false);
+    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), measureName, scan.getStartTs(), false);
+    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), measureName, scan.getEndTs(), false);
     byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
@@ -382,9 +375,8 @@ public final class FactTable implements Closeable {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
 
     // if we are querying only one metric, we will use fixed metricName for filter,
-    // if there are no metrics or >1 metrics to query we use `ANY` fuzzy filter.
-    String measureName =
-      (scan.getMeasureNames() != null && scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().get(0) : null;
+    // if there are no metrics or more than one metrics to query we use `ANY` fuzzy filter.
+    String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));

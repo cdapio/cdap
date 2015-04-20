@@ -120,7 +120,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   }
 
   private static MetricDataQuery getTotalCounterQuery(Map<String, String> context) {
-    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, null, MetricType.COUNTER, context, new ArrayList<String>());
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, MetricType.COUNTER, context, new ArrayList<String>());
   }
 
 }

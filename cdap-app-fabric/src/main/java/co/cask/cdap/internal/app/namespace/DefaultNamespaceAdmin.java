@@ -207,7 +207,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
     metricStore.delete(deleteQuery);
   }
 

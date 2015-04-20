@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +34,7 @@ public class CubeDeleteQuery {
   private final long startTs;
   private final long endTs;
   private final int resolution;
-  private final List<String> measureNames;
+  private final Collection<String> measureNames;
   private final Map<String, String> sliceByTagValues;
 
   /**
@@ -45,12 +46,41 @@ public class CubeDeleteQuery {
    * @param measureNames name of the measures to delete, {@code null} means delete all
    */
   public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> sliceByTagValues, @Nullable List<String> measureNames) {
+                         Map<String, String> sliceByTagValues, Collection<String> measureNames) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.measureNames = measureNames;
     this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
+  }
+
+
+  /**
+   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
+   * @param startTs start time of the data selection, in seconds since epoch
+   * @param endTs end time of the data selection, in seconds since epoch
+   * @param resolution resolution of the aggregations to delete from
+   * @param sliceByTagValues tag name, tag value pairs that define the data selection
+   * @param measureName name of the measure to delete, {@code null} means delete all
+   */
+  public CubeDeleteQuery(long startTs, long endTs, int resolution,
+                         Map<String, String> sliceByTagValues, @Nullable String measureName) {
+
+    this(startTs, endTs, resolution, sliceByTagValues,
+         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName));
+  }
+
+  /**
+   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
+   * @param startTs start time of the data selection, in seconds since epoch
+   * @param endTs end time of the data selection, in seconds since epoch
+   * @param resolution resolution of the aggregations to delete from
+   * @param sliceByTagValues tag name, tag value pairs that define the data selection
+   */
+  public CubeDeleteQuery(long startTs, long endTs, int resolution,
+                         Map<String, String> sliceByTagValues) {
+
+    this(startTs, endTs, resolution, sliceByTagValues, ImmutableList.<String>of());
   }
 
   public long getStartTs() {
@@ -65,7 +95,7 @@ public class CubeDeleteQuery {
     return resolution;
   }
 
-  public List<String> getMeasureNames() {
+  public Collection<String> getMeasureNames() {
     return measureNames;
   }
 

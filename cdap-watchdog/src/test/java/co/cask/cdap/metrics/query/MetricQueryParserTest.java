@@ -19,7 +19,6 @@ import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
-import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,7 +35,7 @@ public class MetricQueryParserTest {
   @Test
   public void testPathStrip() {
     String expected = "/system/apps/app1/flows/flow1/metric?aggregate=true";
-    String path = Constants.Gateway.API_VERSION_2 + "/metrics" + expected;
+    String path = Constants.Gateway.API_VERSION_3 + "/metrics" + expected;
     Assert.assertEquals(expected, MetricQueryParser.stripVersionAndMetricsFromPath(path));
   }
 
@@ -49,7 +48,7 @@ public class MetricQueryParserTest {
     Assert.assertEquals(Integer.MAX_VALUE, query.getResolution());
 
     query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?count=60&start=1&end=61&" +
-                                                      "resolution=1s"));
+                                                 "resolution=1s"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(1, query.getResolution());
@@ -136,7 +135,7 @@ public class MetricQueryParserTest {
   public void testOverview() throws MetricsPathException  {
     MetricDataQuery query = MetricQueryParser.parse(URI.create("/system/reads?aggregate=true"));
     Assert.assertTrue(query.getSliceByTags().isEmpty());
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
   }
 
   @Test
@@ -145,7 +144,7 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
   }
 
   @Test
@@ -157,7 +156,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.bytes"), query.getMetricNames());
+    assertMetricName("system.process.bytes", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/some.metric?summary=true"));
@@ -165,7 +164,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
-    Assert.assertEquals(ImmutableList.of("system.some.metric"), query.getMetricNames());
+    assertMetricName("system.some.metric", query);
 
     //flow with runId
     query = MetricQueryParser.parse(
@@ -174,7 +173,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
-    Assert.assertEquals(ImmutableList.of("system.some.metric"), query.getMetricNames());
+    assertMetricName("system.some.metric", query);
     Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
 
     //flowlet with runId
@@ -185,7 +184,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.some.metric"), query.getMetricNames());
+    assertMetricName("system.some.metric", query);
     Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -204,7 +203,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.bytes.in"), query.getMetricNames());
+    assertMetricName("system.process.bytes.in", query);
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -214,7 +213,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.bytes.out"), query.getMetricNames());
+    assertMetricName("system.process.bytes.out", query);
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -224,7 +223,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.events.in"), query.getMetricNames());
+    assertMetricName("system.process.events.in", query);
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -234,7 +233,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.events.out"), query.getMetricNames());
+    assertMetricName("system.process.events.out", query);
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
 
     query = MetricQueryParser.parse(
@@ -245,7 +244,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.process.events.out"), query.getMetricNames());
+    assertMetricName("system.process.events.out", query);
     Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
@@ -259,7 +258,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reducers/reads?summary=true"));
@@ -268,7 +267,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "r");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reads?summary=true"));
@@ -276,7 +275,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/reads?summary=true"));
@@ -284,7 +283,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
 
     query = MetricQueryParser.parse(
@@ -294,7 +293,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -306,7 +305,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SERVICE, "serve1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
@@ -315,7 +314,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
                Tag.SERVICE_RUNNABLE, "run1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
@@ -324,7 +323,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
                Tag.SERVICE_RUNNABLE, "run1");
-    Assert.assertEquals(ImmutableList.of("system.reads"), query.getMetricNames());
+    assertMetricName("system.reads", query);
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -336,7 +335,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SPARK, "fakespark");
-    Assert.assertEquals(ImmutableList.of("system.sparkmetric"), query.getMetricNames());
+    assertMetricName("system.sparkmetric", query);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/runs/runid123/sparkmetric?aggregate=true"));
@@ -344,7 +343,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SPARK, "fakespark");
-    Assert.assertEquals(ImmutableList.of("system.sparkmetric"), query.getMetricNames());
+    assertMetricName("system.sparkmetric", query);
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -369,7 +368,7 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
-    Assert.assertEquals(ImmutableList.of("system.store.reads"), query.getMetricNames());
+    assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("run1", query.getSliceByTags().get(Tag.RUN_ID));
 
@@ -379,7 +378,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
-    Assert.assertEquals(ImmutableList.of("system.store.reads"), query.getMetricNames());
+    assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
@@ -388,7 +387,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
-    Assert.assertEquals(ImmutableList.of("system.store.reads"), query.getMetricNames());
+    assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("123", query.getSliceByTags().get(Tag.RUN_ID));
 
@@ -397,14 +396,14 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals(ImmutableList.of("system.store.reads"), query.getMetricNames());
+    assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals(ImmutableList.of("system.store.reads"), query.getMetricNames());
+    assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
   }
 
@@ -414,7 +413,7 @@ public class MetricQueryParserTest {
       URI.create("/system/streams/stream1/collect.events?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals(ImmutableList.of("system.collect.events"), query.getMetricNames());
+    assertMetricName("system.collect.events", query);
     Assert.assertEquals("stream1", query.getSliceByTags().get(Tag.STREAM));
   }
 
@@ -426,7 +425,7 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                "system",
                Tag.COMPONENT, "appfabric");
-    Assert.assertEquals(ImmutableList.of("system.query.received"), query.getMetricNames());
+    assertMetricName("system.query.received", query);
   }
 
 
@@ -439,7 +438,7 @@ public class MetricQueryParserTest {
                "system",
                Tag.COMPONENT, "appfabric",
                Tag.HANDLER, "AppFabricHttpHandler");
-    Assert.assertEquals(ImmutableList.of("system.response.server-error"), query.getMetricNames());
+    assertMetricName("system.response.server-error", query);
     Assert.assertEquals("123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
@@ -453,7 +452,7 @@ public class MetricQueryParserTest {
                Tag.COMPONENT, "metrics",
                Tag.HANDLER, "MetricsQueryHandler",
                Tag.METHOD, "handleComponent");
-    Assert.assertEquals(ImmutableList.of("system.response.successful"), query.getMetricNames());
+    assertMetricName("system.response.successful", query);
   }
 
   @Test(expected = MetricsPathException.class)
@@ -468,7 +467,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     verifyTags(query.getSliceByTags(), "system");
-    Assert.assertEquals(ImmutableList.of("system.resources.total.storage"), query.getMetricNames());
+    assertMetricName("system.resources.total.storage", query);
   }
 
 
@@ -479,7 +478,7 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                "system",
                Tag.COMPONENT, "transactions");
-    Assert.assertEquals(ImmutableList.of("system.invalid"), query.getMetricNames());
+    assertMetricName("system.invalid", query);
   }
 
   @Test
@@ -492,14 +491,14 @@ public class MetricQueryParserTest {
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals(ImmutableList.of("user." + weirdMetric), query.getMetricNames());
+    assertMetricName("user." + weirdMetric, query);
 
     query = MetricQueryParser.parse(
       URI.create("/user/apps/app1/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1");
-    Assert.assertEquals(ImmutableList.of("user." + weirdMetric), query.getMetricNames());
+    assertMetricName("user." + weirdMetric, query);
   }
 
 
@@ -560,6 +559,11 @@ public class MetricQueryParserTest {
       }
     }
     Assert.assertEquals(invalidPaths.length, numBad);
+  }
+
+  private void assertMetricName(String expected, MetricDataQuery query) {
+    Assert.assertEquals(1, query.getMetricNames().size());
+    Assert.assertEquals(expected, query.getMetricNames().iterator().next());
   }
 
   private static void verifyTags(Map<String, String> sliceByTags, String... context) {

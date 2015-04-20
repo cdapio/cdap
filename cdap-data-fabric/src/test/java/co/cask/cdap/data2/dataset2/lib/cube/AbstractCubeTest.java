@@ -108,7 +108,7 @@ public abstract class AbstractCubeTest {
 
     CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
                                                 ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                                ImmutableList.of("metric1"));
+                                                "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
@@ -119,7 +119,7 @@ public abstract class AbstractCubeTest {
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
     query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"),
-                                ImmutableList.of("metric1"));
+                                "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
@@ -152,7 +152,7 @@ public abstract class AbstractCubeTest {
 
     CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
                                                 ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                                ImmutableList.of("metric1"));
+                                                "metric1");
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -169,7 +169,7 @@ public abstract class AbstractCubeTest {
 
     query = new CubeDeleteQuery(startTs, endTs, resolution,
                                 ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
-                                ImmutableList.of("metric1"));
+                                "metric1");
     cube.delete(query);
 
     //test big-slope linear interpolation
@@ -234,7 +234,7 @@ public abstract class AbstractCubeTest {
                                 Map<String, String> sliceByTagValues, List<String> groupByTags,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
     CubeQuery query = new CubeQuery(startTs, endTs, resolution, Integer.MAX_VALUE,
-                                    ImmutableList.of(measureName), MeasureType.COUNTER,
+                                    measureName, MeasureType.COUNTER,
                                     sliceByTagValues, groupByTags, interpolator);
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());

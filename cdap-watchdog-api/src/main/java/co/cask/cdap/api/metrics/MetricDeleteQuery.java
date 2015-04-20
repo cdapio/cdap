@@ -18,8 +18,10 @@ package co.cask.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -30,15 +32,20 @@ public class MetricDeleteQuery {
 
   private final long startTs;
   private final long endTs;
-  private final List<String> metricNames;
+  private final Collection<String> metricNames;
   private final Map<String, String> sliceByTagValues;
 
-  public MetricDeleteQuery(long startTs, long endTs, List<String> metricNames,
+  public MetricDeleteQuery(long startTs, long endTs, Collection<String> metricNames,
                            Map<String, String> sliceByTagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.metricNames = metricNames;
     this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
+  }
+
+  public MetricDeleteQuery(long startTs, long endTs,
+                           Map<String, String> sliceByTagValues) {
+    this(startTs, endTs, ImmutableList.<String>of(), sliceByTagValues);
   }
 
   public long getStartTs() {
@@ -49,7 +56,7 @@ public class MetricDeleteQuery {
     return endTs;
   }
 
-  public List<String> getMetricNames() {
+  public Collection<String> getMetricNames() {
     return metricNames;
   }
 

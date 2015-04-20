@@ -122,7 +122,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   protected long getStreamEventsSize(Id.Stream streamId) throws IOException {
     MetricDataQuery metricDataQuery = new MetricDataQuery(
       0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-      Integer.MAX_VALUE, ImmutableList.of("system.collect.bytes"),
+      Integer.MAX_VALUE, "system.collect.bytes",
       MetricType.COUNTER,
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
                       Constants.Metrics.Tag.STREAM, streamId.getId()),

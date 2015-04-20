@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.timeseries;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import com.google.common.collect.ImmutableList;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -28,22 +29,30 @@ import java.util.List;
  */
 public final class FactScan {
   private final List<TagValue> tagValues;
-  private final List<String> measureNames;
+  private final Collection<String> measureNames;
   private final long startTs;
   private final long endTs;
 
-  public FactScan(long startTs, long endTs, List<String> measureNames, List<TagValue> tagValues) {
+  public FactScan(long startTs, long endTs, Collection<String> measureNames, List<TagValue> tagValues) {
     this.endTs = endTs;
     this.startTs = startTs;
     this.measureNames = measureNames;
     this.tagValues = ImmutableList.copyOf(tagValues);
   }
 
+  public FactScan(long startTs, long endTs, String measureName, List<TagValue> tagValues) {
+    this(startTs, endTs, measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), tagValues);
+  }
+
+  public FactScan(long startTs, long endTs, List<TagValue> tagValues) {
+    this(startTs, endTs, ImmutableList.<String>of(), tagValues);
+  }
+
   public List<TagValue> getTagValues() {
     return tagValues;
   }
 
-  public List<String> getMeasureNames() {
+  public Collection<String> getMeasureNames() {
     return measureNames;
   }
 

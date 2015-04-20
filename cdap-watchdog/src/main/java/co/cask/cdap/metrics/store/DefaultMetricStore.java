@@ -229,7 +229,7 @@ public class DefaultMetricStore implements MetricStore {
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap());
       cube.get().delete(query);
     }
   }
@@ -242,8 +242,7 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteAll() throws Exception {
     // this will delete all aggregates metrics data
-    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Maps.<String, String>newHashMap()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
