@@ -17,20 +17,14 @@ body.theme-cdap {
     @cdap-tabs-hpad: extract(@nav-link-padding, 1);
     @cdap-subnav-height: 300px;
 
-
-    h1, h2 {
-      small {
+    blockquote { border: 0; }
+    h2 {
+      > span {
         display: block;
-        padding: 5px 0 12px;
-        font-size: 16px;
-        color: @brand-primary;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        font-size: 28px;
       }
-    }
-    h2 > span {
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 8px;
-      font-size: 28px;
     }
     section.tab-pane h2 {
         margin: 0;
@@ -54,12 +48,22 @@ body.theme-cdap {
       height: @cdap-subnav-height;
       margin-top: -(@cdap-subnav-height - (@cdap-tabs-height + (@cdap-tabs-hpad*2) + 2));
       border-bottom: 1px solid @nav-tabs-border-color;
+      &.immediate { margin-top: -(@cdap-subnav-height); }
+    }
 
-      &.immediate {
-        margin-top: -(@cdap-subnav-height);
+    .type-block {
+      padding: 5px 0 20px;
+      small {
+        display: inline-block;
+        font-size: 16px;
+        color: @brand-primary;
+        line-height: 15px;
+        vertical-align: middle;
       }
     }
-    blockquote { border: 0; }
+    .type-icon {
+      margin-right: 5px;
+    }
   } // end main.container
 
   footer {
