@@ -22,7 +22,6 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.SourceContext;
-import co.cask.cdap.templates.etl.common.StageMetrics;
 
 import java.util.Map;
 
@@ -40,7 +39,7 @@ public class WorkerSourceContext implements SourceContext {
     this.context = context;
     this.specification = specification;
     this.stage = sourceStage;
-    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SOURCE, specification.getName());
+    this.metrics = metrics;
   }
 
   @Override

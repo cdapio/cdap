@@ -24,7 +24,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.common.StageMetrics;
 
 import java.util.List;
 import java.util.Map;
@@ -34,13 +33,11 @@ import java.util.Map;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
   private final ETLStage sourceStage;
-  private final Metrics metrics;
 
   public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage,
                                 StageSpecification specification, Metrics metrics) {
-    super(context, specification);
+    super(context, specification, metrics);
     this.sourceStage = sourceStage;
-    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SOURCE, specification.getName());
   }
 
   @Override
@@ -66,10 +63,5 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   @Override
   public Map<String, String> getRuntimeArguments() {
     return sourceStage.getProperties();
-  }
-
-  @Override
-  public Metrics getMetrics() {
-    return metrics;
   }
 }

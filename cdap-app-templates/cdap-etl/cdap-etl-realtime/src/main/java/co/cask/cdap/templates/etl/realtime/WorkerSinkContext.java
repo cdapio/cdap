@@ -27,7 +27,6 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.SinkContext;
-import co.cask.cdap.templates.etl.common.StageMetrics;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +49,7 @@ public class WorkerSinkContext implements SinkContext {
     this.specification = spec;
     this.stage = sinkStage;
     this.datasetContext = datasetContext;
-    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SINK, spec.getName());
+    this.metrics = metrics;
   }
 
   @Override

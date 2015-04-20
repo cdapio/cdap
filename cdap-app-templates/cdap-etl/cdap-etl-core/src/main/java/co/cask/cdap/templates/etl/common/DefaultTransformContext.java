@@ -33,7 +33,7 @@ public class DefaultTransformContext implements StageContext {
   public DefaultTransformContext(StageSpecification specification, Map<String, String> runtimeArgs, Metrics metrics) {
     this.specification = specification;
     this.runtimeArgs = runtimeArgs;
-    this.metrics = new StageMetrics(metrics, StageMetrics.Type.TRANSFORM, specification.getName());
+    this.metrics = metrics;
   }
 
   @Override

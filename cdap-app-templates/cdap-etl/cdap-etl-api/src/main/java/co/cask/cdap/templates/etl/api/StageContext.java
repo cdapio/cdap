@@ -32,11 +32,11 @@ public interface StageContext extends RuntimeContext {
   StageSpecification getSpecification();
 
   /**
-   * Get an instance of {@link Metrics}, which allows collecting metrics specific to the stage. Any metric emitted
-   * will be prefixed by '[type].[name]', where name is the name of the stage, and type is 'source', 'sink', or
-   * 'transform'.
+   * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by
+   * the stage they are emitted from. A metric called 'reads' emitted in one stage will be aggregated with
+   * those emitted in another stage.
    *
-   * @return {@link Metrics} for collecting transform metrics
+   * @return {@link Metrics} for collecting metrics
    */
   Metrics getMetrics();
 }
