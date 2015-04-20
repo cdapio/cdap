@@ -35,7 +35,6 @@ import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
-import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -63,7 +62,6 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         StructuredRecordToGenericRecordTransform.class,
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
-                                        StreamToStructuredRecordTransform.class,
                                         ScriptFilterTransform.class,
                                         DBSource.class,
                                         DBSink.class));

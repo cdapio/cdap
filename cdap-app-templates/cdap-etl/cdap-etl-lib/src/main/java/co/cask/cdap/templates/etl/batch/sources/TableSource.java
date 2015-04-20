@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
@@ -58,6 +59,11 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   @Override
   protected String getType(ETLStage stageConfig) {
     return Table.class.getName();
+  }
+
+  @Override
+  public void prepareJob(BatchSourceContext context) {
+    super.prepareJob(context);
   }
 
   @Override
