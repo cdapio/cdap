@@ -35,6 +35,17 @@ public final class Properties {
     public static final String COUNT_QUERY = "dbCountQuery";
   }
 
+  /**
+   * Properties for the StreamBatchSource
+   */
+  public static class Stream {
+    public static final String NAME = "name";
+    public static final String SCHEMA = "schema";
+    public static final String FORMAT = "format";
+    public static final String DELAY = "delay";
+    public static final String DURATION = "duration";
+  }
+
   private Properties() {
   }
 }
