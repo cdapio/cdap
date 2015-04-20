@@ -90,8 +90,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sourceSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Source.SPECIFICATION), StageSpecification.class);
     BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec,
-      new StageMetrics(mrMetrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec, mrMetrics);
     LOG.info("Source Stage : {}", sourceStage);
     LOG.info("Source Class : {}", source.getClass().getName());
     LOG.info("Specifications of Source : {}", sourceSpec);
@@ -102,8 +101,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sinkSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION), StageSpecification.class);
     BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
-    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec,
-      new StageMetrics(mrMetrics, StageMetrics.Type.SINK, sinkSpec.getName()));
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec, mrMetrics);
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", sink.getClass().getName());
     LOG.info("Specifications of Sink : {}", sinkSpec);
