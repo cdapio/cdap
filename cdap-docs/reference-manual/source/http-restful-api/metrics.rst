@@ -223,23 +223,23 @@ depends on the Spark program being queried:
 
    * - Spark Metric
      - Description
-   * - ``system:<spark-id> BlockManager.disk.diskSpaceUsed_MB``
+   * - ``system.<spark-id>.driver.BlockManager.disk.diskSpaceUsed_MB``
      - Disk space used by the Block Manager
-   * - ``system:<spark-id> BlockManager.memory.maxMem_MB``
+   * - ``system.<spark-id>.driver.BlockManager.memory.maxMem_MB``
      - Maximum memory given to the Block Manager
-   * - ``system:<spark-id> BlockManager.memory.memUsed_MB``
+   * - ``system.<spark-id>.driver.BlockManager.memory.memUsed_MB``
      - Memory used by the Block Manager
-   * - ``system:<spark-id> BlockManager.memory.remainingMem_MB``
+   * - ``system.<spark-id>.driver.BlockManager.memory.remainingMem_MB``
      - Memory remaining to the Block Manager
-   * - ``system:<spark-id> DAGScheduler.job.activeJobs``
+   * - ``system.<spark-id>.driver.DAGScheduler.job.activeJobs``
      - Number of active jobs
-   * - ``system:<spark-id> DAGScheduler.job.allJobs``
+   * - ``system.<spark-id>.driver.DAGScheduler.job.allJobs``
      - Total number of jobs
-   * - ``system:<spark-id> DAGScheduler.stage.failedStages``
+   * - ``system.<spark-id>.driver.DAGScheduler.stage.failedStages``
      - Number of failed stages
-   * - ``system:<spark-id> DAGScheduler.stage.runningStages``
+   * - ``system.<spark-id>.driver.DAGScheduler.stage.runningStages``
      - Number of running stages
-   * - ``system:<spark-id> DAGScheduler.stage.waitingStages``
+   * - ``system.<spark-id>.driver.DAGScheduler.stage.waitingStages``
      - Number of waiting stages
 
 These metrics are available in a Streams context:
