@@ -100,5 +100,14 @@ body.theme-cdap {
     background-color: @cdap-header;
     color: white;
     .border-radius(4px);
+    + .dropdown-menu {
+      background-color: @cdap-header;
+      margin: 0;
+      padding: 0;
+      > li > a {
+        color: white;
+        &:hover, &:focus { color: @cdap-header; }
+      }
+    }
   }
 }
