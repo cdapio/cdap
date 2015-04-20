@@ -84,9 +84,9 @@ enclosing context. These are the available Application contexts of CDAP:
    * - All Workers of an Application
      - ``namespace:<namespace> app:<app-id> workers:*``
    * - All Mappers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype.m``
+     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
    * - All Reducers of a MapReduce
-     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype.r``
+     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
    * - One MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id>``
    * - All MapReduce of an Application
@@ -100,7 +100,7 @@ enclosing context. These are the available Application contexts of CDAP:
    * - All components of an Application
      - ``namespace:<namespace> app:<app-id>``
    * - All components of all Applications
-     - ``namespace:<namespace>``
+     - ``namespace:<namespace> app:*``
 
 Stream metrics are only available at the Stream level and the only available context is:
 
@@ -128,9 +128,9 @@ Flowlet, Worker, Service, Mapper, or Reducer level:
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
    * - A single Dataset in the context of a specific Application
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id>``
-   * - A single Dataset across all Applications
+   * - A single Dataset
      - ``namespace:<namespace> dataset:<dataset-id>``
-   * - All Datasets across all Applications
+   * - All Datasets
      - ``namespace:<namespace> dataset:*``
 
 .. _available-system-metrics:
@@ -541,7 +541,7 @@ Query Tips
     
   will return the empty result, as the metric will be interpreted as ``"user.names.bytes?aggregate=true"`` instead of
   ``"user.names.bytes"``.
-    
+
 
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
