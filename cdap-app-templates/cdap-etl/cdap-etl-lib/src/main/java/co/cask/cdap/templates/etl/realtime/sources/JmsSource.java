@@ -142,13 +142,7 @@ public class JmsSource extends RealtimeSource<String> {
             LOG.trace("Process JMS TextMessage : ", text);
           } else if (message instanceof BytesMessage) {
             BytesMessage bytesMessage = (BytesMessage) message;
-            int bodyLength = (int) bytesMessage.getBodyLength();
-            byte[] data = new byte[bodyLength];
-            int bytesRead = bytesMessage.readBytes(data);
-            if (bytesRead != bodyLength) {
-              LOG.warn("Number of bytes read {} not same as expected {}", bytesRead, bodyLength);
-            }
-            text = new String(data).intern();
+            text = bytesMessage.readUTF();
             LOG.trace("Processing JMS ByteMessage : {}", text);
           } else {
             // Different kind of messages, just get String for now
