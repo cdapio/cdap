@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A {@link co.cask.cdap.common.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
+ * A {@link co.cask.cdap.api.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
  * during collection and emit the aggregated values when emit.
  */
 final class AggregatedMetricsEmitter implements MetricsEmitter {

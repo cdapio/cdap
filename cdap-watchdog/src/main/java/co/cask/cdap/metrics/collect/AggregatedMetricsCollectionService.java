@@ -17,9 +17,9 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;

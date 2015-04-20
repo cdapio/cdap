@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
@@ -67,8 +66,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
       @Override
       public EntityTable get() {
-        String tableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                     MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+        String tableName = cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
+                                     Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
         return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
@@ -77,9 +76,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
   public FactTable get(int resolution) {
-    String tableName = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                 MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+    String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                 Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    int ttl =  cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     DatasetProperties.Builder props = DatasetProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
@@ -97,8 +96,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   @Override
   public KafkaConsumerMetaTable createKafkaConsumerMeta() {
     try {
-      String tableName = cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                   MetricsConstants.DEFAULT_KAFKA_META_TABLE);
+      String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE,
+                                   Constants.Metrics.DEFAULT_KAFKA_META_TABLE);
       MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
       LOG.info("KafkaConsumerMetaTable created: {}", tableName);
       return new KafkaConsumerMetaTable(table);
@@ -179,13 +178,13 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   private int getRollTime(int resolution) {
-    String key = MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME + "." + resolution;
+    String key = Constants.Metrics.TIME_SERIES_TABLE_ROLL_TIME + "." + resolution;
     String value = cConf.get(key);
     if (value != null) {
-      return cConf.getInt(key, MetricsConstants.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
+      return cConf.getInt(key, Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
     }
-    return cConf.getInt(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME,
-                        MetricsConstants.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
+    return cConf.getInt(Constants.Metrics.TIME_SERIES_TABLE_ROLL_TIME,
+                        Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
   }
 
 }

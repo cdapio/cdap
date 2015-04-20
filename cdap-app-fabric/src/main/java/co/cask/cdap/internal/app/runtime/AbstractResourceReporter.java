@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
