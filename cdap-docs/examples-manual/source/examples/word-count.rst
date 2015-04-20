@@ -22,8 +22,8 @@ store the results and statistics in datasets.
     received words like "total words received" and "total length of words received" and emits each word to the
     ``counter`` flowlet  and each sentence (list of words) to the ``associator`` flowlet.
   - The ``associator`` flowlet receives the set of words and writes word associations to the ``wordAssocs`` dataset.
-    For example, if we receive a sentence "welcome to CDAP", the word associations are
-    {"welcome","to"} , {"welcome", "CDAP"}, and {"to","CDAP"}.
+    For example, if we receive a sentence ``"welcome to CDAP"``, the word associations are
+    ``{"welcome","to"}`` , ``{"welcome", "CDAP"}``, and ``{"to","CDAP"}``.
   - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a key-value table and
     forwards this word to the ``unique`` flowlet.
   - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
@@ -42,15 +42,17 @@ of the Application are tied together by the class ``WordCount``:
 
 
 Data Storage
---------------------------
+------------
 
 - ``wordStats`` stores the global statistics of total count of words and the total length of words received.
 - ``wordCounts`` stores the word and the corresponding count in a key value table.
 - ``uniqueCount`` is a custom dataset that stores the total count of unique words received so far.
 - ``wordAssocs`` is a custom dataset that stores the count for word associations.
 
+.. _word-count-service-requests:
+
 RetrieveCounts Service
---------------------------
+----------------------
 
 The Service serves read requests for calculated statistics, word counts and associations.
 It exposes these endpoints:
@@ -62,7 +64,7 @@ It exposes these endpoints:
 
 
 Building and Starting
-=================================
+=====================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
@@ -72,7 +74,7 @@ Building and Starting
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: WordCount
 
@@ -83,7 +85,7 @@ Running the Example
 ===================
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
@@ -102,7 +104,7 @@ Once the application is deployed:
       - ``> bin\cdap-cli.bat start flow WordCount.WordCounter``    
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -121,7 +123,7 @@ Once the application is deployed:
       - ``> bin\cdap-cli.bat start service WordCount.RetrieveCounts``    
 
 Injecting Sentences
-------------------------------
+-------------------
 
 In the Application's detail page, under *Process*, click on the *WordCounter* flow. This takes you to the flow details page.
 Now click on the *wordStream* stream on the left side of the flow visualization, which brings up a pop-up window.
@@ -131,19 +133,19 @@ the counters for the flowlets *counter* and *unique* increase to 2.
 You can repeat this step to enter additional sentences.
 
 Querying the Results
-------------------------------
+--------------------
 
 .. highlight:: console
 
 If the Service has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-  curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start'
+  curl -w'\n' -X POST 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start'
 
 To query the ``RetrieveCounts`` service,
 send a query via an HTTP request using the ``curl`` command. For example::
 
-  curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
+  curl -w'\n' 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
@@ -161,12 +163,13 @@ format (example reformatted to fit)::
     "word": "CDAP"
   }
 
-You can also request other endpoints available in this Service, which described above.
+You can also make requests to the other endpoints available in this Service, as 
+:ref:`described above <word-count-service-requests>`.
 
 Stopping the Application
--------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+------------------------
+Once done, you can stop the application as described above in `Stopping an Application 
+<#stopping-an-application>`__. Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
