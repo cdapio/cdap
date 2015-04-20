@@ -22,8 +22,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -109,8 +109,8 @@ public class StructuredRecordToCubeFactTransformTest {
   @Test
   public void testTransform() throws Exception {
     // initialize the transform
-    Transform transform = new StructuredRecordToCubeFactTransform();
-    TransformContext context = new MockTransformContext(
+    TransformStage transform = new StructuredRecordToCubeFactTransform();
+    StageContext context = new MockTransformContext(
       ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
                       new Gson().toJson(createValidConfig())));
     transform.initialize(context);
@@ -290,8 +290,8 @@ public class StructuredRecordToCubeFactTransformTest {
   }
 
   private void verifyInvalidConfigDetected(StructuredRecordToCubeFactTransform.MappingConfig config) {
-    Transform transform = new StructuredRecordToCubeFactTransform();
-    TransformContext context =
+    TransformStage transform = new StructuredRecordToCubeFactTransform();
+    StageContext context =
       new MockTransformContext(config == null ? new HashMap<String, String>() :
                                  ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
                                                  new Gson().toJson(config)));

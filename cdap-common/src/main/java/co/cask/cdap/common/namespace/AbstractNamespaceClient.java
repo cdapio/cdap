@@ -102,4 +102,11 @@ public abstract class AbstractNamespaceClient {
     }
     throw new IOException("Cannot get create namespace. Reason: " + "getDetails(response)");
   }
+
+  public void deleteAll() throws
+    IOException, UnauthorizedException, NamespaceNotFoundException, NamespaceCannotBeDeletedException {
+    for (NamespaceMeta meta : list()) {
+      delete(meta.getName());
+    }
+  }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -27,7 +28,6 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -108,17 +108,18 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                            new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(
-        new DatasetAdminOpHTTPHandlerV2(new NoAuthenticator(),
-                                        new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework)));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
 
-    InMemoryDatasetFramework mdsFramework =
-      new InMemoryDatasetFramework(registryFactory,
-                                   ImmutableMap.of("memoryTable", new InMemoryTableModule(),
-                                                   "core", new CoreDatasetsModule()), cConf);
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .put("memoryTable", new InMemoryTableModule())
+      .put("core", new CoreDatasetsModule())
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
+
+    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);

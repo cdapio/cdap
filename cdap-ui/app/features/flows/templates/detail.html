@@ -4,14 +4,16 @@
   <div class="col-sm-6">
     <h2 class="programTitle">
       <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
-      <small> <em>Type: Tigon </em></small>
     </h2>
+    <div class="type-block">
+      <small> Type: Tigon </small>
+    </div>
   </div>
   <div class="col-sm-6 text-right">
-    <span class="programTitle">
+<!--     <span class="programTitle">
       <ng-pluralize data-count="activeRuns"
           data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-    </span>
+    </span> -->
     <div ng-show="activeRuns === 0 && status === null"
          class="btn btn-success btn-md"
          ng-click="do('start')">
@@ -20,7 +22,7 @@
     </div>
 
     <div ng-show="activeRuns > 0 && status === null"
-         class="btn btn-primary btn-md"
+         class="btn btn-default btn-md"
          ng-click="do('stop')">
       <span class="fa fa-stop"></span>
       <span>Stop</span>
@@ -41,10 +43,6 @@
 
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.runs" role="tab">Runs</a>
-  </li>
-
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="flows.detail.flowlets" role="tab">Flowlets</a>
   </li>
 
   <li role="presentation" ui-sref-active="active">

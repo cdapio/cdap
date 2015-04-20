@@ -19,18 +19,13 @@ package co.cask.cdap.templates.etl.api.realtime;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.StageSpecification;
 
 /**
  * Context passed to the Sink stages.
  */
-public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
-
-  /**
-   * Get the specification of this stage, set during the configuration.
-   *
-   * @return {@link RealtimeSpecification}
-   */
-  RealtimeSpecification getSpecification();
+public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext, StageContext {
 
   /**
    * Get Instance Id.

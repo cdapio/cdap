@@ -212,15 +212,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") final String appId) {
     try {
       Id.Application id = Id.Application.from(namespaceId, appId);
-
-      // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (!adapterService.canDeleteApp(id)) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-          "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
-
-        return;
-      }
-
       AppFabricServiceStatus appStatus = removeApplication(id);
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
       responder.sendString(appStatus.getCode(), appStatus.getMessage());
@@ -423,6 +414,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
+    // Deletion of a particular application is not allowed if that application is used by an adapter
+    if (!adapterService.canDeleteApp(appId)) {
+      return AppFabricServiceStatus.ADAPTER_CONFLICT;
+    }
+
     //Check if all are stopped.
     boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -483,10 +479,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
-   * the reset API has a v3 version
+   * Delete the metrics for an application, or if null is provided as the application ID, for all apps.
+   * @param applicationId the application to delete metrics for.
+   *                      If null, metrics for all applications in the namespace are deleted.
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws Exception {
+  private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));

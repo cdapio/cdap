@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.RunIds;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -79,7 +79,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @Nullable
   public ApplicationMeta getApplication(String namespaceId, String appId) {
-    return get(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+    return getFirst(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
@@ -110,7 +110,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     spec = DefaultApplicationSpecification.from(spec);
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
-    ApplicationMeta existing = get(key, ApplicationMeta.class);
+    ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
     if (existing == null) {
       String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);
       LOG.error(msg);
@@ -198,7 +198,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    RunRecord started = get(key, RunRecord.class);
+    RunRecord started = getFirst(key, RunRecord.class);
     if (started == null) {
       String msg = String.format("No meta for started run record for namespace %s app %s program type %s " +
                                  "program %s pid %s exists",
@@ -398,7 +398,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public StreamSpecification getStream(String namespaceId, String name) {
-    return get(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
+    return getFirst(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
   }
 
   public List<StreamSpecification> getAllStreams(String namespaceId) {
@@ -424,13 +424,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public ProgramArgs getProgramArgs(Id.Program program) {
-    return get(new MDSKey.Builder()
-                 .add(TYPE_PROGRAM_ARGS)
-                 .add(program.getNamespaceId())
-                 .add(program.getApplicationId())
-                 .add(program.getType().name())
-                 .add(program.getId())
-                 .build(), ProgramArgs.class);
+    return getFirst(new MDSKey.Builder()
+                      .add(TYPE_PROGRAM_ARGS)
+                      .add(program.getNamespaceId())
+                      .add(program.getApplicationId())
+                      .add(program.getType().name())
+                      .add(program.getId())
+                      .build(), ProgramArgs.class);
   }
 
   public void deleteProgramArgs(Id.Program program) {
@@ -465,7 +465,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public NamespaceMeta getNamespace(Id.Namespace id) {
-    return get(getNamespaceKey(id.getId()), NamespaceMeta.class);
+    return getFirst(getNamespaceKey(id.getId()), NamespaceMeta.class);
   }
 
   public void deleteNamespace(Id.Namespace id) {
@@ -507,8 +507,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   @SuppressWarnings("unchecked")
   private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
-    return get(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(),
-               AdapterMeta.class);
+    return getFirst(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
   public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {

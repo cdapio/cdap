@@ -72,11 +72,11 @@ public class ServePathGeneratorTest {
     Assert.assertEquals("/webapp/default/netlens/src/data/data.txt",
                         servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/data/data.txt"));
 
-    Assert.assertEquals("/v2/apps?count=10",
-                        servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/v2/apps?count=10"));
+    Assert.assertEquals("/v3/apps?count=10",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/v3/apps?count=10"));
 
-    Assert.assertEquals("/v2/apps?count=10",
-                        servePathGenerator.getServePath("127.0.0.1:30000", "/v2/apps?count=10"));
+    Assert.assertEquals("/v3/apps?count=10",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/v3/apps?count=10"));
 
     Assert.assertEquals("/status",
                         servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/status"));

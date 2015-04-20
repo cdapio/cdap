@@ -81,7 +81,7 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
                                                           datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateAdapterDatasetInstancesStage(configuration, datasetFramework, namespace));
     pipeline.addLast(new CreateAdapterStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
-    pipeline.setFinally(new AdapterRegistrationStage(namespace, store));
+    pipeline.addLast(new AdapterRegistrationStage(namespace, store));
     return pipeline.execute(input);
   }
 }

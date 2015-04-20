@@ -19,16 +19,20 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.DBSink;
+import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sources.DBSource;
+import co.cask.cdap.templates.etl.batch.sources.TableSource;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Properties;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToPutTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -41,12 +45,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.hsqldb.Server;
-import org.hsqldb.persist.HsqlProperties;
 import org.hsqldb.server.ServerAcl;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -69,6 +73,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.sql.rowset.serial.SerialBlob;
 
 /**
  * Test for ETL using databases
@@ -77,6 +82,8 @@ public class BatchETLDBAdapterTest extends TestBase {
   private static final long currentTs = System.currentTimeMillis();
   private static final String clobData = "this is a long string with line separators \n that can be used as \n a clob";
   private static HSQLDBServer hsqlDBServer;
+  private static ApplicationManager templateManager;
+  private static Schema schema;
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -88,38 +95,71 @@ public class BatchETLDBAdapterTest extends TestBase {
     hsqlDBServer.start();
     Connection conn = hsqlDBServer.getConnection();
     try {
-      createTestTable(conn);
+      createTestTables(conn);
       prepareTestData(conn);
     } finally {
       conn.close();
     }
+    // deploy etl batch template
+    String path = Resources.getResource("org/hsqldb/jdbcDriver.class").getPath();
+    File hsqldbJar = new File(URI.create(path.substring(0, path.indexOf('!'))));
+    templateManager = deployApplication(ETLBatchTemplate.class, hsqldbJar);
+
+    Schema nullableString = Schema.nullableOf(Schema.of(Schema.Type.STRING));
+    Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
+    Schema nullableInt = Schema.nullableOf(Schema.of(Schema.Type.INT));
+    Schema nullableLong = Schema.nullableOf(Schema.of(Schema.Type.LONG));
+    Schema nullableFloat = Schema.nullableOf(Schema.of(Schema.Type.FLOAT));
+    Schema nullableDouble = Schema.nullableOf(Schema.of(Schema.Type.DOUBLE));
+    Schema nullableBytes = Schema.nullableOf(Schema.of(Schema.Type.BYTES));
+    schema = Schema.recordOf("student",
+                             Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
+                             Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
+                             Schema.Field.of("SCORE", nullableDouble),
+                             Schema.Field.of("GRADUATED", nullableBoolean),
+                             Schema.Field.of("TINY", nullableInt),
+                             Schema.Field.of("SMALL", nullableInt),
+                             Schema.Field.of("BIG", nullableLong),
+                             Schema.Field.of("FLOAT", nullableFloat),
+                             Schema.Field.of("REAL", nullableFloat),
+                             Schema.Field.of("NUMERIC", nullableDouble),
+                             Schema.Field.of("DECIMAL", nullableDouble),
+                             Schema.Field.of("BIT", nullableBoolean),
+                             Schema.Field.of("DATE", nullableLong),
+                             Schema.Field.of("TIME", nullableLong),
+                             Schema.Field.of("TIMESTAMP", nullableLong),
+                             Schema.Field.of("BINARY", nullableBytes),
+                             Schema.Field.of("BLOB", nullableBytes),
+                             Schema.Field.of("CLOB", nullableString));
   }
 
-  private static void createTestTable(Connection conn) throws SQLException {
+  private static void createTestTables(Connection conn) throws SQLException {
     Statement stmt = conn.createStatement();
     try {
       stmt.execute("CREATE TABLE my_table" +
                      "(" +
-                     "id INT NOT NULL, " +
-                     "name VARCHAR(40) NOT NULL, " +
-                     "score DOUBLE, " +
-                     "graduated BOOLEAN, " +
-                     "not_imported VARCHAR(30), " +
-                     "tiny TINYINT, " +
-                     "small SMALLINT, " +
-                     "big BIGINT, " +
-                     "float FLOAT, " +
-                     "real REAL, " +
-                     "numeric NUMERIC(10, 2), " +
-                     "decimal DECIMAL(10, 2), " +
-                     "bit BIT, " +
-                     "date DATE, " +
-                     "time TIME, " +
-                     "timestamp TIMESTAMP, " +
-                     "binary BINARY(100)," +
-                     "blob BLOB(100), " +
-                     "clob CLOB" +
+                     "ID INT NOT NULL, " +
+                     "NAME VARCHAR(40) NOT NULL, " +
+                     "SCORE DOUBLE, " +
+                     "GRADUATED BOOLEAN, " +
+                     "NOT_IMPORTED VARCHAR(30), " +
+                     "TINY TINYINT, " +
+                     "SMALL SMALLINT, " +
+                     "BIG BIGINT, " +
+                     "FLOAT_COL FLOAT, " +
+                     "REAL_COL REAL, " +
+                     "NUMERIC_COL NUMERIC(10, 2), " +
+                     "DECIMAL_COL DECIMAL(10, 2), " +
+                     "BIT_COL BIT, " +
+                     "DATE_COL DATE, " +
+                     "TIME_COL TIME, " +
+                     "TIMESTAMP_COL TIMESTAMP, " +
+                     "BINARY_COL BINARY(100)," +
+                     "BLOB_COL BLOB(100), " +
+                     "CLOB_COL CLOB(100)" +
                      ")");
+      stmt.execute("CREATE TABLE my_dest_table AS (" +
+                     "SELECT * FROM my_table) WITH DATA");
     } finally {
       stmt.close();
     }
@@ -152,7 +192,7 @@ public class BatchETLDBAdapterTest extends TestBase {
         pStmt.setTime(15, new Time(currentTs));
         pStmt.setTimestamp(16, new Timestamp(currentTs));
         pStmt.setBytes(17, name.getBytes(Charsets.UTF_8));
-        pStmt.setBlob(18, new ByteArrayInputStream(name.getBytes(Charsets.UTF_8)));
+        pStmt.setBlob(18, new SerialBlob(name.getBytes(Charsets.UTF_8)));
         pStmt.setClob(19, new InputStreamReader(new ByteArrayInputStream(clobData.getBytes(Charsets.UTF_8))));
         pStmt.executeUpdate();
       }
@@ -164,16 +204,12 @@ public class BatchETLDBAdapterTest extends TestBase {
   @Test
   @Category(SlowTests.class)
   public void testDBSource() throws Exception {
-    String path = Resources.getResource("org/hsqldb/jdbcDriver.class").getPath();
-    File hsqldbJar = new File(URI.create(path.substring(0, path.indexOf('!'))));
-
-    ApplicationManager applicationManager = deployApplication(ETLBatchTemplate.class, hsqldbJar);
-
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
-    String importQuery = "SELECT id, name, score, graduated, tiny, small, big, float, real, numeric, decimal, bit, " +
-      "date, time, timestamp, binary, blob, clob FROM my_table WHERE id < 3";
-    String countQuery = "SELECT COUNT(id) from my_table WHERE id < 3";
+    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
+      "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
+      "WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage(DBSource.class.getSimpleName(),
                                    ImmutableMap.of(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver(),
                                                    Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
@@ -181,46 +217,22 @@ public class BatchETLDBAdapterTest extends TestBase {
                                                    Properties.DB.IMPORT_QUERY, importQuery,
                                                    Properties.DB.COUNT_QUERY, countQuery
                                    ));
-    ETLStage sink = new ETLStage("TableSink", ImmutableMap.of("name", "outputTable"));
-    Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
-    Schema nullableInt = Schema.nullableOf(Schema.of(Schema.Type.INT));
-    Schema nullableLong = Schema.nullableOf(Schema.of(Schema.Type.LONG));
-    Schema nullableFloat = Schema.nullableOf(Schema.of(Schema.Type.FLOAT));
-    Schema nullableDouble = Schema.nullableOf(Schema.of(Schema.Type.DOUBLE));
-    Schema nullableBytes = Schema.nullableOf(Schema.of(Schema.Type.BYTES));
-    Schema schema = Schema.recordOf("student",
-                                    Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
-                                    Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("SCORE", nullableDouble),
-                                    Schema.Field.of("GRADUATED", nullableBoolean),
-                                    Schema.Field.of("TINY", nullableInt),
-                                    Schema.Field.of("SMALL", nullableInt),
-                                    Schema.Field.of("BIG", nullableLong),
-                                    Schema.Field.of("FLOAT", nullableFloat),
-                                    Schema.Field.of("REAL", nullableFloat),
-                                    Schema.Field.of("NUMERIC", nullableDouble),
-                                    Schema.Field.of("BIT", nullableBoolean),
-                                    Schema.Field.of("DATE", nullableLong),
-                                    Schema.Field.of("TIME", nullableLong),
-                                    Schema.Field.of("TIMESTAMP", nullableLong),
-                                    Schema.Field.of("BINARY", nullableBytes),
-                                    Schema.Field.of("CLOB", nullableBytes));
 
-    ETLStage putTransform = new ETLStage(StructuredRecordToPutTransform.class.getSimpleName(),
-                                         ImmutableMap.of("schema", schema.toString(),
-                                                         "row.field", "ID"));
-    List<ETLStage> transformList = Lists.newArrayList(putTransform);
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
+    ETLStage sink = new ETLStage(TableSink.class.getSimpleName(), ImmutableMap.of(
+      "name", "outputTable",
+      Table.PROPERTY_SCHEMA, schema.toString(),
+      Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     // add dataset instances that the source and sink added
     addDatasetInstances(adapterConfigurer);
 
     Map<String, String> mapReduceArgs = Maps.newHashMap(adapterConfigurer.getArguments());
-    MapReduceManager mrManager = applicationManager.startMapReduce(ETLMapReduce.class.getSimpleName(), mapReduceArgs);
+    MapReduceManager mrManager = templateManager.startMapReduce(ETLMapReduce.class.getSimpleName(), mapReduceArgs);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
-    applicationManager.stopAll();
+    templateManager.stopAll();
 
     DataSetManager<Table> outputManager = getDataset("outputTable");
     Table outputTable = outputManager.get();
@@ -254,43 +266,103 @@ public class BatchETLDBAdapterTest extends TestBase {
     Assert.assertEquals(1, (long) row1.getLong("BIG"));
     Assert.assertEquals(2, (long) row2.getLong("BIG"));
     // TODO: Reading from table as FLOAT seems to be giving back the wrong value.
-    Assert.assertEquals(124.45, row1.getDouble("FLOAT"), 0.00001);
-    Assert.assertEquals(125.45, row2.getDouble("FLOAT"), 0.00001);
-    Assert.assertEquals(124.45, row1.getDouble("REAL"), 0.00001);
-    Assert.assertEquals(125.45, row2.getDouble("REAL"), 0.00001);
-    Assert.assertEquals(124.45, row1.getDouble("NUMERIC"), 0.000001);
-    Assert.assertEquals(125.45, row2.getDouble("NUMERIC"), 0.000001);
-    Assert.assertEquals(124.45, row1.getDouble("DECIMAL"), 0.000001);
-    Assert.assertEquals(null, row2.get("DECIMAL"));
-    Assert.assertEquals(true, row1.getBoolean("BIT"));
-    Assert.assertEquals(false, row2.getBoolean("BIT"));
+    Assert.assertEquals(124.45, row1.getDouble("FLOAT_COL"), 0.00001);
+    Assert.assertEquals(125.45, row2.getDouble("FLOAT_COL"), 0.00001);
+    Assert.assertEquals(124.45, row1.getDouble("REAL_COL"), 0.00001);
+    Assert.assertEquals(125.45, row2.getDouble("REAL_COL"), 0.00001);
+    Assert.assertEquals(124.45, row1.getDouble("NUMERIC_COL"), 0.000001);
+    Assert.assertEquals(125.45, row2.getDouble("NUMERIC_COL"), 0.000001);
+    Assert.assertEquals(124.45, row1.getDouble("DECIMAL_COL"), 0.000001);
+    Assert.assertEquals(null, row2.get("DECIMAL_COL"));
+    Assert.assertEquals(true, row1.getBoolean("BIT_COL"));
+    Assert.assertEquals(false, row2.getBoolean("BIT_COL"));
     // Verify time columns
     java.util.Date date = new java.util.Date(currentTs);
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     long expectedDateTimestamp = Date.valueOf(sdf.format(date)).getTime();
     sdf = new SimpleDateFormat("H:mm:ss");
     long expectedTimeTimestamp = Time.valueOf(sdf.format(date)).getTime();
-    Assert.assertEquals(expectedDateTimestamp, (long) row1.getLong("DATE"));
-    Assert.assertEquals(expectedDateTimestamp, (long) row2.getLong("DATE"));
-    Assert.assertEquals(expectedTimeTimestamp, (long) row1.getLong("TIME"));
-    Assert.assertEquals(expectedTimeTimestamp, (long) row2.getLong("TIME"));
-    Assert.assertEquals(currentTs, (long) row1.getLong("TIMESTAMP"));
-    Assert.assertEquals(currentTs, (long) row2.getLong("TIMESTAMP"));
+    Assert.assertEquals(expectedDateTimestamp, (long) row1.getLong("DATE_COL"));
+    Assert.assertEquals(expectedDateTimestamp, (long) row2.getLong("DATE_COL"));
+    Assert.assertEquals(expectedTimeTimestamp, (long) row1.getLong("TIME_COL"));
+    Assert.assertEquals(expectedTimeTimestamp, (long) row2.getLong("TIME_COL"));
+    Assert.assertEquals(currentTs, (long) row1.getLong("TIMESTAMP_COL"));
+    Assert.assertEquals(currentTs, (long) row2.getLong("TIMESTAMP_COL"));
     // verify binary columns
-    Assert.assertEquals("user1", Bytes.toString(row1.get("BINARY"), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(row2.get("BINARY"), 0, 5));
-    Assert.assertEquals("user1", Bytes.toString(row1.get("BLOB"), 0, 5));
-    Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB"), 0, 5));
-    Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB"), 0, clobData.length()));
-    Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB"), 0, clobData.length()));
+    Assert.assertEquals("user1", Bytes.toString(row1.get("BINARY_COL"), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(row2.get("BINARY_COL"), 0, 5));
+    Assert.assertEquals("user1", Bytes.toString(row1.get("BLOB_COL"), 0, 5));
+    Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB_COL"), 0, 5));
+    Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB_COL"), 0, clobData.length()));
+    Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
+  }
 
+  @Test
+  @Ignore
+  @Category(SlowTests.class)
+  public void testDBSink() throws Exception {
+    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
+    String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
+      "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
+    ETLStage source = new ETLStage(TableSource.class.getSimpleName(),
+                                   ImmutableMap.of(
+                                     "name", "inputTable",
+                                     Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
+                                     Table.PROPERTY_SCHEMA, schema.toString()));
+    ETLStage sink = new ETLStage(DBSink.class.getSimpleName(),
+                                 ImmutableMap.of(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver(),
+                                                 Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+                                                 Properties.DB.TABLE_NAME, "my_dest_table",
+                                                 Properties.DB.COLUMNS, cols
+                                 ));
+    List<ETLStage> transforms = Lists.newArrayList();
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, transforms);
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
+    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
+    // add dataset instances that the source and sink added
+    addDatasetInstances(adapterConfigurer);
+    createInputData();
+    Map<String, String> mapReduceArgs = Maps.newHashMap(adapterConfigurer.getArguments());
+    MapReduceManager mrManager = templateManager.startMapReduce(ETLMapReduce.class.getSimpleName(), mapReduceArgs);
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    templateManager.stopAll();
+  }
+
+  private void createInputData() throws Exception {
+    // add some data to the input table
+    DataSetManager<Table> inputManager = getDataset("inputTable");
+    Table inputTable = inputManager.get();
+    for (int i = 1; i <= 2; i++) {
+      Put put = new Put(Bytes.toBytes("row" + i));
+      String name = "user" + i;
+      put.add("ID", i);
+      put.add("NAME", name);
+      put.add("SCORE", 3.451);
+      put.add("GRADUATED", (i % 2 == 0));
+      put.add("TINY", i + 1);
+      put.add("SMALL", i + 2);
+      put.add("BIG", 3456987L);
+      put.add("FLOAT", 3.456f);
+      put.add("REAL", 3.457f);
+      put.add("NUMERIC", 3.458);
+      put.add("DECIMAL", 3.459);
+      put.add("BIT", (i % 2 == 1));
+      put.add("DATE", currentTs);
+      put.add("TIME", currentTs);
+      put.add("TIMESTAMP", currentTs);
+      put.add("BINARY", name.getBytes(Charsets.UTF_8));
+      put.add("BLOB", name.getBytes(Charsets.UTF_8));
+      put.add("CLOB", clobData);
+      inputTable.put(put);
+      inputManager.flush();
+    }
   }
 
   private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
-    for (Map.Entry<String, ImmutablePair<String, DatasetProperties>> entry :
+    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
       configurer.getDatasetInstances().entrySet()) {
-      String typeName = entry.getValue().getFirst();
-      DatasetProperties properties = entry.getValue().getSecond();
+      String typeName = entry.getValue().getKey();
+      DatasetProperties properties = entry.getValue().getValue();
       String instanceName = entry.getKey();
       addDatasetInstance(typeName, instanceName, properties);
     }
@@ -306,7 +378,6 @@ public class BatchETLDBAdapterTest extends TestBase {
       } finally {
         stmt.close();
       }
-      stmt.close();
     } finally {
       conn.close();
     }
@@ -330,10 +401,8 @@ public class BatchETLDBAdapterTest extends TestBase {
     }
 
     public int start() throws IOException, ServerAcl.AclFormatException {
-      HsqlProperties props = new HsqlProperties();
-      props.setProperty("server.database.0", locationUrl);
-      props.setProperty("server.dbname.0", database);
-      server.setProperties(props);
+      server.setDatabasePath(0, locationUrl);
+      server.setDatabaseName(0, database);
       return server.start();
     }
 

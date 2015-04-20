@@ -16,22 +16,16 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 
 /**
  * Context passed to Batch Source and Sink.
  */
-public interface BatchContext extends RuntimeContext, DatasetContext {
-
-  /**
-   * Get the specification of the stage, set during the configuration time.
-   *
-   * @return {@link StageSpecification}
-   */
-  StageSpecification getSpecification();
+public interface BatchContext extends RuntimeContext, DatasetContext, StageContext {
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
@@ -45,11 +39,4 @@ public interface BatchContext extends RuntimeContext, DatasetContext {
   /**
    */
   <T> T getHadoopJob();
-
-  /**
-   * Overrides the resources, such as memory and virtual cores, to use for the execution of this Batch job.
-   *
-   * @param resources Resources to be used for execution of this job
-   */
-  void setResources(Resources resources);
 }

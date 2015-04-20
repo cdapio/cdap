@@ -1,30 +1,36 @@
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title"> Configuration </h3>
+<div class="row">
+  <div class="col-xs-6">
+    <h2> Configuration </h2>
   </div>
-
-  <div class="panel-body">
-    <div class="input-group col-xs-4 pull-right search-bar">
+  <div class="col-xs-6">
+    <div class="input-group pull-right search-bar">
       <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
       <div class="input-group-addon">
         <i class="fa fa-search"></i>
       </div>
     </div>
-
-    <table class="table table-responsive" cask-sortable>
-      <thead>
-        <tr ng-class="{'sort-enabled': config.length>0}">
-          <th data-predicate="key">Name</th>
-          <th data-predicate="value">Value</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr ng-repeat="row in config | filter: searchText | orderBy:sortable.predicate:sortable.reverse">
-          <td>{{row.key}}</td>
-          <td>{{row.value}}</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </div>
+<div class="row">
+  <div class="col-xs-12">
+    <div class="table-responsive">
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': config.length>0}">
+            <th data-predicate="key">Name</th>
+            <th data-predicate="value">Value</th>
+            <th data-predicate="source">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="row in config | filter: searchText | orderBy:sortable.predicate:sortable.reverse | limitTo: 50">
+            <td>{{::row.name}}</td>
+            <td>{{::row.value}}</td>
+            <td>{{::row.source}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+

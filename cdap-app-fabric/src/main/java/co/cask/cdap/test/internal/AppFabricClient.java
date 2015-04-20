@@ -18,7 +18,6 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -66,7 +65,6 @@ public class AppFabricClient {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
-  private final AppFabricHttpHandler httpHandler;
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
@@ -75,12 +73,11 @@ public class AppFabricClient {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory,
+  public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceAdmin namespaceAdmin, WorkflowHttpHandler workflowHttpHandler) {
-    this.httpHandler = httpHandler;
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
@@ -278,7 +275,8 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = appName + ".jar";
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();

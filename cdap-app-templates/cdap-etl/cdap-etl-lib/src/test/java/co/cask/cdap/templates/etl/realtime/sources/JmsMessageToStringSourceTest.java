@@ -16,13 +16,11 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import co.cask.cdap.templates.etl.common.MockSourceContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.junit.After;
 import org.junit.Assert;
@@ -32,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -44,7 +41,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
-import javax.naming.NamingException;
 
 /**
  * Unit test for JMS ETL realtime source
@@ -63,7 +59,7 @@ public class JmsMessageToStringSourceTest {
   public void beforeTest() {
     jmsSource = new JmsSource();
 
-    jmsSource.configure(new RealtimeConfigurer() {
+    jmsSource.configure(new StageConfigurer() {
       @Override
       public void setName(String name) {
         // no-op
@@ -83,11 +79,6 @@ public class JmsMessageToStringSourceTest {
       public void addProperty(Property property) {
         // no-op
       }
-
-      @Override
-      public void setResources(Resources resources) {
-        // no-op
-      }
     });
   }
 
@@ -100,32 +91,12 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleQueueMessages() throws NamingException, JMSException {
+  public void testSimpleQueueMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new SourceContext() {
-      @Override
-      public RealtimeSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockSourceContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     QueueConnection queueConn = null;
@@ -152,32 +123,12 @@ public class JmsMessageToStringSourceTest {
   }
 
   @Test
-  public void testSimpleTopicMessages() throws NamingException, JMSException {
+  public void testSimpleTopicMessages() throws Exception {
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new SourceContext() {
-      @Override
-      public RealtimeSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockSourceContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     TopicConnection topicConn = null;

@@ -17,11 +17,12 @@
 package co.cask.cdap.templates.etl.transforms;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.StructuredRecordSerializer;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -35,13 +36,14 @@ import javax.script.ScriptException;
 /**
  * Filters records using custom javascript provided by the config.
  */
-public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+public class ScriptFilterTransform extends TransformStage<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT = "script";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
   private ScriptEngine engine;
   private Invocable invocable;
+  private Metrics metrics;
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -57,7 +59,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = context.getRuntimeArguments().get(SCRIPT);
@@ -70,6 +72,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
       throw new IllegalArgumentException("Invalid script.", e);
     }
     invocable = (Invocable) engine;
+    metrics = context.getMetrics();
   }
 
   @Override
@@ -79,6 +82,8 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
       Boolean shouldFilter = (Boolean) invocable.invokeFunction("shouldFilter");
       if (!shouldFilter) {
         emitter.emit(input);
+      } else {
+        metrics.count("filtered", 1);
       }
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);

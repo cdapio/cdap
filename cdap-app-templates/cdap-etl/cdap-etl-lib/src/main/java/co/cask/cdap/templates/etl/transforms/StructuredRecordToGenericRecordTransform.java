@@ -19,7 +19,7 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Transform {@link StructuredRecord} to {@link GenericRecord}
  */
-public class StructuredRecordToGenericRecordTransform extends Transform<StructuredRecord, GenericRecord> {
+public class StructuredRecordToGenericRecordTransform extends TransformStage<StructuredRecord, GenericRecord> {
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
 
   @Override

@@ -25,8 +25,8 @@ import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -106,7 +106,7 @@ import javax.annotation.Nullable;
  * Measurement type (specified in 'type' property) can be one of {@link MeasureType} values.
  *
  */
-public class StructuredRecordToCubeFactTransform extends Transform<StructuredRecord, CubeFact> {
+public class StructuredRecordToCubeFactTransform extends TransformStage<StructuredRecord, CubeFact> {
   public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
 
   private CubeFactBuilder factBuilder;
@@ -122,7 +122,7 @@ public class StructuredRecordToCubeFactTransform extends Transform<StructuredRec
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     String configAsString = context.getRuntimeArguments().get(MAPPING_CONFIG_PROPERTY);
     Preconditions.checkArgument(configAsString != null && !configAsString.isEmpty(),
                                 "the mapping config must be given");

@@ -63,7 +63,6 @@ public final class LoggingConfiguration {
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
   public static final long DEFAULT_LOG_RETENTION_DURATION_DAYS = 30;
   public static final long DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
-  public static final String SYNC_LOG_APPENDER_ANNOTATION = "sync.log.appender";
 
   private LoggingConfiguration() {}
 

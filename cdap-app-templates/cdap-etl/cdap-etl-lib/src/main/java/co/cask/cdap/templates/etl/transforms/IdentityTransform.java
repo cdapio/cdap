@@ -18,14 +18,14 @@ package co.cask.cdap.templates.etl.transforms;
 
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformStage;
 
 /**
  * Simple Identity Transform for testing.
  *
  * @param <T> any type
  */
-public class IdentityTransform<T> extends Transform<T, T> {
+public class IdentityTransform<T> extends TransformStage<T, T> {
 
   @Override
   public void configure(StageConfigurer configurer) {

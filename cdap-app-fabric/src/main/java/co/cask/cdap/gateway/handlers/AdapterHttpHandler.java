@@ -107,13 +107,18 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("template") String template) {
     if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
+    if (template != null) {
+      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId), template));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
+    }
   }
 
   /**

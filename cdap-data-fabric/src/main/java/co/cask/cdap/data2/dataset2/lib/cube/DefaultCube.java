@@ -63,10 +63,10 @@ public class DefaultCube implements Cube {
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
 
-  private final Collection<? extends Aggregation> aggregations;
+  private final Map<String, ? extends Aggregation> aggregations;
 
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
-                     Collection<? extends Aggregation> aggregations) {
+                     Map<String, ? extends Aggregation> aggregations) {
     this.aggregations = aggregations;
     this.resolutionToFactTable = Maps.newHashMap();
     for (int resolution : resolutions) {
@@ -83,7 +83,7 @@ public class DefaultCube implements Cube {
   public void add(Collection<? extends CubeFact> facts) {
     List<Fact> toWrite = Lists.newArrayList();
     for (CubeFact fact : facts) {
-      for (Aggregation agg : aggregations) {
+      for (Aggregation agg : aggregations.values()) {
         if (agg.accept(fact)) {
           List<TagValue> tagValues = Lists.newArrayList();
           for (String tagName : agg.getTagNames()) {
@@ -105,13 +105,13 @@ public class DefaultCube implements Cube {
       CubeQuery example: "dataset read ops for app per dataset". Or:
 
       SELECT count('read.ops')                                     << measure name and type
-      FROM Cube
+      FROM aggregation.resolution                                  << aggregation and resolution
       GROUP BY dataset,                                            << groupByTags
       WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
 
       Execution:
 
-      1) find aggregation to supply results
+      1) (optional, if aggregation to query in is not provided) find aggregation to supply results
 
       Here, we need aggregation that has following dimensions: 'namespace', 'app', 'program', 'dataset'.
 
@@ -140,12 +140,24 @@ public class DefaultCube implements Cube {
                                            query.toString());
     }
 
-    Aggregation agg = findAggregation(query);
-    if (agg == null) {
-      throw new IllegalArgumentException("There's no data aggregated for specified tags to satisfy the query: " +
-                                           query.toString());
+    // 1) find aggregation to query
+    Aggregation agg;
+    if (query.getAggregation() != null) {
+      agg = aggregations.get(query.getAggregation());
+      if (agg == null) {
+        throw new IllegalArgumentException(
+          String.format("Specified aggregation %s is not found in cube aggregations: %s",
+                        query.getAggregation(), aggregations.keySet().toString()));
+      }
+    } else {
+      agg = findAggregation(query);
+      if (agg == null) {
+        throw new IllegalArgumentException("There's no data aggregated for specified tags to satisfy the query: " +
+                                             query.toString());
+      }
     }
 
+    // 2) build a scan for a query
     List<TagValue> tagValues = Lists.newArrayList();
     for (String tagName : agg.getTagNames()) {
       // if not defined in query, will be set as null, which means "any"
@@ -153,6 +165,8 @@ public class DefaultCube implements Cube {
     }
 
     FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
+
+    // 3) execute scan query
     FactTable table = resolutionToFactTable.get(query.getResolution());
     FactScanner scanner = table.scan(scan);
     Table<Map<String, String>, String, Map<Long, Long>> resultMap = getTimeSeries(query, scanner);
@@ -165,7 +179,7 @@ public class DefaultCube implements Cube {
     List<TagValue> tagValues = Lists.newArrayList();
     // find all the aggregations that match the sliceByTags in the query and
     // use the tag values of the aggregation to delete entries in all the fact-tables.
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
         tagValues.clear();
         for (String tagName : agg.getTagNames()) {
@@ -194,7 +208,7 @@ public class DefaultCube implements Cube {
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(slice.keySet())) {
         result.addAll(table.findSingleTagValue(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
       }
@@ -218,7 +232,7 @@ public class DefaultCube implements Cube {
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(slice.keySet())) {
         result.addAll(table.findMeasureNames(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
       }
@@ -231,7 +245,7 @@ public class DefaultCube implements Cube {
   private Aggregation findAggregation(CubeQuery query) {
     Aggregation currentBest = null;
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(query.getGroupByTags()) &&
         agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
 
@@ -335,6 +349,11 @@ public class DefaultCube implements Cube {
       }
     }
     return result;
+  }
+
+  @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
   }
 
   @Override
