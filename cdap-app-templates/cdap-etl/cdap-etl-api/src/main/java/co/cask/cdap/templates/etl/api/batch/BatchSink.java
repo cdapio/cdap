@@ -23,9 +23,6 @@ import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch job, the sink
@@ -38,17 +35,6 @@ import java.lang.reflect.Type;
  */
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
   implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>> {
-
-  private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link IN}.
-   *
-   * @return {@link Type} of input object
-   */
-  public final Type getInputType() {
-    return inputType;
-  }
 
   @Override
   public void configure(StageConfigurer configurer) {
