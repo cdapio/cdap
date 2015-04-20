@@ -57,7 +57,7 @@ import java.util.Map;
 /**
  * AdapterService life cycle tests.
  */
-public class AdapterServiceTests extends AppFabricTestBase {
+public class AdapterServiceTest extends AppFabricTestBase {
   private static final Id.Namespace NAMESPACE = Id.Namespace.from(TEST_NAMESPACE1);
   private static LocationFactory locationFactory;
   private static File adapterDir;
