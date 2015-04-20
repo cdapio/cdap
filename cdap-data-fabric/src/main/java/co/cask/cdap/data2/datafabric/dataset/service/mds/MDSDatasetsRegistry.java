@@ -47,7 +47,6 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
   @Override
   public void startUp() throws Exception {
     this.util = new DatasetMetaTableUtil(dsFramework);
-    this.util.init();
   }
 
   @Override

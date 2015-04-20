@@ -401,7 +401,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   // because there may be dependencies between modules, it is important that they are ordered correctly.
-  private DatasetDefinitionRegistry createRegistry(LinkedHashSet<String> availableModuleClasses,
+  protected DatasetDefinitionRegistry createRegistry(LinkedHashSet<String> availableModuleClasses,
                                                    @Nullable ClassLoader classLoader) {
     DatasetDefinitionRegistry registry = registryFactory.create();
     for (String moduleClassName : availableModuleClasses) {
@@ -434,7 +434,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   // gets all module class names available in the given namespace. Includes system modules first, then
   // namespace modules.
-  private LinkedHashSet<String> getAvailableModuleClasses(Id.Namespace namespace) {
+  protected LinkedHashSet<String> getAvailableModuleClasses(Id.Namespace namespace) {
     // order is important, system
     LinkedHashSet<String> availableModuleClasses = Sets.newLinkedHashSet();
     availableModuleClasses.addAll(moduleClasses.row(Constants.SYSTEM_NAMESPACE_ID).values());
