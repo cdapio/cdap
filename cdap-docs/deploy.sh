@@ -94,8 +94,7 @@ set_remote_dir
 #
 USER=bamboo
 PROJECT_DOCS=${PROJECT}-docs
-WEB_FILE=${PROJECT}-docs-${VERSION}-web.zip
-GITHUB_FILE=${PROJECT}-docs-${VERSION}-github.zip
+ZIP_FILE=${PROJECT}-docs-${VERSION}-web.zip
 FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
 REMOTE_STG_DIR="${REMOTE_STG_BASE}/${DIR}"
@@ -123,7 +122,7 @@ function make_remote_dir () {
 
 function rsync_zip_file () {
   decho "rsyncing archive ${4} to ${2}"
-  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" || die "could not rsync ${4} to ${2}"
+  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" 
   rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
   decho ""
 }
@@ -135,11 +134,19 @@ function unzip_archive () {
   decho ""
 }
 
+function move_zip_file () {
+  decho "moving zip file"
+  decho "ssh ${1}@${2} \"sudo mv ${3}/${4} ${3}/${VERSION}\""
+  ssh ${1}@${2} "sudo mv ${3}/${4} ${3}/${VERSION}" || die "unable to move ${4} to ${VERSION} subdirectory on ${2}"
+  decho ""
+}
+
 function deploy () {
   decho "deploying to ${2}"
   make_remote_dir ${1} ${2} ${3}
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
   unzip_archive ${1} ${2} ${3} ${4}
+  move_zip_file ${1} ${2} ${3} ${4}
 }
 
 ################################################################################
@@ -151,14 +158,14 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
   decho "Deploying to Staging server"
-  deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${WEB_FILE} ${FILE_PATH}
+  deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${ZIP_FILE} ${FILE_PATH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
   decho "Deploying to Docs servers"
   for i in ${DOCS_SERVERS}; do
-    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${WEB_FILE} ${FILE_PATH}
+    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH}
   done
 fi
 decho "####################### DEPLOYING DONE #######################"
