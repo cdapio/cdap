@@ -52,4 +52,4 @@ if [ ${containsTokenFileArg} -eq 0 ] && [ -r ${auth_file} ]; then
   TOKENFILE="--token-file ${auth_file}"
 fi
 
-java -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.common.conf.ConfigurationJsonTool ${@} ${TOKENFILE}
+java -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.ui.ConfigurationJsonTool ${@} ${TOKENFILE}
