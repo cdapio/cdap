@@ -22,14 +22,20 @@
           <td>
             <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
           </td>
-          <td ng-bind="dataset.type"></td>
+          <td>
+            <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
+            <span> {{dataset.type}} </span>
+          </td>
           <td></td>
         </tr>
         <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
           <td>
             <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
           </td>
-          <td ng-bind="stream.type"></td>
+          <td>
+            <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
+            <span> {{stream.type}} </span>
+          </td>
           <td>
             <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
           </td>
