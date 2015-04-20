@@ -67,6 +67,6 @@ public abstract class MapReduceBatchContext implements BatchContext {
 
   @Override
   public Metrics getMetrics() {
-    return null;
+    return metrics;
   }
 }
