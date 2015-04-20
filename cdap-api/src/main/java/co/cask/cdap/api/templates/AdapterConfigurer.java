@@ -31,35 +31,35 @@ import java.util.Map;
  * Currently, only Worker or Workflow can be used in the execution.
  */
 @Beta
-public interface AdapterConfigurer {
+public interface AdapterConfigurer extends AdapterPluginRegistry {
 
   /**
    * Set the schedule for the program. Must be set for Workflows and is not valid for other program types.
    *
    * @param schedule {@link Schedule}
    */
-  public void setSchedule(Schedule schedule);
+  void setSchedule(Schedule schedule);
 
   /**
    * Set the number of instances of the program. Valid only for Workers and defaults to 1.
    *
    * @param instances number of instances
    */
-  public void setInstances(int instances);
+  void setInstances(int instances);
 
   /**
    * Set the resources the program should use.
    *
    * @param resources the resources the program should use
    */
-  public void setResources(Resources resources);
+  void setResources(Resources resources);
 
   /**
    * Add arguments to be passed to the program as runtime arguments.
    *
    * @param arguments the runtime arguments to add to the program
    */
-  public void addRuntimeArguments(Map<String, String> arguments);
+  void addRuntimeArguments(Map<String, String> arguments);
 
   /**
    * Add argument to be passed to the program as runtime arguments.
@@ -67,7 +67,7 @@ public interface AdapterConfigurer {
    * @param key the runtime argument key
    * @param value the runtime argument value
    */
-  public void addRuntimeArgument(String key, String value);
+  void addRuntimeArgument(String key, String value);
 
   /**
    * Adds a {@link Stream} to the Adapter. The stream will be created during adapter creation if it does not
@@ -112,7 +112,5 @@ public interface AdapterConfigurer {
    * @param datasetClass dataset class to create the Dataset type from
    * @param props dataset instance properties
    */
-  void createDataset(String datasetName,
-                     Class<? extends Dataset> datasetClass,
-                     DatasetProperties props);
+  void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props);
 }

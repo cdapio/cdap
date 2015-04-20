@@ -22,6 +22,7 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -30,7 +31,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -38,6 +41,8 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
@@ -99,15 +104,39 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                                 workerSpec.getDatasets(), newResources,
                                                                 Integer.valueOf(instances));
 
-    BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, runId, instanceId, instanceCount,
-                                                        options.getUserArguments(), cConf,
-                                                        metricsCollectionService, datasetFramework,
-                                                        txClient, discoveryServiceClient, streamWriterFactory);
+    AdapterSpecification adapterSpec = getAdapterSpecification(options.getArguments());
+
+    BasicWorkerContext context = new BasicWorkerContext(
+      newWorkerSpec, program, runId, instanceId, instanceCount,
+      options.getUserArguments(), cConf,
+      metricsCollectionService, datasetFramework,
+      txClient, discoveryServiceClient, streamWriterFactory,
+      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()));
+
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
     worker.start();
     return controller;
+  }
+
+  @Nullable
+  private AdapterSpecification getAdapterSpecification(Arguments arguments) {
+    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
+    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
+      return null;
+    }
+    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterSpecification.class);
+  }
+
+  @Nullable
+  private PluginInstantiator createPluginInstantiator(@Nullable AdapterSpecification adapterSpec,
+                                                      ClassLoader programClassLoader) {
+    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
+    if (adapterSpec == null) {
+      return null;
+    }
+    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

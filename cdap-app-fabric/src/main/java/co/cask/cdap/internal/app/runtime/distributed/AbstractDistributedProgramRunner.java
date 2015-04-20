@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
@@ -28,12 +29,13 @@ import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
@@ -62,7 +64,9 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -105,7 +109,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-    Map<String, File> localizeFiles = Maps.newHashMap();
 
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
@@ -114,6 +117,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
+
+      Map<String, File> localizeFiles = addAdapterPluginFiles(options, new HashMap<String, File>());
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -161,6 +166,50 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
+   * modification will be done to the map.
+   */
+  private Map<String, File> addAdapterPluginFiles(ProgramOptions options, Map<String, File> localizeFiles) {
+    Arguments arguments = options.getArguments();
+    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
+      return localizeFiles;
+    }
+
+    // Decode the adapter spec from program system argument
+    AdapterSpecification adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
+                                                     AdapterSpecification.class);
+
+    // Get all unique PluginInfo from the adapter spec
+    Set<PluginInfo> plugins = adapterSpec.getPluginInfos();
+
+    // If there is no plugin used by the adapter, nothing need to be localized
+    if (plugins.isEmpty()) {
+      return localizeFiles;
+    }
+
+    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+
+    // Localize all required plugin jars
+    // Use the template dir name as the target directory name.
+    // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
+    for (PluginInfo plugin : plugins) {
+      String localizedName = String.format("%s/%s/%s",
+                                           templateDir.getName(), adapterSpec.getTemplate(), plugin.getFileName());
+      localizeFiles.put(localizedName, new File(pluginDir, plugin.getFileName()));
+    }
+
+    // Localize all files under template plugin "lib" directory
+    for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
+      String localizedName = String.format("%s/%s/lib/%s",
+                                           templateDir.getName(), adapterSpec.getTemplate(), libJar.getName());
+      localizeFiles.put(localizedName, libJar);
+    }
+
+    return localizeFiles;
   }
 
   /**

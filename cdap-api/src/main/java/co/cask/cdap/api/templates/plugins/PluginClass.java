@@ -16,12 +16,15 @@
 
 package co.cask.cdap.api.templates.plugins;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Contains information about a plugin class.
  */
+@Beta
 public class PluginClass {
 
   private final String type;
@@ -129,5 +132,17 @@ public class PluginClass {
     result = 31 * result + (configFieldName != null ? configFieldName.hashCode() : 0);
     result = 31 * result + properties.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "PluginClass{" +
+      "className='" + className + '\'' +
+      ", type='" + type + '\'' +
+      ", name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", configFieldName='" + configFieldName + '\'' +
+      ", properties=" + properties +
+      '}';
   }
 }
