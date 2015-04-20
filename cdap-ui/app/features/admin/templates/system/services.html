@@ -1,4 +1,4 @@
-<h3> Services </h3>
+<h2> Services </h2>
 
 <div class="table-responsive">
   <table class="table table-curved" cask-sortable>
@@ -6,13 +6,14 @@
       <tr ng-class="{'sort-enabled': services.length>0}">
         <th data-predicate="name" data-predicate-default="reverse">Name</th>
         <th data-predicate="status">Status</th>
-        <th data-predicate="provisioned">Instances Provisioned</th>
-        <th data-predicate="requested">Instances Requested</th>
+        <th data-predicate="provisioned">Provisioned</th>
+        <th data-predicate="requested">Requested</th>
       </tr>
     </thead>
     <tbody>
       <tr ng-repeat="service in services | orderBy:sortable.predicate:sortable.reverse">
         <td>
+          <span ng-class="{'status-green': service.status === 'OK', 'status-grey': service.status === 'NOTOK'}"></span>
           <a ui-sref="admin.system.services.detail({serviceName:service.name})">
             <strong>{{ ::service.name }}</strong>
           </a>
