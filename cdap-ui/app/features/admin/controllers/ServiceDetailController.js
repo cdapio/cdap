@@ -4,7 +4,7 @@ function ($scope, $state, MyDataSource) {
     var myDataSrc = new MyDataSource($scope);
 
     myDataSrc.request({
-      _cdapPathV2: $scope.basePath  + '/instances'
+      _cdapPath: $scope.basePath  + '/instances'
     })
       .then(function(response) {
         $scope.instances = response;

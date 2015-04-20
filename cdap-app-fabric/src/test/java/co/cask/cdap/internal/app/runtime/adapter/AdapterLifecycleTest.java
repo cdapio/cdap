@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * AdapterService life cycle tests.
  */
-public class AdapterLifecycleTests extends AppFabricTestBase {
+public class AdapterLifecycleTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
     new TypeToken<List<AdapterSpecification>>() { }.getType();
