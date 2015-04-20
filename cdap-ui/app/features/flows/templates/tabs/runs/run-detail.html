@@ -1,15 +1,15 @@
 
-  <div class="btn-group nested-tabs pull-right">
-    <button class="btn btn-default"
-        ng-repeat="tab in tabs"
-        ng-click="selectTab(tab)"
-        ng-class="{'active': tab.title == activeTab.title}"
-    >
-      {{ tab.title }}
-    </button>
-  </div>
+<div class="btn-group nested-tabs pull-right">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
 
-<div class="flow-components">
+<div class="flow-components" ng-controller="FlowsRunsDetailStatusControler">
   <div class="row run-status">
     <div class="col-xs-6">
       <table class="table table-curved table-status">
