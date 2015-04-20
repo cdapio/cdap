@@ -1,12 +1,16 @@
 /*global require, module */
 
-var _ = require('lodash'),
-    request = require('request'),
-    colors = require('colors/safe'),
-    HashTable = require('object-hash').HashTable;
+var request = require('request'),
+    colors = require('colors/safe');
 
-
-var POLL_INTERVAL = 1000;
+/**
+ * Default Poll Interval used by the backend.
+ * We set the default poll interval to high, so 
+ * if any of the frontend needs faster than this
+ * time, then would have to pass in the 'interval'
+ * in their request.
+ */
+var POLL_INTERVAL = 10*1000; 
 
 /**
  * Aggregator
@@ -21,81 +25,116 @@ function Aggregator (conn) {
     return new Aggregator(conn);
   }
 
-  conn.on('data', _.bind(onSocketData, this));
-  conn.on('close', _.bind(onSocketClose, this));
+  conn.on('data', onSocketData.bind(this));
+  conn.on('close', onSocketClose.bind(this));
 
   this.connection = conn;
-  this.polledResources = new HashTable();
-  this.bodyCache = {};
 
-  // this.log('init');
+  // WebSocket local resource pool. Key here is the resource id
+  // as send from the backend. The FE has to guarantee that the
+  // the resource id is unique within a websocket connection.
+  this.polledResources = {};
 }
 
 /**
- * log something
+ * Checks if the 'id' received from the client is already registered -- This
+ * check was added because for whatever reason 'Safari' was sending multiple
+ * requests to backend with same ids. As this is happens only once during
+ * the start of poll, it's safe to make this check. The assumption here is
+ * that the frontend is sending in unique ids within the websocket session.
+ *
+ * Upon check if it's not duplicate, we invoke doPoll that would make the
+ * first call and set the interval for the timeout.
  */
-Aggregator.prototype.log = function () {
-  console.log(
-    colors.cyan('sock'),
-    colors.dim(this.connection.id),
-    _(arguments).join(' ')
-  );
+Aggregator.prototype.startPolling = function (resource) {
+  // WARN: This assumes that the browser side ids are unique for a websocket session.
+  // This check is needed for Safari.
+  if(this.polledResources[resource.id]) {
+    // console.log("Resource id " + resource.id + " already registered.");
+    return;
+  }
+  resource.interval = resource.interval || POLL_INTERVAL;
+  this.polledResources[resource.id] = resource;
+  doPoll.bind(this, resource)();
+}
+
+/**
+ * This method is called regularly by 'doPoll' to register the next interval
+ * for timeout. Every resource handle has a flag is used to indicate if the
+ * the resource has been requested to be stopped, if it's already stopped, then
+ * there is nothing for us to do. If it's not then we go ahead and register
+ * the interval timeout.
+ */
+Aggregator.prototype.scheduleAnotherIteration = function (resource) {
+  if (resource.stop) {
+    // Don't reschedule another iteration if the resource has been stopped
+    return;
+  }
+  // console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
+  //    ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
+  resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
 
 /**
- * schedule polling
+ * Stops the polling of a resource. The resources that has been requested to be stopped
+ * is removed from the websocket local poll and the timeouts are cleared and stop flag
+ * is set to true.
  */
-Aggregator.prototype.planPolling = function () {
-  this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
+Aggregator.prototype.stopPolling = function (resource) {
+  var thisResource = removeFromObj(this.polledResources, resource.id);
+  if (thisResource === undefined) {
+    return;
+  }
+  clearTimeout(thisResource.timerId);
+  thisResource.stop = true;
 };
 
 /**
- * stop polling
+ * Iterates through the websocket local resources and clears the timers and sets
+ * the flag. This is called when the websocket is closing the connection.
  */
-Aggregator.prototype.stopPolling = function () {
-  clearTimeout(this.timeout);
-  this.timeout = null;
-};
-
+Aggregator.prototype.stopPollingAll = function() {
+  for (var id in this.polledResources) {
+    var resource = this.polledResources[id];
+    clearTimeout(resource.timerId);
+    resource.stop = true;
+  }
+}
 
 /**
- * @private doPoll
- * requests all the polled resources
+ * Removes the resource id from the websocket connection local resource pool.
  */
-function doPoll () {
-  var that = this,
-      rscs = this.polledResources.toArray(),
-      pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
+function removeFromObj(obj, key) {
+  var el = obj[key];
+  delete obj[key];
+  return el;
+}
 
-  //this.log('poll', rscs.length);
-  _.forEach(rscs, function(one){
-    var resource = one.value, k = one.hash;
-    request(resource, function(error, response, body){
-      if(_.isEqual(that.bodyCache[one.hash], body)) {
-        // that.log('not emitting', resource.url);
-        return; // we do not send down identical bodies
-      } else if (error) {
-        that.bodyCache[one.hash] = body;
+/**
+ * 'doPoll' is the doer - it makes the resource request call to backend and
+ * sends the response back once it receives it. Upon completion of the request
+ * it schedulers the interval for next trigger.
+ */
+function doPoll (resource) {
+    var that = this,
+        callBack = this.scheduleAnotherIteration.bind(that, resource);
+
+    request(resource, function(error, response, body) {
+      if (error) {
         emitResponse.call(that, resource, error);
         return;
       }
 
-      that.bodyCache[one.hash] = body;
       emitResponse.call(that, resource, false, response, body);
 
-    }).on('response', pollAgain)
-    .on('error', pollAgain);
-  });
+    }).on('response', callBack)
+    .on('error', callBack);
 }
-
-
-
 
 /**
  * @private emitResponse
  *
  * sends data back to the client through socket
- * TODO: only send it down if it changed
  *
  * @param  {object} resource that was requested
  * @param  {error|null} error
@@ -103,8 +142,9 @@ function doPoll () {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
+  resource.timerId = undefined;
+  resource.stop = undefined;
   if(error) { // still emit a warning
-    this.log(resource.url, error);
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -113,7 +153,6 @@ function emitResponse (resource, error, response, body) {
 
   } else {
 
-    // this.log('emit', resource.url);
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,
@@ -129,29 +168,19 @@ function emitResponse (resource, error, response, body) {
 function onSocketData (message) {
   try {
     message = JSON.parse(message);
-    // this.log('data', message.action);
-
     var r = message.resource;
-    // @TODO whitelist resources
 
     switch(message.action) {
       case 'poll-start':
-        this.polledResources.add(r);
-        if(!this.timeout) {
-          this.planPolling();
-        }
-        /* falls through */
+        this.startPolling(r);
+        break;
       case 'request':
-        request(r, _.bind(emitResponse, this, r));
+        request(r, emitResponse.bind(this, r));
         break;
       case 'poll-stop':
-        this.polledResources.remove(r);
-        if(!Object.keys(this.polledResources.table()).length) {
-          this.stopPolling();
-        }
+        this.stopPolling(r);
         break;
     }
-
   }
   catch (e) {
     console.error(e);
@@ -162,10 +191,8 @@ function onSocketData (message) {
  * @private onSocketClose
  */
 function onSocketClose () {
-  this.log('closed');
-  this.stopPolling();
-  this.polledResources.reset();
+  this.stopPollingAll();
+  this.polledResources = {};
 }
-
 
 module.exports = Aggregator;

@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * AdapterService life cycle tests.
  */
-public class AdapterLifecycleTests extends AppFabricTestBase {
+public class AdapterLifecycleTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
     new TypeToken<List<AdapterSpecification>>() { }.getType();
@@ -181,7 +181,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testRestrictUserApps() throws Exception {
     // Testing that users can not deploy an application
-    HttpResponse response = deploy(AppWithServices.class, DummyBatchTemplate.NAME);
+    HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN,
+      Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
@@ -214,7 +215,17 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testInvalidConfigReturns400() throws Exception {
-    // TODO: implement once adapter creation calls configureTemplate()
+    String adapterName = "badConfigAdapter";
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", null);
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/adapters/%s",
+        Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, adapterName), GSON.toJson(adapterConfig));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    String deleteURL = getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME,
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    deleteApplication(60, deleteURL, 200);
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {

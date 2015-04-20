@@ -76,8 +76,8 @@ public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.C
   @Override
   public void configureAdapter(String adapterName, Config configuration,
                                AdapterConfigurer configurer) throws Exception {
-    Preconditions.checkNotNull(configuration.sourceName);
-    Preconditions.checkNotNull(configuration.crontab);
+    Preconditions.checkArgument(configuration.sourceName != null, "sourceName must be specified.");
+    Preconditions.checkArgument(configuration.crontab != null, "crontab must be specified.");
 
     Schedule schedule = Schedules.createTimeSchedule("dummy.schedule", "a dummy schedule", configuration.crontab);
     configurer.setSchedule(schedule);

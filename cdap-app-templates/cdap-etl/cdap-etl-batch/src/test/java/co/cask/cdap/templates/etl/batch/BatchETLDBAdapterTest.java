@@ -223,7 +223,7 @@ public class BatchETLDBAdapterTest extends TestBase {
       Table.PROPERTY_SCHEMA, schema.toString(),
       Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.<ETLStage>newArrayList());
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     // add dataset instances that the source and sink added
@@ -316,7 +316,7 @@ public class BatchETLDBAdapterTest extends TestBase {
                                                  Properties.DB.COLUMNS, cols
                                  ));
     List<ETLStage> transforms = Lists.newArrayList();
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transforms);
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, transforms);
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
     // add dataset instances that the source and sink added

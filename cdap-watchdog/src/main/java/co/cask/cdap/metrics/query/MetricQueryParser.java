@@ -142,7 +142,7 @@ final class MetricQueryParser {
    */
   static String stripVersionAndMetricsFromPath(String path) {
     // +8 for "/metrics"
-    int startPos = Constants.Gateway.API_VERSION_2.length() + 8;
+    int startPos = Constants.Gateway.API_VERSION_3.length() + 8;
     return path.substring(startPos, path.length());
   }
 

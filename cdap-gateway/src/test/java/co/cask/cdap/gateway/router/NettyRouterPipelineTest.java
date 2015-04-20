@@ -91,9 +91,9 @@ import javax.ws.rs.Path;
 /**
  * Verify the ordering of events in the RouterPipeline.
  */
-public class NettyRouterPipelineTests {
+public class NettyRouterPipelineTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTests.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NettyRouterPipelineTest.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;

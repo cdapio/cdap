@@ -32,7 +32,6 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -147,9 +146,7 @@ public abstract class DatasetServiceTestBase {
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(
-        new DatasetAdminOpHTTPHandlerV2(new NoAuthenticator(),
-                                        new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework)));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
@@ -215,8 +212,9 @@ public abstract class DatasetServiceTestBase {
     return port;
   }
 
-  protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
+  protected URL getUrl(String path) throws MalformedURLException {
+    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, path));
   }
 
   protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {

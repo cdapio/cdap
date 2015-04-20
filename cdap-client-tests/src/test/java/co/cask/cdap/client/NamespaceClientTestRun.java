@@ -100,6 +100,28 @@ public class NamespaceClientTestRun extends ClientTestBase {
     Assert.assertEquals(initialNamespaceCount, namespaceClient.list().size());
   }
 
+  @Test
+  public void testDeleteAll() throws Exception {
+    // create a valid namespace
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
+    builder.setName(TEST_NAMESPACE_NAME).setDescription(TEST_DESCRIPTION);
+    namespaceClient.create(builder.build());
+    waitForNamespaceCreation(TEST_NAMESPACE_NAME.getId());
+
+    // create another namespace
+    builder = new NamespaceMeta.Builder();
+    builder.setName(TEST_DEFAULT_FIELDS);
+    namespaceClient.create(builder.build());
+    waitForNamespaceCreation(TEST_DEFAULT_FIELDS.getId());
+
+    // cleanup
+    namespaceClient.deleteAll();
+
+    // verify that only the default namespace is left
+    Assert.assertEquals(1, namespaceClient.list().size());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE, namespaceClient.list().get(0).getName());
+  }
+
   private void verifyDoesNotExist(Id.Namespace namespaceId)
     throws IOException, UnauthorizedException, CannotBeDeletedException {
 
