@@ -29,7 +29,7 @@
           </tab-heading>
 
           <!-- CONTENT -->
-          <table class="table table-curved">
+          <table class="table">
             <tr>
               <td>Table</td>
               <td>{{ selectedInfo.table_name }}</td>
@@ -70,7 +70,7 @@
             Schema
           </tab-heading>
 
-          <table class="table table-curved">
+          <table class="table">
             <thead>
               <th>Column Name</th>
               <th>Column Type</th>
@@ -88,7 +88,7 @@
             Partition Keys
           </tab-heading>
 
-          <table class="table table-curved" ng-if="selectedInfo.partitioned_keys.length > 0">
+          <table class="table" ng-if="selectedInfo.partitioned_keys.length > 0">
             <thead>
               <th>Name</th>
               <th>Type</th>
@@ -110,7 +110,7 @@
             Advanced
           </tab-heading>
 
-          <table class="table table-curved">
+          <table class="table">
             <tr>
               <td>Input Format</td>
               <td>{{ selectedInfo.input_format }}</td>
