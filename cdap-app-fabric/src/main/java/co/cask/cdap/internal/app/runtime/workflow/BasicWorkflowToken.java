@@ -37,7 +37,7 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
-    this.mapReduceCounters = ImmutableMap.copyOf(copyHadoopCounters(mapReduceCounters));
+    this.mapReduceCounters = copyHadoopCounters(mapReduceCounters);
   }
 
   /**
@@ -53,10 +53,10 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   private Map<String, Map<String, Long>> copyHadoopCounters(Map<String, Map<String, Long>> input) {
-    Map<String, Map<String, Long>> copiedMap = Maps.newHashMap();
+    ImmutableMap.Builder<String, Map<String, Long>> builder = ImmutableMap.builder();
     for (Map.Entry<String, Map<String, Long>> entry : input.entrySet()) {
-      copiedMap.put(entry.getKey(), new HashMap<String, Long>(entry.getValue()));
+      builder.put(entry.getKey(), ImmutableMap.copyOf(entry.getValue()));
     }
-    return copiedMap;
+    return builder.build();
   }
 }
