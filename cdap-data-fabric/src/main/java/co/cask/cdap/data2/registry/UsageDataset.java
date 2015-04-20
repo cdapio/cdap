@@ -46,7 +46,7 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param datasetInstanceId dataset
    */
   public void register(Id.Program programId, Id.DatasetInstance datasetInstanceId) {
-    write(ProgramDataset.makeKey(programId, datasetInstanceId), true);
+    write(ProgramMapping.makeKey(programId, datasetInstanceId), true);
     write(DatasetProgram.makeKey(datasetInstanceId, programId), true);
   }
 
@@ -90,7 +90,7 @@ public class UsageDataset extends MetadataStoreDataset {
     // Delete streams associated with applicationId
 
     // Delete all mappings for applicaionId
-    deleteAll(ProgramDataset.makeScanKey(applicationId));
+    deleteAll(ProgramMapping.makeDatasetScanKey(applicationId));
   }
 
   /**
@@ -107,8 +107,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @return datasets used by programId
    */
   public Set<Id.DatasetInstance> getDatasets(Id.Program programId) {
-    Map<MDSKey, Boolean> datasetKeys = listKV(ProgramDataset.makeScanKey(programId), Boolean.TYPE);
-    return ProgramDataset.toDatasetInstanceIds(datasetKeys.keySet());
+    Map<MDSKey, Boolean> datasetKeys = listKV(ProgramMapping.makeDatasetScanKey(programId), Boolean.TYPE);
+    return ProgramMapping.toDatasetInstanceIds(datasetKeys.keySet());
   }
 
   /**
@@ -117,8 +117,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @return datasets used by applicaionId
    */
   public Set<Id.DatasetInstance> getDatasets(Id.Application applicationId) {
-    Map<MDSKey, Boolean> datasetKeys = listKV(ProgramDataset.makeScanKey(applicationId), Boolean.TYPE);
-    return ProgramDataset.toDatasetInstanceIds(datasetKeys.keySet());
+    Map<MDSKey, Boolean> datasetKeys = listKV(ProgramMapping.makeDatasetScanKey(applicationId), Boolean.TYPE);
+    return ProgramMapping.toDatasetInstanceIds(datasetKeys.keySet());
   }
 
   /**
@@ -194,115 +194,109 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Represents a Program - Dataset mapping.
+   * Represents a Program - Dataset/Stream mapping.
    */
-  private static final class ProgramDataset {
-    private static final String PREFIX = "pd_";
+  private static final class ProgramMapping {
+    private static final String DATASET_PREFIX = "pd_";
+    private static final String STREAM_PREFIX = "ps_";
 
     public static MDSKey makeKey(Id.Program programId, Id.DatasetInstance datasetInstanceId) {
-      return getBuilder()
-        .add(programId.getNamespaceId())
-        .add(programId.getApplicationId())
-        .add(programId.getType().getCategoryName())
-        .add(programId.getId())
-        .add(datasetInstanceId.getNamespaceId())
-        .add(datasetInstanceId.getId())
-        .build();
+      MDSKey.Builder builder = new MDSKey.Builder().add(DATASET_PREFIX);
+      addProgramId(builder, programId);
+      addDatasetId(builder, datasetInstanceId);
+      return builder.build();
     }
 
-    public static MDSKey makeScanKey(Id.Program programId) {
-      return getBuilder()
-        .add(programId.getNamespaceId())
-        .add(programId.getApplicationId())
-        .add(programId.getType().getCategoryName())
-        .add(programId.getId())
-        .build();
+    public static MDSKey makeDatasetScanKey(Id.Program programId) {
+      MDSKey.Builder builder = new MDSKey.Builder().add(DATASET_PREFIX);
+      addProgramId(builder, programId);
+      return builder.build();
     }
 
-    public static MDSKey makeScanKey(Id.Application applicationId) {
-      return getBuilder()
-        .add(applicationId.getNamespaceId())
-        .add(applicationId.getId())
-        .build();
+    public static MDSKey makeDatasetScanKey(Id.Application applicationId) {
+      MDSKey.Builder builder = new MDSKey.Builder().add(DATASET_PREFIX);
+      addApplicationId(builder, applicationId);
+      return builder.build();
     }
 
     public static Set<Id.DatasetInstance> toDatasetInstanceIds(Set<MDSKey> programDatasetKeys) {
       Set<Id.DatasetInstance> datasetInstances = Sets.newHashSetWithExpectedSize(programDatasetKeys.size());
       for (MDSKey mdsKey : programDatasetKeys) {
-        MDSKey.Splitter splitter = getSplitter(mdsKey);
-        splitter.skipString(); // namespace
-        splitter.skipString(); // app
-        splitter.skipString(); // type
-        splitter.skipString(); // program
+        MDSKey.Splitter splitter = mdsKey.split();
+        splitter.skipString(); // prefix
+        skipProgramId(splitter);
         datasetInstances.add(Id.DatasetInstance.from(splitter.getString(), splitter.getString()));
       }
       return datasetInstances;
     }
-
-    private static MDSKey.Builder getBuilder() {
-      return new MDSKey.Builder().add(PREFIX);
-    }
-
-    private static MDSKey.Splitter getSplitter(MDSKey mdsKey) {
-      MDSKey.Splitter splitter = mdsKey.split();
-      splitter.skipString();
-      return splitter;
-    }
   }
 
   /**
-   * Represents a Dataset - Program mapping.
+   * Represents a Dataset - Program/Adapter mapping.
    */
   private static final class DatasetProgram {
-    private static final String PREFIX = "dp_";
+    private static final String PROGRAM_PREFIX = "dp_";
+    private static final String ADAPTER_PREFIX = "da_";
 
     public static MDSKey makeKey(Id.DatasetInstance datasetInstanceId, Id.Program programId) {
-      return getBuilder()
-        .add(datasetInstanceId.getNamespaceId())
-        .add(datasetInstanceId.getId())
-        .add(programId.getNamespaceId())
-        .add(programId.getApplicationId())
-        .add(programId.getType().getCategoryName())
-        .add(programId.getId())
-        .build();
+      MDSKey.Builder builder = new MDSKey.Builder().add(PROGRAM_PREFIX);
+      addDatasetId(builder, datasetInstanceId);
+      addProgramId(builder, programId);
+      return builder.build();
     }
 
     public static MDSKey makeKey(Id.DatasetInstance datasetInstanceId, Id.Application applicationId) {
-      return getBuilder()
-        .add(datasetInstanceId.getNamespaceId())
-        .add(datasetInstanceId.getId())
-        .add(applicationId.getNamespaceId())
-        .add(applicationId.getId())
-        .build();
+      MDSKey.Builder builder = new MDSKey.Builder().add(PROGRAM_PREFIX);
+      addDatasetId(builder, datasetInstanceId);
+      addApplicationId(builder, applicationId);
+      return builder.build();
     }
 
-    public static MDSKey makeScanKey(Id.DatasetInstance datasetInstanceId) {
-      return getBuilder()
-        .add(datasetInstanceId.getNamespaceId())
-        .add(datasetInstanceId.getId())
-        .build();
+    public static MDSKey makeProgramScanKey(Id.DatasetInstance datasetInstanceId) {
+      MDSKey.Builder builder = new MDSKey.Builder().add(PROGRAM_PREFIX);
+      addDatasetId(builder, datasetInstanceId);
+      return builder.build();
     }
 
     public static Set<Id.Program> toProgramIds(Set<MDSKey> datasetProgramKeys) {
       Set<Id.Program> programIds = Sets.newHashSetWithExpectedSize(datasetProgramKeys.size());
       for (MDSKey mdsKey : datasetProgramKeys) {
-        MDSKey.Splitter splitter = getSplitter(mdsKey);
-        splitter.skipString(); // namespace
-        splitter.skipString(); // instance
+        MDSKey.Splitter splitter = mdsKey.split();
+        splitter.skipString(); // prefix
+        skipDatasetId(splitter);
         programIds.add(Id.Program.from(splitter.getString(), splitter.getString(),
                                        ProgramType.valueOfCategoryName(splitter.getString()), splitter.getString()));
       }
       return programIds;
     }
+  }
 
-    private static MDSKey.Builder getBuilder() {
-      return new MDSKey.Builder().add(PREFIX);
-    }
+  private static void addProgramId(MDSKey.Builder builder, Id.Program programId) {
+    builder.add(programId.getNamespaceId())
+      .add(programId.getApplicationId())
+      .add(programId.getType().getCategoryName())
+      .add(programId.getId());
+  }
 
-    private static MDSKey.Splitter getSplitter(MDSKey mdsKey) {
-      MDSKey.Splitter splitter = mdsKey.split();
-      splitter.skipString();
-      return splitter;
-    }
+  private static void addDatasetId(MDSKey.Builder builder, Id.DatasetInstance datasetInstanceId) {
+    builder.add(datasetInstanceId.getNamespaceId())
+      .add(datasetInstanceId.getId());
+  }
+
+  private static void addApplicationId(MDSKey.Builder builder, Id.Application applicationId) {
+    builder.add(applicationId.getNamespaceId())
+      .add(applicationId.getId());
+  }
+
+  private static void skipProgramId(MDSKey.Splitter splitter) {
+    splitter.skipString(); // namespace
+    splitter.skipString(); // app
+    splitter.skipString(); // type
+    splitter.skipString(); // program
+  }
+
+  private static void skipDatasetId(MDSKey.Splitter splitter) {
+    splitter.skipString(); // namespace
+    splitter.skipString(); // instance
   }
 }
