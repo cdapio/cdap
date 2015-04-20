@@ -47,7 +47,8 @@ public class DefaultDataWriter implements DataWriter {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) throws DatasetInstantiationException {
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
     return dsContext.getDataset(name, arguments);
   }
 
