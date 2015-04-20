@@ -85,8 +85,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
       LOG.info("{} Program {} workflow action completed",
                programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
-      LOG.info("Failed to execute {} Program {} in workflow: {}",
-               programType != null ? programType.name() : null, programName, e);
+      LOG.info("Failed to execute {} Program {} in workflow", programType, programName, e);
       throw Throwables.propagate(e);
     }
   }

@@ -233,7 +233,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         completionService.submit(new Callable<Map.Entry<String, WorkflowToken>>() {
           @Override
           public Map.Entry<String, WorkflowToken> call() throws Exception {
-            final WorkflowToken copiedToken = BasicWorkflowToken.deepCopy(token);
+            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy(token);
             executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
             return Maps.immutableEntry(branch.toString(), copiedToken);
           }
