@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Service.
@@ -49,8 +50,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options, File hConfFile, File cConfFile,
-                                     ApplicationLauncher launcher) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -65,8 +66,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     // Launch service runnables program runners
     LOG.info("Launching distributed service: {}:{}", program.getName(), serviceSpec.getName());
 
-    TwillController controller = launcher.launch(new ServiceTwillApplication(program, serviceSpec, hConfFile,
-                                                                             cConfFile, eventHandler));
+    TwillController controller = launcher.launch(new ServiceTwillApplication(program, serviceSpec,
+                                                                             localizeFiles, eventHandler));
 
     DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
       program, controller);
