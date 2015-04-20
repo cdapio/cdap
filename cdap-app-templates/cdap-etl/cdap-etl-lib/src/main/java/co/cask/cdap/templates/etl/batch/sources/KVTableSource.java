@@ -37,7 +37,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName("KVTableSource");
+    configurer.setName(getClass().getSimpleName());
     configurer.setDescription("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field " +
       "and a 'value' field. Both fields are of type bytes.");
     configurer.addProperty(new Property(NAME, "Dataset Name", true));

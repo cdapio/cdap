@@ -39,7 +39,7 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName("KVTableSink");
+    configurer.setName(getClass().getSimpleName());
     configurer.setDescription("CDAP Key Value Table Dataset Batch Sink");
     configurer.addProperty(new Property(NAME, "Dataset Name", true));
     configurer.addProperty(new Property(
