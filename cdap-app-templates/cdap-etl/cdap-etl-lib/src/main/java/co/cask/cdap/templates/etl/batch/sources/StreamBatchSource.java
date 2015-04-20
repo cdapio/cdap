@@ -67,8 +67,9 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   public void configure(StageConfigurer configurer) {
     configurer.setName(StreamBatchSource.class.getSimpleName());
     configurer.setDescription("Batch source for a stream. If a format is given, any property prefixed with " +
-      "'format.setting.' will be passed to the format. For example, if a property with key 'format.setting.delimiter' " +
-      "and value '|' is given, the setting 'delimiter' with value '|' will be passed to the format.");
+      "'format.setting.' will be passed to the format. For example, if a property with key " +
+      "'format.setting.delimiter' and value '|' is given, the setting 'delimiter' with value '|' " +
+      "will be passed to the format.");
     configurer.addProperty(new Property(Properties.Stream.NAME, "Name of the stream.", true));
     configurer.addProperty(new Property(
       Properties.Stream.DURATION,
