@@ -1,8 +1,10 @@
+@import "../../styles/variables.less";
+
 body.state-mapreduce{
     .run-status {
       margin-bottom: 25px;
     }
-
+    .table-status { margin-top: 0; }
     .entry {
       font-weight: 700;
     }
@@ -18,6 +20,12 @@ body.state-mapreduce{
         }
       }
     }
+  }
+
+  .col-xs-12 > strong {
+    color: @cdap-header;
+    font-size: 14px;
+    padding-right: 5px;
   }
 
   .component-box {

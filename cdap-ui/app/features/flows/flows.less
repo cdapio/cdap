@@ -1,6 +1,9 @@
 @import "../../styles/variables.less";
 
 body.state-flows {
+  .run-status {
+    margin-bottom: 25px;
+  }
   textarea.flow-injector-input {
     width: 100%;
     height: 100px;
@@ -21,6 +24,11 @@ body.state-flows {
       padding: 5px 10px;
       vertical-align: middle;
     }
+  }
+  .col-xs-12 > strong {
+    color: @cdap-header;
+    font-size: 14px;
+    padding-right: 5px;
   }
 }
 body.state-flows{
