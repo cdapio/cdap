@@ -14,25 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime.sinks;
+package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+
+import java.util.Map;
 
 /**
- * Generic NoOp Sink.
- *
- * @param <T> any object
+ * Mock Source context for tests.
  */
-public class NoOpSink<T> extends RealtimeSink<T> {
+public class MockSourceContext implements SourceContext {
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(NoOpSink.class.getSimpleName());
+  public StageSpecification getSpecification() {
+    return null;
   }
 
   @Override
-  public int write(Iterable<T> object) {
+  public Metrics getMetrics() {
+    return NoopMetrics.INSTANCE;
+  }
+
+  @Override
+  public int getInstanceId() {
     return 0;
+  }
+
+  @Override
+  public int getInstanceCount() {
+    return 0;
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return null;
   }
 }

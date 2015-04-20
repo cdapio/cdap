@@ -17,11 +17,12 @@
 package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.metrics.Metrics;
 
 /**
- * Context passed to the Transform stages.
+ * Context passed to ETL stages.
  */
-public interface TransformContext extends RuntimeContext {
+public interface StageContext extends RuntimeContext {
 
   /**
    * Return the specification of this state.
@@ -29,4 +30,13 @@ public interface TransformContext extends RuntimeContext {
    * @return {@link StageSpecification}
    */
   StageSpecification getSpecification();
+
+  /**
+   * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by
+   * the stage they are emitted from. A metric called 'reads' emitted in one stage will be aggregated with
+   * those emitted in another stage.
+   *
+   * @return {@link Metrics} for collecting metrics
+   */
+  Metrics getMetrics();
 }

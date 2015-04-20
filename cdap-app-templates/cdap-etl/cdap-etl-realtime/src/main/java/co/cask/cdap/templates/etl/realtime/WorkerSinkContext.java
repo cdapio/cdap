@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
@@ -40,18 +41,25 @@ public class WorkerSinkContext implements SinkContext {
   private final StageSpecification specification;
   private final ETLStage stage;
   private final DatasetContext datasetContext;
+  private final Metrics metrics;
 
   public WorkerSinkContext(WorkerContext context, ETLStage sinkStage, StageSpecification spec,
-                           DatasetContext datasetContext) {
+                           DatasetContext datasetContext, Metrics metrics) {
     this.context = context;
     this.specification = spec;
     this.stage = sinkStage;
     this.datasetContext = datasetContext;
+    this.metrics = metrics;
   }
 
   @Override
   public StageSpecification getSpecification() {
     return specification;
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 
   @Override

@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.KeyValueListParser;
 import com.google.common.base.Splitter;
@@ -81,7 +81,7 @@ public class ProjectionTransform extends TransformStage<StructuredRecord, Struct
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     Map<String, String> properties = context.getRuntimeArguments();
 
     String dropStr = properties.get(DROP);

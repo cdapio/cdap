@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchContext;
 
@@ -29,11 +30,13 @@ import java.util.Map;
  */
 public abstract class MapReduceBatchContext implements BatchContext {
   private final StageSpecification specification;
+  private final Metrics metrics;
   protected final MapReduceContext mrContext;
 
-  public MapReduceBatchContext(MapReduceContext context, StageSpecification specification) {
+  public MapReduceBatchContext(MapReduceContext context, StageSpecification specification, Metrics metrics) {
     this.mrContext = context;
     this.specification = specification;
+    this.metrics = metrics;
   }
 
   @Override
@@ -60,5 +63,10 @@ public abstract class MapReduceBatchContext implements BatchContext {
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return mrContext.getDataset(name, arguments);
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 }

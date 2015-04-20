@@ -19,10 +19,9 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.io.LongWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +47,7 @@ public class StructuredRecordToGenericRecordTransformTest {
     builder.set("field3", 3.0);
     StructuredRecord structuredRecord = builder.build();
 
-    TransformContext transformContext = new MockTransformContext(null);
+    StageContext transformContext = new MockTransformContext(null);
     transformer.initialize(transformContext);
     MockEmitter<GenericRecord> emitter = new MockEmitter<GenericRecord>();
     transformer.transform(structuredRecord, emitter);

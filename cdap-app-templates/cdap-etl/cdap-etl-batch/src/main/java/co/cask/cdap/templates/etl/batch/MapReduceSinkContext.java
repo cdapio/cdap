@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
@@ -30,8 +31,9 @@ import java.util.Map;
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
   private final ETLStage sinkStage;
 
-  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage, StageSpecification specification) {
-    super(context, specification);
+  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage,
+                              StageSpecification specification, Metrics metrics) {
+    super(context, specification, metrics);
     this.sinkStage = sinkStage;
   }
 
@@ -49,4 +51,5 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   public Map<String, String> getRuntimeArguments() {
     return sinkStage.getProperties();
   }
+
 }
