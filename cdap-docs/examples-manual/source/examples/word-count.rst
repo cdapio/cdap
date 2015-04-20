@@ -14,19 +14,19 @@ A Cask Data Application Platform (CDAP) Example demonstrating Flows, Datasets an
 Overview
 ========
 
-This application receives words and sentences from a stream and uses flowlets to process them and
-store the results and statistics in datasets.
+This application receives words and sentences from a Stream and uses Flowlets in a Flow to
+process the sentences and store the results and statistics in Datasets.
 
   - The ``wordStream`` receives sentences, one event at a time.
   - The ``splitter`` flowlet reads sentences from stream and splits them into words, writes global statistics of the
-    received words like "total words received" and "total length of words received" and emits each word to the
+    received words such as "total words received" and "total length of words received" and emits each word to the
     ``counter`` flowlet  and each sentence (list of words) to the ``associator`` flowlet.
   - The ``associator`` flowlet receives the set of words and writes word associations to the ``wordAssocs`` dataset.
-    For example, if we receive a sentence ``"welcome to CDAP"``, the word associations are
-    ``{"welcome","to"}`` , ``{"welcome", "CDAP"}``, and ``{"to","CDAP"}``.
-  - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a key-value table and
-    forwards this word to the ``unique`` flowlet.
-  - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
+    For example, if we receive a sentence ``"Welcome to CDAP"``, the word associations are
+    ``{"Welcome", "to"}`` , ``{"Welcome", "CDAP"}``, and ``{"to", "CDAP"}``.
+  - The ``counter`` flowlet receives a word, increments the count for the word |---| maintained in a key-value table |---| and
+    forwards the word to the ``unique`` flowlet.
+  - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it is seeing this word for the first time.
 
 Let's look at some of these components, and then run the Application and see the results.
 
