@@ -1,13 +1,12 @@
-<div ng-if="datasets.length > 0 || streams.length > 0">
-  <div class="row">
-    <div class="col-xs-6">
-      <h2><span> {{ $state.params.nsadmin | myEllipsis: 15 }}: Data </span></h2>
-    </div>
-    <div class="col-xs-6 h2">
-      <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</button>
-    </div>
+<div class="row">
+  <div class="col-xs-6">
+    <h2> Datasets </h2>
   </div>
-
+  <div class="col-xs-6" ng-if="datasets.length > 0 || streams.length > 0">
+    <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
+  </div>
+</div>
+<div ng-if="datasets.length > 0 || streams.length > 0">
   <div class="table-responsive">
     <table class="table table-curved" cask-sortable>
       <thead>
@@ -46,6 +45,6 @@
 </div>
 
 <div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
-  <p> You haven't created any streams. </p>
-  <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})">Create Stream</a>
+  <p> Start by creating a Stream to ingest data. </p>
+  <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
 </div>
