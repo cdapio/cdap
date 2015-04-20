@@ -2,7 +2,9 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, myHelpers) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $state.params.flowletid;
+    var flowletid = $scope.$parent.activeFlowlet.name;
+    var runid = $scope.runs.selected.runid;
+
     $scope.inputs = [];
 
     // Initialize
@@ -29,6 +31,7 @@ angular.module(PKG.name + '.feature.flows')
             var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
+                              + '.run.' + runid
                               + '.flowlet.' + input.name
                               + '&metric=system.process.events.out&start=now-60s',
                 streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
