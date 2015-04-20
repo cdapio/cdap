@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.realtime.kafka;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 
 import com.google.common.base.Charsets;
@@ -69,7 +69,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   private Map<TopicPartition, KafkaConsumerInfo<OFFSET>> consumerInfos;
   private Map<String, byte[]> offsetStore;
 
-  protected SourceContext sourceContext;
+  private RealtimeContext sourceContext;
 
   /**
    * <p>
@@ -79,7 +79,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param context
    * @throws Exception
    */
-  public void initialize(SourceContext context) throws Exception {
+  public void initialize(RealtimeContext context) throws Exception {
     sourceContext = context;
 
     // Tries to detect key and payload decoder based on the class parameterized type.
@@ -106,23 +106,44 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     consumerInfos = createConsumerInfos(kafkaConfigurer.getTopicPartitions());
   }
 
-  public SourceContext getContext() {
+  /**
+   * Return the {@link RealtimeContext} for this Kafka source.
+   *
+   * @return instance of {@link RealtimeContext}
+   */
+  public RealtimeContext getContext() {
     return sourceContext;
   }
 
+  /**
+   *
+   * @return the name of this Kafka realtime source. Default would be the simple class name.
+   */
   public String getName() {
     return getClass().getSimpleName();
   }
 
   /**
-   * WIll be called by external source to start poll the Kafka messages one at the time.
-   *
-   * @throws Exception
+   * @return the internal state of topic partitions offset
    */
-  public void pollMessages(Emitter<ByteBuffer> emitter, SourceState currentState) {
+  public Map<String, byte[]> getSavedState() {
+    return Maps.newHashMap(offsetStore);
+  }
+
+  /**
+   *  Set the internal state for the Topic partition.
+   */
+  public void saveState(SourceState currentState) {
     // Update the internal state
     offsetStore = currentState.getState();
+  }
 
+  /**
+   * WIll be called by external source to start poll the Kafka messages one at the time.
+   *
+   * @param emitter instance of {@link Emitter} to emit the messages.
+   */
+  public void pollMessages(Emitter<ByteBuffer> emitter) {
     boolean infosUpdated = false;
     // Poll for messages from Kafka
     for (KafkaConsumerInfo<OFFSET> info : consumerInfos.values()) {
