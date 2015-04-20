@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -53,8 +54,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options, File hConfFile, File cConfFile,
-                                     ApplicationLauncher launcher) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -79,7 +80,7 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     LOG.info("Launching distributed worker {}", program.getName());
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
-                                                                            hConfFile, cConfFile, eventHandler));
+                                                                            localizeFiles, eventHandler));
     return new WorkerTwillProgramController(program.getName(), controller).startListen();
   }
 
