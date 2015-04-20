@@ -66,11 +66,11 @@ set_remote_dir () {
   DOC_DIR=${OPT_DIR:-${BRANCH_NAME}}
   convert_branch_name
   if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* ]]; then
-    DIR=''
+    REMOTE_DIR=''
   else
-    DIR=branches/${DOC_DIR}
+    REMOTE_DIR=branches/${DOC_DIR}
   fi
-  decho "SUBDIR=${DIR}"
+  decho "SUBDIR=${REMOTE_DIR}"
 }
 
 # parameters that can be passed to this script (as environment variables)
@@ -97,8 +97,8 @@ PROJECT_DOCS=${PROJECT}-docs
 ZIP_FILE=${PROJECT}-docs-${VERSION}-web.zip
 FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
-REMOTE_STG_DIR="${REMOTE_STG_BASE}/${DIR}"
-REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${DIR}"
+REMOTE_STG_DIR="${REMOTE_STG_BASE}/${REMOTE_DIR}"
+REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${REMOTE_DIR}"
 
 RSYNC_OPTS='-aPh'
 SSH_OPTS='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
