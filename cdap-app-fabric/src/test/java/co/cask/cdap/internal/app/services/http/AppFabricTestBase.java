@@ -336,6 +336,9 @@ public abstract class AppFabricTestBase {
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                        @Nullable String appName, @Nullable String appVersion) throws Exception {
+    namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
+    apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
+
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
