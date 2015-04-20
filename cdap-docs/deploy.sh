@@ -18,11 +18,11 @@
 # Deployment script for docs
 # Deploys zip files created by build scripts
 #
-# DOC_DIR is an optional directory to use instead of derived branch name. E.g.:
+# OPT_DIR is an optional directory to use instead of derived branch name. E.g.:
 #   if branch name=feature/docs-build-testing, and we want to use testdir
-#   we would set DOC_DIR=testdir and add it to the bamboo tasks' variables
+#   we would set OPT_DIR=testdir and add it to the bamboo tasks' variables
 #   and the remote directory would be 2.8.1/testdir (testdir treated as branch)
-# If DOC_DIR is not set, bamboo.planRepository.<position>.branch will be used,
+# If OPT_DIR is not set, bamboo.planRepository.<position>.branch will be used,
 #   e.g. /var/www/html/cdap/2.8.1/feature-myfix, unless the branch name
 #   is release/* or develop/* in which case, it will just be put into
 #   the version directory, e.g. /var/www/html/cdap/2.8.1
@@ -58,20 +58,19 @@ function get_project () {
 }
 
 function convert_branch_name () {
-  decho "convert '/' to '-' in branch name"
+  decho "converting '/' to '-' in branch name"
   DOC_DIR=`echo $DOC_DIR | tr '/' '-'`
 }
 
 set_remote_dir () {
-  DOC_DIR=${DOC_DIR:-${BRANCH_NAME}}
+  DOC_DIR=${OPT_DIR:-${BRANCH_NAME}}
   convert_branch_name
-  echo "DOC_DIR=${DOC_DIR}"
   if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* ]]; then
     DIR=''
   else
     DIR=branches/${DOC_DIR}
   fi
-  echo "SUBDIR=${DIR}"
+  decho "SUBDIR=${DIR}"
 }
 
 # parameters that can be passed to this script (as environment variables)
@@ -85,12 +84,13 @@ STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
 REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/cdap}
 REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/cdap}
 
-decho "DOC_DIR=${DOC_DIR}"
+decho "OPT_DIR=${DOC_DIR}"
 decho "BRANCH_NAME=${BRANCH_NAME}"
 
 get_version
 get_project
 set_remote_dir
+
 #
 USER=bamboo
 PROJECT_DOCS=${PROJECT}-docs
