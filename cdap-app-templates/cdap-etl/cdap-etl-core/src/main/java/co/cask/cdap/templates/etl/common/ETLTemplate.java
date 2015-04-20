@@ -31,11 +31,14 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeResolution;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -49,6 +52,7 @@ import java.util.Map;
  * @param <T> type of the configuration object
  */
 public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLTemplate.class);
   private static final Gson GSON = new Gson();
 
   private final Map<String, String> sourceClassMap;
@@ -92,21 +96,6 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     }
   }
 
-  protected void instantiateStages()
-    throws IllegalArgumentException {
-    try {
-      source = (EndPointStage) sourceClass.newInstance();
-      sink = (EndPointStage) sinkClass.newInstance();
-
-      for (Class transformClass : transformClasses) {
-        TransformStage transformObj = (TransformStage) transformClass.newInstance();
-        transforms.add(transformObj);
-      }
-    } catch (Exception e) {
-      throw new IllegalArgumentException("Unable to load class. Check stage names. %s", e);
-    }
-  }
-
   protected void configure(EndPointStage stage, ETLStage stageConfig, AdapterConfigurer configurer,
                                String specKey) throws Exception {
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer);
@@ -126,90 +115,6 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     configurer.addRuntimeArgument(specKey, GSON.toJson(transformSpecs));
   }
 
-  private List<String> retrieveClassNames(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    List<String> classNameList = Lists.newArrayList();
-    String sourceClassName = sourceClassMap.get(source.getName());
-    String sinkClassName = sinkClassMap.get(sink.getName());
-    classNameList.add(sourceClassName);
-    for (ETLStage stage : transforms) {
-      classNameList.add(transformClassMap.get(stage.getName()));
-    }
-    classNameList.add(sinkClassName);
-    return classNameList;
-  }
-
-  private void validateTypes(String source, String sink, List<String> transforms) throws Exception {
-    ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
-    Type inType = Transform.class.getTypeParameters()[0];
-    Type outType = Transform.class.getTypeParameters()[1];
-
-    sourceClass = Class.forName(source);
-    sinkClass = Class.forName(sink);
-    TypeToken sourceToken = TypeToken.of(sourceClass);
-    TypeToken sinkToken = TypeToken.of(sinkClass);
-
-    if (RealtimeSource.class.isAssignableFrom(sourceClass)) {
-      Type type = RealtimeSource.class.getTypeParameters()[0];
-      unresTypeList.add(sourceToken.resolveType(type).getType());
-    } else {
-      unresTypeList.add(sourceToken.resolveType(outType).getType());
-    }
-
-    for (String transform : transforms) {
-      Class<?> klass = Class.forName(transform);
-      transformClasses.add(klass);
-      TypeToken transformToken = TypeToken.of(klass);
-      unresTypeList.add(transformToken.resolveType(inType).getType());
-      unresTypeList.add(transformToken.resolveType(outType).getType());
-    }
-
-    if (RealtimeSink.class.isAssignableFrom(sinkClass)) {
-      Type type = RealtimeSink.class.getTypeParameters()[0];
-      unresTypeList.add(sinkToken.resolveType(type).getType());
-    } else {
-      unresTypeList.add(sinkToken.resolveType(inType).getType());
-    }
-
-    validateTypes(unresTypeList);
-  }
-
-  @VisibleForTesting
-  static void validateTypes(ArrayList<Type> unresTypeList) {
-    List<Type> resTypeList = Lists.newArrayListWithCapacity(unresTypeList.size());
-    resTypeList.add(unresTypeList.get(0));
-    try {
-      Type nType = (new TypeResolution()).where(unresTypeList.get(1), resTypeList.get(0)).resolveType(
-        unresTypeList.get(1));
-      resTypeList.add(nType);
-    } catch (IllegalArgumentException e) {
-      resTypeList.add(unresTypeList.get(1));
-    }
-
-    for (int i = 2; i < unresTypeList.size(); i++) {
-      Type actualType = resTypeList.get(i - 1);
-      Type formalType = unresTypeList.get(i - 1);
-      Type toResolveType = unresTypeList.get(i);
-      try {
-        Type newType;
-        newType = (new TypeResolution()).where(formalType, actualType).resolveType(toResolveType);
-        if (newType.equals(toResolveType) || (toResolveType instanceof TypeVariable)) {
-          newType = (new TypeResolution()).where(toResolveType, actualType).resolveType(toResolveType);
-        }
-        resTypeList.add(newType);
-      } catch (IllegalArgumentException e) {
-        resTypeList.add(toResolveType);
-      }
-    }
-
-    for (int i = 0; i < resTypeList.size(); i += 2) {
-      Type firstType = resTypeList.get(i);
-      Type secondType = resTypeList.get(i + 1);
-      Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
-                                  "Types between stages didn't match. Mismatch between {} -> {}",
-                                  firstType, secondType);
-    }
-  }
-
   @Override
   public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer)
     throws Exception {
@@ -218,15 +123,24 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
 
-    List<String> classNames = retrieveClassNames(sourceConfig, sinkConfig, transformConfigs);
-    String sourceClassName = classNames.remove(0);
-    String sinkClassName = classNames.remove(classNames.size() - 1);
+    // Get Source, Sink, Transform Class Names
+    String sourceClassName = sourceClassMap.get(sourceConfig.getName());
+    String sinkClassName = sinkClassMap.get(sinkConfig.getName());
+    List<String> transformClassNames = Lists.newArrayList();
+    for (ETLStage transformStage : transformConfigs) {
+      transformClassNames.add(transformClassMap.get(transformStage.getName()));
+    }
 
-    // Validate type matching
-    validateTypes(sourceClassName, sinkClassName, classNames);
+    // Validate Source -> Transform -> Sink hookup
+    validateStages(sourceClassName, sinkClassName, transformClassNames);
 
     // Instantiate Source, Transforms, Sink stages.
-    instantiateStages();
+    source = instantiateClass(sourceClass);
+    sink = instantiateClass(sinkClass);
+    for (Class transformClass : transformClasses) {
+      TransformStage transformObj = instantiateClass(transformClass);
+      transforms.add(transformObj);
+    }
 
     configure(source, sourceConfig, configurer, Constants.Source.SPECIFICATION);
     configure(sink, sinkConfig, configurer, Constants.Sink.SPECIFICATION);
@@ -236,6 +150,112 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     Resources resources = etlConfig.getResources();
     if (resources != null) {
       configurer.setResources(resources);
+    }
+  }
+
+  private void validateStages(String source, String sink, List<String> transforms) throws Exception {
+    ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
+    Type inType = Transform.class.getTypeParameters()[0];
+    Type outType = Transform.class.getTypeParameters()[1];
+
+    // Load the classes using the class names provided
+    sourceClass = Class.forName(source);
+    sinkClass = Class.forName(sink);
+    TypeToken sourceToken = TypeToken.of(sourceClass);
+    TypeToken sinkToken = TypeToken.of(sinkClass);
+
+    // Extract the source's output type
+    if (RealtimeSource.class.isAssignableFrom(sourceClass)) {
+      Type type = RealtimeSource.class.getTypeParameters()[0];
+      unresTypeList.add(sourceToken.resolveType(type).getType());
+    } else {
+      unresTypeList.add(sourceToken.resolveType(outType).getType());
+    }
+
+    // Extract the transforms' input and output type
+    for (String transform : transforms) {
+      Class<?> klass = Class.forName(transform);
+      transformClasses.add(klass);
+      TypeToken transformToken = TypeToken.of(klass);
+      unresTypeList.add(transformToken.resolveType(inType).getType());
+      unresTypeList.add(transformToken.resolveType(outType).getType());
+    }
+
+    // Extract the sink's input type
+    if (RealtimeSink.class.isAssignableFrom(sinkClass)) {
+      Type type = RealtimeSink.class.getTypeParameters()[0];
+      unresTypeList.add(sinkToken.resolveType(type).getType());
+    } else {
+      unresTypeList.add(sinkToken.resolveType(inType).getType());
+    }
+
+    // Invoke validation method with list of unresolved types
+    validateTypes(unresTypeList);
+  }
+
+  @VisibleForTesting
+  static void validateTypes(ArrayList<Type> unresTypeList) {
+    Preconditions.checkArgument(unresTypeList.size() %2 == 0, "ETL Stages validation expects even number of types");
+    List<Type> resTypeList = Lists.newArrayListWithCapacity(unresTypeList.size());
+
+    // Add the source output to resolved type list as the first resolved type.
+    resTypeList.add(unresTypeList.get(0));
+    try {
+      // Resolve the second type using just the first resolved type.
+      Type nType = (new TypeResolution()).where(unresTypeList.get(1), resTypeList.get(0)).resolveType(
+        unresTypeList.get(1));
+      resTypeList.add(nType);
+    } catch (IllegalArgumentException e) {
+      // If unable to resolve type, add the second type as is, to the resolved list.
+      resTypeList.add(unresTypeList.get(1));
+    }
+
+    for (int i = 2; i < unresTypeList.size(); i++) {
+      // ActualType is previous resolved type; FormalType is previous unresolved type;
+      // ToResolveType is current unresolved type;
+      // Ex: Actual = String; Formal = T; ToResolve = List<T>;  ==> newType = List<String>
+      Type actualType = resTypeList.get(i - 1);
+      Type formalType = unresTypeList.get(i - 1);
+      Type toResolveType = unresTypeList.get(i);
+      try {
+        Type newType;
+        newType = (new TypeResolution()).where(formalType, actualType).resolveType(toResolveType);
+
+        // If TypeResolution was not able to resolve or if the toResolveType is a TypeVariable, then try to resolve
+        // using just the previous resolved type.
+        // Ex: Actual = List<String> ; Formal = List<T> ; ToResolve = T ==> newType = String which is not correct;
+        // newType should be List<String>. Hence resolve only from the previous resolved type (Actual)
+        if (newType.equals(toResolveType) || (toResolveType instanceof TypeVariable)) {
+          newType = (new TypeResolution()).where(toResolveType, actualType).resolveType(toResolveType);
+        }
+        resTypeList.add(newType);
+      } catch (IllegalArgumentException e) {
+        // If resolution failed, add the type as is to the resolved list.
+        resTypeList.add(toResolveType);
+      }
+    }
+
+    // Check isAssignable on the resolved list for every paired elements. 0 --> 1 | 2 --> 3 | 4 --> 5 etc.
+    for (int i = 0; i < resTypeList.size(); i += 2) {
+      Type firstType = resTypeList.get(i);
+      Type secondType = resTypeList.get(i + 1);
+      // Check if secondType can accept firstType
+      Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
+                                  "Types between stages didn't match. Mismatch between {} -> {}",
+                                  firstType, secondType);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T instantiateClass(Class klass) {
+    try {
+      return (T) klass.newInstance();
+    } catch (InstantiationException e) {
+      LOG.error("Unable to instantiate {}", klass.getName(), e);
+      throw Throwables.propagate(e);
+    } catch (IllegalAccessException e) {
+      LOG.error("Illegal access while instantiating {}", klass.getName(), e);
+      throw Throwables.propagate(e);
     }
   }
 }

@@ -131,6 +131,16 @@ public class ValidationTest {
     ETLTemplate.validateTypes(typeList);
   }
 
+  @Test
+  public void testSourceParamType() throws Exception {
+    // T --> N | List<N> --> M
+    ArrayList<Type> typeList = Lists.newArrayList();
+    typeList.add(getFirstTypeParameter(ParamToListParam.class));
+    typeList.addAll(getBothParameters(ParamToListParam.class));
+    typeList.add(getFirstTypeParameter(ParamToListParam.class));
+    ETLTemplate.validateTypes(typeList);
+  }
+
   private static List<Type> getBothParameters(Class klass) {
     return Lists.newArrayList(getFirstTypeParameter(klass), getSecondTypeParameter(klass));
   }
@@ -147,31 +157,31 @@ public class ValidationTest {
     return getTypeParameter(klass, 1);
   }
 
-  public abstract static class ParamToListParam<T> extends TransformStage<T, List<T>> {
+  private abstract static class ParamToListParam<T> extends TransformStage<T, List<T>> {
 
   }
 
-  public abstract static class ArrayToListArray<E> extends TransformStage<E[], List<E[]>> {
+  private abstract static class ArrayToListArray<E> extends TransformStage<E[], List<E[]>> {
 
   }
 
-  public abstract static class ArrayToArrayListArray<E> extends TransformStage<E[], List<E[]>[]> {
+  private abstract static class ArrayToArrayListArray<E> extends TransformStage<E[], List<E[]>[]> {
 
   }
 
-  public abstract static class ArrayToString<E> extends TransformStage<E[], String> {
+  private abstract static class ArrayToString<E> extends TransformStage<E[], String> {
 
   }
 
-  public abstract static class ParamToArrayListParam<T> extends TransformStage<T, List<T>[]> {
+  private abstract static class ParamToArrayListParam<T> extends TransformStage<T, List<T>[]> {
 
   }
 
-  public abstract static class StringListSink<A, B> extends BatchSink<List<String>, A, B> {
+  private abstract static class StringListSink<A, B> extends BatchSink<List<String>, A, B> {
 
   }
 
-  public abstract static class NoOpSink<X, Y> extends BatchSink<Object, X, Y> {
+  private abstract static class NoOpSink<X, Y> extends BatchSink<Object, X, Y> {
 
   }
 }
