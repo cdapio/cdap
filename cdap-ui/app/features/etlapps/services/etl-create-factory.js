@@ -77,6 +77,7 @@ angular.module(PKG.name + '.feature.etlapps')
           angular.forEach(res.properties, function(property) {
             obj[property.name] = '';
           });
+          index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
           this.scope.transforms[index].properties = obj;
         }.bind(this));
     }
