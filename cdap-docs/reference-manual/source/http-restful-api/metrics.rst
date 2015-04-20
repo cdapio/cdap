@@ -23,7 +23,7 @@ the :ref:`CDAP Administration Manual. <admin-index>`
 
 
 Metrics Data
-============
+------------
 
 Metrics data is identified by a combination of **context** and **name**.
 
@@ -61,7 +61,7 @@ available metrics.
 
 
 Available Contexts
-------------------
+..................
 The context of a metric is typically enclosed into a hierarchy of contexts. For example,
 the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the
 Application context. A metric can always be queried (and aggregated) relative to any
@@ -136,7 +136,7 @@ Flowlet, Worker, Service, Mapper, or Reducer level:
 .. _available-system-metrics:
 
 Available System Metrics
-------------------------
+........................
 **Note:** A user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
 
@@ -257,7 +257,7 @@ These metrics are available in a Streams context:
 
 
 Searches and Queries
-====================
+--------------------
 
 The process of retrieving a metric involves these steps:
 
@@ -267,7 +267,7 @@ The process of retrieving a metric involves these steps:
 
 
 Search for Contexts
-===================
+...................
 
 To search for the available contexts, perform an HTTP request::
 
@@ -308,14 +308,11 @@ examples below for its use.
    * - HTTP Method
      - ``POST '<base-url>/metrics/search?target=tag&tag=namespace:default'``
    * - Returns
-     - ::
-
-        [{"name":"app","value":"HelloWorld"},{"name":"app","value":"PurchaseHistory"},
-         {"name":"component","value":"gateway"},{"name":"dataset","value":"frequentCustomers"},
-         {"name":"dataset","value":"history"},{"name":"dataset","value":"purchases"},
-         {"name":"dataset","value":"userProfiles"},{"name":"dataset","value":"whom"},
-         {"name":"stream","value":"purchaseStream"},{"name":"stream","value":"who"}]
-
+     - | ``[{"name":"app","value":"HelloWorld"},{"name":"app","value":"PurchaseHistory"},``
+       | `` {"name":"component","value":"gateway"},{"name":"dataset","value":"frequentCustomers"},``
+       | `` {"name":"dataset","value":"history"},{"name":"dataset","value":"purchases"},``
+       | `` {"name":"dataset","value":"userProfiles"},{"name":"dataset","value":"whom"},``
+       | `` {"name":"stream","value":"purchaseStream"},{"name":"stream","value":"who"}]``
    * - Description
      - Returns all tags of the of the given parent context; in this case, all entities in the default namespace.
    * - 
@@ -331,7 +328,7 @@ examples below for its use.
 
 
 Search for Metrics
-==================
+..................
 
 To search for the available metrics within a given context, perform an HTTP POST request::
 
@@ -354,19 +351,39 @@ To search for the available metrics within a given context, perform an HTTP POST
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/search?target=metric&``
-       ``tag=namespace:default&tag=app:PurchaseHistory'``
+     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:PurchaseHistory'``
    * - Returns
-     - ``["system.process.events.in","system.process.events.processed","system.process.instance",``
-        ``"system.process.tuples.attempt.read","system.process.tuples.read"]``
-
+     - | ``["system.process.events.in","system.process.events.processed","system.process.instance",``
+       | `` "system.process.tuples.attempt.read","system.process.tuples.read"]``
    * - Description
      - Returns all metrics in the context of the application *PurchaseHistory* of the
+       *default* namespace; in this case, returns a list of system and (possibly) user-defined metrics.
+   * - 
+     - 
+   * - HTTP Method
+     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting'``
+   * - Returns
+     - | ``["system.dataset.store.ops","system.dataset.store.reads","system.requests.count",``
+       | `` "system.response.successful.count","system.store.ops","system.store.reads",``
+       | `` "user.greetings.count.jane_doe"]``
+   * - Description
+     - Returns all metrics in the context of the service *Greeting* of the application *HelloWorld* of the
+       *default* namespace; in this case, returns a list of system and user-defined metrics.
+   * - 
+     - 
+   * - HTTP Method
+     - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver'``
+   * - Returns
+     - | ``["system.dataset.store.bytes","system.dataset.store.ops","system.dataset.store.writes",``
+       | `` "system.process.events.in","system.process.events.processed","system.process.instance",``
+       | `` "system.process.tuples.attempt.read","system.process.tuples.read","system.store.bytes",``
+       | `` "system.store.ops","system.store.writes","user.names.bytes"]``
+   * - Description
+     - Returns all metrics in the context of the flowlet *saver* of the application *PurchaseHistory* of the
        *default* namespace; in this case, returns a list of system and user-defined metrics.
 
-
 Querying A Metric
-=================
+.................
 
 Once you know the context and the metric to query, you can formulate a request for the
 metrics data.
@@ -401,26 +418,35 @@ To query a metric within a given context, perform an HTTP POST request::
    * - HTTP Method
      - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow``
        ``&tag=flowlet:saver&metric=system.process.events.processed&aggregate=true'``
-   * - Description
-     - Using a *System* metric, *system.process.events.processed*
    * - Returns
      - ``{"startTime":0,"endTime":1429327964,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":1}]}]}``
+   * - Description
+     - Using a *System* metric, *system.process.events.processed*
    * - 
      - 
    * - HTTP Method
      - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow.WhoFlow``
        ``&tag=run:13ac3a50-a435-49c8-a752-83b3c1e1b9a8&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'``
-   * - Description
-     - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - Returns
      - ``{"startTime":0,"endTime":1429328212,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":8}]}]}``
+   * - Description
+     - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
-     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting``
-       ``&metric=user.names.bytes'``
+     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes'``
+   * - Returns
+     - ``{"startTime":0,"endTime":1429475995,"series":[]}``
    * - Description
-     - Using a *user-defined* metric, *names.bytes* in a Service's Handler
+     - Using a *User-defined* metric, *names.bytes* in a Service's Handler, called before any data entered, returning an empty series
+   * - 
+     - 
+   * - HTTP Method
+     - ``POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&metric=user.names.bytes'``
+   * - Returns
+     - ``{"startTime":0,"endTime":1429477901,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}``
+   * - Description
+     - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
 Query Tips
 ----------
@@ -504,46 +530,115 @@ Query Tips
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver
       &metric=user.names.bytes&aggregate=true'
 
+- If a particular metric has no value, a query will return an empty array in the ``"series"`` of the results, such as::
+
+    {"startTime":0,"endTime":1429475995,"series":[]}
+    
+  You can also get such a result from querying a metric that does not exist, either because it does not exist at the 
+  context given or if the query is incorrectly formulated::
+  
+    ...metric=user.names.bytes?aggregate=true
+    
+  will return the empty result, as the metric will be interpreted as ``"user.names.bytes?aggregate=true"`` instead of
+  ``"user.names.bytes"``.
+    
+
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
 
 Querying for Multiple Metrics
------------------------------
+.............................
 
-Multiple Metrics with the Same Context
-
-
-
-
-Multiple Metrics with Different Contexts
-
-
-Retrieving multiple metrics at once, can be accomplished by issuing an HTTP POST request
+Retrieving multiple metrics at once can be accomplished by issuing an HTTP POST request
 with a JSON list as the request body that enumerates the name and attributes for each
-metric. For example::
+metric. The format of the request and the JSON body depends if the metrics share the same
+context or are being called for different contexts. 
 
-  POST http://<host>:<port>/v3/metrics/query
+.. rubric:: Multiple Metrics with the Same Context
 
-with the arguments as a JSON string in the body. For example, to retrieve multiple metrics
-using a ``curl`` call::
+Retrieving multiple metrics at once for the same contexts can be accomplished by issuing a
+request as in previous examples, but providing the additional metrics. For example::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics' \
-  -H "Content-Type: application/json" \
-  -d '[ "/system/collect.events?aggregate=true", '\
-  '"/system/apps/HelloWorld/process.events.processed?start=1380323712&count=6000" ]'
+  POST '<base-url>/metrics/query?tag=flow:CountRandom&metric=system.process.events.processed
+    &metric=system.dataset.store.bytes&start=now-5s&count=5'
+
+The result (pretty-printed to fit) would be::
+
+  {"startTime":1429487786,
+   "endTime":1429487791,
+   "series":[{"metricName":"system.process.events.processed",
+              "grouping":{},
+              "data":[{"time":1429487786,"value":1268},
+                      {"time":1429487787,"value":1324},
+                      {"time":1429487788,"value":1206},
+                      {"time":1429487789,"value":1125},
+                      {"time":1429487790,"value":1035}]},
+             {"metricName":"system.dataset.store.bytes",
+              "grouping":{},
+              "data":[{"time":1429487786,"value":15600},
+                      {"time":1429487787,"value":14998},
+                      {"time":1429487788,"value":13712},
+                      {"time":1429487789,"value":12246},
+                      {"time":1429487790,"value":9924}]
+              }]
+  }
+
+.. rubric:: Multiple Metrics with Different Contexts
+
+Retrieving multiple metrics at once for different contexts can be accomplished by issuing
+a request with a JSON list as the request body that enumerates the name, attributes and
+context for each metric. Use an HTTP POST request:: 
+
+  POST 'http://<host>:<port>/v3/metrics/query'
+
+with the arguments as a JSON string in the body. The format of the JSON follows this
+structure (pretty-printed)::
+
+  { “query1”: {
+        tags: {“namespace”: “default”, “app”: “PurchaseHistory”}, 
+        metrics: [“metric1”, “metric2”],
+        groupBy: [“app”, “dataset”],
+        timeRange: {“aggregate”: “true”}
+        },
+    “query2”: {
+        tags: {“namespace”: “default”},
+        metrics: [“metric1”, “metric2”],
+        groupBy: [“app”, “dataset”],
+        timeRange: {“start”: “now­2s”, “end”: “now”}
+        }
+  }
+
+For example, to retrieve multiple metrics using a ``curl`` call (results reformatted to fit)::
+
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' \
+   -d '{"query1":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.processed"], "timeRange": {"start":"now-5s", "count":"5"}}}'
+
+  {"query1":{"startTime":1429486246,"endTime":1429486251,
+             "series":[{"metricName":"system.process.events.processed","grouping":{},
+                        "data":[{"time":1429486246,"value":1188},
+                                {"time":1429486247,"value":1115},
+                                {"time":1429486248,"value":1107},
+                                {"time":1429486249,"value":1030},
+                                {"time":1429486250,"value":1079}]
+                        }]
+             }
+   }
 
 If the context of the requested metric or metric itself doesn't exist, the system returns a
-status 200 (OK) with JSON formed following the above description with zeroes for the values.
+status 200 (OK) with JSON formed following the above description, with an empty ``series`` for values::
+
+  {"query1":{"startTime":1429486465,"endTime":1429486470,"series":[]}}
 
 
 .. _http-restful-api-metrics-groupby:
 
 Querying for Multiple Time-series
----------------------------------
+.................................
+
 In a query, the optional ``groupBy`` parameter defines a list of tags whose values are
 used to build multiple timeseries. All data points that have the same values in tags
 specified in the ``groupBy`` parameter will form a single timeseries. You can define
-multiple tags for grouping by providing a comma-separated list.
+multiple tags for grouping by providing a list, similar to a tag combination list.
 
 .. list-table::
    :header-rows: 1
@@ -553,7 +648,7 @@ multiple tags for grouping by providing a comma-separated list.
      - Description
    * - ``groupBy=app``
      - Retrieves the time series for each application. 
-   * - ``groupBy=app,flow``
+   * - ``groupBy=app&groupBy=flow``
      - Retrieves a time series for each app and flow combination
 
 .. rubric:: Example
@@ -593,7 +688,8 @@ returns the *user.customers.count* metric in the context of the application
 .. _http-restful-api-metrics-time-range:
 
 Querying by a Time Range
-------------------------
+........................
+
 The time range of a metric query can be specified in various ways: either
 ``aggregate=true`` to retrieve the total aggregated since the Application was deployed
 or |---| in the case of Dataset metrics |---| since a Dataset was created; 
@@ -671,15 +767,18 @@ CDAP has not been stopped or restarted::
 
 If a metric is a gauge type, the aggregate will return the latest value set for the metric.
 For example, this request will retrieve the completion percentage for the map-stage of the MapReduce
-``PurchaseHistoryWorkflow_PurchaseHistoryBuilder`` (reformatted to fit)::
+``PurchaseHistoryBuilder`` (reformatted to fit)::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
-      PurchaseHistoryWorkflow_PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true'
+  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
+    &tag=mapreduce:PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true'
+    
+  {"startTime":0,"endTime":1429497700,"series":[{"metricName":"system.process.completion",
+   "grouping":{},"data":[{"time":0,"value":200}]}]} 
   
 .. _http-restful-api-metrics-querying-by-run-id:
 
 Querying by Run-ID
-------------------
+..................
 
 Each execution of an program (Flow, MapReduce, Spark, Services, Worker) has an :ref:`associated 
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
@@ -692,18 +791,27 @@ after the ``program-id`` with the tag ``run``::
 
   ...app:<app-id>&tag=<program-type>:<program-id>&tag=run:<run-id>
 
-Examples of using a run-ID (reformatted to fit)::
+Examples of using a run-ID (with both commands and results reformatted to fit)::
 
-  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=flow:MyFlow
-      &tag=run:364-789-1636765&metric=system.process.completion'
+  POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=flow:PurchaseFlow
+      &tag=run:364-789-1636765&metric=system.process.events.processed'
+  
+  {"startTime":0,"endTime":1429498228,"series":[{"metricName":"system.process.events.processed",
+   "grouping":{},"data":[{"time":0,"value":10}]}]}
+   
   
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
       PurchaseHistoryBuilder&tag=run:453-454-447683&metric=system.process.completion'
 
+  {"startTime":0,"endTime":1429498425,"series":[{"metricName":"system.process.completion",
+   "grouping":{},"data":[{"time":0,"value":200}]}]}
+   
+  
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom&tag=run:
     bca50436-9650-448e-9ab1-f1d186eb2285&tag=flowlet:splitter&metric=system.process.events.processed&aggregate=true'
 
-The last example will return (where ``"time"=0`` means aggregated total number) something similar to::
+The last example will return (where ``"time"=0`` means aggregated total number, and ``endTime`` is
+the query time |---| current time |---| or *now* at the time of the query) something similar to::
 
-  {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed",
+  {"startTime":0,"endTime":1421188775,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
