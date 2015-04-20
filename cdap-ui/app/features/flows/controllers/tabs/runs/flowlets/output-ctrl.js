@@ -2,7 +2,8 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, myHelpers) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $state.params.flowletid;
+    var flowletid = $scope.$parent.activeFlowlet.name;
+    var runid = $scope.runs.selected.runid;
     $scope.outputs = [];
 
     // Initialize
@@ -26,7 +27,8 @@ angular.module(PKG.name + '.feature.flows')
               _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
                             + '.app.' + $state.params.appId
                             + '.flow.' + $state.params.programId
-                            + '.flowlet.' + $state.params.flowletid
+                            + '.run.' + runid
+                            + '.flowlet.' + flowletid
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
@@ -84,7 +86,8 @@ angular.module(PKG.name + '.feature.flows')
                 _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
-                              + '.flowlet.' + $state.params.flowletid
+                              + '.run.' + runid
+                              + '.flowlet.' + flowletid
                               + '&metric=system.process.events.out',
                 method: 'POST'
               }, function(res) {

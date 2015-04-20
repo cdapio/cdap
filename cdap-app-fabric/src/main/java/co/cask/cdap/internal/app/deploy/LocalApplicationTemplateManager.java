@@ -111,7 +111,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
                                                     queueAdmin, metricStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    pipeline.setFinally(new EnableConcurrentRunsStage(preferencesStore));
+    pipeline.addLast(new EnableConcurrentRunsStage(preferencesStore));
     return pipeline.execute(input);
   }
 }

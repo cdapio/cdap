@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.batch.config;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLConfig;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public final class ETLBatchConfig extends ETLConfig {
     this.schedule = schedule;
   }
 
+  @VisibleForTesting
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
     this(schedule, source, sink, transforms, null);
   }
