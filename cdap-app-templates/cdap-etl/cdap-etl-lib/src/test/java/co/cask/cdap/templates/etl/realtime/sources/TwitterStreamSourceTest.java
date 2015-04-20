@@ -21,7 +21,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.NoopMetrics;
 import co.cask.cdap.templates.etl.common.Tweet;
@@ -68,7 +68,7 @@ public class TwitterStreamSourceTest {
       }
     });
 
-    source.initialize(new SourceContext() {
+    source.initialize(new RealtimeContext() {
       @Override
       public StageSpecification getSpecification() {
         return null;

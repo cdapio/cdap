@@ -20,7 +20,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
-import co.cask.cdap.templates.etl.common.MockSourceContext;
+import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.junit.After;
 import org.junit.Assert;
@@ -96,7 +96,8 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new MockSourceContext());
+
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     QueueConnection queueConn = null;
@@ -128,7 +129,7 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new MockSourceContext());
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     TopicConnection topicConn = null;

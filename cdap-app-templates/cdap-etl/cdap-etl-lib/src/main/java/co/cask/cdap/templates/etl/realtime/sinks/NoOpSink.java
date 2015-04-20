@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.realtime.sinks;
 
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 
 /**
@@ -32,7 +33,7 @@ public class NoOpSink<T> extends RealtimeSink<T> {
   }
 
   @Override
-  public int write(Iterable<T> object) {
+  public int write(Iterable<T> objects, DataWriter dataWriter) throws Exception {
     return 0;
   }
 }

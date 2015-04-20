@@ -14,28 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.realtime;
+package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
+
+import java.util.Map;
 
 /**
- * Context passed to the Source stages.
+ * Mock RealtimeContext for tests.
  */
-public interface SourceContext extends RuntimeContext, StageContext {
+public class MockRealtimeContext implements RealtimeContext {
 
-  /**
-   * Get Instance Id.
-   *
-   * @return instance id
-   */
-  int getInstanceId();
+  @Override
+  public StageSpecification getSpecification() {
+    return null;
+  }
 
-  /**
-   * Get Instance Count.
-   *
-   * @return instance count
-   */
-  int getInstanceCount();
+  @Override
+  public Metrics getMetrics() {
+    return NoopMetrics.INSTANCE;
+  }
+
+  @Override
+  public int getInstanceId() {
+    return 0;
+  }
+
+  @Override
+  public int getInstanceCount() {
+    return 0;
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return null;
+  }
 }

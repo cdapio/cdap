@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 
@@ -35,8 +36,8 @@ public class TrackedRealtimeSink<T> extends RealtimeSink<T> {
   }
 
   @Override
-  public int write(Iterable<T> objects) throws Exception {
-    int written = sink.write(objects);
+  public int write(Iterable<T> objects, DataWriter dataWriter) throws Exception {
+    int written = sink.write(objects, dataWriter);
     metrics.count("records.out", written);
     return written;
   }

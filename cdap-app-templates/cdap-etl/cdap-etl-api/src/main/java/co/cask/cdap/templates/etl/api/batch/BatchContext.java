@@ -18,9 +18,7 @@ package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 
 /**
  * Context passed to Batch Source and Sink.
