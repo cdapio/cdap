@@ -24,6 +24,7 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.templates.etl.realtime.sinks.RealtimeTableSink;
 import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
@@ -50,7 +51,8 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
                                         StructuredRecordToGenericRecordTransform.class,
                                         ScriptFilterTransform.class,
                                         ProjectionTransform.class,
-                                        StreamSink.class));
+                                        StreamSink.class,
+                                        RealtimeTableSink.class));
   }
 
   @Override

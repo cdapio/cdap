@@ -47,7 +47,7 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
       false));
     configurer.addProperty(new Property(
       Table.PROPERTY_SCHEMA_ROW_FIELD,
-      "the name of the record field that should be used as the row key when writing to the table.",
+      "The name of the record field that should be used as the row key when writing to the table.",
       true));
   }
 
@@ -55,7 +55,7 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   public void initialize(ETLStage stageConfig) throws Exception {
     super.initialize(stageConfig);
     String rowField = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA_ROW_FIELD);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(rowField), "row field must be given as a property.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(rowField), "Row field must be given as a property.");
     recordPutTransformer = new RecordPutTransformer(rowField);
   }
 
