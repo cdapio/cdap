@@ -78,7 +78,8 @@ body.theme-cdap.state-admin {
         }
       }
     }
-    .panel-message h3 { margin-top: 0; }
+    h2:first-child { margin-top: 0; }
+    .panel-default { margin-top: 18px; }
     td > span {
       display: inline-block;
       width: 10px;
@@ -88,9 +89,7 @@ body.theme-cdap.state-admin {
       &.status-green { background-color: @brand-success; }
       &.status-grey { background-color: @cdap-gray; }
     }
-    input.pref-key {
-      font-weight: bold;
-    }
+    input.pref-key { font-weight: bold; }
   }
 
 }
