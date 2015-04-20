@@ -17,38 +17,46 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link WorkflowToken} interface.
  */
 public class BasicWorkflowToken implements WorkflowToken {
-  private Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
+  private Map<String, Map<String, Long>> mapReduceCounters;
 
+  @Nullable
   @Override
   public Map<String, Map<String, Long>> getMapReduceCounters() {
     return mapReduceCounters;
   }
 
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
-    this.mapReduceCounters = mapReduceCounters;
+    this.mapReduceCounters = ImmutableMap.copyOf(copyHadoopCounters(mapReduceCounters));
   }
 
   /**
    * Make a deep copy of the WorkflowToken. Currently only copies the MapReduce counters.
-   * @param token WorkflowToken to be copy
    * @return copied WorkflowToken
    */
-  public WorkflowToken deepCopy(WorkflowToken token) {
+  public WorkflowToken deepCopy() {
     BasicWorkflowToken copiedToken = new BasicWorkflowToken();
+    if (getMapReduceCounters() != null) {
+      copiedToken.setMapReduceCounters(copyHadoopCounters(getMapReduceCounters()));
+    }
+    return copiedToken;
+  }
+
+  private Map<String, Map<String, Long>> copyHadoopCounters(Map<String, Map<String, Long>> input) {
     Map<String, Map<String, Long>> copiedMap = Maps.newHashMap();
-    for (Map.Entry<String, Map<String, Long>> entry : token.getMapReduceCounters().entrySet()) {
+    for (Map.Entry<String, Map<String, Long>> entry : input.entrySet()) {
       copiedMap.put(entry.getKey(), new HashMap<String, Long>(entry.getValue()));
     }
-    copiedToken.setMapReduceCounters(copiedMap);
-    return copiedToken;
+    return copiedMap;
   }
 }

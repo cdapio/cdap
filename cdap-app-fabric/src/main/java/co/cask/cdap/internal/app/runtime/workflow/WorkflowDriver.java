@@ -233,22 +233,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         completionService.submit(new Callable<Map.Entry<String, WorkflowToken>>() {
           @Override
           public Map.Entry<String, WorkflowToken> call() throws Exception {
-            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy(token);
+            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
             executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
             return Maps.immutableEntry(branch.toString(), copiedToken);
           }
         });
       }
 
+      boolean assignedCounters = false;
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
           Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
           Map.Entry<String, WorkflowToken> retValue = f.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
-          if (i == 0) {
-            // Simply assign the MapReduce counters from the first branch to the token
+          if (!assignedCounters && branchToken.getMapReduceCounters() != null) {
+            // Simply assign the MapReduce counters from the first branch where they are available to the token
             ((BasicWorkflowToken) token).setMapReduceCounters(branchToken.getMapReduceCounters());
+            assignedCounters = true;
           }
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {

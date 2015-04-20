@@ -17,14 +17,17 @@
 package co.cask.cdap.api.workflow;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Interface to represent the data that is transferred from one node to the next node in the {@link Workflow}
  */
 public interface WorkflowToken {
   /**
-   *
-   * @return the Hadoop MapReduce counters from the previous MapReduce program in the Workflow
+   * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null
+   * if the counters are not set.
+   * @return the Hadoop MapReduce counters set by the previous MapReduce program
    */
+  @Nullable
   public Map<String, Map<String, Long>> getMapReduceCounters();
 }
