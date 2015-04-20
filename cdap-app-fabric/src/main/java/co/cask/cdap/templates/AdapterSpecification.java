@@ -25,10 +25,9 @@ import co.cask.cdap.proto.ProgramType;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -37,11 +36,10 @@ import javax.annotation.Nullable;
  */
 public final class AdapterSpecification {
 
-  private static final HashSet<ProgramType> ADAPTER_PROGRAM_TYPES = Sets.newHashSet(ProgramType.WORKFLOW,
-                                                                                    ProgramType.WORKER);
+  private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
+                                                                               ProgramType.WORKER);
   private final String name;
   private final String description;
-  private final String template;
   private final Id.Program program;
   private final ScheduleSpecification scheduleSpec;
   private final int instances;
@@ -55,7 +53,7 @@ public final class AdapterSpecification {
   // but the platform itself never interprets it but just passes it along.
   private final JsonElement config;
 
-  private AdapterSpecification(String name, String description, String template, Id.Program program,
+  private AdapterSpecification(String name, String description, Id.Program program,
                                ScheduleSpecification scheduleSpec, int instances,
                                Map<String, StreamSpecification> streams,
                                Map<String, DatasetCreationSpec> datasets,
@@ -64,7 +62,6 @@ public final class AdapterSpecification {
                                JsonElement config) {
     this.name = name;
     this.description = description;
-    this.template = template;
     this.program = program;
     this.scheduleSpec = scheduleSpec;
     this.instances = instances;
@@ -86,7 +83,7 @@ public final class AdapterSpecification {
   }
 
   public String getTemplate() {
-    return template;
+    return program.getApplicationId();
   }
 
   public Id.Program getProgram() {
@@ -127,8 +124,8 @@ public final class AdapterSpecification {
     return config;
   }
 
-  public static Builder builder(String name, String template, Id.Program program) {
-    return new Builder(name, template, program);
+  public static Builder builder(String name, Id.Program program) {
+    return new Builder(name, program);
   }
 
   /**
@@ -136,8 +133,7 @@ public final class AdapterSpecification {
    */
   public static class Builder {
     private final String name;
-    private final String template;
-    Id.Program program;
+    private final Id.Program program;
     private String description;
     private ScheduleSpecification schedule;
     private Map<String, String> runtimeArgs;
@@ -148,13 +144,11 @@ public final class AdapterSpecification {
     private Resources resources;
     private JsonElement config;
 
-    public Builder(String name, String template, Id.Program program) {
+    public Builder(String name, Id.Program program) {
       Preconditions.checkArgument(name != null, "Adapter name must be specified.");
-      Preconditions.checkArgument(template != null, "Adapter template must be specified.");
       Preconditions.checkArgument(ADAPTER_PROGRAM_TYPES.contains(program.getType()), "Adapter program type must be " +
         "one of these: %s" , ADAPTER_PROGRAM_TYPES);
       this.name = name;
-      this.template = template;
       this.program = program;
       // defaults
       this.instances = 1;
@@ -207,7 +201,7 @@ public final class AdapterSpecification {
     }
 
     public AdapterSpecification build() {
-      return new AdapterSpecification(name, description, template, program, schedule, instances,
+      return new AdapterSpecification(name, description, program, schedule, instances,
                                       streams, datasets, datasetModules, runtimeArgs, resources, config);
     }
   }
@@ -225,7 +219,6 @@ public final class AdapterSpecification {
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&
-      Objects.equal(template, that.template) &&
       Objects.equal(program, that.program) &&
       Objects.equal(config, that.config) &&
       Objects.equal(scheduleSpec, that.scheduleSpec) &&
@@ -238,7 +231,7 @@ public final class AdapterSpecification {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, description, template, program, config, scheduleSpec, runtimeArgs,
+    return Objects.hashCode(name, description, program, config, scheduleSpec, runtimeArgs,
                             streams, datasets, datasetModules, instances);
   }
 
@@ -247,7 +240,6 @@ public final class AdapterSpecification {
     return Objects.toStringHelper(this)
       .add("name", name)
       .add("description", description)
-      .add("template", template)
       .add("program", program)
       .add("config", config)
       .add("scheduleSpec", scheduleSpec)

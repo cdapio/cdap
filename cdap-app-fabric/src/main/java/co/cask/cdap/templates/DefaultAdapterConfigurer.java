@@ -177,10 +177,10 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
       programName = Iterables.getFirst(templateSpec.getWorkers().keySet(), null);
     }
 
-    Id.Program program = Id.Program.from(namespaceId, adapterName, programType, programName);
+    Id.Program program = Id.Program.from(namespaceId, adapterConfig.getTemplate(), programType, programName);
 
     AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, adapterConfig.getTemplate(), program)
+      AdapterSpecification.builder(adapterName, program)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
