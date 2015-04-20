@@ -114,16 +114,16 @@ angular
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
       myAlert({
         title: 'Error',
-        content: data.reason || 'could not connect to the server',
+        content: data.reason || 'Unable to connect to CDAP',
         type: 'danger'
       });
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
-      if(data.statusCode>399) {
+      if(data.statusCode > 399) {
         myAlert({
           title: data.statusCode.toString(),
-          content: data.response || 'Something went terribly wrong',
+          content: data.response || 'Server had an issue, please try refreshing the page',
           type: 'danger'
         });
       }
@@ -132,7 +132,7 @@ angular
       // is unable to connect to CDAP. Error messages add no
       // more value than the pop showing that the FE is waiting 
       // for system to come back up. Most of the issues are with 
-      // connect, other that connect pass everything else to user. 
+      // connect, other than that pass everything else to user. 
       if(data.warning && data.error.syscall !== 'connect') {
         myAlert({
           content: data.warning,
