@@ -36,10 +36,10 @@ public class WorkerRealtimeContext implements RealtimeContext {
   private final Metrics metrics;
 
   public WorkerRealtimeContext(WorkerContext context, StageSpecification specification,
-                               ETLStage sourceStage, Metrics metrics) {
+                               ETLStage stage, Metrics metrics) {
     this.context = context;
     this.specification = specification;
-    this.stage = sourceStage;
+    this.stage = stage;
     this.metrics = metrics;
   }
 
