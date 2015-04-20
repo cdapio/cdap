@@ -20,7 +20,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.Tweet;
 import twitter4j.StallWarning;
@@ -71,7 +71,7 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
   }
 
   @Override
-  public void initialize(SourceContext context) throws Exception {
+  public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
 
     statusListener = new StatusListener() {

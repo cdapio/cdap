@@ -25,17 +25,14 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * MapReduce Source Context.
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
-  private final ETLStage sourceStage;
 
   public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage, StageSpecification specification) {
-    super(context, specification);
-    this.sourceStage = sourceStage;
+    super(context, sourceStage, specification);
   }
 
   @Override
@@ -56,10 +53,5 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   @Override
   public void setInput(String datasetName, Dataset dataset) {
     mrContext.setInput(datasetName, dataset);
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return sourceStage.getProperties();
   }
 }

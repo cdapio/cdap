@@ -20,7 +20,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import org.junit.After;
@@ -98,7 +98,7 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new SourceContext() {
+    jmsSource.initialize(new RealtimeContext() {
       @Override
       public StageSpecification getSpecification() {
         return null;
@@ -150,7 +150,7 @@ public class JmsMessageToStringSourceTest {
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new SourceContext() {
+    jmsSource.initialize(new RealtimeContext() {
       @Override
       public StageSpecification getSpecification() {
         return null;

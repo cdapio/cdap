@@ -27,6 +27,7 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -114,14 +115,7 @@ public class ETLWorker extends AbstractWorker {
 
     initializeSource(context, config.getSource());
     initializeTransforms(context, config.getTransforms());
-
-    // Execute within a transaction since Dataset operations could be performed in the Sink.
-    getContext().execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetCtx) throws Exception {
-        initializeSink(context, config.getSink(), datasetCtx);
-      }
-    });
+    initializeSink(context, config.getSink());
 
     transformExecutor = new TransformExecutor(transforms);
     defaultEmitter = new DefaultEmitter();
@@ -131,18 +125,18 @@ public class ETLWorker extends AbstractWorker {
     StageSpecification spec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Source.SPECIFICATION),
                                             StageSpecification.class);
     source = (RealtimeSource) Class.forName(spec.getClassName()).newInstance();
-    WorkerSourceContext sourceContext = new WorkerSourceContext(context, stage, spec);
+    RealtimeContext sourceContext = new WorkerRealtimeContext(context, spec, stage);
     LOG.info("Source Stage : {}", stage.getName());
     LOG.info("Source Class : {}", stage.getClass().getName());
     LOG.info("Specifications of Source : {}", spec);
     source.initialize(sourceContext);
   }
 
-  private void initializeSink(WorkerContext context, ETLStage stage, DatasetContext datasetContext) throws Exception {
+  private void initializeSink(WorkerContext context, ETLStage stage) throws Exception {
     StageSpecification spec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
                                             StageSpecification.class);
     sink = (RealtimeSink) Class.forName(spec.getClassName()).newInstance();
-    WorkerSinkContext sinkContext = new WorkerSinkContext(context, stage, spec, datasetContext);
+    RealtimeContext sinkContext = new WorkerRealtimeContext(context, spec, stage);
     LOG.info("Sink Stage : {}", stage.getName());
     LOG.info("Sink Class : {}", stage.getClass().getName());
     LOG.info("Specifications of Sink : {}", spec);
@@ -199,10 +193,12 @@ public class ETLWorker extends AbstractWorker {
       for (Object sourceData : defaultEmitter) {
         try {
           final Iterable<Object> dataToSink = transformExecutor.runOneIteration(sourceData);
+
           getContext().execute(new TxRunnable() {
             @Override
             public void run(DatasetContext context) throws Exception {
-              sink.write(dataToSink);
+              DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
+              sink.write(dataToSink, defaultDataWriter);
 
               //Persist sourceState
               KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);

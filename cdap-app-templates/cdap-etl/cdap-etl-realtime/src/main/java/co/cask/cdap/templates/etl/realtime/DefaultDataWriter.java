@@ -21,11 +21,8 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.api.realtime.SinkContext;
+import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,51 +30,25 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Implementation of {@link SinkContext} for a {@link Worker} driver.
+ * Implementation of {@link DataWriter}.
  */
-public class WorkerSinkContext implements SinkContext {
-  private WorkerContext context;
-  private final StageSpecification specification;
-  private final ETLStage stage;
-  private final DatasetContext datasetContext;
+public class DefaultDataWriter implements DataWriter {
+  private final WorkerContext context;
+  private final DatasetContext dsContext;
 
-  public WorkerSinkContext(WorkerContext context, ETLStage sinkStage, StageSpecification spec,
-                           DatasetContext datasetContext) {
+  public DefaultDataWriter(WorkerContext context, DatasetContext dsContext) {
     this.context = context;
-    this.specification = spec;
-    this.stage = sinkStage;
-    this.datasetContext = datasetContext;
-  }
-
-  @Override
-  public StageSpecification getSpecification() {
-    return specification;
-  }
-
-  @Override
-  public int getInstanceId() {
-    return context.getInstanceId();
-  }
-
-  @Override
-  public int getInstanceCount() {
-    return context.getInstanceCount();
+    this.dsContext = dsContext;
   }
 
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return datasetContext.getDataset(name);
+    return dsContext.getDataset(name);
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
-    return datasetContext.getDataset(name, arguments);
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return stage.getProperties();
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) throws DatasetInstantiationException {
+    return dsContext.getDataset(name, arguments);
   }
 
   @Override

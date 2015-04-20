@@ -22,17 +22,13 @@ import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
-import java.util.Map;
-
 /**
  * MapReduce Sink Context.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
-  private final ETLStage sinkStage;
 
   public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage, StageSpecification specification) {
-    super(context, specification);
-    this.sinkStage = sinkStage;
+    super(context, sinkStage, specification);
   }
 
   @Override
@@ -45,8 +41,4 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     mrContext.setOutput(datasetName, dataset);
   }
 
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return sinkStage.getProperties();
-  }
 }

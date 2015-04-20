@@ -20,22 +20,23 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
- * Implementation of {@link SourceContext} for a {@link Worker} driver.
+ * Implementation of {@link RealtimeContext} for {@link Worker} driver.
  */
-public class WorkerSourceContext implements SourceContext {
+public class WorkerRealtimeContext implements RealtimeContext {
   private final WorkerContext context;
   private final StageSpecification specification;
   private final ETLStage stage;
 
-  public WorkerSourceContext(WorkerContext context, ETLStage sourceStage, StageSpecification specification) {
+  public WorkerRealtimeContext(WorkerContext context, StageSpecification specification, ETLStage stage) {
     this.context = context;
     this.specification = specification;
-    this.stage = sourceStage;
+    this.stage = stage;
   }
 
   @Override
@@ -55,6 +56,6 @@ public class WorkerSourceContext implements SourceContext {
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    return stage.getProperties();
+    return Collections.unmodifiableMap(stage.getProperties());
   }
 }
