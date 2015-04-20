@@ -25,6 +25,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     { name: 'Histogram (bar)',       type: 'bar' },
     { name: 'Timeseries (area)',     type: 'area' },
     { name: 'Pie Chart',             type: 'pie' },
+    { name: 'Donut',                 type: 'donut' },
     { name: 'Table',                 type: 'table' }
   ];
 
