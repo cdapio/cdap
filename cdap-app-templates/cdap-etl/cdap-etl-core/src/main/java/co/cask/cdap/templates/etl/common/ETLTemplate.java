@@ -195,7 +195,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
   @VisibleForTesting
   static void validateTypes(ArrayList<Type> unresTypeList) {
-    Preconditions.checkArgument(unresTypeList.size() %2 == 0, "ETL Stages validation expects even number of types");
+    Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
     List<Type> resTypeList = Lists.newArrayListWithCapacity(unresTypeList.size());
 
     // Add the source output to resolved type list as the first resolved type.
