@@ -73,6 +73,8 @@ my-flow-graph {
     fill: white;
     cursor: default;
     text-anchor: middle;
+    // stroke: @cdap-header;
+    // stroke-width: 2px;
   }
 }
 
@@ -84,7 +86,7 @@ my-workflow-graph {
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    fill: white;
+    fill: @cdap-header;
   }
 
   .node rect {
@@ -100,12 +102,16 @@ my-workflow-graph {
   }
 
   .job-svg {
-    fill: #3C4355;
+    fill: white;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
     cursor: pointer;
   }
 
   .end-svg, .start-svg {
-    fill: #3C4355;
+    fill: white;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
   }
 
   .conditional-svg {
