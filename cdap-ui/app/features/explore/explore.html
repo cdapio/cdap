@@ -6,33 +6,27 @@
      ng-model="activePanel"
      bs-collapse>
 
-  <div class="row">
+  <div class="explore-tables">
 
-    <div class="col-xs-3">
+    <div class="panel-left">
       <div class="panel panel-default">
         <div class="panel-heading">
           Tables
         </div>
         <div class="list-group">
-          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="click(data)">{{ ::data.table }}</a>
+          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)">{{ ::data.name }}</a>
         </div>
       </div>
     </div>
 
-    <!-- TABLE INFO -->
-    <div class="col-xs-9">
+    <div class="panel-right">
+      <tabset>
+        <tab>
+          <tab-heading>
+            General
+          </tab-heading>
 
-      <!-- GENERAL -->
-      <div class="panel panel-default" ng-click="openGeneral = !openGeneral">
-        <div class="panel-heading">
-          <span
-            ng-class="{'fa-caret-right': !openGeneral,
-                       'fa-caret-down': openGeneral}"
-            class="fa fa-fw"
-          ></span>General
-        </div>
-
-        <div class="panel-body" ng-if="openGeneral">
+          <!-- CONTENT -->
           <table class="table table-curved">
             <tr>
               <td>Table</td>
@@ -130,21 +124,14 @@
               </td>
             </tr>
           </table>
-        </div>
-      </div>
 
+        </tab>
 
-      <!-- TABLE SCHEMA -->
-      <div class="panel panel-default" ng-click="openSchema = !openSchema">
-        <div class="panel-heading">
-          <span
-            ng-class="{'fa-caret-right': !openSchema,
-                       'fa-caret-down': openSchema}"
-            class="fa fa-fw"
-          ></span>Table Schema
-        </div>
+        <tab>
+          <tab-heading>
+            Schema
+          </tab-heading>
 
-        <div class="panel-body" ng-if="openSchema">
           <table class="table table-curved">
             <thead>
               <th>Column Name</th>
@@ -155,21 +142,14 @@
               <td>{{ schema.type }}</td>
             </tr>
           </table>
-        </div>
-      </div>
 
+        </tab>
 
-      <!-- PARTITION KEYS -->
-      <div class="panel panel-default" ng-click="openPartition = !openPartition">
-        <div class="panel-heading">
-          <span
-            ng-class="{'fa-caret-right': !openPartition,
-                       'fa-caret-down': openPartition}"
-            class="fa fa-fw"
-          ></span>Partition Keys
-        </div>
+        <tab>
+          <tab-heading>
+            Partition Keys
+          </tab-heading>
 
-        <div class="panel-body" ng-if="openPartition">
           <table class="table table-curved" ng-if="selectedInfo.partitioned_keys.length > 0">
             <thead>
               <th>Name</th>
@@ -185,9 +165,8 @@
           <div class="well text-center" ng-if="selectedInfo.partitioned_keys.length === 0">
             No Partitioned Keys
           </div>
-        </div>
-      </div>
-
+        </tab>
+      </tabset>
     </div>
 
   </div>
