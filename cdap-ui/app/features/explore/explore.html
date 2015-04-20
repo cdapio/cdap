@@ -9,14 +9,16 @@
   <div class="explore-tables">
 
     <div class="panel-left">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          Tables
-        </div>
-        <div class="list-group">
-          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)">{{ ::data.name }}</a>
-        </div>
-      </div>
+      <table class="table table-curved">
+        <thead>
+          <th>Tables</th>
+        </thead>
+        <tbody>
+          <tr ng-repeat="data in dataList" ng-click="selectTable(data)">
+            <td>{{ ::data.name }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="panel-right">
@@ -31,11 +33,6 @@
             <tr>
               <td>Table</td>
               <td>{{ selectedInfo.table_name }}</td>
-            </tr>
-
-            <tr>
-              <td>Table Type</td>
-              <td>{{ selectedInfo.table_type }}</td>
             </tr>
 
             <tr>
@@ -61,67 +58,8 @@
             </tr>
 
             <tr>
-              <td>From Dataset</td>
+              <td>Is Dataset</td>
               <td>{{ selectedInfo.from_dataset }}</td>
-            </tr>
-
-            <tr>
-              <td>Input Format</td>
-              <td>{{ selectedInfo.input_format }}</td>
-            </tr>
-
-            <tr>
-              <td>Last Accessed Time</td>
-              <td>{{ selectedInfo.last_access_time }}</td>
-            </tr>
-
-            <tr>
-              <td>Location</td>
-              <td>{{ selectedInfo.location }}</td>
-            </tr>
-
-            <tr>
-              <td>Number of Buckets</td>
-              <td>{{ selectedInfo.num_buckets }}</td>
-            </tr>
-
-            <tr>
-              <td>Output Format</td>
-              <td>{{ selectedInfo.output_format }}</td>
-            </tr>
-
-            <tr>
-              <td>Parameters</td>
-              <td>
-                <table class="table table-curved">
-                  <tr ng-repeat="(key,value) in selectedInfo.parameters">
-                    <td>{{key}}</td>
-                    <td>{{value}}</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Retention</td>
-              <td>{{ selectedInfo.retention }}</td>
-            </tr>
-
-            <tr>
-              <td>Serde</td>
-              <td>{{ selectedInfo.serde }}</td>
-            </tr>
-
-            <tr>
-              <td>Serde Parameters</td>
-              <td>
-                <table class="table table-curved">
-                  <tr ng-repeat="(key, value) in selectedInfo.serde_parameters">
-                    <td>{{ key }}</td>
-                    <td>{{ value }}</td>
-                  </tr>
-                </table>
-              </td>
             </tr>
           </table>
 
@@ -165,6 +103,77 @@
           <div class="well text-center" ng-if="selectedInfo.partitioned_keys.length === 0">
             No Partitioned Keys
           </div>
+        </tab>
+
+        <tab>
+          <tab-heading>
+            Advanced
+          </tab-heading>
+
+          <table class="table table-curved">
+            <tr>
+              <td>Input Format</td>
+              <td>{{ selectedInfo.input_format }}</td>
+            </tr>
+
+            <tr>
+              <td>Last Accessed Time</td>
+              <td>{{ selectedInfo.last_access_time }}</td>
+            </tr>
+
+            <tr>
+              <td>Location</td>
+              <td>{{ selectedInfo.location }}</td>
+            </tr>
+
+            <tr>
+              <td>Number of Buckets</td>
+              <td>{{ selectedInfo.num_buckets }}</td>
+            </tr>
+
+            <tr>
+              <td>Output Format</td>
+              <td>{{ selectedInfo.output_format }}</td>
+            </tr>
+
+            <tr>
+              <td>Parameters</td>
+              <td>
+                <table class="table table-curved">
+                  <tbody>
+                    <tr ng-repeat="(key, value) in selectedInfo.parameters">
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Retention</td>
+              <td>{{ selectedInfo.retention }}</td>
+            </tr>
+
+            <tr>
+              <td>SerDe</td>
+              <td>{{ selectedInfo.serde }}</td>
+            </tr>
+
+            <tr>
+              <td>SerDe Parameters</td>
+              <td>
+                <table class="table table-curved">
+                  <tbody>
+                    <tr ng-repeat="(key, value) in selectedInfo.serde_parameters">
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </table>
         </tab>
       </tabset>
     </div>

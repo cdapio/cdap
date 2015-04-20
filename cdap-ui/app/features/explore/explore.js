@@ -25,9 +25,11 @@ angular.module(PKG.name + '.feature.explore')
 
 
     $scope.selectTable = function (data) {
+      // Passing this info to sql-query directive
       $scope.type = data.type;
       $scope.name = data.name;
 
+      // Fetching info of the table
       dataSrc.request({
         _cdapNsPath: '/data/explore/tables/' + data.table + '/info'
       }).then(function (res) {

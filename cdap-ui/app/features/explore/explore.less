@@ -1,18 +1,19 @@
 body.state-explore {
 
   .explore-tables {
-
     .panel-left {
       width: 25%;
       display: inline-block;
       vertical-align: top;
       float: left;
       margin-bottom: 15px;
+      max-height: 299px;
+      overflow-y: scroll;
 
-      .list-group {
-        max-height: 300px;
-        overflow-y: scroll;
+      .table {
+        margin: 0;
       }
+
     }
 
     .panel-right {
@@ -23,8 +24,16 @@ body.state-explore {
       margin-bottom: 15px;
 
       .tab-content {
-        max-height: 298px;
+        max-height: 258px;
         overflow-y: scroll;
+
+        .well {
+          margin-top: 10px;
+        }
+
+        .table {
+          margin-bottom: 0;
+        }
       }
     }
   }
@@ -32,7 +41,5 @@ body.state-explore {
   .panel-explore {
     clear: both;
   }
-
-
 
 }
