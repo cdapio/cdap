@@ -140,6 +140,7 @@
       <artifactId>avro-mapred</artifactId>
       <classifier>hadoop2</classifier>
     </dependency>
+    <!-- Start for JMS Source -->
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jms_1.1_spec</artifactId>
@@ -161,6 +162,26 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!-- Start for Kafka Source -->
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.kafka</groupId>
+          <artifactId>kafka_2.10</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.10</artifactId>
+    </dependency>
+    <!-- End for Kafka Source -->
   </dependencies>
 
 </project>
