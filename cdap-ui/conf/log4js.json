@@ -1,0 +1,11 @@
+{
+  "appenders": [
+    { 
+      "category" : "default",
+      "type" : "console"
+    }
+  ],
+  "levels": {
+     "default" : "TRACE"
+  }
+}

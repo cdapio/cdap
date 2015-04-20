@@ -5,18 +5,37 @@ var express = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
     parser = require('./server/config/parser.js'),
     sockjs = require('sockjs'),
-    colors = require('colors/safe'),
     http = require('http'),
+    log4js = require('log4js'),
     https = require('https');
-
-
+  
 var cdapConfig, securityConfig;
 
+/**
+ * Configuring the logger. In order to use the logger anywhere 
+ * in the BE, include the following:
+ *    var log4js = require('log4js');
+ *    var logger = log4js.getLogger();
+ * 
+ * We configure using LOG4JS_CONFIG specified file or we use 
+ * the default provided in the conf/log4js.json file.
+ */
+if(process.env.LOG4JS_CONFIG) {
+  log4js.configure({}, { reloadSecs: 600});
+} else {
+  log4js.configure(__dirname + "/conf/log4js.json", { reloadSecs: 10});
+}
+
+// Get a log handle.
+var log = log4js.getLogger('default');
+
+log.info("Starting CDAP UI ...");
 parser.extractConfig('cdap')
 
   .then(function (c) {
     cdapConfig = c;
     if (cdapConfig['ssl.enabled'] === 'true') {
+      log.debug("CDAP Security has been enabled");
       return parser.extractConfig('security');
     }
   })
@@ -49,7 +68,7 @@ parser.extractConfig('cdap')
     }
 
     server.listen(port, cdapConfig['dashboard.bind.address'], function () {
-        console.info(colors.yellow('http')+' listening on port %s', port);
+      log.info('CDAP UI listening on port %s', port);
     });
 
     return server;
@@ -57,10 +76,9 @@ parser.extractConfig('cdap')
 
   .then(function (server) {
 
-    // sockjs
     var sockServer = sockjs.createServer({
       log: function (lvl, msg) {
-        // console.log(colors.blue('sock'), msg);
+        log.trace(msg);
       }
     });
 
