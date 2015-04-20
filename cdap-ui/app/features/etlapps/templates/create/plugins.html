@@ -1,94 +1,77 @@
 <div class="row">
   <div class="plugins">
+    <div class="col-xs-4">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix" ng-click="ETLSourcesTabOpen = !ETLSourcesTabOpen">
+          <span class="pull-left"> Source</span>
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': ETLSourcesTabOpen, 'fa-chevron-right': !ETLSourcesTabOpen}"></i>
+        </div>
 
-
-
-    <div class="panel panel-default">
-      <div class="panel-heading clearfix" ng-click="ETLSourcesTabOpen = !ETLSourcesTabOpen">
-        <span class="pull-left"> Source</span>
-        <i class="fa fa-fw pull-right"
-            ng-class="{'fa-chevron-down': ETLSourcesTabOpen, 'fa-chevron-right': !ETLSourcesTabOpen}"></i>
+        <div class="panel-body" ng-if="ETLSourcesTabOpen">
+          <div class="col-xs-12">
+            <ul class="list-group" ng-if="etlSources.length > 0">
+              <li class="list-group-item clearfix"
+                  ng-repeat="source in etlSources">
+                <span class="pull-left">{{source.name}}</span>
+                <span class="fa fa-plus-circle pull-right" ng-click="handleSourceDrop(source.name)"></span>
+              </li>
+            </ul>
+            <div class="well well-xs text-center" ng-if="etlSources.length === 0">
+              <span> No Sources Found</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="panel-body" ng-if="ETLSourcesTabOpen">
-        <div class="col-xs-12">
-          <ul class="list-group" ng-if="etlSources.length > 0">
-            <li class="list-group-item"
-                ng-repeat="source in etlSources"
-                id="source-{{source.name}}"
-                data-model="{{source.name}}"
-                data-drop-zone="sourceDropZone"
-                data-drag-type="source"
-                draggable>
-              {{source.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlSources.length === 0">
-            <span> No Sources Found</span>
+    </div>
+    <div class="col-xs-4">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix" ng-click="ETLTransformsTabOpen =!ETLTransformsTabOpen">
+          <span class="pull-left"> Transforms</span>
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': ETLTransformsTabOpen, 'fa-chevron-right': !ETLTransformsTabOpen}"></i>
+        </div>
+
+        <div class="panel-body" ng-if="ETLTransformsTabOpen">
+          <div class="col-xs-12">
+            <ul class="list-group" ng-if="etlTransforms.length > 0">
+              <li class="list-group-item clearfix"
+                  ng-repeat="transform in etlTransforms">
+                <span class="pull-left">{{transform.name}}</span>
+                <span class="fa fa-plus-circle pull-right" ng-click="handleTransformDrop(transform.name)"></span>
+              </li>
+            </ul>
+            <div class="well well-xs text-center" ng-if="etlTransforms.length === 0">
+              <span> No Transforms Found</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <div class="col-xs-4">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix" ng-click="ETLSinksTabOpen = !ETLSinksTabOpen">
+          <span class="pull-left"> Sinks</span>
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': ETLSinksTabOpen, 'fa-chevron-right': !ETLSinksTabOpen}"></i>
+        </div>
 
-
-
-    <div class="panel panel-default">
-      <div class="panel-heading clearfix" ng-click="ETLTransformsTabOpen =!ETLTransformsTabOpen">
-        <span class="pull-left"> Transforms</span>
-        <i class="fa fa-fw pull-right"
-            ng-class="{'fa-chevron-down': ETLTransformsTabOpen, 'fa-chevron-right': !ETLTransformsTabOpen}"></i>
-      </div>
-
-      <div class="panel-body" ng-if="ETLTransformsTabOpen">
-        <div class="col-xs-12">
-          <ul class="list-group" ng-if="etlTransforms.length > 0">
-            <li class="list-group-item"
-                ng-repeat="transform in etlTransforms"
-                id="transform-{{transform.name}}"
-                data-model="{{transform.name}}"
-                data-drop-zone="transformDropZone"
-                data-drag-type="transform"
-                draggable>
-              {{transform.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlTransforms.length === 0">
-            <span> No Transforms Found</span>
+        <div class="panel-body" ng-if="ETLSinksTabOpen">
+          <div class="col-xs-12">
+            <ul class="list-group" ng-if="etlSinks.length > 0">
+              <li class="list-group-item clearfix"
+                  ng-repeat="sink in etlSinks">
+                <span class="pull-left">{{sink.name}}</span>
+                <span class="fa fa-plus-circle pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+              </li>
+            </ul>
+            <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
+              <span> No Sinks Found</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-
-
-
-    <div class="panel panel-default">
-      <div class="panel-heading clearfix" ng-click="ETLSinksTabOpen = !ETLSinksTabOpen">
-        <span class="pull-left"> Sinks</span>
-        <i class="fa fa-fw pull-right"
-            ng-class="{'fa-chevron-down': ETLSinksTabOpen, 'fa-chevron-right': !ETLSinksTabOpen}"></i>
-      </div>
-
-      <div class="panel-body" ng-if="ETLSinksTabOpen">
-        <div class="col-xs-12">
-          <ul class="list-group" ng-if="etlSinks.length > 0">
-            <li class="list-group-item"
-                ng-repeat="sink in etlSinks"
-                id="sink-{{sink.name}}"
-                data-model="{{sink.name}}"
-                data-drop-zone="sinkDropZone"
-                data-drag-type="sink"
-                draggable>
-              {{sink.name}}
-            </li>
-          </ul>
-          <div class="well well-xs text-center" ng-if="etlSinks.length === 0">
-            <span> No Sinks Found</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
   </div>
 </div>

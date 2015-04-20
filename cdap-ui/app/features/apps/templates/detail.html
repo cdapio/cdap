@@ -1,8 +1,10 @@
 <div ncy-breadcrumb></div>
   <h2>
     <span ng-bind="$state.params.appId | caskCapitalizeFilter"></span>
-    <small> Type: App </small>
   </h2>
+  <div class="type-block">
+    <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" /><small> Type: App </small>
+  </div>
   <div class="cdap-subnav-end"></div>
   <my-tabs
     data-tabs-list="['Status']"

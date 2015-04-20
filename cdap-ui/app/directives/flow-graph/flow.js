@@ -4,7 +4,8 @@ var baseDirective = {
   restrict: 'E',
   templateUrl: 'flow-graph/flow.html',
   scope: {
-    model: '='
+    model: '=',
+    click: '&'
   },
   controller: 'myFlowController'
 };
@@ -163,7 +164,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         if (instance.type === 'STREAM') {
           myStreamService.show(nodeId);
         } else {
-          $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
+          // $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
+
+          scope.$apply(function(scope) {
+            var fn = scope.click();
+            if ('undefined' !== typeof fn) {
+              fn(nodeId);
+            }
+          });
         }
       };
 

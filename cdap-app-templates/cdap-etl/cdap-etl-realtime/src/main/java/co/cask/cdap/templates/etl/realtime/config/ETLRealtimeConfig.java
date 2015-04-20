@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.realtime.config;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLConfig;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ public final class ETLRealtimeConfig extends ETLConfig {
     this(instances, source, sink, transforms, null);
   }
 
+  @VisibleForTesting
   public ETLRealtimeConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms) {
     this(1, source, sink, transforms);
   }

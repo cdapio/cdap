@@ -30,6 +30,7 @@ import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
@@ -56,6 +57,7 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
   public void configureAdapter(String adapterName, ETLRealtimeConfig etlConfig, AdapterConfigurer configurer)
     throws Exception {
     super.configureAdapter(adapterName, etlConfig, configurer);
+    Preconditions.checkArgument(etlConfig.getInstances() != 0, "Instances cannot be 0");
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
     configurer.setInstances(etlConfig.getInstances());
     // Generate unique id for this adapter creation.

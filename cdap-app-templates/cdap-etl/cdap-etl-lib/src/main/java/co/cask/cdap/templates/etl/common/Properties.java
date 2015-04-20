@@ -46,6 +46,14 @@ public final class Properties {
     public static final String DURATION = "duration";
   }
 
+  /**
+   * Properties for KeyValueTables
+   */
+  public static class KeyValueTable {
+    public static final String KEY_FIELD = "key.field";
+    public static final String VALUE_FIELD = "value.field";
+  }
+
   private Properties() {
   }
 }

@@ -1,7 +1,9 @@
 /*global require, module */
 
 var request = require('request'),
-    colors = require('colors/safe');
+    log4js = require('log4js');
+
+var log = log4js.getLogger('default');
 
 /**
  * Default Poll Interval used by the backend.
@@ -50,10 +52,11 @@ Aggregator.prototype.startPolling = function (resource) {
   // WARN: This assumes that the browser side ids are unique for a websocket session.
   // This check is needed for Safari.
   if(this.polledResources[resource.id]) {
-    // console.log("Resource id " + resource.id + " already registered.");
     return;
   }
+
   resource.interval = resource.interval || POLL_INTERVAL;
+  log.debug('Scheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
   this.polledResources[resource.id] = resource;
   doPoll.bind(this, resource)();
 }
@@ -70,8 +73,7 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
     // Don't reschedule another iteration if the resource has been stopped
     return;
   }
-  // console.log(Object.keys(this.polledResources).length + ':' + Math.floor(Date.now()/1000) +
-  //    ': scheduling for: ' + resource.id + ', interval: ' + resource.interval + ' - ' + resource.url);
+  log.debug('Rescheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
   resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
 
@@ -81,6 +83,7 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
  * is set to true.
  */
 Aggregator.prototype.stopPolling = function (resource) {
+  log.debug('Stopping (' + resource.id + ',' + resource.url + ')');
   var thisResource = removeFromObj(this.polledResources, resource.id);
   if (thisResource === undefined) {
     return;
@@ -119,6 +122,7 @@ function doPoll (resource) {
     var that = this,
         callBack = this.scheduleAnotherIteration.bind(that, resource);
 
+    resource.startTs = Date.now();
     request(resource, function(error, response, body) {
       if (error) {
         emitResponse.call(that, resource, error);
@@ -142,9 +146,16 @@ function doPoll (resource) {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
+  var timeDiff = Date.now()  - resource.startTs;
+
   resource.timerId = undefined;
   resource.stop = undefined;
-  if(error) { // still emit a warning
+  resource.startTs = undefined;
+  
+  if(error) { 
+    log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
+    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ',' 
+       + resource.url + ') body : (' + error.toString() + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -152,7 +163,9 @@ function emitResponse (resource, error, response, body) {
     }));
 
   } else {
-
+    log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
+    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' 
+       + resource.url + ') body : (' + JSON.stringify(body) + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,
@@ -172,18 +185,22 @@ function onSocketData (message) {
 
     switch(message.action) {
       case 'poll-start':
+        log.debug ('Poll start (' + r.method + ',' + r.id + ',' + r.url + ')');
         this.startPolling(r);
         break;
       case 'request':
+        log.debug ('Single request (' + r.method + ',' + r.id + ',' + r.url + ')');
+        r.startTs = Date.now();
         request(r, emitResponse.bind(this, r));
         break;
       case 'poll-stop':
+        log.debug ('Poll stop (' + r.id + ',' + r.url + ')');
         this.stopPolling(r);
         break;
     }
   }
   catch (e) {
-    console.error(e);
+    log.warn(e);
   }
 }
 
