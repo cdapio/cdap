@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -46,7 +47,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import javax.annotation.Nullable;
 
@@ -60,7 +60,6 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
   private final Store store;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
@@ -69,22 +68,21 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
   private final ExploreFacade exploreFacade;
   private final boolean exploreEnabled;
   private final PreferencesStore preferencesStore;
+  private final MetricStore metricStore;
 
   @Inject
   public LocalApplicationTemplateManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                                          NamespacedLocationFactory namespacedLocationFactory,
                                          Store store, StreamConsumerFactory streamConsumerFactory,
-                                         QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
-                                         DatasetFramework datasetFramework,
+                                         QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                                          @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                                          StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                                          AdapterService adapterService,
                                          PreferencesStore preferencesStore,
-                                         @Assisted ProgramTerminator programTerminator) {
+                                         @Assisted ProgramTerminator programTerminator, MetricStore metricStore) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.store = store;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
@@ -93,6 +91,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
     this.exploreFacade = exploreFacade;
+    this.metricStore = metricStore;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
     this.preferencesStore = preferencesStore;
@@ -109,10 +108,10 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
     pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
-                                                    queueAdmin, discoveryServiceClient));
+                                                    queueAdmin, metricStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
-    pipeline.setFinally(new EnableConcurrentRunsStage(preferencesStore));
+    pipeline.addLast(new EnableConcurrentRunsStage(preferencesStore));
     return pipeline.execute(input);
   }
 }

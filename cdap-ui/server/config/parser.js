@@ -9,9 +9,11 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     decoder = new StringDecoder('utf8'),
+    log4js = require('log4js'),
     cache = {},
     buffer = '';
 
+var log = log4js.getLogger('default');
 
 /*
  *  Extracts the config
@@ -41,7 +43,7 @@ function extractConfig(param) {
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      console.error('!!! using development configuration for', '"'+param+'"');
+      log.info('Using development configuration for' + '"' + param + '"');
       cache[param] = require('./development/'+param+'.json');
     }
 
@@ -65,7 +67,6 @@ function configRead (data) {
 function configReadFail (data) {
   var textChunk = decoder.write(data);
   if (textChunk) {
-    console.error('Failed to extract the configuration!');
-    console.log(textChunk);
+    log.error('Failed to extract configuration');
   }
 }

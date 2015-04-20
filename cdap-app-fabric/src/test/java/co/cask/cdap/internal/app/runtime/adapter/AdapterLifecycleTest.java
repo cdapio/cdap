@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * AdapterService life cycle tests.
  */
-public class AdapterLifecycleTests extends AppFabricTestBase {
+public class AdapterLifecycleTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
     new TypeToken<List<AdapterSpecification>>() { }.getType();
@@ -181,7 +181,8 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   @Test
   public void testRestrictUserApps() throws Exception {
     // Testing that users can not deploy an application
-    HttpResponse response = deploy(AppWithServices.class, DummyBatchTemplate.NAME);
+    HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN,
+      Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
@@ -214,7 +215,66 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
 
   @Test
   public void testInvalidConfigReturns400() throws Exception {
-    // TODO: implement once adapter creation calls configureTemplate()
+    String adapterName = "badConfigAdapter";
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", null);
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
+    HttpResponse response = doPut(
+      String.format("%s/namespaces/%s/adapters/%s",
+        Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, adapterName), GSON.toJson(adapterConfig));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    String deleteURL = getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME,
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE);
+    deleteApplication(60, deleteURL, 200);
+  }
+
+  @Test
+  public void testGetAllAdapters() throws Exception {
+    // create first adapter
+    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String adapter1 = "adapter1";
+    DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
+    createAdapter(namespaceId, adapter1,
+                  new AdapterConfig("description", DummyWorkerTemplate.NAME, GSON.toJsonTree(config1)));
+
+    // create second adapter with a different template
+    String adapter2 = "adapter2";
+    DummyBatchTemplate.Config config2 = new DummyBatchTemplate.Config("somesource", "0 0 1 1 *");
+    createAdapter(namespaceId, adapter2,
+      new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config2)));
+
+    // test get all endpoint
+    HttpResponse response = listAdapters(namespaceId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    Assert.assertEquals(2, list.size());
+
+    // test get all for a template
+    response = listAdaptersForTemplate(namespaceId, DummyWorkerTemplate.NAME);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(adapter1, list.get(0).getName());
+
+    response = listAdaptersForTemplate(namespaceId, DummyBatchTemplate.NAME);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(adapter2, list.get(0).getName());
+
+    // delete adapters
+    deleteAdapter(namespaceId, adapter1);
+    deleteAdapter(namespaceId, adapter2);
+    deleteApplication(60, getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME,
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 200);
+    deleteApplication(60, getVersionedAPIPath("apps/" + DummyWorkerTemplate.NAME,
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 200);
+
+    // check there are none
+    response = listAdapters(namespaceId);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    Assert.assertTrue(list.isEmpty());
   }
 
   private static void setupAdapter(Class<?> clz) throws IOException {
@@ -236,6 +296,11 @@ public class AdapterLifecycleTests extends AppFabricTestBase {
   private HttpResponse listAdapters(String namespaceId) throws Exception {
     return doGet(String.format("%s/namespaces/%s/adapters",
                                Constants.Gateway.API_VERSION_3, namespaceId));
+  }
+
+  private HttpResponse listAdaptersForTemplate(String namespaceId, String template) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/adapters?template=%s",
+                               Constants.Gateway.API_VERSION_3, namespaceId, template));
   }
 
   private HttpResponse getAdapter(String namespaceId, String adapterId) throws Exception {

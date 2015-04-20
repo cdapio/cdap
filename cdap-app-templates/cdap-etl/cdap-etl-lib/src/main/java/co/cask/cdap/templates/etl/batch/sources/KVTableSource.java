@@ -16,6 +16,8 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.templates.etl.api.Emitter;
@@ -26,12 +28,18 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 /**
  * CDAP Key Value Table Dataset Batch Source.
  */
-public class KVTableSource extends BatchReadableSource<byte[], byte[], KeyValue<byte[], byte[]>> {
+public class KVTableSource extends BatchReadableSource<byte[], byte[], StructuredRecord> {
+  private static final Schema SCHEMA = Schema.recordOf(
+    "keyValue",
+    Schema.Field.of("key", Schema.of(Schema.Type.BYTES)),
+    Schema.Field.of("value", Schema.of(Schema.Type.BYTES))
+  );
 
   @Override
   public void configure(StageConfigurer configurer) {
-    configurer.setName("KVTableSource");
-    configurer.setDescription("CDAP KeyValue Table Dataset Batch Source");
+    configurer.setName(getClass().getSimpleName());
+    configurer.setDescription("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field " +
+      "and a 'value' field. Both fields are of type bytes.");
     configurer.addProperty(new Property(NAME, "Dataset Name", true));
   }
 
@@ -41,7 +49,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], KeyValue<
   }
 
   @Override
-  public void transform(KeyValue<byte[], byte[]> input, Emitter<KeyValue<byte[], byte[]>> emitter) throws Exception {
-    emitter.emit(input);
+  public void transform(KeyValue<byte[], byte[]> input, Emitter<StructuredRecord> emitter) throws Exception {
+    emitter.emit(StructuredRecord.builder(SCHEMA).set("key", input.getKey()).set("value", input.getValue()).build());
   }
 }

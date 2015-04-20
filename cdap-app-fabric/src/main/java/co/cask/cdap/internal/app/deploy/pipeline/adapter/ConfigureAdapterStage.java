@@ -32,6 +32,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.twill.filesystem.Location;
 
 import java.io.Reader;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,7 +69,17 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
     InMemoryAdapterConfigurator inMemoryAdapterConfigurator =
       new InMemoryAdapterConfigurator(namespace, templateJarLocation, adapterName,
                                       deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec());
-    ConfigResponse configResponse = inMemoryAdapterConfigurator.config().get(120, TimeUnit.SECONDS);
+
+    ConfigResponse configResponse;
+
+    try {
+      configResponse = inMemoryAdapterConfigurator.config().get(120, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof Exception) {
+        throw (Exception) e.getCause();
+      }
+      throw e;
+    }
     InputSupplier<? extends Reader> configSupplier = configResponse.get();
     if (configResponse.getExitCode() != 0 || configSupplier == null) {
       throw new IllegalArgumentException("Failed to configure adapter: " + deploymentInfo);

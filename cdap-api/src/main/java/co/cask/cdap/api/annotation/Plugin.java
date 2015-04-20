@@ -14,16 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms.formats;
+package co.cask.cdap.api.annotation;
 
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Format for a record contained in a {@link StreamEvent}.
- *
+ * Annotate a class that it is a plugin.
  */
-public abstract class StreamEventRecordFormat extends RecordFormat<StreamEvent, StructuredRecord> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Plugin {
 
+  /**
+   * Default plugin type name.
+   */
+  String DEFAULT_TYPE = "plugin";
+
+  /**
+   * Returns the name of the plugin type. Default is 'plugin'.
+   */
+  String type() default DEFAULT_TYPE;
 }

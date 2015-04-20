@@ -5,7 +5,6 @@ angular.module(PKG.name + '.feature.flows')
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
 
-
     dataSrc.poll({
       _cdapNsPath: basePath + '/runs?status=running'
     }, function(res) {
