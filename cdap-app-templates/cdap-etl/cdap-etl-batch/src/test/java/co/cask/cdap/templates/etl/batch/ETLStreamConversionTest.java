@@ -128,7 +128,7 @@ public class ETLStreamConversionTest extends TestBase {
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(streamToStructuredRecord);
     transformList.add(structuredRecordToGeneric);
-    return new ETLBatchConfig("", source, sink, transformList);
+    return new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
   }
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

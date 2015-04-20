@@ -70,7 +70,7 @@ public class ETLMapReduceTest extends TestBase {
     ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, transformList);
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
 
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
@@ -133,7 +133,7 @@ public class ETLMapReduceTest extends TestBase {
         Table.PROPERTY_SCHEMA, schema.toString()));
     ETLStage sink = new ETLStage(TableSink.class.getSimpleName(),
       ImmutableMap.of("name", "outputTable", Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("", source, sink, Lists.<ETLStage>newArrayList());
+    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
 
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
@@ -198,6 +198,6 @@ public class ETLMapReduceTest extends TestBase {
     ETLStage sink = new ETLStage("KVTableSink", ImmutableMap.of("name", "table2"));
     ETLStage transform = new ETLStage("StructuredRecordToGenericRecordTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
-    return new ETLBatchConfig("", source, sink, transformList);
+    return new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
   }
 }
