@@ -138,16 +138,6 @@
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
               <execution>
-               <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
-               <id>rpm-package</id>
-                 <phase/>
-              </execution>
-              <execution>
-                <!--Skipping the rpm package phase for cdap-ui. It will be run from cdap-web-app-->
-                <id>deb-package</id>
-                <phase/>
-              </execution>
-              <execution>
                 <id>clean-node-modules</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -206,22 +196,22 @@
                 <configuration>
                   <target>
                     <copy todir = "${stage.opt.dir}/alpha/server">
-                      <fileset dir = "../cdap-ui/server"/>
+                      <fileset dir = "server"/>
                     </copy>
                     <copy todir = "${stage.opt.dir}/alpha/dist">
-                      <fileset dir = "../cdap-ui/dist"/>
+                      <fileset dir = "dist"/>
                     </copy>
                     <copy todir = "${stage.opt.dir}/alpha/node_modules">
-                      <fileset dir = "../cdap-ui/node_modules"/>
+                      <fileset dir = "node_modules"/>
                     </copy>
 
                     <copy todir = "${stage.opt.dir}/alpha/">
-                      <fileset dir = "../cdap-ui">
+                      <fileset dir = "./">
                         <include name="package.json" />
                       </fileset>
                     </copy>
                     <copy todir = "${stage.opt.dir}/alpha/">
-                      <fileset dir = "../cdap-ui">
+                      <fileset dir = "./">
                         <include name="server.js" />
                       </fileset>
                     </copy>

@@ -8,4 +8,4 @@ MAIN_CMD=node
 export NODE_ENV=production
 
 # Arguments for MAIN_CMD
-MAIN_CMD_ARGS="$CDAP_HOME/web-app/server.js"
+MAIN_CMD_ARGS="$CDAP_HOME/ui/alpha/server.js"
