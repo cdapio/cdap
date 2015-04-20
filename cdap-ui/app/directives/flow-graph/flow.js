@@ -45,7 +45,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.parentSelector = attr.parent;
       var metricCircleRadius = 25;
       var instanceCircleRadius = 10;
-      var flowletCircleRadius = 60;
+      var flowletCircleRadius = 50;
       // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
       var metricCountPadding = 5;
       var streamDiagramWidth = 40;
