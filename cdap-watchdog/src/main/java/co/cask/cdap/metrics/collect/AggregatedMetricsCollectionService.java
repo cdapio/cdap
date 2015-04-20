@@ -173,7 +173,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         while (iterator.hasNext()) {
           Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> entry = iterator.next();
           Map<String, AggregatedMetricsEmitter> metricEmitters = entry.getValue().asMap();
-          List<MetricValue> metricValues = Lists.newArrayList();
+          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(metricEmitters.size());
           for (Map.Entry<String, AggregatedMetricsEmitter> emitterEntry : metricEmitters.entrySet()) {
             MetricValue metricValue = emitterEntry.getValue().emit();
             // skip increment by 0

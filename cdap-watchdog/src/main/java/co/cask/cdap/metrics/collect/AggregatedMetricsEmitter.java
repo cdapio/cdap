@@ -31,7 +31,9 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
   private final String name;
+  // metric value
   private final AtomicLong value;
+  // specifies if the metric type is gauge or counter
   private final AtomicBoolean gaugeUsed;
 
   public AggregatedMetricsEmitter(String name) {
@@ -48,8 +50,10 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     this.value.addAndGet(value);
   }
 
+
   @Override
   public MetricValue emit() {
+    // todo CDAP-2195 - potential race condition , reseting value and type has to be done together
     long value = this.value.getAndSet(0);
     MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
     return new MetricValue(name, type, value);
