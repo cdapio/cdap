@@ -47,6 +47,9 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
   public void testMetricsSuccess() throws Exception {
     String context = "namespace.system.component.appfabric.handler.PingHandler.method.ping";
 
+    // todo: better fix needed: CDAP-2174
+    TimeUnit.SECONDS.sleep(1);
+
     long received = getMetricValue(context, "system.request.received");
     long successful = getMetricValue(context, "system.response.successful");
     long clientError = getMetricValue(context, "system.response.client-error");

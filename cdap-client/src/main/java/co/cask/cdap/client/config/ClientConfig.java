@@ -42,7 +42,7 @@ public class ClientConfig {
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
 
-  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
   @Nullable
   private ConnectionConfig connectionConfig;
@@ -105,6 +105,13 @@ public class ClientConfig {
    */
   public URL resolveURLV3(String path) throws MalformedURLException {
     return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
+  }
+
+  /**
+   * Resolves a path aginst the CDAP server, without applying an API version. For example, /ping
+   */
+  public URL resolveURLNoVersion(String path) throws MalformedURLException {
+    return getConnectionConfig().resolveURI(path).toURL();
   }
 
   /**

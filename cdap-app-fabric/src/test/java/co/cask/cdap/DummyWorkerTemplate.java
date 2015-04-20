@@ -56,7 +56,13 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
 
   public static class TWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(TWorker.class);
+    public static final String NAME = TWorker.class.getSimpleName();
     private volatile boolean running;
+
+    @Override
+    public void configure() {
+      setName(NAME);
+    }
 
     @Override
     public void run() {

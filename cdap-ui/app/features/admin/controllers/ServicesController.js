@@ -6,7 +6,7 @@ function ($scope, MyDataSource) {
   var myDataSrc = new MyDataSource($scope);
 
   myDataSrc.request({
-    _cdapPathV2: '/system/services'
+    _cdapPath: '/system/services'
   })
     .then(function(response) {
       $scope.services = response;

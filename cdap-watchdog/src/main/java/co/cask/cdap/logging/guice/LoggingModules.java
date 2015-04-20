@@ -18,21 +18,27 @@ package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.AsyncLogAppender;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
+import co.cask.cdap.logging.appender.standalone.StandaloneLogAppender;
 import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.save.LogMetricsPlugin;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+
+import java.util.Set;
 
 /**
  * Injectable modules for logging.
@@ -44,10 +50,11 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
-        bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
-          .to(FileLogAppender.class).in(Scopes.SINGLETON);
-        bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
+        bind(LogReader.class).to(FileLogReader.class);
+        bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
+        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
+          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
+        handlerBinder.addBinding().to(LogMetricsPlugin.class);
       }
     };
   }
@@ -57,10 +64,11 @@ public class LoggingModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(StandaloneLogReader.class);
-        bind(LogAppender.class).annotatedWith(Names.named(LoggingConfiguration.SYNC_LOG_APPENDER_ANNOTATION))
-          .to(FileLogAppender.class).in(Scopes.SINGLETON);
-        bind(LogAppender.class).to(AsyncLogAppender.class).in(Scopes.SINGLETON);
+        bind(LogReader.class).to(FileLogReader.class);
+        bind(LogAppender.class).toProvider(LogAppenderProvider.class).in(Scopes.SINGLETON);
+        Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
+          (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
+        handlerBinder.addBinding().to(LogMetricsPlugin.class);
       }
     };
   }
@@ -75,7 +83,30 @@ public class LoggingModules extends RuntimeModule {
         Multibinder<KafkaLogProcessor> handlerBinder = Multibinder.newSetBinder
           (binder(), KafkaLogProcessor.class, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS));
         handlerBinder.addBinding().to(KafkaLogWriterPlugin.class);
+        handlerBinder.addBinding().to(LogMetricsPlugin.class);
       }
     };
+  }
+
+
+  /**
+   * Provider for Async log appender and plugins to be used in standalone.
+   */
+  public static class LogAppenderProvider implements Provider<LogAppender> {
+    private final LogAppender fileLogAppender;
+    private final Set<KafkaLogProcessor> messageProcessors;
+
+    @Inject
+    public LogAppenderProvider(FileLogAppender fileLogAppender,
+                               @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors) {
+      this.fileLogAppender = fileLogAppender;
+      this.messageProcessors = messageProcessors;
+    }
+
+    @Override
+    public LogAppender get() {
+      AsyncLogAppender asyncLogAppender = new AsyncLogAppender(fileLogAppender);
+      return new StandaloneLogAppender(asyncLogAppender, messageProcessors);
+    }
   }
 }

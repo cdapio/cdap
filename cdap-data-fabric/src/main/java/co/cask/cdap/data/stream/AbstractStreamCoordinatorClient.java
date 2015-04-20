@@ -83,11 +83,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   protected abstract void streamCreated(Id.Stream streamId);
 
   /**
-<<<<<<< HEAD
-   * GEts invoked when a stream is deleted.
-=======
    * Gets invoked when a stream is deleted.
->>>>>>> 359a461e642438f1a92497f960348a275f4302e1
    */
   protected abstract void streamDeleted(Id.Stream streamId);
 
@@ -118,15 +114,14 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public void deleteStream(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception {
+  public void deleteStream(Id.Stream streamId, Runnable action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
-      CoordinatorStreamProperties properties = action.call();
-      if (properties != null) {
-        updateProperties(streamId, properties).get();
-        streamDeleted(streamId);
-      }
+      action.run();
+      // TODO: CDAP-2161 Ideally would be deleting the property. However it is not supported by PropertyStore right now.
+      propertyStore.set(streamId.toId(), null).get();
+      streamDeleted(streamId);
     } finally {
       lock.unlock();
     }
@@ -214,8 +209,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     public void onChange(String name, CoordinatorStreamProperties properties) {
       Id.Stream streamId = Id.Stream.fromId(name);
       if (properties == null) {
-        generationDeleted(streamId);
-        ttlDeleted(streamId);
+        deleted(streamId);
         oldProperties = null;
         return;
       }
@@ -256,15 +250,6 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void generationDeleted(Id.Stream streamId) {
-      try {
-        listener.generationDeleted(streamId);
-      } catch (Throwable t) {
-        LOG.error("Exception while calling StreamPropertyListener.generationDeleted", t);
-      }
-    }
-
-    @Override
     public void ttlChanged(Id.Stream streamId, long ttl) {
       try {
         listener.ttlChanged(streamId, ttl);
@@ -274,20 +259,20 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void ttlDeleted(Id.Stream streamId) {
-      try {
-        listener.ttlDeleted(streamId);
-      } catch (Throwable t) {
-        LOG.error("Exception while calling StreamPropertyListener.ttlDeleted", t);
-      }
-    }
-
-    @Override
     public void thresholdChanged(Id.Stream streamId, int threshold) {
       try {
         listener.thresholdChanged(streamId, threshold);
       } catch (Throwable t) {
         LOG.error("Exception while calling StreamPropertyListener.thresholdChanged", t);
+      }
+    }
+
+    @Override
+    public void deleted(Id.Stream streamId) {
+      try {
+        listener.deleted(streamId);
+      } catch (Throwable t) {
+        LOG.error("Exception while calling StreamPropertyListener.deleted", t);
       }
     }
   }

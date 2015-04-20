@@ -16,11 +16,12 @@
 
 package co.cask.cdap.templates.etl.batch.sinks;
 
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.SinkWriter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
@@ -46,7 +47,7 @@ public class CubeSink extends BatchWritableSink<CubeFact, byte[], CubeFact> {
   }
 
   @Override
-  public void write(CubeFact input, SinkWriter<byte[], CubeFact> writer) throws Exception {
-    writer.write(null, input);
+  public void transform(CubeFact input, Emitter<KeyValue<byte[], CubeFact>> emitter) throws Exception {
+    emitter.emit(new KeyValue<byte[], CubeFact>(null, input));
   }
 }

@@ -18,14 +18,12 @@ package co.cask.cdap.logging.appender.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.logging.LoggingConfiguration;
-import com.google.common.base.Throwables;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -56,11 +54,7 @@ public final class SimpleKafkaProducer {
 
     ProducerConfig config = new ProducerConfig(props);
 
-    try {
-      kafkaTopic = KafkaTopic.getTopic();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    kafkaTopic = KafkaTopic.getTopic();
     producer = new Producer<String, byte[]>(config);
   }
 

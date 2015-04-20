@@ -34,12 +34,13 @@
     <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
     <module>cdap-etl-lib</module>
+    <module>cdap-etl-realtime</module>
     <module>cdap-etl-test</module>
   </modules>
 
   <properties>
     <twitter4j.version>4.0.1</twitter4j.version>
-    <mysql.jdbc.version>5.1.6</mysql.jdbc.version>
+    <mysql.jdbc.version>5.1.35</mysql.jdbc.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
   </properties>

@@ -36,6 +36,7 @@ angular.module(PKG.name + '.feature.flows')
               });
             return defer.promise;
           }
+
         },
         ncyBreadcrumb: {
           parent: 'apps.detail.overview',
@@ -45,22 +46,6 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/detail.html',
         controller: 'FlowsDetailController'
       })
-        .state('flows.detail.flowlets', {
-          url: '/flowlets',
-          templateUrl: '/assets/features/flows/templates/tabs/flowlets.html',
-          controller: 'FlowletsController',
-          ncyBreadcrumb: {
-            label: 'Flowlets'
-          }
-        })
-          .state('flows.detail.flowlets.flowlet', {
-            url: '/:flowletid',
-            templateUrl: '/assets/features/flows/templates/tabs/runs/flowlets/detail.html',
-            controller: 'FlowsFlowletDetailController',
-            ncyBreadcrumb:{
-              label: '{{$state.params.flowletid}}'
-            }
-          })
 
       .state('flows.detail.runs', {
         url: '/runs',
@@ -78,6 +63,7 @@ angular.module(PKG.name + '.feature.flows')
             label: '{{$state.params.runid}}'
           }
         })
+
 
       .state('flows.detail.history', {
         url: '/history',

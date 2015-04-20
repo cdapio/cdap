@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.flows')
 
     var dataSrc = new MyDataSource($scope);
     $scope.activeTab = 0;
-    var flowletid = $state.params.flowletid;
+    var flowletid = $scope.$parent.activeFlowlet.name;
 
     // Initialize
     dataSrc
@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.flows')
 
     dataSrc
       .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + $state.params.flowletid + '/instances'
+        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances'
       })
       .then(function (res){
         $scope.provisionedInstances = res.instances;
@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.flows')
 
     dataSrc
       .poll({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + $state.params.flowletid + '/instances'
+        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances'
       }, function(res) {
         $scope.provisionedInstances = res.instances;
       });
@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.flows')
     $scope.setInstance = function () {
       dataSrc
         .request({
-          _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + $state.params.flowletid + '/instances',
+          _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances',
           method: 'PUT',
           body: {
             'instances': $scope.instance

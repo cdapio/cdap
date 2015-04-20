@@ -22,7 +22,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.RunIds;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -55,8 +56,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options, File hConfFile, File cConfFile,
-                                     ApplicationLauncher launcher) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -81,7 +82,7 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     LOG.info("Launching distributed worker {}", program.getName());
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
-                                                                            hConfFile, cConfFile, eventHandler));
+                                                                            localizeFiles, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkerTwillProgramController(program.getName(), controller, runId).startListen();
   }

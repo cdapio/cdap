@@ -15,12 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.RunIds;
+import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
@@ -34,9 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- *
+ * A {@link ProgramRunner} to start a {@link Workflow} program in distributed mode.
  */
 public final class DistributedWorkflowProgramRunner extends AbstractDistributedProgramRunner {
 
@@ -49,7 +52,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -63,7 +66,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(new WorkflowTwillApplication(program, workflowSpec,
-                                                                              hConfFile, cConfFile, eventHandler));
+                                                                              localizeFiles, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getName(), controller, runId).startListen();
   }

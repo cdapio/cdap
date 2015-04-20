@@ -163,7 +163,13 @@ angular.module(PKG.name+'.feature.dashboard')
 
         hist = [];
         for (var i = 0; i < vs.length; i++) {
-          hist.push({label: $scope.wdgt.metric.names[i], values: vs[i]});
+          // http://stackoverflow.com/questions/20306204/using-queryselector-with-ids-that-are-numbers
+          // http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
+          var metricName = $scope.wdgt.metric.names[i];
+          // Replace all invalid characters with '_'. This is ok for now, since we do not display the chart labels
+          // to the user. Source: http://stackoverflow.com/questions/13979323/how-to-test-if-selector-is-valid-in-jquery
+          var replacedMetricName = metricName.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=><\|])/g, '_');
+          hist.push({label: replacedMetricName, values: vs[i]});
         }
         $scope.chartHistory = hist;
       }

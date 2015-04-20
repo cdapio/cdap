@@ -15,12 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.RunIds;
+import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -44,9 +46,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- *
+ * A {@link ProgramRunner} to start a {@link Flow} program in distributed mode.
  */
 public final class DistributedFlowProgramRunner extends AbstractDistributedProgramRunner {
 
@@ -68,7 +71,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -89,7 +92,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
-                                                                            hConfFile, cConfFile, eventHandler));
+                                                                            localizeFiles, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater =
         new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory);

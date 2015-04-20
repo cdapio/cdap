@@ -12,7 +12,10 @@ module.exports = {
 
 
 var request = require('request'),
+    log4js = require('log4js'),
     promise = require('q');
+
+var log = log4js.getLogger('default');
 
 
 var PING_INTERVAL = 1000,
@@ -47,7 +50,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
   function pingAttempt () {
     attempts++;
 
-    console.log('Calling security endpoint: ', url, ' attempt ', attempts);
+    log.debug('Checking backend security endpoint ' + url + ' attempt ' + attempts);
     request({
         method: 'GET',
         url: url,
@@ -61,7 +64,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
             self.enabled = true;
             self.addresses = JSON.parse(body).auth_uri || [];
           }
-          console.info('Security is '+(self.enabled ? 'enabled': 'disabled')+'.');
+          log.info('CDAP security is '+(self.enabled ? 'enabled': 'disabled')+'.');
           deferred.resolve(self);
         }
         else {

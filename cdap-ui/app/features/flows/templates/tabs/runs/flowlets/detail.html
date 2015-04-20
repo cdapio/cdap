@@ -1,6 +1,7 @@
+<div ng-controller="FlowsFlowletDetailController">
 <div class="row">
   <div class="col-xs-6">
-    <h1><span ng-bind="$state.params.flowletid | caskCapitalizeFilter"></span></h1>
+    <h2><span>{{ ::activeFlowlet.name | caskCapitalizeFilter }}</span></h2>
     <p> {{description}} </p>
   </div>
 
@@ -16,7 +17,7 @@
         <td><strong>Instances:</strong></td>
         <td class="text-center">{{ provisionedInstances }}</td>
         <td><input class="form-control" type="number" ng-model="instance"></td>
-        <td><button class="btn btn-default btn-sm" ng-click="setIntance()" ng-disabled="instance < 1">Set</button></td>
+        <td><button class="btn btn-primary btn-sm" ng-click="setIntance()" ng-disabled="instance < 1">Set</button></td>
       </tr>
     </table>
   </div>
@@ -148,4 +149,5 @@
   <div class="well text-center" ng-if="outputs.length === 0">
     <h3>No Output</h3>
   </div>
+</div>
 </div>
