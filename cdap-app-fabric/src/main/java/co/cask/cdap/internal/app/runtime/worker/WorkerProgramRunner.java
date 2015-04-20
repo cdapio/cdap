@@ -112,7 +112,6 @@ public class WorkerProgramRunner implements ProgramRunner {
       metricsCollectionService, datasetFramework,
       txClient, discoveryServiceClient, streamWriterFactory,
       adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()));
-
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);

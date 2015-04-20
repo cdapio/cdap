@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -76,6 +77,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private final DatasetFramework datasetFramework;
   private final Metrics userMetrics;
   private final int instanceId;
+  private final LoggingContext loggingContext;
   private volatile int instanceCount;
   private final LoadingCache<Long, Map<DatasetCacheKey, Dataset>> datasetsCache;
   private final Program program;
@@ -92,7 +94,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(metricsCollectionService, program, runId.getId(), instanceId),
+          getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService, adapterSpec),
           datasetFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.program = program;
     this.specification = spec;
@@ -100,8 +102,12 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
-    this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
-                                                                 runId.getId(), instanceId));
+    this.loggingContext = createLoggingContext(program.getId(), runId, adapterSpec);
+    if (metricsCollectionService != null) {
+      this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
+    } else {
+      this.userMetrics = null;
+    }
     this.runtimeArgs = runtimeArgs.asMap();
     this.streamWriter = streamWriterFactory.create(program.getId());
 
@@ -139,24 +145,36 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       });
   }
 
+  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
+                                              @Nullable AdapterSpecification adapterSpec) {
+    String adapterName = adapterSpec == null ? null : adapterSpec.getName();
+    return new WorkerLoggingContext(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                    runId.getId(), String.valueOf(getInstanceId()), adapterName);
+  }
+
   @Override
   public Metrics getMetrics() {
     return userMetrics;
   }
 
   public LoggingContext getLoggingContext() {
-    //TODO: Add adapter name if present later
-    return new WorkerLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getId().getId(),
-                                    getRunId().getId(), String.valueOf(getInstanceId()), null);
+    return loggingContext;
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program,
-                                                     String runId, int instanceId) {
+  @Nullable
+  private static MetricsCollector getMetricCollector(Program program, String runId, int instanceId,
+                                                     @Nullable MetricsCollectionService service,
+                                                     @Nullable AdapterSpecification adapterSpec) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
+
+    if (adapterSpec != null) {
+      tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
+    }
+
     return service.getCollector(tags);
   }
 
