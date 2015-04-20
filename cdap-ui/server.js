@@ -23,7 +23,7 @@ var cdapConfig, securityConfig;
 if(process.env.LOG4JS_CONFIG) {
   log4js.configure({}, { reloadSecs: 600});
 } else {
-  log4js.configure(__dirname + "/conf/log4js.json", { reloadSecs: 10});
+  log4js.configure(__dirname + "/conf/log4js.json", { reloadSecs: 300});
 }
 
 // Get a log handle.
