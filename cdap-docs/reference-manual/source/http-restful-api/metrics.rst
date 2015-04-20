@@ -383,15 +383,25 @@ To search for the available metrics within a given context, perform an HTTP POST
        *default* namespace; in this case, returns a list of system and user-defined metrics.
 
 Querying A Metric
-.................
+-----------------
 
 Once you know the context and the metric to query, you can formulate a request for the
-metrics data.
+metrics data. 
+
+In general, a metrics query is performed by making an HTTP POST request, with parameters
+supplied either in the URL or in the body of the request. If you submit the parameters in
+the body, you can make multiple queries with a single request.
+
+Metric parameters include:
+
+- tag values for filtering by context;
+- metric names (multiple metric names can be queried in each request);
+- time range or ``aggregate=true`` for an aggregated result; and
+- tag values for grouping results (optional)
 
 To query a metric within a given context, perform an HTTP POST request::
 
-  POST '<base-url>/metrics/query?tag=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'
-
+  POST '<base-url>/metrics/query?tag=<context>&metric=<metric>&<time-range>[&groupBy=<tags>]'
 
 .. list-table::
    :widths: 20 80
@@ -400,16 +410,18 @@ To query a metric within a given context, perform an HTTP POST request::
    * - Parameter
      - Description
    * - ``<context>``
-     - Metrics context to search within. Consists of a collection of tags. 
-   * - ``<tags>`` *[Optional]*
-     - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
+     - Metrics context to search within, a collection of tags
    * - ``<metric>``
-     - Metric being queried
+     - Metric(s) being queried, a collection of metric names
    * - ``<time-range>``
      - A :ref:`time range <http-restful-api-metrics-time-range>` or ``aggregate=true`` for 
        all since the Application was deployed
+   * - ``<tags>`` *[Optional]*
+     - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
 
-.. rubric:: Examples
+
+Query Examples
+..............
 
 .. list-table::
    :widths: 20 80
@@ -448,99 +460,45 @@ To query a metric within a given context, perform an HTTP POST request::
    * - Description
      - Using a *User-defined* metric, *names.bytes* in a Service's Handler
 
-Query Tips
-----------
 
-- To retrieve the number of input data objects (“events”) processed by the Flowlet named *splitter*,
-  in the Flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
-  POST method::
+Query Results
+.............
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
-      &tag=flowlet:splitter&metric=system.process.events.processed&start=now-5s&count=5'
+Results from a query are returned as a JSON string, in the format::
 
-  This returns a JSON response that has one entry for every second in the requested time interval. It will have
-  values only for the times where the metric was actually emitted (shown here "pretty-printed")::
+  {"startTime":<start-time>, "endTime":<end-time>, "series":<series-array>}
 
-    {
-      "startTime": 1427225350,
-      "endTime": 1427225354,
-      "series": [
-        {
-          "metricName": "system.process.events.processed",
-          "grouping": { },
-          "data": [
-            {
-              "time": 1427225350,
-              "value": 760
-            },
-            {
-              "time": 1427225351,
-              "value": 774
-            },
-            {
-              "time": 1427225352,
-              "value": 792
-            },
-            {
-              "time": 1427225353,
-              "value": 756
-            },
-            {
-              "time": 1427225354,
-              "value": 766
-            }
-          ]
-        }
-      ]
-    }
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Name
+     - Description
+   * - ``<start-time>``
+     - Start time, in seconds, with 0 being from the beginning of the query records
+   * - ``<metric>``
+     - End time, in seconds
+   * - ``<series-array>``
+     - An array of metric results, which can be one series, a multiple time series, or
+       none (an empty array)
+
+If a particular metric has no value, a query will return an empty array in the
+``"series"`` of the results, such as::
+
+  {"startTime":0,"endTime":1429475995,"series":[]}
     
-- You can retrieve :ref:`results based on a run-id <http-restful-api-metrics-querying-by-run-id>`.
-
-- If a run-ID is not specified, CDAP aggregates the events processed for all the runs of a flow.
-
-  The resulting timeseries will represent aggregated values for the context specified.
-  Currently, summation is used as the aggregation function. So, if you query for the
-  ``system.process.events.processed`` metric for a Flow |---| thus across all Flowlets
-  |---| since this metric was actually emitted at the Flowlet level, the resulting values
-  retrieved will be a sum across all Flowlets of the Flow.
-
-- If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
-  API at the Flow context::
-
-    POST '<base-url>/metrics/query?tag=namespace:default.app:CountRandom?tag=flow:CountRandom?tag=flowlet:*
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-- Similarly, you can address the context of all Flows of an Application, an entire Application, or the entire 
-  namespace of a CDAP instance::
-
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:*
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-    POST '<base-url>/metrics/query?tag=namespace:default
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-- To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
-  and specify the user-defined metric at the end of the request.
-
-  For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
-
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver
-      &metric=user.names.bytes&aggregate=true'
-
-- If a particular metric has no value, a query will return an empty array in the ``"series"`` of the results, such as::
-
-    {"startTime":0,"endTime":1429475995,"series":[]}
-    
-  You can also get such a result from querying a metric that does not exist, either because it does not exist at the 
-  context given or if the query is incorrectly formulated::
+You can also receive such a result from querying a metric that does not exist, either
+because it does not exist at the context given or if the query is incorrectly
+formulated:
   
-    ...metric=user.names.bytes?aggregate=true
-    
-  will return the empty result, as the metric will be interpreted as ``"user.names.bytes?aggregate=true"`` instead of
-  ``"user.names.bytes"``.
+  ``...metric=user.names.bytes?aggregate=true``
+  
+instead of the correct
+
+  ``...metric=user.names.bytes&aggregate=true``
+  
+will return the empty result, as the metric name will be interpreted as
+``"user.names.bytes?aggregate=true"`` instead of ``"user.names.bytes"``.
 
 
 .. _http-restful-api-v3-metrics-multiple:
@@ -551,8 +509,8 @@ Querying for Multiple Metrics
 
 Retrieving multiple metrics at once can be accomplished by issuing an HTTP POST request
 with a JSON list as the request body that enumerates the name and attributes for each
-metric. The format of the request and the JSON body depends if the metrics share the same
-context or are being called for different contexts. 
+metric. The format of the request and the JSON body depends on whether the metrics share
+the same context or are being called for different contexts. 
 
 .. rubric:: Multiple Metrics with the Same Context
 
@@ -651,9 +609,7 @@ multiple tags for grouping by providing a list, similar to a tag combination lis
    * - ``groupBy=app&groupBy=flow``
      - Retrieves a time series for each app and flow combination
 
-.. rubric:: Example
-
-The method::
+An example method::
 
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&
     groupBy=flow&metric=user.customers.count&start=now-2s&end=now'
@@ -726,7 +682,6 @@ difference calculated between the start and end times:
 - ``(endTime - startTime) >= 610 seconds``, resolution will be 1 minute; 
 - otherwise, resolution will be 1 second.
 
-
 .. list-table::
    :header-rows: 1
    :widths: 30 70
@@ -774,13 +729,14 @@ For example, this request will retrieve the completion percentage for the map-st
     
   {"startTime":0,"endTime":1429497700,"series":[{"metricName":"system.process.completion",
    "grouping":{},"data":[{"time":0,"value":200}]}]} 
-  
+
+ 
 .. _http-restful-api-metrics-querying-by-run-id:
 
 Querying by Run-ID
 ..................
 
-Each execution of an program (Flow, MapReduce, Spark, Services, Worker) has an :ref:`associated 
+Each execution of an program (Flow, MapReduce, Spark, Service, Worker) has an :ref:`associated 
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
 metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see 
 the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical
@@ -815,3 +771,85 @@ the query time |---| current time |---| or *now* at the time of the query) somet
 
   {"startTime":0,"endTime":1421188775,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
+
+Query Tips
+..........
+
+- To retrieve the number of input data objects (“events”) processed by the Flowlet named *splitter*,
+  in the Flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
+  POST method::
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
+      &tag=flowlet:splitter&metric=system.process.events.processed&start=now-5s&count=5'
+
+  This returns a JSON response that has one entry for every second in the requested time interval. It will have
+  values only for the times where the metric was actually emitted (shown here "pretty-printed")::
+
+    {
+      "startTime": 1427225350,
+      "endTime": 1427225354,
+      "series": [
+        {
+          "metricName": "system.process.events.processed",
+          "grouping": { },
+          "data": [
+            {
+              "time": 1427225350,
+              "value": 760
+            },
+            {
+              "time": 1427225351,
+              "value": 774
+            },
+            {
+              "time": 1427225352,
+              "value": 792
+            },
+            {
+              "time": 1427225353,
+              "value": 756
+            },
+            {
+              "time": 1427225354,
+              "value": 766
+            }
+          ]
+        }
+      ]
+    }
+    
+- If a run-ID is not specified, CDAP aggregates the events processed for all the runs of a flow.
+  The resulting timeseries will represent aggregated values for the context specified.
+  Currently, summation is used as the aggregation function.
+  
+  For example, if you query for the ``system.process.events.processed`` metric for a Flow
+  |---| and thus across all Flowlets |---| since this metric was actually emitted at the
+  Flowlet level, the resulting values retrieved will be a sum across all Flowlets of the Flow.
+
+- If you want the number of input objects processed across all Flowlets of a Flow, you 
+  address the Metrics API at the Flow context::
+
+    POST '<base-url>/metrics/query?tag=namespace:default.app:CountRandom?tag=flow:CountRandom?tag=flowlet:*
+      &metric=system.process.events.processed&start=now-5s&count=5'
+
+  Similarly, you can address the context of all Flows of an Application, an entire Application, 
+  or the entire  namespace of a CDAP instance::
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:*
+      &metric=system.process.events.processed&start=now-5s&count=5'
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom
+      &metric=system.process.events.processed&start=now-5s&count=5'
+
+    POST '<base-url>/metrics/query?tag=namespace:default
+      &metric=system.process.events.processed&start=now-5s&count=5'
+
+- To request user-defined metrics instead of system metrics, specify ``user`` instead of 
+  ``cdap`` in the URL and specify the user-defined metric at the end of the request.
+
+  For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver
+      &metric=user.names.bytes&aggregate=true'
+
+
