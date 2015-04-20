@@ -84,7 +84,7 @@ STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
 REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/cdap}
 REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/cdap}
 
-decho "OPT_DIR=${DOC_DIR}"
+decho "OPT_DIR=${OPT_DIR}"
 decho "BRANCH_NAME=${BRANCH_NAME}"
 
 get_version
