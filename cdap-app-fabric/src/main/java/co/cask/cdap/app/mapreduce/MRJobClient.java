@@ -84,11 +84,9 @@ public class MRJobClient {
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());
     TaskReport[] reduceTaskReports = jobClient.getReduceTaskReports(thisJob.getJobID());
 
-    return new MRJobInfo(thisJob.getState().name(),
-                         thisJob.getStartTime(), thisJob.getFinishTime(),
-                         thisJob.getMapProgress(), thisJob.getReduceProgress(),
+    return new MRJobInfo(thisJob.getMapProgress(), thisJob.getReduceProgress(),
                          groupToMap(counters.getGroup(TaskCounter.class.getName())),
-                         toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports));
+                         toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports), true);
   }
 
   private JobStatus findJobForRunId(JobStatus[] jobs, Id.Run runId) throws NotFoundException {

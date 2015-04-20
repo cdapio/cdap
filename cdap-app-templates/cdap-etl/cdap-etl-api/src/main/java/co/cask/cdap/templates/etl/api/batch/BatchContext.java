@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
@@ -45,11 +44,4 @@ public interface BatchContext extends RuntimeContext, DatasetContext {
   /**
    */
   <T> T getHadoopJob();
-
-  /**
-   * Overrides the resources, such as memory and virtual cores, to use for the execution of this Batch job.
-   *
-   * @param resources Resources to be used for execution of this job
-   */
-  void setResources(Resources resources);
 }

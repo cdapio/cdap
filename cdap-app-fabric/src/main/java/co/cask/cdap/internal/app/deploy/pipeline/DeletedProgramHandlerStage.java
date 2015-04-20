@@ -137,10 +137,11 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
     LOG.debug("Deleting metrics for application {}", application);
     for (String flow : flows) {
+      // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
       String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.API_VERSION_2,
+                                 Constants.Gateway.API_VERSION_3,
                                  "ignored",
                                  application, flow);
 

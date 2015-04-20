@@ -72,6 +72,10 @@ public class ConnectionConfig {
     return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
   }
 
+  public URI resolveURI(String path) {
+    return getURI().resolve(String.format("/%s", path));
+  }
+
   public URI resolveURI(String apiVersion, String path) {
     return getURI().resolve(String.format("/%s/%s", apiVersion, path));
   }

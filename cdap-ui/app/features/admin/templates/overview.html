@@ -1,10 +1,6 @@
 <div ng-hide="welcomeIsHidden">
   <div class="panel panel-message">
     <div class="panel-heading clearfix">
-      <a class="btn-close pull-right" ng-click="hideWelcome()" >
-        <span class="fa fa-close"></span>
-        <span class="sr-only"> Hide Welcome Message </span>
-      </a>
       <h3>
         Welcome CDAP Admin!
       </h3>
@@ -50,25 +46,35 @@
       <h3>Namespaces</h3>
     </div>
     <div class="col-xs-6 text-right h3">
-      <a ui-sref="admin.namespace.create" class="btn btn-success">Add Namespace</a>
+      <a ui-sref="admin.namespace.create" class="btn btn-default"><span class="fa fa-plus"></span> Add Namespace</a>
     </div>
   </div>
-  <table class="table table-responsive" cask-sortable>
-    <thead>
-      <tr ng-class="{'sort-enabled': nsList.length>0}">
-        <th data-predicate="name" data-predicate-default="reverse">Name</th>
-        <th data-predicate="appsCount">Apps</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
-        <td>
-          <span ng-bind="namespace.name"></span>
-        </td>
-        <td>
-          <span ng-bind="namespace.appsCount"></span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': nsList.length>0}">
+            <th data-predicate="name" data-predicate-default="reverse">Name</th>
+            <th data-predicate="appsCount">Apps</th>
+            <th>Datasets</th>
+            <th>Streams</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <span ng-bind="namespace.name"></span>
+            </td>
+            <td>
+              <span ng-bind="namespace.appsCount"></span>
+            </td>
+            <td>
+            <span ng-bind="namespace.datasetsCount"></span>
+            </td>
+            <td>
+            <span ng-bind="namespace.streamsCount"></span>
+            </td>
+          </tr>
+        </tbody>
+    </table>
+  </div>
 </div>

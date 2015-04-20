@@ -20,8 +20,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.StructuredRecordSerializer;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -35,7 +35,7 @@ import javax.script.ScriptException;
 /**
  * Filters records using custom javascript provided by the config.
  */
-public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+public class ScriptFilterTransform extends TransformStage<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT = "script";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())

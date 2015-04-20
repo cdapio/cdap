@@ -25,7 +25,8 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
-import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
+import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -74,7 +75,7 @@ public class ETLStreamConversionTest extends TestBase {
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
 
   @Test
-  public void testConfig() throws Exception {
+  public void testStreamConversion() throws Exception {
     String filesetName = "converted_stream";
 
     addDatasetInstance("timePartitionedFileSet", filesetName, FileSetProperties.builder()
@@ -91,7 +92,7 @@ public class ETLStreamConversionTest extends TestBase {
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
     StreamWriter streamWriter = batchManager.getStreamWriter("myStream");
     streamWriter.createStream();
-    streamWriter.send(ImmutableMap.of("header1", "bar"), "AAPL,10,500.32");
+    streamWriter.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig(filesetName);
@@ -116,18 +117,20 @@ public class ETLStreamConversionTest extends TestBase {
   }
 
   private ETLBatchConfig constructETLBatchConfig(String fileSetName) {
-    ETLStage source = new ETLStage(StreamBatchSource.class.getSimpleName(),
-                                   ImmutableMap.of("streamName", "myStream", "frequency", "1m"));
-    ETLStage streamToStructuredRecord = new ETLStage(StreamToStructuredRecordTransform.class.getSimpleName(),
-                                       ImmutableMap.of("format.name", Formats.CSV, "schema", BODY_SCHEMA.toString()));
+    ETLStage source = new ETLStage(StreamBatchSource.class.getSimpleName(), ImmutableMap.<String, String>builder()
+      .put(Properties.Stream.NAME, "myStream")
+      .put(Properties.Stream.DURATION, "10m")
+      .put(Properties.Stream.FORMAT, Formats.CSV)
+      .put(Properties.Stream.SCHEMA, BODY_SCHEMA.toString())
+      .put("format.setting.delimiter", "|")
+      .build());
     ETLStage structuredRecordToGeneric = new ETLStage(StructuredRecordToGenericRecordTransform.class.getSimpleName(),
-                                       ImmutableMap.<String, String>of());
+      ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getSimpleName(),
                                  ImmutableMap.of("schema", EVENT_SCHEMA.toString(), "name", fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
-    transformList.add(streamToStructuredRecord);
     transformList.add(structuredRecordToGeneric);
-    return new ETLBatchConfig("", source, sink, transformList);
+    return new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
   }
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

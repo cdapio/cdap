@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.common;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
@@ -40,6 +41,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.sql.rowset.serial.SerialBlob;
 
 /**
  * Writable class for DB Source/Sink
@@ -49,6 +51,29 @@ import javax.annotation.Nullable;
 public class DBRecord implements Writable, DBWritable {
 
   private StructuredRecord record;
+  /**
+   * Need to cache {@link ResultSetMetaData} of the record for use during writing to a table.
+   * This is because we cannot rely on JDBC drivers to properly set metadata in the {@link PreparedStatement}
+   * passed to the #write method in this class.
+   */
+  private ResultSetMetaData metadata;
+
+  /**
+   * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
+   *
+   * @param record the {@link StructuredRecord} to construct the {@link DBRecord} from
+   */
+  public DBRecord(StructuredRecord record, ResultSetMetaData metadata) {
+    this.record = record;
+    this.metadata = metadata;
+  }
+
+  /**
+   * Used in map-reduce. Do not remove.
+   */
+  @SuppressWarnings("unused")
+  public DBRecord() {
+  }
 
   public void readFields(DataInput in) throws IOException {
     // no-op, since we may never need to support a scenario where you read a DBRecord from a non-RDBMS source
@@ -114,7 +139,7 @@ public class DBRecord implements Writable, DBWritable {
     for (int i = 0; i < schemaFields.size(); i++) {
       Schema.Field field = schemaFields.get(i);
       String fieldName = field.getName();
-      Schema.Type fieldType = field.getSchema().getType();
+      Schema.Type fieldType = getNonNullableType(field);
       Object fieldValue = record.get(fieldName);
       // In JDBC, field indices start with 1
       writeToDB(stmt, fieldType, fieldValue, i + 1);
@@ -122,7 +147,7 @@ public class DBRecord implements Writable, DBWritable {
   }
 
   private Schema.Type getType(int sqlType) throws SQLException {
-    // Type.STRING covers sql types - case VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
+    // Type.STRING covers sql types - VARCHAR,CHAR,CLOB,LONGNVARCHAR,LONGVARCHAR,NCHAR,NCLOB,NVARCHAR
     Schema.Type type = Schema.Type.STRING;
     switch (sqlType) {
       case Types.NULL:
@@ -180,6 +205,18 @@ public class DBRecord implements Writable, DBWritable {
         throw new SQLException(new UnsupportedTypeException("Unsupported SQL Type: " + sqlType));
     }
 
+    return type;
+  }
+
+  private Schema.Type getNonNullableType(Schema.Field field) {
+    Schema.Type type;
+    if (field.getSchema().isNullable()) {
+      type = field.getSchema().getNonNullable().getType();
+    } else {
+      type = field.getSchema().getType();
+    }
+    Preconditions.checkArgument(type.isSimpleType(),
+                                "only simple types are supported (boolean, int, long, float, double, bytes).");
     return type;
   }
 
@@ -271,8 +308,8 @@ public class DBRecord implements Writable, DBWritable {
         stmt.setNull(fieldIndex, fieldIndex);
         break;
       case STRING:
-        // write string appropriately
-        writeString(stmt, fieldIndex, fieldValue);
+        // clob can also be written to as setString
+        stmt.setString(fieldIndex, (String) fieldValue);
         break;
       case BOOLEAN:
         stmt.setBoolean(fieldIndex, (Boolean) fieldValue);
@@ -301,52 +338,40 @@ public class DBRecord implements Writable, DBWritable {
   }
 
   private void writeBytes(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
-    switch (stmt.getMetaData().getColumnType(fieldIndex)) {
-      case Types.BLOB:
-        stmt.setBlob(fieldIndex, (Blob) fieldValue);
-        break;
-      default:
-        // handles BINARY, VARBINARY and LOGVARBINARY
-        stmt.setBytes(fieldIndex, (byte []) fieldValue);
-        break;
+    byte [] byteValue = (byte []) fieldValue;
+    int parameterType = metadata.getColumnType(fieldIndex);
+    if (Types.BLOB == parameterType) {
+      stmt.setBlob(fieldIndex, new SerialBlob(byteValue));
+      return;
     }
+    // handles BINARY, VARBINARY and LOGVARBINARY
+    stmt.setBytes(fieldIndex, (byte []) fieldValue);
   }
 
   private void writeInt(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
-    switch (stmt.getMetaData().getColumnType(fieldIndex)) {
-      case Types.TINYINT:
-      case Types.SMALLINT:
-        stmt.setShort(fieldIndex, (Short) fieldValue);
-        break;
-      default:
-        stmt.setInt(fieldIndex, (Integer) fieldValue);
+    Integer intValue = (Integer) fieldValue;
+    int parameterType = metadata.getColumnType(fieldIndex);
+    if (Types.TINYINT == parameterType || Types.SMALLINT == parameterType) {
+      stmt.setShort(fieldIndex, intValue.shortValue());
+      return;
     }
-  }
-
-  private void writeString(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
-    switch (stmt.getMetaData().getColumnType(fieldIndex)) {
-      case Types.CLOB:
-        stmt.setClob(fieldIndex, (Clob) fieldValue);
-        break;
-      default:
-        stmt.setString(fieldIndex, (String) fieldValue);
-        break;
-    }
+    stmt.setInt(fieldIndex, intValue);
   }
 
   private void writeLong(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
-    switch (stmt.getMetaData().getColumnType(fieldIndex)) {
+    Long longValue = (Long) fieldValue;
+    switch (metadata.getColumnType(fieldIndex)) {
       case Types.DATE:
-        stmt.setDate(fieldIndex, (Date) fieldValue);
+        stmt.setDate(fieldIndex, new Date(longValue));
         break;
       case Types.TIME:
-        stmt.setTime(fieldIndex, (Time) fieldValue);
+        stmt.setTime(fieldIndex, new Time(longValue));
         break;
       case Types.TIMESTAMP:
-        stmt.setTimestamp(fieldIndex, (Timestamp) fieldValue);
+        stmt.setTimestamp(fieldIndex, new Timestamp(longValue));
         break;
       default:
-        stmt.setLong(fieldIndex, (Long) fieldValue);
+        stmt.setLong(fieldIndex, longValue);
         break;
     }
   }

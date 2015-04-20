@@ -24,8 +24,8 @@ import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
@@ -266,7 +266,7 @@ public class AdapterService extends AbstractIdleService {
    * @param adapterName name of the adapter to create
    * @param adapterConfig config for the adapter to create
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
-   * @throws IllegalArgumentException on other input errors.
+   * @throws IllegalArgumentException if the adapter config is invalid.
    */
   public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
     throws IllegalArgumentException, AdapterAlreadyExistsException {
@@ -298,7 +298,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws CannotBeDeletedException if the adapter is not stopped.
    */
   public void removeAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, CannotBeDeletedException {
+    throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
@@ -330,6 +330,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
+    LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
     ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
@@ -340,8 +341,8 @@ public class AdapterService extends AbstractIdleService {
       LOG.warn("Invalid program type {}.", programType);
       throw new InvalidAdapterOperationException("Invalid program type " + programType);
     }
-
     setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
+    LOG.info("Stopped Adapter {} in namespace {}", adapterName, namespace.getId());
   }
 
   /**
@@ -413,7 +414,8 @@ public class AdapterService extends AbstractIdleService {
     return null;
   }
 
-  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+  @VisibleForTesting
+  Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     ProgramType programType = appTemplateInfos.get().get(adapterSpec.getTemplate()).getProgramType();
     Id.Program program;
@@ -446,12 +448,17 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
-    throws NotFoundException, SchedulerException {
+    throws NotFoundException, SchedulerException, InterruptedException, ExecutionException {
     Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
     scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
     store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+    List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
+                                         Integer.MAX_VALUE);
+    for (RunRecord record : activeRuns) {
+      lifecycleService.stopProgram(RunIds.fromString(record.getPid()));
+    }
   }
 
   private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
@@ -536,7 +543,8 @@ public class AdapterService extends AbstractIdleService {
   // datasets and streams. At the end it will write to the store with the adapter spec.
   private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
                                              ApplicationTemplateInfo applicationTemplateInfo,
-                                             ApplicationSpecification templateSpec, AdapterConfig adapterConfig) {
+                                             ApplicationSpecification templateSpec,
+                                             AdapterConfig adapterConfig) throws IllegalArgumentException {
 
     Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
@@ -546,18 +554,18 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-    try {
-      AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
-        adapterConfig, applicationTemplateInfo, templateSpec);
-      Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
-      if (!namespaceHomeLocation.exists()) {
-        String msg = String.format("Home directory %s for namespace %s not found",
-                                   namespaceHomeLocation.toURI().getPath(), namespace);
-        LOG.error(msg);
-        throw new FileNotFoundException(msg);
-      }
+    AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
+      adapterConfig, applicationTemplateInfo, templateSpec);
 
+    try {
       return manager.deploy(namespace, adapterName, deploymentInfo).get();
+    } catch (ExecutionException e) {
+      // error handling for manager could use some work...
+      Throwable cause = e.getCause();
+      if (cause instanceof IllegalArgumentException) {
+        throw (IllegalArgumentException) cause;
+      }
+      throw new RuntimeException(e);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

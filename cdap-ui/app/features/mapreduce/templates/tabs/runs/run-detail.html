@@ -1,5 +1,5 @@
 <div class="btn-group pull-right">
-  <button class="btn btn-default"
+  <button class="btn btn-default no-border"
       ng-repeat="tab in tabs"
       ng-click="selectTab(tab)"
       ng-class="{'active': tab.title == activeTab.title}"
@@ -11,21 +11,19 @@
 <div class="mapreduce-components">
   <div class="row run-status">
     <div class="col-sm-6">
-      <div class="run-status-box row">
-        <div class="col-sm-4 item">
-          <div class="title"><strong>Status</strong></div>
-          <div class="">{{info.state || 'Not Available'}}</div>
-        </div>
-        <div class="col-sm-4 item">
-          <div class="title"><strong>Started</strong></div>
-          <div class="">{{info.startTime || 'Not Available' | date: 'medium' }}</div>
-        </div>
-        <div class="col-sm-4 item">
-          <div class="title"><strong>Duration</strong></div>
-          <div class="" ng-show="info.finishTime !== 0">{{ (info.finishTime - info.startTime) | amDurationFormat}}</div>
-          <div class="" ng-hide="info.finishTime !== 0">N/A</div>
-        </div>
-      </div>
+      <table class="table table-curved table-status">
+        <thead>
+          <th> Status </th>
+          <th> Started </th>
+          <th> Duration </th>
+        </thead>
+        <tbody>
+          <td> {{info.state || 'Not Available'}} </td>
+          <td> {{info.startTime || 'Not Available' | date: 'medium' }} </td>
+          <td ng-show="info.finishTime !== 0"> {{ (info.finishTime - info.startTime) | amDurationFormat}} </td>
+          <td ng-hide="info.finishTime !== 0"> &mdash; </td>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

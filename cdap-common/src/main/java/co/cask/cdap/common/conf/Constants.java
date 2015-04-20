@@ -308,8 +308,7 @@ public final class Constants {
    * Gateway Configurations.
    */
   public static final class Gateway {
-    public static final String API_VERSION_2_TOKEN = "v2";
-    public static final String API_VERSION_2 = "/" + API_VERSION_2_TOKEN;
+
     /**
      * v3 API.
      */

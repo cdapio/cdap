@@ -37,7 +37,8 @@ public abstract class ApplicationTemplate<T> implements Application {
    * @param name name of the adapter
    * @param configuration adapter configuration
    * @param configurer {@link AdapterConfigurer}
-   * @throws Exception if the configuration is not valid
+   * @throws IllegalArgumentException if the configuration is not valid
+   * @throws Exception if there was some other error configuring the adapter
    */
   public void configureAdapter(String name, T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op

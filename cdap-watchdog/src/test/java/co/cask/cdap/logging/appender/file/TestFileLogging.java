@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -30,11 +32,12 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.StandaloneLogReader;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -74,13 +77,19 @@ public class TestFileLogging {
       new TransactionModules().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules()
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    LogAppender appender = injector.getInstance(LogAppender.class);
+    LogAppender appender = injector.getInstance(FileLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
@@ -98,26 +107,24 @@ public class TestFileLogging {
   @Test
   public void testGetLogNext() throws Exception {
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
-    StandaloneLogReader logReader = injector.getInstance(StandaloneLogReader.class);
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLogPrev() throws Exception {
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
-    StandaloneLogReader logReader = injector.getInstance(StandaloneLogReader.class);
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLog() throws Exception {
     // LogReader.getLog is tested in LogSaverTest for distributed mode
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
-    StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
+    FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 60, Filter.EMPTY_FILTER,
                        logCallback1);

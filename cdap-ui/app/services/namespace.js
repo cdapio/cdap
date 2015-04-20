@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe) {
 
     this.namespaceList = [];
 
@@ -20,20 +20,26 @@ angular.module(PKG.name + '.services')
           {
             _cdapPath: '/namespaces',
             method: 'GET'
-          },
-          (function(res) {
+          })
+            .then(
+              (function(res) {
 
-            if(!res.length) {
-              res = [{
-                id: 'default',
-                name: 'default'
-              }];
-            }
+                if(!res.length) {
+                  res = [{
+                    id: 'default',
+                    name: 'default'
+                  }];
+                }
 
-            this.namespaceList = res;
-            queryInProgress.resolve(res);
-            queryInProgress = null;
-          }).bind(this)
+                this.namespaceList = res;
+                queryInProgress.resolve(res);
+                queryInProgress = null;
+              }).bind(this),
+              function (err) {
+                queryInProgress.reject(err);
+                queryInProgress = null;
+                EventPipe.emit('backendDown', 'Problem accessing Namespaces. Please check if CDAP is online');
+              }
         );
 
       }
