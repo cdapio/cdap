@@ -43,8 +43,7 @@
     "karma-jasmine": "^0.3.5",
     "main-bower-files": "^2.6.2",
     "merge-stream": "^0.1.7",
-    "protractor": "^1.8.0",
-    "log4js": "^0.6.24"
+    "protractor": "^1.8.0"
   },
   "dependencies": {
     "body-parser": "^1.12.1",
@@ -55,6 +54,7 @@
     "q": "^1.2.0",
     "request": "^2.53.0",
     "serve-favicon": "^2.2.0",
-    "sockjs": "^0.3.15"
+    "sockjs": "^0.3.15",
+    "log4js": "^0.6.24"
   }
 }
