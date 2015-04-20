@@ -35,7 +35,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -44,6 +43,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -52,6 +52,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -111,7 +112,17 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                           Map<String, String> properties) {
+      }
+
+      @Override
       public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      }
+
+      @Override
+      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                           Map<String, String> properties) {
       }
 
       @Override
@@ -134,7 +145,11 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      }
 
+      @Override
+      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                                 Map<String, String> properties) {
       }
 
       @Override

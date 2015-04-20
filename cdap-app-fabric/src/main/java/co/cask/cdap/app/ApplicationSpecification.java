@@ -22,8 +22,6 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.Procedure;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -33,6 +31,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Application Specification used in core code.
@@ -43,6 +42,12 @@ public interface ApplicationSpecification {
    * @return Name of the Application.
    */
   String getName();
+
+  /**
+   * @return Version of the Application, according to the Bundle-Version in the jar manifest.
+   */
+  @Nullable
+  String getVersion();
 
   /**
    * @return Description of the Application.
@@ -74,14 +79,6 @@ public interface ApplicationSpecification {
    *         for {@link Flow}s configured for the Application.
    */
   Map<String, FlowSpecification> getFlows();
-
-  /**
-   * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
-   *         for {@link Procedure}s configured for the Application.
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  Map<String, ProcedureSpecification> getProcedures();
 
   /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}

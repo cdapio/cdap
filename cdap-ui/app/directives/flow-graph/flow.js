@@ -4,7 +4,8 @@ var baseDirective = {
   restrict: 'E',
   templateUrl: 'flow-graph/flow.html',
   scope: {
-    model: '='
+    model: '=',
+    click: '&'
   },
   controller: 'myFlowController'
 };
@@ -32,16 +33,17 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
    */
   $scope.getInstances = function(nodeId) {
     return $scope.instanceMap[nodeId].instances ? $scope.instanceMap[nodeId].instances : 0;
-  }
+  };
 
   $scope.$watch('model', update);
   $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function ($filter, $state) {
+module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = genericRender.bind(null, scope, $filter);
+      scope.parentSelector = attr.parent;
       var metricCircleRadius = 25;
       var instanceCircleRadius = 10;
       var flowletCircleRadius = 60;
@@ -160,9 +162,16 @@ module.directive('myFlowGraph', function ($filter, $state) {
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         if (instance.type === 'STREAM') {
-          $state.go('flows.detail.runs.tabs.status.streamsDetail', {streamId: nodeId});
+          myStreamService.show(nodeId);
         } else {
-          $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
+          // $state.go('flows.detail.flowlets.flowlet', { flowletid: nodeId });
+
+          scope.$apply(function(scope) {
+            var fn = scope.click();
+            if ('undefined' !== typeof fn) {
+              fn(nodeId);
+            }
+          });
         }
       };
 
@@ -174,7 +183,7 @@ module.directive('myFlowGraph', function ($filter, $state) {
         var base = radius;
         var extra = (instances.toString().length - 1) * base / 2;
         return base + extra;
-      }
+      };
 
     }
   }, baseDirective);
@@ -340,10 +349,17 @@ function genericRender(scope, $filter) {
   });
 
   angular.extend(renderer.shapes(), scope.getShapes());
-
+  var selector = '';
+  // Making the query to be more specific instead of doing
+  // it under the entire DOM. This allows us to draw the diagram
+  // in multiple places.
+  if (scope.parentSelector) {
+    selector += scope.parentSelector;
+  }
+  selector += ' svg';
   // Set up an SVG group so that we can translate the final graph and tooltip.
-  var svg = d3.select('svg').attr('fill', 'white');
-  var svgGroup = d3.select('svg g');
+  var svg = d3.select(selector).attr('fill', 'white');
+  var svgGroup = d3.select(selector + ' g');
   var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0]);
@@ -357,7 +373,7 @@ function genericRender(scope, $filter) {
   // svg.call(zoom);
 
   // Run the renderer. This is what draws the final graph.
-  renderer(d3.select('svg g'), g);
+  renderer(d3.select(selector + ' g'), g);
 
   // Set up onclick after rendering.
   svg
@@ -368,6 +384,8 @@ function genericRender(scope, $filter) {
     .selectAll('g.node text')
     .on('mouseover', scope.handleShowTip)
     .on('mouseout', scope.handleHideTip);
+
+  scope.$on('$destroy', scope.handleHideTip);
 
   // Center svg.
   var initialScale = 1.1;
@@ -387,12 +405,12 @@ function genericRender(scope, $filter) {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
       })
       .show();
-  }
+  };
 
   /**
    * Handles hiding tooltip on mouseout of node name.
    */
   scope.handleHideTip = function(nodeId) {
     tip.hide();
-  }
-};
+  };
+}

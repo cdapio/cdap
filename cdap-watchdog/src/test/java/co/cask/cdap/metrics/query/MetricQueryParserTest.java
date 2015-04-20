@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
@@ -34,7 +35,7 @@ public class MetricQueryParserTest {
   @Test
   public void testPathStrip() {
     String expected = "/system/apps/app1/flows/flow1/metric?aggregate=true";
-    String path = Constants.Gateway.API_VERSION_2 + "/metrics" + expected;
+    String path = Constants.Gateway.API_VERSION_3 + "/metrics" + expected;
     Assert.assertEquals(expected, MetricQueryParser.stripVersionAndMetricsFromPath(path));
   }
 
@@ -57,30 +58,26 @@ public class MetricQueryParserTest {
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(60, query.getResolution());
-    // todo: support interpolator
-//    Assert.assertNull(query.getInterpolator());
+    Assert.assertNull(query.getInterpolator());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?start=1&end=61&resolution=60m"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
     Assert.assertEquals(3600, query.getResolution());
-    // todo: support interpolator
-//    Assert.assertNull(query.getInterpolator());
+    Assert.assertNull(query.getInterpolator());
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=step"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
-    // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Step);
+    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Step);
 
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/reads?count=60&start=1&end=61&interpolate=linear"));
     Assert.assertEquals(1, query.getStartTs());
     Assert.assertEquals(61, query.getEndTs());
-    // todo: support interpolator
-//    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Linear);
+    Assert.assertTrue(query.getInterpolator() instanceof Interpolators.Linear);
   }
 
   @Test
@@ -296,26 +293,6 @@ public class MetricQueryParserTest {
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
-    Assert.assertEquals("system.reads", query.getMetricName());
-    Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
-  }
-
-  @Test
-  public void testProcedure() throws MetricsPathException  {
-    MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/procedures/proc1/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROCEDURE, "proc1");
-    Assert.assertEquals("system.reads", query.getMetricName());
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/procedures/proc1/runs/run123/reads?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
-               Tag.APP, "app1",
-               Tag.PROCEDURE, "proc1");
     Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
@@ -540,8 +517,6 @@ public class MetricQueryParserTest {
       "/system/apps/appX/flows/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
-      "/system/apps/appX/procedures/metric?aggregate=true",
-      "/system/apps/appX/procedures/procedureY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mappers/metric?aggregate=true",
@@ -558,8 +533,6 @@ public class MetricQueryParserTest {
       "/system/app/appX/metric?aggregate=true",
       "/system/apps/appX/flow/metric?aggregate=true",
       "/system/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
-      "/system/apps/appX/procedure/metric?aggregate=true",
-      "/system/apps/appX/procedure/procedureY/metric?aggregate=true",
       "/system/apps/appX/mapreduces/metric?aggregate=true",
       "/system/apps/appX/mapreduces/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mapper/metric?aggregate=true",

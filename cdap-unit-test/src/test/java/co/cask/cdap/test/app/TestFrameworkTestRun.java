@@ -33,8 +33,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ProcedureClient;
-import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
@@ -46,10 +44,12 @@ import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -60,12 +60,15 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -100,16 +103,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     input.send("1");
     input.send("11");
 
-    ProcedureManager queryManager = applicationManager.startProcedure("Count");
-    ProcedureClient client = queryManager.getClient();
-    Gson gson = new Gson();
+    ServiceManager serviceManager = applicationManager.startService("CountService");
+    serviceManager.waitForStatus(true, 2, 1);
 
-    //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
-    //TODO : Can be removed after fixing JIRA - CDAP-15
-    TimeUnit.SECONDS.sleep(2);
+    Assert.assertEquals("1", new Gson().fromJson(
+      callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
+  }
 
-    Assert.assertEquals("1",
-                        gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
+  @Category(SlowTests.class)
+  @Test
+  public void testMapperDatasetAccess() throws Exception {
+    addDatasetInstance("keyValueTable", "table1").create();
+    addDatasetInstance("keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset("table1");
+    KeyValueTable inputTable = tableManager.get();
+    inputTable.write("hello", "world");
+    tableManager.flush();
+
+    ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
+    Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
+                                                    DatasetWithMRApp.OUTPUT_KEY, "table2");
+    MapReduceManager mrManager = appManager.startMapReduce(DatasetWithMRApp.MAPREDUCE_PROGRAM, argsForMR);
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    appManager.stopAll();
+
+    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+    KeyValueTable outputTable = outTableManager.get();
+    Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
   }
 
   @Category(XSlowTests.class)
@@ -211,21 +231,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     RuntimeMetrics terminalMetrics = RuntimeStats.getFlowletMetrics("JoinMulti",
                                                                     "JoinMultiFlow", "Terminal");
-
     terminalMetrics.waitForProcessed(3, 60, TimeUnit.SECONDS);
-
     TimeUnit.SECONDS.sleep(1);
 
-    ProcedureManager queryManager = applicationManager.startProcedure("Query");
+    ServiceManager queryManager = applicationManager.startService("QueryService");
+    queryManager.waitForStatus(true, 2, 1);
+    URL serviceURL = queryManager.getServiceURL();
     Gson gson = new Gson();
 
-    ProcedureClient client = queryManager.getClient();
-    Assert.assertEquals("testing 1",
-                        gson.fromJson(client.query("get", ImmutableMap.of("key", "input1")), String.class));
-    Assert.assertEquals("testing 2",
-                        gson.fromJson(client.query("get", ImmutableMap.of("key", "input2")), String.class));
-    Assert.assertEquals("testing 3",
-                        gson.fromJson(client.query("get", ImmutableMap.of("key", "input3")), String.class));
+    Assert.assertEquals("testing 1", gson.fromJson(callServiceGet(serviceURL, "input1"), String.class));
+    Assert.assertEquals("testing 2", gson.fromJson(callServiceGet(serviceURL, "input2"), String.class));
+    Assert.assertEquals("testing 3", gson.fromJson(callServiceGet(serviceURL, "input3"), String.class));
   }
 
   @Category(XSlowTests.class)
@@ -244,19 +260,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager pingingWorker = applicationManager.startWorker(AppUsingGetServiceURL.PINGING_WORKER);
     pingingWorker.waitForStatus(true);
 
-    // Test procedure's getServiceURL
-    ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
-    ProcedureClient procedureClient = procedureManager.getClient();
-    String result = procedureClient.query("ping", Collections.<String, String>emptyMap());
+    // Test service's getServiceURL
+    ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.FORWARDING);
+    String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
-    // Verify that the procedure was able to hit the CentralService and retrieve the answer.
+    // Verify that the service was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
-    result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
-                                                                  AppUsingGetServiceURL.DATASET_KEY));
+    result = callServiceGet(serviceManager.getServiceURL(), "read/" + AppUsingGetServiceURL.DATASET_KEY);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
-    procedureManager.stop();
+
+    serviceManager.stop();
 
     pingingWorker.stop();
     pingingWorker.waitForStatus(false);
@@ -429,11 +444,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager datasetWorker = applicationManager.startWorker(AppWithServices.DATASET_UPDATE_WORKER, args);
     datasetWorkerServiceManager.waitForStatus(true);
 
-    ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
-    ProcedureClient procedureClient = procedureManager.getClient();
+    ServiceManager noopManager = applicationManager.startService("NoOpService");
+    serviceManager.waitForStatus(true, 2, 1);
 
-    String result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
-                                                                  AppWithServices.DATASET_TEST_KEY));
+    String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY);
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
@@ -453,13 +467,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStatus(false);
     LOG.info("ServerService Stopped");
 
-    result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
-                                                           AppWithServices.DATASET_TEST_KEY_STOP));
+    result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
 
-    result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
-                                                           AppWithServices.DATASET_TEST_KEY_STOP_2));
+    result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP_2);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP_2, decodedResult);
   }
@@ -545,28 +557,25 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0L, flowletMetrics.getException());
 
     // Query the result
-    ProcedureManager procedureManager = applicationManager.startProcedure("WordFrequency");
-    ProcedureClient procedureClient = procedureManager.getClient();
+    ServiceManager serviceManager = applicationManager.startService("WordFrequency");
+    serviceManager.waitForStatus(true, 2, 1);
 
     // Verify the query result
     Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
-    Gson gson = new Gson();
-    Map<String, Long> result = gson.fromJson(procedureClient.query("wordfreq",
-                                                                   ImmutableMap.of("word", streamName + ":testing")),
-                                             resultType);
-
+    Map<String, Long> result = new Gson().fromJson(
+      callServiceGet(serviceManager.getServiceURL(), "wordfreq/" + streamName + ":testing"), resultType);
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
-    RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
-    procedureMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, procedureMetrics.getException());
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics("WordCountApp", "WordFrequency");
+    serviceMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, serviceMetrics.getException());
 
     // Run mapreduce job
     MapReduceManager mrManager = applicationManager.startMapReduce("countTotal");
     mrManager.waitForFinish(1800L, TimeUnit.SECONDS);
 
-    long totalCount = Long.valueOf(procedureClient.query("total", Collections.<String, String>emptyMap()));
+    long totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "total"));
     // every event has 5 tokens
     Assert.assertEquals(5 * 100L, totalCount);
 
@@ -574,8 +583,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     mrManager = applicationManager.startMapReduce("countFromStream");
     mrManager.waitForFinish(120L, TimeUnit.SECONDS);
 
-    totalCount = Long.valueOf(procedureClient.query("stream_total", Collections.<String, String>emptyMap()));
-
+    totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "stream_total"));
     // The stream MR only consume the body, not the header.
     Assert.assertEquals(3 * 100L, totalCount);
 
@@ -693,34 +701,34 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetModule() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoCreateDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
-    testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
-    testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyProcedureWithUseDataSetAnnotation");
+    testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyServiceWithUseDataSetAnnotation");
   }
 
   @Test(timeout = 60000L)
@@ -739,23 +747,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetType() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyProcedure");
+    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyService");
   }
 
-  private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
+  private void testAppWithDataset(Class<? extends Application> app, String serviceName) throws Exception {
     ApplicationManager applicationManager = deployApplication(app);
     // Query the result
-    ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
-    ProcedureClient procedureClient = procedureManager.getClient();
-
-    procedureClient.query("set", ImmutableMap.of("key", "key1", "value", "value1"));
-
-    String response = procedureClient.query("get", ImmutableMap.of("key", "key1"));
+    ServiceManager serviceManager = applicationManager.startService(serviceName);
+    serviceManager.waitForStatus(true, 2, 1);
+    callServicePut(serviceManager.getServiceURL(), "key1", "value1");
+    String response = callServiceGet(serviceManager.getServiceURL(), "key1");
     Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
   }
 
@@ -824,42 +830,31 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
   }
 
-  @Category(XSlowTests.class)
-  @Test
-  public void testDatasetUncheckedUpgrade() throws Exception {
-    deployApplication(testSpace, DatasetUncheckedUpgradeApp.class);
-    DataSetManager<DatasetUncheckedUpgradeApp.RecordDataset> datasetManager =
-      getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
-    DatasetUncheckedUpgradeApp.Record expectedRecord = new DatasetUncheckedUpgradeApp.Record("0AXB", "john", "doe");
-    datasetManager.get().writeRecord("key", expectedRecord);
-    datasetManager.flush();
-
-    DatasetUncheckedUpgradeApp.Record actualRecord =
-      (DatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
-    Assert.assertEquals(expectedRecord, actualRecord);
-
-    // Test compatible upgrade
-    deployApplication(testSpace, CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
-    CompatibleDatasetUncheckedUpgradeApp.Record compatibleRecord =
-      (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
-    Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), compatibleRecord);
-
-    // Test in-compatible upgrade
-    deployApplication(testSpace, IncompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
+  private String callServiceGet(URL serviceURL, String path) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
     try {
-      datasetManager.get().getRecord("key");
-      Assert.fail("Expected to throw exception here due to an incompatible Dataset upgrade.");
-    } catch (Exception e) {
-      // Expected exception due to incompatible Dataset upgrade
+      Assert.assertEquals(200, connection.getResponseCode());
+      return reader.readLine();
+    } finally {
+      Closeables.closeQuietly(reader);
     }
+  }
 
-    // Revert the upgrade
-    deployApplication(testSpace, CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(testSpace, DatasetUncheckedUpgradeApp.DATASET_NAME);
-    CompatibleDatasetUncheckedUpgradeApp.Record revertRecord =
-      (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
-    Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), revertRecord);
+  private String callServicePut(URL serviceURL, String path, String body) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+    connection.setDoOutput(true);
+    connection.setRequestMethod("PUT");
+    OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
+    out.write(body);
+    out.close();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
+    try {
+      Assert.assertEquals(200, connection.getResponseCode());
+      return reader.readLine();
+    } finally {
+      Closeables.closeQuietly(reader);
+    }
   }
 }
+

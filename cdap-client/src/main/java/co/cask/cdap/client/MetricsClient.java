@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,33 +61,39 @@ public class MetricsClient {
   /**
    * Gets the value of a particular metric.
    *
-   * @param context context of the metric
    * @param metric name of the metric
+   * @param context context of the metric
    * @param groupBy how to group the metrics
    * @return value of the metric
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public MetricQueryResult query(Map<String, String> context, String metric, @Nullable String groupBy)
+  public MetricQueryResult query(String metric, @Nullable Map<String, String> context,
+                                 @Nullable String start, @Nullable String end, @Nullable String groupBy)
     throws IOException, UnauthorizedException {
 
-    URL url = config.resolveURLV3(String.format("metrics/query?context=%s&metric=%s%s",
-                                                contextToPathParam(context), metric,
+    URL url = config.resolveURLV3(String.format("metrics/query?metric=%s%s%s%s%s", metric,
+                                                start == null ? "" : "&start=" + start,
+                                                end == null ? "" : "&end=" + end,
+                                                context == null ? "" : "&context=" + contextToPathParam(context),
                                                 groupBy == null ? "" : "&groupBy=" + groupBy));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
+  }
+
+  public MetricQueryResult query(String metric, Map<String, String> context)
+    throws IOException, UnauthorizedException {
+    return query(metric, context, null, null, null);
+  }
+
+  public MetricQueryResult query(String metric) throws IOException, UnauthorizedException {
+    return query(metric, null, null, null, null);
   }
 
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
     return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
                       MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
                       MetricsConstants.FLOWLET_EXCEPTIONS);
-  }
-
-  public RuntimeMetrics getProcedureMetrics(Id.Program procedureId) {
-    return getMetrics(MetricsContexts.forProcedure(procedureId),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
   }
 
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
@@ -181,7 +187,7 @@ public class MetricsClient {
 
   private long getTotalCounter(Map<String, String> context, String metricName) {
     try {
-      MetricQueryResult.TimeSeries[] result = query(context, metricName, null).getSeries();
+      MetricQueryResult.TimeSeries[] result = query(metricName, context).getSeries();
       if (result.length == 0) {
         return 0;
       }

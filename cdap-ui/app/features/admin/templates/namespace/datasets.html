@@ -1,25 +1,50 @@
-<h2> {{$stateParams.nsadmin}}: Datasets </h2>
-
-<div class="btn-group">
-    <button type="button" class="btn btn-default" bs-dropdown="dropdown">Select core dataset type <span class="caret"></span></button>
-    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Add Dataset</button>
-    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
-    <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button>
+<div class="row">
+  <div class="col-xs-6">
+    <h2> Datasets </h2>
+  </div>
+  <div class="col-xs-6" ng-if="datasets.length > 0 || streams.length > 0">
+    <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
+  </div>
+</div>
+<div ng-if="datasets.length > 0 || streams.length > 0">
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': datasets.length>0}">
+          <th data-predicate="name">Name</th>
+          <th data-predicate="type">Type</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
+          </td>
+          <td>
+            <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
+            <span> {{dataset.type}} </span>
+          </td>
+          <td></td>
+        </tr>
+        <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
+          </td>
+          <td>
+            <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
+            <span> {{stream.type}} </span>
+          </td>
+          <td>
+            <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<table class="table table-striped table-responsive">
-    <thead ng-class="{'sort-enabled': datasets.length>0}">
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Apps Using</th>
-    </thead>
-    <tbody>
-        <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
-            <td ng-bind="dataset.name"></td>
-            <td ng-bind="dataset.type"></td>
-            <td ng-bind="dataset.description"></td>
-            <td ng-bind="dataset.apps"></td>
-        </tr>
-    </tbody>
-</table>
+<div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
+  <p> Start by creating a Stream to ingest data. </p>
+  <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
+</div>

@@ -119,7 +119,9 @@ gulp.task('js:lib', function() {
       './bower_components/dagre-d3/dist/dagre-d3.core.js',
       './bower_components/moment/moment.js',
       './bower_components/angular-moment/angular-moment.js',
-      './bower_components/angular-bootstrap/ui-bootstrap-tpls.js'
+      './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+
+      './bower_components/node-uuid/uuid.js'
 
 
     ].concat([
@@ -327,5 +329,6 @@ gulp.task('watch', ['build'], function() {
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
   gulp.watch('./app/img/**/*', ['img']);
+  gulp.watch('./app/index.html', ['html:main']);
 
 });

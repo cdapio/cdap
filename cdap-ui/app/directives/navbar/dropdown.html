@@ -14,21 +14,17 @@
     </a>
   </li>
 
-
-  <li role="presentation" class="divider"></li>
-
-  <li role="presentation" class="dropdown-header">
-    themes
+  <li class="nav-subsection">
+    Themes
   </li>
 
   <li role="presentation" ng-repeat="it in theme.list()">
+
     <a role="menuitem" href="" ng-click="theme.set(it)">
       <span class="fa fa-fw" ng-class="it==theme.current ? 'fa-dot-circle-o' : 'fa-circle-o'"></span>
       <span ng-bind="{cdap:'CDAP', default:'Bootstrap'}[it]"></span>
     </a>
   </li>
-
-  <li role="presentation" class="divider"></li>
 
   <li role="presentation" ng-hide="currentUser" ui-sref-active="disabled">
     <a role="menuitem" tabindex="-1" ui-sref="login({next:$state.current.url})">

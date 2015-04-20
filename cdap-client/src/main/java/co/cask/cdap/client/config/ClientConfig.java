@@ -42,7 +42,7 @@ public class ClientConfig {
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
 
-  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
   @Nullable
   private ConnectionConfig connectionConfig;
@@ -92,6 +92,10 @@ public class ClientConfig {
     return resolveURL(apiVersion, path);
   }
 
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
+  }
+
   /**
    * Resolves a path against the target CDAP server
    *
@@ -104,10 +108,17 @@ public class ClientConfig {
   }
 
   /**
+   * Resolves a path aginst the CDAP server, without applying an API version. For example, /ping
+   */
+  public URL resolveURLNoVersion(String path) throws MalformedURLException {
+    return getConnectionConfig().resolveURI(path).toURL();
+  }
+
+  /**
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v3/<namespace>/apps".
+   *             in a URL like "http://example.com:10000/v3/&lt;namespace&gt;/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
@@ -238,7 +249,6 @@ public class ClientConfig {
   public static final class Builder {
 
     private ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
-
     private String apiVersion = DEFAULT_VERSION;
     private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
     private boolean verifySSLCert = DEFAULT_VERIFY_SSL_CERTIFICATE;

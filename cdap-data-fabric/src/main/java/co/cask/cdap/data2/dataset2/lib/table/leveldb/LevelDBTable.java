@@ -17,11 +17,15 @@
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
+import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
@@ -44,8 +48,10 @@ public class LevelDBTable extends BufferingTable {
   private long persistedVersion;
 
   public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
-                      LevelDBTableService service, CConfiguration cConf) throws IOException {
-    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level);
+                      LevelDBTableService service, CConfiguration cConf,
+                      Schema schema, String schemaRowField) throws IOException {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level,
+          false, schema, schemaRowField);
     this.core = new LevelDBTableCore(getTableName(), service);
   }
 
@@ -111,7 +117,17 @@ public class LevelDBTable extends BufferingTable {
   }
 
   @Override
-  protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
-    return core.scan(startRow, stopRow, null, null, tx);
+  protected Scanner scanPersisted(Scan scan) throws Exception {
+
+    FuzzyRowFilter filter = null;
+    if (scan.getFilter() != null) {
+      // todo: currently we support only FuzzyRowFilter as an experimental feature
+      if (scan.getFilter() instanceof FuzzyRowFilter) {
+        filter = (FuzzyRowFilter) scan.getFilter();
+      } else {
+        throw new DataSetException("Unknown filter type: " + filter);
+      }
+    }
+    return core.scan(scan.getStartRow(), scan.getStopRow(), filter, null, tx);
   }
 }

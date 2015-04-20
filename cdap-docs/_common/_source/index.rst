@@ -4,6 +4,7 @@
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-relations: true
+
 :hide-global-toc: true
 
 .. _documentation-index:
@@ -12,7 +13,7 @@
 CDAP Documentation v\ |version|
 ==================================================
 
-.. rubric:: Introduction to the Cask Data Application Platform
+.. .. rubric:: Introduction to the Cask Data Application Platform
 
 The Cask |(TM)| Data Application Platform (CDAP) is an integrated, open source application
 development platform for the Hadoop ecosystem that provides developers with data and
@@ -44,16 +45,25 @@ It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
 
 
+.. |introduction| replace:: **Introduction to CDAP:**
+.. _introduction: introduction/index.html
+
+- |introduction|_
+
+  - **Simple Access to Powerful Technology:** A comparison between using the current 
+    technologies available from the Hadoop ecosystem and using CDAP
+
+
 .. |developers-manual| replace:: **Developers’ Manual:**
 .. _developers-manual: developers-manual/index.html
 
 - |developers-manual|_
 
-  - **Getting Started:** A quick, hands-on introduction to CDAP
+  - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
   - **Overview:** The overall architecture and technology behind CDAP
   - **Building Blocks:** The two core abstractions in CDAP: Data and Applications, and their components
   - **Security:** Perimeter security, configuration and client authentication
-  - **Testing and Debugging:** Test framework, and tools and procedures for debugging your applications
+  - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
   - **Advanced Topics:** Data exploration of datasets, best practices for CDAP development, adding a custom logback
 
@@ -95,10 +105,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |reference-manual|_ 
 
-  - **HTTP RESTful API:** HTTP interface for a multitude of purposes
-  - **Javadocs:** The Java APIs for writing CDAP Applications
-  - **Java Client API:** Methods for interacting with CDAP from external Java applications
   - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
+  - **HTTP RESTful API:** HTTP interface for a multitude of purposes
+  - **Java Client API:** Methods for interacting with CDAP from external Java applications
+  - **Javadocs:** The Java APIs for writing CDAP Applications
   - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP Dependent Packages
 
 

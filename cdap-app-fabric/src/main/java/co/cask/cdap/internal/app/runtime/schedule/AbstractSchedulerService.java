@@ -20,21 +20,19 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.ApplicationNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Supplier;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -55,20 +53,15 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
   private final TimeScheduler timeScheduler;
   private final StreamSizeScheduler streamSizeScheduler;
-  private final StoreFactory storeFactory;
   private final CConfiguration cConf;
+  private final Store store;
 
-  private Store store;
-
-  public AbstractSchedulerService(Supplier<org.quartz.Scheduler> schedulerSupplier,
-                                  StreamSizeScheduler streamSizeScheduler,
-                                  StoreFactory storeFactory, ProgramRuntimeService programRuntimeService,
-                                  PreferencesStore preferencesStore, CConfiguration cConf) {
-    this.timeScheduler = new TimeScheduler(schedulerSupplier, storeFactory, programRuntimeService,
-                                           preferencesStore, cConf);
+  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
+                                  CConfiguration cConf, Store store) {
+    this.timeScheduler = timeScheduler;
     this.streamSizeScheduler = streamSizeScheduler;
-    this.storeFactory = storeFactory;
     this.cConf = cConf;
+    this.store = store;
   }
 
   private boolean isLazyStart() {
@@ -158,6 +151,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
+    schedule(programId, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule,
+                       Map<String, String> properties) throws SchedulerException {
     Scheduler scheduler;
     if (schedule instanceof TimeSchedule) {
       scheduler = timeScheduler;
@@ -167,7 +166,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
     }
 
-    scheduler.schedule(programId, programType, schedule);
+    scheduler.schedule(programId, programType, schedule, properties);
     if (isLazyStart()) {
       try {
         scheduler.suspendSchedule(programId, programType, schedule.getName());
@@ -181,6 +180,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
     throws SchedulerException {
+    schedule(programId, programType, schedules, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       Map<String, String> properties) throws SchedulerException {
     Set<Schedule> timeSchedules = Sets.newHashSet();
     Set<Schedule> streamSizeSchedules = Sets.newHashSet();
     for (Schedule schedule : schedules) {
@@ -193,7 +198,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
     if (!timeSchedules.isEmpty()) {
-      timeScheduler.schedule(programId, programType, timeSchedules);
+      timeScheduler.schedule(programId, programType, timeSchedules, properties);
       if (isLazyStart()) {
         for (Schedule schedule : timeSchedules) {
           try {
@@ -206,7 +211,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
     if (!streamSizeSchedules.isEmpty()) {
-      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules);
+      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules, properties);
       if (isLazyStart()) {
         for (Schedule schedule : streamSizeSchedules) {
           try {
@@ -255,8 +260,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
+    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                             Map<String, String> properties) throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, programType, schedule.getName());
-    scheduler.updateSchedule(program, programType, schedule);
+    scheduler.updateSchedule(program, programType, schedule, properties);
   }
 
   @Override
@@ -275,7 +286,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : getStore().getAllApplications(namespaceId)) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }
@@ -310,23 +321,16 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                          programType.name(), program.getId());
   }
 
-  private synchronized Store getStore() {
-    if (store == null) {
-      store = storeFactory.create();
-    }
-    return store;
-  }
-
   private Scheduler getSchedulerForSchedule(Id.Program program, SchedulableProgramType programType,
                                             String scheduleName) throws NotFoundException {
-    ApplicationSpecification appSpec = getStore().getApplication(program.getApplication());
+    ApplicationSpecification appSpec = store.getApplication(program.getApplication());
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(program.getApplicationId());
+      throw new ApplicationNotFoundException(program.getApplication());
     }
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
     if (schedules == null || !schedules.containsKey(scheduleName)) {
-      throw new ScheduleNotFoundException(scheduleName);
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
     }
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);

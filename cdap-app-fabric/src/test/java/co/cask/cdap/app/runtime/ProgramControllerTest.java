@@ -16,13 +16,13 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.sun.istack.Nullable;
-import org.apache.twill.internal.RunIds;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

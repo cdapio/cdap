@@ -49,7 +49,6 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
   private final ConcurrentMap<Id.Stream, StreamSizeAggregator> aggregators;
-  private boolean isInit;
 
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
@@ -65,7 +64,6 @@ public class LocalStreamService extends AbstractStreamService {
     this.streamWriterSizeCollector = streamWriterSizeCollector;
     this.notificationService = notificationService;
     this.aggregators = Maps.newConcurrentMap();
-    this.isInit = true;
   }
 
   @Override
@@ -91,14 +89,19 @@ public class LocalStreamService extends AbstractStreamService {
     for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
       Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamId);
-      if (streamSizeAggregator == null) {
-        // First time that we see this Stream here
-        StreamConfig config = streamAdmin.getConfig(streamId);
-        streamSizeAggregator = createSizeAggregator(streamId, 0, config.getNotificationThresholdMB());
+      try {
+        if (streamSizeAggregator == null) {
+          // First time that we see this Stream here
+          StreamConfig config = streamAdmin.getConfig(streamId);
+          streamSizeAggregator = createSizeAggregator(streamId, 0, config.getNotificationThresholdMB());
+        }
+        streamSizeAggregator.checkAggregatedSize();
+      } catch (Exception e) {
+        // Need to catch and not to propagate the exception, otherwise this scheduled service will be terminated
+        // Just log the exception here as the next run iteration should have the problem fixed
+        LOG.warn("Exception in aggregating stream size for {}", streamId, e);
       }
-      streamSizeAggregator.checkAggregatedSize();
     }
-    isInit = false;
   }
 
   /**
@@ -144,6 +147,7 @@ public class LocalStreamService extends AbstractStreamService {
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
+    private boolean published;
 
     protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamId = streamId;
@@ -153,7 +157,7 @@ public class LocalStreamService extends AbstractStreamService {
       this.streamFeed = new Id.NotificationFeed.Builder()
         .setNamespaceId(streamId.getNamespaceId())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getName()))
+        .setName(String.format("%sSize", streamId.getId()))
         .build();
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }
@@ -178,13 +182,14 @@ public class LocalStreamService extends AbstractStreamService {
      */
     public void checkAggregatedSize() {
       long sum = streamInitSize + streamWriterSizeCollector.getTotalCollected(streamId);
-      if (isInit || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
+      if (!published || sum - streamBaseCount.get() > toBytes(streamThresholdMB.get())) {
         try {
           publishNotification(sum);
         } finally {
           streamBaseCount.set(sum);
         }
       }
+      published = true;
     }
 
     private long toBytes(int mb) {
@@ -198,7 +203,7 @@ public class LocalStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.warn("Could not publish notification on feed {}", streamFeed.getId(), t);
+        LOG.warn("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
       }
     }
   }

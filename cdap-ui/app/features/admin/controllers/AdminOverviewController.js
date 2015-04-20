@@ -24,12 +24,32 @@ angular.module(PKG.name + '.feature.admin')
             .then(function (apps) {
               namespace.appsCount = apps.length;
             });
+          getDatasets(namespace)
+            .then(function (data) {
+              namespace.datasetsCount = data.length;
+            });
+          getStreams(namespace)
+            .then(function (streams) {
+              namespace.streamsCount = streams.length;
+            });
         });
       });
 
     function getApps (namespace) {
       return dataSrc.request({
-        _cdapPath: '/namespaces/' + namespace.id + '/apps'
+        _cdapPath: '/namespaces/' + namespace.name + '/apps'
+      });
+    }
+
+    function getDatasets (namespace) {
+      return dataSrc.request({
+        _cdapPath: '/namespaces/' + namespace.name + '/data/datasets'
+      });
+    }
+
+    function getStreams (namespace) {
+      return dataSrc.request({
+        _cdapPath: '/namespaces/' + namespace.name + '/streams'
       });
     }
   });

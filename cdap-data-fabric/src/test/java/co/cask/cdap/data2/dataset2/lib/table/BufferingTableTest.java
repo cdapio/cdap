@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.Transaction;
@@ -106,7 +107,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       // written values should not yet be persisted
       verify(new byte[0][],
              new byte[0][][],
-             ((BufferingTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             ((BufferingTable) table1).scanPersisted(new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
 
       // buffered values should be visible in a scan
       verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
@@ -146,7 +147,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
              aa(a(C1, V1),
                 a(C1, V1),
                 a(C1, V1)),
-             ((BufferingTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+             ((BufferingTable) table1).scanPersisted(new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
 
       // all values should be visible in buffered scan
       verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
@@ -503,8 +504,8 @@ public abstract class BufferingTableTest<T extends BufferingTable>
     }
 
     @Override
-    protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
-      return delegate.scanPersisted(startRow, stopRow);
+    protected Scanner scanPersisted(Scan scan) throws Exception {
+      return delegate.scanPersisted(scan);
     }
 
     // propagating tx to delegate

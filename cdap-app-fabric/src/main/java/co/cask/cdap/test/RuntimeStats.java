@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,13 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.metrics.TimeValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
@@ -33,7 +33,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,17 +68,6 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
-    return getMetrics(MetricsContexts.forProcedure(id),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
   }
 
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {

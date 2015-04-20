@@ -26,6 +26,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+cdap_apps_version = "0.4.0-SNAPSHOT"
+
 import sys
 import os
 import os.path
@@ -63,7 +65,7 @@ def print_sdk_version():
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -78,11 +80,12 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
+  'introduction': ('../../introduction/',        os.path.abspath('../../introduction/build/html/objects.inv')),
   'developers':   ('../../developers-manual/',   os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'integrations': ('../../integrations/', os.path.abspath('../../integrations/build/html/objects.inv')),
-  'reference':    ('../../reference-manual',     os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
+  'integrations': ('../../integrations/',        os.path.abspath('../../integrations/build/html/objects.inv')),
   'examples':     ('../../examples-manual',      os.path.abspath('../../examples-manual/build/html/objects.inv')),
+  'reference':    ('../../reference-manual',     os.path.abspath('../../reference-manual/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -119,20 +122,11 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # is read. This is the right place to add substitutions that should be available in every
 # file. 
 rst_epilog = """
-.. |bold-version| replace:: **%(version)s**
-
-.. |italic-version| replace:: *%(version)s*
-
-.. |short-version| replace:: %(short_version)s
-
-.. |literal-version| replace:: ``%(version)s``
-
-.. |literal-release| replace:: ``%(release)s``
-
 .. role:: gp
 .. |$| replace:: :gp:`$`
 
 .. |http:| replace:: http:
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
@@ -140,17 +134,45 @@ rst_epilog = """
 .. |(R)| unicode:: U+00AE .. registered trademark sign
    :ltrim:
 
-.. |copyright| replace:: %(copyright)s
-
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
+   
+.. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
+"""
 
-""" % {'version': version, 
-       'short_version': short_version, 
-       'release': release,
-       'copyright': copyright,
-       }
+if version:
+    rst_epilog = rst_epilog + """
+.. |bold-version| replace:: **%(version)s**
+
+.. |italic-version| replace:: *%(version)s*
+
+.. |literal-version| replace:: ``%(version)s``
+""" % {'version': version}
+
+if short_version:
+    rst_epilog = rst_epilog + """
+.. |short-version| replace:: %(short_version)s
+""" % {'short_version': short_version}
+
+if release:
+    rst_epilog = rst_epilog + """
+.. |literal-release| replace:: ``%(release)s``
+""" % {'release': release}
+
+if copyright:
+    rst_epilog = rst_epilog + """
+.. |copyright| replace:: %(copyright)s
+""" % {'copyright': copyright}
+
+if cdap_apps_version:
+    rst_epilog = rst_epilog + """
+.. |cdap-apps-version| replace:: %(cdap-apps-version)s
+
+.. |literal-cdap-apps-version| replace:: ``%(cdap-apps-version)s``
+
+""" % {'cdap-apps-version': cdap_apps_version}
+
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -217,13 +239,16 @@ html_theme = 'cdap'
 # versions points to the JSON file on the webservers
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
 # format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
-# the inner-lists being the directory and a label
+# the inner-lists being the directory, a label, and the release date in YYYY-MM-DD format.
+# The label is currently not used in output, but is there for a future possibility of using 
+# a label instead of the directory to identify a release.
 #
 # manual_list is an ordered list of the manuals
 # Fields: directory, manual name, icon 
 # icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
-    ["developers-manual",   u"Developers’ Manual",             "",],
+    ["introduction",        "Introduction to CDAP",            "",],
+    ["developers-manual",  u"Developers’ Manual",              "",],
     ["admin-manual",        "Administration Manual",           "",],
     ["integrations",        "Integrations",                    "",],
     ["examples-manual",     "Examples, Guides, and Tutorials", "",],
@@ -246,10 +271,17 @@ html_theme_options = {
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": 
-        [ ["2.8.0-SNAPSHOT", "2.8.0"], ], 
-      "current": ["2.7.1", "2.7.1"], 
-      "older": 
-        [ ["2.6.1", "2.6.1"],["2.6.0", "2.6.0"],["2.5.2", "2.5.2"], ["2.5.1", "2.5.1"], ["2.5.0", "2.5.0"], ], 
+        [ ['3.0.0-SNAPSHOT', '3.0.0'], ], 
+      "current": ['2.8.0', '2.8.0', '2015-03-23'], 
+      "older": [ 
+        ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.2', '2.6.2', '2015-03-23'], 
+        ['2.6.1', '2.6.1', '2015-01-29'], 
+        ['2.6.0', '2.6.0', '2015-01-10'], 
+        ['2.5.2', '2.5.2', '2014-11-14'], 
+        ['2.5.1', '2.5.1', '2014-10-15'], 
+        ['2.5.0', '2.5.0', '2014-09-26'],
+        ],
     },
 }
 
@@ -320,7 +352,14 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'downloads.html', 'searchbox.html', ],}
+html_sidebars = {'**': [
+    'manuals.html', 
+    'globaltoc.html', 
+    'relations.html', 
+    'downloads.html', 
+    'searchbox.html',
+    'casksites.html',
+     ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

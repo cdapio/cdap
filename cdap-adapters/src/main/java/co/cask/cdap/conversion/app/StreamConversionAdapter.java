@@ -16,17 +16,49 @@
 
 package co.cask.cdap.conversion.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.ApplicationTemplate;
+import com.google.gson.Gson;
+import org.apache.avro.mapreduce.AvroKeyInputFormat;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Application that converts a stream into a partitioned file set.
  */
-public class StreamConversionAdapter extends AbstractApplication {
+public class StreamConversionAdapter extends ApplicationTemplate<AdapterArgs> {
+  static final String CONFIG_KEY = "adapter.args";
 
   @Override
-  public void configure() {
-    setDescription("Periodically reads stream events and writes them to a time partitioned fileset");
-    addMapReduce(new StreamConversionMapReduce());
-    addWorkflow(new StreamConversionWorkflow());
+  public void configureAdapter(String adapterName, AdapterArgs args,
+                               AdapterConfigurer configurer) throws Exception {
+    configurer.addRuntimeArgument(CONFIG_KEY, new Gson().toJson(args));
+
+    ConversionConfig config = args.getConfig();
+    configurer.createDataset(config.getSinkName(), "timePartitionedFileSet", FileSetProperties.builder()
+      .setBasePath(config.getSinkName())
+      .setInputFormat(AvroKeyInputFormat.class)
+      .setOutputFormat(AvroKeyOutputFormat.class)
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", config.getSinkSchema().toString())
+      .build());
+
+    long minutes = TimeUnit.MINUTES.convert(config.getFrequency(), TimeUnit.MILLISECONDS);
+    configurer.setSchedule(Schedules.createTimeSchedule("test", "adapter schedule", "*/" + minutes + " * * * *"));
+  }
+
+  @Override
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setDescription("Periodically reads stream events and writes them to a time partitioned fileset");
+    configurer.addMapReduce(new StreamConversionMapReduce());
+    configurer.addWorkflow(new StreamConversionWorkflow());
   }
 }

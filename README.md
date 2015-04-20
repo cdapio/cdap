@@ -5,25 +5,34 @@
 
 **Introduction**
 
-The Cask Data Application Platform (CDAP) is an application server that provides a
-comprehensive platform for the development, deployment and management of data applications 
-and the management of data.
+The Cask™ Data Application Platform (CDAP)is an integrated, open source application
+development platform for the Hadoop ecosystem that provides developers with data and
+application abstractions to simplify and accelerate application development, address a
+broader range of real-time and batch use cases, and deploy applications into production
+while satisfying enterprise requirements.
 
-Out-of-the-box, its features include transaction management, dataset abstractions, QoS (quality-of-service),
-performance, scalability, security, metrics and log collection, and a web-based management console.
+CDAP is a layer of software running on top of Apache Hadoop® platforms such as the
+Cloudera Enterprise Data Hub or the Hortonworks® Data Platform. CDAP provides these
+essential capabilities:
 
-CDAP provides data virtualization and application containerization for your data and application
-needs. With CDAP, you do not need to understand the implementation or the complexity of Apache 
-Hadoop&trade;, HBase or Zookeeper. CDAP provides independence from Hadoop versions and runs on any 
-distribution of Hadoop. Its container model allows for the integration of different processing 
-paradigms with CDAP's features. It provides a common environment, the abstraction of a unified API, 
-lifecycle management and a programming model for both data applications and their data. You can package, 
-deploy and manage applications as a single unit.
+- Abstraction of data in the Hadoop environment through logical representations of underlying data;
+- Portability of applications through decoupling underlying infrastructures;
+- Services and tools that enable faster application creation in development;
+- Integration of the components of the Hadoop ecosystem into a single platform; and
+- Higher degrees of operational control in production through enterprise best practices.
 
-You can run applications ranging from simple MapReduce Jobs through complete ETL (extract, transform, and load) 
-pipelines all the way up to complex, enterprise-scale data-intensive applications. 
+CDAP exposes developer APIs (Application Programming Interfaces) for creating applications
+and accessing core CDAP services. CDAP defines and implements a diverse collection of
+services that land applications and data on existing Hadoop infrastructure such as HBase,
+HDFS, YARN, MapReduce, Hive, and Spark.
+
+You can run applications ranging from simple MapReduce Jobs through complete ETL (extract,
+transform, and load) pipelines all the way up to complex, enterprise-scale data-intensive
+applications.
+
 Developers can build and test their applications end-to-end in a full-stack, single-node
-installation. CDAP can be run either standalone, deployed within the Enterprise or hosted in the Cloud.
+installation. CDAP can be run either standalone, deployed within the Enterprise or hosted
+in the Cloud.
 
 For more information, see our collection of 
 [Developers' Manual and other documentation](http://docs.cask.co/cdap/current/en/developers-manual/index.html).
@@ -35,7 +44,7 @@ For more information, see our collection of
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
   1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
-  2. Node.js 0.8.16+ (required to run the CDAP Console)
+  2. Node.js (from v0.8.16 through v0.10.37; required to run the CDAP Console)
   3. Apache Maven 3.0+ (required to build the example applications)
   
 ### Build
@@ -129,7 +138,7 @@ CDAP IRC Channel: #cdap on irc.freenode.net
 
 ## License and Trademarks
 
-Copyright © 2014 Cask Data, Inc.
+Copyright © 2014-2015 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

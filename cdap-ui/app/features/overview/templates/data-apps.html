@@ -1,0 +1,132 @@
+<div class="row">
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="dataList.length > 0">
+      <h3 class="text-uppercase"> Data </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="dataList.length < 5"> Showing {{ dataList.length }} of {{ dataList.length }}</p>
+          <p ng-if="dataList.length >= 5"> Showing 5 of {{ dataList.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9 text-right">
+          <div class="btn-group">
+            <a ui-sref="data.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+              <span>All Datasets</span>
+            </a>
+            <a ui-sref="explore" class="btn btn-default">
+              <span class="fa fa-eye"></span>
+              <span>Explore</span>
+            </a>
+            <a ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})" class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span>Add Stream</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group" >
+        <li class="list-group-item" ng-repeat="data in dataList | orderBy:'name' | limitTo: 5 track by $index ">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
+            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
+            <div class="title-type-image">
+              <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
+              <span> Stream </span>
+            </div>
+          </a>
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
+            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
+            <div class="title-type-image">
+              <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
+              <span> Dataset </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="dataList.length === 0">
+      <div class="clearfix">
+        <h3 class="text-uppercase"> Data </h3>
+        <p> You haven't deployed any datasets. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-left" ng-controller="AppsSectionCtrl">
+        <!-- <my-file-select
+            data-button-label="Add Data"
+            data-button-disabled="true"
+            data-button-icon="fa-plus"
+            on-file-select="onFileSelected($files)">
+        </my-file-select> -->
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
+          <span class="fa fa-plus"></span>
+          <span>Add Stream</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="apps.length > 0">
+      <h3 class="text-uppercase"> Apps </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="apps.length < 5"> Showing {{ apps.length }} of {{ apps.length }}</p>
+          <p ng-if="apps.length >= 5"> Showing 5 of {{ apps.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9 text-right">
+          <div class="btn-group">
+            <a ui-sref="apps.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+               <span>All Apps</span>
+            </a>
+            <a ui-sref="etlapps.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+               All ETL Apps
+            </a>
+<!--             <a ui-sref="apps.list" class="btn btn-default">
+              <span class="fa fa-pencil-square-o"></span>
+               <span>ETL</span>
+            </a> -->
+            <my-file-select
+                data-button-label="Add App"
+                data-button-icon="fa-plus"
+                on-file-select="onFileSelected($files)"
+                ng-controller="AppsSectionCtrl">
+            </my-file-select>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="app in apps | orderBy:'name' | limitTo:5">
+          <a ui-sref="apps.detail.overview({appId: app.id})">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
+              <span> CDAP </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="apps.length === 0">
+      <div class="clearfix">
+        <h3 class="text-uppercase"> Apps </h3>
+        <p> You haven't deployed any apps. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-left" ng-controller="AppsSectionCtrl">
+        <my-file-select
+            data-button-label="Add App"
+            data-button-icon="fa-plus"
+            on-file-select="onFileSelected($files)">
+        </my-file-select>
+        <a ui-sref="etlapps.create" class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span>Add ETL App</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

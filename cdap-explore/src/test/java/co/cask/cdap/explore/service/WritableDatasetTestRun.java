@@ -32,8 +32,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.URL;
@@ -45,6 +47,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static final Id.DatasetModule keyExtendedStructValueTable =
     Id.DatasetModule.from(NAMESPACE_ID, "keyExtendedStructValueTable");
@@ -63,7 +68,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 

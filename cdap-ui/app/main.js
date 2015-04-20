@@ -8,12 +8,13 @@ angular
       PKG.name+'.feature.overview',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
-      PKG.name+'.feature.operation28',
       PKG.name+'.feature.apps',
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo'
+      PKG.name+'.feature.foo',
+      PKG.name+'.feature.etlapps',
+      PKG.name+'.feature.explore'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -109,28 +110,31 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
-
-    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
-      $alert({
+  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
+    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
+      myAlert({
         title: 'Error',
-        content: sockEvent.reason || 'could not connect to the server',
+        content: data.reason || 'Unable to connect to CDAP',
         type: 'danger'
       });
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
-
-      if(data.statusCode>399) {
-        $alert({
+      if(data.statusCode > 399) {
+        myAlert({
           title: data.statusCode.toString(),
-          content: data.response || 'Something went terribly wrong',
+          content: data.response || 'Server had an issue, please try refreshing the page',
           type: 'danger'
         });
       }
 
-      if(data.warning) {
-        $alert({
+      // The user doesn't need to know that the backend node 
+      // is unable to connect to CDAP. Error messages add no
+      // more value than the pop showing that the FE is waiting 
+      // for system to come back up. Most of the issues are with 
+      // connect, other than that pass everything else to user. 
+      if(data.warning && data.error.syscall !== 'connect') {
+        myAlert({
           content: data.warning,
           type: 'warning'
         });
@@ -138,12 +142,36 @@ angular
     });
   })
 
+  .run(function(MyDataSource, EventPipe, MY_CONFIG, $rootScope) {
+    // verify backend server is running
+    var dataSrc = new MyDataSource($rootScope.$new());
+    function pingBackend() {
+      dataSrc.poll({
+        url: ['http://',
+              MY_CONFIG.cdap.routerServerUrl,
+              ':',
+              MY_CONFIG.cdap.routerServerPort,
+              '/status'].join(''),
+        interval: 2000
+      }, function(res) {
+        EventPipe.emit('backendUp');
+      }, function(res) {
+        if (res.error.code === 'ECONNREFUSED') {
+          EventPipe.emit('backendDown');
+        }
+      });
+    }
+
+    pingBackend(); // execute immediately when initially opening a page
+
+  })
+
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, $modal, $http, $interval) {
+  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -172,31 +200,6 @@ angular
 
       $scope.bodyClass = classes.join(' ');
     });
-
-
-    // verify backend server is running
-    var modalInstance = $modal({
-          scope: $scope,
-          template: '/assets/features/backendstatus/errorModal.html',
-          show: false,
-          backdrop: 'static',
-          keyboard: false
-        });
-
-    function pingBackend() {
-      $http.get('/backendstatus')
-        .success(function() {
-          modalInstance.$promise.then(modalInstance.hide);
-        })
-        .error (function() {
-          modalInstance.$promise.then(modalInstance.show);
-        });
-    }
-
-    pingBackend(); // execute immediately when initially opening a page
-    $interval(pingBackend, 60000); // ping every 60 seconds
-
-
 
     console.timeEnd(PKG.name);
   });

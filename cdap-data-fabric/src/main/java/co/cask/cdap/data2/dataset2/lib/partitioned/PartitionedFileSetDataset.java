@@ -17,11 +17,13 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
@@ -37,6 +39,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -59,7 +62,7 @@ import javax.annotation.Nullable;
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.
  */
-public class PartitionedFileSetDataset extends AbstractDataset implements PartitionedFileSet {
+public class PartitionedFileSetDataset extends AbstractDataset implements PartitionedFileSet, DatasetOutputCommitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
 
@@ -76,6 +79,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   private final Id.DatasetInstance datasetInstanceId;
 
+  // In this map we keep track of the partitions that were added in the same transaction.
+  // If the exact same partition is added again, we will not throw an error but only log an message that
+  // the partition already exists. The reason for this is to provide backward-compatibility for CDAP-1227:
+  // by adding the partition in the onSuccess() of this dataset, map/reduce programs do not need to do that in
+  // their onFinish() any longer. But existing map/reduce programs may still do that, and would now fail.
+  private final Map<String, PartitionKey> partitionsAddedInSameTx = Maps.newHashMap();
+
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                    Partitioning partitioning, FileSet fileSet, Table partitionTable,
                                    DatasetSpecification spec, Map<String, String> arguments,
@@ -88,6 +98,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
     this.datasetInstanceId = Id.DatasetInstance.from(datasetContext.getNamespaceId(), name);
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    partitionsAddedInSameTx.clear();
+    super.startTx(tx);
   }
 
   @Override
@@ -104,9 +120,16 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
+      if (key.equals(partitionsAddedInSameTx.get(path))) {
+        LOG.warn("Dataset {} already added a partition with key {} in this transaction. " +
+                   "Partitions no longer need to be added in the onFinish() of MapReduce. Please check your app. ",
+                 getName(), key.toString());
+        return;
+      }
       throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
                                                getName(), key.toString()));
     }
+    LOG.debug("Adding partition with key {} and path {} to dataset {}", key, path, getName());
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
     for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
@@ -114,6 +137,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
     }
     partitionsTable.put(put);
+    partitionsAddedInSameTx.put(path, key);
     if (addToExplore) {
       addPartitionToExplore(key, path);
       // TODO: make DDL operations transactional [CDAP-1393]
@@ -307,6 +331,24 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     outputArgs.putAll(config);
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
     return ImmutableMap.copyOf(outputArgs);
+  }
+
+  @Override
+  public void onSuccess() throws DataSetException {
+    String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
+    // if there if no output path, the batch job probably would have failed
+    // we definitely can't do much here if we don't know the output path
+    if (outputPath == null) {
+      return;
+    }
+    // we know for sure there is an output partition key (checked in getOutputFormatConfig())
+    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
+    addPartition(outputKey, outputPath);
+  }
+
+  @Override
+  public void onFailure() throws DataSetException {
+    // nothing to do, as we have not written anything to the dataset yet
   }
 
   @Override

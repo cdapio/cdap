@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.cli.english.Noun;
+import co.cask.cdap.cli.english.Word;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Sets;
 
@@ -26,98 +28,79 @@ import java.util.Set;
  */
 public enum ElementType {
 
-  ADAPTER("Adapter", "Adapters", "adapter", "adapters",
-          null, null, ArgumentName.ADAPTER),
+  ADAPTER(new Noun("adapter"), new Noun("Adapter"), null, null,
+          ArgumentName.ADAPTER),
 
-  INSTANCE("Instance", "Instance", "instance", "instance",
-           null, null, ArgumentName.INSTANCE, Capability.PREFERENCES),
+  INSTANCE(new Noun("instance"), new Noun("Instance"), null, null,
+           ArgumentName.INSTANCE, Capability.PREFERENCES),
 
-  NAMESPACE("Namespace", "Namespaces", "namespace", "namespaces",
-            null, null, ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
+  NAMESPACE(new Noun("namespace"), new Noun("Namespace"), null, null,
+            ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
 
-  APP("Application", "Applications", "app", "apps",
-      null, null, ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
+  APP(new Noun("app"), new Noun("Application"), null, null,
+      ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
-  DATASET("Dataset", "Datasets", "dataset", "datasets",
-          null, null, ArgumentName.DATASET, Capability.LIST),
+  DATASET(new Noun("dataset"), new Noun("Dataset"), null, null,
+          ArgumentName.DATASET, Capability.LIST),
 
-  DATASET_MODULE("Dataset module", "Dataset modules", "dataset module", "dataset modules",
-                 null, null, ArgumentName.DATASET_MODULE, Capability.LIST),
+  DATASET_MODULE(new Noun("dataset module"), new Noun("Dataset module"), null, null,
+                 ArgumentName.DATASET_MODULE, Capability.LIST),
 
-  DATASET_TYPE("Dataset type", "Dataset types", "dataset type", "dataset types",
-               null, null, ArgumentName.DATASET_TYPE, Capability.LIST),
+  DATASET_TYPE(new Noun("dataset type"), new Noun("Dataset type"), null, null,
+               ArgumentName.DATASET_TYPE, Capability.LIST),
 
-  QUERY("Dataset query", "Dataset queries", "dataset query", "dataset queries",
-        null, null, ArgumentName.QUERY),
+  QUERY(new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 
-  STREAM("Stream", "Streams", "stream", "streams",
-         null, null, ArgumentName.STREAM, Capability.LIST),
+  STREAM(new Noun("stream"), new Noun("Stream"), null, null, ArgumentName.STREAM, Capability.LIST),
 
-  PROGRAM("Program", "Programs", "program", "programs",
-          null, null, ArgumentName.PROGRAM),
+  PROGRAM(new Noun("program"), new Noun("Program"), null, null, ArgumentName.PROGRAM),
 
-  FLOW("Flow", "Flows", "flow", "flows",
-       ProgramType.FLOW, null,
-       ArgumentName.FLOW,
+  FLOW(new Noun("flow"), new Noun("Flow"), ProgramType.FLOW, null, ArgumentName.FLOW,
        Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START, Capability.STOP,
        Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  WORKFLOW("Workflow", "Workflows", "workflow", "workflows",
-           ProgramType.WORKFLOW, null,
+  WORKFLOW(new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
            Capability.RUNS, Capability.STATUS, Capability.START,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets",
-          null, ProgramType.FLOW,
+  FLOWLET(new Noun("flowlet"), new Noun("Flowlet"), null, ProgramType.FLOW,
           ArgumentName.FLOWLET,
           Capability.SCALE),
 
-  WORKER("Worker", "Workers", "worker", "workers",
-         ProgramType.WORKER, null, ArgumentName.WORKER,
+  WORKER(new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null, ArgumentName.WORKER,
          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  PROCEDURE("Procedure", "Procedures", "procedure", "procedures",
-            ProgramType.PROCEDURE, null,
-            ArgumentName.PROCEDURE,
-            Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
-
-  SERVICE("Service", "Services", "service", "services",
-          ProgramType.SERVICE, null,
+  SERVICE(new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
           Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
 
-  MAPREDUCE("MapReduce Program", "MapReduce Programs", "mapreduce", "mapreduce programs",
+  MAPREDUCE(new Noun("mapreduce", "mapreduce programs"), new Noun("MapReduce Program", "MapReduce Programs"),
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SPARK("Spark Program", "Spark Programs", "spark", "spark programs",
+  SPARK(new Noun("spark", "spark programs"), new Noun("Spark Program", "Spark Programs"),
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES);
 
-  private final String pluralName;
-  private final String pluralPrettyName;
-  private final String name;
+  private final Noun name;
   private final ProgramType programType;
   private final ProgramType parentType;
   private final Set<Capability> capabilities;
-  private final String prettyName;
   private final ArgumentName argumentName;
+  private final Noun titleName;
 
-  ElementType(String prettyName, String pluralPrettyName, String name, String pluralName,
-              ProgramType programType, ProgramType parentType, ArgumentName argumentName,
+  ElementType(Noun name, Noun titleName, ProgramType programType, ProgramType parentType,
+              ArgumentName argumentName,
               Capability... capabilities) {
-    this.prettyName = prettyName;
-    this.pluralPrettyName = pluralPrettyName;
     this.name = name;
-    this.pluralName = pluralName;
+    this.titleName = titleName;
     this.programType = programType;
     this.parentType = parentType;
     this.argumentName = argumentName;
@@ -128,20 +111,24 @@ public enum ElementType {
     return parentType == null;
   }
 
-  public String getPrettyName() {
-    return prettyName;
+  public Word getName() {
+    return name.getName();
   }
 
-  public String getName() {
-    return name;
+  public Word getNamePlural() {
+    return name.getNamePlural();
+  }
+
+  public Word getTitleName() {
+    return titleName.getName();
+  }
+
+  public Word getTitleNamePlural() {
+    return titleName.getNamePlural();
   }
 
   public ArgumentName getArgumentName() {
     return argumentName;
-  }
-
-  public String getPluralName() {
-    return pluralName;
   }
 
   public ProgramType getProgramType() {
@@ -150,10 +137,6 @@ public enum ElementType {
 
   public ProgramType getParentType() {
     return parentType;
-  }
-
-  public String getPluralPrettyName() {
-    return pluralPrettyName;
   }
 
   public boolean canScale() {

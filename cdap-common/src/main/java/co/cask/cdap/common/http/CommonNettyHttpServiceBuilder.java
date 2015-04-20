@@ -17,9 +17,9 @@ package co.cask.cdap.common.http;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Function;
-import com.google.inject.Inject;
 import org.jboss.netty.channel.ChannelPipeline;
 
 /**
@@ -28,14 +28,15 @@ import org.jboss.netty.channel.ChannelPipeline;
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   public CommonNettyHttpServiceBuilder(CConfiguration configuration) {
     super();
-    if (configuration.getBoolean(Constants.Security.AUTHORIZATION_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.ENABLED)) {
       this.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
-          input.addAfter("decoder", "authenticator", new AuthenticationChannelHandler());
+          input.addBefore("router", "authenticator", new AuthenticationChannelHandler());
           return input;
         }
       });
     }
+    this.setExceptionHandler(new HttpExceptionHandler());
   }
 }

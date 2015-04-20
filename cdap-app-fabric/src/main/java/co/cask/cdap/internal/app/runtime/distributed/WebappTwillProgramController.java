@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,7 @@ final class WebappTwillProgramController extends AbstractTwillProgramController 
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    // Procedure doesn't have any command for now.
-    LOG.info("Command ignored for procedure controller: {}, {}", name, value);
+    // Webapp doesn't have any command for now.
+    LOG.info("Command ignored for webapp controller: {}, {}", name, value);
   }
 }

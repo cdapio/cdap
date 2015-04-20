@@ -74,7 +74,7 @@ public interface ProgramController {
     /**
      * Program is suspended.
      */
-    SUSPENDED(ProgramRunStatus.RUNNING),
+    SUSPENDED(ProgramRunStatus.SUSPENDED),
 
     /**
      * Trying to resume a suspended program.

@@ -18,19 +18,26 @@ package co.cask.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.inject.Inject;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 /**
 * Mock LogReader for testing.
@@ -38,81 +45,64 @@ import org.slf4j.LoggerFactory;
 public class MockLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(MockLogReader.class);
 
-  private final Multimap<String, LogLine> logMap;
+  private final List<LogEvent> logEvents = Lists.newArrayList();
   private static final int MAX = 80;
   public static final String TEST_NAMESPACE = "testNamespace";
-  private final String logBaseDir;
 
-  @Inject
-  MockLogReader(CConfiguration cConf) {
-    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-    String defaultNamespacedLogBaseDir = String.format("%s/%s", Constants.DEFAULT_NAMESPACE, this.logBaseDir);
-    String testNamespacedLogBaseDir = String.format("%s/%s", TEST_NAMESPACE, this.logBaseDir);
-    logMap = ArrayListMultimap.create();
+  MockLogReader() {
+    // Add logs for app testApp1, flow testFlow1
+    generateLogs(new FlowletLoggingContext(Constants.DEFAULT_NAMESPACE,
+                                           "testApp1", "testFlow1", "testFlowlet1", "", ""));
 
-    // Add log lines for app testApp1, flow testFlow1
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(defaultNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
-    }
+    // Add logs for app testApp3, mapreduce testMapReduce1
+    generateLogs(new MapReduceLoggingContext(Constants.DEFAULT_NAMESPACE,
+                                             "testApp3", "testMapReduce1", "", null));
 
-    // Add log lines for app testApp1, flow testService1
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(defaultNamespacedLogBaseDir + "/testApp4/userservice-testService1",
-                 new LogLine(i, "testService1<img>-" + i));
-    }
+    // Add logs for app testApp1, service testService1
+    generateLogs(new UserServiceLoggingContext(Constants.DEFAULT_NAMESPACE,
+                                               "testApp4", "testService1", "test1", "", ""));
 
-    // Add log lines for app testApp2, flow testProcedure1
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(defaultNamespacedLogBaseDir + "/testApp2/procedure-testProcedure1",
-                 new LogLine(i, "testProcedure1<img>-" + i));
-    }
+    // Add logs for app testApp1, mapreduce testMapReduce1 run as part of batch adapter adapter1 in testNamespace
+    generateLogs(new MapReduceLoggingContext(TEST_NAMESPACE,
+                                             "testTemplate1", "testMapReduce1", "", "testAdapter1"));
 
-    // Add log lines for app testApp3, flow testMapReduce1
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(defaultNamespacedLogBaseDir + "/testApp3/mapred-testMapReduce1",
-                 new LogLine(i, "testMapReduce1<img>-" + i));
-    }
+    // Add logs for app testApp1, flow testFlow1 in testNamespace
+    generateLogs(new FlowletLoggingContext(TEST_NAMESPACE,
+                                           "testApp1", "testFlow1", "testFlowlet1", "", ""));
 
-    // Add log lines for app testApp1, flow testFlow1 in testNamespace
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(testNamespacedLogBaseDir + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
-    }
-
-    // Add log lines for app testApp1, flow testService1 in testNamespace
-    for (int i = 0; i < MAX; ++i) {
-      logMap.put(testNamespacedLogBaseDir + "/testApp4/userservice-testService1",
-                 new LogLine(i, "testService1<img>-" + i));
-    }
+    // Add logs for app testApp1, service testService1 in testNamespace
+    generateLogs(new UserServiceLoggingContext(TEST_NAMESPACE,
+                                               "testApp4", "testService1", "test1", "", ""));
   }
 
   @Override
-  public void getLogNext(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  public void getLogNext(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset < 0) {
+    if (fromOffset.getKafkaOffset() < 0) {
       getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
       return;
     }
 
+    Filter contextFilter = LoggingContextHelper.createFilter(loggingContext);
+
     callback.init();
     try {
       int count = 0;
-      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
-        if (logLine.getOffset() >= fromOffset) {
+      for (LogEvent logLine : logEvents) {
+        if (logLine.getOffset().getKafkaOffset() >= fromOffset.getKafkaOffset()) {
+          if (!contextFilter.match(logLine.getLoggingEvent())) {
+            continue;
+          }
+
           if (++count > maxEvents) {
             break;
           }
 
-          if (filter != Filter.EMPTY_FILTER && logLine.getOffset() % 2 != 0) {
+          if (filter != Filter.EMPTY_FILTER && logLine.getOffset().getKafkaOffset() % 2 != 0) {
             continue;
           }
 
-          callback.handle(
-            new LogEvent(
-              new LoggingEvent("com.continuiity.Test",
-                               (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
-                               Level.WARN, logLine.getLog(), null, null),
-                                       logLine.getOffset())
-          );
+          callback.handle(logLine);
         }
       }
     } catch (Throwable e) {
@@ -123,33 +113,34 @@ public class MockLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(LoggingContext loggingContext, long fromOffset, int maxEvents, Filter filter,
+  public void getLogPrev(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset < 0) {
-      fromOffset = MAX;
+    if (fromOffset.getKafkaOffset() < 0) {
+      fromOffset = new LogOffset(MAX, MAX);
     }
+
+    Filter contextFilter = LoggingContextHelper.createFilter(loggingContext);
 
     callback.init();
     try {
       int count = 0;
-      long startOffset = fromOffset - maxEvents;
-      for (LogLine logLine : logMap.get(loggingContext.getLogPathFragment(logBaseDir))) {
-        if (logLine.getOffset() >= startOffset && logLine.getOffset() < fromOffset) {
+      long startOffset = fromOffset.getKafkaOffset() - maxEvents;
+      for (LogEvent logLine : logEvents) {
+        if (!contextFilter.match(logLine.getLoggingEvent())) {
+          continue;
+        }
+
+        if (logLine.getOffset().getKafkaOffset() >= startOffset &&
+          logLine.getOffset().getKafkaOffset() < fromOffset.getKafkaOffset()) {
           if (++count > maxEvents) {
             break;
           }
 
-          if (filter != Filter.EMPTY_FILTER && logLine.getOffset() % 2 != 0) {
+          if (filter != Filter.EMPTY_FILTER && logLine.getOffset().getKafkaOffset() % 2 != 0) {
             continue;
           }
 
-          callback.handle(
-            new LogEvent(
-              new LoggingEvent("com.continuiity.Test",
-                               (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
-                               Level.WARN, logLine.getLog(), null, null),
-              logLine.getOffset())
-          );
+          callback.handle(logLine);
         }
       }
     } catch (Throwable e) {
@@ -162,10 +153,33 @@ public class MockLogReader implements LogReader {
   @Override
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                      Callback callback) {
-    getLogNext(loggingContext, fromTimeMs / 1000, (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
+    long fromOffset = fromTimeMs / 1000;
+    getLogNext(loggingContext, new LogOffset(fromOffset, fromOffset),
+               (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
   }
 
-  @Override
-  public void close() {
+  private static final Function<LoggingContext.SystemTag, String> TAG_TO_STRING_FUNCTION =
+    new Function<LoggingContext.SystemTag, String>() {
+      @Override
+      public String apply(LoggingContext.SystemTag input) {
+        return input.getValue();
+      }
+    };
+
+  private void generateLogs(LoggingContext loggingContext) {
+    String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
+    for (int i = 0; i < MAX; ++i) {
+      LoggingEvent event =
+        new LoggingEvent("com.continuiity.Test",
+                         (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
+                         i % 2 == 0 ? Level.ERROR : Level.WARN, entityId + "<img>-" + i, null, null);
+
+      // Add runid to logging context
+      Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
+                                                                         TAG_TO_STRING_FUNCTION));
+      tagMap.put(ApplicationLoggingContext.TAG_RUNID_ID, String.valueOf(i % 2));
+      event.setMDCPropertyMap(tagMap);
+      logEvents.add(new LogEvent(event, new LogOffset(i, i)));
+    }
   }
 }

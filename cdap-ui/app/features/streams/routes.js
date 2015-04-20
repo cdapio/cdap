@@ -32,8 +32,11 @@ angular.module(PKG.name + '.feature.streams')
             keyboard: true,
             controller: 'StreamsCreateController'
           }).result.finally(function() {
-            $state.go('streams.list');
+            $state.go('streams.list',{}, { reload: true });
           });
+        },
+        onExit: function($modalStack) {
+          $modalStack.dismissAll();
         }
       })
 

@@ -18,7 +18,6 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
@@ -27,29 +26,31 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
+import co.cask.cdap.gateway.handlers.MockETLHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
-import co.cask.cdap.gateway.handlers.MonitorHandlerV2;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
-import co.cask.cdap.internal.app.deploy.LocalManager;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
+import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
+import co.cask.cdap.internal.app.deploy.LocalApplicationTemplateManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
@@ -74,11 +75,13 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -112,8 +115,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
-                                                      StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -158,8 +160,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
-                                                      StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -262,26 +263,35 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       install(
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalManager<DeploymentInfo, ApplicationWithPrograms>>() { })
+                     new TypeLiteral<LocalApplicationManager<DeploymentInfo, ApplicationWithPrograms>>() { })
           .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
       );
-
-      install(new FactoryModuleBuilder()
-                .implement(Store.class, DefaultStore.class)
-                .build(StoreFactory.class)
+      install(
+        new FactoryModuleBuilder()
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
+                     LocalApplicationTemplateManager.class)
+          .build(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { },
+                         Names.named("templates")))
       );
+      install(
+        new FactoryModuleBuilder()
+          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterSpecification>> () { },
+                     LocalAdapterManager.class)
+          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterSpecification>>() { },
+                         Names.named("adapters")))
+      );
+
+      bind(Store.class).to(DefaultStore.class);
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));
       CommonHandlers.add(handlerBinder);
-      handlerBinder.addBinding().to(AppFabricHttpHandler.class);
+      handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
-      handlerBinder.addBinding().to(MonitorHandlerV2.class);
-      handlerBinder.addBinding().to(ServiceHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
@@ -290,6 +300,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
+      handlerBinder.addBinding().to(MockETLHandler.class);
+      handlerBinder.addBinding().to(AdapterHttpHandler.class);
+      handlerBinder.addBinding().to(WorkflowHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
-import co.cask.cdap.internal.app.runtime.procedure.ProcedureProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
@@ -37,9 +36,9 @@ import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
+import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
+import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.internal.app.worker.InMemoryWorkerRunner;
-import co.cask.cdap.internal.app.worker.WorkerProgramRunner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -74,7 +73,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(LogWriter.class).to(LocalLogWriter.class);
     expose(LogWriter.class);
 
-    // Bind ServiceAnnouncer for procedure.
+    // Bind ServiceAnnouncer for service.
     bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
     // For Binding queue stuff
@@ -85,7 +84,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
       MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);

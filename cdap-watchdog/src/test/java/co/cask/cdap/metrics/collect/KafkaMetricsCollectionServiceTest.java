@@ -38,6 +38,7 @@ import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.After;
 import org.junit.Assert;
@@ -92,7 +93,13 @@ public class KafkaMetricsCollectionServiceTest {
       .create(metricValueType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter) {
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
+    };
     collectionService.startAndWait();
 
     // publish metrics for different context
@@ -128,7 +135,13 @@ public class KafkaMetricsCollectionServiceTest {
       .create(metricRecordType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter) {
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
+    };
     collectionService.startAndWait();
 
     // start the kafka server
@@ -195,10 +208,12 @@ public class KafkaMetricsCollectionServiceTest {
     });
 
     Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
-
     Assert.assertEquals(expected.size(), metrics.size());
+
     for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
-      Assert.assertEquals(expectedEntry.getValue().intValue(), metrics.get(expectedEntry.getKey()).getValue());
+      MetricValue metric = metrics.get(expectedEntry.getKey());
+      Assert.assertNotNull("Missing expected value for " + expectedEntry.getKey(), metric);
+      Assert.assertEquals(expectedEntry.getValue().intValue(), metric.getValue());
     }
 
     kafkaClient.stopAndWait();

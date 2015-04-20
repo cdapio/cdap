@@ -53,6 +53,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -138,7 +139,6 @@ public class MDSUpgrader extends AbstractUpgrader {
     handlePrograms(appId, appSpec.getSpark().keySet(), ProgramType.SPARK);
     handlePrograms(appId, appSpec.getWorkflows().keySet(), ProgramType.WORKFLOW);
     handlePrograms(appId, appSpec.getServices().keySet(), ProgramType.SERVICE);
-    handlePrograms(appId, appSpec.getProcedures().keySet(), ProgramType.PROCEDURE);
   }
 
   /**
@@ -276,8 +276,8 @@ public class MDSUpgrader extends AbstractUpgrader {
     }
 
     @Override
-    protected <T> T deserialize(byte[] serialized, Class<T> classOfT) {
-      return GSON.fromJson(Bytes.toString(serialized), classOfT);
+    protected <T> T deserialize(byte[] serialized, Type typeOfT) {
+      return GSON.fromJson(Bytes.toString(serialized), typeOfT);
     }
   }
 }

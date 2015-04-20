@@ -21,24 +21,25 @@ import ch.qos.logback.classic.PatternLayout;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.HttpResponder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * Callback to handle log events from LogReader.
  */
 class LogReaderCallback implements Callback {
-  private final JsonArray logResults;
+  private final List<FormattedLogEvent> logResults;
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
 
   LogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
-    this.logResults = new JsonArray();
+    this.logResults = Lists.newArrayList();
     this.responder = responder;
     this.escape = escape;
 
@@ -61,10 +62,7 @@ class LogReaderCallback implements Callback {
     String log = patternLayout.doLayout(event.getLoggingEvent());
     log = escape ? StringEscapeUtils.escapeHtml(log) : log;
 
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("log", log);
-    jsonObject.addProperty("offset", event.getOffset());
-    logResults.add(jsonObject);
+    logResults.add(new FormattedLogEvent(log, event.getOffset()));
   }
 
   @Override

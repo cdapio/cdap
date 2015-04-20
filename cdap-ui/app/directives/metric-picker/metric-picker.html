@@ -1,37 +1,53 @@
-<div class="input-group">
-  <div class="input-group-btn">
-    <button type="button" class="btn btn-default"
-      ng-model="metric.type"
-      bs-options="t for t in available.types"
-      data-container="body"
-      bs-select>
-        <strong ng-bind="metric.type"></strong>
-        <span class="caret"></span>
-    </button>
+<div class="form-group">
+  <div class="col-xs-12 col-sm-12">
+    <div class="input-group">
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+          ng-model="metric.type"
+          bs-options="t for t in available.types"
+          data-container="body"
+          bs-select>
+            <strong ng-bind="metric.type"></strong>
+            <span class="caret"></span>
+        </button>
+      </div>
+      <input type="text" class="form-control mp-input-group-input"
+        placeholder="Context"
+        ng-model="metric.context"
+        bs-options="c.value as c.display for c in available.contexts"
+        data-watch-options="1"
+        data-min-length="0"
+        data-limit="20"
+        data-container="body"
+        bs-typeahead />
+    </div>
   </div>
-  <input type="text" class="form-control"
-    placeholder="Context"
-    ng-model="metric.context"
-    bs-options="c.value as c.display for c in available.contexts"
-    data-watch-options="1"
-    data-min-length="0"
-    data-container="body"
-    bs-typeahead />
 </div>
 
-<br />
-
-<div class="input-group">
-  <span class="input-group-addon">
-    <i class="fa fa-line-chart"></i>
-  </span>
-  <input type="text" class="form-control"
-    placeholder="Metric Name"
-    ng-model="metric.name"
-    ng-disabled="!metric.context"
-    bs-options="m for m in available.names"
-    data-watch-options="1"
-    data-min-length="0"
-    data-container="body"
-    bs-typeahead />
+<div class="metrics-container">
+<div ng-repeat="name in metric.names" class="h6">
+  <div class="input-group">
+    <span class="input-group-addon">
+      <i class="fa fa-line-chart"></i>
+    </span>
+    <input type="text" class="form-control"
+      placeholder="Metric Name"
+      ng-model="name.name"
+      bs-options="m for m in available.names"
+      data-watch-options="1"
+      data-min-length="0"
+      data-limit="20"
+      data-container="body"
+      bs-typeahead />
+    <div class="input-group-addon" ng-click="deleteMetric($index)">
+      <span>
+        <i class="fa fa-fw fa-trash"></i>
+      </span>
+    </div>
+  </div>
 </div>
+</div>
+
+<button class="btn btn-primary" ng-click="addMetricName()" type="button" >
+  <span class="fa fa-fw fa-plus"></span>
+</button>

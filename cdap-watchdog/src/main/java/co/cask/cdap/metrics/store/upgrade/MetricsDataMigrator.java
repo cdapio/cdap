@@ -32,11 +32,11 @@ import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
+import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.metrics.store.timeseries.EntityTable;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -76,11 +76,6 @@ public class MetricsDataMigrator {
                                  Constants.Metrics.Tag.MAPREDUCE,
                                  Constants.Metrics.Tag.MR_TASK_TYPE,
                                  Constants.Metrics.Tag.INSTANCE_ID))
-      .put("p", ImmutableList.of(Constants.Metrics.Tag.APP,
-                                 TYPE,
-                                 Constants.Metrics.Tag.PROCEDURE,
-                                 Constants.Metrics.Tag.INSTANCE_ID))
-
       .put("s", ImmutableList.of(Constants.Metrics.Tag.APP,
                                  TYPE,
                                  Constants.Metrics.Tag.SPARK,
@@ -303,7 +298,7 @@ public class MetricsDataMigrator {
     Row row;
     long rowCount = 0;
     try {
-      Scanner scanner = metricsTable.scan(null, null, null, null);
+      Scanner scanner = metricsTable.scan(null, null, null);
       while ((row = scanner.next()) != null) {
         byte[] rowKey = row.getRow();
         int offset = 0;

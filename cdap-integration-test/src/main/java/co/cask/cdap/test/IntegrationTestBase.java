@@ -192,7 +192,7 @@ public class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+    return deployApplication(getClientConfig().getNamespace(), applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Id.Namespace namespace,
@@ -201,7 +201,7 @@ public class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, new File[0]);
+    return deployApplication(getClientConfig().getNamespace(), applicationClz, new File[0]);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
@@ -271,22 +271,6 @@ public class IntegrationTestBase {
       result.addAll(subList);
     }
     return result;
-  }
-
-  @SuppressWarnings("deprecation")
-  private void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    // TODO: replace with programClient.waitForProcedureInstances()
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getProcedureInstances(appId, procedureId);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
   }
 
   private void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,

@@ -24,11 +24,13 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LogSaverStatusServiceModule;
+import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.LogSaver;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -72,6 +74,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   private KafkaClientService kafkaClientService;
   private MultiLeaderElection multiElection;
   private LogSaverStatusService logSaverStatusService;
+  private MetricsCollectionService metricsCollectionService;
 
   public LogSaverTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -131,6 +134,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
                                               createPartitionChangeHandler(logSaver));
 
       logSaverStatusService = injector.getInstance(LogSaverStatusService.class);
+      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -142,8 +146,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver, multiElection,
-                                             logSaverStatusService));
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, logSaver,
+                                             multiElection, logSaverStatusService));
 
     LOG.info("Runnable started " + name);
 
@@ -166,8 +170,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    Futures.getUnchecked(Services.chainStop(logSaverStatusService,
-                                            multiElection, logSaver, kafkaClientService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(logSaverStatusService, multiElection, logSaver,
+                                            metricsCollectionService, kafkaClientService, zkClientService));
     completion.set(null);
   }
 
@@ -197,7 +201,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new LogSaverStatusServiceModule()
+      new LogSaverStatusServiceModule(),
+      new LoggingModules().getDistributedModules()
     );
   }
 }

@@ -17,24 +17,21 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.mapreduce.MRJobClient;
+import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -43,21 +40,22 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
@@ -65,26 +63,16 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -119,39 +107,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
 
   /**
-   * Json serializer.
-   */
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .create();
-
-  /**
-   * Store manages non-runtime lifecycle.
-   */
-  private final Store store;
-
-  private final WorkflowClient workflowClient;
-
-  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
-
-  /**
-   * Configuration object passed from higher up.
-   */
-  private final CConfiguration configuration;
-
-  /**
-   * Runtime program service for running and managing programs.
-   */
-  private final ProgramRuntimeService runtimeService;
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final ProgramLifecycleService lifecycleService;
   private final QueueAdmin queueAdmin;
-  private final Scheduler scheduler;
   private final PreferencesStore preferencesStore;
-  private final SchedulerQueueResolver schedulerQueueResolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final PropertiesResolver propertiesResolver;
+  private final AdapterService adapterService;
+  private MRJobClient mrJobClient;
+  private MapReduceMetricsInfo mapReduceMetricsInfo;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -194,29 +160,113 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Json serializer.
+   */
+  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
+
+  /**
+   * Store manages non-runtime lifecycle.
+   */
+  protected final Store store;
+
+  /**
+   * Runtime program service for running and managing programs.
+   */
+  protected final ProgramRuntimeService runtimeService;
+
+  /**
+   * Scheduler provides ability to schedule/un-schedule the jobs.
+   */
+  protected final Scheduler scheduler;
+
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                                     WorkflowClient workflowClient, CConfiguration configuration,
-                                     ProgramRuntimeService runtimeService,
-                                     DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
+                                     CConfiguration cConf, ProgramRuntimeService runtimeService,
+                                     ProgramLifecycleService lifecycleService,
+                                     QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory) {
+                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
+                                     MapReduceMetricsInfo mapReduceMetricsInfo,
+                                     PropertiesResolver propertiesResolver, AdapterService adapterService) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = storeFactory.create();
-    this.workflowClient = workflowClient;
-    this.configuration = configuration;
+    this.store = store;
     this.runtimeService = runtimeService;
-    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.lifecycleService = lifecycleService;
+    this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(configuration, store);
+    this.mrJobClient = mrJobClient;
+    this.mapReduceMetricsInfo = mapReduceMetricsInfo;
+    this.propertiesResolver = propertiesResolver;
+    this.adapterService = adapterService;
   }
 
   /**
-   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,procedures,services,schedules}.
+   * Relays job-level and task-level information about a particular MapReduce program run.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runs/{run-id}/info")
+  public void getMapReduceInfo(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("mapreduce-id") String mapreduceId,
+                               @PathParam("run-id") String runId) {
+    try {
+      Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+      Id.Run run = new Id.Run(programId, runId);
+      ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+      if (appSpec == null) {
+        throw new NotFoundException(programId.getApplication());
+      }
+      if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+        throw new NotFoundException(programId);
+      }
+      RunRecord runRecord = store.getRun(programId, runId);
+      if (runRecord == null) {
+        throw new NotFoundException(run);
+      }
+
+
+      MRJobInfo mrJobInfo;
+      try {
+        mrJobInfo = mrJobClient.getMRJobInfo(run);
+      } catch (IOException ioe) {
+        LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      } catch (NotFoundException nfe) {
+        // Even if we ran the MapReduce program, there is no guarantee that the JobClient will be able to find it.
+        // For example, if the MapReduce program fails before it successfully submits the job.
+        LOG.debug("Failed to find run history from JobClient for runId: {}. Falling back to Metrics system.", run, nfe);
+        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
+      }
+
+      mrJobInfo.setState(runRecord.getStatus().name());
+      // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
+      // in milliseconds. RunRecord returns seconds value.
+      mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecord.getStartTs()));
+      Long stopTs = runRecord.getStopTs();
+      if (stopTs != null) {
+        mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
+      }
+
+
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+    } catch (NotFoundException e) {
+      LOG.warn("NotFoundException while getting MapReduce Run info.", e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Failed to get run history for runId: {}", runId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
    */
   @GET
   @Path("/apps/{app-id}/{type}/{id}/status")
@@ -268,7 +318,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
       Id.Program programId = Id.Program.from(namespaceId, appId, programType, programName);
       JsonObject json = new JsonObject();
-      json.addProperty("status", scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
+      json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
                                                          scheduleName).toString());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
@@ -287,6 +337,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) {
+    // If the app is an Application Template, then don't allow any action.
+    // Operations are only allowed through Adapter Lifecycle management.
+    if (adapterService.getApplicationTemplateInfo(appId) != null) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           "Operations on Application Templates are allowed only through Adapters.");
+      return;
+    }
+
     if (type.equals("schedules")) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);
       return;
@@ -385,9 +443,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
     getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
+  }
+
+  /**
+   * Returns run record for a particular run of a program.
+   */
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}")
+  public void programRunRecord(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("program-type") String programType,
+                             @PathParam("program-id") String programId,
+                             @PathParam("run-id") String runid) {
+    ProgramType type = ProgramType.valueOfCategoryName(programType);
+    if (type == null || type == ProgramType.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+
+    try {
+      RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
+      if (runRecord != null) {
+        responder.sendJson(HttpResponseStatus.OK, runRecord);
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -485,26 +575,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the status for all programs that are passed into the data. The data is an array of Json objects
+   * Returns the status for all programs that are passed into the data. The data is an array of JSON objects
    * where each object must contain the following three elements: appId, programType, and programId
    * (flow name, service name, etc.).
-   * <p/>
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"},
    * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
-   * <p/>
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
    * as well as 2 fields, "status" which maps to the status of the program and "statusCode" which maps to the
-   * status code for the data in that JsonObjects. If an error occurs in the
-   * input (i.e. in the example above, App2 does not exist), then all JsonObjects for which the parameters
-   * have a valid status will have the status field but all JsonObjects for which the parameters do not have a valid
-   * status will have an error message and statusCode.
-   * <p/>
+   * status code for the data in that JsonObjects.
+   * </p><p>
+   * If an error occurs in the input (for the example above, App2 does not exist), then all JsonObjects for which the
+   * parameters have a valid status will have the status field but all JsonObjects for which the parameters do not have
+   * a valid status will have an error message and statusCode.
+   * </p><p>
    * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
-   * {"appId": "App1", "programType": "Procedure", "programId": "Proc2"}, "statusCode": 200, "status": "STOPPED"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "status": "STOPPED"},
    * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * </code></pre>
    */
   @POST
   @Path("/status")
@@ -544,31 +640,39 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns the number of instances for all program runnables that are passed into the data. The data is an array of
    * Json objects where each object must contain the following three elements: appId, programType, and programId
-   * (flow name, service name, or procedure name). Retrieving instances only applies to flows, procedures, and user
-   * services. For flows and procedures, another parameter, "runnableId", must be provided. This corresponds to the
-   * flowlet/runnable for which to retrieve the instances. This does not apply to procedures.
-   *
+   * (flow name, service name). Retrieving instances only applies to flows, and user
+   * services. For flows, another parameter, "runnableId", must be provided. This corresponds to the
+   * flowlet/runnable for which to retrieve the instances.
+   * <p>
    * Example input:
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1"},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2"},
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1"}]
-   *
+   * </code></pre>
+   * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
    * as well as 3 fields:
-   * "provisioned" which maps to the number of instances actually provided for the input runnable,
-   * "requested" which maps to the number of instances the user has requested for the input runnable,
-   * "statusCode" which maps to the http status code for the data in that JsonObjects. (200, 400, 404)
-   * If an error occurs in the input (i.e. in the example above, Flowlet1 does not exist), then all JsonObjects for
+   * <ul>
+   * <li>"provisioned" which maps to the number of instances actually provided for the input runnable;</li>
+   * <li>"requested" which maps to the number of instances the user has requested for the input runnable; and</li>
+   * <li>"statusCode" which maps to the http status code for the data in that JsonObjects (200, 400, 404).</li>
+   * </ul>
+   * </p><p>
+   * If an error occurs in the input (for the example above, Flowlet1 does not exist), then all JsonObjects for
    * which the parameters have a valid instances will have the provisioned and requested fields status code fields
    * but all JsonObjects for which the parameters are not valid will have an error message and statusCode.
-   *
-   * E.g. given the above data, if there is no Flowlet1, then the response would be 200 OK with following possible data:
+   * </p><p>
+   * For example, if there is no Flowlet1 in the above data, then the response could be 200 OK with the following data:
+   * </p>
+   * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
    *   "statusCode": 200, "provisioned": 2, "requested": 2},
-   *  {"appId": "App1", "programType": "Procedure", "programId": "Proc2", "statusCode": 200, "provisioned": 1,
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "provisioned": 1,
    *   "requested": 3},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Program": Flowlet1 not found"}]
+   * </code></pre>
    */
   @POST
   @Path("/instances")
@@ -590,7 +694,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
         String programTypeStr = requestedObj.getProgramType();
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-        // cant get instances for things that are not flows, services, or procedures
+        // cant get instances for things that are not flows or services
         if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
                        "Program type: " + programType + " is not a valid program type to get instances");
@@ -622,16 +726,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
     programList(responder, namespaceId, ProgramType.FLOW, null, store);
-  }
-
-  /**
-   * Returns a list of procedures associated with a namespace.
-   */
-  @GET
-  @Path("/procedures")
-  public void getAllProcedures(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.PROCEDURE, null, store);
   }
 
   /**
@@ -871,8 +965,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-        deleteProcessMetricsForFlow(appId, flowId);
+        // TODO: the process.events.pending metric is now off. We need to adjust it somehow [CDAP-2191]
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -883,110 +976,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**************************** Workflow/schedule APIs *****************************************************/
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
-  public void workflowStatus(HttpRequest request, final HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                             @PathParam("run-id") String runId) {
-
-    try {
-      workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
-                                           } else {
-                                             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                  status.getResult());
-                                           }
-                                         }
-                                       });
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Returns next scheduled runtime of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
-  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
-
-      JsonArray array = new JsonArray();
-      for (ScheduledRuntime runtime : runtimes) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", runtime.getScheduleId());
-        object.addProperty("time", runtime.getTime());
-        array.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, array);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Get Workflow schedules
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("workflow-id") String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
-    if (appSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
-      return;
-    }
-
-    List<ScheduleSpecification> specList = Lists.newArrayList();
-    for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
-      ScheduleSpecification spec = entry.getValue();
-      if (spec.getProgram().getProgramName().equals(workflowId) &&
-        spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
-        specList.add(entry.getValue());
-      }
-    }
-    responder.sendJson(HttpResponseStatus.OK, specList,
-                       new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
-  }
-
   /**
    * Return the number of instances of a service.
    */
   @GET
   @Path("/apps/{app-id}/services/{service-id}/instances")
-  public void getServiceInstance(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("app-id") String appId,
-                                 @PathParam("service-id") String serviceId) {
-    getServiceInstances(responder, namespaceId, appId, serviceId);
-  }
-
-  void getServiceInstances(HttpResponder responder, String namespaceId, String appId, String serviceId) {
+  public void getServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId)  {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1005,7 +1003,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK,
                          new ServiceInstances(instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE,
                                                                           serviceId, serviceId)));
-
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1019,16 +1016,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}/services/{service-id}/instances")
-  public void setServiceInstance(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("app-id") String appId,
-                                 @PathParam("service-id") String serviceId) {
-    setServiceInstances(request, responder, namespaceId, appId, serviceId);
-  }
-
-  void setServiceInstances(HttpRequest request, HttpResponder responder,
-                           String namespaceId, String appId, String serviceId) {
-
+  public void setServiceInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("service-id") String serviceId) {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1054,13 +1045,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getServiceInstances(programId);
       if (oldInstances != instances) {
         store.setServiceInstances(programId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
-                                                                        programId.getApplicationId(),
-                                                                        programId.getId(),
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(namespaceId, appId, serviceId,
                                                                         ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(programId.getId(), String.valueOf(instances))).get();
+                                              ImmutableMap.of(serviceId, String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1113,7 +1102,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Populates requested and provisioned instances for a program type.
-   * The program type passed here should be one that can have instances (flows, services or procedures)
+   * The program type passed here should be one that can have instances (flows, services, ...)
    * Requires caller to do this validation.
    */
   private void populateProgramInstances(BatchEndpointInstances requestedObj, String namespaceId, String appId,
@@ -1121,23 +1110,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         String programId) {
     int requested;
     String runnableId;
-    if (programType == ProgramType.PROCEDURE) {
-      // the "runnable" for procedures has the same id as the procedure name
-      runnableId = programId;
-      if (!spec.getProcedures().containsKey(programId)) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Procedure: " + programId + " not found");
-        return;
-      }
-      requested = store.getProcedureInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
-    } else if (programType == ProgramType.WORKER) {
+    if (programType == ProgramType.WORKER) {
       runnableId = programId;
       if (!spec.getWorkers().containsKey(programId)) {
         addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                      "Worker: " + programId + " not found");
         return;
       }
-      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.PROCEDURE, programId));
+      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, programId));
     } else {
       // services and flows must have runnable id
       if (requestedObj.getRunnableId() == null) {
@@ -1226,7 +1206,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * 'protected' only to support v2 webapp APIs
+   * 'protected' for the workflow handler to use
    */
   protected ProgramStatus getProgramStatus(Id.Program id, ProgramType type) {
     try {
@@ -1239,27 +1219,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           if (spec == null) {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          } else {
-            // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
           }
-        } else {
-          // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
-          Location webappLoc = null;
-          try {
-            webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
-          } catch (FileNotFoundException e) {
-            // No location found for webapp, no need to log this exception
+          if (type == ProgramType.MAPREDUCE && !store.getRuns(id, ProgramRunStatus.RUNNING, 0,
+                                                              Long.MAX_VALUE, 1).isEmpty()) {
+            // MapReduce program exists and running as a part of Workflow
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
           }
-
-          if (webappLoc != null && webappLoc.exists()) {
-            // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
-          } else {
-            // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
-          }
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
         }
+        // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
+        Location webappLoc = null;
+        try {
+          webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id, ProgramType.WEBAPP);
+        } catch (FileNotFoundException e) {
+          // No location found for webapp, no need to log this exception
+        }
+
+        if (webappLoc != null && webappLoc.exists()) {
+          // webapp exists and not running. so return stopped.
+          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
+        }
+
+        // webapp doesn't exist
+        return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
       }
 
       String status = controllerStateToString(runtimeInfo.getController().getState());
@@ -1298,8 +1280,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramSpecification programSpec;
       if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programId)) {
         programSpec = appSpec.getFlows().get(id.getId());
-      } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(programId)) {
-        programSpec = appSpec.getProcedures().get(id.getId());
       } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programId)) {
         programSpec = appSpec.getMapReduce().get(id.getId());
       } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programId)) {
@@ -1335,45 +1315,37 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
-                                             String appId, ProgramType programType, String programId,
+                                             String appId, ProgramType type, String programId,
                                              String action) {
-    if (programType == null) {
+    if (type == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
-                action, appId, programType, programId);
-      programStartStop(request, responder, namespaceId, appId, programId, programType, action);
-    }
-  }
+                action, appId, type, programId);
+      try {
+        Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
+        AppFabricServiceStatus status;
+        if ("start".equals(action)) {
+          status = start(id, type, decodeArguments(request), false);
+        } else if ("debug".equals(action)) {
+          status = start(id, type, decodeArguments(request), true);
+        } else if ("stop".equals(action)) {
+          status = stop(id, type);
+        } else {
+          throw new IllegalArgumentException("action must be start, stop, or debug, but is: " + action);
+        }
+        if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
+          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          return;
+        }
 
-  /**
-   * Protected temporarily until all v2 APIs are migrated (webapp APIs in this case).
-   */
-  protected void programStartStop(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
-                                  String programId, ProgramType type, String action) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-      AppFabricServiceStatus status;
-      if ("start".equals(action)) {
-        status = start(id, type, decodeArguments(request), false);
-      } else if ("debug".equals(action)) {
-        status = start(id, type, decodeArguments(request), true);
-      } else if ("stop".equals(action)) {
-        status = stop(id, type);
-      } else {
-        throw new IllegalArgumentException("action must be start, stop, or debug, but is: " + action);
-      }
-      if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
+        responder.sendString(status.getCode(), status.getMessage());
+      } catch (SecurityException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      } catch (Throwable e) {
+        LOG.error("Got exception:", e);
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
       }
-
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1384,76 +1356,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      Program program = store.loadProgram(id, type);
-      if (program == null) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
-
       if (isRunning(id, type)) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Map<String, String> userArgs = preferencesStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
-                                                                            type.getCategoryName(), id.getId());
+      Map<String, String> sysArgs = propertiesResolver.getSystemProperties(id, type);
+      Map<String, String> userArgs = propertiesResolver.getUserProperties(id, type);
       if (overrides != null) {
-        for (Map.Entry<String, String> entry : overrides.entrySet()) {
-          userArgs.put(entry.getKey(), entry.getValue());
-        }
+        userArgs.putAll(overrides);
       }
 
-      BasicArguments userArguments = new BasicArguments(userArgs);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(), getSystemArguments(id.getNamespaceId()),
-                                                             userArguments, debug));
-
-      final ProgramController controller = runtimeInfo.getController();
-      final String runId = controller.getRunId().getId();
-
-      controller.addListener(new AbstractListener() {
-
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
-          }
-        }
-
-        @Override
-        public void completed () {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.COMPLETED.getRunStatus());
-        }
-
-        @Override
-        public void killed() {
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.KILLED.getRunStatus());
-        }
-
-        @Override
-        public void error(Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", id, runId, cause);
-          store.setStop(id, runId,
-                        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR.getRunStatus());
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-
-      return AppFabricServiceStatus.OK;
-    } catch (DatasetInstantiationException e) {
-      return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, debug);
+      return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
+    } catch (ProgramNotFoundException e) {
+      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
-      if (throwable instanceof FileNotFoundException) {
-        return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      }
       return AppFabricServiceStatus.INTERNAL_ERROR;
     }
   }
@@ -1485,7 +1403,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      Preconditions.checkNotNull(runtimeInfo,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), type, identifier);
       ProgramController controller = runtimeInfo.getController();
       controller.stop().get();
       return AppFabricServiceStatus.OK;
@@ -1503,7 +1422,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ProgramRunStatus.valueOf(status.toUpperCase());
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
       } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");
       }
     } catch (SecurityException e) {
@@ -1750,78 +1669,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   private boolean canHaveInstances(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE,
-                      ProgramType.WORKER).contains(programType);
-  }
-
-  // deletes the process metrics for a flow
-  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(3L, TimeUnit.SECONDS);
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
-    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.API_VERSION_2,
-                               application, flow);
-
-    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) timeout)
-      .build();
-
-    try {
-      client.delete().get(timeout, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
-  }
-
-  private BasicArguments getSystemArguments(String namespaceId) {
-    // Get Configs from Cconf
-    Map<String, String> systemConfigsFromCDAP = getDefaultSystemArguments();
-    // Override the Configs from configs at namespace level.
-    return new BasicArguments(getResolvedSystemArguments(namespaceId, systemConfigsFromCDAP));
-  }
-
-  // Get default system arguments from Cconfiguration.
-  private Map<String, String> getDefaultSystemArguments() {
-
-    Map<String, String> configs = Maps.newHashMap();
-
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getDefaultQueue();
-    if (schedulerQueue != null) {
-      configs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-
-    return configs;
-  }
-
-  // Get system arguments resolved at namespace level, fall back to default
-  private Map<String, String> getResolvedSystemArguments(String namespaceId, Map<String, String> configs) {
-    Map<String, String> resolvedConfigs = Maps.newHashMap(configs);
-    // The only config currently as system arguments is Scheduler queue.
-    String schedulerQueue = schedulerQueueResolver.getQueue(Id.Namespace.from(namespaceId));
-    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
-      resolvedConfigs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, schedulerQueue);
-    }
-    return resolvedConfigs;
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 }

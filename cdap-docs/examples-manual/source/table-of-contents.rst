@@ -12,5 +12,5 @@ CDAP Examples, Guides, and Tutorials Table of Contents
    Introduction </index>
    Examples </examples/index>
    How-To Guides </how-to-guides/index>
-   Tutorials </tutorials>
+   Tutorials </tutorials/index>
    Apps and Packs </apps-packs>

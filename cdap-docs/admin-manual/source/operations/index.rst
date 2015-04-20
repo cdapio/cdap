@@ -39,13 +39,13 @@ Operations
 .. _preferences: preferences.html
 
 - |preferences|_ **Preferences** provide the ability to save configuration information. 
-  Flows, Procedures, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments.**
+  Flows, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets and Procedures.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets.** 
 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**

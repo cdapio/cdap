@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,12 +24,17 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -69,20 +74,6 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void verifyProgramRecords(List<String> expected, Map<ProgramType, List<ProgramRecord>> map) {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
-  }
-
-  protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getProcedureInstances(appId, procedureId);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
@@ -126,7 +117,11 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
   }
 
-  protected File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+  protected File createAppJarFile(Class<?> cls) throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    File appJarFile = TMP_FOLDER.newFile();
+    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    return appJarFile;
   }
 }

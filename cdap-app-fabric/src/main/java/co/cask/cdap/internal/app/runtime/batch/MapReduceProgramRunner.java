@@ -24,6 +24,8 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -49,13 +51,15 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -70,7 +74,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-
+  private final Store store;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
 
@@ -81,7 +85,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient) {
+                                DiscoveryServiceClient discoveryServiceClient, Store store) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -90,6 +94,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.store = store;
   }
 
   @Inject (optional = true)
@@ -100,7 +105,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  public ProgramController run(final Program program, ProgramOptions options) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -114,7 +119,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-    RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
+    final RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
                     ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
                     : RunIds.generate();
 
@@ -124,6 +129,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -135,7 +141,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final DynamicMapReduceContext context =
       new DynamicMapReduceContext(program, null, runId, null,
                                   options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch,
+                                  logicalStartTime, workflowBatch, adapterName,
                                   discoveryServiceClient, metricsCollectionService,
                                   txSystemClient, datasetFramework);
 
@@ -151,7 +157,39 @@ public class MapReduceProgramRunner implements ProgramRunner {
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
                                                                         streamAdmin, txSystemClient);
-    ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
+    mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void starting() {
+        //Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        }
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        if (from == Service.State.STOPPING) {
+          // Service was killed
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.KILLED.getRunStatus());
+        } else {
+          // Service completed by itself.
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.COMPLETED.getRunStatus());
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.ERROR.getRunStatus());
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
     LOG.info("Starting MapReduce Job: {}", context.toString());
     // if security is not enabled, start the job as the user we're using to access hdfs with.

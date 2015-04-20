@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.metrics.query;
 
-import co.cask.cdap.api.metrics.Interpolator;
-import co.cask.cdap.api.metrics.Interpolators;
+import co.cask.cdap.api.dataset.lib.cube.Interpolator;
+import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
@@ -68,7 +68,6 @@ final class MetricQueryParser {
   public enum ProgramType {
     FLOWS("f", Constants.Metrics.Tag.FLOW),
     MAPREDUCE("b", Constants.Metrics.Tag.MAPREDUCE),
-    PROCEDURES("p", Constants.Metrics.Tag.PROCEDURE),
     HANDLERS("h", Constants.Metrics.Tag.HANDLER),
     SERVICES("u", Constants.Metrics.Tag.SERVICE),
     SPARK("s", Constants.Metrics.Tag.SPARK);
@@ -143,7 +142,7 @@ final class MetricQueryParser {
    */
   static String stripVersionAndMetricsFromPath(String path) {
     // +8 for "/metrics"
-    int startPos = Constants.Gateway.API_VERSION_2.length() + 8;
+    int startPos = Constants.Gateway.API_VERSION_3.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -314,7 +313,7 @@ final class MetricQueryParser {
       return;
     }
 
-    // request-type: flows, procedures, or mapreduce or handlers or services(user)
+    // request-type: flows, mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
     ProgramType programType;
     try {
@@ -362,13 +361,6 @@ final class MetricQueryParser {
         break;
       case SERVICES:
         buildComponentTypeContext(pathParts, tagValues, "runnables", "service", Constants.Metrics.Tag.SERVICE_RUNNABLE);
-        break;
-      case PROCEDURES:
-        if (pathParts.hasNext()) {
-          if (pathParts.next().equals(RUN_ID)) {
-            parseRunId(pathParts, tagValues);
-          }
-        }
         break;
       case SPARK:
         if (pathParts.hasNext()) {
@@ -477,7 +469,11 @@ final class MetricQueryParser {
       } else {
         resolution = Resolution.SECOND.getResolution();
       }
-      count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      if (queryParams.containsKey(COUNT)) {
+        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      } else {
+        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      }
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
@@ -509,9 +505,9 @@ final class MetricQueryParser {
   }
 
   private static Resolution getResolution(long difference) {
-    if (difference >= MetricsConstants.METRICS_HOUR_RESOLUTION_CUTOFF) {
+    if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
       return  Resolution.HOUR;
-    } else if (difference >= MetricsConstants.METRICS_MINUTE_RESOLUTION_CUTOFF) {
+    } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
       return Resolution.MINUTE;
     } else {
       return Resolution.SECOND;

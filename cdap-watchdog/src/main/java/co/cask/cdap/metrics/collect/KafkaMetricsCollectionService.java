@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
@@ -38,7 +39,7 @@ import java.util.Iterator;
  * is determined by the metric context.
  */
 @Singleton
-public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
+public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionService.class);
 
   private final KafkaClient kafkaClient;
@@ -87,13 +88,17 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
       MetricValue value = metrics.next();
-      recordWriter.encode(value, encoder);
-      // partitioning by the context
-      preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), getPartitionKey(value));
-      encoderOutputStream.reset();
+      publishMetric(preparer, value);
     }
 
     preparer.send();
+  }
+
+  private void publishMetric(KafkaPublisher.Preparer preparer, MetricValue value) throws IOException {
+    recordWriter.encode(value, encoder);
+    // partitioning by the context
+    preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), getPartitionKey(value));
+    encoderOutputStream.reset();
   }
 
   private Integer getPartitionKey(MetricValue value) {

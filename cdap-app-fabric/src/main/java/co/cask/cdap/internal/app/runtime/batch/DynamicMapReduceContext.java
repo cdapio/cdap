@@ -72,13 +72,13 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  RunId runId, String taskId,
                                  Arguments runtimeArguments,
                                  MapReduceSpecification spec,
-                                 long logicalStartTime, String workflowBatch,
+                                 long logicalStartTime, String workflowBatch, String adapterName,
                                  DiscoveryServiceClient discoveryServiceClient,
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
-          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService, dsFramework);
+          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService, dsFramework, adapterName);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override

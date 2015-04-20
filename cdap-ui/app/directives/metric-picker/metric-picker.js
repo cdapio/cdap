@@ -16,7 +16,31 @@ angular.module(PKG.name + '.commons')
       $scope.metric = {
         context: '',
         type: ns,
-        name: ''
+        names: [{name: ''}],
+        resetNames: function() {
+          this.names = [{name: ''}];
+        },
+        getNames: function() {
+          return this.names.map(function(value) {
+            return value.name;
+          });
+        },
+        getName: function() {
+          return this.getNames().join(', ');
+        }
+      };
+
+      $scope.addMetricName = function() {
+        $scope.metric.names.push({name: ''});
+      };
+
+      $scope.deleteMetric = function(idx) {
+        if ($scope.metric.names.length == 1) {
+          // If its the only metric, simply clear it instead of removing it
+          $scope.metric.resetNames();
+        } else {
+          $scope.metric.names.splice(idx, 1);
+        }
       };
 
     }
@@ -38,7 +62,15 @@ angular.module(PKG.name + '.commons')
           elem.find('input').attr('required', true);
           ngModel.$validators.metricAndContext = function (m, v) {
             var t = m || v;
-            return t && t.name && t.context;
+            if (!t || !t.names || !t.names.length || !t.context) {
+              return false;
+            }
+            for (var i = 0; i < t.names.length; i++) {
+              if (!t.names[i].length) {
+                return false;
+              }
+            }
+            return true;
           };
         }
 
@@ -97,6 +129,8 @@ angular.module(PKG.name + '.commons')
                 '&context=' + encodeURIComponent(context)
             },
             function (res) {
+              // 'Add All' option to add all metrics in current context.
+              res.unshift('Add All');
               scope.available.names = res;
             }
           );
@@ -107,36 +141,54 @@ angular.module(PKG.name + '.commons')
         elem.find('button').on('blur', onBlurHandler);
         elem.find('input').on('blur', onBlurHandler);
 
-        scope.$watchCollection('metric', function (newVal, oldVal) {
-
+        var metricChanged = function (newVal, oldVal) {
           ngModel.$validate();
 
           if(newVal.type !== oldVal.type) {
             scope.metric.context = '';
-            scope.metric.name = '';
+            scope.metric.resetNames();
             fetchAhead();
             return;
           }
 
           if(newVal.context !== oldVal.context) {
-            scope.metric.name = '';
+            scope.metric.resetNames();
             fetchAhead();
+            return;
           }
 
-          if(newVal.context && newVal.name) {
-            ngModel.$setViewValue({
-              context: getBaseContext() + '.' + newVal.context,
-              name: newVal.name
-            });
-          }
-          else {
+          if(newVal.context && newVal.names) {
+            var isAddAll = false;
+            for (var i = 0; i < newVal.names.length; i++) {
+              if (newVal.names[i].name === 'Add All') {
+                isAddAll = true;
+              }
+            }
+            if (isAddAll) {
+              ngModel.$setViewValue({
+                addAll: true,
+                allMetrics: scope.available.names.slice(1), // Remove 'Add All' option
+                context: getBaseContext() + '.' + newVal.context,
+                names: newVal.getNames(),
+                name: newVal.getName()
+              });
+              return;
+            } else {
+              ngModel.$setViewValue({
+                context: getBaseContext() + '.' + newVal.context,
+                names: newVal.getNames(),
+                name: newVal.getName()
+              });
+            }
+          } else {
             if(ngModel.$dirty) {
               ngModel.$setViewValue(null);
             }
 
           }
 
-        });
+        }
+        scope.$watch('metric', metricChanged, true);
 
         fetchAhead();
       }

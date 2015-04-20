@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
@@ -66,15 +68,6 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerId, appId, numInstances);
         break;
-      case PROCEDURE:
-        if (programIdParts.length < 2) {
-          throw new CommandInputError(this);
-        }
-        String procedureId = programIdParts[1];
-        programClient.setProcedureInstances(appId, procedureId, numInstances);
-        output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
-                      procedureId, appId, numInstances);
-        break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
@@ -97,7 +90,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the instances of a %s.", elementType.getPrettyName());
+    return String.format("Sets the instances of %s.", Fragment.of(Article.A, elementType.getTitleName()));
 
   }
 }

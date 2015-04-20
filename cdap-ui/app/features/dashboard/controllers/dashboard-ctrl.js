@@ -3,52 +3,35 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
-  $scope.dashboards = rDashboardsModel.data;
+  $scope.unknownBoard = false;
+  $scope.isEnterprise = MY_CONFIG.isEnterprise;
+  $scope.dashboards = rDashboardsModel.data || [];
+  $scope.liveDashboard = null;
+  $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
 
-  if(!rDashboardsModel.data.length) {
-    rDashboardsModel.add();
+  $scope.currentBoard = rDashboardsModel.current();
+  if (!$scope.currentBoard) {
+    $scope.unknownBoard = true;
   }
-
-  $scope.$watch('dashboards.activeIndex', function (newVal) {
-    $state.go($state.current, {tab:newVal});
-  });
-
-  function checkTabParam() {
-    var tab = parseInt($state.params.tab, 10) || 0;
-    if((tab<0 || tab>=$scope.dashboards.length)) {
-      tab = 0;
-    }
-    if($scope.dashboards.activeIndex !== tab) {
-      $scope.dashboards.activeIndex = tab;
-    }
-    $scope.currentBoard = rDashboardsModel.current();
-  }
-
-  $scope.$on('$stateChangeSuccess', checkTabParam);
-  checkTabParam();
-
-
 
   /**
    * show a dropdown when clicking on the tab of active dashboard
    * @TODO make a directive instead
    */
-  $scope.activeTabClick = function (event) {
-
+  $scope.activeTabClick = function (event, index) {
+    if (index !== $scope.dashboards.activeIndex || !$state.includes('dashboard.user')) {
+      return;
+    }
     var toggle = angular.element(event.target);
     if(!toggle.hasClass('dropdown-toggle')) {
       toggle = toggle.parent();
     }
 
-    if(toggle.parent().hasClass('open')) {
-      return;
-    }
-
     var scope = $scope.$new(),
         dd = $dropdown(toggle, {
-          template: 'assets/features/dashboard/partials/tab-dd.html',
+          template: 'assets/features/dashboard/templates/partials/tab-dd.html',
           animation: 'am-flip-x',
           trigger: 'manual',
           prefixEvent: 'dashboard-tab-dd',
@@ -68,12 +51,16 @@ function ($scope, $state, $dropdown, rDashboardsModel) {
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {
-      $state.go($state.current, {tab: 0}, {reload: true});
+      var tabDest = rDashboardsModel.data.length - 1;
+      $state.go('dashboard.user', {tab: tabDest}, {reload: true});
     });
   };
 
   $scope.removeDashboard = function () {
-    rDashboardsModel.remove($scope.dashboards.activeIndex);
+    rDashboardsModel.remove($scope.dashboards.activeIndex)
+      .then(function() {
+        $state.go('dashboard.standard.cdap', {}, {reload: true});
+      });
   };
 
   $scope.reorderDashboard = function (reverse) {
@@ -91,7 +78,16 @@ function ($scope, $state, $dropdown, rDashboardsModel) {
     }
   };
 
+  $scope.makeItLive = function() {
+    $scope.liveDashboard = !$scope.liveDashboard;
+    var currentColumns = rDashboardsModel.current().columns,
+        i, j;
+    for (i=0; i<currentColumns.length; i++) {
+      for (j=0; j<currentColumns[i].length; j++) {
+        currentColumns[i][j].isLive = $scope.liveDashboard;
+      }
+    }
+  };
 
 
 });
-

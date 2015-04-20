@@ -1,30 +1,33 @@
-<div class="row h2">
-  <div class="col-sm-4">
-    <button type="button"
-            class="btn btn-default"
-            ng-model="currentRun"
-            placeholder="Please Select a Run"
-            bs-options="run.runid as run.runid for run in runs" bs-select>
-      <span class="caret"></span>
-    </button>
-  </div>
-  <div class="col-sm-8 text-right">
-    <!-- <div class="btn-group" ng-model="runTabs.activeTab" bs-radio-group>
-      <label class="btn btn-default" ng-repeat="tab in runTabs">
-        <input type="radio" class="btn btn-default" value="{{ $index }}">
-        {{tab}}
-      </label>
-    </div> -->
-  </div>
-</div>
 <div class="row">
-  <div class="col-sm-12">
-    <ui-view/>
+  <div class="col-lg-4 col-md-5 col-sm-6 col-xs-12">
+    <div class="btn-group"
+          dropdown is-open="dropdown.isopen">
+      <button type="button"
+              class="btn btn-default dropdown-toggle"
+              dropdown-toggle ng-disabled="current === 'No Run'">
+        {{ runs.selected.runid }}
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li ng-repeat="run in runs">
+          <a ui-sref="workflows.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
+        </li>
+      </ul>
+    </div>
+
   </div>
 </div>
-
-<!-- <div ng-show="runs.length == 0" class="h2">
-  <div class="well well-md  text-center">
-    <h3> This Flow hasn't run once. Start a run! </h3>
+<br/>
+<div ng-if="runs.length">
+  <div ng-if="runs.length">
+    <div ng-include="'/assets/features/workflows/templates/tabs/runs/run-detail.html'"
+          ng-if="!$stateParams.runid">
+    </div>
+    <div ui-view  ng-if="$stateParams.runid"> </div>
   </div>
-</div> -->
+  <div ng-if="!runs.length">
+    <div class="well well-lg text-center h3">
+      <div>No runs yet! Start one.</div>
+    </div>
+  </div>
+</div>

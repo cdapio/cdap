@@ -19,13 +19,13 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.FlowMapReduceApp;
 import co.cask.cdap.NoProgramsApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
@@ -41,7 +41,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -52,39 +51,46 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.Sink;
-import co.cask.cdap.proto.Source;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import com.google.inject.Injector;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class DefaultStoreTest {
+  private static final Gson GSON = new Gson();
   private static DefaultStore store;
 
   @BeforeClass
@@ -125,16 +131,59 @@ public class DefaultStoreTest {
     // Should have two run history.
     Id.Program programId = Id.Program.from("account1", "concurrentApp", ProgramType.FLOW, "concurrentFlow");
     long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
-    store.setStart(programId, "run1", now - 1000);
-    store.setStart(programId, "run2", now - 1000);
+    RunId run1 = RunIds.generate(now - 10000);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1));
+    RunId run2 = RunIds.generate(now - 10000);
+    store.setStart(programId, run2.getId(), runIdToSecs(run2));
 
-    store.setStop(programId, "run1", now, ProgramController.State.COMPLETED.getRunStatus());
-    store.setStop(programId, "run2", now, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, run1.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
+    store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
 
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
-                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
+  }
+
+  @Test
+  public void testAdapterLogRunHistory() throws Exception {
+    String adapter = "adapter1";
+    Id.Program programId = Id.Program.from("ns1", "app1", ProgramType.WORKER, "wrk1");
+    long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
+    RunId run1 = RunIds.generate(now - 20000);
+
+    // Record start through an Adapter but try to stop the run outside of an adapter.
+    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter);
+
+    // RunRecord should be available through RunRecord query for that Program.
+    RunRecord programRun = store.getRun(programId, run1.getId());
+    Assert.assertEquals(run1.getId(), programRun.getPid());
+
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
+
+    RunRecord adapterRun = store.getRun(programId, run1.getId());
+    Assert.assertNotNull(adapterRun);
+    Assert.assertEquals(run1.getId(), adapterRun.getPid());
+
+    // RunRecords query for the Program under different Adapter name should not return anything
+    List<RunRecord> records = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
+                                            "invalidAdapter");
+    Assert.assertTrue(records.isEmpty());
+
+    // RunRecords query for the Program should return the RunRecord
+    List<RunRecord> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertEquals(1, runRecords.size());
+    Assert.assertEquals(run1.getId(), Iterables.getFirst(runRecords, null).getPid());
+
+    List<RunRecord> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
+                                                adapter);
+    List<RunRecord> completedRuns = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE,
+                                                  Integer.MAX_VALUE, adapter);
+    Assert.assertEquals(adapterRuns, completedRuns);
+    Assert.assertEquals(1, adapterRuns.size());
+    Assert.assertEquals(run1.getId(), Iterables.getFirst(adapterRuns, null).getPid());
   }
 
   @Test
@@ -142,31 +191,43 @@ public class DefaultStoreTest {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow1");
     long now = System.currentTimeMillis();
+    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
-    store.setStart(programId, "run1", now - 2000);
-    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR.getRunStatus());
+    RunId run1 = RunIds.generate(now - 20000);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1));
+    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.ERROR.getRunStatus());
 
     // record another finished flow
-    store.setStart(programId, "run2", now - 1000);
-    store.setStop(programId, "run2", now - 500, ProgramController.State.COMPLETED.getRunStatus());
+    RunId run2 = RunIds.generate(now - 10000);
+    store.setStart(programId, run2.getId(), runIdToSecs(run2));
+    store.setStop(programId, run2.getId(), nowSecs - 5, ProgramController.State.COMPLETED.getRunStatus());
 
     // record not finished flow
-    store.setStart(programId, "run3", now);
+    RunId run3 = RunIds.generate(now);
+    store.setStart(programId, run3.getId(), runIdToSecs(run3));
+
+    // For a RunRecord that has not yet been completed, getStopTs should return null
+    RunRecord runRecord = store.getRun(programId, run3.getId());
+    Assert.assertNull(runRecord.getStopTs());
 
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
-    store.setStart(programId2, "run4", now - 500);
-    store.setStop(programId2, "run4", now - 400, ProgramController.State.COMPLETED.getRunStatus());
+    RunId run4 = RunIds.generate(now - 5000);
+    store.setStart(programId2, run4.getId(), runIdToSecs(run4));
+    store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"), "run3", now - 300);
+    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
+                   run3.getId(), RunIds.getTime(run3, TimeUnit.MILLISECONDS));
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> successHistory = store.getRuns(programId, ProgramRunStatus.COMPLETED,
-                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                   0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     List<RunRecord> failureHistory = store.getRuns(programId, ProgramRunStatus.FAILED,
-                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                   nowSecs - 20, nowSecs - 10, Integer.MAX_VALUE);
+    Assert.assertEquals(failureHistory, store.getRuns(programId, ProgramRunStatus.FAILED,
+                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE));
 
     // only finished + succeeded runs should be returned
     Assert.assertEquals(1, successHistory.size());
@@ -174,14 +235,71 @@ public class DefaultStoreTest {
     Assert.assertEquals(1, failureHistory.size());
     // records should be sorted by start time latest to earliest
     RunRecord run = successHistory.get(0);
-    Assert.assertEquals(now - 1000, run.getStartTs());
-    Assert.assertEquals(now - 500, run.getStopTs());
+    Assert.assertEquals(nowSecs - 10, run.getStartTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 5), run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
-    Assert.assertEquals(now - 2000, run.getStartTs());
-    Assert.assertEquals(now - 1000, run.getStopTs());
+    Assert.assertEquals(nowSecs - 20, run.getStartTs());
+    Assert.assertEquals(Long.valueOf(nowSecs - 10), run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
+
+    // Assert all history
+    List<RunRecord> allHistory = store.getRuns(programId, ProgramRunStatus.ALL,
+                                               nowSecs - 20, nowSecs + 1, Integer.MAX_VALUE);
+    Assert.assertEquals(allHistory.toString(), 3, allHistory.size());
+
+    // Assert running programs
+    List<RunRecord> runningHistory = store.getRuns(programId, ProgramRunStatus.RUNNING, nowSecs, nowSecs + 1, 100);
+    Assert.assertEquals(1, runningHistory.size());
+    Assert.assertEquals(runningHistory, store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100));
+
+    // Get a run record for running program
+    RunRecord expectedRunning = runningHistory.get(0);
+    Assert.assertNotNull(expectedRunning);
+    RunRecord actualRunning = store.getRun(programId, expectedRunning.getPid());
+    Assert.assertEquals(expectedRunning, actualRunning);
+
+    // Get a run record for completed run
+    RunRecord expectedCompleted = successHistory.get(0);
+    Assert.assertNotNull(expectedCompleted);
+    RunRecord actualCompleted = store.getRun(programId, expectedCompleted.getPid());
+    Assert.assertEquals(expectedCompleted, actualCompleted);
+
+    // Backwards compatibility test with random UUIDs
+    // record finished flow
+    RunId run5 = RunIds.fromString(UUID.randomUUID().toString());
+    store.setStart(programId, run5.getId(), nowSecs - 8);
+    store.setStop(programId, run5.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
+
+    // record not finished flow
+    RunId run6 = RunIds.fromString(UUID.randomUUID().toString());
+    store.setStart(programId, run6.getId(), nowSecs - 2);
+
+    // Get run record for run5
+    RunRecord expectedRecord5 = new RunRecord(run5.getId(), nowSecs - 8, nowSecs - 4, ProgramRunStatus.COMPLETED);
+    RunRecord actualRecord5 = store.getRun(programId, run5.getId());
+    Assert.assertEquals(expectedRecord5, actualRecord5);
+
+    // Get run record for run6
+    RunRecord expectedRecord6 = new RunRecord(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING);
+    RunRecord actualRecord6 = store.getRun(programId, run6.getId());
+    Assert.assertEquals(expectedRecord6, actualRecord6);
+
+    // Non-existent run record should give null
+    Assert.assertNull(store.getRun(programId, UUID.randomUUID().toString()));
+
+    // Searching for history in wrong time range should give us no results
+    Assert.assertTrue(
+      store.getRuns(programId, ProgramRunStatus.COMPLETED, nowSecs - 5000, nowSecs - 2000, Integer.MAX_VALUE).isEmpty()
+    );
+    Assert.assertTrue(
+      store.getRuns(programId, ProgramRunStatus.ALL, nowSecs - 5000, nowSecs - 2000, Integer.MAX_VALUE).isEmpty()
+    );
+  }
+
+  private long runIdToSecs(RunId runId) {
+    return RunIds.getTime(runId, TimeUnit.SECONDS);
   }
 
   @Test
@@ -233,8 +351,6 @@ public class DefaultStoreTest {
       createDataset("dataset2", KeyValueTable.class);
       addFlow(new FlowImpl("flow1"));
       addFlow(new FlowImpl("flow2"));
-      addProcedure(new ProcedureImpl("procedure1"));
-      addProcedure(new ProcedureImpl("procedure2"));
       addMapReduce(new FooMapReduceJob("mrJob1"));
       addMapReduce(new FooMapReduceJob("mrJob2"));
     }
@@ -253,8 +369,6 @@ public class DefaultStoreTest {
                     DatasetProperties.builder().add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "foo").build());
       addFlow(new FlowImpl("flow2"));
       addFlow(new FlowImpl("flow3"));
-      addProcedure(new ProcedureImpl("procedure2"));
-      addProcedure(new ProcedureImpl("procedure3"));
       addMapReduce(new FooMapReduceJob("mrJob2"));
       addMapReduce(new FooMapReduceJob("mrJob3"));
     }
@@ -314,24 +428,6 @@ public class DefaultStoreTest {
       setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS");
     }
   }
-
-  /**
-   *
-   */
-  public static class ProcedureImpl extends AbstractProcedure {
-    @UseDataSet("dataset2")
-    private KeyValueTable counters;
-
-    protected ProcedureImpl(String name) {
-      super(name);
-    }
-
-    @Handle("proced")
-    public void process(String word) throws Exception {
-      this.counters.read(word.getBytes(Charsets.UTF_8));
-    }
-  }
-
 
   private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored) {
     // should be enough to make sure it is stored
@@ -418,22 +514,21 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testProcedureInstances() throws Exception {
+  public void testWorkerInstances() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithWorker.class);
+    ApplicationSpecification spec = Specifications.from(new AppWithWorker());
 
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
-    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
+    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
 
-    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
-    Id.Program programId = new Id.Program(appId, ProgramType.PROCEDURE, "NoOpProcedure");
-
-    int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
+    int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
     Assert.assertEquals(1, instancesFromSpec);
-    int instances = store.getProcedureInstances(programId);
+    int instances = store.getWorkerInstances(programId);
     Assert.assertEquals(instancesFromSpec, instances);
 
-    store.setProcedureInstances(programId, 10);
-    instances = store.getProcedureInstances(programId);
-    Assert.assertEquals(10, instances);
+    store.setWorkerInstances(programId, 9);
+    instances = store.getWorkerInstances(programId);
+    Assert.assertEquals(9, instances);
   }
 
   @Test
@@ -501,12 +596,10 @@ public class DefaultStoreTest {
 
     Id.Program flowProgramId = new Id.Program(appId, ProgramType.FLOW, "NoOpFlow");
     Id.Program mapreduceProgramId = new Id.Program(appId, ProgramType.MAPREDUCE, "NoOpMR");
-    Id.Program procedureProgramId = new Id.Program(appId, ProgramType.PROCEDURE, "NoOpProcedure");
     Id.Program workflowProgramId = new Id.Program(appId, ProgramType.WORKFLOW, "NoOpWorkflow");
 
     store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
     store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
-    store.storeRunArguments(procedureProgramId, ImmutableMap.of("timeoutMs", "1000"));
     store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "cask"));
 
 
@@ -517,10 +610,6 @@ public class DefaultStoreTest {
     args = store.getRunArguments(mapreduceProgramId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("/data", args.get("path"));
-
-    args = store.getRunArguments(procedureProgramId);
-    Assert.assertEquals(1, args.size());
-    Assert.assertEquals("1000", args.get("timeoutMs"));
 
     args = store.getRunArguments(workflowProgramId);
     Assert.assertEquals(1, args.size());
@@ -534,9 +623,6 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, args.size());
 
     args = store.getRunArguments(mapreduceProgramId);
-    Assert.assertEquals(0, args.size());
-
-    args = store.getRunArguments(procedureProgramId);
     Assert.assertEquals(0, args.size());
 
     args = store.getRunArguments(workflowProgramId);
@@ -560,7 +646,6 @@ public class DefaultStoreTest {
 
     Id.Program flowProgramId1 = new Id.Program(appId1, ProgramType.FLOW, "NoOpFlow");
     Id.Program mapreduceProgramId1 = new Id.Program(appId1, ProgramType.MAPREDUCE, "NoOpMR");
-    Id.Program procedureProgramId1 = new Id.Program(appId1, ProgramType.PROCEDURE, "NoOpProcedure");
     Id.Program workflowProgramId1 = new Id.Program(appId1, ProgramType.WORKFLOW, "NoOpWorkflow");
 
     Id.Program flowProgramId2 = new Id.Program(appId2, ProgramType.FLOW, "WordCountFlow");
@@ -576,9 +661,6 @@ public class DefaultStoreTest {
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
     store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
-    store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
-    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.COMPLETED.getRunStatus());
-
     store.setStart(workflowProgramId1, "wfRun1", now - 1000);
     store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
@@ -587,7 +669,6 @@ public class DefaultStoreTest {
 
     verifyRunHistory(flowProgramId1, 1);
     verifyRunHistory(mapreduceProgramId1, 1);
-    verifyRunHistory(procedureProgramId1, 1);
     verifyRunHistory(workflowProgramId1, 1);
 
     verifyRunHistory(flowProgramId2, 1);
@@ -599,7 +680,6 @@ public class DefaultStoreTest {
 
     verifyRunHistory(flowProgramId1, 0);
     verifyRunHistory(mapreduceProgramId1, 0);
-    verifyRunHistory(procedureProgramId1, 0);
     verifyRunHistory(workflowProgramId1, 0);
 
     // Check to see if the flow history of second app is not deleted
@@ -613,7 +693,7 @@ public class DefaultStoreTest {
 
   private void verifyRunHistory(Id.Program programId, int count) {
     List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
-                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
   }
 
@@ -624,13 +704,12 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
-    specsToBeVerified.addAll(spec.getProcedures().keySet());
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
     specsToBeVerified.addAll(spec.getWorkflows().keySet());
     specsToBeVerified.addAll(spec.getFlows().keySet());
 
     //Verify if there are 4 program specs in AllProgramsApp
-    Assert.assertEquals(4, specsToBeVerified.size());
+    Assert.assertEquals(3, specsToBeVerified.size());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
     // Check the diff with the same app - re-deployement scenario where programs are not removed.
@@ -642,7 +721,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(4, deletedSpecs.size());
+    Assert.assertEquals(3, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -654,25 +733,24 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testCheckDeletedProceduresAndWorkflow () throws Exception {
+  public void testCheckDeletedWorkflow () throws Exception {
     //Deploy program with all types of programs.
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
-    specsToBeDeleted.addAll(spec.getProcedures().keySet());
 
-    Assert.assertEquals(2, specsToBeDeleted.size());
+    Assert.assertEquals(1, specsToBeDeleted.size());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
 
-    //Get the spec for app that contains only flow and mapreduce - removing procedures and workflows.
+    //Get the spec for app that contains only flow and mapreduce - removing workflows.
     spec = Specifications.from(new FlowMapReduceApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(2, deletedSpecs.size());
+    Assert.assertEquals(1, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -752,49 +830,94 @@ public class DefaultStoreTest {
     Assert.assertNotNull(application);
     return application.getSchedules();
   }
+
   @Test
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    Map<String, String> properties = ImmutableMap.of("frequency", "10m");
-    Set<Source> sources = Sets.newHashSet(new Source("eventStream", Source.Type.STREAM,
-                                                         ImmutableMap.of("prop1", "val1")));
+    AdapterSpecification spec1 = AdapterSpecification.builder("spec1", "template1")
+      .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
+      .build();
 
-    Set<Sink> sinks = Sets.newHashSet(new Sink("myAvroFiles", Sink.Type.DATASET,
-                                                   ImmutableMap.of("type", "co.cask.cdap.data.dataset.Fileset")));
+    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
+    AdapterSpecification spec2 = AdapterSpecification.builder("spec2", "template2")
+      .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
+      .build();
 
-    AdapterSpecification specStreamToAvro1 = new AdapterSpecification("streamToAvro1", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
+    store.addAdapter(namespaceId, spec1);
+    store.addAdapter(namespaceId, spec2);
 
-    AdapterSpecification specStreamToAvro2 = new AdapterSpecification("streamToAvro2", "batchStreamToAvro",
-                                                                     properties, sources, sinks);
-
-    store.addAdapter(namespaceId, specStreamToAvro1);
-    store.addAdapter(namespaceId, specStreamToAvro2);
+    // check get all adapters
+    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespaceId);
+    Assert.assertEquals(2, adapters.size());
+    // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
+    // them in a set and compare...
+    Iterator<AdapterSpecification> iter = adapters.iterator();
+    AdapterSpecification actual1 = iter.next();
+    AdapterSpecification actual2 = iter.next();
+    // since order is not guaranteed...
+    if (actual1.getName().equals(spec1.getName())) {
+      Assert.assertEquals(actual1, spec1);
+      Assert.assertEquals(actual2, spec2);
+    } else {
+      Assert.assertEquals(actual1, spec2);
+      Assert.assertEquals(actual2, spec1);
+    }
 
     // Get non existing spec
     AdapterSpecification retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
     Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    AdapterSpecification retrievedSpec = store.getAdapter(namespaceId, "streamToAvro1");
-    Assert.assertEquals(specStreamToAvro1, retrievedSpec);
+    AdapterSpecification retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
+    Assert.assertEquals(spec1, retrievedSpec1);
     // Remove spec
-    store.removeAdapter(namespaceId, "streamToAvro1");
+    store.removeAdapter(namespaceId, spec1.getName());
 
     // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro1");
+    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName());
     Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
-    retrievedSpec = store.getAdapter(namespaceId, "streamToAvro2");
-    Assert.assertEquals(specStreamToAvro2, retrievedSpec);
+    AdapterSpecification retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
+    Assert.assertEquals(spec2, retrievedSpec2);
 
     // remove all
     store.removeAllAdapters(namespaceId);
 
     // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, "streamToAvro2");
+    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName());
     Assert.assertNull(retrievedAdapter);
+  }
+
+  private static class TemplateConf {
+    private final int x;
+    private final String y;
+    private final Map<String, String> z;
+
+    public TemplateConf(int x, String y, Map<String, String> z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TemplateConf that = (TemplateConf) o;
+
+      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(x, y, z);
+    }
   }
 }

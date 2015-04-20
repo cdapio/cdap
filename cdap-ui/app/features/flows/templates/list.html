@@ -1,11 +1,11 @@
 <div ncy-breadcrumb></div>
-<table class="table table-striped table-responsive" cask-sortable>
+<table class="table table-responsive" cask-sortable>
   <thead>
     <tr ng-class="{'sort-enabled': flows.length>0}">
       <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-      <th> Description </th>
-      <th> App </th>
-      <th> Status </th>
+      <th data-predicate="description"> Description </th>
+      <th data-predicate="app"> App </th>
+      <th data-predicate="status"> Status </th>
       <th> Action (start/pause)</th>
     </tr>
   </thead>

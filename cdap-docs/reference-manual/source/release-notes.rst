@@ -24,13 +24,36 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
+=============================================================
+
+General
+-------
+
+New Features
+------------
+
+Improvement
+-----------
+
+API Changes
+-----------
+
+.. _known-issues-300:
+
+Known Issues
+------------
+
+- See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
+
+
 `Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
 =============================================================
 
 General
 -------
 
-- The :ref:`HTTP RESTful API v2 <http-restful-api-v2>` is deprecated, replaced with the
+- The HTTP RESTful API v2 was deprecated, replaced with the
   :ref:`namespaced HTTP RESTful API v3 <http-restful-api-v3>`.
 
 - Added log rotation for CDAP programs running in YARN containers
@@ -46,7 +69,7 @@ General
 
 - Added the ability to specify 
   :ref:`custom logback file for CDAP programs <application-logback>`
-  (`CDAP-1741 <https://issues.cask.co/browse/CDAP-1741>`__).
+  (`CDAP-1100 <https://issues.cask.co/browse/CDAP-1100>`__).
 
 - System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.
 
@@ -70,10 +93,6 @@ New Features
   - Allow an unchecked Dataset upgrade upon application deployment
     (`CDAP-1574 <https://issues.cask.co/browse/CDAP-1574>`__).
 
-- **Explore**
-
-  - Explore now works on secure Hadoop clusters.
-  
 - **Metrics**
 
   - Added new APIs for exploring available metrics, including drilling down into the context of emitted metrics
@@ -117,6 +136,8 @@ New Features
 
   - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
     2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+    Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
+    please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
   - Added a metric migration tool which migrates old metrics to the new 2.8 format.
 
 
@@ -157,7 +178,7 @@ Known Issues
 - Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
   the request body that enumerates the name and attributes for each metric |---| is currently not
   supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
-  Instead, use the :ref:`v2 API <http-restful-api-v2-metrics-multiple>`. It will be
+  Instead, use the v2 API. It will be
   supported in a future release.
 - Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
   any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,

@@ -94,8 +94,8 @@ depending upon the language (Java or Scala) in which the program is written. You
 
 Spark and Datasets
 ------------------
-Spark programs in CDAP can directly access **Dataset** similar to the way a MapReduce or
-Procedure can. These programs can create Spark's Resilient Distributed Dataset (RDD) by
+Spark programs in CDAP can directly access **Dataset** similar to the way a MapReduce can. 
+These programs can create Spark's Resilient Distributed Dataset (RDD) by
 reading a Dataset and can also write RDD to a Dataset.
 
 In order to access a Dataset in Spark, both the key and value classes have to be serializable.

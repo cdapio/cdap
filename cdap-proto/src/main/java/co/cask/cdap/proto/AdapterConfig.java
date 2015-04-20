@@ -16,51 +16,69 @@
 
 package co.cask.cdap.proto;
 
-import java.util.Map;
+import com.google.common.base.Objects;
+import com.google.gson.JsonElement;
 
 /**
- * Specifies input parameters to create Adapter
+ * Config of an adapter. This is the input for requests to add an adapter.
  */
 public final class AdapterConfig {
-  public String type;
-  public Map<String, String> properties;
-
-  public Source source;
-  public Sink sink;
-
-  public String getType() {
-    return type;
-  }
+  private final String description;
+  private final String template;
+  private final JsonElement config;
 
   /**
-   * Specifies the source of the Adapter
+   * Construct an AdapterConfig with the given parameters.
+   *
+   * @param description the description of the adapter
+   * @param template the template to base the adapter off of
+   * @param config the config for the adapter
    */
-  public static final class Source {
-    public String name;
-    public Map<String, String> properties;
-
-    public Source() {
-    }
-
-    public Source(String name, Map<String, String> properties) {
-      this.name = name;
-      this.properties = properties;
-    }
+  public AdapterConfig(String description, String template, JsonElement config) {
+    this.description = description;
+    this.template = template;
+    this.config = config;
   }
 
-  /**
-   * Specifies the sink of the Adapter
-   */
-  public static final class Sink {
-    public String name;
-    public Map<String, String> properties;
+  public String getDescription() {
+    return description;
+  }
 
-    public Sink() {
+  public String getTemplate() {
+    return template;
+  }
+
+  public JsonElement getConfig() {
+    return config;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    public Sink(String name, Map<String, String> properties) {
-      this.name = name;
-      this.properties = properties;
-    }
+    AdapterConfig that = (AdapterConfig) o;
+
+    return Objects.equal(description, that.description) &&
+      Objects.equal(template, that.template) &&
+      Objects.equal(config, that.config);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(description, template, config);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("description", description)
+      .add("template", template)
+      .add("config", config)
+      .toString();
   }
 }

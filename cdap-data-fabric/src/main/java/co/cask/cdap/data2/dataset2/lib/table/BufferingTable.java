@@ -18,11 +18,14 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Filter;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.tephra.Transaction;
@@ -95,26 +98,37 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   private MetricsCollector metricsCollector;
 
   /**
-   * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   * Creates an instance of {@link BufferingTable} with row level conflict detection, without readless increments,
+   * and no schema.
+   *
+   * @param name the name of the table
    */
   public BufferingTable(String name) {
     this(name, ConflictDetection.ROW);
   }
 
   /**
-   * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   * Creates an instance of {@link BufferingTable} without readless increments disabled and no schema.
+   *
+   * @param name the name of the table
+   * @param level the conflict detection level
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, level, false);
+    this(name, level, false, null, null);
   }
 
   /**
    * Creates an instance of {@link BufferingTable}.
-   * @param name table name
+   *
+   * @param name the name of the table
+   * @param level the conflict detection level
+   * @param enableReadlessIncrements whether or not readless increments are enabled
+   * @param schema the schema of the table, or null if there is no schema
+   * @param rowFieldName the name of the schema field that the row key maps to, or null if there is none
    */
-  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements) {
+  public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements,
+                        @Nullable Schema schema, @Nullable String rowFieldName) {
+    super(schema, rowFieldName);
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
                                 "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
@@ -201,14 +215,13 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     throws Exception;
 
   /**
-   * Scans range of rows from persistent store.
+   * Scans range of rows from persistent store for a given {@link Scan}.
    * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
-   * @param startRow key of the first row in a range, inclusive
-   * @param stopRow key of the last row in a range, exclusive
+   * @param scan scan configuration
    * @return instance of {@link Scanner}, never null
    * @throws Exception
    */
-  protected abstract  Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception;
+  protected abstract  Scanner scanPersisted(Scan scan) throws Exception;
 
   @Override
   public void setMetricsCollector(MetricsCollector metricsCollector) {
@@ -555,7 +568,25 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) {
+    return scan(new Scan(startRow, stopRow));
+  }
+
+  @Override
+  public Scanner scan(Scan scan) {
+    NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap = scanBuffer(scan);
+    try {
+      return new BufferingScanner(bufferMap, scanPersisted(scan));
+    } catch (Exception e) {
+      LOG.debug("scan failed for table: " + getTransactionAwareName() +
+          ", scan: " + scan.toString(), e);
+      throw new DataSetException("compareAndSwap failed", e);
+    }
+  }
+
+  private NavigableMap<byte[], NavigableMap<byte[], Update>> scanBuffer(Scan scan) {
     NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap;
+    byte[] startRow = scan.getStartRow();
+    byte[] stopRow = scan.getStopRow();
     if (startRow == null && stopRow == null) {
       bufferMap = buff;
     } else if (startRow == null) {
@@ -565,13 +596,28 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     } else {
       bufferMap = buff.subMap(startRow, true, stopRow, false);
     }
-    try {
-      return new BufferingScanner(bufferMap, scanPersisted(startRow, stopRow));
-    } catch (Exception e) {
-      LOG.debug("scan failed for table: " + getTransactionAwareName() +
-          ", start row: " + (startRow != null ? Bytes.toStringBinary(startRow) : "NULL") +
-          ", stop row: "  + (stopRow != null ? Bytes.toStringBinary(stopRow) : "NULL"), e);
-      throw new DataSetException("compareAndSwap failed", e);
+    bufferMap = applyFilter(bufferMap, scan.getFilter());
+    return bufferMap;
+  }
+
+  private NavigableMap<byte[], NavigableMap<byte[], Update>> applyFilter(
+                                                        NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap,
+                                                        @Nullable Filter filter) {
+    if (filter == null) {
+      return bufferMap;
+    }
+
+    // todo: currently we support only FuzzyRowFilter as an experimental feature
+    if (filter instanceof FuzzyRowFilter) {
+      NavigableMap<byte[], NavigableMap<byte[], Update>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      for (Map.Entry<byte[], NavigableMap<byte[], Update>> entry : bufferMap.entrySet()) {
+        if (FuzzyRowFilter.ReturnCode.INCLUDE == ((FuzzyRowFilter) filter).filterRow(entry.getKey())) {
+          result.put(entry.getKey(), entry.getValue());
+        }
+      }
+      return result;
+    } else {
+      throw new DataSetException("Unknown filter type: " + filter);
     }
   }
 

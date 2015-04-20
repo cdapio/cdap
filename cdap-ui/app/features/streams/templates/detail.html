@@ -1,17 +1,33 @@
 <div ncy-breadcrumb></div>
 <div class="row">
   <div class="col-sm-6">
-    <h3>
+    <h2>
       <span ng-bind="$state.params.streamId | caskCapitalizeFilter"></span>
-      <small> Type: Stream </small>
-    </h3>
+    </h2>
+    <div class="type-block">
+      <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" /><small> Type: Stream </small>
+    </div>
   </div>
   <div class="col-sm-6 text-right">
-    <span class="btn-group h3">
-      <a class="btn btn-default" data-animation="am-flip-x" bs-dropdown="dropdown" disabled>
+
+    <div class="btn-group h3" dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
         Action <span class="caret"></span>
-      </a>
-    </span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $state.params.namespace, streamid: $state.params.streamId})">Edit Properties</a>
+        </li>
+        <li>
+          <a href="" ng-click="caskConfirm()"
+            cask-confirmable="truncate()"
+            data-confirmable-content="Are you sure you want to truncate this stream?">
+            Truncate
+          </a>
+        </li>
+      </ul>
+    </div>
+
   </div>
 
 </div>

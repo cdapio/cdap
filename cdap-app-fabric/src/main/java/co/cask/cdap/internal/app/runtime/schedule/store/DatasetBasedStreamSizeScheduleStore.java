@@ -34,14 +34,18 @@ import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -59,6 +63,8 @@ public class DatasetBasedStreamSizeScheduleStore {
   private static final byte[] LAST_RUN_SIZE_COL = Bytes.toBytes("lastRunSize");
   private static final byte[] LAST_RUN_TS_COL = Bytes.toBytes("lastRunTs");
   private static final byte[] ACTIVE_COL = Bytes.toBytes("active");
+  private static final byte[] PROPERTIES_COL = Bytes.toBytes("properties");
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
@@ -90,10 +96,11 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param running true if the schedule is running, false if it is suspended
    */
   public void persist(Id.Program programId, SchedulableProgramType programType, StreamSizeSchedule schedule,
-                      long baseRunSize, long baseRunTs, long lastRunSize, long lastRunTs, boolean running)
+                      Map<String, String> properties, long baseRunSize, long baseRunTs, long lastRunSize,
+                      long lastRunTs, boolean running)
     throws TransactionFailureException, InterruptedException {
     byte[][] columns = new byte[][] {
-      SCHEDULE_COL, BASE_SIZE_COL, BASE_TS_COL, LAST_RUN_SIZE_COL, LAST_RUN_TS_COL, ACTIVE_COL
+      SCHEDULE_COL, BASE_SIZE_COL, BASE_TS_COL, LAST_RUN_SIZE_COL, LAST_RUN_TS_COL, ACTIVE_COL, PROPERTIES_COL
     };
     byte[][] values = new byte[][] {
       Bytes.toBytes(GSON.toJson(schedule)),
@@ -101,7 +108,8 @@ public class DatasetBasedStreamSizeScheduleStore {
       Bytes.toBytes(baseRunTs),
       Bytes.toBytes(lastRunSize),
       Bytes.toBytes(lastRunTs),
-      Bytes.toBytes(running)
+      Bytes.toBytes(running),
+      Bytes.toBytes(GSON.toJson(properties))
     };
     updateTable(programId, programType, schedule.getName(), columns, values, null);
   }
@@ -233,6 +241,7 @@ public class DatasetBasedStreamSizeScheduleStore {
             byte[] lastRunSizeBytes = next.get(LAST_RUN_SIZE_COL);
             byte[] lastRunTsBytes = next.get(LAST_RUN_TS_COL);
             byte[] activeBytes = next.get(ACTIVE_COL);
+            byte[] propertyBytes = next.get(PROPERTIES_COL);
             if (scheduleBytes == null || baseSizeBytes == null || baseTsBytes == null || lastRunSizeBytes == null ||
               lastRunTsBytes == null || activeBytes == null) {
               continue;
@@ -252,8 +261,12 @@ public class DatasetBasedStreamSizeScheduleStore {
             long lastRunSize = Bytes.toLong(lastRunSizeBytes);
             long lastRunTs = Bytes.toLong(lastRunTsBytes);
             boolean active = Bytes.toBoolean(activeBytes);
+            Map<String, String> properties = Maps.newHashMap();
+            if (propertyBytes != null) {
+              properties = GSON.fromJson(Bytes.toString(propertyBytes), STRING_MAP_TYPE);
+            }
             StreamSizeScheduleState scheduleState =
-              new StreamSizeScheduleState(program, programType, schedule, baseSize, baseTs,
+              new StreamSizeScheduleState(program, programType, schedule, properties, baseSize, baseTs,
                                           lastRunSize, lastRunTs, active);
             scheduleStates.add(scheduleState);
             LOG.debug("StreamSizeSchedule found in store: {}", scheduleState);

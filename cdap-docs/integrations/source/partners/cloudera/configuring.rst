@@ -41,7 +41,7 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version from 0.8.16 through 0.10.36) must be installed on the node(s) where the Web-App
+#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the Web-App
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
@@ -157,8 +157,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    The API listens on the host where the Gateway/Router role instance is running, port
    11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
 
-     curl -w '\n' -v \
-       'http://[router-host]:[router-port]/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
+     $ curl -w'\n' -v \
+       'http://[router-host]:[router-port]/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
 
 #. You should get back a response similar to::
 

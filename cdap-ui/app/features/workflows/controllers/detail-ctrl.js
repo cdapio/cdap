@@ -27,11 +27,21 @@ angular.module(PKG.name + '.feature.workflows')
       $scope.status = res.status;
     });
 
-    $scope.toggleFlow = function(action) {
-      $scope.status = action;
+    $scope.start = function() {
+      $scope.status = 'STARTING';
       dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
+        _cdapNsPath: basePath + '/start',
+        method: 'POST'
+      })
+        .then(function() {
+          $state.go('workflows.detail.runs', {}, {reload: true});
+        });
+    };
+    $scope.stop = function() {
+      $scope.status = 'STOPPING';
+      dataSrc.request({
+        _cdapNsPath: basePath + '/stop',
+        method: 'POST'
       });
     };
 

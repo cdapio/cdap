@@ -3,63 +3,36 @@
 
     <ul class="list-group list-unstyled">
       <li class="list-group-item">
-        <a ui-sref="admin.overview"
-           ui-sref-active="current"
-           class="abstract">
-          Management
-        </a>
-      </li>
-      <li class="list-group-item">
         <a href=""
            class="abstract"
            ng-click="submenu.system=!submenu.system"
-           ng-class="{ current: $state.includes('admin.system.services.**') }">
+           ng-class="{ current: $state.includes('admin.system.**') }">
           System Configuration
         </a>
         <ul class="list-unstyled"
             ng-show="submenu.system">
-<!--           <li>
-            <a ui-sref="admin.system.instance" href="">
-              Instance
+          <li>
+            <a ui-sref="admin.system.configuration"
+               ng-class="{ current: $state.includes('admin.system.configuration.**') }">
+              Configuration
             </a>
-          </li> -->
+          </li>
+
           <li>
             <a ui-sref="admin.system.services"
                ng-class="{ current: $state.includes('admin.system.services.**') }">
               Services
             </a>
           </li>
-<!--           <li>
-            <a ui-sref="admin.system.notifications" href="">
-              Notifications
+
+          <li>
+            <a ui-sref="admin.system.preferences"
+               ng-class="{ current: $state.includes('admin.system.preferences.**') }">
+              Preferences
             </a>
-          </li> -->
+          </li>
         </ul>
       </li>
-<!--       <li class="list-group-item">
-        <a href="" ng-click="submenu.security=!submenu.security">
-          Systemwide Security
-        </a>
-        <ul class="list-unstyled"
-            ng-show="submenu.security">
-            <li>
-              <a ui-sref="admin.security.permissions" href="">
-                Global Permissions
-              </a>
-            </li>
-          <li>
-            <a ui-sref="admin.security.tokens"
-               ng-class="{ current: $state.includes('admin.security.tokens.**') }">
-              Access Tokens
-            </a>
-          </li>
-          <li>
-            <a ui-sref="admin.security.logs" href="">
-              Audit Logs
-            </a>
-          </li>
-        </ul>
-      </li> -->
 
       <li class="list-group-item">
         <a href=""
@@ -78,21 +51,27 @@
           <li ng-repeat="ns in nsList">
             <a href=""
                ng-click="submenu.perNs[ns.name]=!submenu.perNs[ns.name]">
-              <span ng-bind="ns.name | myEllipsis: 15"></span>
+              <span ng-bind="ns.name | myEllipsis: 12"></span>
               <span ng-class="{ 'fa-caret-down': submenu.perNs[ns.name], 'fa-caret-right': !submenu.perNs[ns.name] }"
               class="fa pull-right"></span>
             </a>
             <ul class="list-unstyled" ng-show="submenu.perNs[ns.name]">
-<!--               <li>
-                <a ui-sref-active="current"
-                   ui-sref="admin.namespace.detail.metadata({nsadmin: ns.name})">
-                  Metadata
-                </a>
-              </li> -->
               <li>
                 <a ui-sref-active="current"
                    ui-sref="admin.namespace.detail.apps({nsadmin: ns.name})">
-                  Apps
+                  Applications
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current"
+                    ui-sref="admin.namespace.detail.data({nsadmin: ns.name})">
+                  Datasets
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current"
+                    ui-sref="admin.namespace.detail.preferences({nsadmin: ns.name})">
+                  Preferences
                 </a>
               </li>
             </ul>

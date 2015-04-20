@@ -34,15 +34,6 @@ public abstract class StreamPropertyListener {
   }
 
   /**
-   * Invoked when the stream generation property is deleted.
-   *
-   * @param streamId Id of the stream
-   */
-  public void generationDeleted(Id.Stream streamId) {
-    // Default no-op
-  }
-
-  /**
    * Invoked when the stream TTL property is changed.
    *
    * @param streamId Id of the stream
@@ -53,21 +44,21 @@ public abstract class StreamPropertyListener {
   }
 
   /**
-   * Invoked when the stream TTL property is deleted.
-   *
-   * @param streamId Id of the stream
-   */
-  public void ttlDeleted(Id.Stream streamId) {
-    // Default no-op
-  }
-
-  /**
    * Invoked when the stream Notification threshold property is changed.
    *
    * @param streamId Id of the stream
    * @param threshold Notification threshold of the stream
    */
   public void thresholdChanged(Id.Stream streamId, int threshold) {
+    // Default no-op
+  }
+
+  /**
+   * Invoked when the stream property is deleted.
+   *
+   * @param streamId Id of the stream
+   */
+  public void deleted(Id.Stream streamId) {
     // Default no-op
   }
 }

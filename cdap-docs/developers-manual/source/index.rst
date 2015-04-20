@@ -9,10 +9,10 @@
 CDAP Developers’ Manual
 ==================================================
 
-.. |getting-started| replace:: **Getting Started:**
+.. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html
 
-- |getting-started|_ **A quick, hands-on introduction to CDAP,**  which guides you through
+- |getting-started|_ **A quick, hands-on introduction to developing with CDAP,**  which guides you through
   installing the CDAP SDK, setting up your development environment, starting and stopping CDAP, 
   and building and running example applications.
   
@@ -46,7 +46,7 @@ CDAP Developers’ Manual
 .. _testing: testing/index.html
 
 - |testing|_ CDAP has a **test framework** that developers can use with their applications
-  and **tools and procedures for debugging** your application prior to deployment.
+  plus **tools and practices for debugging** your application prior to deployment.
 
 
 .. |ingesting-tools| replace:: **Ingesting Data:**

@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.common.cli.Arguments;
@@ -50,7 +52,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getPrettyName());
+    printStream.printf(SUCCESS + "\n", type.getTitleName());
   }
 
   @SuppressWarnings("unchecked")
@@ -93,7 +95,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Set Preferences of a %s from a local Config File (supported formats = JSON).",
-                         type.getPluralPrettyName());
+    return String.format("Set Preferences of %s from a local Config File (supported formats = JSON).",
+                         Fragment.of(Article.A, type.getTitleName()));
   }
 }

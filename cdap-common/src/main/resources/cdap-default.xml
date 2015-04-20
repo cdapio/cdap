@@ -510,6 +510,12 @@
         </description>
     </property>
 
+    <property>
+        <name>data.queue.table.presplits</name>
+        <value>16</value>
+        <description>Number of splits in the queue table.</description>
+    </property>
+
     <!--
         Metadata Service Configuration
     -->
@@ -570,21 +576,6 @@
         <description>Root location for collecting logs</description>
     </property>
 
-    <!--
-        Account Service Configuration
-    -->
-    <property>
-        <name>account.server.host</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the host for account server</description>
-    </property>
-
-    <property>
-        <name>account.server.port</name>
-        <value>8080</value>
-        <description>Specifies the port for account server</description>
-    </property>
-
     <!-- App Fabric related changes -->
     <property>
         <name>app.bind.address</name>
@@ -599,9 +590,9 @@
     </property>
 
     <property>
-      <name>app.adapter.dir</name>
-      <value>/opt/cdap/master/plugins</value>
-      <description>Directory where all archives for adapters are stored</description>
+        <name>app.template.dir</name>
+        <value>${local.data.dir}/plugins</value>
+        <description>Directory where all archives for app templates are stored</description>
     </property>
 
     <property>
@@ -644,6 +635,14 @@
         <name>app.program.jvm.opts</name>
         <value>${twill.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
+    </property>
+
+  <!-- Used for MapReduce Info endpoint -->
+    <property>
+      <name>mapreduce.jobclient.connect.max.retries</name>
+      <value>2</value>
+      <description>Indicates the maximum number of retries JobClient will make to establish
+        a server connection when retrieving job status and history.</description>
     </property>
 
     <!-- scheduler related changes -->
@@ -1063,8 +1062,14 @@
     </property>
 
     <property>
+      <name>security.auth.server.address</name>
+      <value></value>
+      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
+    </property>
+
+    <property>
       <name>security.auth.server.bind.address</name>
-      <value>127.0.0.1</value>
+      <value>0.0.0.0</value>
     </property>
 
     <property>
@@ -1188,6 +1193,5 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
-
 
 </configuration>

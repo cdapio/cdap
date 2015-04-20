@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployValid() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testDeployWithVersion() throws Exception {
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE1, "BobApp", "1.2.3");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, "BobApp");
+    Assert.assertEquals("1.2.3", appDetails.get("version").getAsString());
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
@@ -120,7 +131,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("mydataset", dataset.get("name").getAsString());
 
     JsonArray programs = result.get("programs").getAsJsonArray();
-    Assert.assertEquals(7, programs.size());
+    Assert.assertEquals(6, programs.size());
     JsonObject[] progs = new JsonObject[programs.size()];
     for (int i = 0; i < programs.size(); i++) {
       progs[i] = programs.get(i).getAsJsonObject();
@@ -136,10 +147,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("Worker", progs[i].get("type").getAsString());
     Assert.assertEquals("LazyGuy", progs[i].get("name").getAsString());
     Assert.assertEquals("nothing to describe", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Service", progs[i].get("type").getAsString());
-    Assert.assertEquals("NoopService", progs[i].get("name").getAsString());
-    Assert.assertEquals("Dummy Service", progs[i].get("description").getAsString());
     i++;
     Assert.assertEquals("Workflow", progs[i].get("type").getAsString());
     Assert.assertEquals("SingleStep", progs[i].get("name").getAsString());
@@ -157,9 +164,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("WordCountFlow", progs[i].get("name").getAsString());
     Assert.assertEquals("Flow for counting words", progs[i].get("description").getAsString());
     i++;
-    Assert.assertEquals("Procedure", progs[i].get("type").getAsString());
-    Assert.assertEquals("WordFrequency", progs[i].get("name").getAsString());
-    Assert.assertEquals("Procedure for executing WordFrequency.", progs[i].get("description").getAsString());
+    Assert.assertEquals("Service", progs[i].get("type").getAsString());
+    Assert.assertEquals("WordFrequencyService", progs[i].get("name").getAsString());
+    Assert.assertEquals("", progs[i].get("description").getAsString());
 
     //get and verify app details in testnamespace2
     result = getAppDetails(TEST_NAMESPACE2, appName);

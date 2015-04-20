@@ -110,13 +110,4 @@
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
 
-    <!--
-        Adapter Jar directory
-    -->
-    <property>
-      <name>app.adapter.dir</name>
-      <value>plugins</value>
-      <description>Directory where all archives for adapters are stored</description>
-    </property>
-
 </configuration>

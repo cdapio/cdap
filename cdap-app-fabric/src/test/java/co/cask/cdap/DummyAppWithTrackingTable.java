@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -28,10 +27,10 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -39,6 +38,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Simple app for testing data set handling by the program runners.
@@ -59,8 +61,8 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     createDataset("foo", TrackingTable.class);
     createDataset("bar", TrackingTable.class);
     addFlow(new DummyFlow());
-    addProcedure(new DummyProcedure());
     addMapReduce(new DummyBatch());
+    addService(new BasicService("DummyService", new DummyHandler()));
   }
 
   /**
@@ -95,18 +97,19 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   }
 
   /**
-   * A procedure.
+   * A handler.
    */
-  public static class DummyProcedure extends AbstractProcedure {
+  public static class DummyHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet("foo")
     TrackingTable table;
 
-    @Handle("get")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      byte[] key = request.getArgument("key").getBytes(Charsets.UTF_8);
-      byte[] value = table.read(key);
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), new String(value, Charsets.UTF_8));
+    @GET
+    @Path("{key}")
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("key") String key) throws IOException {
+      byte[] value = table.read(Bytes.toBytes(key));
+      responder.sendJson(Bytes.toString(value));
     }
   }
 

@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.StreamClient;
@@ -84,10 +86,6 @@ public class GetStreamStatsCommand extends AbstractCommand {
       return;
     }
 
-    output.printf("Analyzing %d Stream events in the time range [%d, %d]...", limit, startTime, endTime);
-    output.println();
-    output.println();
-
     // build processorMap: Hive column name -> StatsProcessor
     Map<String, Set<StatsProcessor>> processorMap = Maps.newHashMap();
     Schema streamSchema = config.getFormat().getSchema();
@@ -107,7 +105,9 @@ public class GetStreamStatsCommand extends AbstractCommand {
     List<ColumnDesc> schema = results.getResultSchema();
 
     // apply StatsProcessors to every element in every row
+    int rows = 0;
     while (results.hasNext()) {
+      rows++;
       QueryResult row = results.next();
       for (int i = 0; i < row.getColumns().size(); i++) {
         Object column = row.getColumns().get(i);
@@ -142,6 +142,10 @@ public class GetStreamStatsCommand extends AbstractCommand {
         }
       }
     }
+
+    output.printf("Analyzed %d Stream events in the time range [%d, %d]...", rows, startTime, endTime);
+    output.println();
+    output.println();
   }
 
   private String getTruncatedColumnName(String streamId, String hiveColumnName) {
@@ -215,7 +219,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets statistics for a " + ElementType.STREAM.getPrettyName() + ". " +
+    return "Gets statistics for " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
       "The <" + ArgumentName.LIMIT + "> limits how many Stream events to analyze; default is " + DEFAULT_LIMIT + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +

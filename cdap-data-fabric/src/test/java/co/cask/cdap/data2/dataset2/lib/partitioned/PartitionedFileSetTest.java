@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
@@ -35,6 +35,7 @@ import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -46,7 +47,9 @@ import java.util.concurrent.Callable;
 /**
  * Test partitioned file sets without map/reduce and without explore.
  */
-public class PartitionedFileSetTest extends AbstractDatasetTest {
+public class PartitionedFileSetTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   static final Logger LOG = org.slf4j.LoggerFactory.getLogger(PartitionedFileSetTest.class);
 
@@ -63,11 +66,11 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     .build();
 
   private static final Id.DatasetInstance pfsInstance =
-    DS_NAMESPACE.namespace(Id.DatasetInstance.from(NAMESPACE_ID, "pfs"));
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pfs");
 
   @Before
   public void before() throws Exception {
-    createInstance("partitionedFileSet", pfsInstance, PartitionedFileSetProperties.builder()
+    dsFrameworkUtil.createInstance("partitionedFileSet", pfsInstance, PartitionedFileSetProperties.builder()
       .setPartitioning(PARTITIONING_1)
       .setBasePath("testDir")
       .build());
@@ -75,7 +78,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
 
   @After
   public void after() throws Exception {
-    deleteInstance(pfsInstance);
+    dsFrameworkUtil.deleteInstance(pfsInstance);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -116,7 +119,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
   @Category(SlowTests.class)
   public void testAddRemoveGetPartitions() throws Exception {
 
-    final PartitionedFileSet dataset = getInstance(pfsInstance);
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];
@@ -131,7 +134,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
             .addField("i", i * 100)
             .addField("l", 15L - 10 * l)
             .build();
-          Partition partition = newTransactionExecutor((TransactionAware) dataset)
+          Partition partition = dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset)
             .execute(new Callable<PartitionOutput>() {
               @Override
               public PartitionOutput call() throws Exception {
@@ -153,13 +156,14 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
         for (int l = 0; l < 4; l++) {
           final PartitionKey key = keys[s][i][l];
           final String path = paths[s][i][l];
-          newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
-            @Override
-            public void apply() throws Exception {
-              Partition partition = dataset.getPartition(key);
-              Assert.assertNotNull(partition);
-              Assert.assertEquals(path, partition.getRelativePath());
-            }
+          dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(
+            new TransactionExecutor.Subroutine() {
+              @Override
+              public void apply() throws Exception {
+                Partition partition = dataset.getPartition(key);
+                Assert.assertNotNull(partition);
+                Assert.assertEquals(path, partition.getRelativePath());
+              }
           });
           // also test getPartitionPaths() and getPartitions() for the filter matching this
           @SuppressWarnings({"unchecked", "unused"})
@@ -187,11 +191,12 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
     for (final PartitionKey key : keysToRemove) {
 
       // remove in a transaction
-      newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Procedure<PartitionKey>() {
-        @Override
-        public void apply(PartitionKey partitionKey) throws Exception {
-          dataset.dropPartition(partitionKey);
-        }
+      dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(
+        new TransactionExecutor.Procedure<PartitionKey>() {
+          @Override
+          public void apply(PartitionKey partitionKey) throws Exception {
+            dataset.dropPartition(partitionKey);
+          }
       }, key);
 
       // test all filters
@@ -232,7 +237,7 @@ public class PartitionedFileSetTest extends AbstractDatasetTest {
         }
       });
 
-    newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Assert.assertEquals(matching, dataset.getPartitions(filter));

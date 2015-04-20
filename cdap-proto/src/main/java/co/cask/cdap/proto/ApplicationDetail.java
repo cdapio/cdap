@@ -23,17 +23,20 @@ import java.util.List;
  */
 public class ApplicationDetail {
   private final String name;
+  private final String version;
   private final String description;
   private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
 
   public ApplicationDetail(String name,
+                           String version,
                            String description,
                            List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs) {
     this.name = name;
+    this.version = version;
     this.description = description;
     this.streams = streams;
     this.datasets = datasets;
@@ -42,6 +45,10 @@ public class ApplicationDetail {
 
   public String getName() {
     return name;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getDescription() {

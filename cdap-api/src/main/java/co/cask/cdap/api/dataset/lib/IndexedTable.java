@@ -17,14 +17,17 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
@@ -34,6 +37,7 @@ import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -475,6 +479,11 @@ public class IndexedTable extends AbstractDataset implements Table {
     return table.scan(startRow, stopRow);
   }
 
+  @Override
+  public Scanner scan(Scan scan) {
+    return table.scan(scan);
+  }
+
   /* BatchReadable implementation */
 
   @Override
@@ -483,8 +492,18 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   @Override
+  public Type getRecordType() {
+    return table.getRecordType();
+  }
+
+  @Override
   public List<Split> getSplits() {
     return table.getSplits();
+  }
+
+  @Override
+  public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
+    return table.createSplitRecordScanner(split);
   }
 
   @Override

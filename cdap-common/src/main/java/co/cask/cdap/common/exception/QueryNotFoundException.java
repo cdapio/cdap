@@ -16,22 +16,22 @@
 
 package co.cask.cdap.common.exception;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Thrown when a query was not found by its handle.
  */
 public class QueryNotFoundException extends NotFoundException {
 
-  private final String queryHandle;
+  private final Id.QueryHandle id;
 
-  public QueryNotFoundException(String queryHandle) {
-    super("query", queryHandle);
-    this.queryHandle = queryHandle;
+  // TODO: namespace?
+  public QueryNotFoundException(Id.QueryHandle id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return Query handle of the query that was not found
-   */
-  public String getQueryHandle() {
-    return queryHandle;
+  public Id.QueryHandle getId() {
+    return id;
   }
 }

@@ -13,8 +13,10 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   }
 
   $scope.apps = [];
-  $scope.datasets = [];
+
+  $scope.dataList = [];
   $scope.hideWelcomeMessage = false;
+
 
   var dataSrc = new MyDataSource($scope),
       partialPath = '/assets/features/overview/templates/',
@@ -31,32 +33,43 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   };
 
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
+  $scope.systemStatus = '';
+  dataSrc.poll({
+    _cdapPath: '/system/services/status'
+  }, function(res) {
+    var serviceStatuses = Object.keys(res).map(function(value, i) {
+      return res[value];
+    });
+    if (serviceStatuses.indexOf('NOT OK') > -1) {
+      $scope.systemStatus = 'yellow';
+    }
+    if (serviceStatuses.indexOf('OK') === -1) {
+      $scope.systemStatus = 'red';
+    }
+    if (serviceStatuses.indexOf('NOT OK') === -1) {
+      $scope.systemStatus = 'green';
+    }
+  });
 
   dataSrc.request({
     _cdapNsPath: '/apps'
   })
     .then(function(res) {
       $scope.apps = res;
-      var isValidArray = angular.isArray($scope.apps) && $scope.apps.length;
-      $scope.appsTemplate = partialPath +
-        (isValidArray ? 'apps-section.html': 'apps-empty-section.html');
     });
 
   dataSrc.request({
     _cdapNsPath: '/data/datasets'
   })
     .then(function(res) {
-      $scope.datasets = res;
-      var isValidArray = angular.isArray($scope.datasets) && $scope.datasets.length;
-      $scope.dataTemplate = partialPath +
-        (isValidArray ? 'data-section.html': 'data-empty-section.html');
+      $scope.dataList = $scope.dataList.concat(res);
     });
 
   dataSrc.request({
     _cdapNsPath: '/streams'
   }, function(res) {
     if (angular.isArray(res) && res.length) {
-      $scope.streams = res;
+      $scope.dataList = $scope.dataList.concat(res);
     }
   });
 

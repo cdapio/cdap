@@ -47,8 +47,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;
@@ -67,9 +69,12 @@ import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinitio
 @Category(SlowTests.class)
 public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
 
@@ -380,16 +385,17 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       List<QueryResult> firstPreview = exploreService.previewResults(handle);
       Assert.assertEquals(ImmutableList.of(
         new QueryResult(ImmutableList.<Object>of(MY_TABLE_NAME)),
-        new QueryResult(ImmutableList.<Object>of("dataset_my_table_2")),
-        new QueryResult(ImmutableList.<Object>of("dataset_my_table_3")),
-        new QueryResult(ImmutableList.<Object>of("dataset_my_table_4")),
-        new QueryResult(ImmutableList.<Object>of("dataset_my_table_5"))
+        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable2))),
+        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable3))),
+        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable4))),
+        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable5)))
       ), firstPreview);
 
 
+      // test that preview results do not change even when the query cursor is updated by nextResults
       List<QueryResult> endResults = exploreService.nextResults(handle, 100);
       Assert.assertEquals(ImmutableList.of(
-        new QueryResult(ImmutableList.<Object>of("dataset_my_table_6"))
+        new QueryResult(ImmutableList.<Object>of(getDatasetHiveName(myTable6)))
       ), endResults);
 
       List<QueryResult> secondPreview = exploreService.previewResults(handle);
@@ -406,6 +412,13 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
         // Expected exception
       }
 
+      // now test preview on a query that doesn't return any results
+      handle = exploreService.execute(NAMESPACE_ID, "select * from " + getDatasetHiveName(myTable2));
+      status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
+      Assert.assertTrue(exploreService.previewResults(handle).isEmpty());
+      // calling preview again should return the same thing. it should not throw an exception
+      Assert.assertTrue(exploreService.previewResults(handle).isEmpty());
     } finally {
       datasetFramework.deleteInstance(myTable2);
       datasetFramework.deleteInstance(myTable3);

@@ -92,7 +92,6 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
         bind(MetricsCollectionService.class).toInstance(new AggregatedMetricsCollectionService() {
           @Override
           protected void publish(Iterator<MetricValue> metrics) throws Exception {
-            // No-op
           }
         });
       }

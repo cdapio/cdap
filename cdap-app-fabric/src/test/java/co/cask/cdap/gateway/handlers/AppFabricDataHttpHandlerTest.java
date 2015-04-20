@@ -35,8 +35,7 @@ public class AppFabricDataHttpHandlerTest extends AppFabricTestBase {
 
   @After
   public void cleanup() throws Exception {
-    HttpResponse response = doPost("/v2/unrecoverable/reset");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    resetNamespaces();
   }
 
   @Test

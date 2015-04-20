@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
@@ -25,13 +26,13 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data.stream.StreamInputFormat;
@@ -49,7 +50,8 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Objects;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +61,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -68,6 +69,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -77,6 +79,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +99,13 @@ import javax.annotation.Nonnull;
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
+
+  /**
+   * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
+   * AM in secure mode.
+   */
+  @SuppressWarnings("unused")
+  private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo mrClientSecurityInfo;
 
   // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
   private static final String PROGRAMMATIC_SOURCE = "programmatically";
@@ -138,29 +148,22 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     final Job job = Job.getInstance(new Configuration(hConf));
+    job.setJobName(getJobName(context));
     Configuration mapredConf = job.getConfiguration();
-
-    // Prefer our job jar in the classpath
-    // Set both old and new keys
-    mapredConf.setBoolean("mapreduce.user.classpath.first", true);
-    mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // If runs in secure cluster, this program runner is running in a yarn container, hence not able
-      // to get authenticated with the history and MR-AM.
+      // to get authenticated with the history.
       mapredConf.unset("mapreduce.jobhistory.address");
-      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, true);
+      mapredConf.setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
 
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
       job.getCredentials().addAll(credentials);
     }
 
-    // Create a classloader that have the context/system classloader as parent and the program classloader as child
-    ClassLoader classLoader = new CombineClassLoader(
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), ClassLoader.getSystemClassLoader()),
-      ImmutableList.of(context.getProgram().getClassLoader())
-    );
+    ClassLoader classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
+    ClassLoaders.setContextClassLoader(classLoader);
 
     job.getConfiguration().setClassLoader(classLoader);
     context.setJob(job);
@@ -180,6 +183,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     setOutputClassesIfNeeded(job);
     setMapOutputClassesIfNeeded(job);
+
+    // Prefer our job jar in the classpath
+    // Set both old and new keys
+    mapredConf.setBoolean("mapreduce.user.classpath.first", true);
+    mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+    mapredConf.setBoolean(Job.MAPREDUCE_JOB_CLASSLOADER, true);
+
+    // Make CDAP classes (which is in the job.jar created below) to have higher precedence
+    // It is needed to override the ApplicationClassLoader to use our implementation
+    String yarnAppClassPath = mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                             Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+    mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "job.jar/lib/*," + yarnAppClassPath);
 
     // set resources for the job
     Resources mapperResources = context.getMapperResources();
@@ -204,25 +219,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ReducerWrapper.wrap(job);
 
     // packaging job jar which includes cdap classes with dependencies
-    // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
-    //       classloader when executing user code. We need to submit a copy of the program jar because
-    //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
-    //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
-
     Location jobJar = buildJobJar(context);
     try {
       try {
         Location programJarCopy = copyProgramJar();
         try {
           job.setJar(jobJar.toURI().toString());
-          job.addFileToClassPath(new Path(programJarCopy.toURI()));
-
-          MapReduceContextConfig contextConfig = new MapReduceContextConfig(job);
+          // Localize the program jar, but not add it to class path
+          // The ApplicationLoader will create ProgramClassLoader from it
+          job.addCacheFile(programJarCopy.toURI());
+          MapReduceContextConfig contextConfig = new MapReduceContextConfig(job.getConfiguration());
           // We start long-running tx to be used by mapreduce job tasks.
           Transaction tx = txClient.startLong();
           try {
             // We remember tx, so that we can re-use it in mapreduce tasks
-            contextConfig.set(context, cConf, tx, programJarCopy.getName());
+            contextConfig.set(context, cConf, tx, programJarCopy.toURI());
 
             LOG.info("Submitting MapReduce Job: {}", context);
             // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -383,7 +394,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public void apply() throws Exception {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
         try {
-          mapReduce.onFinish(succeeded, context);
+          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          boolean success = succeeded;
+          Dataset outputDataset = context.getOutputDataset();
+          if (outputDataset != null && outputDataset instanceof DatasetOutputCommitter) {
+            try {
+              if (succeeded) {
+                ((DatasetOutputCommitter) outputDataset).onSuccess();
+              } else {
+                ((DatasetOutputCommitter) outputDataset).onFailure();
+              }
+            } catch (Throwable t) {
+              LOG.error(String.format("Error from %s method of output dataset %s.",
+                        succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
+              success = false;
+            }
+          }
+          mapReduce.onFinish(success, context);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -454,11 +481,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (inputFormatClass == null) {
       throw new DataSetException("Input dataset '" + inputDatasetName + "' provided null as the input format");
     }
-    // wrap the input format so that the program's classloader is used to create record readers, etc.
-    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
-    // some library CDAP depends on (Avro for example).
-    job.setInputFormatClass(InputFormatWrapper.class);
-    InputFormatWrapper.setInputFormatClass(job, inputFormatClass.getName());
+    job.setInputFormatClass(inputFormatClass);
 
     Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
     if (inputConfig != null) {
@@ -491,11 +514,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (outputFormatClass == null) {
       throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
     }
-    // wrap the output format so that the program's classloader is used to create record writers, etc.
-    // otherwise the mapreduce framework may run into problems if the program uses a conflicting version of
-    // some library CDAP depends on (Avro for example).
-    job.setOutputFormatClass(OutputFormatWrapper.class);
-    OutputFormatWrapper.setOutputFormatClass(job, outputFormatClass.getName());
+    job.setOutputFormatClass(outputFormatClass);
 
     Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();
     if (outputConfig != null) {
@@ -530,7 +549,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       String decoderType = stream.getDecoderType();
       if (decoderType == null) {
         // If the user don't specify the decoder, detect the type from Mapper/Reducer
-        setStreamEventDecoder(job);
+        setStreamEventDecoder(job.getConfiguration());
       } else {
         StreamInputFormat.setDecoderClassName(job, decoderType);
       }
@@ -546,43 +565,65 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * inspecting the Mapper/Reducer type parameters to figure out what the input type is, and pick the appropriate
    * {@link StreamEventDecoder}.
    *
-   * @param job The MapReduce job
+   * @param hConf The job configuration
    * @throws IOException If fails to detect what decoder to use for decoding StreamEvent.
    */
-  private void setStreamEventDecoder(Job job) throws IOException {
+  @VisibleForTesting
+  void setStreamEventDecoder(Configuration hConf) throws IOException {
     // Try to set from mapper
-    TypeToken<Mapper> mapperType = resolveClass(job.getConfiguration(), MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+    TypeToken<Mapper> mapperType = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
     if (mapperType != null) {
-      setStreamEventDecoder(job, mapperType);
+      setStreamEventDecoder(hConf, mapperType);
       return;
     }
 
     // If there is no Mapper, it's a Reducer only job, hence get the decoder type from Reducer class
-    TypeToken<Reducer> reducerType = resolveClass(job.getConfiguration(), MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
-    setStreamEventDecoder(job, reducerType);
+    TypeToken<Reducer> reducerType = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
+    setStreamEventDecoder(hConf, reducerType);
   }
 
   /**
    * Optionally sets the {@link StreamEventDecoder}.
    *
-   * @throws IOException If not able to determine what {@link StreamEventDecoder} class should use.
+   * @throws IOException If the type is an instance of {@link ParameterizedType} and is not able to determine
+   * what {@link StreamEventDecoder} class should use.
    *
    * @param <V> type of the super class
    */
-  private <V> void setStreamEventDecoder(Job job, TypeToken<V> type) throws IOException {
-    // The super type must be a parameterized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
-    if (!(type.getType() instanceof ParameterizedType)) {
-      throw new IOException("Failed to determine decoder for consuming StreamEvent from " + type);
-    }
-
-    try {
+  private <V> void setStreamEventDecoder(Configuration hConf, TypeToken<V> type) throws IOException {
+    // The super type must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
+    Type valueType = StreamEvent.class;
+    if ((type.getType() instanceof ParameterizedType)) {
       // Try to determine the decoder to use from the first input types
       // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
-      Type[] typeArgs = ((ParameterizedType) type.getType()).getActualTypeArguments();
-      StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
+      Type inputValueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
+
+      // If the Mapper/Reducer class is not parameterized (meaning not extends with parameters),
+      // then assume StreamEvent as the input value type.
+      // We need to check if the TypeVariable is the same as the one in the parent type.
+      // This avoid the case where a subclass that has "class InvalidMapper<I, O> extends Mapper<I, O>"
+      if (inputValueType instanceof TypeVariable && inputValueType.equals(type.getRawType().getTypeParameters()[1])) {
+        inputValueType = StreamEvent.class;
+      }
+      // Only Class type is support for inferring stream decoder class
+      if (!(inputValueType instanceof Class)) {
+        throw new IllegalArgumentException("Input value type not supported for stream input: " + type);
+      }
+      valueType = inputValueType;
+    }
+    try {
+      StreamInputFormat.inferDecoderClass(hConf, valueType);
     } catch (IllegalArgumentException e) {
       throw new IOException("Type not support for consuming StreamEvent from " + type, e);
     }
+  }
+
+  private String getJobName(BasicMapReduceContext context) {
+    Id.Program programId = context.getProgram().getId();
+    // MRJobClient expects the following format (for RunId to be the first component)
+    return String.format("%s.%s.%s.%s.%s",
+                         context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
+                         programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   /**

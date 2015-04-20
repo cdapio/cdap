@@ -31,8 +31,10 @@ import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Painfully test a wide combination of types in a schema of a record scannable.
@@ -40,11 +42,14 @@ import org.junit.experimental.categories.Category;
 @Category(SlowTests.class)
 public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTest {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static final Id.DatasetModule extensiveSchema = Id.DatasetModule.from(NAMESPACE_ID, "extensiveSchema");
 
   @BeforeClass
   public static void start() throws Exception {
-    initialize();
+    initialize(tmpFolder);
 
     datasetFramework.addModule(extensiveSchema, new ExtensiveSchemaTableDefinition.ExtensiveSchemaTableModule());
 

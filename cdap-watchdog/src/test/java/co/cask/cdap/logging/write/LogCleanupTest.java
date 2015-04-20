@@ -105,7 +105,7 @@ public class LogCleanupTest {
     LOG.info("deletionBoundary = {}", deletionBoundary);
 
     // Setup directories
-    LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt");
+    LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
     Location namespacedLogsDir = baseDir.append(namespacesDir).append("ns").append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");

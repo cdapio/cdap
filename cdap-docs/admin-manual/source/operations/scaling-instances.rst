@@ -52,41 +52,6 @@ with the arguments as a JSON string in the body::
   { "instances" : 2 }
 
 
-Scaling Procedures
-------------------
-
-.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
-
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
-by using the ``instances`` parameter with HTTP GET and PUT methods::
-
-  GET /v3/namespaces/default/apps/<app-id>/procedures/<procedure-id>/instances
-  PUT /v3/namespaces/default/apps/<app-id>/procedures/<procedure-id>/instances
-
-with the arguments as a JSON string in the body::
-
-  { "instances" : <quantity> }
-
-Where:
-  :<app-id>: Name of the application
-  :<procedure-id>: Name of the Procedure
-  :<quantity>: Number of instances to be used
-
-Example: Find out the number of instances of the Procedure *saver*
-in the Flow *WhoFlow* of the application *HelloWorld*::
-
-  GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
-
-Example: Change the number of instances of the Procedure *saver*
-in the Flow *WhoFlow* of the application *HelloWorld*::
-
-  PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
-
-with the arguments as a JSON string in the body::
-
-  { "instances" : 2 }
-  
-
 Scaling Services
 ------------------
 

@@ -21,6 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
@@ -46,7 +48,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
     String streamId = arguments.get(ArgumentName.STREAM.toString());
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
     streamClient.sendEvent(streamId, streamEvent);
-    output.printf("Successfully send stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
   }
 
   @Override
@@ -56,7 +58,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getDescription() {
-    return String.format("Sends an event to a %s.", ElementType.STREAM.getPrettyName());
+    return String.format("Sends an event to %s.", Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
   }
 
   @Override

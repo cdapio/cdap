@@ -1,39 +1,27 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('FlowsDetailController', function($scope, MyDataSource, $state, FlowDiagramData, myHelpers, $timeout) {
+    $scope.status = null;
     var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' +
-            $state.params.appId +
-            '/flows/' +
-            $state.params.programId;
+        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
-    $scope.activeRuns = 0;
-    $scope.runs = null;
 
     dataSrc.poll({
-      _cdapNsPath: basePath + '/runs'
+      _cdapNsPath: basePath + '/runs?status=running'
     }, function(res) {
-        $scope.runs = res;
-        var count = 0;
-        angular.forEach(res, function(runs) {
-          if (runs.status === 'RUNNING') {
-            count += 1;
-          }
-        });
-        $scope.activeRuns = count;
+        $scope.activeRuns = res.length;
       });
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/status'
-    }, function(res) {
-      $scope.status = res.status;
-    });
 
-    $scope.toggleFlow = function(action) {
+    $scope.do = function(action) {
       $scope.status = action;
       dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
+        _cdapNsPath: basePath + '/' + action,
+        method: 'POST'
+      }).then(function() {
+        $timeout(function() {
+          $scope.status = null;
+          $state.go($state.current, $state.params, { reload: true });
+        });
       });
     };
-
-});
+  });

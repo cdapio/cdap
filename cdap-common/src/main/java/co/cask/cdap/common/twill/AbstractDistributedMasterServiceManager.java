@@ -18,8 +18,12 @@ package co.cask.cdap.common.twill;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Containers;
+import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.base.Preconditions;
+import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -30,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,6 +58,38 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
     this.twillRunnerService = twillRunnerService;
     this.discoveryTimeout = cConf.getLong(Constants.Monitor.DISCOVERY_TIMEOUT_SECONDS);
     this.discoveryServiceClient = discoveryServiceClient;
+  }
+
+  @Override
+  public SystemServiceLiveInfo getLiveInfo() {
+    SystemServiceLiveInfo.Builder builder = SystemServiceLiveInfo.builder();
+
+    Iterable<TwillController> twillControllerList = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    if (twillControllerList == null) {
+      return builder.build();
+    }
+
+    for (TwillController twillController : twillControllerList) {
+      if (twillController.getResourceReport() == null) {
+        continue;
+      }
+
+      ResourceReport resourceReport = twillController.getResourceReport();
+      Collection<TwillRunResources> runResources = resourceReport.getResources().get(serviceName);
+      for (TwillRunResources resources : runResources) {
+        Containers.ContainerInfo containerInfo = new Containers.ContainerInfo(
+          Containers.ContainerType.SYSTEM_SERVICE,
+          serviceName,
+          resources.getInstanceId(),
+          resources.getContainerId(),
+          resources.getHost(),
+          resources.getMemoryMB(),
+          resources.getVirtualCores(),
+          resources.getDebugPort());
+        builder.addContainer(containerInfo);
+      }
+    }
+    return builder.build();
   }
 
   @Override

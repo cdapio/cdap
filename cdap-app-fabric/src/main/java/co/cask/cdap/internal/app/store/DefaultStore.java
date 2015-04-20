@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -46,13 +46,12 @@ import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -160,20 +159,24 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime) {
+  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime);
+        mds.apps.recordProgramStart(id, pid, startTime, adapter);
         return null;
       }
     });
   }
 
   @Override
+  public void setStart(Id.Program id, String pid, long startTime) {
+    setStart(id, pid, startTime, null);
+  }
+
+  @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
-
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -187,12 +190,56 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setSuspend(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramSuspend(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setResume(final Id.Program id, final String pid) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordProgramResumed(id, pid);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                 final long startTime, final long endTime, final int limit) {
+                                 final long startTime, final long endTime, final int limit, final String adapter) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(id, status, startTime, endTime, limit);
+        return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
+      }
+    });
+  }
+
+  @Override
+  public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
+    return getRuns(id, status, startTime, endTime, limit, null);
+  }
+
+  /**
+   * Returns run record for a given run.
+   *
+   * @param id program id
+   * @param runid run id
+   * @return run record for runid
+   */
+  @Override
+  public RunRecord getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
+      @Override
+      public RunRecord apply(AppMds mds) throws Exception {
+        return mds.apps.getRun(id, runid);
       }
     });
   }
@@ -238,7 +285,6 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getSpark())
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
-                                                                      .putAll(existingAppSpec.getProcedures())
                                                                       .putAll(existingAppSpec.getServices())
                                                                       .build();
 
@@ -247,7 +293,6 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
-                                                                      .putAll(appSpec.getProcedures())
                                                                       .putAll(appSpec.getServices())
                                                                       .build();
 
@@ -329,18 +374,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getProcedureInstances(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
-      @Override
-      public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
-        return specification.getInstances();
-      }
-    });
-  }
-
-  @Override
   public void setWorkerInstances(final Id.Program id, final int instances) {
     Preconditions.checkArgument(instances > 0, "cannot change number of program " +
       "instances to negative number: " + instances);
@@ -362,36 +395,9 @@ public class DefaultStore implements Store {
         return null;
       }
     });
-  }
 
-  @Override
-  public void setProcedureInstances(final Id.Program id, final int count) {
-    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
-
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ProcedureSpecification specification = getProcedureSpecOrFail(id, appSpec);
-
-        ProcedureSpecification newSpecification =  new DefaultProcedureSpecification(specification.getClassName(),
-                                                                                     specification.getName(),
-                                                                                     specification.getDescription(),
-                                                                                     specification.getDataSets(),
-                                                                                     specification.getProperties(),
-                                                                                     specification.getResources(),
-                                                                                     count);
-
-        ApplicationSpecification newAppSpec = replaceProcedureInAppSpec(appSpec, id, newSpecification);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.PROCEDURE);
-
-        mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
-        return null;
-      }
-    });
-
-    LOG.trace("Setting program instances: namespace: {}, application: {}, procedure: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplicationId(), id.getId(), count);
+    LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
+              id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
   }
 
   @Override
@@ -692,8 +698,6 @@ public class DefaultStore implements Store {
         try {
           if (type == ProgramType.FLOW) {
             programSpecification = getFlowSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.PROCEDURE) {
-            programSpecification = getProcedureSpecOrFail(id, appSpec);
           } else if (type == ProgramType.SERVICE) {
             programSpecification = getServiceSpecOrFail(id, appSpec);
           } else if (type == ProgramType.WORKFLOW) {
@@ -790,18 +794,16 @@ public class DefaultStore implements Store {
     });
   }
 
-
   @Override
   public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STARTED);
+        mds.apps.writeAdapter(id, adapterSpec, AdapterStatus.STOPPED);
         return null;
       }
     });
   }
-
 
   @Nullable
   @Override
@@ -813,7 +815,6 @@ public class DefaultStore implements Store {
       }
     });
   }
-
 
   @Nullable
   @Override
@@ -987,16 +988,6 @@ public class DefaultStore implements Store {
     return workerSpecification;
   }
 
-  private static ProcedureSpecification getProcedureSpecOrFail(Id.Program id, ApplicationSpecification appSpec) {
-    ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
-    if (procedureSpecification == null) {
-      throw new NoSuchElementException("no such procedure @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication() +
-                                           ", procedure id: " + id.getId());
-    }
-    return procedureSpecification;
-  }
-
   private static ApplicationSpecification updateFlowletInstancesInAppSpec(ApplicationSpecification appSpec,
                                                                           Id.Program id, String flowletId, int count) {
 
@@ -1119,34 +1110,6 @@ public class DefaultStore implements Store {
       Map<String, WorkerSpecification> workers = Maps.newHashMap(super.getWorkers());
       workers.put(workerId, workerSpecification);
       return workers;
-    }
-  }
-
-  private static ApplicationSpecification replaceProcedureInAppSpec(
-                                                             final ApplicationSpecification appSpec,
-                                                             final Id.Program id,
-                                                             final ProcedureSpecification procedureSpecification) {
-    // replace the new procedure spec.
-    return new ApplicationSpecificationWithChangedProcedure(appSpec, id.getId(), procedureSpecification);
-  }
-
-  private static final class ApplicationSpecificationWithChangedProcedure extends ForwardingApplicationSpecification {
-    private final String procedureId;
-    private final ProcedureSpecification procedureSpecification;
-
-    private ApplicationSpecificationWithChangedProcedure(ApplicationSpecification delegate,
-                                                         String procedureId,
-                                                         ProcedureSpecification procedureSpecification) {
-      super(delegate);
-      this.procedureId = procedureId;
-      this.procedureSpecification = procedureSpecification;
-    }
-
-    @Override
-    public Map<String, ProcedureSpecification> getProcedures() {
-      Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
-       procedures.put(procedureId, procedureSpecification);
-      return procedures;
     }
   }
 

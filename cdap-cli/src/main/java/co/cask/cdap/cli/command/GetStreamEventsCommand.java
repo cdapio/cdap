@@ -20,6 +20,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -81,7 +83,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets events from a " + ElementType.STREAM.getPrettyName() + ". " +
+    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +

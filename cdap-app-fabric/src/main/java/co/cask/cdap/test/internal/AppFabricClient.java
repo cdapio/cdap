@@ -17,17 +17,14 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ApplicationBundler;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -39,9 +36,6 @@ import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -59,14 +53,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -77,30 +65,25 @@ public class AppFabricClient {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
-  private final AppFabricHttpHandler httpHandler;
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceAdmin namespaceAdmin;
-  private final StreamAdmin streamAdmin;
-  private final StreamMetaStore streamMetaStore;
 
   @Inject
-  public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory,
+  public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin, StreamAdmin streamAdmin,
-                         StreamMetaStore streamMetaStore) {
-    this.httpHandler = httpHandler;
+                         NamespaceAdmin namespaceAdmin, WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceAdmin = namespaceAdmin;
-    this.streamAdmin = streamAdmin;
-    this.streamMetaStore = streamMetaStore;
+    this.workflowHttpHandler = workflowHttpHandler;
   }
 
   public void reset() throws Exception {
@@ -131,69 +114,36 @@ public class AppFabricClient {
                            String flowId, ProgramType type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/start",
-                                 appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      String argString = GSON.toJson(args);
-      if (argString != null) {
-        request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
-      }
-      httpHandler.startProgram(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/start",
-                                 namespaceId, appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      String argString = GSON.toJson(args);
-      if (argString != null) {
-        request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
-      }
-      programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                                type.getCategoryName(), flowId, "start");
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/start",
+                               namespaceId, appId, type.getCategoryName(), flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    String argString = GSON.toJson(args);
+    if (argString != null) {
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "start");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
   public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/stop",
-                                 appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      httpHandler.stopProgram(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/stop",
-                                 namespaceId, appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                                type.getCategoryName(), flowId, "stop");
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
-    }
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/stop",
+                               namespaceId, appId, type.getCategoryName(), flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "stop");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
   public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      httpHandler.getStatus(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
-      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-      return json.get("status");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/status", namespaceId, appId, type, flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
-      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-      return json.get("status");
-    }
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/status", namespaceId, appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    return json.get("status");
   }
 
   public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) {
@@ -256,7 +206,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v3/namespaces/%s/apps/%s/workflows/%s/schedules", namespaceId, appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
+    workflowHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
 
     List<ScheduleSpecification> schedules = responder.decodeResponseContent(
       new TypeToken<List<ScheduleSpecification>>() { }, GSON);
@@ -316,30 +266,17 @@ public class AppFabricClient {
     }
   }
 
-  /**
-   * Given a class generates a manifest file with main-class as class.
-   *
-   * @param klass to set as Main-Class in manifest file.
-   * @return An instance {@link java.util.jar.Manifest}
-   */
-  public static Manifest getManifestWithMainClass(Class<?> klass) {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
-    return manifest;
-  }
-
   public Location deployApplication(Id.Namespace namespace, String appName,
                                     Class<?> applicationClz, File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-    Location deployedJar =
-      locationFactory.create(createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars).toURI());
+    Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = appName + ".jar";
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
@@ -366,78 +303,4 @@ public class AppFabricClient {
     return deployedJar;
   }
 
-  public static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
-                                         File... bundleEmbeddedJars) throws IOException {
-
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hive",
-                                                                         "org.apache.spark"),
-                                                        ImmutableList.of("org.apache.hadoop.hbase"));
-    Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
-    bundler.createBundle(jarLocation, clz);
-
-    Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
-
-    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
-    // by the ApplicationBundler inside Twill.
-    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), manifest);
-    try {
-      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
-      try {
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-
-            // TODO: this is due to manifest possibly already existing in the jar, but we also
-            // create a manifest programatically so it's possible to have a duplicate entry here
-            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
-              jarEntry = jarInput.getNextJarEntry();
-              continue;
-            }
-
-            jarOutput.putNextEntry(jarEntry);
-            if (!isDir) {
-              ByteStreams.copy(jarInput, jarOutput);
-            }
-          }
-
-          jarEntry = jarInput.getNextJarEntry();
-        }
-      } finally {
-        jarInput.close();
-      }
-
-      for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
-      }
-
-    } finally {
-      jarOutput.close();
-    }
-
-    return new File(deployJar.toURI());
-  }
-
-  public static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, File... bundleEmbeddedJars)
-    throws IOException {
-    // Creates Manifest
-    Manifest manifest = new Manifest();
-
-    Attributes attributes = new Attributes();
-    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
-    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().putAll(attributes);
-
-    return createDeploymentJar(locationFactory, clz, manifest);
-  }
 }

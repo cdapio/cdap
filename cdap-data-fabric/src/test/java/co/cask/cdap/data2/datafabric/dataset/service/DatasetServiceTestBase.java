@@ -24,16 +24,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -46,6 +45,7 @@ import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -53,6 +53,7 @@ import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
@@ -69,6 +70,8 @@ import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -76,8 +79,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -87,8 +88,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
@@ -149,19 +148,19 @@ public abstract class DatasetServiceTestBase {
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(
-        new DatasetAdminOpHTTPHandlerV2(new NoAuthenticator(),
-                                        new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework)));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
 
-    Map<String, DatasetModule> defaultModules =
-      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                   Names.named("defaultDatasetModules")));
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .putAll(injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                           Names.named("defaultDatasetModules"))))
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, defaultModules, cConf));
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
@@ -217,8 +216,9 @@ public abstract class DatasetServiceTestBase {
     return port;
   }
 
-  protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
+  protected URL getUrl(String path) throws MalformedURLException {
+    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, path));
   }
 
   protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
@@ -227,43 +227,35 @@ public abstract class DatasetServiceTestBase {
     return new URL("http://" + "localhost" + ":" + getPort() + resource);
   }
 
-  protected int deployModule(String moduleName, Class moduleClass) throws Exception {
-    String jarPath = JarFinder.getJar(moduleClass);
-    final FileInputStream is = new FileInputStream(jarPath);
-    try {
-      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Class-Name", moduleClass.getName())
-        .withBody(new File(jarPath)).build();
-      return HttpRequests.execute(request).getResponseCode();
-    } finally {
-      is.close();
+  protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
+    LocationFactory lf = new LocalLocationFactory(tmpFolder.newFolder());
+    File[] embeddedJars = new File[bundleEmbeddedJars.length];
+    for (int i = 0; i < bundleEmbeddedJars.length; i++) {
+      File file = tmpFolder.newFile();
+      Files.copy(Locations.newInputSupplier(bundleEmbeddedJars[i]), file);
+      embeddedJars[i] = file;
     }
+
+    return AppJarHelper.createDeploymentJar(lf, moduleClass, embeddedJars);
+  }
+
+  protected int deployModule(String moduleName, Class moduleClass) throws Exception {
+    Location moduleJar = createModuleJar(moduleClass);
+    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+      .addHeader("X-Class-Name", moduleClass.getName())
+      .withBody(Locations.newInputSupplier(moduleJar)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
   // used to make request for deploying module.
   protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
-                                    File...bundleEmbeddedJars) throws IOException {
-    String jarPath = JarFinder.getJar(moduleClass);
-    JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarPath));
-    try {
-      for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
-      }
-    } finally {
-      jarOutput.close();
-    }
-    final FileInputStream is = new FileInputStream(jarPath);
-    try {
-      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Class-Name", moduleClassName)
-        .withBody(new File(jarPath)).build();
-      return HttpRequests.execute(request).getResponseCode();
-    } finally {
-      is.close();
-    }
+                                    Location...bundleEmbeddedJars) throws IOException {
+    Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
+    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+      .addHeader("X-Class-Name", moduleClassName)
+      .withBody(Locations.newInputSupplier(moduleJar)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {

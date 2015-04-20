@@ -32,8 +32,10 @@ import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 import java.util.Set;
@@ -48,21 +50,20 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   private static final long INACTIVE_OPERATION_TIMEOUT_SECS = 5;
   private static final long CLEANUP_JOB_SCHEDULE_SECS = 1;
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static ExploreService exploreService;
 
   @BeforeClass
   public static void start() throws Exception {
-    // Need to specify that when this test is run after ExploreServiceTestsSuite has run in the same JVM
-    BaseHiveExploreServiceTest.runBefore = true;
-    BaseHiveExploreServiceTest.runAfter = true;
-
     // Set smaller values for timeouts for testing
     CConfiguration cConfiguration = CConfiguration.create();
     cConfiguration.setLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS, ACTIVE_OPERATION_TIMEOUT_SECS);
     cConfiguration.setLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS, INACTIVE_OPERATION_TIMEOUT_SECS);
     cConfiguration.setLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, CLEANUP_JOB_SCHEDULE_SECS);
 
-    initialize(cConfiguration);
+    initialize(cConfiguration, tmpFolder);
 
     exploreService = injector.getInstance(ExploreService.class);
 

@@ -22,8 +22,9 @@ import co.cask.cdap.common.logging.ApplicationLoggingContext;
  * Logging context used for testing purpose.
  */
 public class TestLoggingContext extends ApplicationLoggingContext {
-  public TestLoggingContext(String namespaceId, String applicationId) {
-    super(namespaceId, applicationId);
+  public TestLoggingContext(String namespaceId, String applicationId, String runId, String instanceId) {
+    super(namespaceId, applicationId, runId);
+    setInstanceId(instanceId);
   }
 
   @Override

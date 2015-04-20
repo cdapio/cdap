@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myInstanceControl', function ($alert) {
+  .directive('myInstanceControl', function (myAlert) {
 
     return {
       restrict: 'E',
@@ -17,7 +17,7 @@ angular.module(PKG.name + '.commons')
           scope.processing = true;
 
           if (scope.model.requested === undefined || scope.model.requested < 0) {
-            $alert({
+            myAlert({
               title: 'Invalid instances: ',
               content: 'you must request a valid number of instances.',
               type: 'danger'
@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
 
           scope.myDataSrc.request({
             method: 'PUT',
-            _cdapPathV2: scope.basePath + '/instances',
+            _cdapPath: scope.basePath + '/instances',
             body: {'instances': scope.model.requested}
           }).then(function success (response) {
             scope.model.provisioned = scope.model.requested;

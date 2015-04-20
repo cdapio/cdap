@@ -20,8 +20,10 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interfaces that defines all methods related to scheduling, un-scheduling jobs.
@@ -44,10 +46,35 @@ public interface Scheduler {
    *
    * @param program Program that needs to be run.
    * @param programType type of program.
+   * @param schedule Schedule with which the program runs.
+   * @param properties system properties to be passed to the schedule
+   * @throws SchedulerException on unforeseen error.
+   */
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                       Map<String, String> properties) throws SchedulerException;
+
+  /**
+   * Schedule a program to be run in a defined schedule.
+   *
+   * @param program Program that needs to be run.
+   * @param programType type of program.
    * @param schedules Schedules with which the program runs.
    * @throws SchedulerException on unforeseen error.
    */
   public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+    throws SchedulerException;
+
+  /**
+   * Schedule a program to be run in a defined schedule.
+   *
+   * @param program Program that needs to be run.
+   * @param programType type of program.
+   * @param schedules Schedules with which the program runs.
+   * @param properties system properties to be passed to the schedule.
+   * @throws SchedulerException on unforeseen error.
+   */
+  public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+                       Map<String, String> properties)
     throws SchedulerException;
 
   /**
@@ -118,6 +145,20 @@ public interface Scheduler {
    */
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException;
+
+  /**
+   * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
+   *
+   * @param program the program for which schedule needs to be updated
+   * @param programType the type of the program
+   * @param schedule the new schedule. The schedule with the same name will be replaced
+   * @param properties properties that can be passed to the quartz scheduler
+   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
+   *                           belongs to does not exist.
+   * @throws SchedulerException on unforeseen error.
+   */
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+                             Map<String, String> properties) throws NotFoundException, SchedulerException;
 
   /**
    * Deletes the schedule.

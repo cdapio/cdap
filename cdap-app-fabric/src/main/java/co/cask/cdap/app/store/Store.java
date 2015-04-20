@@ -25,12 +25,12 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
-import co.cask.cdap.proto.AdapterSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.templates.AdapterSpecification;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -60,7 +60,17 @@ public interface Store {
    *
    * @param id        Info about program
    * @param pid       run id
-   * @param startTime start timestamp
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param adapter   name of the adapter associated with the run
+   */
+  void setStart(Id.Program id, String pid, long startTime, String adapter);
+
+  /**
+   * Logs start of program run.
+   *
+   * @param id        Info about program
+   * @param pid       run id
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
   void setStart(Id.Program id, String pid, long startTime);
 
@@ -69,10 +79,24 @@ public interface Store {
    *
    * @param id      id of program
    * @param pid     run id
-   * @param endTime end timestamp
+   * @param endTime end timestamp in seconds
    * @param runStatus   {@link ProgramRunStatus} of program run
    */
   void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs suspend of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setSuspend(Id.Program id, String pid);
+
+  /**
+   * Logs resume of a program run.
+   * @param id      id of the program
+   * @param pid     run id
+   */
+  void setResume(Id.Program id, String pid);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -80,13 +104,36 @@ public interface Store {
    *
    * @param id        program id.
    * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime.
-   * @param endTime   fetch run history that has started before the endTime.
-   * @param limit     max number of entries to fetch for this history call.
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
+   * @param adapter   name of the adapter associated with the runs
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
-                          long startTime, long endTime, int limit);
+  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+                          String adapter);
+
+  /**
+   * Fetches run records for particular program. Returns only finished runs.
+   * Returned ProgramRunRecords are sorted by their startTime.
+   *
+   * @param id        program id.
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
+   * @return          list of logged runs
+   */
+  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+
+  /**
+   * Fetches the run record for particular run of a program.
+   *
+   * @param id        program id
+   * @param runid     run id of the program
+   * @return          run record for the specified program and runid, null if not found
+   */
+  RunRecord getRun(Id.Program id, String runid);
 
   /**
    * Creates a new stream if it does not exist.
@@ -174,26 +221,6 @@ public interface Store {
   int getFlowletInstances(Id.Program id, String flowletId);
 
   /**
-   * Set the number of procedure instances.
-   *
-   * @param id     program id
-   * @param count  new number of instances.
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  void setProcedureInstances(Id.Program id, int count);
-
-  /**
-   * Gets the number of procedure instances.
-   *
-   * @param id  program id
-   * @return    number of instances
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  int getProcedureInstances(Id.Program id);
-
-  /**
    * Sets the number of instances of a service.
    *
    * @param id program id
@@ -218,6 +245,7 @@ public interface Store {
 
   /**
    * Gets the number of instances of a {@link Worker}
+   *
    * @param id program id
    * @return number of instances
    */
@@ -398,5 +426,4 @@ public interface Store {
    * @param id Namespace id.
    */
   void removeAllAdapters(Id.Namespace id);
-
 }

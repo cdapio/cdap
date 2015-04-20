@@ -38,11 +38,13 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.StandaloneLogReader;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.Iterables;
 import com.google.inject.Guice;
@@ -90,6 +92,8 @@ public class TestResilientLogging {
     cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());
 
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
@@ -111,12 +115,13 @@ public class TestResilientLogging {
     opExecutorService.startAndWait();
 
     // Start the logging before starting the service.
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    String logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                       "RUN", "INSTANCE"));
+    String logBaseDir = "trl-log/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    LogAppender appender = injector.getInstance(LogAppender.class);
+    LogAppender appender = new AsyncLogAppender(injector.getInstance(FileLogAppender.class));
     new LogAppenderInitializer(appender).initialize("TestResilientLogging");
 
     Logger logger = LoggerFactory.getLogger("TestResilientLogging");
@@ -158,13 +163,13 @@ public class TestResilientLogging {
     appender.stop();
 
     // Verify - we should have at least 5 events.
-    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logTail = injector.getInstance(StandaloneLogReader.class);
+    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "", "RUN", "INSTANCE");
+    FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
-    logTail.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER,
+    logTail.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER,
                        logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
-    Assert.assertTrue(allEvents.size() >= 5);
+    Assert.assertTrue(allEvents.toString(), allEvents.size() >= 5);
 
     // Finally - stop all services
     Services.chainStop(dsService, opExecutorService, txManager);

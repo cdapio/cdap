@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,6 @@ public final class MetricsConstants {
   public static final String FLOWLET_INPUT = "system.process.tuples.read";
   public static final String FLOWLET_PROCESSED = "system.process.events.processed";
   public static final String FLOWLET_EXCEPTIONS = "system.process.errors";
-
-  public static final String PROCEDURE_INPUT = "system.query.requests";
-  public static final String PROCEDURE_PROCESSED = "system.query.processed";
-  public static final String PROCEDURE_EXCEPTIONS = "system.query.failures";
 
   public static final String SERVICE_INPUT = "system.requests.count";
   public static final String SERVICE_PROCESSED = "system.response.successful.count";
