@@ -6,6 +6,6 @@
     }
   ],
   "levels": {
-     "default" : "TRACE"
+     "default" : "INFO"
   }
 }
