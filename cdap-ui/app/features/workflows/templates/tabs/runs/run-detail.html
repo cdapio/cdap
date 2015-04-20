@@ -1,6 +1,6 @@
 <div class="clearfix">
-  <div class="btn-group pull-right">
-    <button class="btn btn-default no-border"
+  <div class="btn-group pull-right nested-tabs">
+    <button class="btn btn-default"
         ng-repeat="tab in tabs"
         ng-click="selectTab(tab)"
         ng-class="{'active': tab.title == activeTab.title}"
@@ -11,4 +11,4 @@
 </div>
 <br/>
 <div ng-include="activeTab.template"></div>
-  
+
