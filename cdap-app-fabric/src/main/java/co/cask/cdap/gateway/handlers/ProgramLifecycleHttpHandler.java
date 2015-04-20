@@ -19,8 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
@@ -66,7 +64,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -120,7 +117,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final PropertiesResolver propertiesResolver;
   private final AdapterService adapterService;
-  private final MetricStore metricStore;
   private MRJobClient mrJobClient;
   private MapReduceMetricsInfo mapReduceMetricsInfo;
 
@@ -195,14 +191,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
                                      MapReduceMetricsInfo mapReduceMetricsInfo,
-                                     PropertiesResolver propertiesResolver, AdapterService adapterService,
-                                     MetricStore metricStore) {
+                                     PropertiesResolver propertiesResolver, AdapterService adapterService) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
     this.lifecycleService = lifecycleService;
-    this.metricStore = metricStore;
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
@@ -972,8 +966,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-        deleteProcessMetricsForFlow(namespaceId, appId, flowId);
+        // TODO: the process.events.pending metric is now off. We need to adjust it somehow [CDAP-2191]
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1704,20 +1697,5 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean canHaveInstances(ProgramType programType) {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
-  }
-
-  // deletes the process metrics for a flow
-  private void deleteProcessMetricsForFlow(String namespaceId,
-                                           String application,
-                                           String flow) throws Exception {
-
-    long endTs = System.currentTimeMillis() / 1000;
-    String metricNamePrefix = "process";
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
-    tags.put(Constants.Metrics.Tag.APP, application);
-    tags.put(Constants.Metrics.Tag.FLOW, flow);
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, metricNamePrefix, tags);
-    metricStore.delete(deleteQuery);
   }
 }
