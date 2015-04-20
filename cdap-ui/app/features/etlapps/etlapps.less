@@ -1,14 +1,103 @@
 @import '../../styles/variables.less';
 
-
+@font-size: 18px;
 body.theme-cdap.state-etlapps-create {
+
+  .as-sortable-drag {
+    &.template {
+      &.transforms {
+        border: 2px dashed black;
+        color: black;
+        background-color: white;
+        text-align: center;
+        font-size: @font-size;
+      }
+    }
+  }
+  [etl-canvas-template] {
+    &[class*="col-"] {
+      padding-right: 0;
+    }
+  }
+
   .etlflowcontainer {
     width: 100%;
-    background: @cdap-header;
     padding: 0 10px;
+    h4 {
+      margin-top: 0;
+      font-weight: bold;
+    }
+    .fa-pencil {
+      font-size: 12px;
+      vertical-align: middle;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    .wrapper {
+      border-radius: 4px;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid white;
+      height: 250px;
+      background: #D3D3D3;
+      color: white;
+
+      &.transform-wrapper {
+        height: auto;
+      }
+
+      .default { display: none;}
+      .template,.default {
+        padding: 20px;
+        border: 2px dashed white;
+        color: white;
+        height: 100%;
+
+        > div {
+          text-align: center;
+          position: relative;
+          top: 50%;
+          font-size: @font-size;
+          word-wrap: ellipsis;
+          -ms-transform: translateY(-50%);
+          -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+        }
+      }
+      .template {
+        &.transforms {
+          border: 0;
+          padding: 0;
+          .default {
+            > div {
+              transform: none;
+            }
+          }
+          > div {
+            border: 2px dashed white;
+            padding: 8px 0;
+            margin: 0;
+            margin-bottom: 12px;
+            -ms-transform: none;
+            -webkit-transform: none;
+            transform: none;
+            word-wrap: break-word;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+    }
   }
 
   .plugins {
+    h4 {
+      margin-top: 0;
+      font-weight: bold;
+    }
     .panel.panel-default {
       margin-bottom: 5px;
       .panel-body{
@@ -16,6 +105,16 @@ body.theme-cdap.state-etlapps-create {
 
         .list-group {
           margin-bottom: 0;
+
+          .list-group-item {
+            border: 0;
+            border-bottom: 1px solid lightgray;
+            background-color: transparent;
+
+            &:last-child {
+              border: 0;
+            }
+          }
         }
       }
     }
@@ -31,34 +130,6 @@ body.theme-cdap.state-etlapps-create {
   #ETLsourceTab, #ETLsinkTab, #ETLtransformsTab {
     .panel-heading {
       cursor: pointer;
-    }
-  }
-  .sourceDropZone,
-  .transformDropZone,
-  .sinkDropZone {
-    background: black;
-    color: white;
-    width: 100%;
-    height: 33vh;
-    margin: 20px 0;
-    cursor: pointer;
-    border: 2px dashed black;
-    > div {
-      margin-top: 13vh;
-    }
-    > div.overlay {
-      display: none;
-    }
-
-    &.over {
-      > div.overlay {
-        display: block;
-      }
-      > div.template {
-        display: none;
-      }
-      color: black;
-      background: white;
     }
   }
 }

@@ -4,8 +4,10 @@
   <div class="col-sm-6">
     <h2 class="programTitle">
       <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
-      <small> Type: Tigon </small>
     </h2>
+    <div class="type-block">
+      <small> Type: Tigon </small>
+    </div>
   </div>
   <div class="col-sm-6 text-right">
     <div ng-show="activeRuns === 0 && status === null"
@@ -37,10 +39,6 @@
 
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.runs" role="tab">Runs</a>
-  </li>
-
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="flows.detail.flowlets" role="tab">Flowlets</a>
   </li>
 
   <li role="presentation" ui-sref-active="active">

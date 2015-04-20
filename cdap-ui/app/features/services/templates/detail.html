@@ -4,8 +4,10 @@
   <div class="col-sm-6">
     <h2 class="programTitle">
       <span ng-bind="$state.params.programId | caskCapitalizeFilter"> </span>
-      <small> Type: Service </small>
     </h2>
+    <div class="type-block">
+      <small> Type: Service </small>
+    </div>
   </div>
   <div class="col-sm-6 text-right">
     <div ng-show="status == 'RUNNING'"
