@@ -331,7 +331,7 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
     LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
-    ProgramType programType = adapterSpec.getProgramType();
+    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -364,7 +364,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = adapterSpec.getProgramType();
+    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -426,7 +426,7 @@ public class AdapterService extends AbstractIdleService {
       throw new NotFoundException(appId);
     }
     return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
-                           adapterSpec.getProgramType(), adapterSpec.getProgramName());
+                           adapterSpec.getProgram().getType(), adapterSpec.getProgram().getId());
   }
 
   private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
