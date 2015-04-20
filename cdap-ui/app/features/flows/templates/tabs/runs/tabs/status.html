@@ -1,6 +1,8 @@
 <div ng-controller="FlowsRunsDetailStatusControler">
-<div class="row h4">
-  <div class="col-sm-3">
+
+
+
+<!--   <div class="col-sm-3">
     <span> Status </span>
     <div ng-bind="status"></div>
   </div>
@@ -11,8 +13,8 @@
   <div class="col-sm-3">
     <span> Duration </span>
     <div ng-bind="duration*1000 | amDurationFormat"></div>
-  </div>
-  <div class="col-sm-3 text-right">
+  </div> -->
+<!--   <div class="col-sm-3 text-right">
     <div ng-show="status == 'RUNNING'"
          class="btn btn-default btn-md"
          ng-click="stopFlow('stop')">
@@ -22,8 +24,8 @@
          class="btn btn-default btn-md">
       <span class="fa fa-refresh fa-spin"></span>
     </div>
-  </div>
-</div>
+  </div> -->
+
 
 <my-flow-graph data-model="data" parent="#c{{$state.params.runid}}" id="c{{$state.params.runid}}"></my-flow-graph>
 </div>

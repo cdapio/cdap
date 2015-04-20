@@ -8,10 +8,6 @@
     </h2>
   </div>
   <div class="col-sm-6 text-right">
-    <span class="programTitle">
-      <ng-pluralize data-count="activeRuns"
-          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-    </span>
     <div ng-hide="status === 'STARTING'"
          class="btn btn-success btn-md"
          ng-click="toggleFlow('start')">
