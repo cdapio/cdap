@@ -30,14 +30,14 @@
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <div class="title-type-image">
-              <img src="assets/img/stream.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
               <span> Stream </span>
             </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <div class="title-type-image">
-              <img src="assets/img/datasets.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
               <span> Dataset </span>
             </div>
           </a>
@@ -99,7 +99,7 @@
           <a ui-sref="apps.detail.overview({appId: app.id})">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <img src="assets/img/cdap.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
               <span> CDAP </span>
             </div>
           </a>
