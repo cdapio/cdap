@@ -440,7 +440,6 @@ public final class Constants {
       public static final String APP = "app";
 
       public static final String SERVICE = "srv";
-      public static final String SERVICE_HANDLER = "srn";
 
       public static final String WORKER = "wrk";
 
