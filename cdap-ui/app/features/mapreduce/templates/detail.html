@@ -18,7 +18,7 @@
     </div>
 
     <div ng-show="status === 'STARTING' || status === 'STOPPING'"
-         ng-class="{'btn-success': status === 'STARTING', 'btn-primary': status === 'STOPPING'}"
+         ng-class="{'btn-success': status === 'STARTING', 'btn-warning': status === 'STOPPING'}"
          class="btn btn-default btn-md">
       <span class="fa fa-refresh fa-spin"></span>
       <span>{{status | caskCapitalizeFilter}}</span>
@@ -28,7 +28,7 @@
 
 <div class="cdap-subnav-end"></div>
 
-<ul class="nav nav-tabs" role="tablist">
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
   </li>
