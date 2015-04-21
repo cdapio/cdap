@@ -16,45 +16,63 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.ByteBuffer;
 
 /**
  * App that contains all program types. Used to test Metadata store.
  */
 public class AllProgramsApp extends AbstractApplication {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AllProgramsApp.class);
+
+  public static final String NAME = "App";
+  public static final String STREAM_NAME = "stream";
+  public static final String DATASET_NAME = "kvt";
+
   @Override
   public void configure() {
-    setName("App");
+    setName(NAME);
     setDescription("Application which has everything");
-    addStream(new Stream("stream"));
-    createDataset("kvt", KeyValueTable.class);
+    addStream(new Stream(STREAM_NAME));
+    createDataset(DATASET_NAME, KeyValueTable.class);
     addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());
     addWorkflow(new NoOpWorkflow());
+    addWorker(new NoOpWorker());
   }
 
   /**
    *
    */
   public static class NoOpFlow implements Flow {
+
+    public static final String NAME = "NoOpFlow";
+
     @Override
     public FlowSpecification configure() {
      return FlowSpecification.Builder.with()
-        .setName("NoOpFlow")
+        .setName(NAME)
         .setDescription("NoOpflow")
         .withFlowlets()
-          .add(new A())
+          .add(A.NAME, new A())
         .connect()
-          .fromStream("stream").to("A")
+          .fromStream(STREAM_NAME).to(A.NAME)
         .build();
     }
   }
@@ -63,8 +81,15 @@ public class AllProgramsApp extends AbstractApplication {
    *
    */
   public static final class A extends AbstractFlowlet {
+    public static final String NAME = "A";
+
     public A() {
-      super("A");
+      super(NAME);
+    }
+
+    @ProcessInput
+    public void process(StreamEvent event) {
+      // NO-OP
     }
   }
 
@@ -72,15 +97,24 @@ public class AllProgramsApp extends AbstractApplication {
    *
    */
   public static class NoOpMR extends AbstractMapReduce {
+    public static final String NAME = "NoOpMR";
+
+    @Override
+    protected void configure() {
+      setName(NAME);
+    }
   }
 
   /**
    *
    */
-  private static class NoOpWorkflow extends AbstractWorkflow {
+  public static class NoOpWorkflow extends AbstractWorkflow {
+
+    public static final String NAME = "NoOpWorkflow";
+
     @Override
     public void configure() {
-        setName("NoOpWorkflow");
+        setName(NAME);
         setDescription("NoOp Workflow description");
         addAction(new NoOpAction());
     }
@@ -89,10 +123,33 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  private static class NoOpAction extends AbstractWorkflowAction {
+  public static class NoOpAction extends AbstractWorkflowAction {
+
     @Override
     public void run() {
 
+    }
+  }
+
+  /**
+   *
+   */
+  public static class NoOpWorker extends AbstractWorker {
+
+    public static final String NAME = "NoOpWorker";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+    }
+
+    @Override
+    public void run() {
+      try {
+        getContext().write(STREAM_NAME, ByteBuffer.wrap(Bytes.toBytes("NO-OP")));
+      } catch (Exception e) {
+        LOG.error("Worker ran into error", e);
+      }
     }
   }
 

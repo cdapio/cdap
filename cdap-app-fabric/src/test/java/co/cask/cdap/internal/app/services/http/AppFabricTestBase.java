@@ -30,6 +30,7 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
@@ -135,6 +136,7 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
+  private static UsageHandler usageHandler;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -177,7 +179,6 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
-
     createNamespaces();
   }
 
@@ -469,6 +470,11 @@ public abstract class AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertEquals(expected, status);
+  }
+
+  protected void deleteApp(Id.Application app, int expectedResponseCode) throws Exception {
+    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/apps/%s", app.getNamespaceId(), app.getId()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
   protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {

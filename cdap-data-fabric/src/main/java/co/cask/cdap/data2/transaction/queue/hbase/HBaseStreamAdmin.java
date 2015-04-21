@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -46,15 +47,16 @@ import javax.annotation.Nullable;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
-  private final TransactionExecutorFactory txExecutorFactory;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
-                          HBaseTableUtil tableUtil, DatasetFramework datasetFramework,
-                          TransactionExecutorFactory txExecutorFactory) throws IOException {
+                          HBaseTableUtil tableUtil, final DatasetFramework datasetFramework,
+                          TransactionExecutorFactory txExecutorFactory,
+                          UsageRegistry usageRegistry) throws IOException {
     super(hConf, cConf, locationFactory, tableUtil,
           datasetFramework, txExecutorFactory, QueueConstants.QueueType.STREAM);
-    this.txExecutorFactory = txExecutorFactory;
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -138,6 +140,11 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   public void drop(Id.Stream streamId) throws Exception {
     drop(QueueName.fromStream(streamId));
+  }
+
+  @Override
+  public void register(Id.Stream streamId, Id.Program programId) {
+    usageRegistry.register(programId, streamId);
   }
 
 }
