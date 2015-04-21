@@ -33,6 +33,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
     }, options);
 
     angular.extend(options, forcedOpts || {}, {
+      // TODO: Do we need to copy $scope.history here? I think not.
       data: angular.copy($scope.history),
       el: elem[0]
     });
