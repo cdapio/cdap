@@ -1,14 +1,33 @@
-<div class="clearfix">
-  <div class="btn-group pull-right">
-    <button class="btn btn-default no-border"
-        ng-repeat="tab in tabs"
-        ng-click="selectTab(tab)"
-        ng-class="{'active': tab.title == activeTab.title}"
-    >
-      {{ tab.title }}
-    </button>
+<div class="btn-group pull-right nested-tabs">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
+
+<div class="workflow-components">
+  <div class="row run-status">
+    <div class="col-sm-6">
+      <table class="table table-curved table-status">
+        <thead>
+          <th> Status </th>
+          <th> Started </th>
+          <th> Duration </th>
+        </thead>
+        <tbody>
+          <td ng-bind="status"> </td>
+          <td ng-show="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
+          <td ng-show="!startTime"> &mdash; </td>
+          <td ng-show="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
+          <td ng-show="!duration"> &mdash; </td>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-<br/>
+
 <div ng-include="activeTab.template"></div>
-  
+

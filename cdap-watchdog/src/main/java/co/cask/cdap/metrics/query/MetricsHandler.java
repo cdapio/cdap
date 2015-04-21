@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.QueryRequest;
 import co.cask.http.HttpResponder;
@@ -356,13 +355,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     if (resolution.equals(PARAM_AUTO_RESOLUTION)) {
       if (start != null && end != null) {
         long difference = end - start;
-        if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
-          return 3600;
-        } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
-          return 60;
-        } else {
-          return 1;
-        }
+        return MetricQueryParser.getResolution(difference).getResolution();
       } else {
         throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
                                              "should be provided to determine resolution");
@@ -388,20 +381,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
-      Collection<MetricTimeSeries> queryResult = Lists.newArrayList();
       QueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
-      for (String metric : queryRequest.getMetrics()) {
-        MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
-                                                    timeRange.getResolutionInSeconds(),
-                                                    timeRange.getCount(), metric,
-                                                    // todo: figure out MetricType
-                                                    MetricType.COUNTER, tagsSliceBy,
-                                                    transformGroupByTags(queryRequest.getGroupBy()),
-                                                    timeRange.getInterpolate());
-        Collection<MetricTimeSeries> timeSerieses = metricStore.query(query);
 
-        queryResult.addAll(timeSerieses);
-      }
+      MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
+                                                  timeRange.getResolutionInSeconds(),
+                                                  timeRange.getCount(), queryRequest.getMetrics(),
+                                                  // todo: figure out MetricType
+                                                  MetricType.COUNTER, tagsSliceBy,
+                                                  transformGroupByTags(queryRequest.getGroupBy()),
+                                                  timeRange.getInterpolate());
+      Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
       long endTime = timeRange.getEnd();
       if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && endTime == 0) {

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
-import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramWrapper;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;

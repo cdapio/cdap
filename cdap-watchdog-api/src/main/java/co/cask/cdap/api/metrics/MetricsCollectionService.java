@@ -13,8 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.api.metrics;
+
+import com.google.common.util.concurrent.Service;
+
+import java.util.Map;
 
 /**
- * Metrics client classes.
+ * Service for collects and publishes metrics.
  */
-package co.cask.cdap.common.metrics;
+public interface MetricsCollectionService extends Service {
+
+  /**
+   * Returns the metric collector for the given context.
+   *
+   * @param context The tags that define the metrics context.
+   * @return A {@link MetricsCollector} for emitting metrics.
+   */
+  MetricsCollector getCollector(Map<String, String> context);
+}

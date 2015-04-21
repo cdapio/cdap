@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.metrics;
 
-import com.google.common.util.concurrent.Service;
+package co.cask.cdap.api.workflow;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Service for collects and publishes metrics.
+ * Interface to represent the data that is transferred from one node to the next node in the {@link Workflow}
  */
-public interface MetricsCollectionService extends Service {
-
+public interface WorkflowToken {
   /**
-   * Returns the metric collector for the given context.
-   *
-   * @param context The tags that define the metrics context.
-   * @return A {@link MetricsCollector} for emitting metrics.
+   * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null
+   * if the counters are not set.
+   * @return the Hadoop MapReduce counters set by the previous MapReduce program
    */
-  MetricsCollector getCollector(Map<String, String> context);
+  @Nullable
+  public Map<String, Map<String, Long>> getMapReduceCounters();
 }

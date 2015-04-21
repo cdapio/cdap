@@ -18,8 +18,9 @@ package co.cask.cdap.metrics.collect;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
 import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
 import co.cask.cdap.internal.io.DatumWriter;
@@ -28,8 +29,10 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.test.SlowTests;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -87,9 +90,9 @@ public class KafkaMetricsCollectionServiceTest {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    final TypeToken<MetricValue> metricValueType = TypeToken.of(MetricValue.class);
+    final TypeToken<MetricValues> metricValueType = TypeToken.of(MetricValues.class);
     final Schema schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
-    DatumWriter<MetricValue> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricValueType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
@@ -112,11 +115,13 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricValueType,
-                           ImmutableMap.of(
-                             "tag.1", 1,
-                             "tag.2", 2,
-                             "tag.3", 3));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.1", "processed", 1L);
+    expected.put("tag.2", "processed", 2L);
+    expected.put("tag.3", "processed", 3L);
+
+    assertMetricsFromKafka(kafkaClient, schema, metricValueType, expected);
   }
 
   @Test
@@ -129,9 +134,9 @@ public class KafkaMetricsCollectionServiceTest {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    final TypeToken<MetricValue> metricRecordType = TypeToken.of(MetricValue.class);
+    final TypeToken<MetricValues> metricRecordType = TypeToken.of(MetricValues.class);
     final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
-    DatumWriter<MetricValue> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricRecordType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
@@ -160,27 +165,30 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, ImmutableMap.of("tag.test", 5));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.test", "metric", 5L);
+    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, expected);
   }
 
   private void assertMetricsFromKafka(KafkaClientService kafkaClient, final Schema schema,
-                                      final TypeToken<MetricValue> metricRecordType,
-                                      Map<String, Integer> expected) throws InterruptedException {
+                                      final TypeToken<MetricValues> metricRecordType,
+                                      Table<String, String, Long> expected) throws InterruptedException {
 
     // Consume from kafka
-    final Map<String, MetricValue> metrics = Maps.newHashMap();
+    final Map<String, MetricValues> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
     kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
-      ReflectionDatumReader<MetricValue> reader = new ReflectionDatumReader<MetricValue>(schema, metricRecordType);
+      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<MetricValues>(schema, metricRecordType);
 
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {
         try {
           while (messages.hasNext()) {
             ByteBuffer payload = messages.next().getPayload();
-            MetricValue metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
+            MetricValues metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
             StringBuilder flattenContext = new StringBuilder();
             // for verifying expected results, sorting tags
             Map<String, String> tags = Maps.newTreeMap();
@@ -208,12 +216,17 @@ public class KafkaMetricsCollectionServiceTest {
     });
 
     Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
-    Assert.assertEquals(expected.size(), metrics.size());
+    Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
-    for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
-      MetricValue metric = metrics.get(expectedEntry.getKey());
-      Assert.assertNotNull("Missing expected value for " + expectedEntry.getKey(), metric);
-      Assert.assertEquals(expectedEntry.getValue().intValue(), metric.getValue());
+    for (String expectedContext : expected.rowKeySet()) {
+      MetricValues metric = metrics.get(expectedContext);
+      Assert.assertNotNull("Missing expected value for " + expectedContext, metric);
+
+      // validate metrics and their values
+      for (MetricValue metricValue : metric.getMetrics()) {
+        Assert.assertNotNull(expected.contains(expectedContext, metricValue));
+        Assert.assertEquals((long) expected.get(expectedContext, metricValue.getName()), metricValue.getValue());
+      }
     }
 
     kafkaClient.stopAndWait();

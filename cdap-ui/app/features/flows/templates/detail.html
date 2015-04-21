@@ -10,10 +10,6 @@
     </div>
   </div>
   <div class="col-sm-6 text-right">
-<!--     <span class="programTitle">
-      <ng-pluralize data-count="activeRuns"
-          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-    </span> -->
     <div ng-show="activeRuns === 0 && status === null"
          class="btn btn-success btn-md"
          ng-click="do('start')">
@@ -39,7 +35,7 @@
 
 <div class="cdap-subnav-end"></div>
 
-<ul class="nav nav-tabs" role="tablist">
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
 
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.runs" role="tab">Runs</a>

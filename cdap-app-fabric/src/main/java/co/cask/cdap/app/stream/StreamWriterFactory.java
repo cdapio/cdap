@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,19 @@
  * the License.
  */
 
+package co.cask.cdap.app.stream;
+
+import co.cask.cdap.api.data.stream.StreamWriter;
+import com.google.inject.assistedinject.Assisted;
+
 /**
- * Reporter Hooks.
+ * Factory to create {@link StreamWriter} objects
  */
-package co.cask.cdap.common.hooks;
+public interface StreamWriterFactory {
+  /**
+   * @param namespaceId the namespaceId for which to return a {@link StreamWriter}
+   * @return a {@link StreamWriter} for the specified namespaceId
+   */
+  StreamWriter create(@Assisted("namespaceId") String namespaceId);
+}
+

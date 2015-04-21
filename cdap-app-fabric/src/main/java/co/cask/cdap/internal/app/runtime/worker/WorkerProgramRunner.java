@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -24,8 +25,8 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -49,16 +50,18 @@ public class WorkerProgramRunner implements ProgramRunner {
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
+  private final StreamWriterFactory streamWriterFactory;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.streamWriterFactory = streamWriterFactory;
   }
 
   @Override
@@ -99,7 +102,7 @@ public class WorkerProgramRunner implements ProgramRunner {
     BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, runId, instanceId, instanceCount,
                                                         options.getUserArguments(), cConf,
                                                         metricsCollectionService, datasetFramework,
-                                                        txClient, discoveryServiceClient);
+                                                        txClient, discoveryServiceClient, streamWriterFactory);
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);

@@ -162,7 +162,8 @@ public class StructuredRecordToCubeFactTransform extends TransformStage<Structur
     }
 
     public CubeFact build(StructuredRecord record) {
-      CubeFact fact = new CubeFact(timestampResolver.getTimestamp(record));
+      // we divide by 1000 to get seconds - which is expected by Cube
+      CubeFact fact = new CubeFact(timestampResolver.getTimestamp(record) / 1000);
       for (TagValueResolver resolver : tagResolvers) {
         String value = resolver.getValue(record);
         if (value != null) {

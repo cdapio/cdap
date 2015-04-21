@@ -24,7 +24,7 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
-import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
+import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.realtime.sources.TwitterStreamSource;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
@@ -48,11 +48,11 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
     // TODO : Remove this when plugins management is available.
     initTable(Lists.<Class>newArrayList(IdentityTransform.class,
                                         TwitterStreamSource.class,
-                                        NoOpSink.class,
                                         TestSource.class,
                                         StructuredRecordToGenericRecordTransform.class,
                                         ScriptFilterTransform.class,
-                                        ProjectionTransform.class));
+                                        ProjectionTransform.class,
+                                        StreamSink.class));
   }
 
   @Override

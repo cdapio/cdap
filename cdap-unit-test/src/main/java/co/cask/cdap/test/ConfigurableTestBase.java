@@ -21,7 +21,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -32,7 +34,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
@@ -66,7 +67,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -76,8 +76,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
+import co.cask.cdap.test.internal.DefaultStreamManager;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalNamespaceClient;
+import co.cask.cdap.test.internal.LocalStreamWriter;
+import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -172,7 +175,7 @@ public class ConfigurableTestBase {
     CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -219,7 +222,7 @@ public class ConfigurableTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
+      new InMemoryProgramRunnerModule(LocalStreamWriter.class),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -247,6 +250,8 @@ public class ConfigurableTestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
+          install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
+                    .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -495,6 +500,10 @@ public class ConfigurableTestBase {
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+  }
+
+  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
+    return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
 }
 

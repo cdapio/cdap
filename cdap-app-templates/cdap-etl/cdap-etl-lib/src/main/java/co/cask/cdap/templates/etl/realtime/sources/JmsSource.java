@@ -44,15 +44,18 @@ import javax.jms.TextMessage;
 public class JmsSource extends RealtimeSource<String> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
-  private static final long JMS_CONSUMER_TIMEOUT_MS = 30000;
+  private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
   private static final String CDAP_JMS_SOURCE_NAME = "JMS Realtime Source";
+  private static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
 
   private transient Connection connection;
   private transient Session session;
-  private MessageConsumer consumer;
+  private transient MessageConsumer consumer;
+
+  private int messagesToReceive = 50;
 
   /**
    * Configure the JMS Source.
@@ -72,6 +75,10 @@ public class JmsSource extends RealtimeSource<String> {
    */
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+
+    if (context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE) != null) {
+      messagesToReceive = Integer.valueOf(context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE));
+    }
 
     // Bootstrap the JMS consumer
     initializeJMSConnection();
@@ -118,43 +125,40 @@ public class JmsSource extends RealtimeSource<String> {
   public SourceState poll(Emitter<String> writer, SourceState currentState) {
     // Try to get message from Queue
     Message message = null;
-    try {
-      message = consumer.receive(JMS_CONSUMER_TIMEOUT_MS);
-    } catch (JMSException e) {
-      LOG.warn("Exception when trying to receive message from JMS consumer: {}", CDAP_JMS_SOURCE_NAME);
-    }
-    if (message == null) {
-      return currentState;
-    }
 
-    String text;
-    try {
-      if (message instanceof TextMessage) {
-        TextMessage textMessage = (TextMessage) message;
-        text = textMessage.getText();
-        LOG.trace("Process JMS TextMessage : ", text);
-      } else if (message instanceof BytesMessage) {
-        BytesMessage bytesMessage = (BytesMessage) message;
-        int bodyLength = (int) bytesMessage.getBodyLength();
-        byte[] data = new byte[bodyLength];
-        int bytesRead = bytesMessage.readBytes(data);
-        if (bytesRead != bodyLength) {
-          LOG.warn("Number of bytes read {} not same as expected {}", bytesRead, bodyLength);
-        }
-        text = new String(data).intern();
-        LOG.trace("Processing JMS ByteMessage : {}", text);
-      } else {
-        // Different kind of messages, just get String for now
-        // TODO Process different kind of JMS messages
-        text = message.toString();
-        LOG.trace("Processing JMS message : ", text);
+    int count = 0;
+    do {
+      try {
+        message = consumer.receive(JMS_CONSUMER_TIMEOUT_MS);
+      } catch (JMSException e) {
+        LOG.warn("Exception when trying to receive message from JMS consumer: {}", CDAP_JMS_SOURCE_NAME);
       }
-    }  catch (JMSException e) {
-      LOG.error("Unable to read text from a JMS Message.");
-      return currentState;
-    }
+      if (message != null) {
+        String text;
+        try {
+          if (message instanceof TextMessage) {
+            TextMessage textMessage = (TextMessage) message;
+            text = textMessage.getText();
+            LOG.trace("Process JMS TextMessage : ", text);
+          } else if (message instanceof BytesMessage) {
+            BytesMessage bytesMessage = (BytesMessage) message;
+            text = bytesMessage.readUTF();
+            LOG.trace("Processing JMS ByteMessage : {}", text);
+          } else {
+            // Different kind of messages, just get String for now
+            // TODO Process different kind of JMS messages
+            text = message.toString();
+            LOG.trace("Processing JMS message : ", text);
+          }
+        } catch (JMSException e) {
+          LOG.error("Unable to read text from a JMS Message.");
+          continue;
+        }
 
-    writer.emit(text);
+        writer.emit(text);
+        count++;
+      }
+    } while (message != null && count < messagesToReceive);
 
     return new SourceState(currentState.getState());
   }

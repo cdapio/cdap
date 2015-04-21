@@ -16,7 +16,7 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -56,7 +56,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
                                       MetricDatasetFactory metricDatasetFactory,
                                       MessageCallbackFactory callbackFactory,
-                                      @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                      @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
     this.kafkaClient = kafkaClient;
     this.callbackFactory = callbackFactory;
