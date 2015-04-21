@@ -111,7 +111,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       .put(Constants.Metrics.Tag.ADAPTER, "adapter")
 
       .put(Constants.Metrics.Tag.SERVICE, "service")
-      // .put(Constants.Metrics.Tag.SERVICE_HANDLER, "handler") // this would be a duplicate with HANDLER
+      // SERVICE_HANDLER is the same HANDLER
 
       .put(Constants.Metrics.Tag.WORKER, "worker")
 
