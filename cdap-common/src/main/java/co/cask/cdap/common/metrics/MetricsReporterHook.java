@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.hooks;
+package co.cask.cdap.common.metrics;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.http.AbstractHandlerHook;
 import co.cask.http.HandlerInfo;
 import co.cask.http.HttpResponder;
