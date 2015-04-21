@@ -1,22 +1,22 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, source) {
+  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, rSource) {
     var dataSrc = new MyDataSource($scope);
     var filterFilter = $filter('filter');
 
     var path = '';
     var parentPath = ''; // to fetch resolved preferences of parent
 
-    if (source === 'SYSTEM') {
+    if (rSource === 'SYSTEM') {
       path = '/preferences';
 
       $scope.heading = 'System Preferences';
-    } else if (source === 'NAMESPACE') {
+    } else if (rSource === 'NAMESPACE') {
       path = '/namespaces/' + $state.params.nsadmin + '/preferences';
       parentPath = '/preferences';
       $scope.messages = 'Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.';
 
       $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
-    } else if (source === 'APPLICATION') {
+    } else if (rSource === 'APPLICATION') {
       path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId + '/preferences';
       parentPath = '/namespaces/' + $state.params.nsadmin + '/preferences?resolved=true';
       $scope.messages = 'Specify new or override namespace configurations that will be accessible in all programs within this application.';
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.preferences = [];
 
     $scope.loadProperties = function () {
-      if (source !== 'SYSTEM') {
+      if (rSource !== 'SYSTEM') {
         dataSrc
           .request({
             _cdapPath: parentPath

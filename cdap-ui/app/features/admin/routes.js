@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.admin')
             templateUrl: '/assets/features/admin/templates/preferences.html',
             controller: 'PreferencesController',
             resolve: {
-              source: function() {
+              rSource: function() {
                 return 'SYSTEM';
               }
             }
@@ -150,7 +150,7 @@ angular.module(PKG.name + '.feature.admin')
               templateUrl: '/assets/features/admin/templates/preferences.html',
               controller: 'PreferencesController',
               resolve: {
-                source: function () {
+                rSource: function () {
                   return 'NAMESPACE';
                 }
               }
@@ -227,19 +227,14 @@ angular.module(PKG.name + '.feature.admin')
                 parent: 'admin.namespace.detail',
                 url: '/:appId',
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
-                controller: 'AdminNamespaceAppMetadataController',
-                resolve: {
-                    source: function () {
-                      return 'APPLICATION'
-                    }
-                  }
+                controller: 'AdminNamespaceAppMetadataController'
               })
                 .state('admin.namespace.detail.apps.metadata.preference', {
                   url: '/preferences',
                   templateUrl: '/assets/features/admin/templates/preferences.html',
                   controller: 'PreferencesController',
                   resolve: {
-                    source: function () {
+                    rSource: function () {
                       return 'APPLICATION'
                     }
                   }
