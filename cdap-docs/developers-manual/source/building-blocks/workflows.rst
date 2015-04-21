@@ -214,20 +214,56 @@ Taking our first example and modifying it, you could use code such as::
 
 where ``MyPredicate`` is a public class which implements the ``Predicate`` interface as::
 
-  public static class MyPredicate implements Predicate<Map<String, String>> {
+  public static class MyPredicate implements Predicate<WorkflowContext> {
 
     @Override
-    public boolean apply(@Nullable Map<String, String> input) {
+    public boolean apply(@Nullable WorkflowContext input) {
       if (input != null && input.containsKey("BuildProductProfile")) {
-        return true;
+        Map<String, Long> customCounters = input.getToken().getMapReduceCounters().get("MyCustomCounters");
+        if (customCounters.get("BuildProductProfile") > 0) {
+          return true;
+        }
       }
       return false;
     }
   }
   
-In this case, if the input receives the key *BuildProductProfile*, the logic will follow
-the path of *BuildProductProfileMR*; otherwise, the other path will be taken. The diagram for
-this code would be:
+In the ``JoinWithCatalogMR`` MapReduce, it could have in its Mapper class code that 
+governs which condition to follow::
+
+  public static final class JoinWithCatalogMR extends AbstractMapReduce {
+
+    @Override
+    public void configure() {
+      setName("JoinWithCatalogMR");
+      setDescription("MapReduce program to demonstrate a Conditional Workflow");
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      job.setMapperClass(MyVerifier.class);
+      String inputPath = context.getRuntimeArguments().get("inputPath");
+      String outputPath = context.getRuntimeArguments().get("outputPath");
+      FileInputFormat.addInputPath(job, new Path(inputPath));
+      FileOutputFormat.setOutputPath(job, new Path(outputPath));
+    }
+  }
+
+  public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
+    public void map(LongWritable key, Text value, Context context)
+      throws IOException, InterruptedException {
+      if (value.toString() and value.toString().equals("BuildProductProfile")) {
+        context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(1L);
+      } else {
+        context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(0);
+      }
+    }
+  }
+
+In this case, if the predicate finds that the a ``MapReduceCounter`` *BuildProductProfile*
+is greater than zero, the logic will follow the path of *BuildProductProfileMR*;
+otherwise, the other path will be taken. The diagram for this code would be:
 
 .. image:: /_images/conditional-workflow.png
    :width: 8in
