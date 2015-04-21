@@ -23,7 +23,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,10 +51,10 @@ public class StreamConversionTest extends TestBase {
     ApplicationManager appManager = deployApplication(StreamConversionApp.class);
 
     // send some data to the events stream
-    StreamWriter streamWriter = appManager.getStreamWriter("events");
-    streamWriter.send("15");
-    streamWriter.send("16");
-    streamWriter.send("17");
+    StreamManager streamManager = getStreamManager("events");
+    streamManager.send("15");
+    streamManager.send("16");
+    streamManager.send("17");
 
     // record the current time
     final long startTime = System.currentTimeMillis();

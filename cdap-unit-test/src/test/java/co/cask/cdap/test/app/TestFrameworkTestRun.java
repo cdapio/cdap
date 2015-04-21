@@ -36,7 +36,7 @@ import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
@@ -99,7 +99,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     args.put("threshold", "10");
     applicationManager.startFlow("FilterFlow", args);
 
-    StreamWriter input = applicationManager.getStreamWriter("input");
+    StreamManager input = getStreamManager("input");
     input.send("1");
     input.send("11");
 
@@ -217,13 +217,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 240000)
   @Ignore
   // TODO: Investigate why this fails in Bamboo, but not locally
-  public void testMultiInput() throws InterruptedException, IOException, TimeoutException {
+  public void testMultiInput() throws Exception {
     ApplicationManager applicationManager = deployApplication(JoinMultiStreamApp.class);
     applicationManager.startFlow("JoinMultiFlow");
 
-    StreamWriter s1 = applicationManager.getStreamWriter("s1");
-    StreamWriter s2 = applicationManager.getStreamWriter("s2");
-    StreamWriter s3 = applicationManager.getStreamWriter("s3");
+    StreamManager s1 = getStreamManager("s1");
+    StreamManager s2 = getStreamManager("s2");
+    StreamManager s3 = getStreamManager("s3");
 
     s1.send("testing 1");
     s2.send("testing 2");
@@ -542,9 +542,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     applicationManager.startFlow("WordCountFlow");
 
     // Send some inputs to streams
-    StreamWriter streamWriter = applicationManager.getStreamWriter(streamName);
+    StreamManager streamManager = getStreamManager(streamName);
     for (int i = 0; i < 100; i++) {
-      streamWriter.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
+      streamManager.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
     }
 
     // Check the flowlet metrics
