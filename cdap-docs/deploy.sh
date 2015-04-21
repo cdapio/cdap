@@ -67,13 +67,23 @@ function convert_branch_name () {
 }
 
 # create remote directory based on type of build
+#   3 scenarios (assuming remote base web directory=/var/www/html/cdap and VERSION=2.8.1)
+#     OPT_DIR is set via environment variables
+#         => remote directory=/var/www/html/cdap/${VERSION}-${OPT_DIR}
+#     OPT_DIR is not set AND branch=release/* or branch=develop/*
+#         => remote directory=/var/www/html/cdap/2.8.1
+#     OPT_DIR is not set AND branch=anything else (e.g. feature/*, hotfix/*, etc..)
+#         => remote directory=/var/www/html/cdap/${VERSION}-${BRANCH_NAME}
 set_remote_dir () {
   DOC_DIR=${OPT_DIR:-${BRANCH_NAME}}
   convert_branch_name
+  BRANCH=''
   if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* ]]; then
     REMOTE_DIR=''
   else
-    REMOTE_DIR=branches/${DOC_DIR}
+    #REMOTE_DIR=branches/${DOC_DIR}
+    REMOTE_DIR=${VERSION}-${DOC_DIR}
+    BRANCH=yes
   fi
   decho "SUBDIR=${REMOTE_DIR}"
 }
@@ -120,43 +130,85 @@ fi
 
 # create remote directory prior to rsync
 function make_remote_dir () {
-  decho "making sure remote directory ${3} exists on ${2}"
-  decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
-  ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  decho "ssh ${_user}@${_host} \"sudo mkdir -p ${_remote_dir}\""
+  ssh ${_user}@${_host} "sudo mkdir -p ${_remote_dir}" || die "could not create ${_remote_dir} directory on ${_host}"
   decho ""
 }
 
 # rsync zip file to remote directory in directory we just created
 function rsync_zip_file () {
-  decho "rsyncing archive ${4} to ${2}"
-  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" 
-  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  local _zip_file=${4}
+  local _local_dir=${5}
+  decho "rsyncing archive ${_zip_file} to ${_host}"
+  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_zip_file} \"${_user}@${_host}:${_remote_dir}/.\""
+  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_zip_file} "${_user}@${_host}:${_remote_dir}/." || die "could not rsync ${_zip_file} to ${_host}"
   decho ""
 }
 
-# unzip file on remote server 
+# unzip file on remote server
 function unzip_archive () {
-  decho "unzipping ${4} on ${2}"
-  decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
-  ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  local _zip_file=${4}
+  decho "unzipping ${_zip_file} on ${_host}"
+  decho "ssh ${_user}@${_host} \"sudo unzip -o ${_remote_dir}/${_zip_file} -d ${_remote_dir}\""
+  ssh ${_user}@${_host} "sudo unzip -o ${_remote_dir}/${_zip_file} -d ${_remote_dir}" || die "unable to unzip ${_zip_file} in ${_remote_dir} on ${_host}, as ${_user}"
   decho ""
 }
 
 # after unzipping it, we move the zip file to it is unzipped directory
 function move_zip_file () {
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  local _zip_file=${4}
+  local _version=${5}
   decho "moving zip file"
-  decho "ssh ${1}@${2} \"sudo mv ${3}/${4} ${3}/${VERSION}\""
-  ssh ${1}@${2} "sudo mv ${3}/${4} ${3}/${VERSION}" || die "unable to move ${4} to ${VERSION} subdirectory on ${2}"
+  decho "ssh ${_user}@${_host} \"sudo mv ${_remote_dir}/${_zip_file} ${_remote_dir}/${_version}\""
+  ssh ${_user}@${_host} "sudo mv ${_remote_dir}/${_zip_file} ${_remote_dir}/${_version}" || die "unable to move ${_zip_file} to ${_version} subdirectory on ${_host}"
+  decho ""
+}
+
+# clean up remote subdirectory
+function clean_remote_subdir () {
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  local _version=${4}
+  # move content of subdirectory directly into _remote_dir
+  decho "ssh ${_user}@${_host} \"sudo mv ${_remote_dir}/${_version}/* ${_remote_dir}/${_version}/.h* ${_remote_dir}/\""
+  ssh ${_user}@${_host} "sudo mv ${_remote_dir}/${_version}/* ${_remote_dir}/${_version}/.h* ${_remote_dir}/" || die "unable to move subdirectory content on ${_host}"
+  # clean up extraneous directory
+  decho "ssh ${_user}@${_host} \"sudo rm -rf ${_remote_dir}/${_version}\""
+  ssh ${_user}@${_host} "sudo rm -rf ${_remote_dir}/${_version}" || die "unable to remove extra subdirectory ${_remote_dir}/${_version} on ${_host}"
   decho ""
 }
 
 # main deploy function
 function deploy () {
-  decho "deploying to ${2}"
-  make_remote_dir ${1} ${2} ${3}
-  rsync_zip_file ${1} ${2} ${3} ${4} ${5}
-  unzip_archive ${1} ${2} ${3} ${4}
-  move_zip_file ${1} ${2} ${3} ${4}
+  local _user=${1}
+  local _host=${2}
+  local _remote_dir=${3}
+  local _zip_file=${4}
+  local _local_dir=${5}
+  local _version=${6}
+  local _branch=${7}
+  decho "deploying to ${_host}"
+  make_remote_dir ${_user} ${_host} ${_remote_dir}
+  rsync_zip_file ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_local_dir}
+  unzip_archive ${_user} ${_host} ${_remote_dir} ${_zip_file}
+  decho "branch=${_branch}"
+  if [ "${_branch}" == 'yes' ]; then
+    move_zip_file ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_version}
+    clean_remote_subdir ${_user} ${_host} ${_remote_dir} ${_version}
+  fi
 }
 
 ################################################################################
@@ -168,14 +220,14 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
   decho "Deploying to Staging server"
-  deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${ZIP_FILE} ${FILE_PATH}
+  deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
   decho "Deploying to Docs servers"
   for i in ${DOCS_SERVERS}; do
-    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH}
+    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
   done
 fi
 decho "####################### DEPLOYING DONE #######################"
