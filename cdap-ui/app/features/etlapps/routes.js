@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.feature.etlapps')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
-      .state('etlapps', {
-        url: '/etlapps',
+      .state('adapters', {
+        url: '/adapters',
         abstract: true,
         parent: 'apps',
         data: {
@@ -12,13 +12,13 @@ angular.module(PKG.name + '.feature.etlapps')
         template: '<ui-view/>'
       })
 
-        .state('etlapps.list', {
+        .state('adapters.list', {
           url: '',
           templateUrl: '/assets/features/etlapps/templates/list.html',
           controller: 'EtlAppsListController'
         })
 
-        .state('etlapps.create', {
+        .state('adapters.create', {
           url: '/create',
           params: {
             data: null
@@ -27,9 +27,9 @@ angular.module(PKG.name + '.feature.etlapps')
           controller: 'ETLAppsCreateController'
         })
 
-        .state('etlapps.detail', {
-          url: '/:etlappid',
-          template: '<h2> EtlApps detail</h2>'
+        .state('adapters.detail', {
+          url: '/:adapterid',
+          template: '<h2> Adapter detail</h2>'
         })
 
 
