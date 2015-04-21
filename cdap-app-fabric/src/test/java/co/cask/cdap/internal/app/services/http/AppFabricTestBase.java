@@ -472,6 +472,11 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expected, status);
   }
 
+  protected void deleteApp(Id.Application app, int expectedResponseCode) throws Exception {
+    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/apps/%s", app.getNamespaceId(), app.getId()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
+  }
+
   protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
     int trial = 0;
     HttpResponse response = null;

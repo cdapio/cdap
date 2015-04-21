@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
@@ -38,15 +39,17 @@ public class UsageHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testProgramStreamUsage() throws Exception {
-    final Id.Application app = Id.Application.from("somespace", "noapp");
-    final Id.Program program = Id.Program.from(app, ProgramType.FLOW, "noprogram");
-    final Id.Stream stream = Id.Stream.from("somespace", "nostream");
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
+    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
     Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    getUsageRegistry().register(program, stream);
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
 
     Assert.assertEquals(1, getAppStreamUsage(app).size());
     Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
@@ -56,7 +59,13 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, getStreamProgramUsage(stream).size());
     Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
 
-    getUsageRegistry().unregister(app);
+    stopProgram(program);
+    waitState(program, "STOPPED");
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
   }
 
   @Test

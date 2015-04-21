@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasetUtil;
 import co.cask.cdap.data2.registry.UsageDatasets;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
