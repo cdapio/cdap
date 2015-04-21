@@ -227,8 +227,23 @@ angular.module(PKG.name + '.feature.admin')
                 parent: 'admin.namespace.detail',
                 url: '/:appId',
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
-                controller: 'AdminNamespaceAppMetadataController'
-              });
+                controller: 'AdminNamespaceAppMetadataController',
+                resolve: {
+                    source: function () {
+                      return 'APPLICATION'
+                    }
+                  }
+              })
+                .state('admin.namespace.detail.apps.metadata.preference', {
+                  url: '/preferences',
+                  templateUrl: '/assets/features/admin/templates/preferences.html',
+                  controller: 'PreferencesController',
+                  resolve: {
+                    source: function () {
+                      return 'APPLICATION'
+                    }
+                  }
+                });
 
 
   });

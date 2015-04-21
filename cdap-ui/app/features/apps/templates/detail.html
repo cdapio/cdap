@@ -1,9 +1,30 @@
 <div ncy-breadcrumb></div>
-  <h2>
-    <span ng-bind="$state.params.appId | caskCapitalizeFilter"></span>
-  </h2>
-  <div class="type-block">
-    <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" /><small> Type: App </small>
+  <div class="row">
+    <div class="col-sm-6">
+      <h2>
+        <span ng-bind="$state.params.appId | caskCapitalizeFilter"></span>
+      </h2>
+      <div class="type-block">
+        <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" /><small> Type: App </small>
+      </div>
+    </div>
+    <div class="col-sm-6 text-right">
+
+      <div class="btn-group h3" dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+          Action <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li>
+            <a ui-sref="admin.namespace.detail.apps.metadata.preference({ nsadmin: $state.params.namespace, appId: $state.params.appId })">
+              <span class="fa fa-fw fa-cog"></span>
+              Preferences
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
   </div>
   <div class="cdap-subnav-end"></div>
   <my-tabs
