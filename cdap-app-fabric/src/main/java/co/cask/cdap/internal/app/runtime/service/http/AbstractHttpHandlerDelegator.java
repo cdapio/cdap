@@ -42,11 +42,6 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   protected AbstractHttpHandlerDelegator(DelegatorContext<T> context, MetricsCollector metricsCollector) {
     this.context = context;
     this.metricsCollector = metricsCollector;
-    if (context.getServiceContext() != null && context.getServiceContext().getSpecification() != null) {
-      this.metricsCollector =
-        metricsCollector.childCollector(Constants.Metrics.Tag.HANDLER,
-                                        context.getServiceContext().getSpecification().getName());
-    }
   }
 
   @Override
@@ -78,6 +73,11 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   }
 
   protected final DelayedHttpServiceResponder wrapResponder(HttpResponder responder) {
-    return new DelayedHttpServiceResponder(responder, metricsCollector);
+    MetricsCollector collector = this.metricsCollector;
+    if (context.getServiceContext() != null && context.getServiceContext().getSpecification() != null) {
+      collector = metricsCollector.childCollector(Constants.Metrics.Tag.HANDLER,
+                                                  context.getServiceContext().getSpecification().getName());
+    }
+    return new DelayedHttpServiceResponder(responder, collector);
   }
 }
