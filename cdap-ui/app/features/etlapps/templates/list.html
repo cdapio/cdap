@@ -13,12 +13,25 @@
 
 <br/>
 <div class="row" etl-apps-list>
+  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6 text-center"
+        ng-click="$state.go('^.create')"
+        etl-add-app>
+    <h1>
+      <span class="fa fa-plus"></span>
+    </h1>
+  </div>
   <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6" ng-repeat="app in etlapps">
     <div class="well well-md">
         <div>
           <h3 tooltip="{{::app.name}}">
             <i class="fa fa-heartbeat"></i>
             {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
+            <small>
+              <span ng-if="app.isdraft"
+                  class="fa fa-pencil text-primary"
+                  ng-click="$state.go('^.create', {data: app.name})">
+              </span>
+            </small>
           </h3>
           <small> Type: {{::app.template}}  </small>
         </div>

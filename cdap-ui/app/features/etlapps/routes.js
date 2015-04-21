@@ -20,6 +20,9 @@ angular.module(PKG.name + '.feature.etlapps')
 
         .state('etlapps.create', {
           url: '/create',
+          params: {
+            data: null
+          },
           templateUrl: '/assets/features/etlapps/templates/create.html',
           controller: 'ETLAppsCreateController'
         })
