@@ -56,7 +56,7 @@ public final class CubeQuery {
   private final List<String> groupByTags;
   private final Interpolator interpolator;
 
-  // todo : use builder instead of having multiple constructors
+  // todo : CDAP-2199 use builder instead of having multiple constructors
   /**
    * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int,
    *                                    Collection, MeasureType, Map, List, Interpolator)},
@@ -93,7 +93,7 @@ public final class CubeQuery {
    * @param endTs end (exclusive) of the time range to query
    * @param resolution resolution of the aggregation to query in
    * @param limit max number of returned data points
-   * @param measureNames name of the measure to query for
+   * @param measureNames name of the measures to query for, empty collection means "all measures"
    * @param measureType type of the measure to query for (used for aggregating results during query)
    * @param sliceByTagValues tag values to filter by
    * @param groupByTags tags to group by
