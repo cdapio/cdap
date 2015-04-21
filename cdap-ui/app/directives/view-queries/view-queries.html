@@ -15,16 +15,8 @@
       <div ng-show="responses.request.status === 'FINISHED'">
         <br/>
         <div class="row">
-          <div class="col-xs-10">
+          <div class="col-xs-12">
             <p class="well">{{ responses.request.statement }}</p>
-          </div>
-          <div class="col-xs-2 text-right">
-            <a
-              class="btn btn-default"
-              ng-click="download(responses.request)"
-            >
-              <i class="fa fa-download"></i> Download All
-            </a>
           </div>
         </div>
 
@@ -33,6 +25,15 @@
             <div class="col-xs-6">
               <h3>Results</h3>
             </div>
+
+            <div class="col-xs-6 text-right">
+            <a
+              class="btn btn-default download"
+              ng-click="download(responses.request)"
+            >
+              <i class="fa fa-download"></i> Download All
+            </a>
+          </div>
 
           </div>
           <div class="table-responsive">
@@ -47,7 +48,7 @@
                 <tr ng-repeat="results in responses.results">
                   <td ng-repeat="result in results.columns track by $index">
                     <span>{{ result }}</span>
-                    <span ng-if="!result">null</span>
+                    <span ng-if="!result && result !== 0">null</span>
                   </td>
                 </tr>
                 <tr class="text-center" ng-if="responses.results.length === 0">
