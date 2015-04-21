@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -75,8 +76,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
+import co.cask.cdap.test.internal.DefaultStreamManager;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalNamespaceClient;
+import co.cask.cdap.test.internal.LocalStreamWriter;
+import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -218,7 +222,7 @@ public class ConfigurableTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
+      new InMemoryProgramRunnerModule(LocalStreamWriter.class),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -246,6 +250,8 @@ public class ConfigurableTestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
+          install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
+                    .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -494,6 +500,10 @@ public class ConfigurableTestBase {
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+  }
+
+  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
+    return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
 }
 

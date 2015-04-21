@@ -17,47 +17,46 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
-import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A {@link co.cask.cdap.api.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
- * during collection and emit the aggregated values when emit.
+ * {@link MetricsEmitter} that aggregates  values for a metric
+ * during collection and emit the aggregated value when emit.
  */
 final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
-  private final Map<String, String> tags;
   private final String name;
+  // metric value
   private final AtomicLong value;
+  // specifies if the metric type is gauge or counter
   private final AtomicBoolean gaugeUsed;
 
-  public AggregatedMetricsEmitter(Map<String, String> tags, String name) {
+  public AggregatedMetricsEmitter(String name) {
     if (name == null || name.isEmpty()) {
-      LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
-                 "for context " + Joiner.on(",").withKeyValueSeparator(":").join(tags));
+      LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, ");
     }
 
     this.name = name;
     this.value = new AtomicLong();
     this.gaugeUsed = new AtomicBoolean(false);
-    this.tags = tags;
   }
 
   void increment(long value) {
     this.value.addAndGet(value);
   }
 
+
   @Override
-  public MetricValue emit(long timestamp) {
+  public MetricValue emit() {
+    // todo CDAP-2195 - potential race condition , reseting value and type has to be done together
     long value = this.value.getAndSet(0);
     MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
-    return new MetricValue(tags, name, timestamp, value, type);
+    return new MetricValue(name, type, value);
   }
 
   public void gauge(long value) {

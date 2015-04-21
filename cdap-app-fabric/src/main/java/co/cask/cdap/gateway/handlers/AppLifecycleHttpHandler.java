@@ -499,7 +499,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (ApplicationSpecification application : applications) {
       // add or replace application name in the tagMap
       tags.put(Constants.Metrics.Tag.APP, application.getName());
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
       metricStore.delete(deleteQuery);
     }
   }

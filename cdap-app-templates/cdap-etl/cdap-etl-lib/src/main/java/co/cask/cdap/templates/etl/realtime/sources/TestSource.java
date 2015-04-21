@@ -81,7 +81,6 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-
     if (type == null) {
       writeDefaultRecords(writer);
     } else if (STREAM_TYPE.equals(type)) {
@@ -103,7 +102,6 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     Schema.Field dataField = Schema.Field.of("data", Schema.of(Schema.Type.STRING));
     Schema.Field headersField = Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                         Schema.of(Schema.Type.STRING)));
-    Schema.Field tsField = Schema.Field.of("timestamp", Schema.of(Schema.Type.LONG));
     // emit only string
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("StringRecord", dataField));
     recordBuilder.set("data", "Hello");
@@ -119,12 +117,10 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     recordBuilder.set("data", "Hello".getBytes(Charsets.UTF_8));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
     writer.emit(recordBuilder.build());
-    // ByteBuffer + headers + timestamp
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersTsRecord", dataField, headersField,
-                                                             tsField));
+    // ByteBuffer + headers
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersRecord", dataField, headersField));
     recordBuilder.set("data", ByteBuffer.wrap("Hello".getBytes(Charsets.UTF_8)));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
-    recordBuilder.set("timestamp", System.currentTimeMillis());
     writer.emit(recordBuilder.build());
   }
 

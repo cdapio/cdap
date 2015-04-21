@@ -146,8 +146,8 @@ public class StructuredRecordToCubeFactTransformTest {
     transform.transform(record, emitter);
 
     CubeFact transformed = emitter.getEmitted().get(0);
-    // note: our date format doesn't include millis
-    Assert.assertEquals(ts / 1000 * 1000, transformed.getTimestamp());
+    // note: ts is in seconds
+    Assert.assertEquals(ts / 1000, transformed.getTimestamp());
 
     Map<String, String> tags = transformed.getTags();
     Assert.assertEquals(7, tags.size());
@@ -197,10 +197,9 @@ public class StructuredRecordToCubeFactTransformTest {
     long tsEnd = System.currentTimeMillis();
 
     transformed = emitter.getEmitted().get(0);
-    // note: our date format doesn't include millis
     // verify that assigned ts was current ts
-    Assert.assertTrue(tsStart / 1000 * 1000 <= transformed.getTimestamp());
-    Assert.assertTrue(1000 + tsEnd / 1000 * 1000 >= transformed.getTimestamp());
+    Assert.assertTrue(tsStart / 1000 <= transformed.getTimestamp());
+    Assert.assertTrue(1000 + tsEnd / 1000 >= transformed.getTimestamp());
 
     tags = transformed.getTags();
     Assert.assertEquals(6, tags.size());

@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -56,7 +56,7 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
 
       @Override
       public void increment(long size) throws Exception {
-        metricStore.add(new MetricValue(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
+        metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
                                                         Constants.Metrics.Tag.STREAM, streamId.getId()),
                                         "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                         size, MetricType.COUNTER));

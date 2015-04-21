@@ -36,7 +36,7 @@ public final class Properties {
   }
 
   /**
-   * Properties for the StreamBatchSource
+   * Properties for the StreamBatchSource as well as the real-time StreamSink
    */
   public static class Stream {
     public static final String NAME = "name";
@@ -44,6 +44,10 @@ public final class Properties {
     public static final String FORMAT = "format";
     public static final String DELAY = "delay";
     public static final String DURATION = "duration";
+    public static final String DATA_FIELD = "data.field";
+    public static final String DEFAULT_DATA_FIELD = "data";
+    public static final String HEADERS_FIELD = "headers.field";
+    public static final String DEFAULT_HEADERS_FIELD = "headers";
   }
 
   /**

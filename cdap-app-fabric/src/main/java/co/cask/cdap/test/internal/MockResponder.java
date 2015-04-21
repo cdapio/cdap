@@ -25,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
@@ -39,7 +40,6 @@ public final class MockResponder extends AbstractHttpResponder {
   private HttpResponseStatus status = null;
   private ChannelBuffer content = null;
   private static final Gson GSON = new Gson();
-
 
   public HttpResponseStatus getStatus() {
     return status;
@@ -61,12 +61,15 @@ public final class MockResponder extends AbstractHttpResponder {
     return new ChunkResponder() {
       @Override
       public void sendChunk(ByteBuffer chunk) throws IOException {
-        // No-op
+        sendChunk(ChannelBuffers.wrappedBuffer(chunk));
       }
 
       @Override
       public void sendChunk(ChannelBuffer chunk) throws IOException {
-        // No-op
+        if (content == null) {
+          content = ChannelBuffers.dynamicBuffer();
+        }
+        content.writeBytes(chunk);
       }
 
       @Override
