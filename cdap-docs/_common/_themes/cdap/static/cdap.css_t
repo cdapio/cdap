@@ -410,3 +410,47 @@ div.table-block.container table.triple-table.docutils tr:first-of-type th.stub {
   border-bottom: 1px solid #aaa;
 }
 
+/* -- Table styles used on RESTful pages -------------------------------------- */
+
+div.table-block-example.container {
+  border-style: solid;
+  border-width: 1px;
+  margin-left: 0px;
+  margin-top: 20px;
+  margin-bottom: 30px;
+  border-color: #aaa;
+}
+
+div.table-block-example.container table.docutils tr.row-odd {
+  background-color: #E0E0E0;
+}
+
+/* Triple-table: Make even row with white border */
+
+div.table-block-example.container table.triple-table.docutils tr.row-even td {
+  border-bottom: 1px solid white;
+}
+
+div.table-block-example.container table.triple-table.docutils th.stub {
+  border-bottom: 1px solid white;
+}
+
+/* Triple-table: Make odd row with White background */
+
+div.table-block-example.container table.triple-table.docutils tr.row-odd {
+  background-color: white;
+}
+
+div.table-block-example.container table.triple-table.docutils tr.row-odd th.stub {
+  border-bottom: 1px solid #aaa;
+}
+
+/* Triple-table: Make first row light-grey background with bottom border */
+
+div.table-block-example.container table.triple-table.docutils tr:first-of-type {
+  background-color: #F9FAFB;
+}
+
+div.table-block-example.container table.triple-table.docutils tr:first-of-type th.stub {
+  border-bottom: 1px solid #aaa;
+}
