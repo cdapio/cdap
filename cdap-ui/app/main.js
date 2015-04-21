@@ -62,7 +62,8 @@ angular
       'mgcrea.ngStrap.modal',
 
       'ncy-angular-breadcrumb',
-      'angularMoment'
+      'angularMoment',
+      'ui.select'
 
     ]).name,
 

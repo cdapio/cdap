@@ -1,7 +1,7 @@
 @import '../../styles/variables.less';
 
 @font-size: 18px;
-body.theme-cdap.state-etlapps-create {
+body.theme-cdap.state-adapters-create {
 
   .as-sortable-drag {
     &.template {
@@ -134,8 +134,21 @@ body.theme-cdap.state-etlapps-create {
   }
 }
 
-body.theme-cdap.state-etlapps-list {
+body.theme-cdap.state-adapters-list {
+  a {
+    text-decoration: none;
+  }
   [etl-apps-list] {
+    [etl-add-app] {
+      cursor: pointer;
+      .well.well-lg {
+        border: 2px dashed;
+        margin-bottom: 0;
+        h1 {
+          margin-bottom: 13px;
+        }
+      }
+    }
     [class*="col-"] {
       padding-left: 5px;
       padding-right: 5px;
