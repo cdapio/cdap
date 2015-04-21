@@ -127,6 +127,15 @@ fi
 
 ################################################################################
 
+# copy zip file to local_dir's unzipped directory (e.g. cdap-docs/build/3.0.0-SNAPSHOT/)
+function copy_zip_file () {
+  local _zip_file=${1}
+  local _local_dir=${2}
+  local _version=${3}
+  decho "cp ${_local_dir}/${_zip_file} ${_local_dir}/${_version}/"
+  cp ${_local_dir}/${_zip_file} ${_local_dir}/${_version}/
+}
+
 # create remote directory prior to rsync
 function make_remote_dir () {
   local _user=${1}
@@ -137,57 +146,20 @@ function make_remote_dir () {
   decho ""
 }
 
-# rsync zip file to remote directory in directory we just created
-function rsync_zip_file () {
+# rsync local dir to remote dir
+function sync_local_dir_to_remote_dir () {
   local _user=${1}
   local _host=${2}
   local _remote_dir=${3}
   local _zip_file=${4}
   local _local_dir=${5}
-  decho "rsyncing archive ${_zip_file} to ${_host}"
-  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_zip_file} \"${_user}@${_host}:${_remote_dir}/.\""
-  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_zip_file} "${_user}@${_host}:${_remote_dir}/." || die "could not rsync ${_zip_file} to ${_host}"
+  local _version=${6}
+  if [ "${BRANCH}" == '' ]; then
+    _remote_dir=${_remote_dir}/${_version}
+  fi
   decho ""
-}
-
-# unzip file on remote server
-function unzip_archive () {
-  local _user=${1}
-  local _host=${2}
-  local _remote_dir=${3}
-  local _zip_file=${4}
-  decho "unzipping ${_zip_file} on ${_host}"
-  decho "ssh ${_user}@${_host} \"sudo unzip -o ${_remote_dir}/${_zip_file} -d ${_remote_dir}\""
-  ssh ${_user}@${_host} "sudo unzip -o ${_remote_dir}/${_zip_file} -d ${_remote_dir}" || die "unable to unzip ${_zip_file} in ${_remote_dir} on ${_host}, as ${_user}"
-  decho ""
-}
-
-# after unzipping it, we move the zip file to it is unzipped directory
-function move_zip_file () {
-  local _user=${1}
-  local _host=${2}
-  local _remote_dir=${3}
-  local _zip_file=${4}
-  local _version=${5}
-  decho "moving zip file"
-  decho "ssh ${_user}@${_host} \"sudo mv ${_remote_dir}/${_zip_file} ${_remote_dir}/${_version}\""
-  ssh ${_user}@${_host} "sudo mv ${_remote_dir}/${_zip_file} ${_remote_dir}/${_version}" || die "unable to move ${_zip_file} to ${_version} subdirectory on ${_host}"
-  decho ""
-}
-
-# clean up remote subdirectory
-function clean_remote_subdir () {
-  local _user=${1}
-  local _host=${2}
-  local _remote_dir=${3}
-  local _version=${4}
-  # move content of subdirectory directly into _remote_dir
-  decho "ssh ${_user}@${_host} \"sudo mv ${_remote_dir}/${_version}/* ${_remote_dir}/${_version}/.h* ${_remote_dir}/\""
-  ssh ${_user}@${_host} "sudo mv ${_remote_dir}/${_version}/* ${_remote_dir}/${_version}/.h* ${_remote_dir}/" || die "unable to move subdirectory content on ${_host}"
-  # clean up extraneous directory
-  decho "ssh ${_user}@${_host} \"sudo rm -rf ${_remote_dir}/${_version}\""
-  ssh ${_user}@${_host} "sudo rm -rf ${_remote_dir}/${_version}" || die "unable to remove extra subdirectory ${_remote_dir}/${_version} on ${_host}"
-  decho ""
+  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_remote_dir}\"" 
+  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_remote_dir}" || die "could not rsync ${_local_dir} to ${_remote_dir} on ${_host}" 
 }
 
 # main deploy function
@@ -200,14 +172,10 @@ function deploy () {
   local _version=${6}
   local _branch=${7}
   decho "deploying to ${_host}"
+  copy_zip_file ${_zip_file} ${_local_dir} ${_version}
   make_remote_dir ${_user} ${_host} ${_remote_dir}
-  rsync_zip_file ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_local_dir}
-  unzip_archive ${_user} ${_host} ${_remote_dir} ${_zip_file}
+  sync_local_dir_to_remote_dir ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_local_dir} ${_version}
   decho "branch=${_branch}"
-  if [ "${_branch}" == 'yes' ]; then
-    move_zip_file ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_version}
-    clean_remote_subdir ${_user} ${_host} ${_remote_dir} ${_version}
-  fi
 }
 
 ################################################################################
