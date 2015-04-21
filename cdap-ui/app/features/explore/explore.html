@@ -6,22 +6,40 @@
      ng-model="activePanel"
      bs-collapse>
 
-  <div class="explore-tables">
+  <div class="row" explore-table>
 
-    <div class="panel-left">
-      <table class="table table-curved">
-        <thead>
-          <th>Tables</th>
-        </thead>
-        <tbody>
-          <tr ng-repeat="data in dataList" ng-click="selectTable(data)">
-            <td>{{ ::data.name }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="col-xs-3">
+      <!-- <div class="table-container">
+        <table class="table table-curved">
+          <thead>
+            <th>Tables</th>
+          </thead>
+          <tbody>
+            <tr ng-repeat="data in dataList" ng-click="selectTable(data)">
+              <td>
+                <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" / ng-if="data.type === 'stream'">
+                <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" / ng-if="data.type === 'dataset'">
+                {{ ::data.name }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div> -->
+
+      <div class="list-group">
+        <p class="list-group-item list-group-heading">Table</p>
+        <div class="list-group-content">
+          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)">
+            <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" / ng-if="data.type === 'stream'">
+            <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" / ng-if="data.type === 'dataset'">
+            {{ ::data.name }}
+          </a>
+        </div>
+      </div>
+
     </div>
 
-    <div class="panel-right">
+    <div class="col-xs-9">
       <tabset>
         <tab>
           <tab-heading>

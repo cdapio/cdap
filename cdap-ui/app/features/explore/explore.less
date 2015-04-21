@@ -1,51 +1,39 @@
+@import "../../styles/variables.less";
+
 body.state-explore {
 
-  .explore-tables {
-
-    .panel-left {
-      width: 25%;
-      display: inline-block;
-      vertical-align: top;
-      float: left;
+  [explore-table] {
+    [class*="col-"] {
+      padding-right: 0;
       margin-bottom: 15px;
-      max-height: 299px;
-      overflow-y: scroll;
-
-      .table {
-        margin: 0;
-      }
-
-    }
-
-    .panel-right {
-      width: 73%;
-      display: inline-block;
-      vertical-align: top;
-      float: right;
-      margin-bottom: 15px;
-
-      ul.nav.nav-tabs {
-        border-bottom: none;
-      }
 
       .tab-content {
-        max-height: 258px;
-        overflow-y: scroll;
+        max-height: 247px;
+        overflow-y: auto;
+      }
 
-        .well {
-          margin-top: 1px;
-          border-radius: 0;
+      .list-group {
+        .list-group-heading {
+          font-weight: 700;
         }
 
-        .table {
-          margin: 0;
+        .list-group-content {
+          max-height: 247px;
+          overflow-y: auto;
         }
       }
+
+    }
+
+    ul.nav.nav-tabs {
+      border-bottom: none;
+    }
+
+    .table {
+      margin: 0;
     }
   }
 
-  .panel-explore {
-    clear: both;
-  }
+
 
 }
