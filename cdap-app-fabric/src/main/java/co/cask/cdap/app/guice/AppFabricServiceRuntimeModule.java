@@ -63,7 +63,6 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
-import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
@@ -287,8 +286,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                        Names.named(AppFabricServer.HANDLERS_BINDING));
+      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);

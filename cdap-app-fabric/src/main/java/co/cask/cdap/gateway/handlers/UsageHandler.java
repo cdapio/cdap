@@ -239,7 +239,7 @@ public class UsageHandler extends AbstractHttpHandler {
   }
 
   /**
-   *
+   * For passing {@link UsageDataset} to {@link Transactional#of}.
    */
   public static final class UsageDatasetIterable implements Iterable<UsageDataset> {
     private final UsageDataset usageDataset;

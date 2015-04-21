@@ -24,10 +24,10 @@ import co.cask.tephra.TransactionExecutor;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.InputStreamReader;
 import java.util.Set;
 
 /**
@@ -174,13 +174,17 @@ public class UsageHandlerTest extends AppFabricTestBase {
       });
   }
 
+  private UsageHandler getUsageHandler() {
+    return getInjector().getInstance(UsageHandler.class);
+  }
+
   // app/program/adapter -> dataset/stream
 
   private Set<Id.DatasetInstance> getAppDatasetUsage(Id.Application app) throws Exception {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespaceId(), app.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
   }
 
@@ -188,7 +192,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespaceId(), app.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Stream>>() { }.getType());
   }
 
@@ -199,7 +203,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
                     program.getType().getCategoryName(),
                     program.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
   }
 
@@ -210,7 +214,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
                     program.getType().getCategoryName(),
                     program.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Stream>>() { }.getType());
   }
 
@@ -218,7 +222,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/adapters/%s/datasets", adapter.getNamespaceId(), adapter.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
   }
 
@@ -226,7 +230,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/adapters/%s/streams", adapter.getNamespaceId(), adapter.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Stream>>() { }.getType());
   }
 
@@ -236,7 +240,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/streams/%s/programs", stream.getNamespaceId(), stream.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Program>>() { }.getType());
   }
 
@@ -244,7 +248,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/streams/%s/adapters", stream.getNamespaceId(), stream.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Adapter>>() { }.getType());
   }
 
@@ -252,7 +256,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/data/datasets/%s/programs", dataset.getNamespaceId(), dataset.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Program>>() { }.getType());
   }
 
@@ -260,7 +264,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet(
       String.format("/v3/namespaces/%s/data/datasets/%s/adapters", dataset.getNamespaceId(), dataset.getId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return GSON.fromJson(new InputStreamReader(response.getEntity().getContent()),
+    return GSON.fromJson(EntityUtils.toString(response.getEntity()),
                          new TypeToken<Set<Id.Adapter>>() { }.getType());
   }
 

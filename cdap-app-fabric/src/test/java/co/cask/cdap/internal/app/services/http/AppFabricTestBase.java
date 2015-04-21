@@ -29,7 +29,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -180,8 +179,6 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
-    usageHandler = injector.getInstance(UsageHandler.class);
-
     createNamespaces();
   }
 
@@ -195,10 +192,6 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
-  }
-
-  protected UsageHandler getUsageHandler() throws IOException, DatasetManagementException {
-    return usageHandler;
   }
 
   protected static Injector getInjector() {

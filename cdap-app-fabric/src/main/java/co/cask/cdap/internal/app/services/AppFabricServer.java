@@ -87,7 +87,7 @@ public final class AppFabricServer extends AbstractIdleService {
   public AppFabricServer(CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService, NotificationService notificationService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named(HANDLERS_BINDING) Set<HttpHandler> handlers,
+                         @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
                          StreamCoordinatorClient streamCoordinatorClient,
