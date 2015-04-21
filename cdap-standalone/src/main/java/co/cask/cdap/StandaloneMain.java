@@ -253,8 +253,8 @@ public class StandaloneMain {
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --web-app-path  Path to Webapp");
-    out.println("  --help          To print this message");
+    out.println("  --ui-path  Path to UI");
+    out.println("  --help     To print this message");
     out.println("");
 
     if (error) {

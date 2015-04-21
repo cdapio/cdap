@@ -29,7 +29,7 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-WEB_APP_PATH=${WEB_APP_PATH:-"web-app/alpha/server.js"}
+UI_PATH=${UI_PATH:-"ui/alpha/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`
@@ -152,7 +152,7 @@ check_before_start() {
       exit 0
     fi
   else
-    nodejs_pid=`ps | grep web-app/ | grep -v grep | awk ' { print $1 } '`
+    nodejs_pid=`ps | grep ui/ | grep -v grep | awk ' { print $1 } '`
     if [[ "x{nodejs_pid}" != "x" ]]; then
       kill -9 $nodejs_pid 2>/dev/null >/dev/null
     fi
@@ -222,7 +222,7 @@ start() {
     fi
 
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
-        --web-app-path ${WEB_APP_PATH} \
+        --ui-path ${UI_PATH} \
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid
 
