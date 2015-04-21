@@ -50,7 +50,7 @@
                     <span ng-if="!result">null</span>
                   </td>
                 </tr>
-                <tr class="text-center">
+                <tr class="text-center" ng-if="responses.results.length === 0">
                   <td colspan="{{ responses.schema.length }}">No Result</td>
                 </tr>
               </tbody>
