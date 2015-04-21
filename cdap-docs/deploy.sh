@@ -17,7 +17,12 @@
 ################################################################################
 # Deployment script for docs
 # Deploys zip files created by build scripts
-#
+# 
+# BUILD_WORKING_DIR must be passed as an environment variable (can be set in Bamboo)
+#   It will typically look like this:
+#   Release: /var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1
+#   Develop: /var/bamboo/xml-data/build-dir/CDAP-DDBD-JOB1
+# 
 # OPT_DIR is an optional directory to use instead of derived branch name. E.g.:
 #   if branch name=feature/docs-build-testing, and we want to use testdir
 #   we would set OPT_DIR=testdir and add it to the bamboo tasks' variables
@@ -27,12 +32,6 @@
 #   is release/* or develop/* in which case, it will just be put into
 #   the version directory, e.g. /var/www/html/cdap/2.8.1
 #
-# function variables reference: (these were kept consistent throughout)
-# $1 user name (typically bamboo)
-# $2 remote server (docs or docs staging servers)
-# $3 remote web directory
-# $4 zip archive file
-# $5 local path to zip archive file
 ################################################################################
 
 # output trimmer
@@ -92,12 +91,12 @@ set_remote_dir () {
 DEBUG=${DEBUG:-no}
 DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
-BUILD_WORKING_DIR=${BUILD_WORKING_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-JOB1}
 DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
 DOCS_SERVER2=${DOCS_SERVER2:-docs2.cask.co}
 STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
 REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/${PROJECT}}
 REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/${PROJECT}}
+# OPT_DIR (optional)
 
 decho "OPT_DIR=${OPT_DIR}"
 decho "BRANCH_NAME=${BRANCH_NAME}"
