@@ -135,16 +135,18 @@ body.theme-cdap.state-etlapps-create {
 }
 
 body.theme-cdap.state-etlapps-list {
+  a {
+    text-decoration: none;
+  }
   [etl-apps-list] {
     [etl-add-app] {
       cursor: pointer;
-      height: 155px;
-      border: 2px dashed;
-      margin-top: 0;
-      h1 {
-        margin-top: 5px;
-        margin-bottom: 5px;
-        transform: translate(0%, 150%);
+      .well.well-lg {
+        border: 2px dashed;
+        margin-bottom: 0;
+        h1 {
+          margin-bottom: 13px;
+        }
       }
     }
     [class*="col-"] {
