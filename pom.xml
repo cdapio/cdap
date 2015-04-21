@@ -1456,6 +1456,8 @@
     <profile>
       <id>templates</id>
       <modules>
+        <module>cdap-api</module>
+        <module>cdap-unit-test</module>
         <module>cdap-app-templates</module>
       </modules>
     </profile>
