@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .factory('ETLAppsApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout) {
+  .factory('ETLAppsApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings) {
     var filterFilter = $filter('filter');
     function ETLAppsApiFactory(scope) {
       this.scope = scope;
@@ -92,13 +92,17 @@ angular.module(PKG.name + '.feature.etlapps')
         body: data
       })
         .then(function(res) {
-          $timeout(function() {
-            $state.go('etlapps.list', $state.params, {reload: true});
-          });
-          $alert({
-            type: 'success',
-            content: 'ETL Template: ' + this.scope.metadata.name + ' created successfully!'
-          });
+          delete this.scope.etlDrafts[this.scope.metadata.name];
+          mySettings.set('etldrafts', this.scope.etlDrafts)
+            .then(function() {
+              $timeout(function() {
+                $state.go('etlapps.list', $state.params, {reload: true});
+              });
+              $alert({
+                type: 'success',
+                content: 'ETL Template created successfully!'
+              });
+            })
         }.bind(this));
     }
     return ETLAppsApiFactory;
