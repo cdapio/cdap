@@ -33,10 +33,12 @@ import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -50,11 +52,17 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.net.ssl.SSLHandshakeException;
 
 /**
@@ -64,6 +72,8 @@ public class CLIMain {
 
   private static final boolean DEFAULT_VERIFY_SSL = true;
   private static final boolean DEFAULT_AUTOCONNECT = true;
+  private static final String DEFAULT_SCRIPT_FILE = null;
+  private static final boolean DEFAULT_SCRIPT_FILE_FIRST = false;
 
   @VisibleForTesting
   public static final Option HELP_OPTION = new Option(
@@ -90,6 +100,24 @@ public class CLIMain {
   @VisibleForTesting
   public static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
+
+  @VisibleForTesting
+  public static final Option SCRIPT_FILE_OPTION = new Option(
+    "f", "scriptfile", true, 
+    "Name of script file to read and execute.  Blank lines, " + 
+    "and comments starting with '#' are ignored.  By default the " + 
+    "cdap-cli shell terminates when the script finishes.  " + 
+    "A 'break' command causes the script to terminate early and leaves " +
+    "the user at the cdap-cli command prompt.  Commands " + 
+    "added after the script file specification on the command line " + 
+    "are run after the script completes, unless a 'break' " + 
+    "command is encountered, then they are skipped. ");
+
+  @VisibleForTesting
+  public static final Option SCRIPT_FILE_FIRST_OPTION = new Option(
+    "ff", "scriptfilefirst", false, "If \"true\", run script file before " +
+    "any command line commands are run." +
+    " Defaults to \"" + DEFAULT_SCRIPT_FILE_FIRST + "\".");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -232,6 +260,8 @@ public class CLIMain {
 
       LaunchOptions launchOptions = LaunchOptions.builder()
         .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
+        .setScriptFile(command.getOptionValue(SCRIPT_FILE_OPTION.getOpt(), DEFAULT_SCRIPT_FILE))
+        .setScriptFileFirst(command.hasOption(SCRIPT_FILE_FIRST_OPTION.getOpt()))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
@@ -248,10 +278,74 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
-        if (commandArgs.length == 0) {
+        ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
+        URI baseURI = connectionConfig.getURI();
+        URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
+        String cliPrompt = "\ncdap (" + uri + ")> ";
+
+        // Execute commands entered on cdap-cli command line
+        boolean runScriptFileFirst = launchOptions.getScriptFileFirst();
+        if (commandArgs.length > 0 && !runScriptFileFirst) {
+          ArrayList<String> cmds = parseCmdStr(Joiner.on(" ").join(commandArgs));
+          for (String cmd : cmds) {
+            output.println(cliPrompt + cmd);
+            cli.execute(cmd, output);
+          }
+        }
+
+        boolean ranScript = false;
+        boolean brokeFromScript = false;
+        if (launchOptions.getScriptFile() != null) {
+
+          ranScript = true;
+
+          BufferedReader br = null;
+          try {
+            String line;
+            
+            br = Files.newReader(new File(launchOptions.getScriptFile()), Charsets.UTF_8);
+            while ((line = br.readLine()) != null) {
+              ArrayList<String> cmds = parseCmdStr(line);
+              for (String cmd : cmds) {
+                if (cmd.equals("break")) {
+                  brokeFromScript = true;
+                  break;
+                }
+                if (brokeFromScript) {
+                  break; // Break from script processing and drop into interactive mode
+                }
+                output.println(cliPrompt + cmd);
+                cli.execute(cmd, output);
+              }
+            }
+            output.println("\n");
+          } catch (IOException e) {
+            output.println("Couldn't read from script '" + 
+                           launchOptions.getScriptFile() + "'\n" + e.getMessage());
+          } finally {
+            try {
+              if (br != null) {
+                br.close();
+              }
+            } catch (IOException e) {
+              output.println("Couldn't close script '" + 
+                             launchOptions.getScriptFile() + "'\n" + e.getMessage());
+            }
+          }
+        }
+
+        // Execute commands entered on cdap-cli command line
+        if (commandArgs.length > 0 && runScriptFileFirst) {
+          ArrayList<String> cmds = parseCmdStr(Joiner.on(" ").join(commandArgs));
+          for (String cmd : cmds) {
+            output.println(cliPrompt + cmd);
+            cli.execute(cmd, output);
+          }
+        }
+
+        // Enter interactive cdap-cli shell
+        if ((commandArgs.length == 0 && !ranScript) || brokeFromScript) {
           cli.startInteractiveMode(output);
-        } else {
-          cli.execute(Joiner.on(" ").join(commandArgs), output);
         }
       } catch (Exception e) {
         e.printStackTrace(output);
@@ -260,6 +354,89 @@ public class CLIMain {
       output.println(e.getMessage());
       usage();
     }
+  }
+
+  private static ArrayList<String> parseCmdStr(String str) {
+    ArrayList<String> cmds = new ArrayList<String>();
+    boolean isEscaped = false;
+    boolean inSingleQuote = false;
+    boolean inDoubleQuote = false;
+    boolean isMulti = false;
+    for (int i = 0; i < str.length(); ++i) {
+      if (str.charAt(i) == '"' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == '\'' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == '\'' && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+        continue;
+      }
+      if (inSingleQuote) {
+        continue;
+      }
+      if (str.charAt(i) == '"' && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
+        continue;
+      }
+      if (inDoubleQuote) {
+        continue;
+      }
+      if (str.charAt(i) == '\\') {
+        isEscaped = !isEscaped;
+        continue;
+      }
+      if (str.charAt(i) == '#' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+      }
+      if (str.charAt(i) == '#' && !isEscaped && !inSingleQuote && !inDoubleQuote) {
+        str = str.substring(0, i);
+        isEscaped = false;
+        break;
+      }
+      if (str.charAt(i) == ';' && isEscaped) {
+        str = str.substring(0, i - 1) + str.substring(i);
+        i -= 1;
+        continue;
+      }
+      if (str.charAt(i) == ';' && !isEscaped && !inSingleQuote && !inDoubleQuote) {
+        String str1 = str.substring(0, i).trim();
+        String str2;
+        if (str.length() > i + 1) {
+          str2 = str.substring(i + 1).trim();
+        } else {
+          str2 = "";
+        }
+        if (!"".equals(str1)) {
+          cmds.add(str1);
+        }
+        if (!"".equals(str2)) {
+          ArrayList<String> subCmds = parseCmdStr(str2);
+          for (String subStr : subCmds) {
+            String str3 = subStr.trim();
+            if (!"".equals(str3)) {
+              cmds.add(str3);
+            }
+          }
+        }
+        isMulti = true;
+        break;
+      }
+      isEscaped = false;
+    }
+    if (!isMulti) {
+      String str4 = str.trim();
+      if (!"".equals(str4)) {
+        cmds.add(str4);
+      }
+    }
+    return cmds;
   }
 
   private static boolean parseBooleanOption(CommandLine command, Option option, boolean defaultValue) {
@@ -275,6 +452,8 @@ public class CLIMain {
     addOptionalOption(options, VERIFY_SSL_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
+    addOptionalOption(options, SCRIPT_FILE_OPTION);
+    addOptionalOption(options, SCRIPT_FILE_FIRST_OPTION);
     return options;
   }
 
@@ -292,7 +471,9 @@ public class CLIMain {
       "[--debug] " +
       "[--help] " +
       "[--verify-ssl <true|false>] " +
-      "[--uri <arg>]";
+      "[--uri <arg>]" +
+      "[--scriptfile <arg>]" +
+      "[--scriptfilefirst]";
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
