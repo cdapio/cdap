@@ -196,8 +196,7 @@ angular.module(PKG.name + '.feature.etlapps')
       });
     };
 
-    $scope.deleteTrasformProperty = function(transform) {
-      var filterFilter = $filter('filter');
+    $scope.deleteTransformProperty = function(transform) {
       var index = $scope.transforms.indexOf(transform);
       $scope.transforms.splice(index, 1);
       if (!$scope.transforms.length) {
