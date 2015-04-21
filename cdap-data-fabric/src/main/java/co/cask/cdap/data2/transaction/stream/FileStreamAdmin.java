@@ -26,6 +26,9 @@ import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageDataset;
+import co.cask.cdap.data2.registry.UsageDatasets;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -35,6 +38,8 @@ import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -75,6 +80,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
+  private final Supplier<UsageDataset> usageDataset;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -82,13 +88,24 @@ public class FileStreamAdmin implements StreamAdmin {
                          CConfiguration cConf,
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
-                         NotificationFeedManager notificationFeedManager) {
+                         NotificationFeedManager notificationFeedManager,
+                         final DatasetFramework datasetFramework) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
+    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
+      @Override
+      public UsageDataset get() {
+        try {
+          return UsageDatasets.get(datasetFramework);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   @SuppressWarnings("unused")
@@ -336,6 +353,11 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public void drop(Id.Stream streamId) throws Exception {
     doDrop(streamId, getStreamLocation(streamId));
+  }
+
+  @Override
+  public void register(Id.Stream streamId, Id.Program programId) {
+    usageDataset.get().register(programId, streamId);
   }
 
   /**

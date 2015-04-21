@@ -24,34 +24,31 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 
 /**
  * Utility to create {@link UsageDataset}.
  */
-public final class UsageDatasets {
+public class UsageDatasetUtil {
   private static final Id.DatasetInstance USAGE_INSTANCE_ID =
     Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, "usage.registry");
 
-  private UsageDatasets() {
+  private final DatasetFramework framework;
+
+  public UsageDatasetUtil(DatasetFramework framework) {
+    this.framework = framework;
   }
 
-  public static UsageDataset get(DatasetFramework framework) throws IOException, DatasetManagementException {
-    return get(framework, USAGE_INSTANCE_ID);
-  }
-
-  @VisibleForTesting
-  static UsageDataset get(DatasetFramework framework, Id.DatasetInstance id)
-    throws IOException, DatasetManagementException {
+  public UsageDataset getUsageDataset() throws IOException, DatasetManagementException {
     // Use ConflictDetection.NONE as we only need a flag whether a program uses a dataset/stream.
     // Having conflict detection will lead to failures when programs start, and all try to register at the same time.
     DatasetProperties properties = DatasetProperties.builder()
       .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.NONE.name())
       .build();
 
-    Table table = DatasetsUtil.getOrCreateDataset(framework, id, Table.class.getName(), properties, null, null);
-    return new UsageDataset(table);
+    return (UsageDataset) DatasetsUtil.getOrCreateDataset(framework, USAGE_INSTANCE_ID,
+                                                            UsageDataset.class.getName(),
+                                                            properties, null, null);
   }
 }

@@ -22,13 +22,20 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageDataset;
+import co.cask.cdap.data2.registry.UsageDatasets;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -52,12 +59,32 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private final String namespaceId;
   private final EndpointStrategy endpointStrategy;
+  /**
+   * The program that is using this {@link StreamWriter}.
+   */
+  private final Id.Program program;
+  private final Supplier<UsageDataset> usageDataset;
+  private final Map<Id.Stream, Boolean> isStreamRegistered;
 
   @Inject
   public DefaultStreamWriter(@Assisted("namespaceId") String namespaceId,
+                             @Assisted("programId") Id.Program program,
+                             final DatasetFramework datasetFramework,
                              DiscoveryServiceClient discoveryServiceClient) {
     this.namespaceId = namespaceId;
+    this.program = program;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
+    this.isStreamRegistered = Maps.newHashMap();
+    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
+      @Override
+      public UsageDataset get() {
+        try {
+          return UsageDatasets.get(datasetFramework);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -80,6 +107,11 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
+    if (!isStreamRegistered.containsKey(stream)) {
+      usageDataset.get().register(program, stream);
+      isStreamRegistered.put(stream, true);
+    }
+
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
