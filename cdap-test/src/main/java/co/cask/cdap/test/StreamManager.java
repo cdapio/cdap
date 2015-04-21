@@ -20,12 +20,12 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 
 /**
- * This interface allows you to interact with streams.
- * Currently, it only exposes methods to read from a stream.
- * Eventually, {@link StreamWriter} should be deprecated and all its functionality moved here
+ * This interface helps to interact with streams.
  */
 @Beta
 public interface StreamManager {
@@ -36,6 +36,74 @@ public interface StreamManager {
    * @throws java.io.IOException If there is an error creating the stream.
    */
   void createStream() throws IOException;
+
+  /**
+   * Sends a UTF-8 encoded string to the stream.
+   * @param content Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(String content) throws IOException;
+
+  /**
+   * Sends a byte array to the stream. Same as calling {@link #send(byte[], int, int) send(content, 0, content.length)}.
+   * @param content Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(byte[] content) throws IOException;
+
+  /**
+   * Sends a byte array to the stream.
+   * @param content Data to be sent.
+   * @param off Offset in the array to start with
+   * @param len Number of bytes to sent starting from {@code off}.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(byte[] content, int off, int len) throws IOException;
+
+  /**
+   * Sends the content of a {@link java.nio.ByteBuffer} to the stream.
+   * @param buffer Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(ByteBuffer buffer) throws IOException;
+
+  /**
+   * Sends a UTF-8 encoded string to the stream.
+   * @param headers Key-value pairs to be sent as
+   *                headers of {@link co.cask.cdap.api.flow.flowlet.StreamEvent StreamEvent}.
+   * @param content Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(Map<String, String> headers, String content) throws IOException;
+
+  /**
+   * Sends a byte array to the stream. Same as calling {@link #send(byte[], int, int) send(content, 0, content.length)}.
+   * @param headers Key-value pairs to be sent as
+   *                headers of {@link co.cask.cdap.api.flow.flowlet.StreamEvent StreamEvent}.
+   * @param content Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(Map<String, String> headers, byte[] content) throws IOException;
+
+  /**
+   * Sends a byte array to the stream.
+   * @param headers Key-value pairs to be sent as
+   *                headers of {@link co.cask.cdap.api.flow.flowlet.StreamEvent StreamEvent}.
+   * @param content Data to be sent.
+   * @param off Offset in the array to start with
+   * @param len Number of bytes to sent starting from {@code off}.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(Map<String, String> headers, byte[] content, int off, int len) throws IOException;
+
+  /**
+   * Sends the content of a {@link java.nio.ByteBuffer} to the stream.
+   * @param headers Key-value pairs to be sent as
+   *                headers of {@link co.cask.cdap.api.flow.flowlet.StreamEvent StreamEvent}.
+   * @param buffer Data to be sent.
+   * @throws java.io.IOException If there is error writing to the stream.
+   */
+  void send(Map<String, String> headers, ByteBuffer buffer) throws IOException;
 
   /**
    * Get events from the specified stream in the specified interval

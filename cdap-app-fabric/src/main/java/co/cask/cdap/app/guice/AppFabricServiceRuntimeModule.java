@@ -43,6 +43,7 @@ import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
+import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
@@ -62,6 +63,7 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
@@ -285,13 +287,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                        Names.named("appfabric.http.handler"));
+      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
+      handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);

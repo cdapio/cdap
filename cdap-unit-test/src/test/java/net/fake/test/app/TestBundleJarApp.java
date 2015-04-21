@@ -22,7 +22,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -36,11 +36,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests bundle jar feature, in which the application jar contains
@@ -50,13 +48,13 @@ import java.util.concurrent.TimeoutException;
 public class TestBundleJarApp extends TestBase {
 
   @Test
-  public void testBundleJar() throws IOException, URISyntaxException, TimeoutException, InterruptedException {
+  public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
     FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
-    StreamWriter streamWriter = applicationManager.getStreamWriter("simpleInputStream");
+    StreamManager streamManager = getStreamManager("simpleInputStream");
     for (int i = 0; i < 5; i++) {
-      streamWriter.send("test" + i + ":" + i);
+      streamManager.send("test" + i + ":" + i);
     }
 
     // Check the flowlet metrics
