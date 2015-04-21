@@ -308,7 +308,7 @@ public class MetricQueryParserTest {
     Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
+      URI.create("/system/apps/app1/services/serve1/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
@@ -317,7 +317,7 @@ public class MetricQueryParserTest {
     Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
+      URI.create("/system/apps/app1/services/serve1/runs/runid123/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
