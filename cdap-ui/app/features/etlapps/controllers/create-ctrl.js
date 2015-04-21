@@ -196,6 +196,19 @@ angular.module(PKG.name + '.feature.etlapps')
       });
     };
 
+    $scope.deleteTrasformProperty = function(transform) {
+      var filterFilter = $filter('filter');
+      var index = $scope.transforms.indexOf(transform);
+      $scope.transforms.splice(index, 1);
+      if (!$scope.transforms.length) {
+        $scope.transforms.push({
+          name: 'Add a Transforms',
+          placeHolderTransform: true,
+          properties: {}
+        });
+      }
+    };
+
     $scope.doSave = function() {
       var transforms = [],
           i;
@@ -249,6 +262,10 @@ angular.module(PKG.name + '.feature.etlapps')
 
     $scope.saveAsDraft = function() {
       if (!$scope.metadata.name.length) {
+        $alert({
+          type: info,
+          content: 'Please provide a name for the Adapter to be saved as draft'
+        });
         return;
       }
       $scope.etlDrafts[$scope.metadata.name] = {

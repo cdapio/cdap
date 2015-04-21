@@ -27,12 +27,15 @@ body.theme-cdap.state-adapters-create {
       margin-top: 0;
       font-weight: bold;
     }
-    .fa-pencil {
+    .fa-pencil,.fa-times {
       font-size: 12px;
       vertical-align: middle;
       &:hover {
         cursor: pointer;
       }
+    }
+    .fa-times {
+      font-size: 15px;
     }
     .wrapper {
       border-radius: 4px;
@@ -67,6 +70,10 @@ body.theme-cdap.state-adapters-create {
       }
       .template {
         &.transforms {
+          .fa-times {
+            position: relative;
+            top: -5px;
+          }
           border: 0;
           padding: 0;
           .default {
