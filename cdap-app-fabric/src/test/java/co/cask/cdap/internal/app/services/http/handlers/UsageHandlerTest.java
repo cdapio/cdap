@@ -16,11 +16,10 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.gateway.handlers.UsageHandler;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.tephra.TransactionExecutor;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
@@ -47,14 +46,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
     Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().register(program, stream);
-          return null;
-        }
-      });
+    getUsageRegistry().register(program, stream);
 
     Assert.assertEquals(1, getAppStreamUsage(app).size());
     Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
@@ -64,14 +56,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, getStreamProgramUsage(stream).size());
     Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().unregister(app);
-          return null;
-        }
-      });
+    getUsageRegistry().unregister(app);
   }
 
   @Test
@@ -84,14 +69,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getProgramDatasetUsage(program).size());
     Assert.assertEquals(0, getDatasetAdapterUsage(dataset).size());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().register(program, dataset);
-          return null;
-        }
-      });
+    getUsageRegistry().register(program, dataset);
 
     Assert.assertEquals(1, getAppDatasetUsage(app).size());
     Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
@@ -100,14 +78,7 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
     Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().unregister(app);
-          return null;
-        }
-      });
+    getUsageRegistry().unregister(app);
   }
 
   @Test
@@ -118,28 +89,14 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getAdapterStreamUsage(adapter).size());
     Assert.assertEquals(0, getStreamAdapterUsage(stream).size());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().register(adapter, stream);
-          return null;
-        }
-      });
+    getUsageRegistry().register(adapter, stream);
 
     Assert.assertEquals(1, getAdapterStreamUsage(adapter).size());
     Assert.assertEquals(stream, getAdapterStreamUsage(adapter).iterator().next());
     Assert.assertEquals(1, getStreamAdapterUsage(stream).size());
     Assert.assertEquals(adapter, getStreamAdapterUsage(stream).iterator().next());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().unregister(adapter);
-          return null;
-        }
-      });
+    getUsageRegistry().unregister(adapter);
   }
 
   @Test
@@ -150,32 +107,18 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getAdapterDatasetUsage(adapter).size());
     Assert.assertEquals(0, getDatasetAdapterUsage(dataset).size());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().register(adapter, dataset);
-          return null;
-        }
-      });
+    getUsageRegistry().register(adapter, dataset);
 
     Assert.assertEquals(1, getAdapterDatasetUsage(adapter).size());
     Assert.assertEquals(dataset, getAdapterDatasetUsage(adapter).iterator().next());
     Assert.assertEquals(1, getDatasetAdapterUsage(dataset).size());
     Assert.assertEquals(adapter, getDatasetAdapterUsage(dataset).iterator().next());
 
-    getUsageHandler().executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageHandler.UsageDatasetIterable, Void>() {
-        @Override
-        public Void apply(UsageHandler.UsageDatasetIterable input) throws Exception {
-          input.getUsageDataset().unregister(adapter);
-          return null;
-        }
-      });
+    getUsageRegistry().unregister(adapter);
   }
 
-  private UsageHandler getUsageHandler() {
-    return getInjector().getInstance(UsageHandler.class);
+  private UsageRegistry getUsageRegistry() {
+    return getInjector().getInstance(UsageRegistry.class);
   }
 
   // app/program/adapter -> dataset/stream

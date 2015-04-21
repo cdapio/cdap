@@ -17,27 +17,15 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasets;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterators;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Set;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -49,22 +37,11 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class UsageHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(UsageHandler.class);
-  private final Transactional<UsageDatasetIterable, UsageDataset> txnl;
+  private final UsageRegistry registry;
 
   @Inject
-  public UsageHandler(final DatasetFramework datasetFramework, TransactionExecutorFactory txExecutorFactory) {
-    txnl = Transactional.of(txExecutorFactory, new Supplier<UsageDatasetIterable>() {
-      @Override
-      public UsageDatasetIterable get() {
-        try {
-          return new UsageDatasetIterable(UsageDatasets.get(datasetFramework));
-        } catch (Exception e) {
-          LOG.error("Failed to access usage table", e);
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+  public UsageHandler(UsageRegistry registry) {
+    this.registry = registry;
   }
 
   @GET
@@ -73,13 +50,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId) {
     final Id.Application id = Id.Application.from(namespaceId, appId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getDatasets(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -89,13 +60,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId) {
     final Id.Application id = Id.Application.from(namespaceId, appId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getStreams(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -108,13 +73,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                      @PathParam("program-id") String programId) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getDatasets(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -127,13 +86,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                     @PathParam("program-id") String programId) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getStreams(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -143,13 +96,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("adapter-id") String adapterId) {
     final Id.Adapter id = Id.Adapter.from(namespaceId, adapterId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getDatasets(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -159,13 +106,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("adapter-id") String adapterId) {
     final Id.Adapter id = Id.Adapter.from(namespaceId, adapterId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getStreams(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -175,13 +116,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("stream-id") String streamId) {
     final Id.Stream id = Id.Stream.from(namespaceId, streamId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getPrograms(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -191,13 +126,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("stream-id") String streamId) {
     final Id.Stream id = Id.Stream.from(namespaceId, streamId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-      @Override
-      public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getAdapters(id);
-      }
-    });
+    Set<? extends Id> ids = registry.getAdapters(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -207,13 +136,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("dataset-id") String datasetId) {
     final Id.DatasetInstance id = Id.DatasetInstance.from(namespaceId, datasetId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getPrograms(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -223,38 +146,7 @@ public class UsageHandler extends AbstractHttpHandler {
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("dataset-id") String datasetId) {
     final Id.DatasetInstance id = Id.DatasetInstance.from(namespaceId, datasetId);
-    Set<? extends Id> ids = executeUsageDatasetOp(
-      new TransactionExecutor.Function<UsageDatasetIterable, Set<? extends Id>>() {
-        @Override
-        public Set<? extends Id> apply(UsageDatasetIterable input) throws Exception {
-          return input.getUsageDataset().getAdapters(id);
-        }
-      });
+    Set<? extends Id> ids = registry.getAdapters(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
-  }
-
-  @VisibleForTesting
-  public <R> R executeUsageDatasetOp(TransactionExecutor.Function<UsageDatasetIterable, R> func) {
-    return txnl.executeUnchecked(func);
-  }
-
-  /**
-   * For passing {@link UsageDataset} to {@link Transactional#of}.
-   */
-  public static final class UsageDatasetIterable implements Iterable<UsageDataset> {
-    private final UsageDataset usageDataset;
-
-    private UsageDatasetIterable(UsageDataset usageDataset) {
-      this.usageDataset = usageDataset;
-    }
-
-    public UsageDataset getUsageDataset() {
-      return usageDataset;
-    }
-
-    @Override
-    public Iterator<UsageDataset> iterator() {
-      return Iterators.singletonIterator(usageDataset);
-    }
   }
 }
