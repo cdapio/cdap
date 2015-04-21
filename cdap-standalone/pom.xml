@@ -30,7 +30,7 @@
 
   <artifactId>cdap-standalone</artifactId>
   <name>CDAP Standalone</name>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <dependencies>
     <dependency>
@@ -134,6 +134,13 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <modules>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-api</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-lib</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-core</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-batch</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-realtime</module>
+      </modules>
       <properties>
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
@@ -153,9 +160,13 @@
         </dependency>
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-adapters</artifactId>
+          <artifactId>cdap-etl-batch</artifactId>
           <version>${project.version}</version>
-          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-etl-realtime</artifactId>
+          <version>${project.version}</version>
         </dependency>
       </dependencies>
       <build>
@@ -189,7 +200,7 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-adapters</id>
+                <id>copy-plugins</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
@@ -199,9 +210,9 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeArtifactIds>cdap-adapters</includeArtifactIds>
+                  <includeArtifactIds>cdap-etl-batch,cdap-etl-realtime</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
-                  <silent>true</silent>
+                  <silent>false</silent>
                   <includeScope>compile</includeScope>
                 </configuration>
               </execution>

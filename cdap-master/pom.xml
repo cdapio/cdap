@@ -140,12 +140,28 @@
       <properties>
         <package.depends>--depends cdap --depends cdap-hbase-compat-0.94 --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98</package.depends>
       </properties>
+      <modules>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-api</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-lib</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-core</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-batch</module>
+        <module>../cdap-app-templates/cdap-etl/cdap-etl-realtime</module>
+      </modules>
       <dependencies>
         <dependency>
           <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-adapters</artifactId>
+          <artifactId>cdap-etl-batch</artifactId>
           <version>${project.version}</version>
-          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-etl-realtime</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-etl-lib</artifactId>
+          <version>${project.version}</version>
         </dependency>
       </dependencies>
       <build>
@@ -161,17 +177,65 @@
             <version>2.8</version>
             <executions>
               <execution>
-                <id>copy-adapters</id>
+                <id>copy-plugins</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
                 </goals>
                 <configuration>
-                  <outputDirectory>${stage.plugins.dir}</outputDirectory>
+                  <outputDirectory>${project.build.directory}/plugins</outputDirectory>
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeArtifactIds>cdap-adapters</includeArtifactIds>
+                  <includeArtifactIds>cdap-etl-batch,cdap-etl-realtime</includeArtifactIds>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                  <includeScope>compile</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>copy-etl-batch-deps</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/plugins/etl-batch</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <includeArtifactIds>cdap-etl-lib</includeArtifactIds>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                  <includeScope>compile</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>copy-etl-realtime-deps</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/plugins/etl-realtime</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <includeArtifactIds>cdap-etl-lib</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
