@@ -19,8 +19,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasets;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -29,9 +28,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -51,26 +47,16 @@ import javax.annotation.Nullable;
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
-  private final TransactionExecutorFactory txExecutorFactory;
-  private final Supplier<UsageDataset> usageDataset;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public HBaseStreamAdmin(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory,
                           HBaseTableUtil tableUtil, final DatasetFramework datasetFramework,
-                          TransactionExecutorFactory txExecutorFactory) throws IOException {
+                          TransactionExecutorFactory txExecutorFactory,
+                          UsageRegistry usageRegistry) throws IOException {
     super(hConf, cConf, locationFactory, tableUtil,
           datasetFramework, txExecutorFactory, QueueConstants.QueueType.STREAM);
-    this.txExecutorFactory = txExecutorFactory;
-    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
-      @Override
-      public UsageDataset get() {
-        try {
-          return UsageDatasets.get(datasetFramework);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -158,7 +144,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
 
   @Override
   public void register(Id.Stream streamId, Id.Program programId) {
-    usageDataset.get().register(programId, streamId);
+    usageRegistry.register(programId, streamId);
   }
 
 }

@@ -38,9 +38,40 @@ public class UsageHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
 
   @Test
-  public void testProgramStreamUsage() throws Exception {
+  public void testFlowStreamUsage() throws Exception {
     final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
     final Id.Program program = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
+    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
+
+    Assert.assertEquals(1, getAppStreamUsage(app).size());
+    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+
+    Assert.assertEquals(1, getProgramStreamUsage(program).size());
+    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
+    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
+    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+
+    stopProgram(program);
+    waitState(program, "STOPPED");
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+  }
+
+  @Test
+  public void testWorkerStreamUsage() throws Exception {
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME);
     final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());

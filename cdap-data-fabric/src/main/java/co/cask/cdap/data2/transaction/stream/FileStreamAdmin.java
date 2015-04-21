@@ -26,9 +26,7 @@ import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasets;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -38,8 +36,6 @@ import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -80,7 +76,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
-  private final Supplier<UsageDataset> usageDataset;
+  private final UsageRegistry usageRegistry;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -89,23 +85,14 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
-                         final DatasetFramework datasetFramework) {
+                         UsageRegistry usageRegistry) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
-    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
-      @Override
-      public UsageDataset get() {
-        try {
-          return UsageDatasets.get(datasetFramework);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    this.usageRegistry = usageRegistry;
   }
 
   @SuppressWarnings("unused")
@@ -301,16 +288,12 @@ public class FileStreamAdmin implements StreamAdmin {
         }
 
         Properties properties = (props == null) ? new Properties() : props;
-        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
-                                                                       cConf.get(Constants.Stream.PARTITION_DURATION)));
-        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
-                                                                   cConf.get(Constants.Stream.INDEX_INTERVAL)));
+        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
+        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
         long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
-                                                                cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval, ttl, streamLocation,
-                                               null, threshold);
+        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval, ttl, streamLocation, null, threshold);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true);
@@ -321,8 +304,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
     Location namespaceHomeLocation = Locations.getParent(getStreamBaseLocation(namespaceId));
-    Preconditions.checkArgument(namespaceHomeLocation != null && namespaceHomeLocation.exists(),
-                                "Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
+    Preconditions.checkArgument(namespaceHomeLocation != null && namespaceHomeLocation.exists(), "Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
   }
 
   /**
@@ -357,7 +339,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void register(Id.Stream streamId, Id.Program programId) {
-    usageDataset.get().register(programId, streamId);
+    usageRegistry.register(programId, streamId);
   }
 
   /**

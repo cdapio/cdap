@@ -16,21 +16,15 @@
 
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasets;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -45,22 +39,12 @@ import javax.annotation.Nullable;
 @Singleton
 public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin {
 
-  private final Supplier<UsageDataset> usageDataset;
+  private final UsageRegistry usageRegistry;
 
   @Inject
-  public LevelDBStreamAdmin(CConfiguration conf, LevelDBTableService service,
-                            final DatasetFramework datasetFramework) {
+  public LevelDBStreamAdmin(LevelDBTableService service, UsageRegistry usageRegistry) {
     super(service, QueueConstants.QueueType.STREAM);
-    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
-      @Override
-      public UsageDataset get() {
-        try {
-          return UsageDatasets.get(datasetFramework);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -138,6 +122,6 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
 
   @Override
   public void register(Id.Stream streamId, Id.Program programId) {
-    usageDataset.get().register(programId, streamId);
+    usageRegistry.register(programId, streamId);
   }
 }

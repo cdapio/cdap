@@ -38,9 +38,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.registry.UsageDatasets;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -66,9 +64,6 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
@@ -128,7 +123,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
   private final MetricStore metricStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final Supplier<UsageDataset> usageDataset;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -138,7 +133,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  PreferencesStore preferencesStore, AdapterService adapterService,
                                  NamespaceAdmin namespaceAdmin, MetricStore metricStore,
                                  NamespacedLocationFactory namespacedLocationFactory,
-                                 final DatasetFramework datasetFramework) {
+                                 UsageRegistry usageRegistry) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -152,16 +147,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
     this.metricStore = metricStore;
-    this.usageDataset = Suppliers.memoize(new Supplier<UsageDataset>() {
-      @Override
-      public UsageDataset get() {
-        try {
-          return UsageDatasets.get(datasetFramework);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    this.usageRegistry = usageRegistry;
   }
 
   /**
@@ -479,7 +465,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     store.removeApplication(appId);
 
     try {
-      usageDataset.get().unregister(appId);
+      usageRegistry.unregister(appId);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }

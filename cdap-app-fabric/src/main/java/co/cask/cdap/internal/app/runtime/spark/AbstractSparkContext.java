@@ -201,7 +201,12 @@ abstract class AbstractSparkContext implements SparkContext {
     throws IOException {
 
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
-    basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+
+    try {
+      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+    } catch (Exception e) {
+      LOG.info("Failed to registry usage of {} -> {}", streamId, basicSparkContext.getProgram().getId(), e);
+    }
 
     StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(streamId);
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
