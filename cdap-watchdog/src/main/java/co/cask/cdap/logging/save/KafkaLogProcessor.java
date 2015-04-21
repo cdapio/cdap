@@ -53,5 +53,5 @@ public interface KafkaLogProcessor {
    * @param partition partition number in kafka
    * @return checkpoint offset
    */
- public long getCheckPoint(int partition);
+ public Checkpoint getCheckpoint(int partition);
 }

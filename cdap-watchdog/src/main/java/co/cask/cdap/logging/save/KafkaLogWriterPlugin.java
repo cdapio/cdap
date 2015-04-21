@@ -251,7 +251,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public long getCheckPoint(int partition) {
+  public Checkpoint getCheckpoint(int partition) {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {
