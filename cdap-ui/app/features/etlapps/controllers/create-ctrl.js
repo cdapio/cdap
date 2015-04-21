@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory, $filter) {
+  .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory, mySettings, $filter) {
     var apiFactory = new ETLAppsApiFactory($scope);
 
     $scope.ETLMetadataTabOpen = true;
@@ -18,6 +18,31 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.etlSources = [];
     $scope.etlSinks = [];
     $scope.etlTransforms = [];
+    $scope.selectedEtlDraft = undefined;
+    $scope.etlDraftList = [];
+
+    $scope.onDraftChange = function(item, model) {
+      var filterFilter = $filter('filter'),
+          match = null,
+          swapObj = {};
+      if (!item) {
+        return; //un-necessary.
+      }
+      if ($scope.etlDrafts[item]) {
+        $scope.metadata = $scope.etlDrafts[item].config.metadata;
+        $scope.source = $scope.etlDrafts[item].config.source;
+        $scope.sink = $scope.etlDrafts[item].config.sink;
+        $scope.transforms = $scope.etlDrafts[item].config.transforms;
+      } else {
+        $scope.metadata.name = item;
+        $scope.metadata.type = $scope.metadata.type;
+        $scope.transforms = defaultTransforms;
+        $scope.source = defaultSource;
+        $scope.sink = defaultSink;
+      }
+    };
+
+    // $scope.$watch('selectedEtlDraft', );
 
     // Default ETL Templates
     $scope.etlTypes = [
@@ -38,20 +63,19 @@ angular.module(PKG.name + '.feature.etlapps')
         type: 'etlbatch'
     };
 
-    // Source, Sink and Transform Models
-    $scope.source = {
+    var defaultSource = {
       name: 'Add a Source',
       properties: {},
       placeHolderSource: true
     };
 
-    $scope.sink = {
+    var defaultSink = {
       name: 'Add a Sink',
       placeHolderSink: true,
       properties: {}
     };
 
-    $scope.transforms = [{
+    var defaultTransforms = [{
       name: 'Add a Transforms',
       placeHolderTransform: true,
       properties: {}
@@ -66,7 +90,23 @@ angular.module(PKG.name + '.feature.etlapps')
       placeHolderTransform: true,
       properties: {}
     }];
+
+    // Source, Sink and Transform Models
+    $scope.source = defaultSource;
+    $scope.sink = defaultSink;
+    $scope.transforms = defaultTransforms;
     $scope.activePanel = 0;
+
+    function debounce(fn, ms) {
+      var timeout;
+      return function() {
+        var args = Array.prototype.slice.call(arguments, 0);
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        timeout = setTimeout(fn.apply.bind(fn, $scope, args), ms);
+      };
+    }
 
     $scope.$watch('metadata.type',function(etlType) {
       if (!etlType) return;
@@ -141,6 +181,7 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
 
       });
+
     };
 
     $scope.editTransformProperty = function(transform) {
@@ -203,4 +244,36 @@ angular.module(PKG.name + '.feature.etlapps')
         console.log('dragEnd', drag.source, drag.dest);
       }
     };
+
+    $scope.getDrafts = function() {
+      mySettings.get('etldrafts')
+        .then(function(res) {
+          $scope.etlDrafts = res || {};
+          window.e = $scope.etlDrafts;
+          $scope.etlDraftList = Object.keys($scope.etlDrafts);
+          window.f = $scope.etlDraftList;
+        });
+    };
+    $scope.getDrafts();
+
+    $scope.saveAsDraft = function() {
+      if (!$scope.metadata.name.length) {
+        return;
+      }
+      $scope.etlDrafts[$scope.metadata.name] = {
+        config: {
+          metadata: $scope.metadata,
+          source: $scope.source,
+          transforms: $scope.transforms,
+          sink: $scope.sink
+        }
+      };
+      debounce(function() {
+        console.log("Saveing")
+        mySettings.set('etldrafts', $scope.etlDrafts)
+        .then(function(res) {
+          console.log("Etl Drafts Saved");
+        });
+      }, 5000)();
+    }
   });
