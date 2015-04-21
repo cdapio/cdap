@@ -25,6 +25,7 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
@@ -90,7 +91,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   }
 
   @Override
-  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<Map<String, String>> predicate) {
+  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate.getClass().getName());
   }
 
