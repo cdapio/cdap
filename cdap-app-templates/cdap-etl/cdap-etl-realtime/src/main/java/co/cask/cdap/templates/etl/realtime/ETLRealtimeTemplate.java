@@ -26,6 +26,7 @@ import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.templates.etl.realtime.sinks.NoOpSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
+import co.cask.cdap.templates.etl.realtime.sources.TwitterStreamSource;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
@@ -46,6 +47,7 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
     // Add class from lib here to be made available for use in the ETL Worker.
     // TODO : Remove this when plugins management is available.
     initTable(Lists.<Class>newArrayList(IdentityTransform.class,
+                                        TwitterStreamSource.class,
                                         NoOpSink.class,
                                         TestSource.class,
                                         StructuredRecordToGenericRecordTransform.class,

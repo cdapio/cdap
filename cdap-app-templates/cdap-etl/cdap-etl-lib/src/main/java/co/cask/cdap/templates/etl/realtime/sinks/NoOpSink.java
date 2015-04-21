@@ -19,6 +19,8 @@ package co.cask.cdap.templates.etl.realtime.sinks;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generic NoOp Sink.
@@ -26,6 +28,7 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
  * @param <T> any object
  */
 public class NoOpSink<T> extends RealtimeSink<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(NoOpSink.class);
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -34,6 +37,9 @@ public class NoOpSink<T> extends RealtimeSink<T> {
 
   @Override
   public int write(Iterable<T> objects, DataWriter dataWriter) throws Exception {
+    for (T object : objects) {
+      LOG.error("Received : {}", object);
+    }
     return 0;
   }
 }
