@@ -23,12 +23,10 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
@@ -533,76 +531,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
     result.addAll(appSpec.getStreams().keySet());
     return result;
-  }
-
-  protected final void programListByDataAccess(HttpResponder responder,
-                                               Store store, DatasetFramework dsFramework,
-                                               ProgramType type, Data data, String namespaceId, String name) {
-    try {
-      if (name.isEmpty()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, data.prettyName().toLowerCase() + " name is empty");
-        return;
-      }
-      Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      List<ProgramRecord> programRecords = listProgramsByDataAccess(store, dsFramework, namespace, type, data, name);
-      if (programRecords == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, programRecords);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * @return list of program records, an empty list if no programs were found, or null if the stream or
-   * dataset does not exist
-   */
-  private List<ProgramRecord> listProgramsByDataAccess(Store store, DatasetFramework dsFramework,
-                                                       Id.Namespace namespace, ProgramType type,
-                                                       Data data, String name) throws Exception {
-    // search all apps for programs that use this
-    List<ProgramRecord> result = Lists.newArrayList();
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace);
-    if (appSpecs != null) {
-      for (ApplicationSpecification appSpec : appSpecs) {
-        if (type == ProgramType.FLOW) {
-          for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-            if ((data == Data.DATASET && usesDataSet(flowSpec, name))
-              || (data == Data.STREAM && usesStream(flowSpec, name))) {
-              result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
-            }
-          }
-        } else if (type == ProgramType.MAPREDUCE) {
-          for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-            if (data == Data.DATASET && mrSpec.getDataSets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
-            }
-          }
-        } else if (type == ProgramType.WORKER) {
-          for (WorkerSpecification workerSpec : appSpec.getWorkers().values()) {
-            if (data == Data.DATASET && workerSpec.getDatasets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), workerSpec, ProgramType.WORKER));
-            }
-          }
-        }
-      }
-    }
-    if (!result.isEmpty()) {
-      return result;
-    }
-    // if no programs were found, check whether the data exists, return [] if yes, null if not
-    boolean exists = false;
-    if (data == Data.DATASET) {
-      exists = dsFramework.hasInstance(Id.DatasetInstance.from(namespace, name));
-    } else if (data == Data.STREAM) {
-      exists = store.getStream(new Id.Namespace(Constants.DEFAULT_NAMESPACE), name) != null;
-    }
-    return exists ? result : null;
   }
 
   private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
