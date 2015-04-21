@@ -73,11 +73,13 @@ enclosing context. These are the available Application contexts of CDAP:
 
    * - System Metric
      - Context
+   * - One Run of a Flowlet
+     - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
    * - One Flowlet of a Flow
      - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
    * - All Flowlets of a Flow
      - ``namespace:<namespace> app:<app-id> flow:<flow-id>``
-   * - All Flowlets of all app of an Application
+   * - All Flowlets of all Flows of an Application
      - ``namespace:<namespace> app:<app-id> flow:*``
    * - One Worker
      - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
@@ -87,12 +89,16 @@ enclosing context. These are the available Application contexts of CDAP:
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
    * - All Reducers of a MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:r``
+   * - One Run of a MapReduce
+     - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
    * - One MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id>``
    * - All MapReduce of an Application
      - ``namespace:<namespace> app:<app-id> mapreduce:*``
    * - One Spark Program
      - ``namespace:<namespace> app:<app-id> spark:<spark-id>``
+   * - One Service
+     - ``namespace:<namespace> app:<app-id> service:<service-id>``
    * - One Service
      - ``namespace:<namespace> app:<app-id> service:<service-id>``
    * - All Services of an Application
@@ -493,10 +499,6 @@ formulated:
   
   ``...metric=user.names.bytes?aggregate=true``
   
-instead of the correct
-
-  ``...metric=user.names.bytes&aggregate=true``
-  
 will return the empty result, as the metric name will be interpreted as
 ``"user.names.bytes?aggregate=true"`` instead of ``"user.names.bytes"``.
 
@@ -568,19 +570,31 @@ structure (pretty-printed)::
 
 For example, to retrieve multiple metrics using a ``curl`` call (results reformatted to fit)::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' \
-   -d '{"query1":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.processed"], "timeRange": {"start":"now-5s", "count":"5"}}}'
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' 
+      -d '{"eventsIn":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.in"], 
+           "timeRange": {"start":"now-5s", "count":"5"}}, "eventsOut":{"tags": {"flow":"CountRandom"}, 
+           "metrics": ["system.process.events.out"], "timeRange": {"start":"now-5s", "count":"5"}}}'
 
-  {"query1":{"startTime":1429486246,"endTime":1429486251,
-             "series":[{"metricName":"system.process.events.processed","grouping":{},
-                        "data":[{"time":1429486246,"value":1188},
-                                {"time":1429486247,"value":1115},
-                                {"time":1429486248,"value":1107},
-                                {"time":1429486249,"value":1030},
-                                {"time":1429486250,"value":1079}]
-                        }]
-             }
-   }
+  {"eventsIn":{"startTime":1429593961,"endTime":1429593966,
+               "series":[{"metricName":"system.process.events.in","grouping":{},
+                          "data":[{"time":1429593961,"value":2828},
+                                  {"time":1429593962,"value":3218},
+                                  {"time":1429593963,"value":3419},
+                                  {"time":1429593964,"value":3593},
+                                  {"time":1429593965,"value":3990}]
+                         }]
+              },
+   "eventsOut":{"startTime":1429593961,"endTime":1429593966,
+                "series":[{"metricName":"system.process.events.out","grouping":{},
+                           "data":[{"time":1429593961,"value":3211},
+                                   {"time":1429593962,"value":3865},
+                                   {"time":1429593963,"value":3919},
+                                   {"time":1429593964,"value":3906},
+                                   {"time":1429593965,"value":3993}]
+                          }]
+              }
+                                   
+  }
 
 If the context of the requested metric or metric itself doesn't exist, the system returns a
 status 200 (OK) with JSON formed following the above description, with an empty ``series`` for values::
