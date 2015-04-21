@@ -32,7 +32,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
@@ -136,17 +135,17 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       expose(KafkaMetricsProcessorServiceFactory.class);
     }
     @Provides
-    @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
+    @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
     public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                          MetricsConstants.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
+      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD,
+                          Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
     }
 
     @Provides
-    @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
+    @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
     public String providesKafkaTopicPrefix(CConfiguration cConf) {
-      return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX,
-                       MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
+      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX,
+                       Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
     }
   }
 }

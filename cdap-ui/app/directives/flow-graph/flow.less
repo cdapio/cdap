@@ -1,44 +1,46 @@
-my-flow-graph {
-  .flow-chart-container {
+@import "../../styles/variables.less";
 
-  }
+my-flow-graph {
 
   text {
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
-    fill: white;
+    fill: @cdap-header;
   }
 
   .node rect {
     stroke: #999;
-    fill: #fff;
+    fill: white;
     stroke-width: 1.5px;
   }
 
   .edgePath path {
     stroke-dasharray: 8px, 8px;
-    stroke: #5A5D6E;
+    stroke: @cdap-darkness;
     stroke-width: 2px;
   }
 
-
   .flowlet-svg {
-    fill: #3C4355;
+    fill: white;
     cursor: pointer;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
   }
 
   .stream-svg {
-    fill: #3C4355;
+    fill: white;
     cursor: pointer;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
   }
 
   .flowlet-events {
-    fill: #FF6600;
-    stroke: #ebecf1;
-    stroke-width: 2px;
+    fill: @cdap-orange;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
     cursor: pointer;
   }
 
@@ -49,9 +51,9 @@ my-flow-graph {
   }
 
   .stream-events {
-    fill: #0AAE33;
-    stroke: white;
-    stroke-width: 2px;
+    fill: @brand-success;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
     cursor: pointer;
   }
 
@@ -63,7 +65,7 @@ my-flow-graph {
 
   .flowlet-instances {
     fill: #01ABED;
-    stroke: #3C4355;
+    stroke: @cdap-darkness;
     stroke-width: 2px;
   }
 
@@ -75,9 +77,6 @@ my-flow-graph {
 }
 
 my-workflow-graph {
-  .flow-chart-container {
-
-  }
 
   text {
     font-weight: 300;
@@ -85,50 +84,57 @@ my-workflow-graph {
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    fill: white;
+    fill: @cdap-header;
   }
 
   .node rect {
     stroke: #999;
-    fill: #fff;
+    fill: white;
     stroke-width: 1.5px;
   }
 
   .edgePath path {
     stroke-dasharray: 8px, 8px;
-    stroke: #5A5D6E;
+    stroke: @cdap-darkness;
     stroke-width: 2px;
   }
 
-
   .job-svg {
-    fill: #3C4355;
+    fill: white;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
     cursor: pointer;
   }
 
   .end-svg, .start-svg {
-    fill: #3C4355;
+    stroke: @cdap-darkness;
+    stroke-width: 5px;
+    + .label text {
+      fill: white;
+      font-size: 12px;
+    }
   }
+  .start-svg { fill: @brand-success; }
+  .end-svg { fill: @brand-danger; }
 
   .conditional-svg {
-    fill: #3C4355;
+    fill: @cdap-darkness;
     cursor: pointer;
   }
 
   .job-events {
-    fill: #FF6600;
+    fill: @cdap-orange;
     stroke: #ebecf1;
     stroke-width: 2px;
     cursor: pointer;
   }
 
   .conditional-events {
-    fill: #0AAE33;
+    fill: @brand-success;
     stroke: white;
     stroke-width: 2px;
     cursor: pointer;
   }
-
 }
 
 .d3-tip {
@@ -136,7 +142,7 @@ my-workflow-graph {
   font-weight: bold;
   padding: 12px;
   background: rgba(0, 0, 0, 0.8);
-  color: #fff;
+  color: white;
   border-radius: 2px;
   pointer-events: none;
 }
@@ -162,6 +168,4 @@ my-workflow-graph {
   text-align: center;
 }
 
-span.tip-node-name {
-  color: red;
-}
+span.tip-node-name { color: @brand-danger; }

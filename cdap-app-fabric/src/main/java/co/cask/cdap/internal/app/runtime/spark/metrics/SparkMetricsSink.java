@@ -17,8 +17,8 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.io.Closeables;

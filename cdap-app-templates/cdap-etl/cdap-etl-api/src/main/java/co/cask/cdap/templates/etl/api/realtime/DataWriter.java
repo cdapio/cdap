@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,14 @@
  * the License.
  */
 
+package co.cask.cdap.templates.etl.api.realtime;
+
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.stream.StreamWriter;
+
 /**
- * Metrics client classes.
+ * Used in Realtime Sink to write to CDAP Streams and Datasets.
  */
-package co.cask.cdap.common.metrics;
+public interface DataWriter extends StreamWriter, DatasetContext {
+
+}

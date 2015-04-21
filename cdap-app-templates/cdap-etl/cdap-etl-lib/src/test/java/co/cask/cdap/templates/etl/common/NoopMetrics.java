@@ -14,19 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.metrics.Metrics;
 
 /**
- * Context passed to the Transform stages.
+ * No op metrics implementation for tests.
  */
-public interface TransformContext extends RuntimeContext {
+public class NoopMetrics implements Metrics {
+  public static final Metrics INSTANCE = new NoopMetrics();
 
-  /**
-   * Return the specification of this state.
-   *
-   * @return {@link StageSpecification}
-   */
-  StageSpecification getSpecification();
+  @Override
+  public void count(String s, int i) {
+    // no-op
+  }
+
+  @Override
+  public void gauge(String s, long l) {
+    // no-op
+  }
 }

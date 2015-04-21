@@ -40,9 +40,8 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   private final String name;
   private String programName;
-  private Callable<RuntimeContext> programRunner;
+  private Runnable programRunner;
   private SchedulableProgramType programType;
-  private WorkflowContext context;
 
   public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
     this.name = name;
@@ -64,8 +63,6 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   @Override
   public void initialize(WorkflowContext context) throws Exception {
-    this.context = context;
-
     programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
     Preconditions.checkNotNull(programName, "No Program name provided.");
 
@@ -81,15 +78,14 @@ public final class ProgramWorkflowAction implements WorkflowAction {
   public void run() {
     try {
       LOG.info("Starting Program for workflow action: {}", programName);
-      RuntimeContext runtimeContext = programRunner.call();
+      programRunner.run();
 
       // TODO (terence) : Put something back to context.
 
       LOG.info("{} Program {} workflow action completed",
                programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
-      LOG.info("Failed to execute {} Program {} in workflow: {}", 
-               programType != null ? programType.name() : null, programName, e);
+      LOG.info("Failed to execute {} Program {} in workflow", programType, programName, e);
       throw Throwables.propagate(e);
     }
   }

@@ -34,7 +34,6 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.MetricHBaseTableUtil.Version;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.Id;
@@ -133,9 +132,9 @@ public class MetricsDataMigrator {
   public MetricsDataMigrator(final CConfiguration cConf, final Configuration hConf, final DatasetFramework dsFramework,
                              MetricDatasetFactory factory) {
     this.dsFramework = dsFramework;
-    this.entityTableName = cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+    this.entityTableName = cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
                                      UpgradeMetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-    this.metricsTableNamePrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+    this.metricsTableNamePrefix = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                             UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
     this.metricsTableName = metricsTableNamePrefix + ".agg";
     aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
@@ -169,7 +168,7 @@ public class MetricsDataMigrator {
     // 3) if we find 2.7 - we will migrate data from 2.7 table, if not - migrate data from 2.6 metrics table
     // todo - use UpgradeTool to figure out if version is 2.8.x, return if it is 2.8.x
 
-    String tableName27 = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+    String tableName27 = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                    UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX) + ".agg";
 
     // versions older than 2.7, has two metrics table, identified by system and user prefix
@@ -435,12 +434,12 @@ public class MetricsDataMigrator {
   public void cleanupDestinationTables() throws DataMigrationException {
     System.out.println("Cleaning up destination tables");
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
-    String destEntityTableName =  cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                            MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+    String destEntityTableName =  cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
+                                            Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
     destEntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(
       Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destEntityTableName));
-    String destMetricsTablePrefix =  cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
-                                               MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
+    String destMetricsTablePrefix =  cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                               Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX);
     destMetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
       Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destMetricsTablePrefix));
     try {

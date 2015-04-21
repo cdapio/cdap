@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformStage;
@@ -31,6 +32,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultTransformContext;
+import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -53,6 +55,7 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
+  private Metrics mrMetrics;
 
   @Override
   public void configure() {
@@ -87,7 +90,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sourceSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Source.SPECIFICATION), StageSpecification.class);
     BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec);
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec, mrMetrics);
     LOG.info("Source Stage : {}", sourceStage);
     LOG.info("Source Class : {}", source.getClass().getName());
     LOG.info("Specifications of Source : {}", sourceSpec);
@@ -98,7 +101,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     StageSpecification sinkSpec = GSON.fromJson(
       context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION), StageSpecification.class);
     BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
-    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec);
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec, mrMetrics);
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", sink.getClass().getName());
     LOG.info("Specifications of Sink : {}", sinkSpec);
@@ -117,7 +120,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Gson GSON = new Gson();
     private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
 
-    private TransformExecutor<KeyValue<Object, Object>, KeyValue<Object, Object>> transformExecutor;
+    private TransformExecutor<KeyValue, KeyValue> transformExecutor;
+    private Metrics mapperMetrics;
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
@@ -135,40 +139,46 @@ public class ETLMapReduce extends AbstractMapReduce {
       LOG.info("Transform Stages : {}", stageList);
       LOG.info("Specifications of Transforms : {}", specificationList);
 
-      Preconditions.checkArgument(stageList.size() == specificationList.size());
-      instantiateTransforms(specificationList, stageList);
+      List<Transform> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
+      List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
+
       BatchSource source = instantiateStage(sourceSpec);
       source.initialize(etlConfig.getSource());
+      pipeline.add(source);
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
+
+      addTransforms(specificationList, stageList, pipeline, stageMetrics);
+
       BatchSink sink = instantiateStage(sinkSpec);
       sink.initialize(etlConfig.getSink());
+      pipeline.add(sink);
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, sinkSpec.getName()));
 
-      List<TransformStage> transformStages = instantiateTransforms(specificationList, stageList);
-      List<Transform> transforms = Lists.newArrayList();
-      transforms.add(source);
-      transforms.addAll(transformStages);
-      transforms.add(sink);
-
-      transformExecutor = new TransformExecutor<KeyValue<Object, Object>, KeyValue<Object, Object>>(transforms);
+      transformExecutor = new TransformExecutor<KeyValue, KeyValue>(pipeline, stageMetrics);
     }
 
-    private List<TransformStage> instantiateTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs) {
-      List<TransformStage> transforms = Lists.newArrayListWithCapacity(specList.size());
+    private void addTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs,
+                               List<Transform> pipeline, List<StageMetrics> stageMetrics) {
+      Preconditions.checkArgument(specList.size() == stageConfigs.size());
+
       for (int i = 0; i < specList.size(); i++) {
         StageSpecification spec = specList.get(i);
         ETLStage stageConfig = stageConfigs.get(i);
         TransformStage transform = instantiateStage(spec);
-        DefaultTransformContext transformContext = new DefaultTransformContext(spec, stageConfig.getProperties());
+        DefaultTransformContext transformContext =
+          new DefaultTransformContext(spec, stageConfig.getProperties(), mapperMetrics);
         transform.initialize(transformContext);
-        transforms.add(transform);
+
+        pipeline.add(transform);
+        stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, spec.getName()));
       }
-      return transforms;
     }
 
     @Override
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
-        KeyValue<Object, Object> input = new KeyValue<Object, Object>(key, value);
-        for (KeyValue<Object, Object> output : transformExecutor.runOneIteration(input)) {
+        KeyValue input = new KeyValue(key, value);
+        for (KeyValue output : transformExecutor.runOneIteration(input)) {
           context.write(output.getKey(), output.getValue());
         }
       } catch (Exception e) {

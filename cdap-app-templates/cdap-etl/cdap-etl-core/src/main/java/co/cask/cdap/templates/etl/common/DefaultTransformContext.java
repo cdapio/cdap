@@ -16,26 +16,34 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.TransformContext;
 
 import java.util.Map;
 
 /**
  * Context for the Transform Stage.
  */
-public class DefaultTransformContext implements TransformContext {
+public class DefaultTransformContext implements StageContext {
   private final StageSpecification specification;
   private final Map<String, String> runtimeArgs;
+  private final Metrics metrics;
 
-  public DefaultTransformContext(StageSpecification specification, Map<String, String> runtimeArgs) {
+  public DefaultTransformContext(StageSpecification specification, Map<String, String> runtimeArgs, Metrics metrics) {
     this.specification = specification;
     this.runtimeArgs = runtimeArgs;
+    this.metrics = metrics;
   }
 
   @Override
   public StageSpecification getSpecification() {
     return specification;
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
   }
 
   @Override

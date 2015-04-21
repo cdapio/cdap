@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.QueryRequest;
 import co.cask.http.HttpResponder;
@@ -356,13 +355,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     if (resolution.equals(PARAM_AUTO_RESOLUTION)) {
       if (start != null && end != null) {
         long difference = end - start;
-        if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
-          return 3600;
-        } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
-          return 60;
-        } else {
-          return 1;
-        }
+        return MetricQueryParser.getResolution(difference).getResolution();
       } else {
         throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
                                              "should be provided to determine resolution");

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,28 @@
  * the License.
  */
 
+package co.cask.cdap.templates.etl.api.realtime;
+
+import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.StageSpecification;
+
 /**
- * Reporter Hooks.
+ * Context passed to the Source and Sink stages of Realtime Adapter.
  */
-package co.cask.cdap.common.hooks;
+public interface RealtimeContext extends RuntimeContext, StageContext {
+
+  /**
+   * Get Instance Id.
+   *
+   * @return instance id
+   */
+  int getInstanceId();
+
+  /**
+   * Get Instance Count.
+   *
+   * @return instance count
+   */
+  int getInstanceCount();
+}
