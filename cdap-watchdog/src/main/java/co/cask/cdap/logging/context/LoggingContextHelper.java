@@ -50,7 +50,7 @@ public final class LoggingContextHelper {
       .put(FlowletLoggingContext.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
       .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
       .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
-      .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.SERVICE_HANDLER)
+      .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.HANDLER)
       .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
  // TODO Add Workflow logging context
     .build();

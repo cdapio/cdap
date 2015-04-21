@@ -313,7 +313,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
-               Tag.SERVICE_HANDLER, "handler1");
+               Tag.HANDLER, "handler1");
     Assert.assertEquals("system.reads", query.getMetricName());
 
     query = MetricQueryParser.parse(
@@ -322,7 +322,7 @@ public class MetricQueryParserTest {
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
-               Tag.SERVICE_HANDLER, "handler1");
+               Tag.HANDLER, "handler1");
     Assert.assertEquals("system.reads", query.getMetricName());
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }

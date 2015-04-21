@@ -124,7 +124,7 @@ public class DefaultMetricStore implements MetricStore {
     aggs.put("service", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.SERVICE_HANDLER,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
                        Constants.Metrics.Tag.INSTANCE_ID),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,

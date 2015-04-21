@@ -112,7 +112,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.SERVICE_HANDLER, handlerName);
+    tags.put(Constants.Metrics.Tag.HANDLER, handlerName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     return service.getCollector(tags);
   }

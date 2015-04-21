@@ -359,7 +359,7 @@ final class MetricQueryParser {
         buildComponentTypeContext(pathParts, tagValues, "methods", "handler", Constants.Metrics.Tag.METHOD);
         break;
       case SERVICES:
-        buildComponentTypeContext(pathParts, tagValues, "handlers", "service", Constants.Metrics.Tag.SERVICE_HANDLER);
+        buildComponentTypeContext(pathParts, tagValues, "handlers", "service", Constants.Metrics.Tag.HANDLER);
         break;
       case SPARK:
         if (pathParts.hasNext()) {
