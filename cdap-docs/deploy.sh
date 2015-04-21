@@ -114,6 +114,7 @@ fi
 ################################################################################
 
 function make_remote_dir () {
+  # create remote directory prior to rsync
   decho "making sure remote directory ${3} exists on ${2}"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
   ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
@@ -121,6 +122,7 @@ function make_remote_dir () {
 }
 
 function rsync_zip_file () {
+  # rsync zip file to remote directory in directory we just created
   decho "rsyncing archive ${4} to ${2}"
   decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" 
   rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
@@ -128,6 +130,7 @@ function rsync_zip_file () {
 }
 
 function unzip_archive () {
+  # unzip file remotely 
   decho "unzipping ${4} on ${2}"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
   ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
@@ -135,6 +138,7 @@ function unzip_archive () {
 }
 
 function move_zip_file () {
+  # after unzipping it, we move the zip file to it is unzipped directory
   decho "moving zip file"
   decho "ssh ${1}@${2} \"sudo mv ${3}/${4} ${3}/${VERSION}\""
   ssh ${1}@${2} "sudo mv ${3}/${4} ${3}/${VERSION}" || die "unable to move ${4} to ${VERSION} subdirectory on ${2}"
@@ -142,6 +146,7 @@ function move_zip_file () {
 }
 
 function deploy () {
+  # main deploy function
   decho "deploying to ${2}"
   make_remote_dir ${1} ${2} ${3}
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
