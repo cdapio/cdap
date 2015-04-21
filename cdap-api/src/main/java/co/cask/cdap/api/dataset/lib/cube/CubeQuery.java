@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  * Another way to think about the query is to map it to the following statement::
  * <pre>
  * SELECT count('read.ops')                                     << measure name and type
- * FROM 1min_resolution                                         << resolution
+ * FROM aggregation1.1min_resolution                            << aggregation & resolution
  * GROUP BY dataset,                                            << groupByTags
  * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
  * LIMIT 100                                                    << limit
@@ -41,6 +41,9 @@ import javax.annotation.Nullable;
  */
 @Beta
 public final class CubeQuery {
+  // null value means auto-choose aggregation based on query todo: auto-choosing may be error prone, remove it?
+  @Nullable
+  private final String aggregation;
   private final long startTs;
   private final long endTs;
   private final int resolution;
@@ -51,18 +54,51 @@ public final class CubeQuery {
   private final List<String> groupByTags;
   private final Interpolator interpolator;
 
+  /**
+   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, String, MeasureType, Map, List, Interpolator)},
+   * with {@code aggregation=null} and {@code interpolator=null}.
+   */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, limit,
+    this(null, startTs, endTs, resolution, limit,
          measureName, measureType,
          sliceByTagValues, groupByTags, null);
   }
 
+  /**
+   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, String, MeasureType, Map, List, Interpolator)},
+   * with {@code aggregation=null}.
+   */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
                    Map<String, String> sliceByTagValues, List<String> groupByTags,
                    @Nullable Interpolator interpolator) {
+    this(null, startTs, endTs, resolution, limit,
+         measureName, measureType,
+         sliceByTagValues, groupByTags, interpolator);
+  }
+
+  /**
+   * Creates {@link CubeQuery} with given parameters.
+   * @param aggregation (optional) aggregation name to query in; if {@code null}, the aggregation will be auto-selected
+   *                    based on rest of query parameters
+   * @param startTs start (inclusive) of the time range to query
+   * @param endTs end (exclusive) of the time range to query
+   * @param resolution resolution of the aggregation to query in
+   * @param limit max number of returned data points
+   * @param measureName name of the measure to query for
+   * @param measureType type of the measure to query for (used for aggregating results during query)
+   * @param sliceByTagValues tag values to filter by
+   * @param groupByTags tags to group by
+   * @param interpolator {@link Interpolator} to use
+   */
+  public CubeQuery(@Nullable String aggregation,
+                   long startTs, long endTs, int resolution, int limit,
+                   String measureName, MeasureType measureType,
+                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   @Nullable Interpolator interpolator) {
+    this.aggregation = aggregation;
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
@@ -72,6 +108,11 @@ public final class CubeQuery {
     this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
     this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
     this.interpolator = interpolator;
+  }
+
+  @Nullable
+  public String getAggregation() {
+    return aggregation;
   }
 
   public long getStartTs() {
@@ -115,7 +156,8 @@ public final class CubeQuery {
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("CubeQuery");
-    sb.append("{startTs=").append(startTs);
+    sb.append("{aggregation=").append(aggregation);
+    sb.append(", startTs=").append(startTs);
     sb.append(", endTs=").append(endTs);
     sb.append(", resolution=").append(resolution);
     sb.append(", limit=").append(limit);

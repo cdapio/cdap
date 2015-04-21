@@ -1,5 +1,6 @@
 @import "../../variables.less";
 @import "../../../../bower_components/bootstrap/less/mixins.less";
+@import "mixins.less";
 
 body.theme-cdap {
 
@@ -76,10 +77,37 @@ body.theme-cdap {
 
   .btn-transparent {
     background-color: @brand-primary;
-    
+
     &:hover,
     &:focus  {
       background-color: darken(@brand-primary, 12%);
+    }
+  }
+  // Nested tabs
+  .nested-tabs .btn-default {
+    border: 1px solid #d1d3da;
+    font-weight: 500;
+    padding: 10px 30px;
+    &:first-child { .border-radius(4px 0 0 4px); }
+    &:last-child { .border-radius(0 4px 4px 0); }
+    &:focus { outline: 0; }
+    &.active {
+      background-color: #6a7387;
+      color: white;
+    }
+  }
+  .btn-group > .btn-default.dropdown-toggle {
+    background-color: @cdap-header;
+    color: white;
+    .border-radius(4px);
+    + .dropdown-menu {
+      background-color: @cdap-header;
+      margin: 0;
+      padding: 0;
+      > li > a {
+        color: white;
+        &:hover, &:focus { color: @cdap-header; }
+      }
     }
   }
 }

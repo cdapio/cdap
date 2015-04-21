@@ -1,15 +1,18 @@
-<strong>View Run:</strong>
-<div class="btn-group" dropdown is-open="dropdown.isopen">
-  <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle ng-disabled="current === 'No Run'">
-    {{ current }} <span class="caret"></span>
-  </button>
-  <ul class="dropdown-menu" role="menu">
-    <li ng-repeat="run in runs">
-      <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
-    </li>
-  </ul>
+<div class="row">
+  <div class="col-xs-12">
+    <strong> View Run: </strong>
+    <div class="btn-group" dropdown is-open="dropdown.isopen">
+      <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle ng-disabled="current === 'No Run'">
+        {{ current }} <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li ng-repeat="run in runs">
+          <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>
-
 <div ng-if="!$state.params.runid"
   ng-include="'/assets/features/mapreduce/templates/tabs/runs/run-detail.html'" ng-controller="MapreduceRunsDetailController">
 </div>

@@ -31,7 +31,6 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -72,10 +71,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -117,7 +112,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final String appFabricDir;
   private final ProgramLifecycleService lifecycleService;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -193,7 +187,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
                                      CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      ProgramLifecycleService lifecycleService,
-                                     DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                     QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
                                      MapReduceMetricsInfo mapReduceMetricsInfo,
@@ -204,7 +198,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.runtimeService = runtimeService;
     this.lifecycleService = lifecycleService;
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
-    this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
@@ -973,8 +966,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-        deleteProcessMetricsForFlow(appId, flowId);
+        // TODO: the process.events.pending metric is now off. We need to adjust it somehow [CDAP-2191]
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -993,12 +985,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId) {
-    getServiceInstances(responder, namespaceId, appId, serviceId, serviceId);
-  }
-
-  void getServiceInstances(HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
+                                  @PathParam("service-id") String serviceId)  {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1014,21 +1001,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
-      int instances;
-      if (specification.getName().equals(runnableName)) {
-        instances = specification.getInstances();
-      } else {
-        ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
-        if (workerSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          return;
-        }
-        instances = workerSpec.getInstances();
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceInstances(instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE,
-                                                                          serviceId, runnableName)));
+      int instances = specification.getInstances();
+      responder.sendJson(HttpResponseStatus.OK, new ServiceInstances(
+        instances, getInstanceCount(namespaceId, appId, ProgramType.SERVICE, serviceId, serviceId)));
 
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1047,12 +1022,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) {
-    setServiceInstances(request, responder, namespaceId, appId, serviceId, serviceId);
-  }
-
-  void setServiceInstances(HttpRequest request, HttpResponder responder,
-                           String namespaceId, String appId, String serviceId, String runnableName) {
-
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId, ProgramType.SERVICE)) {
@@ -1075,24 +1044,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      // If the runnable name is the same as the service name, it's setting the service instances
-      // TODO: This REST API is bad, need to update (CDAP-388)
-      int oldInstances = (runnableName.equals(serviceId)) ? store.getServiceInstances(programId)
-        : store.getServiceWorkerInstances(programId, runnableName);
+      int oldInstances = store.getServiceInstances(programId);
       if (oldInstances != instances) {
-        if (runnableName.equals(serviceId)) {
-          store.setServiceInstances(programId, instances);
-        } else {
-          store.setServiceWorkerInstances(programId, runnableName, instances);
-        }
-
+        store.setServiceInstances(programId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
                                                                         ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                              ImmutableMap.of(runnableName, String.valueOf(instances))).get();
+                                              ImmutableMap.of(serviceId, String.valueOf(instances))).get();
         }
       }
       responder.sendStatus(HttpResponseStatus.OK);
@@ -1736,40 +1697,5 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean canHaveInstances(ProgramType programType) {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
-  }
-
-  // deletes the process metrics for a flow
-  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(3L, TimeUnit.SECONDS);
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      throw new IOException("Can't find Metrics endpoint");
-    }
-
-    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
-    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.API_VERSION_3,
-                               application, flow);
-
-    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) timeout)
-      .build();
-
-    try {
-      client.delete().get(timeout, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("exception making metrics delete call", e);
-      Throwables.propagate(e);
-    } finally {
-      client.close();
-    }
   }
 }

@@ -24,13 +24,13 @@
 <!--                                                                         -->
 
 <configuration>
+    <logger name="co.cask.cdap.gateway.handlers.PingHandler" level="TRACE"/>
+    <logger name="co.cask.cdap.gateway" level="DEBUG" />
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%thread] [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
     </appender>
-
-    <logger name="co.cask.cdap.gateway" level="DEBUG" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

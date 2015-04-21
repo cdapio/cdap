@@ -16,32 +16,12 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.stream.StreamWriter;
 
 /**
- * Context passed to the Source stages.
+ * Used in Realtime Sink to write to CDAP Streams and Datasets.
  */
-public interface SourceContext extends RuntimeContext {
+public interface DataWriter extends StreamWriter, DatasetContext {
 
-  /**
-   * Get the specification of the source stage, set during the configuration.
-   *
-   * @return {@link StageSpecification}
-   */
-  StageSpecification getSpecification();
-
-  /**
-   * Get Instance Id.
-   *
-   * @return instance id
-   */
-  int getInstanceId();
-
-  /**
-   * Get Instance Count.
-   *
-   * @return instance count
-   */
-  int getInstanceCount();
 }

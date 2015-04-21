@@ -22,7 +22,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  *
@@ -30,7 +30,7 @@ import java.util.Collection;
 public class DefaultCubeTest extends AbstractCubeTest {
 
   @Override
-  protected Cube getCube(String name, int[] resolutions, Collection<? extends Aggregation> aggregations) {
+  protected Cube getCube(String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
     FactTableSupplier supplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int rollTime) {
