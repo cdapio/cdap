@@ -23,6 +23,7 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.CharEncoding;
@@ -153,7 +154,7 @@ final class MetricQueryParser {
     builder.setMetricName(metricPrefix);
 
     MetricDataQuery query = builder.build();
-    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMetricName(), query.getSliceByTags());
+    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMetricNames(), query.getSliceByTags());
   }
 
   static MetricDataQuery parse(URI requestURI) throws MetricsPathException {
@@ -573,8 +574,9 @@ final class MetricQueryParser {
     }
 
     public MetricDataQuery build() {
-      String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
-      return new MetricDataQuery(startTs, endTs, resolution, limit, measureName, MetricType.COUNTER,
+      List<String> measureNames =
+        (metricName != null && scope != null) ? ImmutableList.of(scope + "." + metricName) : ImmutableList.<String>of();
+      return new MetricDataQuery(startTs, endTs, resolution, limit, measureNames, MetricType.COUNTER,
                                  sliceByTagValues, new ArrayList<String>(), interpolator);
     }
 

@@ -218,7 +218,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricName(),
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricNames(),
                          toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
@@ -230,7 +230,7 @@ public class DefaultMetricStore implements MetricStore {
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap());
       cube.get().delete(query);
     }
   }
@@ -243,8 +243,7 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteAll() throws Exception {
     // this will delete all aggregates metrics data
-    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Maps.<String, String>newHashMap()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
@@ -253,7 +252,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getSliceByTags(), query.getMetricName());
+                               query.getSliceByTags(), query.getMetricNames());
   }
 
   @Override

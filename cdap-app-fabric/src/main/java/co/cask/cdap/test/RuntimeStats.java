@@ -31,6 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
@@ -85,9 +86,8 @@ public final class RuntimeStats {
   @Deprecated
   public static void clearStats(final String applicationId) {
     try {
-      // null for "all metric names"
       metricStore.delete(
-        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000,
                               ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
                                               Constants.Metrics.Tag.APP, applicationId)));
     } catch (Exception e) {
