@@ -106,7 +106,7 @@ public class RemoteApplicationManager implements ApplicationManager {
       @Override
       public RuntimeMetrics getFlowletMetrics(String flowletId) {
         return metricsClient.getFlowletMetrics(
-          Id.Program.from(application, ProgramType.FLOW, flowId.getRunnableId()), flowletId);
+          Id.Program.from(application, ProgramType.FLOW, flowId.getProgramId()), flowletId);
       }
 
       @Override
@@ -343,7 +343,7 @@ public class RemoteApplicationManager implements ApplicationManager {
         // throw error when you stop something that is not running.
         ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
         if (isRunning(id)) {
-          getProgramClient().stop(application.getId(), id.getRunnableType(), id.getRunnableId());
+          getProgramClient().stop(application.getId(), id.getProgramType(), id.getProgramId());
         }
       }
     } catch (Exception e) {
@@ -352,9 +352,9 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   void stopProgram(ProgramId programId) {
-    String programName = programId.getRunnableId();
+    String programName = programId.getProgramId();
     try {
-      getProgramClient().stop(application.getId(), programId.getRunnableType(), programName);
+      getProgramClient().stop(application.getId(), programId.getProgramType(), programName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -362,8 +362,8 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   boolean isRunning(ProgramId programId) {
     try {
-      String status = getProgramClient().getStatus(application.getId(), programId.getRunnableType(),
-                                                   programId.getRunnableId());
+      String status = getProgramClient().getStatus(application.getId(), programId.getProgramType(),
+                                                   programId.getProgramId());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
@@ -372,18 +372,18 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   static class ProgramId {
-    private final String runnableId;
-    private final ProgramType runnableType;
+    private final String programId;
+    private final ProgramType programType;
 
-    ProgramId(String runnableId, ProgramType runnableType) {
-      this.runnableId = runnableId;
-      this.runnableType = runnableType;
+    ProgramId(String programId, ProgramType programType) {
+      this.programId = programId;
+      this.programType = programType;
     }
-    public String getRunnableId() {
-      return this.runnableId;
+    public String getProgramId() {
+      return this.programId;
     }
-    public ProgramType getRunnableType() {
-      return this.runnableType;
+    public ProgramType getProgramType() {
+      return this.programType;
     }
   }
 }

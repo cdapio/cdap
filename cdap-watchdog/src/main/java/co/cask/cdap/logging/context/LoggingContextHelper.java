@@ -50,7 +50,7 @@ public final class LoggingContextHelper {
       .put(FlowletLoggingContext.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
       .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
       .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
-      .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.SERVICE_RUNNABLE)
+      .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.SERVICE_HANDLER)
       .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
  // TODO Add Workflow logging context
     .build();
@@ -104,12 +104,12 @@ public final class LoggingContextHelper {
         return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
     } else if (tags.containsKey(UserServiceLoggingContext.TAG_USERSERVICE_ID)) {
-      if (!tags.containsKey(UserServiceLoggingContext.TAG_RUNNABLE_ID)) {
+      if (!tags.containsKey(UserServiceLoggingContext.TAG_HANDLER_ID)) {
         return null;
       }
       return new UserServiceLoggingContext(namespaceId, applicationId,
                                            tags.get(UserServiceLoggingContext.TAG_USERSERVICE_ID),
-                                           tags.get(UserServiceLoggingContext.TAG_RUNNABLE_ID),
+                                           tags.get(UserServiceLoggingContext.TAG_HANDLER_ID),
                                            tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
                                            tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {

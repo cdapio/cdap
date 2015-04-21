@@ -1109,50 +1109,48 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         ApplicationSpecification spec, ProgramType programType,
                                         String programId) {
     int requested;
-    String runnableId;
+    String runnableId = programId;
     if (programType == ProgramType.WORKER) {
-      runnableId = programId;
       if (!spec.getWorkers().containsKey(programId)) {
         addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                      "Worker: " + programId + " not found");
         return;
       }
-      requested = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, programId));
-    } else {
-      // services and flows must have runnable id
-      if (requestedObj.getRunnableId() == null) {
-        addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                     "Must provide a string runnableId for flows/services");
+      requested = spec.getWorkers().get(programId).getInstances();
+
+    } else if (programType == ProgramType.SERVICE) {
+      if (!spec.getServices().containsKey(programId)) {
+        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                     "Service: " + programId + " not found");
         return;
       }
+      requested = spec.getServices().get(programId).getInstances();
 
-      runnableId = requestedObj.getRunnableId();
-      if (programType == ProgramType.FLOW) {
-        FlowSpecification flowSpec = spec.getFlows().get(programId);
-        if (flowSpec == null) {
-          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
-          return;
-        }
-
-        FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
-        if (flowletDefinition == null) {
-          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                       "Flowlet: " + runnableId + " not found");
-          return;
-        }
-        requested = flowletDefinition.getInstances();
-
-      } else {
-        // Services
-        ServiceSpecification serviceSpec = spec.getServices().get(programId);
-        if (serviceSpec == null) {
-          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                       "Service: " + programId + " not found");
-          return;
-        }
-
-        requested = serviceSpec.getInstances();
+    } else if (programType == ProgramType.FLOW) {
+      // flows must have runnable id
+      if (requestedObj.getRunnableId() == null) {
+        addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                     "Must provide the flowlet id as the runnableId for flows");
+        return;
       }
+      runnableId = requestedObj.getRunnableId();
+      FlowSpecification flowSpec = spec.getFlows().get(programId);
+      if (flowSpec == null) {
+        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
+        return;
+      }
+      FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
+      if (flowletDefinition == null) {
+        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                     "Flowlet: " + runnableId + " not found");
+        return;
+      }
+      requested = flowletDefinition.getInstances();
+
+    } else {
+      addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                   "Instances not supported for program type + " + programType);
+      return;
     }
     // use the pretty name of program types to be consistent
     requestedObj.setProgramType(programType.getPrettyName());
@@ -1490,12 +1488,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Convenience class for representing the necessary components in the batch endpoint.
    */
   private class BatchEndpointArgs {
-    private String appId = null;
-    private String programType = null;
-    private String programId = null;
-    private String runnableId = null;
-    private String error = null;
-    private Integer statusCode = null;
+    private String appId;
+    private String programType;
+    private String programId;
+    private String runnableId;
+    private String error;
+    private Integer statusCode;
 
     private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
                               Integer statusCode) {
@@ -1513,10 +1511,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     public String getRunnableId() {
       return runnableId;
-    }
-
-    public void setRunnableId(String runnableId) {
-      this.runnableId = runnableId;
     }
 
     public void setError(String error) {
@@ -1558,10 +1552,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     public BatchEndpointInstances(BatchEndpointArgs arg) {
       super(arg);
-    }
-
-    public Integer getProvisioned() {
-      return provisioned;
     }
 
     public void setProvisioned(Integer provisioned) {

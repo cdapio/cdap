@@ -106,13 +106,13 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   private static MetricsCollector getMetricCollector(MetricsCollectionService service,
-                                                     Program program, String runnableName,
+                                                     Program program, String handlerName,
                                                      String runId, int instanceId) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
-    tags.put(Constants.Metrics.Tag.SERVICE_RUNNABLE, runnableName);
+    tags.put(Constants.Metrics.Tag.SERVICE_HANDLER, handlerName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     return service.getCollector(tags);
   }

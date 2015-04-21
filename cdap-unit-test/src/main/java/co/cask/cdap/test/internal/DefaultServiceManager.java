@@ -58,7 +58,7 @@ public class DefaultServiceManager extends AbstractServiceManager {
     this.serviceId = serviceId;
     this.namespace = namespace;
     this.applicationId = serviceId.getApplicationId();
-    this.serviceName = serviceId.getRunnableId();
+    this.serviceName = serviceId.getProgramId();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;

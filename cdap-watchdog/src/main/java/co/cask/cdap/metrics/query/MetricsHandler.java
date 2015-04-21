@@ -112,7 +112,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       .put(Constants.Metrics.Tag.ADAPTER, "adapter")
 
       .put(Constants.Metrics.Tag.SERVICE, "service")
-      .put(Constants.Metrics.Tag.SERVICE_RUNNABLE, "runnable")
+      .put(Constants.Metrics.Tag.SERVICE_HANDLER, "handler")
 
       .put(Constants.Metrics.Tag.WORKER, "worker")
 

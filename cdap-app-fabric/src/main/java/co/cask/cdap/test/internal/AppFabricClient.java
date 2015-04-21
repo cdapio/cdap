@@ -175,7 +175,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     programLifecycleHttpHandler.setServiceInstances(request, responder, namespaceId, applicationId, serviceName);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set service instances failed");
   }
 
   public ServiceInstances getServiceInstances(String namespaceId, String applicationId, String serviceName) {
@@ -184,7 +184,7 @@ public class AppFabricClient {
                                namespaceId, applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get service instances failed");
     return responder.decodeResponseContent(new TypeToken<ServiceInstances>() { });
   }
 
