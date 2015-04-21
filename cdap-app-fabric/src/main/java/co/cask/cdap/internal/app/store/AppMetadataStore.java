@@ -30,16 +30,13 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunIdMapping;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +62,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
-  private static final String TYPE_RUNID_MAPPING = "runIdMapping";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -130,7 +126,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter) {
+  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -140,7 +136,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
-    write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter));
+    write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -190,7 +186,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus));
+    write(key, new RunRecord(record, null, toStatus));
   }
 
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
@@ -223,6 +219,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
     write(key, new RunRecord(started, stopTs, runStatus));
+  }
+
+  public List<RunRecord> getAllActiveRuns() {
+    MDSKey activeKey = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .build();
+    return list(activeKey, RunRecord.class);
   }
 
   public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,
@@ -538,37 +541,5 @@ public class AppMetadataStore extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
-  }
-
-  private MDSKey getRunIdMappingKey() {
-    return new MDSKey.Builder()
-      .add(TYPE_RUNID_MAPPING)
-      .build();
-  }
-  public Map<String, String> getRunIdMappings() {
-    MDSKey key = getRunIdMappingKey();
-    RunIdMapping mapping = get(key, RunIdMapping.class);
-    if (mapping != null) {
-      return mapping.getRunIdMapping();
-    }
-    return Maps.newHashMap();
-  }
-
-  public void addRunIdMapping(String twillRunId, String runId) {
-    Map<String, String> mapping = getRunIdMappings();
-    mapping.put(twillRunId, runId);
-    updateRunIdMappings(mapping);
-  }
-
-  public void removeRunIdMapping(String twillRunId) {
-    Map<String, String> mapping = getRunIdMappings();
-    mapping.remove(twillRunId);
-    updateRunIdMappings(mapping);
-  }
-
-  private void updateRunIdMappings(Map<String, String> mapping) {
-    MDSKey key = getRunIdMappingKey();
-    deleteAll(key);
-    write(key, new RunIdMapping(mapping));
   }
 }

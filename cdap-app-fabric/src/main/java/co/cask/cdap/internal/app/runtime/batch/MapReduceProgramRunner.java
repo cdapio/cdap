@@ -127,7 +127,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
-    String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    final String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -164,7 +166,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
       }
 
       @Override

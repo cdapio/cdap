@@ -46,7 +46,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
-  private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
+  protected final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
@@ -58,24 +58,26 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    ProgramOptions optionsWithRunId = createProgramOptionsWithRunId(options);
-    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, optionsWithRunId), program);
-    addRemover(runtimeInfo);
+    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, createProgramOptionsWithRunId(options)),
+                                                      program);
+    programStarted(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
   }
 
   private ProgramOptions createProgramOptionsWithRunId(ProgramOptions options) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> systemArgument : options.getArguments().asMap().entrySet()) {
-      builder.put(systemArgument);
-    }
+    builder.putAll(options.getArguments().asMap());
     // Generate the new RunId and add it to the system arguments
     RunId runId = RunIds.generate();
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
 
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
                                     options.isDebug());
+  }
+
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+    return new SimpleRuntimeInfo(controller, program);
   }
 
   @Override
@@ -134,11 +136,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
-      runtimeInfos.put(type, runId, addRemover(runtimeInfo));
+      runtimeInfos.put(type, runId, programStarted(runtimeInfo));
     }
   }
 
-  protected RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
+  private RuntimeInfo programStarted(final RuntimeInfo runtimeInfo) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 
@@ -160,7 +162,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return runtimeInfo;
   }
 
-  protected synchronized void remove(RuntimeInfo info) {
+  private synchronized void remove(RuntimeInfo info) {
     LOG.debug("Removing RuntimeInfo: {} {} {}",
               info.getType(), info.getProgramId().getId(), info.getController().getRunId());
     RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());

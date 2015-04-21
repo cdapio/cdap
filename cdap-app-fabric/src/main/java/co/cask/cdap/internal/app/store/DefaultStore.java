@@ -66,7 +66,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -160,11 +159,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter) {
+  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter,
+                       final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime, adapter);
+        mds.apps.recordProgramStart(id, pid, startTime, adapter, twillRunId);
         return null;
       }
     });
@@ -172,7 +172,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null);
+    setStart(id, pid, startTime, null, null);
   }
 
   @Override
@@ -226,6 +226,16 @@ public class DefaultStore implements Store {
   @Override
   public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
+  }
+
+  @Override
+  public List<RunRecord> getAllActiveRuns() {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+      @Override
+      public List<RunRecord> apply(AppMds mds) throws Exception {
+        return mds.apps.getAllActiveRuns();
+      }
+    });
   }
 
   /**
@@ -917,38 +927,6 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteAllAdapters(id);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public Map<String, String> getRunIdMappings() {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(AppMds mds) throws Exception {
-        return mds.apps.getRunIdMappings();
-      }
-    });
-  }
-
-  @Override
-  public void addRunIdMapping(final String twillRunId, final String runId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.addRunIdMapping(twillRunId, runId);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public void removeRunIdMapping(final String twillRunId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.removeRunIdMapping(twillRunId);
         return null;
       }
     });
