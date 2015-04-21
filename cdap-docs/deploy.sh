@@ -81,8 +81,8 @@ BUILD_WORKING_DIR=${BUILD_WORKING_DIR:-/var/bamboo/xml-data/build-dir/CDAP-DRBD-
 DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
 DOCS_SERVER2=${DOCS_SERVER2:-docs2.cask.co}
 STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
-REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/cdap}
-REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/cdap}
+REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/${PROJECT}}
+REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/${PROJECT}}
 
 decho "OPT_DIR=${OPT_DIR}"
 decho "BRANCH_NAME=${BRANCH_NAME}"
