@@ -30,6 +30,8 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -49,12 +51,12 @@ import java.util.concurrent.TimeUnit;
 public class DefaultStreamWriter implements StreamWriter {
 
   private final String namespaceId;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final EndpointStrategy endpointStrategy;
 
-  public DefaultStreamWriter(String namespaceId, DiscoveryServiceClient discoveryServiceClient) {
+  @Inject
+  public DefaultStreamWriter(@Assisted("namespaceId") String namespaceId,
+                             DiscoveryServiceClient discoveryServiceClient) {
     this.namespaceId = namespaceId;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
   }
 

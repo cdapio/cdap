@@ -14,26 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime.sinks;
+package co.cask.cdap.test.internal;
 
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.DataWriter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.StreamManager;
+import com.google.inject.assistedinject.Assisted;
 
 /**
- * Generic NoOp Sink.
- *
- * @param <T> any object
+ * Factory to create {@link StreamManager} objects
  */
-public class NoOpSink<T> extends RealtimeSink<T> {
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(NoOpSink.class.getSimpleName());
-  }
-
-  @Override
-  public int write(Iterable<T> objects, DataWriter dataWriter) throws Exception {
-    return 0;
-  }
+public interface StreamManagerFactory {
+  /**
+   * Return a {@link StreamManager} for the specified stream
+   *
+   * @param streamId {@link Id.Stream} of the stream for which a {@link StreamManager} is requested
+   * @return {@link StreamManager} for the specified stream
+   */
+  StreamManager create(@Assisted("streamId") Id.Stream streamId);
 }
