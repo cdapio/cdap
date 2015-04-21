@@ -98,40 +98,6 @@ public class ValidationTest {
   }
 
   @Test
-  public void testComplexType() throws Exception {
-    // String --> E | List<E>[] --> T[] | List<T[]> --> Object
-    ArrayList<Type> typeList = Lists.newArrayList();
-    typeList.add(String.class);
-    typeList.addAll(getBothParameters(ParamToArrayListParam.class));
-    typeList.addAll(getBothParameters(ArrayToListArray.class));
-    typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
-  }
-
-  @Test
-  public void testAnotherComplexType() throws Exception {
-    // String[] --> E[] | List<E[]>[] --> T[] | List<T[]> --> N | List<N> --> Object
-    ArrayList<Type> typeList = Lists.newArrayList();
-    typeList.add(String[].class);
-    typeList.addAll(getBothParameters(ArrayToArrayListArray.class));
-    typeList.addAll(getBothParameters(ArrayToListArray.class));
-    typeList.addAll(getBothParameters(ParamToListParam.class));
-    typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
-  }
-
-  @Test
-  public void testNonParamType() throws Exception {
-    // String[] --> E[] | List<E[]>[] --> T[] | String --> Object
-    ArrayList<Type> typeList = Lists.newArrayList();
-    typeList.add(String[].class);
-    typeList.addAll(getBothParameters(ArrayToArrayListArray.class));
-    typeList.addAll(getBothParameters(ArrayToString.class));
-    typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
-  }
-
-  @Test
   public void testSourceParamType() throws Exception {
     // T --> N | List<N> --> M
     ArrayList<Type> typeList = Lists.newArrayList();
@@ -162,18 +128,6 @@ public class ValidationTest {
   }
 
   private abstract static class ArrayToListArray<E> extends TransformStage<E[], List<E[]>> {
-
-  }
-
-  private abstract static class ArrayToArrayListArray<E> extends TransformStage<E[], List<E[]>[]> {
-
-  }
-
-  private abstract static class ArrayToString<E> extends TransformStage<E[], String> {
-
-  }
-
-  private abstract static class ParamToArrayListParam<T> extends TransformStage<T, List<T>[]> {
 
   }
 
