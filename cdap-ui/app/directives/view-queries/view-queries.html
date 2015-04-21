@@ -47,7 +47,7 @@
                 <tr ng-repeat="results in responses.results">
                   <td ng-repeat="result in results.columns track by $index">
                     <span>{{ result }}</span>
-                    <span ng-if="!result">null</span>
+                    <span ng-if="!result && result !== 0">null</span>
                   </td>
                 </tr>
                 <tr class="text-center" ng-if="responses.results.length === 0">
