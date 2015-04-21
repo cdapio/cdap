@@ -722,6 +722,9 @@ of the next program in the sequence.
 In the case of the Workflow mentioned above, resuming it after suspension would start up with the
 second of the three MapReduce programs, which is where it would have left off when it was suspended.
 
+With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
+either a currently running or suspended Workflow.
+
 
 To suspend or resume a Schedule or a Workflow, use::
 
