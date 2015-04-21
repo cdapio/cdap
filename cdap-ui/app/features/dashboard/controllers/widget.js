@@ -169,8 +169,6 @@ angular.module(PKG.name+'.feature.dashboard')
           // Replace all invalid characters with '_'. This is ok for now, since we do not display the chart labels
           // to the user. Source: http://stackoverflow.com/questions/13979323/how-to-test-if-selector-is-valid-in-jquery
           var replacedMetricName = metricName.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=><\|])/g, '_');
-          // TODO: This replacement is not required for c3 (only for Epoch).
-          //       Need to take advantage of that.
           hist.push({label: replacedMetricName, values: vs[i]});
         }
         $scope.chartHistory = hist;
