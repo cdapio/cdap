@@ -185,6 +185,53 @@ The diagram for this code would be:
    :width: 8in
    :align: center
 
+Conditional Node
+----------------
+
+You can provide a *conditional* node in your structure that allows for branching based on 
+a true-false predicate.
+
+Taking our first example and modifying it, you could use code such as::
+
+  public class ConditionalWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void configure() {
+      setName("ConditionalWorkflow");
+      setDescription("Demonstration of conditional execution of a Workflow");
+      
+      addMapReduce("JoinWithCatalogMR");
+      
+      condition(new MyPredicate())
+        .addMapReduce("BuildProductProfileMR")
+      .otherwise()
+        .addMapReduce("BuildUserProfileMR")
+      .end();
+      
+      addAction(new UploadProfilesCA());
+    }
+  }
+
+where ``MyPredicate`` is a public class which implements the ``Predicate`` interface as::
+
+  public static class MyPredicate implements Predicate<Map<String, String>> {
+
+    @Override
+    public boolean apply(@Nullable Map<String, String> input) {
+      if (input != null && input.containsKey("BuildProductProfile")) {
+        return true;
+      }
+      return false;
+    }
+  }
+  
+In this case, if the input receives the key *BuildProductProfile*, the logic will follow
+the path of *BuildProductProfileMR*; otherwise, the other path will be taken. The diagram for
+this code would be:
+
+.. image:: /_images/conditional-workflow.png
+   :width: 8in
+   :align: center
 
 Example of Using a Workflow
 ===========================
