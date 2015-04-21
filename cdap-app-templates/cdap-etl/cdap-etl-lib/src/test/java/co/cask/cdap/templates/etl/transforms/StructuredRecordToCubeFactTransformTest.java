@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableList;
@@ -110,7 +110,7 @@ public class StructuredRecordToCubeFactTransformTest {
   public void testTransform() throws Exception {
     // initialize the transform
     TransformStage transform = new StructuredRecordToCubeFactTransform();
-    TransformContext context = new MockTransformContext(
+    StageContext context = new MockTransformContext(
       ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
                       new Gson().toJson(createValidConfig())));
     transform.initialize(context);
@@ -146,8 +146,8 @@ public class StructuredRecordToCubeFactTransformTest {
     transform.transform(record, emitter);
 
     CubeFact transformed = emitter.getEmitted().get(0);
-    // note: our date format doesn't include millis
-    Assert.assertEquals(ts / 1000 * 1000, transformed.getTimestamp());
+    // note: ts is in seconds
+    Assert.assertEquals(ts / 1000, transformed.getTimestamp());
 
     Map<String, String> tags = transformed.getTags();
     Assert.assertEquals(7, tags.size());
@@ -197,10 +197,9 @@ public class StructuredRecordToCubeFactTransformTest {
     long tsEnd = System.currentTimeMillis();
 
     transformed = emitter.getEmitted().get(0);
-    // note: our date format doesn't include millis
     // verify that assigned ts was current ts
-    Assert.assertTrue(tsStart / 1000 * 1000 <= transformed.getTimestamp());
-    Assert.assertTrue(1000 + tsEnd / 1000 * 1000 >= transformed.getTimestamp());
+    Assert.assertTrue(tsStart / 1000 <= transformed.getTimestamp());
+    Assert.assertTrue(1000 + tsEnd / 1000 >= transformed.getTimestamp());
 
     tags = transformed.getTags();
     Assert.assertEquals(6, tags.size());
@@ -291,7 +290,7 @@ public class StructuredRecordToCubeFactTransformTest {
 
   private void verifyInvalidConfigDetected(StructuredRecordToCubeFactTransform.MappingConfig config) {
     TransformStage transform = new StructuredRecordToCubeFactTransform();
-    TransformContext context =
+    StageContext context =
       new MockTransformContext(config == null ? new HashMap<String, String>() :
                                  ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
                                                  new Gson().toJson(config)));

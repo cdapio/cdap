@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory, $filter) {
+  .controller('ETLAppsCreateController', function($scope, $q, $alert, $bootstrapModal, $state, ETLAppsApiFactory, mySettings, $filter) {
     var apiFactory = new ETLAppsApiFactory($scope);
-
     $scope.ETLMetadataTabOpen = true;
     $scope.ETLSourcesTabOpen = true;
     $scope.ETLTransformsTabOpen = true;
@@ -18,6 +17,29 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.etlSources = [];
     $scope.etlSinks = [];
     $scope.etlTransforms = [];
+    $scope.selectedEtlDraft = undefined;
+    $scope.etlDraftList = [];
+
+    $scope.onDraftChange = function(item, model) {
+      var filterFilter = $filter('filter'),
+          match = null,
+          swapObj = {};
+      if (!item) {
+        return; //un-necessary.
+      }
+      if ($scope.etlDrafts[item]) {
+        $scope.metadata = $scope.etlDrafts[item].config.metadata;
+        $scope.source = $scope.etlDrafts[item].config.source;
+        $scope.sink = $scope.etlDrafts[item].config.sink;
+        $scope.transforms = $scope.etlDrafts[item].config.transforms;
+      } else {
+        $scope.metadata.name = item;
+        $scope.metadata.type = $scope.metadata.type;
+        $scope.transforms = defaultTransforms;
+        $scope.source = defaultSource;
+        $scope.sink = defaultSink;
+      }
+    };
 
     // Default ETL Templates
     $scope.etlTypes = [
@@ -38,20 +60,19 @@ angular.module(PKG.name + '.feature.etlapps')
         type: 'etlbatch'
     };
 
-    // Source, Sink and Transform Models
-    $scope.source = {
+    var defaultSource = {
       name: 'Add a Source',
       properties: {},
       placeHolderSource: true
     };
 
-    $scope.sink = {
+    var defaultSink = {
       name: 'Add a Sink',
       placeHolderSink: true,
       properties: {}
     };
 
-    $scope.transforms = [{
+    var defaultTransforms = [{
       name: 'Add a Transforms',
       placeHolderTransform: true,
       properties: {}
@@ -66,6 +87,11 @@ angular.module(PKG.name + '.feature.etlapps')
       placeHolderTransform: true,
       properties: {}
     }];
+
+    // Source, Sink and Transform Models
+    $scope.source = defaultSource;
+    $scope.sink = defaultSink;
+    $scope.transforms = defaultTransforms;
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(etlType) {
@@ -75,7 +101,6 @@ angular.module(PKG.name + '.feature.etlapps')
       apiFactory.fetchSinks(etlType);
       apiFactory.fetchTransforms(etlType);
     });
-
 
     $scope.handleSourceDrop = function(sourceName) {
       if ($scope.source.placeHolderSource) {
@@ -141,8 +166,8 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
 
       });
-    };
 
+    };
     $scope.editTransformProperty = function(transform) {
       if (transform.placeHolderTransform){
         return;
@@ -157,7 +182,6 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
       });
     }
-
     $scope.editTransformProperties = function() {
       if ($scope.transforms.length === 0) {
         return;
@@ -170,6 +194,18 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
 
       });
+    };
+
+    $scope.deleteTransformProperty = function(transform) {
+      var index = $scope.transforms.indexOf(transform);
+      $scope.transforms.splice(index, 1);
+      if (!$scope.transforms.length) {
+        $scope.transforms.push({
+          name: 'Add a Transforms',
+          placeHolderTransform: true,
+          properties: {}
+        });
+      }
     };
 
     $scope.doSave = function() {
@@ -203,4 +239,50 @@ angular.module(PKG.name + '.feature.etlapps')
         console.log('dragEnd', drag.source, drag.dest);
       }
     };
+
+    $scope.getDrafts = function() {
+      var defer = $q.defer();
+      return mySettings.get('etldrafts')
+        .then(function(res) {
+          $scope.etlDrafts = res || {};
+          $scope.etlDraftList = Object.keys($scope.etlDrafts);
+          defer.resolve();
+        });
+      return defer.promise;
+    };
+    if ($state.params.data) {
+      $scope.getDrafts()
+        .then(function() {
+          $scope.selectedEtlDraft = $state.params.data;
+          $scope.onDraftChange($state.params.data);
+        });
+    };
+    $scope.getDrafts();
+
+    $scope.saveAsDraft = function() {
+      if (!$scope.metadata.name.length) {
+        $alert({
+          type: info,
+          content: 'Please provide a name for the Adapter to be saved as draft'
+        });
+        return;
+      }
+      $scope.etlDrafts[$scope.metadata.name] = {
+        config: {
+          metadata: $scope.metadata,
+          source: $scope.source,
+          transforms: $scope.transforms,
+          sink: $scope.sink
+        }
+      };
+
+      mySettings.set('etldrafts', $scope.etlDrafts)
+      .then(function(res) {
+        $alert({
+          type: 'success',
+          content: 'The ETL Template ' + $scope.metadata.name + ' has been saved as draft!'
+        });
+        $state.go('^.list');
+      });
+    }
   });

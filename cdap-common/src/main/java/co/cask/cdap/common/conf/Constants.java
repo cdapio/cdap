@@ -97,6 +97,11 @@ public final class Constants {
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
 
     /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "appfabric.http.handler";
+
+    /**
      * Defaults.
      */
     public static final int DEFAULT_BACKLOG = 20000;
@@ -366,7 +371,6 @@ public final class Constants {
    * Metrics constants.
    */
   public static final class Metrics {
-    public static final String DATASET_CONTEXT = "-.dataset";
     public static final String ADDRESS = "metrics.bind.address";
     public static final String CLUSTER_NAME = "metrics.cluster.name";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
@@ -379,6 +383,33 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
+
+    public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";
+    public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
+    public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
+
+    // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
+    public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
+
+    public static final String SERVER_ADDRESS = "metrics.query.bind.address";
+    public static final String SERVER_PORT = "metrics.query.bind.port";
+
+    public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
+    public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
+    public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
+    public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
+
+    public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
+    public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
+
+    // NOTE: "v2" to avoid conflict with data of older metrics system
+    public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
+    public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
+    public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
+    public static final long DEFAULT_RETENTION_HOURS = 2;
+
+    public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
+    public static final int DEFAULT_KAFKA_PARTITION_SIZE = 1;
 
     /**
      * Metric's dataset related constants.
@@ -433,6 +464,39 @@ public final class Constants {
       public static final String SCOPE = "scp";
 
       public static final String ADAPTER = "adp";
+    }
+
+    /**
+     * Metric names
+     */
+    public static final class Name {
+      /**
+       * Flow metrics
+       */
+      public static final class Flow {
+        public static final String FLOWLET_INPUT = "system.process.tuples.read";
+        public static final String FLOWLET_PROCESSED = "system.process.events.processed";
+        public static final String FLOWLET_EXCEPTIONS = "system.process.errors";
+      }
+
+      /**
+       * Service metrics
+       */
+      public static final class Service {
+        public static final String SERVICE_INPUT = "system.requests.count";
+        public static final String SERVICE_PROCESSED = "system.response.successful.count";
+        public static final String SERVICE_EXCEPTIONS = "system.response.server.error.count";
+      }
+    }
+
+    /**
+     * Metrics query constants and defaults
+     */
+    public static final class Query {
+      public static final long MAX_HOUR_RESOLUTION_QUERY_INTERVAL = 36000;
+      public static final long MAX_MINUTE_RESOLUTION_QUERY_INTERVAL = 600;
+      // Number of seconds to subtract from current timestamp when query without "end" time.
+      public static final long QUERY_SECOND_DELAY = 2;
     }
   }
 

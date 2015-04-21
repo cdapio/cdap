@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.ConcurrentWorkflowApp;
+import co.cask.cdap.ConditionalWorkflowApp;
 import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
@@ -738,5 +739,93 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "failed");
 
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
+  }
+
+  private String createConditionInput(String folderName, int numGoodRecords, int numBadRecords) throws IOException {
+    File inputDir = tmpFolder.newFolder(folderName);
+
+    File inputFile = new File(inputDir.getPath() + "/data.txt");
+    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
+
+    try {
+      // dummy good records containing ":" separated fields
+      for (int i = 0; i < numGoodRecords; i++) {
+        writer.write("Afname:ALname:A:B");
+        writer.newLine();
+      }
+      // dummy bad records in which fields are not separated by ":"
+      for (int i = 0; i < numBadRecords; i++) {
+        writer.write("Afname ALname A B");
+        writer.newLine();
+      }
+    } finally {
+      writer.close();
+    }
+    return inputDir.getAbsolutePath();
+  }
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testWorkflowCondition() throws Exception {
+    String conditionalWorkflowApp = "ConditionalWorkflowApp";
+    String conditionalWorkflow = "ConditionalWorkflow";
+
+    HttpResponse response = deploy(ConditionalWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE2);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.WORKFLOW,
+                                           conditionalWorkflow);
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+
+    // create input data in which number of good records are lesser than the number of bad records
+    runtimeArguments.put("inputPath", createConditionInput("ConditionProgramInput", 2, 12));
+    runtimeArguments.put("outputPath", new File(tmpFolder.newFolder(), "ConditionProgramOutput").getAbsolutePath());
+    setAndTestRuntimeArgs(programId, runtimeArguments);
+
+    // Start the workflow
+    startProgram(programId, 200);
+
+    verifyProgramRuns(programId, "completed");
+
+    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "completed");
+
+    Id.Program recordVerifierProgramId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.MAPREDUCE,
+                                              "RecordVerifier");
+
+    List<RunRecord> recordVerifierRuns = getProgramRuns(recordVerifierProgramId, "completed");
+
+    Id.Program wordCountProgramId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.MAPREDUCE,
+                                              "ClassicWordCount");
+
+    List<RunRecord> wordCountRuns = getProgramRuns(wordCountProgramId, "completed");
+
+    Assert.assertEquals(1, workflowHistoryRuns.size());
+    Assert.assertEquals(1, recordVerifierRuns.size());
+    Assert.assertEquals(0, wordCountRuns.size());
+
+    // create input data in which number of good records are greater than the number of bad records
+    runtimeArguments.put("inputPath", createConditionInput("AnotherConditionProgramInput", 10, 2));
+    runtimeArguments.put("mapreduce.RecordVerifier.outputPath", new File(tmpFolder.newFolder(),
+                                                                         "ConditionProgramOutput").getAbsolutePath());
+    runtimeArguments.put("mapreduce.ClassicWordCount.outputPath", new File(tmpFolder.newFolder(),
+                                                                         "ConditionProgramOutput").getAbsolutePath());
+
+    setAndTestRuntimeArgs(programId, runtimeArguments);
+
+    // Start the workflow
+    startProgram(programId, 200);
+
+    verifyProgramRuns(programId, "completed", 1);
+
+    workflowHistoryRuns = getProgramRuns(programId, "completed");
+    recordVerifierRuns = getProgramRuns(recordVerifierProgramId, "completed");
+    wordCountRuns = getProgramRuns(wordCountProgramId, "completed");
+
+    Assert.assertEquals(2, workflowHistoryRuns.size());
+    Assert.assertEquals(2, recordVerifierRuns.size());
+    Assert.assertEquals(1, wordCountRuns.size());
   }
 }

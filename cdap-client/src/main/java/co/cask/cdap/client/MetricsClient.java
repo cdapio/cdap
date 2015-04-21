@@ -19,8 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
@@ -92,14 +92,16 @@ public class MetricsClient {
 
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
     return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
-                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
-                      MetricsConstants.FLOWLET_EXCEPTIONS);
+                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
+                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
+                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
   }
 
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
     return getMetrics(MetricsContexts.forService(serviceId),
-                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
-                      MetricsConstants.SERVICE_EXCEPTIONS);
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   /**

@@ -63,10 +63,10 @@ public class DefaultCube implements Cube {
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
 
-  private final Collection<? extends Aggregation> aggregations;
+  private final Map<String, ? extends Aggregation> aggregations;
 
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
-                     Collection<? extends Aggregation> aggregations) {
+                     Map<String, ? extends Aggregation> aggregations) {
     this.aggregations = aggregations;
     this.resolutionToFactTable = Maps.newHashMap();
     for (int resolution : resolutions) {
@@ -83,7 +83,7 @@ public class DefaultCube implements Cube {
   public void add(Collection<? extends CubeFact> facts) {
     List<Fact> toWrite = Lists.newArrayList();
     for (CubeFact fact : facts) {
-      for (Aggregation agg : aggregations) {
+      for (Aggregation agg : aggregations.values()) {
         if (agg.accept(fact)) {
           List<TagValue> tagValues = Lists.newArrayList();
           for (String tagName : agg.getTagNames()) {
@@ -105,13 +105,13 @@ public class DefaultCube implements Cube {
       CubeQuery example: "dataset read ops for app per dataset". Or:
 
       SELECT count('read.ops')                                     << measure name and type
-      FROM Cube
+      FROM aggregation.resolution                                  << aggregation and resolution
       GROUP BY dataset,                                            << groupByTags
       WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
 
       Execution:
 
-      1) find aggregation to supply results
+      1) (optional, if aggregation to query in is not provided) find aggregation to supply results
 
       Here, we need aggregation that has following dimensions: 'namespace', 'app', 'program', 'dataset'.
 
@@ -140,23 +140,37 @@ public class DefaultCube implements Cube {
                                            query.toString());
     }
 
-    Aggregation agg = findAggregation(query);
-    if (agg == null) {
-      throw new IllegalArgumentException("There's no data aggregated for specified tags to satisfy the query: " +
-                                           query.toString());
+    // 1) find aggregation to query
+    Aggregation agg;
+    if (query.getAggregation() != null) {
+      agg = aggregations.get(query.getAggregation());
+      if (agg == null) {
+        throw new IllegalArgumentException(
+          String.format("Specified aggregation %s is not found in cube aggregations: %s",
+                        query.getAggregation(), aggregations.keySet().toString()));
+      }
+    } else {
+      agg = findAggregation(query);
+      if (agg == null) {
+        throw new IllegalArgumentException("There's no data aggregated for specified tags to satisfy the query: " +
+                                             query.toString());
+      }
     }
 
+    // 2) build a scan for a query
     List<TagValue> tagValues = Lists.newArrayList();
     for (String tagName : agg.getTagNames()) {
       // if not defined in query, will be set as null, which means "any"
       tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
     }
 
-    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
+
+    // 3) execute scan query
     FactTable table = resolutionToFactTable.get(query.getResolution());
     FactScanner scanner = table.scan(scan);
-    Table<Map<String, String>, Long, Long> resultTable = getTimeSeries(query, scanner);
-    return convertToQueryResult(query, resultTable);
+    Table<Map<String, String>, String, Map<Long, Long>> resultMap = getTimeSeries(query, scanner);
+    return convertToQueryResult(query, resultMap);
   }
 
   @Override
@@ -165,14 +179,14 @@ public class DefaultCube implements Cube {
     List<TagValue> tagValues = Lists.newArrayList();
     // find all the aggregations that match the sliceByTags in the query and
     // use the tag values of the aggregation to delete entries in all the fact-tables.
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
         tagValues.clear();
         for (String tagName : agg.getTagNames()) {
           tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
         }
         FactTable factTable = resolutionToFactTable.get(query.getResolution());
-        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureName(), tagValues);
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
         factTable.delete(scan);
       }
     }
@@ -194,7 +208,7 @@ public class DefaultCube implements Cube {
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(slice.keySet())) {
         result.addAll(table.findSingleTagValue(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
       }
@@ -218,7 +232,7 @@ public class DefaultCube implements Cube {
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(slice.keySet())) {
         result.addAll(table.findMeasureNames(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
       }
@@ -231,7 +245,7 @@ public class DefaultCube implements Cube {
   private Aggregation findAggregation(CubeQuery query) {
     Aggregation currentBest = null;
 
-    for (Aggregation agg : aggregations) {
+    for (Aggregation agg : aggregations.values()) {
       if (agg.getTagNames().containsAll(query.getGroupByTags()) &&
         agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
 
@@ -245,9 +259,10 @@ public class DefaultCube implements Cube {
     return currentBest;
   }
 
-  private Table<Map<String, String>, Long, Long> getTimeSeries(CubeQuery query, FactScanner scanner) {
-    // tag values -> time -> values
-    Table<Map<String, String>, Long, Long> resultTable = HashBasedTable.create();
+  private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
+    // {tag values, metric} -> {time -> value}s
+    Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
+
     int count = 0;
     while (scanner.hasNext()) {
       FactScanResult next = scanner.next();
@@ -280,13 +295,18 @@ public class DefaultCube implements Cube {
       }
 
       for (TimeValue timeValue : next) {
+        Map<Long, Long> timeValues = result.get(seriesTags, next.getMeasureName());
+        if (timeValues == null) {
+          result.put(seriesTags, next.getMeasureName(), Maps.<Long, Long>newHashMap());
+        }
+
         if (MeasureType.COUNTER == query.getMeasureType()) {
-          Long value = resultTable.get(seriesTags, timeValue.getTimestamp());
+          Long value =  result.get(seriesTags, next.getMeasureName()).get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
-          resultTable.put(seriesTags, timeValue.getTimestamp(), value);
+          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (MeasureType.GAUGE == query.getMeasureType()) {
-          resultTable.put(seriesTags, timeValue.getTimestamp(), timeValue.getValue());
+          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
           throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
@@ -296,32 +316,38 @@ public class DefaultCube implements Cube {
         break;
       }
     }
-    return resultTable;
+    return result;
   }
 
   private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
-                                                      Table<Map<String, String>, Long, Long> aggValuesToTimeValues) {
-    List<TimeSeries> result = Lists.newArrayList();
-    for (Map.Entry<Map<String, String>, Map<Long, Long>> row : aggValuesToTimeValues.rowMap().entrySet()) {
-      int count = 0;
-      List<TimeValue> timeValues = Lists.newArrayList();
-      for (Map.Entry<Long, Long> timeValue : row.getValue().entrySet()) {
-        timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
-      }
-      Collections.sort(timeValues);
-      PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-        new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
-      List<TimeValue> resultTimeValues = Lists.newArrayList();
-      while (timeValueItor.hasNext()) {
-        TimeValue timeValue = timeValueItor.next();
-        resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
-        if (++count >= query.getLimit()) {
-          break;
-        }
-      }
-      result.add(new TimeSeries(query.getMeasureName(), row.getKey(), resultTimeValues));
-    }
+                                                      Table<Map<String, String>, String,
+                                                        Map<Long, Long>> resultTable) {
 
+    List<TimeSeries> result = Lists.newArrayList();
+    // iterating each groupValue tags
+    for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
+      // iterating each metrics
+      for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().entrySet()) {
+        // generating time series for a grouping and a metric
+        int count = 0;
+        List<TimeValue> timeValues = Lists.newArrayList();
+        for (Map.Entry<Long, Long> timeValue : metricEntry.getValue().entrySet()) {
+          timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
+        }
+        Collections.sort(timeValues);
+        PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+          new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+        List<TimeValue> resultTimeValues = Lists.newArrayList();
+        while (timeValueItor.hasNext()) {
+          TimeValue timeValue = timeValueItor.next();
+          resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+          if (++count >= query.getLimit()) {
+            break;
+          }
+        }
+        result.add(new TimeSeries(metricEntry.getKey(), row.getKey(), resultTimeValues));
+      }
+    }
     return result;
   }
 

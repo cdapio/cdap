@@ -14,19 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.test.internal;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.StreamManager;
+import com.google.inject.assistedinject.Assisted;
 
 /**
- * Context passed to the Transform stages.
+ * Factory to create {@link StreamManager} objects
  */
-public interface TransformContext extends RuntimeContext {
-
+public interface StreamManagerFactory {
   /**
-   * Return the specification of this state.
+   * Return a {@link StreamManager} for the specified stream
    *
-   * @return {@link StageSpecification}
+   * @param streamId {@link Id.Stream} of the stream for which a {@link StreamManager} is requested
+   * @return {@link StreamManager} for the specified stream
    */
-  StageSpecification getSpecification();
+  StreamManager create(@Assisted("streamId") Id.Stream streamId);
 }

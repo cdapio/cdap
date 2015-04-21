@@ -14,25 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime.sinks;
+package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.api.metrics.Metrics;
 
 /**
- * Generic NoOp Sink.
- *
- * @param <T> any object
+ * No op metrics implementation for tests.
  */
-public class NoOpSink<T> extends RealtimeSink<T> {
+public class NoopMetrics implements Metrics {
+  public static final Metrics INSTANCE = new NoopMetrics();
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(NoOpSink.class.getSimpleName());
+  public void count(String s, int i) {
+    // no-op
   }
 
   @Override
-  public void write(Iterable<T> object) {
+  public void gauge(String s, long l) {
     // no-op
   }
 }

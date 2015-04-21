@@ -14,34 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.realtime;
+package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Context passed to the Source stages.
+ * Interface to represent the data that is transferred from one node to the next node in the {@link Workflow}
  */
-public interface SourceContext extends RuntimeContext {
-
+public interface WorkflowToken {
   /**
-   * Get the specification of the source stage, set during the configuration.
-   *
-   * @return {@link StageSpecification}
+   * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null
+   * if the counters are not set.
+   * @return the Hadoop MapReduce counters set by the previous MapReduce program
    */
-  StageSpecification getSpecification();
-
-  /**
-   * Get Instance Id.
-   *
-   * @return instance id
-   */
-  int getInstanceId();
-
-  /**
-   * Get Instance Count.
-   *
-   * @return instance count
-   */
-  int getInstanceCount();
+  @Nullable
+  public Map<String, Map<String, Long>> getMapReduceCounters();
 }

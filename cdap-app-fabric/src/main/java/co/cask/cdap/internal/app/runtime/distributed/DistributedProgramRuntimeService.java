@@ -17,6 +17,8 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -27,8 +29,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;

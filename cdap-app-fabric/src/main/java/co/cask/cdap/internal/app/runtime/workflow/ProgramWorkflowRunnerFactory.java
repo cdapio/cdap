@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -56,19 +57,20 @@ public class ProgramWorkflowRunnerFactory {
    * properties of the {@link WorkflowActionSpecification}.
    *
    * @param actionSpec The {@link WorkflowActionSpecification}
+   * @param token      The {@link WorkflowToken}
    * @return the appropriate concrete implementation of {@link ProgramWorkflowRunner} for the program
    */
-  public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec) {
+  public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, WorkflowToken token) {
 
 
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
-                                                    workflowProgramOptions);
+          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, 
+                                                    workflowProgramOptions, token);
         case SPARK:
           return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
-                                                workflowProgramOptions);
+                                                workflowProgramOptions, token);
         default:
           LOG.debug("No workflow program runner found for this program");
       }

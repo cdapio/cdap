@@ -22,8 +22,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -55,7 +55,7 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
   }
 
   @Override
-  public void initialize(SourceContext context) throws Exception {
+  public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
     type = context.getRuntimeArguments().get("type");
   }
@@ -81,7 +81,6 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-
     if (type == null) {
       writeDefaultRecords(writer);
     } else if (STREAM_TYPE.equals(type)) {
@@ -103,7 +102,6 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     Schema.Field dataField = Schema.Field.of("data", Schema.of(Schema.Type.STRING));
     Schema.Field headersField = Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                         Schema.of(Schema.Type.STRING)));
-    Schema.Field tsField = Schema.Field.of("timestamp", Schema.of(Schema.Type.LONG));
     // emit only string
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("StringRecord", dataField));
     recordBuilder.set("data", "Hello");
@@ -119,12 +117,10 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     recordBuilder.set("data", "Hello".getBytes(Charsets.UTF_8));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
     writer.emit(recordBuilder.build());
-    // ByteBuffer + headers + timestamp
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersTsRecord", dataField, headersField,
-                                                             tsField));
+    // ByteBuffer + headers
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersRecord", dataField, headersField));
     recordBuilder.set("data", ByteBuffer.wrap("Hello".getBytes(Charsets.UTF_8)));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
-    recordBuilder.set("timestamp", System.currentTimeMillis());
     writer.emit(recordBuilder.build());
   }
 

@@ -160,8 +160,8 @@ public class MapReduceMetricsInfo {
 
   private long getAggregates(Map<String, String> tags, String metric) throws Exception {
     MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, prependSystem(metric), MetricType.COUNTER, tags,
-                          ImmutableList.<String>of());
+      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, prependSystem(metric),
+                          MetricType.COUNTER, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     if (query.isEmpty()) {
       return 0;
@@ -175,8 +175,8 @@ public class MapReduceMetricsInfo {
   // queries MetricStore for one metric across all tasks of a certain TaskType, using GroupBy InstanceId
   private Map<String, Long> queryGroupedAggregates(Map<String, String> tags, String metric) throws Exception {
     MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, prependSystem(metric), MetricType.GAUGE, tags,
-                          ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
+      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, ImmutableList.of(prependSystem(metric)),
+                          MetricType.GAUGE, tags, ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
 
     // runId -> metricValue

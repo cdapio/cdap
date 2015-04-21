@@ -16,13 +16,18 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -97,28 +102,7 @@ public class JmsMessageToStringSourceTest {
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
-
-    jmsSource.initialize(new SourceContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     QueueConnection queueConn = null;
@@ -131,7 +115,7 @@ public class JmsMessageToStringSourceTest {
       sendMessage(queueConn, queueDestination, "Queue:" + queueDestination.getQueueName());
 
       // Verify if it is valid
-      verifyEmittedText(jmsSource, 5, 4000);
+      verifyEmittedText(jmsSource);
 
     } finally {
       if (queueConn != null) {
@@ -149,28 +133,7 @@ public class JmsMessageToStringSourceTest {
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
-
-    jmsSource.initialize(new SourceContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    });
+    jmsSource.initialize(new MockRealtimeContext());
 
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
     TopicConnection topicConn = null;
@@ -184,7 +147,7 @@ public class JmsMessageToStringSourceTest {
       sendMessage(topicConn, topicDestination, "Topic:" + topicDestination.getTopicName());
 
       // Verify if it is valid
-      verifyEmittedText(jmsSource, 5, 4000);
+      verifyEmittedText(jmsSource);
     } finally {
       if (topicConn != null) {
         try {
@@ -211,37 +174,24 @@ public class JmsMessageToStringSourceTest {
   }
 
   // Helper method to verify
-  private void verifyEmittedText(JmsSource source, int numTries, long sleepMilis) {
+  private void verifyEmittedText(JmsSource source) {
     // Lets verify from JMS source
     MockEmitter emitter = new MockEmitter();
     SourceState sourceState = new SourceState();
     source.poll(emitter, sourceState);
 
-    int i = 1;
-    while (i < numTries) {
-      if (emitter.getCurrentValue() == null) {
-        try {
-          Thread.sleep(sleepMilis);
-        } catch (InterruptedException e) {
-          // no-op
-        }
-        source.poll(emitter, sourceState);
-        i++;
-      } else {
-        break;
-      }
-    }
-    String emitterValue = emitter.getCurrentValue();
-    Assert.assertEquals(originalMessage, emitterValue);
+    for (String val : emitter.getCurrentValues()) {
+      Assert.assertEquals(originalMessage, val);
 
-    System.out.println("Getting JMS Message in emitter with value: " + emitterValue);
+      System.out.println("Getting JMS Message in emitter with value: " + val);
+    }
   }
 
   /**
    * Helper class to emit JMS message to next stage
    */
   private static class MockEmitter implements Emitter<String> {
-    private String currentValue;
+    private List<String> currentValues = Lists.newLinkedList();
 
     /**
      * Emit objects to the next stage.
@@ -250,11 +200,40 @@ public class JmsMessageToStringSourceTest {
      */
     @Override
     public void emit(String value) {
-      currentValue = value;
+      currentValues.add(value);
     }
 
-    String getCurrentValue() {
-      return currentValue;
+    List<String> getCurrentValues() {
+      return currentValues;
+    }
+  }
+
+  public static class MockRealtimeContext implements RealtimeContext {
+    private final Map<String, String> runtimeArgs = Maps.newHashMap();
+
+    @Override
+    public int getInstanceId() {
+      return 0;
+    }
+
+    @Override
+    public int getInstanceCount() {
+      return 1;
+    }
+
+    @Override
+    public Map<String, String> getRuntimeArguments() {
+      return runtimeArgs;
+    }
+
+    @Override
+    public StageSpecification getSpecification() {
+      return null;
+    }
+
+    @Override
+    public Metrics getMetrics() {
+      return null;
     }
   }
 }

@@ -153,4 +153,23 @@ public class MDSKeyTest {
     } catch (BufferUnderflowException expected) {
     }
   }
+
+  @Test
+  public void testAppend() {
+    MDSKey mdsKey1 = new MDSKey.Builder().add("ab").add(3L).add(new byte[]{'x', 'y'}).build();
+    MDSKey mdsKey2 = new MDSKey.Builder().add("bd").add(5).append(mdsKey1).add(new byte[]{'z', 'z'}).build();
+    MDSKey mdsKey3 = new MDSKey.Builder().add(2).add(new byte[]{'w'}).append(mdsKey2).add(8L).build();
+
+    // Assert
+    MDSKey.Splitter splitter = mdsKey3.split();
+    Assert.assertEquals(2, splitter.getInt());
+    Assert.assertArrayEquals(new byte[]{'w'}, splitter.getBytes());
+    Assert.assertEquals("bd", splitter.getString());
+    Assert.assertEquals(5, splitter.getInt());
+    Assert.assertEquals("ab", splitter.getString());
+    Assert.assertEquals(3L, splitter.getLong());
+    Assert.assertArrayEquals(new byte[]{'x', 'y'}, splitter.getBytes());
+    Assert.assertArrayEquals(new byte[]{'z', 'z'}, splitter.getBytes());
+    Assert.assertEquals(8L, splitter.getLong());
+  }
 }

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.metrics;
+package co.cask.cdap.api.metrics;
 
 import com.google.common.util.concurrent.Service;
 

@@ -121,4 +121,7 @@ public interface TestManager {
    * @throws Exception
    */
   void deleteNamespace(Id.Namespace namespace) throws Exception;
+
+
+  StreamManager getStreamManager(Id.Stream streamId);
 }

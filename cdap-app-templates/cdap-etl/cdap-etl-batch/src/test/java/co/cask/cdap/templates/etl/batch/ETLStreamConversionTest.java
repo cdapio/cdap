@@ -31,7 +31,7 @@ import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTran
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -90,9 +90,9 @@ public class ETLStreamConversionTest extends TestBase {
       .build());
 
     ApplicationManager batchManager = deployApplication(ETLBatchTemplate.class);
-    StreamWriter streamWriter = batchManager.getStreamWriter("myStream");
-    streamWriter.createStream();
-    streamWriter.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
+    StreamManager streamManager = getStreamManager("myStream");
+    streamManager.createStream();
+    streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
 
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructETLBatchConfig(filesetName);

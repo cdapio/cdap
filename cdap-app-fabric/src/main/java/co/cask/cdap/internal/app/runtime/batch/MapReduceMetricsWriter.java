@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

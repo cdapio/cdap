@@ -1,7 +1,7 @@
 @import '../../styles/variables.less';
 
 @font-size: 18px;
-body.theme-cdap.state-etlapps-create {
+body.theme-cdap.state-adapters-create {
 
   .as-sortable-drag {
     &.template {
@@ -27,7 +27,7 @@ body.theme-cdap.state-etlapps-create {
       margin-top: 0;
       font-weight: bold;
     }
-    .fa-pencil {
+    .fa-pencil,.fa-times {
       font-size: 12px;
       vertical-align: middle;
       &:hover {
@@ -67,6 +67,11 @@ body.theme-cdap.state-etlapps-create {
       }
       .template {
         &.transforms {
+          .fa-times {
+            position: relative;
+            top: -5px;
+            font-size: 15px;
+          }
           border: 0;
           padding: 0;
           .default {
@@ -134,8 +139,21 @@ body.theme-cdap.state-etlapps-create {
   }
 }
 
-body.theme-cdap.state-etlapps-list {
+body.theme-cdap.state-adapters-list {
+  a {
+    text-decoration: none;
+  }
   [etl-apps-list] {
+    [etl-add-app] {
+      cursor: pointer;
+      .well.well-lg {
+        border: 2px dashed;
+        margin-bottom: 0;
+        h1 {
+          margin-bottom: 13px;
+        }
+      }
+    }
     [class*="col-"] {
       padding-left: 5px;
       padding-right: 5px;

@@ -14,36 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.realtime;
+package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.api.metrics.Metrics;
 
 /**
- * Context passed to the Sink stages.
+ * Context passed to ETL stages.
  */
-public interface SinkContext extends RuntimeContext, StreamWriter, DatasetContext {
+public interface StageContext extends RuntimeContext {
 
   /**
-   * Get the specification of this stage, set during the configuration.
+   * Return the specification of this state.
    *
    * @return {@link StageSpecification}
    */
   StageSpecification getSpecification();
 
   /**
-   * Get Instance Id.
+   * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by
+   * the stage they are emitted from. A metric called 'reads' emitted in one stage will be aggregated with
+   * those emitted in another stage.
    *
-   * @return instance id
+   * @return {@link Metrics} for collecting metrics
    */
-  int getInstanceId();
-
-  /**
-   * Get Instance Count.
-   *
-   * @return instance count
-   */
-  int getInstanceCount();
+  Metrics getMetrics();
 }
