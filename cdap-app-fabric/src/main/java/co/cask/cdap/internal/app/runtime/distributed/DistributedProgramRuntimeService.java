@@ -134,7 +134,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
     RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
-    RunId runId = controller.getRunId();
     return new SimpleRuntimeInfo(controller, program, twillRunId);
   }
 
@@ -147,10 +146,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  private synchronized boolean twillRunIdExists(RunId twillRunId) {
+  private synchronized boolean twillRunIdCached(RunId twillRunId) {
     for (RuntimeInfo runtimeInfo : runtimeInfos.values()) {
-      if (runtimeInfo.getTwillRunId().equals(twillRunId)) {
+      if (runtimeInfo.getTwillRunId() != null && runtimeInfo.getTwillRunId().equals(twillRunId)) {
         return true;
       }
     }
@@ -217,8 +215,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     Map<RunId, RuntimeInfo> result = Maps.newHashMap();
     result.putAll(super.list(type));
 
-    // Map that will hold the Id.Program and TwillController associated with each twill runid
-    // This map can be later used to create the runtimeinfo for the twill runids which are not yet cached in-memory
+    // Map that will hold the Id.Program and TwillController associated with each twill runid which is not yet
+    // cached in memory
     Map<RunId, Map<Id.Program, TwillController>> twillRunIdMap = Maps.newHashMap();
     // Goes through all live application and fill the twillRunIdMap for the given type
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
@@ -231,23 +229,18 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         continue;
       }
 
-      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
       for (TwillController controller : liveInfo.getControllers()) {
         RunId twillRunId = controller.getRunId();
+        if (twillRunIdCached(twillRunId)) {
+          continue;
+        }
+
+        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
         twillRunIdMap.put(twillRunId, ImmutableMap.of(programId, controller));
       }
     }
 
-    // Remove the already cached twill runids from the map
-    Iterator<Map.Entry<RunId, Map<Id.Program, TwillController>>> iter = twillRunIdMap.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry<RunId, Map<Id.Program, TwillController>> entry = iter.next();
-      if (twillRunIdExists(entry.getKey())) {
-        iter.remove();
-      }
-    }
-
-    if (twillRunIdMap.size() > 0) {
+    if (!twillRunIdMap.isEmpty()) {
       // Some twill runids are not cached. Create the runtimeinfo for them and add it to the cache
       // Get all active runs from the store
       List<RunRecord> runningList = store.getAllActiveRuns();
