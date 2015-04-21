@@ -45,23 +45,28 @@ decho () {
 }
 
 # set the mandatory variables first (from info in project's main pom.xml)
+
+# get project version from main pom.xml
 function get_version () {
   TMP_VERSION=`grep "<version>" ../pom.xml`
   TMP_VERSION=${TMP_VERSION#*<version>}
   VERSION=${TMP_VERSION%%</version>*}
 }
 
+# get project name (e.g. cdap) from main pom.xml
 function get_project () {
   TMP_PROJECT=`grep "<artifactId>" ../pom.xml`
   TMP_PROJECT=${TMP_PROJECT#*<artifactId>}
   PROJECT=${TMP_PROJECT%%</artifactId>*}
 }
 
+# convert branch names that look like this: feature/my-branch to feature-my-branch
 function convert_branch_name () {
   decho "converting '/' to '-' in branch name"
   DOC_DIR=`echo $DOC_DIR | tr '/' '-'`
 }
 
+# create remote directory based on type of build
 set_remote_dir () {
   DOC_DIR=${OPT_DIR:-${BRANCH_NAME}}
   convert_branch_name
@@ -113,40 +118,40 @@ fi
 
 ################################################################################
 
+# create remote directory prior to rsync
 function make_remote_dir () {
-  # create remote directory prior to rsync
   decho "making sure remote directory ${3} exists on ${2}"
   decho "ssh ${1}@${2} \"sudo mkdir -p ${3}\""
   ssh ${1}@${2} "sudo mkdir -p ${3}" || die "could not create ${3} directory on ${2}"
   decho ""
 }
 
+# rsync zip file to remote directory in directory we just created
 function rsync_zip_file () {
-  # rsync zip file to remote directory in directory we just created
   decho "rsyncing archive ${4} to ${2}"
   decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${5}/${4} \"${1}@${2}:${3}/.\"" 
   rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${5}/${4} "${1}@${2}:${3}/." || die "could not rsync ${4} to ${2}"
   decho ""
 }
 
+# unzip file on remote server 
 function unzip_archive () {
-  # unzip file on remote server 
   decho "unzipping ${4} on ${2}"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
   ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
   decho ""
 }
 
+# after unzipping it, we move the zip file to it is unzipped directory
 function move_zip_file () {
-  # after unzipping it, we move the zip file to it is unzipped directory
   decho "moving zip file"
   decho "ssh ${1}@${2} \"sudo mv ${3}/${4} ${3}/${VERSION}\""
   ssh ${1}@${2} "sudo mv ${3}/${4} ${3}/${VERSION}" || die "unable to move ${4} to ${VERSION} subdirectory on ${2}"
   decho ""
 }
 
+# main deploy function
 function deploy () {
-  # main deploy function
   decho "deploying to ${2}"
   make_remote_dir ${1} ${2} ${3}
   rsync_zip_file ${1} ${2} ${3} ${4} ${5}
