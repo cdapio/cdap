@@ -1,27 +1,29 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsDetailController', function($scope, MyDataSource, $state, FlowDiagramData, myHelpers, $timeout) {
-    $scope.status = null;
+  .controller('FlowsDetailController', function($scope, MyDataSource, $state) {
     var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+        path = '/apps/' +
+          $state.params.appId + '/flows/' +
+          $state.params.programId;
 
-
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs?status=running'
-    }, function(res) {
-        $scope.activeRuns = res.length;
-      });
-
-
-    $scope.do = function(action) {
-      $scope.status = action;
+    $scope.start = function() {
+      $scope.status = 'STARTING';
       dataSrc.request({
-        _cdapNsPath: basePath + '/' + action,
+        _cdapNsPath: path + '/start',
         method: 'POST'
-      }).then(function() {
-        $timeout(function() {
-          $scope.status = null;
-          $state.go($state.current, $state.params, { reload: true });
-        });
       });
     };
+
+    $scope.stop = function() {
+      $scope.status = 'STOPPING';
+      dataSrc.request({
+        _cdapNsPath: path + '/stop',
+        method: 'POST'
+      });
+    };
+
+    dataSrc.poll({
+      _cdapNsPath: path + '/status'
+    }, function(res) {
+      $scope.status = res.status;
+    });
   });

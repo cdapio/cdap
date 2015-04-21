@@ -381,20 +381,16 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
-      Collection<MetricTimeSeries> queryResult = Lists.newArrayList();
       QueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
-      for (String metric : queryRequest.getMetrics()) {
-        MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
-                                                    timeRange.getResolutionInSeconds(),
-                                                    timeRange.getCount(), metric,
-                                                    // todo: figure out MetricType
-                                                    MetricType.COUNTER, tagsSliceBy,
-                                                    transformGroupByTags(queryRequest.getGroupBy()),
-                                                    timeRange.getInterpolate());
-        Collection<MetricTimeSeries> timeSerieses = metricStore.query(query);
 
-        queryResult.addAll(timeSerieses);
-      }
+      MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
+                                                  timeRange.getResolutionInSeconds(),
+                                                  timeRange.getCount(), queryRequest.getMetrics(),
+                                                  // todo: figure out MetricType
+                                                  MetricType.COUNTER, tagsSliceBy,
+                                                  transformGroupByTags(queryRequest.getGroupBy()),
+                                                  timeRange.getInterpolate());
+      Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
       long endTime = timeRange.getEnd();
       if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && endTime == 0) {

@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.common.io.ByteBufferInputStream;
@@ -35,19 +35,19 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link MetricValue} and stores it in
- * {@link MetricStore}.
+ * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link co.cask.cdap.api.metrics.MetricValues}
+ * and stores it in {@link MetricStore}.
  */
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
 
-  private final DatumReader<MetricValue> recordReader;
+  private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private long recordProcessed;
   private MetricStore metricStore;
 
-  public MetricsMessageCallback(DatumReader<MetricValue> recordReader,
+  public MetricsMessageCallback(DatumReader<MetricValues> recordReader,
                                 Schema recordSchema,
                                 MetricStore metricStore) {
     this.recordReader = recordReader;
@@ -59,10 +59,10 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   public void onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
     final ByteBufferInputStream is = new ByteBufferInputStream(null);
-    List<MetricValue> records = ImmutableList.copyOf(
-      Iterators.filter(Iterators.transform(messages, new Function<FetchedMessage, MetricValue>() {
+    List<MetricValues> records = ImmutableList.copyOf(
+      Iterators.filter(Iterators.transform(messages, new Function<FetchedMessage, MetricValues>() {
       @Override
-      public MetricValue apply(FetchedMessage input) {
+      public MetricValues apply(FetchedMessage input) {
         try {
           return recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         } catch (IOException e) {

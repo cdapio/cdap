@@ -60,7 +60,7 @@ public class MetricStoreRequestExecutor {
       TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(query.getStartTs(),
                                                                       query.getEndTs());
       // Special metrics handle that requires computation from multiple time series.
-      if ("system.process.busyness".equals(query.getMetricName())) {
+      if (query.getMetricNames().contains("system.process.busyness")) {
         computeProcessBusyness(query, builder);
       } else {
         PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(queryTimeSeries(query));
@@ -81,7 +81,7 @@ public class MetricStoreRequestExecutor {
 
     } else {
       // Special metrics handle that requires computation from multiple aggregates results.
-      if ("system.process.events.pending".equals(query.getMetricName())) {
+      if (query.getMetricNames().contains("system.process.events.pending")) {
         resultObj = computeFlowletPending(query);
       } else {
         resultObj = getAggregates(query);

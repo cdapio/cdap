@@ -18,14 +18,13 @@ package co.cask.cdap.metrics.collect;
 import co.cask.cdap.api.metrics.MetricValue;
 
 /**
- * A MetricsEmitter is a class that is able to emit {@link MetricValue}.
+ * A MetricsEmitter is a class that is able to emit {@link co.cask.cdap.api.metrics.MetricValue}.
  */
 public interface MetricsEmitter {
 
   /**
-   * Emits metric for the given timestamp.
-   * @param timestamp The timestamp for the metrics.
-   * @return A {@link MetricValue} representing metrics for the given timestamp.
+   * Emits metric
+   * @return A {@link co.cask.cdap.api.metrics.MetricValue} representing metrics for the given timestamp.
    */
-  MetricValue emit(long timestamp);
+  MetricValue emit();
 }

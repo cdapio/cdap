@@ -40,15 +40,15 @@ angular.module(PKG.name+'.services')
 
     /**
      * Generates unique id's for each request that is being sent on
-     * the websocket connection. 
+     * the websocket connection.
      */
     var generateUUID = function() {
       return uuid.v4();
     }
 
     /**
-     * Start polling of the resource - sends the action 'poll-start' to 
-     * the node backend. 
+     * Start polling of the resource - sends the action 'poll-start' to
+     * the node backend.
      */
     function _pollStart (resource) {
       mySocket.send({
@@ -59,7 +59,7 @@ angular.module(PKG.name+'.services')
 
     /**
      * Stops polling of the resource - sends the actions 'poll-stop' to
-     * the node backend. 
+     * the node backend.
      */
     function _pollStop (resource) {
       mySocket.send({
@@ -132,7 +132,7 @@ angular.module(PKG.name+'.services')
     }
 
     /**
-     * Start polling of a resource when in scope. 
+     * Start polling of a resource when in scope.
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
       var id = generateUUID()
@@ -154,7 +154,7 @@ angular.module(PKG.name+'.services')
     };
 
     /**
-     * Stop polling of a resource when requested or when out of scope. 
+     * Stop polling of a resource when requested or when out of scope.
      */
     DataSource.prototype.stopPoll = function(id) {
       var filterFilter = $filter('filter');
@@ -167,7 +167,7 @@ angular.module(PKG.name+'.services')
     };
 
     /**
-     * Fetch a resource on-demand. Send the action 'request' to 
+     * Fetch a resource on-demand. Send the action 'request' to
      * the node backend.
      */
     DataSource.prototype.request = function (resource, cb) {
