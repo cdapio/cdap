@@ -45,8 +45,9 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.render = genericRender.bind(null, scope, $filter);
       scope.parentSelector = attr.parent;
       var metricCircleRadius = 25;
+      var streamMetricCircleRadius = metricCircleRadius - 5;
       var instanceCircleRadius = 10;
-      var flowletCircleRadius = 60;
+      var flowletCircleRadius = 50;
       // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
       var metricCountPadding = 5;
       var streamDiagramWidth = 40;
@@ -106,7 +107,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
 
         shapes.stream = function(parent, bbox, node) {
           var w = bbox.width,
-          h = bbox.height,
+          h = bbox.height/2,
           points = [
             { x:   -streamDiagramWidth, y: streamDiagramHeight}, //e
             { x:   -streamDiagramWidth, y: -h - streamDiagramHeight}, //a
@@ -120,12 +121,12 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             .attr('class', 'flow-shapes foundation-shape stream-svg');
 
           // Elements are positioned with respect to shapeSvg.
-          var width = shapeSvg.node().getBBox().width;
+          var width = shapeSvg.node().getBBox().width+10;
           var circleXPos = -1 * width/2;
 
           parent.append('circle')
             .attr('cx', circleXPos)
-            .attr('r', metricCircleRadius)
+            .attr('r', streamMetricCircleRadius)
             .attr('class', 'flow-shapes stream-events');
 
           parent.append('text')
