@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, MyDataSource, $alert, $bootstrapModal, $state, ETLAppsApiFactory, mySettings, $filter) {
+  .controller('ETLAppsCreateController', function($scope, $q, $alert, $bootstrapModal, $state, ETLAppsApiFactory, mySettings, $filter) {
     var apiFactory = new ETLAppsApiFactory($scope);
-
     $scope.ETLMetadataTabOpen = true;
     $scope.ETLSourcesTabOpen = true;
     $scope.ETLTransformsTabOpen = true;
@@ -41,8 +40,6 @@ angular.module(PKG.name + '.feature.etlapps')
         $scope.sink = defaultSink;
       }
     };
-
-    // $scope.$watch('selectedEtlDraft', );
 
     // Default ETL Templates
     $scope.etlTypes = [
@@ -97,17 +94,6 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.transforms = defaultTransforms;
     $scope.activePanel = 0;
 
-    function debounce(fn, ms) {
-      var timeout;
-      return function() {
-        var args = Array.prototype.slice.call(arguments, 0);
-        if (timeout) {
-          clearTimeout(timeout);
-        }
-        timeout = setTimeout(fn.apply.bind(fn, $scope, args), ms);
-      };
-    }
-
     $scope.$watch('metadata.type',function(etlType) {
       if (!etlType) return;
       $scope.onETLTypeSelected = true;
@@ -115,7 +101,6 @@ angular.module(PKG.name + '.feature.etlapps')
       apiFactory.fetchSinks(etlType);
       apiFactory.fetchTransforms(etlType);
     });
-
 
     $scope.handleSourceDrop = function(sourceName) {
       if ($scope.source.placeHolderSource) {
@@ -183,7 +168,6 @@ angular.module(PKG.name + '.feature.etlapps')
       });
 
     };
-
     $scope.editTransformProperty = function(transform) {
       if (transform.placeHolderTransform){
         return;
@@ -198,7 +182,6 @@ angular.module(PKG.name + '.feature.etlapps')
         keyboard: true
       });
     }
-
     $scope.editTransformProperties = function() {
       if ($scope.transforms.length === 0) {
         return;
@@ -246,12 +229,20 @@ angular.module(PKG.name + '.feature.etlapps')
     };
 
     $scope.getDrafts = function() {
-      mySettings.get('etldrafts')
+      var defer = $q.defer();
+      return mySettings.get('etldrafts')
         .then(function(res) {
           $scope.etlDrafts = res || {};
-          window.e = $scope.etlDrafts;
           $scope.etlDraftList = Object.keys($scope.etlDrafts);
-          window.f = $scope.etlDraftList;
+          defer.resolve();
+        });
+      return defer.promise;
+    };
+    if ($state.params.data) {
+      $scope.getDrafts()
+        .then(function() {
+          $scope.selectedEtlDraft = $state.params.data;
+          $scope.onDraftChange($state.params.data);
         });
     };
     $scope.getDrafts();
@@ -268,12 +259,14 @@ angular.module(PKG.name + '.feature.etlapps')
           sink: $scope.sink
         }
       };
-      debounce(function() {
-        console.log("Saveing")
-        mySettings.set('etldrafts', $scope.etlDrafts)
-        .then(function(res) {
-          console.log("Etl Drafts Saved");
+
+      mySettings.set('etldrafts', $scope.etlDrafts)
+      .then(function(res) {
+        $alert({
+          type: 'success',
+          content: 'The ETL Template ' + $scope.metadata.name + ' has been saved as draft!'
         });
-      }, 5000)();
+        $state.go('^.list');
+      });
     }
   });
