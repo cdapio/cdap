@@ -16,15 +16,17 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.common.NoopMetrics;
 
 import java.util.Map;
 
 /**
  * Mock context for unit tests
  */
-public class MockTransformContext implements TransformContext {
+public class MockTransformContext implements StageContext {
   private final Map<String, String> args;
 
   public MockTransformContext(Map<String, String> args) {
@@ -34,6 +36,11 @@ public class MockTransformContext implements TransformContext {
   @Override
   public StageSpecification getSpecification() {
     return null;
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return NoopMetrics.INSTANCE;
   }
 
   @Override

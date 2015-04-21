@@ -62,7 +62,7 @@
         <tbody>
           <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <span ng-bind="namespace.name"></span>
+              <span ng-bind="namespace.name | myEllipsis: 12"></span>
             </td>
             <td>
               <span ng-bind="namespace.appsCount"></span>

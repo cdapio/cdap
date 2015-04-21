@@ -15,71 +15,49 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.util.Map;
 
 /**
- *
+ * The {@link TwillApplication} for running {@link Flow} in distributed mode.
+ * Each {@link Flowlet} runs in a separate YARN container.
  */
-public final class FlowTwillApplication implements TwillApplication {
+public final class FlowTwillApplication extends AbstractProgramTwillApplication {
 
   private final FlowSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
 
   public FlowTwillApplication(Program program, FlowSpecification spec,
-                              File hConfig, File cConfig, EventHandler eventHandler) {
+                              Map<String, File> localizeFiles, EventHandler eventHandler) {
+    super(program, localizeFiles, eventHandler);
     this.spec = spec;
-    this.program = program;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
   }
 
   @Override
-  public TwillSpecification configure() {
-    TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s",
-                             ProgramType.FLOW.name().toLowerCase(),
-                             program.getNamespaceId(), program.getApplicationId(), spec.getName()))
-      .withRunnable();
+  protected ProgramType getType() {
+    return ProgramType.FLOW;
+  }
 
-    Location programLocation = program.getJarLocation();
-    String programName = programLocation.getName();
-    TwillSpecification.Builder.RunnableSetter runnableSetter = null;
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
       FlowletSpecification flowletSpec = flowletDefinition.getFlowletSpec();
-      ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-        .setVirtualCores(flowletSpec.getResources().getVirtualCores())
-        .setMemory(flowletSpec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-        .setInstances(flowletDefinition.getInstances())
-        .build();
 
       String flowletName = entry.getKey();
-      runnableSetter = moreRunnable
-        .add(flowletName,
-             new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
-        .withLocalFiles().add(programName, programLocation.toURI())
-                         .add("hConf.xml", hConfig.toURI())
-                         .add("cConf.xml", cConfig.toURI()).apply();
+      runnables.put(entry.getKey(), new RunnableResource(
+        new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml"),
+        createResourceSpec(flowletSpec.getResources(), flowletDefinition.getInstances())
+      ));
     }
-
-    Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");
-    return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
   }
 }

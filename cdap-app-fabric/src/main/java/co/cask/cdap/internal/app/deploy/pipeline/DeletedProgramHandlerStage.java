@@ -19,9 +19,10 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -30,23 +31,17 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
@@ -55,37 +50,29 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   private static final Logger LOG = LoggerFactory.getLogger(DeletedProgramHandlerStage.class);
 
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
-
   private final Store store;
   private final ProgramTerminator programTerminator;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricStore metricStore;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
-                                    QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
+                                    QueueAdmin queueAdmin, MetricStore metricStore) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.metricStore = metricStore;
   }
 
   @Override
   public void process(ApplicationDeployable appSpec) throws Exception {
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
                                                                                     appSpec.getSpecification());
+
+    // TODO: this should also delete logs and run records (or not?), and do it for all prohgram types [CDAP-2187]
 
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
@@ -125,39 +112,16 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     emit(appSpec);
   }
 
-  private void deleteMetrics(String account, String application, Iterable<String> flows) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.METRICS);
-    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(DISCOVERY_TIMEOUT_SECONDS,
-                                                                            TimeUnit.SECONDS);
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
-    }
-
+  private void deleteMetrics(String namespace, String application, Iterable<String> flows) throws Exception {
     LOG.debug("Deleting metrics for application {}", application);
     for (String flow : flows) {
-      // TODO: use MetricStore directly to delete the metrics [CDAP-2163]
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.API_VERSION_3,
-                                 "ignored",
-                                 application, flow);
-
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-        .build();
-
-      try {
-        client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-      } catch (Exception e) {
-        LOG.error("exception making metrics delete call", e);
-        Throwables.propagate(e);
-      } finally {
-        client.close();
-      }
+      long endTs = System.currentTimeMillis() / 1000;
+      Map<String, String> tags = Maps.newHashMap();
+      tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
+      tags.put(Constants.Metrics.Tag.APP, application);
+      tags.put(Constants.Metrics.Tag.FLOW, flow);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      metricStore.delete(deleteQuery);
     }
   }
 }

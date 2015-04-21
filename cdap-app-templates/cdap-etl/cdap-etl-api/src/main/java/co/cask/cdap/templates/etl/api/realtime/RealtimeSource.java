@@ -30,9 +30,7 @@ import javax.annotation.Nullable;
  *
  * @param <T> Type of object that the source emits
  */
-public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContext>, EndPointStage {
-
-  private SourceContext context;
+public abstract class RealtimeSource<T> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -47,11 +45,11 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContex
   /**
    * Initialize the Source.
 
-   * @param context {@link SourceContext}
+   * @param context {@link RealtimeContext}
    */
   @Override
-  public void initialize(SourceContext context) throws Exception {
-    this.context = context;
+  public void initialize(RealtimeContext context) throws Exception {
+    // no-op
   }
 
   /**
@@ -70,9 +68,5 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<SourceContex
   @Override
   public void destroy() {
     // no-op
-  }
-
-  protected SourceContext getContext() {
-    return context;
   }
 }

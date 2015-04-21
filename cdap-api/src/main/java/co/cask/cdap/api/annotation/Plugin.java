@@ -14,19 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.api.annotation;
 
-import co.cask.cdap.api.RuntimeContext;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Context passed to the Transform stages.
+ * Annotate a class that it is a plugin.
  */
-public interface TransformContext extends RuntimeContext {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Plugin {
 
   /**
-   * Return the specification of this state.
-   *
-   * @return {@link StageSpecification}
+   * Default plugin type name.
    */
-  StageSpecification getSpecification();
+  String DEFAULT_TYPE = "plugin";
+
+  /**
+   * Returns the name of the plugin type. Default is 'plugin'.
+   */
+  String type() default DEFAULT_TYPE;
 }

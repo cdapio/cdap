@@ -17,15 +17,22 @@
 package co.cask.cdap.common.utils;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Queues;
+import com.google.common.io.Files;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * Copied from Google Guava as these methods are now deprecated.
+ * Provides utility methods for operating on directories.
  */
 public final class DirUtils {
 
@@ -89,5 +96,103 @@ public final class DirUtils {
     // The last clause is needed so that if there are multiple threads trying to create the same directory
     // this method will still return true.
     return dir.isDirectory() || dir.mkdirs() || dir.isDirectory();
+  }
+
+  /**
+   * Returns list of file names under the given directory. An empty list will be returned if the given file is
+   * not a directory.
+   */
+  public static List<String> list(File directory) {
+    return listOf(directory.list());
+  }
+
+  /**
+   * Returns list of file names under the given directory that are accepted by the given filter.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<String> list(File directory, FilenameFilter filenameFilter) {
+    return listOf(directory.list(filenameFilter));
+  }
+
+  /**
+   * Returns list of file names under the given directory that matches the give set of file name extension.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<String> list(File directory, String...extensions) {
+    return list(directory, ImmutableSet.copyOf(extensions));
+  }
+
+  /**
+   * Returns list of file names under the given directory that matches the give set of file name extension.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<String> list(File directory, Iterable<String> extensions) {
+    final ImmutableSet<String> allowedExtensions = ImmutableSet.copyOf(extensions);
+
+    return list(directory, new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return allowedExtensions.contains(Files.getFileExtension(name));
+      }
+    });
+  }
+
+  /**
+   * Returns list of files under the given directory. An empty list will be returned if the
+   * given file is not a directory.
+   */
+  public static List<File> listFiles(File directory) {
+    return listOf(directory.listFiles());
+  }
+
+  /**
+   * Returns list of files under the given directory that are accepted by the given filter.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<File> listFiles(File directory, FileFilter fileFilter) {
+    return listOf(directory.listFiles(fileFilter));
+  }
+
+  /**
+   * Returns list of files under the given directory that are accepted by the given filter.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<File> listFiles(File directory, FilenameFilter filenameFilter) {
+    return listOf(directory.listFiles(filenameFilter));
+  }
+
+  /**
+   * Returns list of files under the given directory that matches the give set of file name extension.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<File> listFiles(File directory, String...extensions) {
+    return listFiles(directory, ImmutableSet.copyOf(extensions));
+  }
+
+  /**
+   * Returns list of files under the given directory that matches the give set of file name extension.
+   * An empty list will be returned if the given file is not a directory.
+   */
+  public static List<File> listFiles(File directory, Iterable<String> extensions) {
+    final ImmutableSet<String> allowedExtensions = ImmutableSet.copyOf(extensions);
+
+    return listFiles(directory, new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return allowedExtensions.contains(Files.getFileExtension(name));
+      }
+    });
+  }
+
+  /**
+   * Converts the given array into a list. An empty list will be returned if the given array is {@code null}.
+   * (Note: This method might worth to be in some other common class, which we don't have now).
+   *
+   * @param elements array to convert
+   * @param <T> type of elements in the array
+   * @return a new immutable list.
+   */
+  private static <T> List<T> listOf(@Nullable T[] elements) {
+    return elements == null ? ImmutableList.<T>of() : ImmutableList.copyOf(elements);
   }
 }

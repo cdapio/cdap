@@ -17,38 +17,57 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Transform;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 
 /**
- * Execution of Transforms one iteration at a time.
+ * Executes Transforms one iteration at a time, tracking how many records were input into and output from
+ * each transform.
  *
  * @param <IN> the type of input object to the first transform
  * @param <OUT> the type of object output by the last transform
  */
 public class TransformExecutor<IN, OUT> {
-  private final List<Transform> transformList;
-  private DefaultEmitter previousEmitter;
-  private DefaultEmitter currentEmitter;
+  private final List<Transform> transforms;
+  private final List<DefaultEmitter> emitters;
 
-  public TransformExecutor(List<Transform> transforms) {
-    this.transformList = transforms;
-    this.previousEmitter = new DefaultEmitter();
-    this.currentEmitter = new DefaultEmitter();
+  public TransformExecutor(List<Transform> transforms, List<StageMetrics> transformMetrics) {
+    int numTransforms = transforms.size();
+    Preconditions.checkArgument(numTransforms == transformMetrics.size());
+    this.transforms = Lists.newArrayListWithCapacity(numTransforms);
+    this.emitters = Lists.newArrayListWithCapacity(numTransforms);
+    for (int i = 0; i < numTransforms; i++) {
+      StageMetrics stageMetrics = transformMetrics.get(i);
+      this.transforms.add(new TrackedTransform(transforms.get(i), stageMetrics));
+      this.emitters.add(new DefaultEmitter(stageMetrics));
+    }
   }
 
   public Iterable<OUT> runOneIteration(IN input) throws Exception {
-    previousEmitter.reset();
-    previousEmitter.emit(input);
-    for (Transform transform : transformList) {
+    if (transforms.isEmpty()) {
+      return Lists.newArrayList((OUT) input);
+    }
+
+    Transform transform = transforms.get(0);
+    DefaultEmitter currentEmitter = emitters.get(0);
+    currentEmitter.reset();
+    transform.transform(input, currentEmitter);
+
+    DefaultEmitter previousEmitter = currentEmitter;
+
+    for (int i = 1; i < transforms.size(); i++) {
+      transform = transforms.get(i);
+      currentEmitter = emitters.get(i);
+      currentEmitter.reset();
       for (Object transformedVal : previousEmitter) {
         transform.transform(transformedVal, currentEmitter);
       }
       previousEmitter.reset();
-      DefaultEmitter temp = previousEmitter;
       previousEmitter = currentEmitter;
-      currentEmitter = temp;
     }
+
     return previousEmitter;
   }
 }
