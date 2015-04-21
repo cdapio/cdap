@@ -116,8 +116,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
   }
 
   @Override
-  public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer)
-    throws Exception {
+  public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer) throws Exception {
     ETLConfig etlConfig = (ETLConfig) config;
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
@@ -126,9 +125,20 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     // Get Source, Sink, Transform Class Names
     String sourceClassName = sourceClassMap.get(sourceConfig.getName());
     String sinkClassName = sinkClassMap.get(sinkConfig.getName());
+    if (sourceClassName == null) {
+      throw new IllegalArgumentException(String.format("No source named %s found.", sourceConfig.getName()));
+    }
+    if (sinkClassName == null) {
+      throw new IllegalArgumentException(String.format("No sink named %s found.", sinkConfig.getName()));
+    }
+
     List<String> transformClassNames = Lists.newArrayList();
     for (ETLStage transformStage : transformConfigs) {
-      transformClassNames.add(transformClassMap.get(transformStage.getName()));
+      String transformName = transformClassMap.get(transformStage.getName());
+      transformClassNames.add(transformName);
+      if (transformName == null) {
+        throw new IllegalArgumentException(String.format("No transform named %s found.", transformStage.getName()));
+      }
     }
 
     // Validate Source -> Transform -> Sink hookup

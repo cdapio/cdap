@@ -104,6 +104,7 @@ public class RecordPutTransformer {
 
   private Put createPut(StructuredRecord record, Schema recordSchema) {
     Schema.Field keyField = recordSchema.getField(rowField);
+    Preconditions.checkArgument(keyField != null, "Could not find key field in record.");
     Object val = record.get(keyField.getName());
     Preconditions.checkArgument(val != null, "Row key cannot be null.");
 

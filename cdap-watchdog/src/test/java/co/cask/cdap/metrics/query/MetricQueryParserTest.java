@@ -35,7 +35,7 @@ public class MetricQueryParserTest {
   @Test
   public void testPathStrip() {
     String expected = "/system/apps/app1/flows/flow1/metric?aggregate=true";
-    String path = Constants.Gateway.API_VERSION_2 + "/metrics" + expected;
+    String path = Constants.Gateway.API_VERSION_3 + "/metrics" + expected;
     Assert.assertEquals(expected, MetricQueryParser.stripVersionAndMetricsFromPath(path));
   }
 

@@ -22,6 +22,7 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
+import co.cask.cdap.templates.etl.batch.sinks.CubeSink;
 import co.cask.cdap.templates.etl.batch.sinks.DBSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
@@ -34,9 +35,12 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
-import co.cask.cdap.templates.etl.transforms.StreamToStructuredRecordTransform;
+import co.cask.cdap.templates.etl.transforms.StructuredRecordToCubeFactTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
@@ -61,16 +65,21 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         StructuredRecordToGenericRecordTransform.class,
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
-                                        StreamToStructuredRecordTransform.class,
                                         ScriptFilterTransform.class,
+                                        ProjectionTransform.class,
                                         DBSource.class,
-                                        DBSink.class));
+                                        DBSink.class,
+                                        StructuredRecordToCubeFactTransform.class,
+                                        CubeSink.class));
   }
 
   @Override
-  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig, AdapterConfigurer configurer)
-    throws Exception {
+  public void configureAdapter(String adapterName, ETLBatchConfig etlBatchConfig,
+                               AdapterConfigurer configurer) throws Exception {
     super.configureAdapter(adapterName, etlBatchConfig, configurer);
+    String scheduleStr = etlBatchConfig.getSchedule();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(scheduleStr), "Schedule must be specified in the config.");
+
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlBatchConfig));
     configurer.setSchedule(new TimeSchedule(String.format("etl.batch.adapter.%s.schedule", adapterName),
                                             String.format("Schedule for %s Adapter", adapterName),

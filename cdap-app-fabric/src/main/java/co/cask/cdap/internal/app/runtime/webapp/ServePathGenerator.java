@@ -29,7 +29,6 @@ import java.net.URI;
 public class ServePathGenerator {
   public static final String SRC_PATH = "/src/";
   public static final String DEFAULT_DIR_NAME = "default";
-  private static final String GATEWAY_PATH_V2 = Constants.Gateway.API_VERSION_2.substring(1) + "/";
   private static final String GATEWAY_PATH_V3 = Constants.Gateway.API_VERSION_3.substring(1) + "/";
 
   private static final String DEFAULT_PORT_STR = ":80";
@@ -99,7 +98,7 @@ public class ServePathGenerator {
     String servePath;
     if (Iterables.size(pathParts) > 1) {
       String part1 = Iterables.get(pathParts, 1);
-      if (part1.startsWith(GATEWAY_PATH_V2) || part1.startsWith(GATEWAY_PATH_V3) || part1.equals("status")) {
+      if (part1.startsWith(GATEWAY_PATH_V3) || part1.equals("status")) {
         return constructPath(part1, query);
       }
 
@@ -118,7 +117,7 @@ public class ServePathGenerator {
     }
 
     // Next try src/path
-    if (path.startsWith(GATEWAY_PATH_V2) || path.startsWith(GATEWAY_PATH_V3) || path.equals("status")) {
+    if (path.startsWith(GATEWAY_PATH_V3) || path.equals("status")) {
       return constructPath(path, query);
     }
 

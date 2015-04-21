@@ -9,20 +9,22 @@ angular.module(PKG.name+'.feature.dashboard')
   function ($scope, $state, op28helper, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
-
+    // waiting for system.request.received to be changed to query requests
     $scope.panels = [
-      ['Collect', 'EPS',   'collect.events'],
-      ['Process', '%',     'process.busyness'],
-      ['Store',   '/S',    'dataset.store.bytes', true],
-      ['Query',   'QPS',   'query.requests']
+      ['Collect', 'EPS',   'system.collect.events'],
+      ['Process', 'events',     'system.process.events.processed'],
+      ['Store',   '/S',    'system.dataset.store.bytes', true],
+      ['Query',   'QPS',   'system.request.received']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
       var c = panel.chart;
+      console.log('c', c.metric);
       dataSrc.poll({
-          _cdapPathV2: '/metrics/system/' +
-              c.metric + '?start=now-60s&end=now',
-          method: 'GET'
+          _cdapPath: '/metrics/query?metric=' +
+              c.metric + '&start=now-60s&end=now',
+          interval: 1000,
+          method: 'POST'
         },
         op28helper.pollCb.bind(c)
       );
@@ -40,19 +42,20 @@ angular.module(PKG.name+'.feature.dashboard')
     var dataSrc = new MyDataSource($scope);
 
     $scope.panels = [
-      ['AppFabric',  'Containers', 'containers'],
-      ['Processors', 'Cores',      'vcores'],
-      ['Memory',     '',           'memory', true],
-      ['DataFabric', '',           'storage', true]
+      ['AppFabric',  'Containers', 'system.resources.used.containers'],
+      ['Processors', 'Cores',      'system.resources.used.vcores'],
+      ['Memory',     '',           'system.resources.used.memory', true],
+      ['DataFabric', '',           'system.resources.used.storage', true]
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
       var c = panel.chart;
       dataSrc.poll({
-          _cdapPathV2: '/metrics/system/resources.used.' +
+          _cdapPath: '/metrics/metric?.' +
                         c.metric +
-                        '?start=now-60s&end=now',
-          method: 'GET'
+                        '&start=now-60s&end=now',
+          interval: 60 * 1000,
+          method: 'POST'
         },
         op28helper.pollCb.bind(c)
       );
@@ -116,7 +119,7 @@ angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
 
 
-  .factory('op28helper', function () {
+  .factory('op28helper', function (myHelpers) {
 
     function panelMap (d) {
       return {
@@ -135,7 +138,11 @@ angular.module(PKG.name+'.feature.dashboard')
 
 
     function pollCb (res) {
-      var v = res.data.map(function (o) {
+      var result = myHelpers.objectQuery(res, 'series', 0, 'data');
+      if (!result) {
+        return;
+      }
+      var v = result.map(function (o) {
         return {
           time: o.time,
           y: o.value
@@ -148,7 +155,7 @@ angular.module(PKG.name+'.feature.dashboard')
         label: this.metric,
         values: v
       }];
-      this.lastValue = res.data.pop().value;
+      this.lastValue = v.pop().value;
     }
 
     return {

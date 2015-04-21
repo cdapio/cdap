@@ -1,39 +1,30 @@
-body.state-mapreduce{
-    .run-status {
-      margin-bottom: 25px;
-    }
+@import "../../styles/variables.less";
 
-    .entry {
-      font-weight: 700;
-    }
+body.state-mapreduce{
+    .run-status { margin-bottom: 25px; }
+    .table.table-status { margin-top: 0; }
+    .col-sm-6 > div.btn-md { margin-top: 14px; }
+    .entry { font-weight: 700; }
 
   .panel-group {
     .panel.panel-default {
       > .panel-heading {
         > a {
-          &:hover {
-            text-decoration: none;
-          }
           color: white;
+          &:hover { text-decoration: none; }
         }
       }
     }
   }
 
-  .component-box {
-    margin-top: 20px;
-
-    .task-item:nth-child(-n+7) {
-      border-right: 1px solid black;
-    }
+  .col-xs-12 > strong {
+    color: @cdap-header;
+    font-size: 14px;
+    padding-right: 5px;
   }
 
-  &.theme-cdap {
-    .table.table-status { margin-top: 0; }
-    .btn.btn-default.no-border{
-      &:focus{
-        outline: none;
-      }
-    }
+  .component-box {
+    margin-top: 20px;
+    .task-item:nth-child(-n+7) { border-right: 1px solid black; }
   }
 }

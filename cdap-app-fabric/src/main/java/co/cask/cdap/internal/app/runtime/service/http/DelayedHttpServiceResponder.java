@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;

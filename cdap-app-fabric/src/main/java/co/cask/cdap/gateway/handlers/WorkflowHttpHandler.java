@@ -45,7 +45,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -72,12 +71,12 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @Inject
   public WorkflowHttpHandler(Authenticator authenticator, Store store, WorkflowClient workflowClient,
                              CConfiguration configuration, ProgramRuntimeService runtimeService,
-                             DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin, Scheduler scheduler,
-                             PreferencesStore preferencesStore, NamespacedLocationFactory namespacedLocationFactory,
+                             QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                             NamespacedLocationFactory namespacedLocationFactory,
                              MRJobClient mrJobClient, MapReduceMetricsInfo mapReduceMetricsInfo,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
                              AdapterService adapterService) {
-    super(authenticator, store, configuration, runtimeService, lifecycleService, discoveryServiceClient,
+    super(authenticator, store, configuration, runtimeService, lifecycleService,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient,
           mapReduceMetricsInfo, resolver, adapterService);
     this.workflowClient = workflowClient;

@@ -22,7 +22,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.metrics.MetricsConstants;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -142,7 +141,7 @@ final class MetricQueryParser {
    */
   static String stripVersionAndMetricsFromPath(String path) {
     // +8 for "/metrics"
-    int startPos = Constants.Gateway.API_VERSION_2.length() + 8;
+    int startPos = Constants.Gateway.API_VERSION_3.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -485,7 +484,7 @@ final class MetricQueryParser {
         startTime = endTime - (count * resolution) + resolution;
       } else {
         // if only count is specified, assume the current time is desired as the end.
-        endTime = now - MetricsConstants.QUERY_SECOND_DELAY;
+        endTime = now - Constants.Metrics.Query.QUERY_SECOND_DELAY;
         startTime = endTime - (count * resolution) + resolution;
       }
     } else {
@@ -504,10 +503,10 @@ final class MetricQueryParser {
     setInterpolator(queryParams, builder);
   }
 
-  private static Resolution getResolution(long difference) {
-    if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
+  static Resolution getResolution(long difference) {
+    if (difference > Constants.Metrics.Query.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
       return  Resolution.HOUR;
-    } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
+    } else if (difference > Constants.Metrics.Query.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
       return Resolution.MINUTE;
     } else {
       return Resolution.SECOND;

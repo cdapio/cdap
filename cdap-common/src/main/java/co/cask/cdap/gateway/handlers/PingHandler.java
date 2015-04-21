@@ -35,7 +35,7 @@ public class PingHandler extends AbstractHttpHandler {
   @Path("/ping")
   @GET
   public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    LOG.info("Received ping request");
+    LOG.trace("Ping request received");
     responder.sendString(HttpResponseStatus.OK, "OK.\n");
   }
 

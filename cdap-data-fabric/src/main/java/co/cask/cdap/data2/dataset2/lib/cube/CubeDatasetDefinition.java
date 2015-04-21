@@ -30,7 +30,6 @@ import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -96,7 +95,7 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
     // Configuring tables that hold data of specific resolution
     List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
     datasetSpecs.add(tableDef.configure("entity", properties));
-    // NOTE: we create a table per resolution; we later will use that to e.g. configure ttl separatelly for each
+    // NOTE: we create a table per resolution; we later will use that to e.g. configure ttl separately for each
     for (int resolution : resolutions) {
       datasetSpecs.add(tableDef.configure(String.valueOf(resolution), properties));
     }
@@ -136,12 +135,12 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
                                                arguments, classLoader));
     }
 
-    Collection<Aggregation> aggregations = getAggregations(spec.getProperties());
+    Map<String, Aggregation> aggregations = getAggregations(spec.getProperties());
 
     return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations);
   }
 
-  private List<Aggregation> getAggregations(Map<String, String> properties) {
+  private Map<String, Aggregation> getAggregations(Map<String, String> properties) {
     // Example of configuring one aggregation with two tags: user and action and user being required:
     //   dataset.cube.aggregation.1.tags=user,action
     //   dataset.cube.aggregation.1.requiredTags=user
@@ -166,11 +165,11 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
       }
     }
 
-    List<Aggregation> aggregations = Lists.newArrayList();
+    Map<String, Aggregation> aggregations = Maps.newHashMap();
     for (Map.Entry<String, List<String>> aggTagsEntry : aggTags.entrySet()) {
       Set<String> requiredTags = aggRequiredTags.get(aggTagsEntry.getKey());
       requiredTags = requiredTags == null ? Collections.<String>emptySet() : requiredTags;
-      aggregations.add(new DefaultAggregation(aggTagsEntry.getValue(), requiredTags));
+      aggregations.put(aggTagsEntry.getKey(), new DefaultAggregation(aggTagsEntry.getValue(), requiredTags));
     }
     return aggregations;
   }

@@ -24,11 +24,19 @@ public final class Constants {
   public static final String ADAPTER_NAME = "name";
   public static final String CONFIG_KEY = "config";
 
+  private Constants() {
+    throw new AssertionError("Suppress default constructor for noninstantiability");
+  }
+
   /**
    * Constants related to Source.
    */
   public static final class Source {
     public static final String SPECIFICATION = "templates.etl.adapter.source.specification";
+
+    private Source() {
+      throw new AssertionError("Suppress default constructor for noninstantiability");
+    }
   }
 
   /**
@@ -36,6 +44,10 @@ public final class Constants {
    */
   public static final class Sink {
     public static final String SPECIFICATION = "templates.etl.adapter.sink.specification";
+
+    private Sink() {
+      throw new AssertionError("Suppress default constructor for noninstantiability");
+    }
   }
 
   /**
@@ -43,6 +55,10 @@ public final class Constants {
    */
   public static final class Transform {
     public static final String SPECIFICATIONS = "templates.etl.adapter.transform.specifications";
+
+    private Transform() {
+      throw new AssertionError("Suppress default constructor for noninstantiability");
+    }
   }
 
   /**
@@ -50,5 +66,9 @@ public final class Constants {
    */
   public static final class Realtime {
     public static final String UNIQUE_ID = "uniqueid";
+
+    private Realtime() {
+      throw new AssertionError("Suppress default constructor for noninstantiability");
+    }
   }
 }
