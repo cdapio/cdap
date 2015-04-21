@@ -130,7 +130,7 @@ function rsync_zip_file () {
 }
 
 function unzip_archive () {
-  # unzip file remotely 
+  # unzip file on remote server 
   decho "unzipping ${4} on ${2}"
   decho "ssh ${1}@${2} \"sudo unzip -o ${3}/${4} -d ${3}\""
   ssh ${1}@${2} "sudo unzip -o ${3}/${4} -d ${3}" || die "unable to unzip ${4} in ${3} on ${2}, as ${1}"
