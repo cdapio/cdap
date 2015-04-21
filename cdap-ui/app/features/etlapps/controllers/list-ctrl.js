@@ -3,13 +3,13 @@ angular.module(PKG.name + '.feature.etlapps')
     var dataSrc = new MyDataSource($scope);
     $scope.etlapps  = [];
     dataSrc.request({
-      _cdapNsPath: '/adapters?template=etl.batch'
+      _cdapNsPath: '/adapters?template=etlbatch'
     })
       .then(function(res) {
         if (!res.length) {
           return;
         }
-        $scope.etlapps = res;
+        $scope.etlapps = $scope.etlapps.concat(res);
         angular.forEach($scope.etlapps, function(app) {
           app.status =  (Date.now()/2)? 'Running': 'Stopped';
           app.description = 'Something something dark.Something Something something dark';
@@ -29,4 +29,12 @@ angular.module(PKG.name + '.feature.etlapps')
           });
         }
       });
+    $scope.dragdrop = {
+      dragStart: function (drag) {
+        console.log('dragStart', drag.source, drag.dest);
+      },
+      dragEnd: function (drag) {
+        console.log('dragEnd', drag.source, drag.dest);
+      }
+    };
   });
