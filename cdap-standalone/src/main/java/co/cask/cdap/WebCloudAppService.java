@@ -17,8 +17,8 @@ package co.cask.cdap;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Configuration;
-import co.cask.cdap.common.conf.ConfigurationJsonTool;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.ui.ConfigurationJsonTool;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
