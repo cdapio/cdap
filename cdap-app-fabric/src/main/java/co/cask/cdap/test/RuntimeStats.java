@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -32,6 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
@@ -62,30 +62,21 @@ public final class RuntimeStats {
                                                  String flowId, String flowletId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.FLOW, flowId);
     return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
-                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
-                      MetricsConstants.FLOWLET_EXCEPTIONS);
+                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
+                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
+                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
     return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String namespace, String applicationId, String procedureId) {
-    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.PROCEDURE, procedureId);
-    return getMetrics(MetricsContexts.forProcedure(id),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
-  }
-
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    return getProcedureMetrics(Constants.DEFAULT_NAMESPACE, applicationId, procedureId);
-  }
-
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
     return getMetrics(MetricsContexts.forService(id),
-                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
-                      MetricsConstants.SERVICE_EXCEPTIONS);
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
@@ -95,9 +86,8 @@ public final class RuntimeStats {
   @Deprecated
   public static void clearStats(final String applicationId) {
     try {
-      // null for "all metric names"
       metricStore.delete(
-        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
+        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000,
                               ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
                                               Constants.Metrics.Tag.APP, applicationId)));
     } catch (Exception e) {

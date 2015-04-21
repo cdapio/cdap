@@ -19,7 +19,7 @@ package co.cask.cdap.test.standalone;
 import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.StandaloneMain;
 import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -83,8 +83,8 @@ public class StandaloneTestBase {
   public void tearDownStandalone() throws Exception {
     ProgramClient programClient = new ProgramClient(getClientConfig());
     programClient.stopAll();
-    MetaClient metaClient = new MetaClient(getClientConfig());
-    metaClient.resetUnrecoverably();
+    NamespaceClient namespaceClient = new NamespaceClient(getClientConfig());
+    namespaceClient.deleteAll();
   }
 
   @AfterClass

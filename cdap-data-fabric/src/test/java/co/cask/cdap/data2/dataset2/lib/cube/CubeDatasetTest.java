@@ -34,6 +34,7 @@ import org.junit.ClassRule;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -45,7 +46,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
   @Override
   protected Cube getCube(String name, int[] resolutions,
-                         Collection<? extends Aggregation> aggregations) throws Exception {
+                         Map<String, ? extends Aggregation> aggregations) throws Exception {
     DatasetProperties props = configureProperties(resolutions, aggregations);
     Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, name);
     dsFrameworkUtil.createInstance(Cube.class.getName(), id, props);
@@ -53,7 +54,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
     return new CubeTxnlWrapper((Cube) cube);
   }
 
-  private DatasetProperties configureProperties(int[] resolutions, Collection<? extends Aggregation> aggregations) {
+  private DatasetProperties configureProperties(int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
     DatasetProperties.Builder builder = DatasetProperties.builder();
 
     // add resolution property
@@ -62,14 +63,13 @@ public class CubeDatasetTest extends AbstractCubeTest {
       resolutionPropValue.append(",").append(resolution);
     }
     // .substring(1) for removing first comma
-    builder.add(CubeDatasetDefinition.PROPERTY_RESOLUTIONS, resolutionPropValue.substring(1));
+    builder.add(Cube.PROPERTY_RESOLUTIONS, resolutionPropValue.substring(1));
 
     // add aggregation props
-    int aggName = 0;
-    for (Aggregation agg : aggregations) {
+    for (Map.Entry<String, ? extends Aggregation> entry : aggregations.entrySet()) {
       // NOTE: at this moment we support only DefaultAggregation, so all other tests in AbstractCubeTest must be skipped
-      DefaultAggregation defAgg = (DefaultAggregation) agg;
-      String aggPropertyPrefix = CubeDatasetDefinition.PROPERTY_AGGREGATION_PREFIX + (aggName++);
+      DefaultAggregation defAgg = (DefaultAggregation) entry.getValue();
+      String aggPropertyPrefix = CubeDatasetDefinition.PROPERTY_AGGREGATION_PREFIX + (entry.getKey());
       builder.add(aggPropertyPrefix + ".tags", Joiner.on(",").join(defAgg.getTagNames()));
       builder.add(aggPropertyPrefix + ".requiredTags", Joiner.on(",").join(defAgg.getRequiredTags()));
     }
@@ -144,6 +144,11 @@ public class CubeDatasetTest extends AbstractCubeTest {
           return delegate.findMeasureNames(query);
         }
       });
+    }
+
+    @Override
+    public void write(Object ignored, CubeFact cubeFact) {
+      add(cubeFact);
     }
 
     @Override

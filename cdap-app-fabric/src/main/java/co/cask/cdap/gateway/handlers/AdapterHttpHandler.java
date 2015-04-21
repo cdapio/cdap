@@ -30,6 +30,8 @@ import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationExceptio
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -39,12 +41,15 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * {@link co.cask.http.HttpHandler} for managing adapter lifecycle.
@@ -102,13 +107,18 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("template") String template) {
     if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
+    if (template != null) {
+      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId), template));
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
+    }
   }
 
   /**
@@ -175,6 +185,62 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                            adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId).toString());
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    }
+  }
+
+  /**
+   * Retrieves the runs of an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-id}/runs")
+  public void getAdapterRuns(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("adapter-id") String adapterName,
+                             @QueryParam("status") String status,
+                             @QueryParam("start") String startTs,
+                             @QueryParam("end") String endTs,
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
+    long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+    try {
+      ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+        ProgramRunStatus.valueOf(status.toUpperCase());
+      List<RunRecord> runRecords = adapterService.getRuns(namespace, adapterName, runStatus, start, end, resultLimit);
+      responder.sendJson(HttpResponseStatus.OK, runRecords);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Supported options for status of runs are running/completed/failed");
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' when getting run records", namespaceId, adapterName, t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Retrieve a run record of an adapter
+   */
+  @GET
+  @Path("/adapters/{adapter-id}/runs/{run-id}")
+  public void getAdapterRun(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("adapter-id") String adapterId,
+                            @PathParam("run-id") String runId) {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    try {
+      RunRecord runRecord = adapterService.getRun(namespace, adapterId, runId);
+      if (runRecord != null) {
+        responder.sendJson(HttpResponseStatus.OK, runRecord);
+        return;
+      }
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (Throwable t) {
+      LOG.error("Error in namespace '{}' for adapter '{}' when getting run records", namespaceId, adapterId, t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

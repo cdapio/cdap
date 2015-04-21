@@ -1,30 +1,48 @@
 <div ncy-breadcrumb></div>
 
-<h2>
-  <span ng-bind="$state.params.programId | caskCapitalizeFilter"> </span>
-  <small> Type: Service </small>
-</h2>
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId | caskCapitalizeFilter"> </span>
+    </h2>
+    <div class="type-block">
+      <small> Type: Service </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div ng-show="status == 'RUNNING'"
+         class="btn btn-danger btn-md"
+         ng-click="stop()">
+      <span class="fa fa-stop"> </span>
+      <span>Stop</span>
+    </div>
+
+    <div ng-show="status == 'STOPPED'"
+         class="btn btn-success btn-md"
+         ng-click="start()">
+      <span class="fa fa-play"> </span>
+      <span>Start</span>
+    </div>
+    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
+         class="btn btn-md"
+         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
+      <span class="fa fa-refresh fa-spin"></span>
+      <span>{{status | caskCapitalizeFilter}}</span>
+    </div>
+  </div>
+</div>
 
 <div class="cdap-subnav-end"></div>
-<ul class="nav nav-tabs" role="tablist">
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="services.detail.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
   </li>
-<!--   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.data" role="tab">Data</a>
-  </li>
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.metadata" role="tab">Metadata</a>
-  </li> -->
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="services.detail.history" role="tab">History</a>
   </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="services.detail.logs" ui-sref-opts="{reload: true}" role="tab">Logs</a>
   </li>
-<!--   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.resources" role="tab">Resources</a>
-  </li> -->
 </ul>
 
 <br/>

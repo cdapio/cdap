@@ -19,10 +19,10 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.metrics.MetricsConstants;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -43,7 +43,7 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   @Inject
   public MetricsMessageCallbackFactory(SchemaGenerator schemaGenerator, DatumReaderFactory readerFactory,
                                        MetricStore metricStore,
-                                       @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
+                                       @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
                                        int persistThreshold) {
     try {
       this.recordSchema = schemaGenerator.generate(MetricValues.class);

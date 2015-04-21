@@ -1,32 +1,43 @@
 <div ncy-breadcrumb></div>
-<my-file-select class="pull-right" on-file-select="onFileSelected($files)"> </my-file-select>
-<table class="table table-responsive" cask-sortable>
-  <thead>
-    <tr ng-class="{'sort-enabled': apps.length>0}">
-      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-      <th data-predicate="version"> Version </th>
-      <th data-predicate="description"> Description </th>
-      <th> </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
-      <td >
-        <a ui-sref="apps.detail.overview({ appId: app.id })">
-          {{ ::app.name }}
-        </a>
-      </td>
-      <td>{{ ::app.version }}</td>
-      <td> {{ ::app.description }} </td>
-      <td class="text-center">
-        <a ng-click="caskConfirm()"
-            class="btn btn-danger btn-xs"
-            cask-confirmable="deleteApp(app.id)"
-            data-confirmable-content="Are you sure you want to delete this app?"
-          >
-          X
-        </a>
-      </td>
-    </tr>
-  <tbody>
-</table>
+<div class="row">
+  <div class="col-xs-6 text-left">
+    <h2> All Applications </h2>
+  </div>
+  <div class="col-xs-6 h2 text-right">
+    <my-file-select on-file-select="onFileSelected($files)"> </my-file-select>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-curved" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': apps.length>0}">
+        <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+        <th data-predicate="version"> Version </th>
+        <th data-predicate="description"> Description </th>
+        <th> </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
+        <td >
+          <a ui-sref="apps.detail.overview({ appId: app.id })">
+            <strong> {{ ::app.name }} </strong>
+          </a>
+        </td>
+        <td>{{ ::app.version }}</td>
+        <td> {{ ::app.description }} </td>
+        <td class="text-center">
+          <a ng-click="caskConfirm()"
+              class="btn btn-danger btn-xs"
+              cask-confirmable="deleteApp(app.id)"
+              data-confirmable-content="Are you sure you want to delete this app?"
+            >
+            <i class="fa fa-trash-o"></i>
+          </a>
+        </td>
+      </tr>
+    <tbody>
+  </table>
+</div>
+

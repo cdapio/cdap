@@ -66,4 +66,8 @@ angular.module(PKG.name + '.feature.flows')
         });
       });
     };
+
+    $scope.flowletClick = function(node) {
+      $scope.selectTab($scope.tabs[1], node);
+    };
   });

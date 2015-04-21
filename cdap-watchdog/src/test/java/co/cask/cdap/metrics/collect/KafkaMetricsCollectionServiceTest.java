@@ -17,11 +17,10 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
 import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
 import co.cask.cdap.internal.io.DatumWriter;

@@ -100,7 +100,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
@@ -109,7 +108,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
-    logReader.close();
   }
 
   // Note: LogReader.getLog is tested in LogSaverTest for distributed mode

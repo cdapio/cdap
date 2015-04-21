@@ -16,13 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.ValueEmitter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSpecification;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import co.cask.cdap.templates.etl.common.NoopMetrics;
 import co.cask.cdap.templates.etl.common.Tweet;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
@@ -44,11 +45,7 @@ public class TwitterStreamSourceTest {
   @Test
   public void testIntegratedTwitterStream() throws Exception {
     TwitterStreamSource source = new TwitterStreamSource();
-    source.configure(new RealtimeConfigurer() {
-      @Override
-      public void setResources(Resources resources) {
-        // No-op
-      }
+    source.configure(new StageConfigurer() {
 
       @Override
       public void setName(String name) {
@@ -71,10 +68,15 @@ public class TwitterStreamSourceTest {
       }
     });
 
-    source.initialize(new SourceContext() {
+    source.initialize(new RealtimeContext() {
       @Override
-      public RealtimeSpecification getSpecification() {
+      public StageSpecification getSpecification() {
         return null;
+      }
+
+      @Override
+      public Metrics getMetrics() {
+        return NoopMetrics.INSTANCE;
       }
 
       @Override
@@ -101,7 +103,7 @@ public class TwitterStreamSourceTest {
       }
     });
 
-    MockValueEmitter emitter = new MockValueEmitter();
+    MockEmitter emitter = new MockEmitter();
     SourceState state = new SourceState();
 
 
@@ -110,7 +112,7 @@ public class TwitterStreamSourceTest {
   }
 
 
-  private Tweet getWithRetries(TwitterStreamSource source, MockValueEmitter emitter,
+  private Tweet getWithRetries(TwitterStreamSource source, MockEmitter emitter,
                                SourceState state, int retryCount) throws Exception {
 
     Tweet tweet = null;
@@ -119,7 +121,7 @@ public class TwitterStreamSourceTest {
       count++;
       tweet = emitter.getTweet();
       if (tweet != null) {
-        return tweet;
+        break;
       }
       source.poll(emitter, state);
       TimeUnit.SECONDS.sleep(1L);
@@ -128,18 +130,13 @@ public class TwitterStreamSourceTest {
     return tweet;
   }
 
-  private static class MockValueEmitter implements ValueEmitter<Tweet> {
+  private static class MockEmitter implements Emitter<Tweet> {
 
     private Tweet tweet;
 
     @Override
     public void emit(Tweet value) {
       tweet = value;
-    }
-
-    @Override
-    public void emit(Void key, Tweet value) {
-      // No-op
     }
 
     public Tweet getTweet() {

@@ -103,7 +103,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<StreamMds, Boolean>() {
       @Override
       public Boolean apply(StreamMds mds) throws Exception {
-        return mds.streams.get(getKey(streamId), StreamSpecification.class) != null;
+        return mds.streams.getFirst(getKey(streamId), StreamSpecification.class) != null;
       }
     });
   }

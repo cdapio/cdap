@@ -23,7 +23,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -121,6 +120,9 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
     public static final AppFabricServiceStatus INTERNAL_ERROR =
       new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+
+    public static final AppFabricServiceStatus ADAPTER_CONFLICT =
+      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "An ApplicationTemplate exists with conflicting name.");
 
     private final HttpResponseStatus code;
     private final String message;
@@ -303,9 +305,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       switch (type) {
         case FLOW:
           createProgramRecords(appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
-          break;
-        case PROCEDURE:
-          createProgramRecords(appSpec.getName(), type, appSpec.getProcedures().values(), programRecords);
           break;
         case MAPREDUCE:
           createProgramRecords(appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
@@ -511,9 +510,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
       result.addAll(dataSetsUsedBy(flowSpec));
     }
-    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
-      result.addAll(procSpec.getDataSets());
-    }
     for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
       result.addAll(mrSpec.getDataSets());
     }
@@ -579,12 +575,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
             if ((data == Data.DATASET && usesDataSet(flowSpec, name))
               || (data == Data.STREAM && usesStream(flowSpec, name))) {
               result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
-            }
-          }
-        } else if (type == ProgramType.PROCEDURE) {
-          for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-            if (data == Data.DATASET && procedureSpec.getDataSets().contains(name)) {
-              result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
             }
           }
         } else if (type == ProgramType.MAPREDUCE) {

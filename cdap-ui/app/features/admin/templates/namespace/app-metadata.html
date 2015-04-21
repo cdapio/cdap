@@ -1,10 +1,10 @@
 <div class="row">
     <div class="col-xs-6">
-        <h3 ng-bind="apps.name | caskCapitalizeFilter"></h3>
+        <h2 ng-bind="apps.name | caskCapitalizeFilter"></h2>
     </div>
     <div class="col-xs-6">
 
-        <div class="h3 text-right">
+        <div class="text-right">
           <a class="btn btn-default"
             data-template="/assets/features/admin/templates/partials/app-dd.html"
             bs-dropdown>
@@ -15,17 +15,19 @@
     </div>
 </div>
 
-<table class="table table-responsive">
-    <tr>
-        <th>Name</th>
-        <td>{{ ::apps.name }}</td>
-    </tr>
-    <tr>
-        <th>Version</th>
-        <td>{{ ::apps.version}}</td>
-    </tr>
-    <tr>
-        <th>Description</th>
-        <td>{{ ::apps.description }}</td>
-    </tr>
-</table>
+<div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+        <thead>
+            <tr>
+              <th>Name</th>
+              <th>Version</th>
+              <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <td>{{ ::apps.name }}</td>
+            <td>{{ ::apps.version}}</td>
+            <td>{{ ::apps.description }}</td>
+        </tbody>
+    </table>
+</div>

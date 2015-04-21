@@ -91,12 +91,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
-  // the v2 version of the list API, which returns a collection of DatasetSpecification instead of
-  // a collection of DatasetSpecificationSummary
-  void v2list(HttpResponder responder, String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
-  }
-
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {

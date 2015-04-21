@@ -11,36 +11,26 @@ module.exports = {
 };
 
 var pkg = require('../package.json'),
-    morgan = require('morgan'),
     express = require('express'),
     compression = require('compression'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
     request = require('request'),
+    log4js = require('log4js'),
     bodyParser = require('body-parser'),
-    colors = require('colors/safe'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     );
 
-morgan.token('ms', function (req, res){
-  if (!res._header || !req._startAt) { return ''; }
-  var diff = process.hrtime(req._startAt);
-  var ms = diff[0] * 1e3 + diff[1] * 1e-6;
-  return Math.ceil(ms)+'ms';
-});
-
-var httpStaticLogger = morgan(colors.green('http')+' :method :url :ms :status');
-var httpIndexLogger = morgan(colors.inverse('http')+' :method :url :ms :status');
+var log = log4js.getLogger('default');
 
 function makeApp (authAddress, cdapConfig) {
 
   var app = express();
-  console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
 
   // middleware
   try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
-  catch(e) { console.error('Favicon missing! Did you run `gulp build`?'); }
+  catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
   app.use(compression());
   app.use(bodyParser.json());
 
@@ -101,7 +91,6 @@ function makeApp (authAddress, cdapConfig) {
 
   // serve static assets
   app.use('/assets', [
-    //httpStaticLogger,
     express.static(DIST_PATH + '/assets', {
       index: false
     }),
@@ -111,7 +100,6 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
   app.get('/robots.txt', [
-    //httpStaticLogger,
     function (req, res) {
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
@@ -140,7 +128,6 @@ function makeApp (authAddress, cdapConfig) {
   }
 
   app.get('/test/playground', [
-    //httpStaticLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/test.html');
     }
@@ -173,7 +160,6 @@ function makeApp (authAddress, cdapConfig) {
 
   // any other path, serve index.html
   app.all('*', [
-    httpIndexLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/index.html');
     }

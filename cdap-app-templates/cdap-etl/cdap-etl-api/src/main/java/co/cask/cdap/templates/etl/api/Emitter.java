@@ -19,16 +19,14 @@ package co.cask.cdap.templates.etl.api;
 /**
  * Used to emit one or more key, value pairs to the next stage.
  *
- * @param <K> Type of the key object emitted
- * @param <V> Type of the value object emitted
+ * @param <T> Type of the object to emit
  */
-public interface Emitter<K, V> {
+public interface Emitter<T> {
 
   /**
-   * Emit a key, value pair.
+   * Emit an object.
    *
-   * @param key key object
-   * @param value value object
+   * @param value the object to emit
    */
-  void emit(K key, V value);
+  void emit(T value);
 }

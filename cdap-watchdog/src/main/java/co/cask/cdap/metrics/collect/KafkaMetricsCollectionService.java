@@ -16,10 +16,10 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.internal.io.DatumWriter;
-import co.cask.cdap.metrics.MetricsConstants;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -53,7 +53,7 @@ public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionSe
 
   @Inject
   public KafkaMetricsCollectionService(KafkaClient kafkaClient,
-                                       @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                       @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                        DatumWriter<MetricValues> recordWriter) {
     this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }

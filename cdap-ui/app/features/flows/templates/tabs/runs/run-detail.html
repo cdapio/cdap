@@ -1,6 +1,36 @@
-<tabset>
-  <tab ng-repeat="tab in tabs" select="activeTab = true">
-    <tab-heading> {{tab.title}} </tab-heading>
-    <div ng-include="tab.template" ng-if="activeTab"></div>
-  </tab>
-</tabset>
+
+<div class="btn-group nested-tabs pull-right">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
+
+<div class="flow-components" ng-controller="FlowsRunsDetailStatusControler">
+  <div class="row run-status">
+    <div class="col-xs-6">
+      <table class="table table-curved table-status">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Started</th>
+            <th>Running</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td ng-bind="status"></td>
+            <td ng-bind="startTime | date:'medium'"></td>
+            <td ng-bind="duration*1000 | amDurationFormat"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<br/>
+<div ng-include="activeTab.template"></div>

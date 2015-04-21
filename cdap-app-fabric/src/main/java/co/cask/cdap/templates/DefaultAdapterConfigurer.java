@@ -33,6 +33,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -50,6 +51,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, String> runtimeArgs = Maps.newHashMap();
   private final ApplicationSpecification templateSpec;
+  private final Id.Namespace namespaceId;
   private final ProgramType programType;
   private final String adapterName;
   private Schedule schedule;
@@ -58,8 +60,9 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   private Resources resources;
 
   // passed app to be used to resolve default name and description
-  public DefaultAdapterConfigurer(String adapterName, AdapterConfig adapterConfig,
+  public DefaultAdapterConfigurer(Id.Namespace namespaceId, String adapterName, AdapterConfig adapterConfig,
                                   ApplicationSpecification templateSpec) {
+    this.namespaceId = namespaceId;
     this.adapterName = adapterName;
     this.adapterConfig = adapterConfig;
     this.templateSpec = templateSpec;
@@ -165,14 +168,19 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
 
   public AdapterSpecification createSpecification() {
     ScheduleSpecification scheduleSpec = null;
+    String programName;
     if (programType == ProgramType.WORKFLOW) {
-      String workflowName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
+      programName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
       scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
-        SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs);
+        SchedulableProgramType.WORKFLOW, programName), runtimeArgs);
+    } else {
+      programName = Iterables.getFirst(templateSpec.getWorkers().keySet(), null);
     }
 
+    Id.Program program = Id.Program.from(namespaceId, adapterConfig.getTemplate(), programType, programName);
+
     AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, adapterConfig.getTemplate())
+      AdapterSpecification.builder(adapterName, program)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
@@ -180,7 +188,8 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
         .setStreams(streams)
         .setRuntimeArgs(runtimeArgs)
         .setScheduleSpec(scheduleSpec)
-        .setInstances(instances);
+        .setInstances(instances)
+        .setResources(resources);
     return builder.build();
   }
 }

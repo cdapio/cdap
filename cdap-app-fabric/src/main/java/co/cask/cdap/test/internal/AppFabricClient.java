@@ -18,7 +18,6 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -66,7 +65,6 @@ public class AppFabricClient {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
-  private final AppFabricHttpHandler httpHandler;
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
@@ -75,12 +73,11 @@ public class AppFabricClient {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory,
+  public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceAdmin namespaceAdmin, WorkflowHttpHandler workflowHttpHandler) {
-    this.httpHandler = httpHandler;
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
@@ -117,69 +114,36 @@ public class AppFabricClient {
                            String flowId, ProgramType type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/start",
-                                 appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      String argString = GSON.toJson(args);
-      if (argString != null) {
-        request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
-      }
-      httpHandler.startProgram(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/start",
-                                 namespaceId, appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      String argString = GSON.toJson(args);
-      if (argString != null) {
-        request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
-      }
-      programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                                type.getCategoryName(), flowId, "start");
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/start",
+                               namespaceId, appId, type.getCategoryName(), flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    String argString = GSON.toJson(args);
+    if (argString != null) {
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "start");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
   public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/stop",
-                                 appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      httpHandler.stopProgram(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/stop",
-                                 namespaceId, appId, type.getCategoryName(), flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                                type.getCategoryName(), flowId, "stop");
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
-    }
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/stop",
+                               namespaceId, appId, type.getCategoryName(), flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "stop");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
   public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-
-    if (ProgramType.PROCEDURE.equals(type)) {
-      Preconditions.checkArgument(Constants.DEFAULT_NAMESPACE.equals(namespaceId));
-      String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      httpHandler.getStatus(request, responder, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
-      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-      return json.get("status");
-    } else {
-      String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/status", namespaceId, appId, type, flowId);
-      HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-      programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
-      verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
-      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-      return json.get("status");
-    }
+    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/status", namespaceId, appId, type, flowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
+    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    return json.get("status");
   }
 
   public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) {
@@ -311,7 +275,8 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = appName + ".jar";
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();

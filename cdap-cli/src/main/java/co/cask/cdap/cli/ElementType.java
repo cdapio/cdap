@@ -72,11 +72,6 @@ public enum ElementType {
          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  PROCEDURE(new Noun("procedure"), new Noun("Procedure"), ProgramType.PROCEDURE, null,
-            ArgumentName.PROCEDURE,
-            Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
-
   SERVICE(new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,

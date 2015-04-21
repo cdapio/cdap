@@ -165,26 +165,6 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addProcedure(co.cask.cdap.api.procedure.Procedure)
-   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  protected void addProcedure(co.cask.cdap.api.procedure.Procedure procedure) {
-    configurer.addProcedure(procedure);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addProcedure(co.cask.cdap.api.procedure.Procedure, int)
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  @SuppressWarnings("deprecation")
-  protected void addProcedure(co.cask.cdap.api.procedure.Procedure procedure, int instances) {
-    configurer.addProcedure(procedure, instances);
-  }
-
-  /**
    * @see ApplicationConfigurer#addMapReduce(MapReduce)
    */
   protected void addMapReduce(MapReduce mapReduce) {

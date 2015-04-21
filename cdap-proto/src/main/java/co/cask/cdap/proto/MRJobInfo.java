@@ -24,27 +24,41 @@ import javax.annotation.Nullable;
  * Simplified (filtered) representation of a MapReduce Job.
  */
 public class MRJobInfo {
-  private final String state;
-  private final Long startTime;
-  private final Long finishTime;
+  @Nullable
+  private String state;
+  @Nullable
+  private Long startTime;
+  @Nullable
+  private Long stopTime;
+
   private final Float mapProgress;
   private final Float reduceProgress;
   private final Map<String, Long> counters;
   private final List<MRTaskInfo> mapTasks;
   private final List<MRTaskInfo> reduceTasks;
+  // If false, the nullable fields in the MRTaskInfo in the mapTasks and reduceTasks will be null.
+  private final boolean complete;
 
-  public MRJobInfo(@Nullable String state, @Nullable Long startTime, @Nullable Long finishTime,
-                   Float mapProcess, Float reduceProgress,
-                   Map<String, Long> counters,
-                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks) {
-    this.state = state;
-    this.startTime = startTime;
-    this.finishTime = finishTime;
+  public MRJobInfo(Float mapProcess, Float reduceProgress, Map<String, Long> counters,
+                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks, boolean complete) {
     this.mapProgress = mapProcess;
     this.reduceProgress = reduceProgress;
     this.counters = counters;
     this.mapTasks = mapTasks;
     this.reduceTasks = reduceTasks;
+    this.complete = complete;
+  }
+
+  public void setState(@Nullable String state) {
+    this.state = state;
+  }
+
+  public void setStartTime(@Nullable Long startTime) {
+    this.startTime = startTime;
+  }
+
+  public void setStopTime(@Nullable Long stopTime) {
+    this.stopTime = stopTime;
   }
 
   @Nullable
@@ -58,8 +72,8 @@ public class MRJobInfo {
   }
 
   @Nullable
-  public Long getFinishTime() {
-    return finishTime;
+  public Long getStopTime() {
+    return stopTime;
   }
 
   public Float getMapProgress() {
@@ -80,5 +94,9 @@ public class MRJobInfo {
 
   public List<MRTaskInfo> getReduceTasks() {
     return reduceTasks;
+  }
+
+  public boolean isComplete() {
+    return complete;
   }
 }

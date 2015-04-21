@@ -186,10 +186,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // create default namespace, and hence deleting it may cause undeterministic behavior.
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
-      // This condition is only required to support the v2 unrecoverable reset API, since that uses NamespaceAdmin
-      // directly. If you go through the Namespace delete REST API, this condition will already be met, since that
-      // disallows deletion of reserved namespaces altogether.
-      // TODO: Remove this check when the v2 unrecoverable reset API is removed
       if (!Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
         // Delete namespace in storage providers
         dsFramework.deleteNamespace(namespaceId);
@@ -207,7 +203,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId());
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
     metricStore.delete(deleteQuery);
   }
 

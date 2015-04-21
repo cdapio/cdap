@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;

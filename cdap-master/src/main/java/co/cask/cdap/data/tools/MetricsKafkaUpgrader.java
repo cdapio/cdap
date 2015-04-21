@@ -29,7 +29,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.proto.Id;
@@ -77,8 +76,8 @@ public class MetricsKafkaUpgrader extends AbstractUpgrader {
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.oldKafkaMetricsTableName =  Joiner.on(".").join(Constants.SYSTEM_NAMESPACE, "default",
-                                                         cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
-                                                                   MetricsConstants.DEFAULT_KAFKA_META_TABLE));
+                                                         cConf.get(Constants.Metrics.KAFKA_META_TABLE,
+                                                                   Constants.Metrics.DEFAULT_KAFKA_META_TABLE));
   }
 
   private MetricsTable getOrCreateKafkaTable(String tableName) {

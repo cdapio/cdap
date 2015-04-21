@@ -32,6 +32,7 @@ import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -43,7 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.jar.Manifest;
 
@@ -63,11 +63,13 @@ public final class InMemoryAdapterConfigurator implements Configurator {
   private final AdapterConfig adapterConfig;
   private final ApplicationSpecification templateSpec;
   private final String adapterName;
+  private final Id.Namespace namespaceId;
 
   public InMemoryAdapterConfigurator(Id.Namespace id, Location archive, String adapterName,
                                      AdapterConfig adapterConfig, ApplicationSpecification templateSpec) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
+    this.namespaceId = id;
     this.archive = archive;
     this.adapterConfig = adapterConfig;
     this.templateSpec = templateSpec;
@@ -103,15 +105,16 @@ public final class InMemoryAdapterConfigurator implements Configurator {
         }
 
         ApplicationTemplate template = (ApplicationTemplate) appMain;
-        DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(adapterName, adapterConfig, templateSpec);
+        DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(namespaceId, adapterName, adapterConfig,
+                                                                           templateSpec);
 
-        Type templateType = template.getClass().getGenericSuperclass();
+        TypeToken typeToken = TypeToken.of(template.getClass());
+        TypeToken<?> resultToken = typeToken.resolveType(ApplicationTemplate.class.getTypeParameters()[0]);
         Type configType;
         // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
         // we can deserialize the config into that object. Otherwise it'll just be an Object
-        if (templateType instanceof ParameterizedType) {
-          Type[] typeArgs = ((ParameterizedType) template.getClass().getGenericSuperclass()).getActualTypeArguments();
-          configType = typeArgs[0];
+        if (resultToken.getType() instanceof Class) {
+          configType = resultToken.getType();
         } else {
           configType = Object.class;
         }

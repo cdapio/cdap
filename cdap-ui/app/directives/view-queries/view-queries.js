@@ -18,7 +18,12 @@ angular.module(PKG.name + '.commons')
               method: 'GET'
             })
             .then(function (queries) {
+
               $scope.queries = queries;
+
+              angular.forEach($scope.queries, function(query) {
+                query.isOpen = false;
+              });
             });
         };
 
@@ -28,28 +33,42 @@ angular.module(PKG.name + '.commons')
         $scope.responses = {};
 
         $scope.fetchResult = function(query) {
-          $scope.responses.request = query;
+          // Close other accordion
+          angular.forEach($scope.queries, function(q) {
+            q.isOpen = false;
+          });
 
-          // request schema
-          dataSrc
-            .request({
-              _cdapPath: '/data/explore/queries/' +
-                            query.query_handle + '/schema'
-            })
-            .then(function (result) {
-              $scope.responses.schema = result;
-            });
+          query.isOpen = !query.isOpen;
 
-          // request preview
-          dataSrc
-            .request({
-              _cdapPath: '/data/explore/queries/' +
-                            query.query_handle + '/preview',
-              method: 'POST'
-            })
-            .then(function (result) {
-              $scope.responses.results = result;
-            });
+          if (query.isOpen) {
+            $scope.responses.request = query;
+
+            // request schema
+            dataSrc
+              .request({
+                _cdapPath: '/data/explore/queries/' +
+                              query.query_handle + '/schema'
+              })
+              .then(function (result) {
+                angular.forEach(result, function(v) {
+                  v.name = v.name.split('.')[1];
+                });
+
+                $scope.responses.schema = result;
+              });
+
+            // request preview
+            dataSrc
+              .request({
+                _cdapPath: '/data/explore/queries/' +
+                              query.query_handle + '/preview',
+                method: 'POST'
+              })
+              .then(function (result) {
+                $scope.responses.results = result;
+              });
+          }
+
         };
 
         $scope.download = function(query) {

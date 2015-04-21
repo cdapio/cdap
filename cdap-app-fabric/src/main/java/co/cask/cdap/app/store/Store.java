@@ -222,26 +222,6 @@ public interface Store {
   int getFlowletInstances(Id.Program id, String flowletId);
 
   /**
-   * Set the number of procedure instances.
-   *
-   * @param id     program id
-   * @param count  new number of instances.
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  void setProcedureInstances(Id.Program id, int count);
-
-  /**
-   * Gets the number of procedure instances.
-   *
-   * @param id  program id
-   * @return    number of instances
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  int getProcedureInstances(Id.Program id);
-
-  /**
    * Sets the number of instances of a service.
    *
    * @param id program id
@@ -284,6 +264,7 @@ public interface Store {
 
   /**
    * Gets the number of instances of a {@link Worker}
+   *
    * @param id program id
    * @return number of instances
    */

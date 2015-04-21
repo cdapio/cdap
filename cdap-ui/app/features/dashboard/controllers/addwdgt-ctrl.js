@@ -50,17 +50,18 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       'chart-11'
     ];
 
-    var widgets = [];
     if ($scope.model.metric.addAll) {
+      var widgets = [];
       // If the user chooses 'Add All' option, add all the metrics in the current context.
       angular.forEach($scope.model.metric.allMetrics, function(value) {
         widgets.push(
           new Widget({
             type: $scope.model.type,
-            title: value,
+            title: $scope.model.metric.title,
             color: classes[(generateHash(value) * 13) % classes.length],
             metric: {
               context: $scope.model.metric.context,
+              names: [value],
               name: value
             }
           })

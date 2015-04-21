@@ -16,14 +16,15 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 
-import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * App which creates a dataset using the new Datasets API used for testing
@@ -35,15 +36,14 @@ public class AppWithDataset extends AbstractApplication {
     setName("AppWithDataSet");
     setDescription("Application with Dataset");
     createDataset("myds", KeyValueTable.class);
-    addProcedure(new NoOpProcedure());
+    addService(new BasicService("PingService", new PingHandler()));
   }
 
-  public static final class NoOpProcedure extends AbstractProcedure {
-    @Handle("noop")
-    public void handle(ProcedureRequest request,
-                       ProcedureResponder responder)
-      throws IOException {
-      responder.sendJson("OK");
+  public static final class PingHandler extends AbstractHttpServiceHandler {
+    @Path("ping")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
     }
   }
 }

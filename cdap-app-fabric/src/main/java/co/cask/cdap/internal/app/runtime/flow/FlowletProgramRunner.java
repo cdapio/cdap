@@ -32,6 +32,8 @@ import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -48,8 +50,6 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
@@ -670,20 +670,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
 
         @Override
-        public void ttlDeleted(Id.Stream streamId) {
-          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
-          suspendAndResume();
-        }
-
-        @Override
         public void generationChanged(Id.Stream streamId, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamId, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationDeleted(Id.Stream streamId) {
-          LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
+        public void deleted(Id.Stream streamId) {
+          LOG.debug("Properties deleted for stream '{}'", streamId);
           suspendAndResume();
         }
       };

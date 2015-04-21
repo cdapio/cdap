@@ -1,44 +1,34 @@
 <div ncy-breadcrumb></div>
 
-<h2>
-  <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
-  <br />
-  <small> <em>Type: Mapreduce </em></small>
-</h2>
-
-<div class="row">
+<div class="row" program-heading>
   <div class="col-sm-6">
-    <h4>
-      <ng-pluralize data-count="activeRuns"
-          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-    </h4>
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+    </h2>
+    <div class="type-block">
+      <small> Type: Mapreduce </small>
+    </div>
   </div>
-  <div class="col-sm-6 text-right h4">
-    <div ng-show="status == 'RUNNING'"
-         class="btn btn-default btn-md"
-         ng-click="toggleFlow('stop')">
-      <span class="fa fa-stop"> </span>
+  <div class="col-sm-6 text-right">
+    <div ng-hide="status === 'STARTING'"
+         class="btn btn-success btn-md"
+         ng-click="toggleFlow('start')">
+      <span class="fa fa-play"></span>
+      <span>Start</span>
     </div>
 
-    <div ng-show="status == 'STOPPED'"
-         class="btn btn-default btn-md"
-         ng-click="toggleFlow('start')">
-      <span class="fa fa-play"> </span>
-    </div>
-    <div ng-show="status == 'start' || status == 'stop' || status == 'STARTING' || status == 'STOPPING'"
+    <div ng-show="status === 'STARTING' || status === 'STOPPING'"
+         ng-class="{'btn-success': status === 'STARTING', 'btn-warning': status === 'STOPPING'}"
          class="btn btn-default btn-md">
-      <span> {{status}} </span>
       <span class="fa fa-refresh fa-spin"></span>
+      <span>{{status | caskCapitalizeFilter}}</span>
     </div>
   </div>
 </div>
 
 <div class="cdap-subnav-end"></div>
 
-<ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.status" role="tab">Status</a>
-  </li>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
   </li>

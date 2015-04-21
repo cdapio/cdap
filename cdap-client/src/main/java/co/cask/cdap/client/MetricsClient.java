@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.common.metrics.MetricsConstants;
 import co.cask.cdap.common.metrics.MetricsContexts;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
@@ -92,20 +92,16 @@ public class MetricsClient {
 
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
     return getMetrics(MetricsContexts.forFlowlet(flowId, flowletId),
-                      MetricsConstants.FLOWLET_INPUT, MetricsConstants.FLOWLET_PROCESSED,
-                      MetricsConstants.FLOWLET_EXCEPTIONS);
-  }
-
-  public RuntimeMetrics getProcedureMetrics(Id.Program procedureId) {
-    return getMetrics(MetricsContexts.forProcedure(procedureId),
-                      MetricsConstants.PROCEDURE_INPUT, MetricsConstants.PROCEDURE_PROCESSED,
-                      MetricsConstants.PROCEDURE_EXCEPTIONS);
+                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
+                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
+                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
   }
 
   public RuntimeMetrics getServiceMetrics(Id.Program serviceId) {
     return getMetrics(MetricsContexts.forService(serviceId),
-                      MetricsConstants.SERVICE_INPUT, MetricsConstants.SERVICE_PROCESSED,
-                      MetricsConstants.SERVICE_EXCEPTIONS);
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   /**

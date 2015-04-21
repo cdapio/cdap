@@ -24,8 +24,8 @@ import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
@@ -82,11 +82,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -104,9 +106,9 @@ public class AdapterService extends AbstractIdleService {
   private final PropertiesResolver resolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
   // template name to template info mapping
-  private Map<String, ApplicationTemplateInfo> appTemplateInfos;
+  private final AtomicReference<Map<String, ApplicationTemplateInfo>> appTemplateInfos;
   // jar file name to template info mapping
-  private Map<String, ApplicationTemplateInfo> fileToTemplateMap;
+  private final AtomicReference<Map<File, ApplicationTemplateInfo>> fileToTemplateMap;
 
   @Inject
   public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
@@ -123,8 +125,10 @@ public class AdapterService extends AbstractIdleService {
     this.store = store;
     this.templateManagerFactory = templateManagerFactory;
     this.adapterManagerFactory = adapterManagerFactory;
-    this.appTemplateInfos = Maps.newHashMap();
-    this.fileToTemplateMap = Maps.newHashMap();
+    this.appTemplateInfos = new AtomicReference<Map<String, ApplicationTemplateInfo>>(
+      new HashMap<String, ApplicationTemplateInfo>());
+    this.fileToTemplateMap = new AtomicReference<Map<File, ApplicationTemplateInfo>>(
+      new HashMap<File, ApplicationTemplateInfo>());
     this.resolver = resolver;
   }
 
@@ -151,7 +155,7 @@ public class AdapterService extends AbstractIdleService {
    */
   public void deployTemplate(Id.Namespace namespace, String templateName)
     throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
-    ApplicationTemplateInfo templateInfo = appTemplateInfos.get(templateName);
+    ApplicationTemplateInfo templateInfo = appTemplateInfos.get().get(templateName);
     if (templateInfo == null) {
       throw new NotFoundException(Id.ApplicationTemplate.from(templateName));
     }
@@ -168,7 +172,7 @@ public class AdapterService extends AbstractIdleService {
    */
   @Nullable
   public ApplicationTemplateInfo getApplicationTemplateInfo(String templateName) {
-    return appTemplateInfos.get(templateName);
+    return appTemplateInfos.get().get(templateName);
   }
 
   /**
@@ -262,12 +266,12 @@ public class AdapterService extends AbstractIdleService {
    * @param adapterName name of the adapter to create
    * @param adapterConfig config for the adapter to create
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
-   * @throws IllegalArgumentException on other input errors.
+   * @throws IllegalArgumentException if the adapter config is invalid.
    */
   public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
     throws IllegalArgumentException, AdapterAlreadyExistsException {
 
-    ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get(adapterConfig.getTemplate());
+    ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get().get(adapterConfig.getTemplate());
     Preconditions.checkArgument(applicationTemplateInfo != null,
                                 "Application template %s not found", adapterConfig.getTemplate());
 
@@ -294,7 +298,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws CannotBeDeletedException if the adapter is not stopped.
    */
   public void removeAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, CannotBeDeletedException {
+    throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (adapterStatus != AdapterStatus.STOPPED) {
@@ -326,7 +330,8 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
+    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       stopWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -336,8 +341,8 @@ public class AdapterService extends AbstractIdleService {
       LOG.warn("Invalid program type {}.", programType);
       throw new InvalidAdapterOperationException("Invalid program type " + programType);
     }
-
     setAdapterStatus(namespace, adapterName, AdapterStatus.STOPPED);
+    LOG.info("Stopped Adapter {} in namespace {}", adapterName, namespace.getId());
   }
 
   /**
@@ -359,7 +364,7 @@ public class AdapterService extends AbstractIdleService {
 
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
 
-    ProgramType programType = appTemplateInfos.get(adapterSpec.getTemplate()).getProgramType();
+    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -373,19 +378,60 @@ public class AdapterService extends AbstractIdleService {
     setAdapterStatus(namespace, adapterName, AdapterStatus.STARTED);
   }
 
-  private Id.Program getWorkflowId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+  /**
+   * Fetch RunRecords for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param status {@link ProgramRunStatus} status of the program running/completed/failed or all
+   * @param start fetch run history that has started after the startTime in seconds
+   * @param end fetch run history that has started before the endTime in seconds
+   * @param limit max number of entries to fetch for this history call
+   * @return list of {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public List<RunRecord> getRuns(Id.Namespace namespace, String adapterName, ProgramRunStatus status,
+                                 long start, long end, int limit) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    return store.getRuns(program, status, start, end, limit, adapterName);
+  }
+
+  /**
+   * Fetch RunRecord for a given adapter.
+   *
+   * @param namespace namespace in which adapter is deployed
+   * @param adapterName name of the adapter
+   * @param runId run id
+   * @return {@link RunRecord}
+   * @throws NotFoundException if adapter is not found
+   */
+  public RunRecord getRun(Id.Namespace namespace, String adapterName, String runId) throws NotFoundException {
+    Id.Program program = getProgramId(namespace, adapterName);
+    RunRecord runRecord = store.getRun(program, runId);
+    if (adapterName.equals(runRecord.getAdapterName())) {
+      return runRecord;
+    }
+    return null;
+  }
+
+  @VisibleForTesting
+  private Id.Program getProgramId(Id.Namespace namespace, String adapterName) throws NotFoundException {
+    return getProgramId(namespace, getAdapter(namespace, adapterName));
+  }
+
+  private Id.Program getProgramId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    String workflowName = Iterables.getFirst(appSpec.getWorkflows().keySet(), null);
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKFLOW, workflowName);
+    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
+                           adapterSpec.getProgram().getType(), adapterSpec.getProgram().getId());
   }
 
   private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
     throws NotFoundException, SchedulerException {
-    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
+    Id.Program workflowId = getProgramId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
@@ -394,36 +440,35 @@ public class AdapterService extends AbstractIdleService {
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
-    throws NotFoundException, SchedulerException {
-    Id.Program workflowId = getWorkflowId(namespace, adapterSpec);
+    throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
+    Id.Program workflowId = getProgramId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
     scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
     //TODO: Scheduler API should also manage the MDS.
     store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
-  }
-
-  private Id.Program getWorkerId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
-    Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      throw new NotFoundException(appId);
+    List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
+                                         Integer.MAX_VALUE);
+    for (RunRecord record : activeRuns) {
+      lifecycleService.stopProgram(RunIds.fromString(record.getPid()));
     }
-    String workflowName = Iterables.getFirst(appSpec.getWorkers().keySet(), null);
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(), ProgramType.WORKER, workflowName);
   }
 
   private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
     IOException {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
-    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    final Id.Program workerId = getProgramId(namespace, adapterSpec);
     try {
       Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
       Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
+      sysArgs.put(ProgramOptionConstants.INSTANCES, String.valueOf(adapterSpec.getInstances()));
+      sysArgs.put(ProgramOptionConstants.RESOURCES, GSON.toJson(adapterSpec.getResources()));
+
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
-      store.setWorkerInstances(workerId, adapterSpec.getInstances());
+
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
                                                                              sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();
@@ -466,7 +511,7 @@ public class AdapterService extends AbstractIdleService {
 
   private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
     ExecutionException, InterruptedException {
-    final Id.Program workerId = getWorkerId(namespace, adapterSpec);
+    final Id.Program workerId = getProgramId(namespace, adapterSpec);
     List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
                                                adapterSpec.getName());
     RunRecord adapterRun = Iterables.getFirst(runRecords, null);
@@ -480,7 +525,8 @@ public class AdapterService extends AbstractIdleService {
   // datasets and streams. At the end it will write to the store with the adapter spec.
   private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
                                              ApplicationTemplateInfo applicationTemplateInfo,
-                                             ApplicationSpecification templateSpec, AdapterConfig adapterConfig) {
+                                             ApplicationSpecification templateSpec,
+                                             AdapterConfig adapterConfig) throws IllegalArgumentException {
 
     Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
@@ -490,18 +536,18 @@ public class AdapterService extends AbstractIdleService {
         }
       });
 
-    try {
-      AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
-        adapterConfig, applicationTemplateInfo, templateSpec);
-      Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
-      if (!namespaceHomeLocation.exists()) {
-        String msg = String.format("Home directory %s for namespace %s not found",
-                                   namespaceHomeLocation.toURI().getPath(), namespace);
-        LOG.error(msg);
-        throw new FileNotFoundException(msg);
-      }
+    AdapterDeploymentInfo deploymentInfo = new AdapterDeploymentInfo(
+      adapterConfig, applicationTemplateInfo, templateSpec);
 
+    try {
       return manager.deploy(namespace, adapterName, deploymentInfo).get();
+    } catch (ExecutionException e) {
+      // error handling for manager could use some work...
+      Throwable cause = e.getCause();
+      if (cause instanceof IllegalArgumentException) {
+        throw (IllegalArgumentException) cause;
+      }
+      throw new RuntimeException(e);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -541,9 +587,8 @@ public class AdapterService extends AbstractIdleService {
       throw new FileNotFoundException(msg);
     }
     String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    Location destination = namespaceHomeLocation.append(appFabricDir)
+    return namespaceHomeLocation.append(appFabricDir)
       .append(Constants.ARCHIVE_DIR).append(templateInfo.getFile().getName());
-    return destination;
   }
 
   // Reads all the jars from the adapter directory and sets up required internal structures.
@@ -552,7 +597,7 @@ public class AdapterService extends AbstractIdleService {
     try {
       // generate a completely new map in case some templates were removed
       Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();
-      Map<String, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
+      Map<File, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
 
       File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
       Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
@@ -560,13 +605,13 @@ public class AdapterService extends AbstractIdleService {
         try {
           ApplicationTemplateInfo info = getTemplateInfo(file);
           newInfoMap.put(info.getName(), info);
-          newFileTemplateMap.put(info.getFile().getName(), info);
+          newFileTemplateMap.put(info.getFile().getAbsoluteFile(), info);
         } catch (IllegalArgumentException e) {
           LOG.error("Application template from file {} in invalid. Skipping it.", file.getName(), e);
         }
       }
-      appTemplateInfos = newInfoMap;
-      fileToTemplateMap = newFileTemplateMap;
+      appTemplateInfos.set(newInfoMap);
+      fileToTemplateMap.set(newFileTemplateMap);
     } catch (Exception e) {
       LOG.warn("Unable to read the plugins directory");
     }
@@ -574,7 +619,7 @@ public class AdapterService extends AbstractIdleService {
 
   private ApplicationTemplateInfo getTemplateInfo(File jarFile)
     throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    ApplicationTemplateInfo existing = fileToTemplateMap.get(jarFile.getAbsolutePath());
+    ApplicationTemplateInfo existing = fileToTemplateMap.get().get(jarFile.getAbsoluteFile());
     HashCode fileHash = Files.hash(jarFile, Hashing.md5());
     // if the file is the same, just return
     if (existing != null && fileHash.equals(existing.getFileHash())) {

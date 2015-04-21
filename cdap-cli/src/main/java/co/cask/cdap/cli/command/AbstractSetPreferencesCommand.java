@@ -61,7 +61,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       case FLOW:
-      case PROCEDURE:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:

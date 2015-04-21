@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,14 @@
  */
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.distributed.DistributedProcedureProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
@@ -32,6 +34,7 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 
 import java.util.Map;
@@ -47,7 +50,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
       MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(DistributedFlowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(DistributedProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
@@ -57,6 +59,10 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
+
+    // Create StreamWriter factory.
+    install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
+              .build(StreamWriterFactory.class));
   }
 
   @Singleton

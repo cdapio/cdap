@@ -18,12 +18,12 @@ package co.cask.cdap.metrics.guice;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.collect.KafkaMetricsCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
@@ -52,9 +52,9 @@ public final class DistributedMetricsClientModule extends PrivateModule {
   }
 
   @Provides
-  @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
+  @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
   public String providesKafkaTopicPrefix(CConfiguration cConf) {
-    return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX, MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
+    return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX, Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
   }
 
   @Provides

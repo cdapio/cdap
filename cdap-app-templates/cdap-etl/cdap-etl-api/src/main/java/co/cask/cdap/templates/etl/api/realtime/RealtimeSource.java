@@ -18,35 +18,38 @@ package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.ValueEmitter;
+import co.cask.cdap.templates.etl.api.EndPointStage;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import javax.annotation.Nullable;
 
 /**
  * Realtime Source.
  *
- * @param <O> Object that source emits
+ * @param <T> Type of object that the source emits
  */
-public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContext> {
+public abstract class RealtimeSource<T> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
 
-  private SourceContext context;
+  @Override
+  public void configure(StageConfigurer configurer) {
+    // no-op
+  }
 
-  /**
-   * Configure the Source.
-   *
-   * @param configurer {@link RealtimeConfigurer}
-   */
-  public void configure(RealtimeConfigurer configurer) {
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 
   /**
    * Initialize the Source.
-   *
-   * @param context {@link SourceContext}
+
+   * @param context {@link RealtimeContext}
    */
-  public void initialize(SourceContext context) {
-    this.context = context;
+  @Override
+  public void initialize(RealtimeContext context) throws Exception {
+    // no-op
   }
 
   /**
@@ -57,28 +60,13 @@ public abstract class RealtimeSource<O> implements ProgramLifecycle<SourceContex
    * @return {@link SourceState} state of the source after poll, will be persisted when all data from poll are processed
    */
   @Nullable
-  public abstract SourceState poll(ValueEmitter<O> writer, SourceState currentState);
+  public abstract SourceState poll(Emitter<T> writer, SourceState currentState);
 
   /**
-   * Invoked when source is suspended.
+   * Destroy the Source.
    */
-  public void onSuspend() {
-    // no-op
-  }
-
-  /**
-   * Resume/reconfigure from the state of suspension.
-   */
-  public void onResume() {
-    // no-op
-  }
-
   @Override
   public void destroy() {
     // no-op
-  }
-
-  protected SourceContext getContext() {
-    return context;
   }
 }
