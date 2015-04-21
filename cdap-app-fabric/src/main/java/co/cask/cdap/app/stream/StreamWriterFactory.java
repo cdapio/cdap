@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.app.stream;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.api.data.stream.StreamWriter;
+import com.google.inject.assistedinject.Assisted;
 
 /**
- * Default Ids to use in test if you do not want to construct your own.
+ * Factory to create {@link StreamWriter} objects
  */
-public class DefaultId {
-  private static final String DEFAULT_APPLICATION_ID = "myapp";
-
-  public static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
-  public static final Id.Application APPLICATION = Id.Application.from(NAMESPACE, DEFAULT_APPLICATION_ID);
+public interface StreamWriterFactory {
+  /**
+   * @param namespaceId the namespaceId for which to return a {@link StreamWriter}
+   * @return a {@link StreamWriter} for the specified namespaceId
+   */
+  StreamWriter create(@Assisted("namespaceId") String namespaceId);
 }
+
