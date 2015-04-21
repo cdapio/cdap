@@ -177,7 +177,6 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
-
     createNamespaces();
   }
 

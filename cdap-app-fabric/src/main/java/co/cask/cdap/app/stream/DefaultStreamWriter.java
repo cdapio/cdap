@@ -49,12 +49,10 @@ import java.util.concurrent.TimeUnit;
 public class DefaultStreamWriter implements StreamWriter {
 
   private final String namespaceId;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final EndpointStrategy endpointStrategy;
 
   public DefaultStreamWriter(String namespaceId, DiscoveryServiceClient discoveryServiceClient) {
     this.namespaceId = namespaceId;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
   }
 
