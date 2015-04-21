@@ -9,29 +9,13 @@
   <div class="row" explore-table>
 
     <div class="col-xs-3">
-      <!-- <div class="table-container">
-        <table class="table table-curved">
-          <thead>
-            <th>Tables</th>
-          </thead>
-          <tbody>
-            <tr ng-repeat="data in dataList" ng-click="selectTable(data)">
-              <td>
-                <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" / ng-if="data.type === 'stream'">
-                <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" / ng-if="data.type === 'dataset'">
-                {{ ::data.name }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div> -->
 
       <div class="list-group">
-        <p class="list-group-item list-group-heading">Table</p>
+        <p class="list-group-item list-group-heading">Tables ({{dataList.length}})</p>
         <div class="list-group-content">
-          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)">
-            <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" / ng-if="data.type === 'stream'">
-            <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" / ng-if="data.type === 'dataset'">
+          <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)" ng-class="{'selected': data.name === name }">
+            <img class="type-icon" src="assets/img/ico_stream.png" alt="" / ng-if="data.type === 'stream'">
+            <img class="type-icon" src="assets/img/ico_datasets.png" alt="" / ng-if="data.type === 'dataset'">
             {{ ::data.name }}
           </a>
         </div>
@@ -47,7 +31,7 @@
           </tab-heading>
 
           <!-- CONTENT -->
-          <table class="table">
+          <table class="table table-curved">
             <tr>
               <td>Table</td>
               <td>{{ selectedInfo.table_name }}</td>
@@ -88,12 +72,14 @@
             Schema
           </tab-heading>
 
-          <table class="table">
+          <table class="table table-curved" cask-sortable>
             <thead>
-              <th>Column Name</th>
-              <th>Column Type</th>
+              <tr ng-class="{'sort-enabled': selectedInfo.schema.length > 0 }">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="type">Type</th>
+              </tr>
             </thead>
-            <tr ng-repeat="schema in selectedInfo.schema">
+            <tr ng-repeat="schema in selectedInfo.schema | orderBy:sortable.predicate:sortable.reverse">
               <td>{{ schema.name }}</td>
               <td>{{ schema.type }}</td>
             </tr>
@@ -106,13 +92,15 @@
             Partition Keys
           </tab-heading>
 
-          <table class="table" ng-if="selectedInfo.partitioned_keys.length > 0">
+          <table class="table table-curved" ng-if="selectedInfo.partitioned_keys.length > 0" cask-sortable>
             <thead>
-              <th>Name</th>
-              <th>Type</th>
+              <tr ng-class="{'sort-enabled': selectedInfo.partitioned_keys.length > 0 }">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="type">Type</th>
+              </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="partition in selectedInfo.partitioned_keys">
+              <tr ng-repeat="partition in selectedInfo.partitioned_keys | orderBy:sortable.predicate:sortable.reverse">
                 <td>{{ partition.name }}</td>
                 <td>{{ partition.type }}</td>
               </tr>
@@ -128,7 +116,7 @@
             Advanced
           </tab-heading>
 
-          <table class="table">
+          <table class="table table-curved">
             <tr>
               <td>Input Format</td>
               <td>{{ selectedInfo.input_format }}</td>
@@ -206,7 +194,7 @@
           ng-class="{'fa-caret-right': activePanel!==0,
                      'fa-caret-down': activePanel===0}"
           class="fa fa-fw"
-        ></span>Write &amp; Execute SQL
+        ></span>Execute SQL
       </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
@@ -224,7 +212,7 @@
           ng-class="{'fa-caret-right': activePanel!==1,
                      'fa-caret-down': activePanel===1}"
           class="fa fa-fw"
-        ></span>View Queries
+        ></span>View Results
       </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>

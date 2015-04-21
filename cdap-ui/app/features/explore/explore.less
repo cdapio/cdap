@@ -10,6 +10,21 @@ body.state-explore {
       .tab-content {
         max-height: 247px;
         overflow-y: auto;
+
+        .table-curved {
+          border-radius: 0;
+
+          // thead {
+          //   th {
+          //     background-color: @cdap-header;
+          //     color: white;
+          //   }
+          // }
+
+          tr > td:first-child {
+            font-weight: 700;
+          }
+        }
       }
 
       .list-group {
@@ -20,6 +35,14 @@ body.state-explore {
         .list-group-content {
           max-height: 247px;
           overflow-y: auto;
+          a {
+            background-color: @cdap-darkness;
+            color: white;
+
+            &.selected {
+              color: @cdap-orange;
+            }
+          }
         }
       }
 
