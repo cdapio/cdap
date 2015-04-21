@@ -123,6 +123,7 @@ gulp.task('js:lib', function() {
       './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
 
       './bower_components/node-uuid/uuid.js',
+      './bower_components/angular-cookies/angular-cookies.min.js'
       './bower_components/angular-ui-select/dist/select.js'
 
 

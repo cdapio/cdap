@@ -21,9 +21,8 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   $scope.model = new Widget();
 
   $scope.widgetTypes = [
-    { name: 'Timeseries (line)',     type: 'line' },
     { name: 'Histogram (bar)',       type: 'bar' },
-    { name: 'Timeseries (area)',     type: 'area' },
+    { name: 'Timeseries (line)',     type: 'line' },
     { name: 'Pie Chart',             type: 'pie' },
     { name: 'Debug',                 type: 'json' }
   ];
