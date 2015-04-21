@@ -25,7 +25,7 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -119,8 +119,8 @@ public class UserProfilesTest extends TestBase {
 
     // send an event to the stream
     long activeTime = System.currentTimeMillis();
-    StreamWriter streamWriter = applicationManager.getStreamWriter("events");
-    streamWriter.send(new Gson().toJson(new Event(activeTime, "1234", "/some/path")));
+    StreamManager streamManager = getStreamManager("events");
+    streamManager.send(new Gson().toJson(new Event(activeTime, "1234", "/some/path")));
 
     try {
       // Wait for the last Flowlet processing 1 events, or at most 5 seconds

@@ -20,7 +20,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
   @Test
   public void testStreamBatch() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestFlowStreamIntegrationApp.class);
-    StreamWriter s1 = applicationManager.getStreamWriter("s1");
+    StreamManager s1 = getStreamManager("s1");
     for (int i = 0; i < 50; i++) {
       s1.send(String.valueOf(i));
     }

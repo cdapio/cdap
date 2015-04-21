@@ -24,7 +24,6 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -502,6 +501,22 @@ public class ConfigurableTestBase {
     return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
   }
 
+  /**
+   * Returns a {@link StreamManager} for the specified stream in the default namespace
+   *
+   * @param streamName the specified stream
+   * @return {@link StreamManager} for the specified stream in the default namespace
+   */
+  protected final StreamManager getStreamManager(String streamName) throws Exception {
+    return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
+  }
+
+  /**
+   * Returns a {@link StreamManager} for the specified stream in the specified namespace
+   *
+   * @param streamName the specified stream
+   * @return {@link StreamManager} for the specified stream in the specified namespace
+   */
   protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
     return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }

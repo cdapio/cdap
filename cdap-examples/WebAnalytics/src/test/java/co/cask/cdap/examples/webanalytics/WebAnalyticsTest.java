@@ -19,7 +19,7 @@ package co.cask.cdap.examples.webanalytics;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,14 +43,14 @@ public class WebAnalyticsTest extends TestBase {
     appManager.startFlow("WebAnalyticsFlow");
 
     // Send events to the Stream
-    StreamWriter writer = appManager.getStreamWriter("log");
+    StreamManager streamManager = getStreamManager("log");
     BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/access.log"),
                                                                      "UTF-8"));
     int lines = 0;
     try {
       String line = reader.readLine();
       while (line != null) {
-        writer.send(line);
+        streamManager.send(line);
         lines++;
         line = reader.readLine();
       }
