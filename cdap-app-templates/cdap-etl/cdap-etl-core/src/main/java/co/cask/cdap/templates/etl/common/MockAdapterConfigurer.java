@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.templates.plugins.PluginSelector;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -101,6 +103,31 @@ public class MockAdapterConfigurer implements AdapterConfigurer {
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
     datasetInstances.put(datasetName, new KeyValue<String, DatasetProperties>(datasetClass.getName(), props));
+  }
+
+  @Override
+  public <T> T usePlugin(String pluginType, String pluginName, String plugId, PluginProperties properties) {
+    return usePlugin(pluginType, pluginName, plugId, properties, new PluginSelector());
+  }
+
+  @Override
+  public <T> T usePlugin(String pluginType, String pluginName,
+                         String pluginId, PluginProperties properties, PluginSelector acceptor) {
+    // TODO: Implement it when converting existing app-template to use plugin
+    return null;
+  }
+
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName,
+                                     String pluginId, PluginProperties properties) {
+    return usePluginClass(pluginType, pluginName, pluginId, properties, new PluginSelector());
+  }
+
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName,
+                                     String pluginId, PluginProperties properties, PluginSelector acceptor) {
+    // TODO: Implement it when converting existing app-template to use plugin
+    return null;
   }
 
   public Schedule getSchedule() {

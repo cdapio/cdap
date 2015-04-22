@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -52,4 +52,4 @@ if [ ${containsTokenFileArg} -eq 0 ] && [ -r ${auth_file} ]; then
   TOKENFILE="--token-file ${auth_file}"
 fi
 
-java -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.common.conf.ConfigurationJsonTool ${@} ${TOKENFILE}
+java -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.ui.ConfigurationJsonTool ${@} ${TOKENFILE}

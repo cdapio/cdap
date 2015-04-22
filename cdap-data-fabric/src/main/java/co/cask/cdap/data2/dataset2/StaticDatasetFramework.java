@@ -23,8 +23,10 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -51,8 +53,9 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
 
   public StaticDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                 Map<String, DatasetModule> modules,
-                                CConfiguration configuration) {
-    super(registryFactory, modules, configuration);
+                                CConfiguration configuration,
+                                TransactionExecutorFactory txExecutorFactory) {
+    super(registryFactory, modules, configuration, txExecutorFactory);
   }
 
   @Override

@@ -26,13 +26,14 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.templates.AdapterContext;
 
 import java.util.List;
 
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, AdapterContext {
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
    */

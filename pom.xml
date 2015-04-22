@@ -161,7 +161,6 @@
     <module>cdap-unit-test</module>
     <module>cdap-unit-test-standalone</module>
     <module>cdap-master</module>
-    <module>cdap-web-app</module>
     <module>cdap-proto</module>
     <module>cdap-notifications</module>
     <module>cdap-notifications-api</module>

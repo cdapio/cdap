@@ -95,6 +95,22 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
+   * Loads and returns the {@link Class} of the given plugin class.
+   *
+   * @param pluginInfo information about the plugin. It is used for creating the ClassLoader for the plugin.
+   * @param pluginClass information about the plugin class
+   * @param <T> Type of the plugin
+   * @return the plugin Class
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   */
+  @SuppressWarnings("unchecked")
+  public <T> Class<T> loadClass(PluginInfo pluginInfo,
+                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
+    return (Class<T>) getPluginClassLoader(pluginInfo).loadClass(pluginClass.getClassName());
+  }
+
+  /**
    * Creates a new instance of the given plugin class.
    *
    * @param pluginInfo information about the plugin. It is used for creating the ClassLoader for the plugin.

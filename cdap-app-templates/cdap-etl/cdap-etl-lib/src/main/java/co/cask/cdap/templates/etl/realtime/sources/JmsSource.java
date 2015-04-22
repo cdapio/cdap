@@ -90,7 +90,7 @@ public class JmsSource extends RealtimeSource<String> {
     super.initialize(context);
 
     if (context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE) != null) {
-      messagesToReceive = Integer.valueOf(context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE));
+      messagesToReceive = Integer.parseInt(context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE));
     }
 
     // Try get the destination name

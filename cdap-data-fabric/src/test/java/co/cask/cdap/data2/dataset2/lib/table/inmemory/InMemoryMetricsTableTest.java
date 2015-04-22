@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -69,7 +70,8 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
       });
 
     dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class),
-                                               injector.getInstance(CConfiguration.class));
+                                               injector.getInstance(CConfiguration.class),
+                                               injector.getInstance(TransactionExecutorFactory.class));
     dsFramework.addModule(metricsInMemoryModule, new InMemoryMetricsTableModule());
   }
 

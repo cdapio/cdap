@@ -37,8 +37,10 @@ import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -60,6 +62,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -85,10 +88,12 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             DatasetFramework datasetFramework,
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
-                            StreamWriterFactory streamWriterFactory) {
+                            StreamWriterFactory streamWriterFactory,
+                            @Nullable AdapterSpecification adapterSpec,
+                            @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, runId.getId(), instanceId),
-          datasetFramework, discoveryServiceClient);
+          datasetFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
@@ -98,7 +103,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
-    this.streamWriter = streamWriterFactory.create(program.getNamespaceId(), program.getId());
+    this.streamWriter = streamWriterFactory.create(program.getId());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
@@ -165,7 +170,8 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), program.getId(),
+                                             context, datasetFramework,
                                              getProgram().getClassLoader(), null, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

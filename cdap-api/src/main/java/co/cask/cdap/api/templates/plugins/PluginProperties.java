@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.templates.plugins;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Map;
 /**
  * Plugin instance properties.
  */
+@Beta
 public class PluginProperties {
 
   // Currently only support String->String map.
