@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-xs-6">
-        <h2> <span> {{nsname | myEllipsis: 15}}: Applications </span></h2>
+        <h2> Applications </h2>
     </div>
-    <div class="col-xs-6 text-right h2" ng-if="apps.length > 0">
+    <div class="col-xs-6 text-right" ng-if="apps.length > 0">
     <!--     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
         <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button> -->
         <my-file-select ng-controller="AdminNamespaceAppController" data-button-label="Add App" on-file-select="onFileSelected($files)"> </my-file-select>
@@ -28,7 +28,10 @@
                         </a>
                     </td>
                     <td>{{ ::app.version }}</td>
-                    <td>{{ ::app.type }}</td>
+                    <td>
+                        <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" />
+                        <span> {{ ::app.type }} </span>
+                    </td>
                     <td>{{ ::app.description }}</td>
                 </tr>
             </tbody>

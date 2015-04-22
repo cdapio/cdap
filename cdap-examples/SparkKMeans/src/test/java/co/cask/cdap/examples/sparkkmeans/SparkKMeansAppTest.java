@@ -22,7 +22,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -46,12 +46,12 @@ public class SparkKMeansAppTest extends TestBase {
     // Start the Flow
     FlowManager flowManager = appManager.startFlow("PointsFlow");
     // Send a few points to the stream
-    StreamWriter streamWriter = appManager.getStreamWriter("pointsStream");
-    streamWriter.send("10.6 519.2 110.3");
-    streamWriter.send("10.6 518.1 110.1");
-    streamWriter.send("10.6 519.6 109.9");
-    streamWriter.send("10.6 517.9 108.9");
-    streamWriter.send("10.7 518 109.2");
+    StreamManager streamManager = getStreamManager("pointsStream");
+    streamManager.send("10.6 519.2 110.3");
+    streamManager.send("10.6 518.1 110.1");
+    streamManager.send("10.6 519.6 109.9");
+    streamManager.send("10.6 517.9 108.9");
+    streamManager.send("10.7 518 109.2");
 
     //  Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("SparkKMeans", "PointsFlow", "reader");

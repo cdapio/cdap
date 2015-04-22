@@ -17,15 +17,13 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorker;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -50,7 +48,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private final String className;
   private String name;
   private String description;
-  private Map<String, ServiceWorkerSpecification> workers;
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
@@ -63,7 +60,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
-    this.workers = Maps.newHashMap();
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
@@ -77,23 +73,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   @Override
   public void setDescription(String description) {
     this.description = description;
-  }
-
-  @Override
-  public void addWorkers(Map<String, ServiceWorker> serviceWorkers) {
-    for (Map.Entry<String, ServiceWorker> entry : serviceWorkers.entrySet()) {
-      String name = entry.getKey();
-      ServiceWorker worker = entry.getValue();
-
-      Preconditions.checkArgument(!name.equals(this.name),
-                                  "Service worker cannot has the same name as the enclosing Service.");
-      Preconditions.checkArgument(!workers.containsKey(name),
-                                  "Service worker with name %s already existed.", name);
-
-      DefaultServiceWorkerConfigurer configurer = new DefaultServiceWorkerConfigurer(name, worker);
-      worker.configure(configurer);
-      workers.put(name, configurer.createSpecification());
-    }
   }
 
   @Override
@@ -115,7 +94,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances);
   }
 
   /**

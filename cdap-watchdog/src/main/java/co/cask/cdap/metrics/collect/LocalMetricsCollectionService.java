@@ -16,9 +16,9 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -32,7 +32,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link co.cask.cdap.common.metrics.MetricsCollectionService} that writes to MetricsTable directly.
+ * A {@link co.cask.cdap.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
  * It also has a scheduling job that clean up old metrics periodically.
  */
 @Singleton
@@ -51,9 +51,9 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(Iterator<MetricValue> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
     while (metrics.hasNext()) {
-      MetricValue metric = metrics.next();
+      MetricValues metric = metrics.next();
       metricStore.add(metric);
     }
   }
@@ -64,8 +64,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
-                                   MetricsConstants.DEFAULT_RETENTION_HOURS);
+    long retention = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + ".1.seconds",
+                                   Constants.Metrics.DEFAULT_RETENTION_HOURS);
 
     // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
     scheduler.schedule(createCleanupTask(retention), 1, TimeUnit.SECONDS);

@@ -41,7 +41,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -100,14 +99,12 @@ public class ETLMapReduceTest extends TestBase {
     }
   }
 
-  //TODO: Run after validation logic is fixed
-  @Ignore
   @Test(expected = IllegalArgumentException.class)
   public void testSourceTransformTypeMismatchConfig() throws Exception {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     ETLBatchConfig adapterConfig = constructTypeMismatchConfig();
     MockAdapterConfigurer mockAdapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, mockAdapterConfigurer);
+    appTemplate.configureAdapter("badAdapter", adapterConfig, mockAdapterConfigurer);
   }
 
   @SuppressWarnings("ConstantConditions")

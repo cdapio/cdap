@@ -21,7 +21,9 @@ import co.cask.cdap.test.StreamWriter;
 
 /**
  * This interface is using Guice assisted inject to create {@link co.cask.cdap.test.StreamWriter}.
+ * @deprecated use {@link StreamManagerFactory} instead
  */
+@Deprecated
 public interface StreamWriterFactory {
 
   StreamWriter create(Id.Stream streamId);

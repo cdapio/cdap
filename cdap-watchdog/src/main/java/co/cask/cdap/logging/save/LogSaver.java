@@ -138,7 +138,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
-      long offset = getLowestCheckPoint(part);
+      long offset = getLowestCheckpointOffset(part);
       partitionOffset.put(part, offset);
 
       if (offset >= 0) {
@@ -155,15 +155,15 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
 
-  private long getLowestCheckPoint(int partition) {
+  private long getLowestCheckpointOffset(int partition) {
     long lowestCheckpoint = -1L;
 
     for (KafkaLogProcessor processor : messageProcessors) {
-      long checkpoint = processor.getCheckPoint(partition);
-      // If checkpoint is -1; then ignore the checkpoint
-      if (checkpoint != -1) {
-        lowestCheckpoint =  (lowestCheckpoint == -1 || checkpoint < lowestCheckpoint) ?
-                             checkpoint :
+      Checkpoint checkpoint = processor.getCheckpoint(partition);
+      // If checkpoint offset is -1; then ignore the checkpoint offset
+      if (checkpoint.getNextOffset() != -1) {
+        lowestCheckpoint =  (lowestCheckpoint == -1 || checkpoint.getNextOffset() < lowestCheckpoint) ?
+                             checkpoint.getNextOffset() :
                              lowestCheckpoint;
       }
     }
@@ -176,7 +176,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     while (!isDatasetAvailable) {
       try {
          for (KafkaLogProcessor processor : messageProcessors) {
-           processor.getCheckPoint(0);
+           processor.getCheckpoint(0);
          }
         isDatasetAvailable = true;
       } catch (Exception e) {

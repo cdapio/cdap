@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -30,7 +31,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;

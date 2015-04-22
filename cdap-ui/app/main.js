@@ -28,7 +28,8 @@ angular
         'ui.router',
         'cask-angular-window-manager',
         'cask-angular-theme',
-        'cask-angular-focus'
+        'cask-angular-focus',
+        'ngCookies'
       ]).name,
 
       angular.module(PKG.name+'.filters', [
@@ -61,7 +62,8 @@ angular
       'mgcrea.ngStrap.modal',
 
       'ncy-angular-breadcrumb',
-      'angularMoment'
+      'angularMoment',
+      'ui.select'
 
     ]).name,
 
@@ -171,7 +173,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
 
     var activeThemeClass = caskTheme.getClassName();
 

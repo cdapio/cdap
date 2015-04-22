@@ -1,4 +1,4 @@
-<div class="row">
+<!-- <div class="row">
   <div class="col-sm-2 control-label">
     Instances:
   </div>
@@ -18,4 +18,23 @@
         <span ng-if="processing" class="fa fa-refresh fa-spin"></span>
     </form>
   </div>
+
+
+</div> -->
+
+<div class="col-xs-3 instances">
+  <table class="table">
+    <tr>
+      <td></td>
+      <td>Provisioned</td>
+      <td>Requested</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><strong>Instances:</strong></td>
+      <td class="text-center">{{ model.provisioned }}</td>
+      <td><input class="form-control" type="number" ng-model="model.requested"></td>
+      <td><button class="btn btn-primary btn-sm" ng-click="handleSet()" ng-disabled="instance < 1">Set</button></td>
+    </tr>
+  </table>
 </div>

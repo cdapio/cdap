@@ -22,8 +22,8 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.metrics.MetricsConstants;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.CharEncoding;
@@ -154,7 +154,7 @@ final class MetricQueryParser {
     builder.setMetricName(metricPrefix);
 
     MetricDataQuery query = builder.build();
-    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMetricName(), query.getSliceByTags());
+    return new MetricDeleteQuery(query.getStartTs(), query.getEndTs(), query.getMetricNames(), query.getSliceByTags());
   }
 
   static MetricDataQuery parse(URI requestURI) throws MetricsPathException {
@@ -360,7 +360,7 @@ final class MetricQueryParser {
         buildComponentTypeContext(pathParts, tagValues, "methods", "handler", Constants.Metrics.Tag.METHOD);
         break;
       case SERVICES:
-        buildComponentTypeContext(pathParts, tagValues, "runnables", "service", Constants.Metrics.Tag.SERVICE_RUNNABLE);
+        buildComponentTypeContext(pathParts, tagValues, "handlers", "service", Constants.Metrics.Tag.HANDLER);
         break;
       case SPARK:
         if (pathParts.hasNext()) {
@@ -485,7 +485,7 @@ final class MetricQueryParser {
         startTime = endTime - (count * resolution) + resolution;
       } else {
         // if only count is specified, assume the current time is desired as the end.
-        endTime = now - MetricsConstants.QUERY_SECOND_DELAY;
+        endTime = now - Constants.Metrics.Query.QUERY_SECOND_DELAY;
         startTime = endTime - (count * resolution) + resolution;
       }
     } else {
@@ -504,10 +504,10 @@ final class MetricQueryParser {
     setInterpolator(queryParams, builder);
   }
 
-  private static Resolution getResolution(long difference) {
-    if (difference > MetricsConstants.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
+  static Resolution getResolution(long difference) {
+    if (difference > Constants.Metrics.Query.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
       return  Resolution.HOUR;
-    } else if (difference > MetricsConstants.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
+    } else if (difference > Constants.Metrics.Query.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
       return Resolution.MINUTE;
     } else {
       return Resolution.SECOND;
@@ -574,8 +574,9 @@ final class MetricQueryParser {
     }
 
     public MetricDataQuery build() {
-      String measureName = (metricName != null && scope != null) ? scope + "." + metricName : null;
-      return new MetricDataQuery(startTs, endTs, resolution, limit, measureName, MetricType.COUNTER,
+      List<String> measureNames =
+        (metricName != null && scope != null) ? ImmutableList.of(scope + "." + metricName) : ImmutableList.<String>of();
+      return new MetricDataQuery(startTs, endTs, resolution, limit, measureNames, MetricType.COUNTER,
                                  sliceByTagValues, new ArrayList<String>(), interpolator);
     }
 

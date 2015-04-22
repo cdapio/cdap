@@ -89,9 +89,12 @@ angular.module(PKG.name+'.services')
 
       if(r) {
         msg.resource = r;
-        // we only support json content-type,
-        // and expect json as response
-        msg.resource.json = true;
+
+        // Majority of the time, we send data as json and expect a json response, but not always (i.e. stream ingest).
+        // Default to json content-type.
+        if (msg.resource.json === undefined) {
+          msg.resource.json = true;
+        }
 
         // sugar for prefixing the path with namespace
         if (!r.url) {

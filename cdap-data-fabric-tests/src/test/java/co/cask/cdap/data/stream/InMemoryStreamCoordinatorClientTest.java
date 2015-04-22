@@ -21,6 +21,8 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -50,6 +52,8 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),

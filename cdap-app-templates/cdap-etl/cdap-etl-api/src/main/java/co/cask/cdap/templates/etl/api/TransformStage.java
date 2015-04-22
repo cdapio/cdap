@@ -27,30 +27,9 @@ import java.lang.reflect.Type;
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<TransformContext>, Transform<IN, OUT> {
+public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<StageContext>, Transform<IN, OUT> {
 
-  private final Type inputType = new TypeToken<IN>(getClass()) { }.getType();
-  private final Type outputType = new TypeToken<OUT>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link IN}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getInputType() {
-    return inputType;
-  }
-
-  /**
-   * Get the Type of {@link OUT}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getOutputType() {
-    return outputType;
-  }
-
-  private TransformContext context;
+  private StageContext context;
 
   /**
    * Configure the Transform stage. Used to provide information about the Transform.
@@ -65,9 +44,9 @@ public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<Transf
    * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
    * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
    *
-   * @param context {@link TransformContext}
+   * @param context {@link StageContext}
    */
-  public void initialize(TransformContext context) {
+  public void initialize(StageContext context) {
     this.context = context;
   }
 
@@ -76,7 +55,7 @@ public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<Transf
     //no-op
   }
 
-  protected TransformContext getContext() {
+  protected StageContext getContext() {
     return context;
   }
 }

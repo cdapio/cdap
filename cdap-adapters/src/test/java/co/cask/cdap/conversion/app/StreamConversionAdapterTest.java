@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -58,11 +58,11 @@ public class StreamConversionAdapterTest extends TestBase {
     ApplicationManager appManager = deployApplication(StreamConversionAdapter.class);
 
     // create and write to the stream
-    StreamWriter streamWriter = appManager.getStreamWriter(streamName);
-    streamWriter.createStream();
-    streamWriter.send(ImmutableMap.of("header1", "bar"), "AAPL,10,500.32");
-    streamWriter.send(ImmutableMap.of("header1", "baz", "header2", "foo"), "CASK,50,12345.67");
-    streamWriter.send(ImmutableMap.<String, String>of(), "YHOO,1,48.53");
+    StreamManager streamManager = getStreamManager(streamName);
+    streamManager.createStream();
+    streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL,10,500.32");
+    streamManager.send(ImmutableMap.of("header1", "baz", "header2", "foo"), "CASK,50,12345.67");
+    streamManager.send(ImmutableMap.<String, String>of(), "YHOO,1,48.53");
 
     Schema bodySchema = Schema.recordOf(
       "event",

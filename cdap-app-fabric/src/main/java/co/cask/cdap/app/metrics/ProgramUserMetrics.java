@@ -17,9 +17,9 @@
 package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 
 import java.io.Externalizable;
 import java.io.IOException;

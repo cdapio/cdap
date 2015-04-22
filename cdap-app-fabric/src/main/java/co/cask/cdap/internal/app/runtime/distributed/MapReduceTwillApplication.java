@@ -15,39 +15,37 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- * {@link TwillApplication} to run {@link MapReduceTwillRunnable}
+ * The {@link TwillApplication} for running {@link MapReduce} in distributed mode.
  */
-public final class MapReduceTwillApplication implements TwillApplication {
+public final class MapReduceTwillApplication extends AbstractProgramTwillApplication {
 
-  private final MapReduceSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
+  private final String name;
 
   public MapReduceTwillApplication(Program program, MapReduceSpecification spec,
-                                   File hConfig, File cConfig, EventHandler eventHandler) {
-    this.spec = spec;
-    this.program = program;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
+                                   Map<String, File> localizeFiles, EventHandler eventHandler) {
+    super(program, localizeFiles, eventHandler);
+    this.name = spec.getName();
   }
 
   @Override
-  public TwillSpecification configure() {
+  protected ProgramType getType() {
+    return ProgramType.MAPREDUCE;
+  }
+
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
     // These resources are for the container that runs the mapred client that will launch the actual mapred job.
     // It does not need much memory.  Memory for mappers and reduces are specified in the MapReduceSpecification,
     // which is configurable by the author of the job.
@@ -57,20 +55,9 @@ public final class MapReduceTwillApplication implements TwillApplication {
       .setInstances(1)
       .build();
 
-    Location programLocation = program.getJarLocation();
-
-    return TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s",
-                             ProgramType.MAPREDUCE.name().toLowerCase(),
-                             program.getNamespaceId(), program.getApplicationId(), spec.getName()))
-      .withRunnable()
-        .add(spec.getName(),
-             new MapReduceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-             resourceSpec)
-        .withLocalFiles()
-          .add(programLocation.getName(), programLocation.toURI())
-          .add("hConf.xml", hConfig.toURI())
-          .add("cConf.xml", cConfig.toURI()).apply()
-      .anyOrder().withEventHandler(eventHandler).build();
+    runnables.put(name, new RunnableResource(
+      new MapReduceTwillRunnable(name, "hConf.xml", "cConf.xml"),
+      resourceSpec
+    ));
   }
 }

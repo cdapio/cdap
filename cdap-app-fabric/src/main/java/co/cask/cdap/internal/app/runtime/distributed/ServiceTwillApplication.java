@@ -16,81 +16,40 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.util.Map;
 
 /**
- * TwillApplication for service. Used to localize program jar location before running the TwillApplication.
+ * The {@link TwillApplication} for running {@link Service} in distributed mode.
  */
-public class ServiceTwillApplication implements TwillApplication {
+public class ServiceTwillApplication extends AbstractProgramTwillApplication {
 
   private final ServiceSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
 
-  public ServiceTwillApplication(Program program, ServiceSpecification spec, File hConfig, File cConfig,
-                                 EventHandler eventHandler) {
-    this.program = program;
+  public ServiceTwillApplication(Program program, ServiceSpecification spec,
+                                 Map<String, File> localizeFiles, EventHandler eventHandler) {
+    super(program, localizeFiles, eventHandler);
     this.spec = spec;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
   }
 
   @Override
-  public TwillSpecification configure() {
-    TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), program.getNamespaceId(),
-                             program.getApplicationId(), spec.getName()))
-      .withRunnable();
-
-    Location programLocation = program.getJarLocation();
-    String programName = programLocation.getName();
-
-    // Add a runnable for the service handler
-    Resources resources = spec.getResources();
-    TwillSpecification.Builder.RunnableSetter runnableSetter;
-    runnableSetter = moreRunnable.add(spec.getName(),
-                                      new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-                                      createResourceSpec(resources, spec.getInstances()))
-                                  .withLocalFiles()
-                                    .add(programName, programLocation.toURI())
-                                    .add("hConf.xml", hConfig.toURI())
-                                    .add("cConf.xml", cConfig.toURI()).apply();
-
-    // Add runnables for all workers
-    for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-      ServiceWorkerSpecification workerSpec = entry.getValue();
-      runnableSetter = runnableSetter.add(workerSpec.getName(),
-                                          new ServiceTwillRunnable(workerSpec.getName(), "hConf.xml", "cConf.xml"),
-                                          createResourceSpec(workerSpec.getResources(), workerSpec.getInstances()))
-                                     .withLocalFiles()
-                                       .add(programName, programLocation.toURI())
-                                       .add("hConf.xml", hConfig.toURI())
-                                       .add("cConf.xml", cConfig.toURI()).apply();
-    }
-
-    return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
+  protected ProgramType getType() {
+    return ProgramType.SERVICE;
   }
 
-  private ResourceSpecification createResourceSpec(Resources resources, int instances) {
-    return ResourceSpecification.Builder.with()
-      .setVirtualCores(resources.getVirtualCores())
-      .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
+    // Add a runnable for the service handler
+    runnables.put(spec.getName(), new RunnableResource(
+      new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      createResourceSpec(spec.getResources(), spec.getInstances())
+    ));
   }
 }

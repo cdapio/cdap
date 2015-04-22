@@ -20,18 +20,16 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link HelloWorld}.
@@ -39,7 +37,7 @@ import java.util.concurrent.TimeoutException;
 public class HelloWorldTest extends TestBase {
 
   @Test
-  public void test() throws TimeoutException, InterruptedException, IOException {
+  public void test() throws Exception {
     // Deploy the HelloWorld application
     ApplicationManager appManager = deployApplication(HelloWorld.class);
 
@@ -48,12 +46,12 @@ public class HelloWorldTest extends TestBase {
     Assert.assertTrue(flowManager.isRunning());
 
     // Send stream events to the "who" Stream
-    StreamWriter streamWriter = appManager.getStreamWriter("who");
-    streamWriter.send("1");
-    streamWriter.send("2");
-    streamWriter.send("3");
-    streamWriter.send("4");
-    streamWriter.send("5");
+    StreamManager streamManager = getStreamManager("who");
+    streamManager.send("1");
+    streamManager.send("2");
+    streamManager.send("3");
+    streamManager.send("4");
+    streamManager.send("5");
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds

@@ -16,8 +16,11 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
@@ -29,7 +32,7 @@ import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.service.ServiceComponentProgramRunner;
+import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
@@ -57,11 +60,26 @@ import org.apache.twill.discovery.DiscoveryService;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-final class InMemoryProgramRunnerModule extends PrivateModule {
+public final class InMemoryProgramRunnerModule extends PrivateModule {
+
+  private final Class<? extends StreamWriter> streamWriterClass;
+
+  public InMemoryProgramRunnerModule() {
+    this(null);
+  }
+
+  public InMemoryProgramRunnerModule(@Nullable Class<? extends StreamWriter> streamWriterClass) {
+    if (streamWriterClass == null) {
+      this.streamWriterClass = DefaultStreamWriter.class;
+    } else {
+      this.streamWriterClass = streamWriterClass;
+    }
+  }
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.
@@ -92,8 +110,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER_COMPONENT).to(WorkerProgramRunner.class);
 
     // Service support in standalone
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(ServiceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE_COMPONENT).to(ServiceComponentProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InMemoryServiceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE_COMPONENT).to(ServiceProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.
@@ -109,6 +127,10 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
+
+    // Create StreamWriter factory.
+    install(new FactoryModuleBuilder().implement(StreamWriter.class, streamWriterClass)
+              .build(StreamWriterFactory.class));
   }
 
   @Singleton

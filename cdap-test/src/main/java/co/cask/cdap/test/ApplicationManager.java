@@ -72,7 +72,10 @@ public interface ApplicationManager {
    * Gets a {@link StreamWriter} for writing data to the given stream.
    * @param streamName Name of the stream to write to.
    * @return A {@link StreamWriter}.
+   *
+   * @deprecated use TestBase#getStreamMaanger(String streamName)
    */
+  @Deprecated
   StreamWriter getStreamWriter(String streamName);
 
   /**
@@ -83,7 +86,7 @@ public interface ApplicationManager {
    * @param <T> Type of the dataset.
    * @return A {@link DataSetManager} instance.
    * @deprecated As of version 2.8.0, replaced by
-   *             {@link TestBase#getDataset(co.cask.cdap.proto.Id.Namespace, String)}
+   *             TestBase#getDataset(co.cask.cdap.proto.Id.Namespace, String)
    */
   @Deprecated
   <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception;

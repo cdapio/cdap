@@ -122,21 +122,21 @@ public class FactTableTest {
                                                              new TimeValue(ts + 2 * resolution, 6 * k)));
     }
     // metric = null means "all"
-    FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
+    FactScan scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, tagValues);
     assertScan(table, expected, scan);
 
     // delete metric test
     expected.clear();
 
     // delete the metrics data at (timestamp + 20) resolution
-    scan = new FactScan(ts + resolution * 2, ts + resolution * 3, null, tagValues);
+    scan = new FactScan(ts + resolution * 2, ts + resolution * 3, tagValues);
     table.delete(scan);
     for (int k = 1; k < 4; k++) {
       expected.put("metric" + k, tagValues, ImmutableList.of(new TimeValue(ts, 11 * k),
                                                              new TimeValue(ts + resolution, 27 * k)));
     }
     // verify deletion
-    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, null, tagValues);
+    scan = new FactScan(ts - 2 * resolution, ts + 3 * resolution, tagValues);
     assertScan(table, expected, scan);
 
     // delete metrics for "metric1" at ts0 and verify deletion
@@ -313,7 +313,7 @@ public class FactTableTest {
     for (int i = 1; i < 3; i++) {
       // all time points
       scan = new FactScan(ts - resolution, ts + 3 * resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -323,7 +323,7 @@ public class FactTableTest {
 
       // time points since second interval
       scan = new FactScan(ts + resolution, ts + 3 * resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -333,7 +333,7 @@ public class FactTableTest {
 
       // time points before third interval
       scan = new FactScan(ts - resolution, ts + resolution,
-                            "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
+                          "metric" + i, tagValues("tag1", "value1", "tag2", "value2"));
 
       expected = HashBasedTable.create();
       expected.put("metric" + i, tagValues("tag1", "value1", "tag2", "value2"),
@@ -407,8 +407,7 @@ public class FactTableTest {
     }
 
     // all time points
-    scan = new FactScan(ts - resolution, ts + 3 * resolution,
-                          null, tagValues("tag1", "value1", "tag2", "value2"));
+    scan = new FactScan(ts - resolution, ts + 3 * resolution, tagValues("tag1", "value1", "tag2", "value2"));
 
     expected = HashBasedTable.create();
     for (int i = 1; i < 3; i++) {
@@ -419,8 +418,7 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // time points since second interval
-    scan = new FactScan(ts + resolution, ts + 3 * resolution,
-                          null, tagValues("tag1", "value1", "tag2", "value2"));
+    scan = new FactScan(ts + resolution, ts + 3 * resolution, tagValues("tag1", "value1", "tag2", "value2"));
 
     expected = HashBasedTable.create();
     for (int i = 1; i < 3; i++) {
@@ -431,8 +429,7 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // time points before third interval
-    scan = new FactScan(ts - resolution, ts + resolution,
-                          null, tagValues("tag1", "value1", "tag2", "value2"));
+    scan = new FactScan(ts - resolution, ts + resolution, tagValues("tag1", "value1", "tag2", "value2"));
 
     expected = HashBasedTable.create();
     for (int i = 1; i < 3; i++) {
@@ -443,9 +440,7 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // time points for fuzzy tag2 since second interval
-    scan = new FactScan(ts + resolution, ts + 3 * resolution,
-                          // null stands for any
-                          null, tagValues("tag1", "value1", "tag2", null));
+    scan = new FactScan(ts + resolution, ts + 3 * resolution, tagValues("tag1", "value1", "tag2", null));
 
     expected = HashBasedTable.create();
     for (int i = 1; i < 3; i++) {
@@ -458,9 +453,7 @@ public class FactTableTest {
     assertScan(table, expected, scan);
 
     // time points for fuzzy tag1 before third interval (very important case - caught some bugs)
-    scan = new FactScan(ts - resolution, ts + resolution,
-                          // null stands for any
-                          null, tagValues("tag1", null, "tag2", "value3"));
+    scan = new FactScan(ts - resolution, ts + resolution, tagValues("tag1", null, "tag2", "value3"));
 
     expected = HashBasedTable.create();
     for (int i = 1; i < 3; i++) {

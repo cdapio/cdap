@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;

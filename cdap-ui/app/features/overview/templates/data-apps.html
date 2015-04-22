@@ -30,14 +30,14 @@
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <div class="title-type-image">
-              <img src="assets/img/stream.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
               <span> Stream </span>
             </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
             <p ng-bind="data.name | caskCapitalizeFilter"> </p>
             <div class="title-type-image">
-              <img src="assets/img/datasets.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
               <span> Dataset </span>
             </div>
           </a>
@@ -79,9 +79,9 @@
               <span class="fa fa-list-ul"></span>
                <span>All Apps</span>
             </a>
-            <a ui-sref="etlapps.list" class="btn btn-default">
+            <a ui-sref="adapters.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
-               All ETL Apps
+               All Adapters
             </a>
 <!--             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-pencil-square-o"></span>
@@ -102,7 +102,7 @@
           <a ui-sref="apps.detail.overview({appId: app.id})">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <img src="assets/img/cdap.svg" alt="" />
+              <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
               <span> CDAP </span>
             </div>
           </a>
@@ -122,7 +122,7 @@
             data-button-icon="fa-plus"
             on-file-select="onFileSelected($files)">
         </my-file-select>
-        <a ui-sref="etlapps.create" class="btn btn-default">
+        <a ui-sref="adapters.create" class="btn btn-default">
           <span class="fa fa-plus"></span>
           <span>Add ETL App</span>
         </a>

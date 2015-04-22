@@ -19,7 +19,7 @@ package co.cask.cdap.examples.sparkpagerank;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -46,11 +46,11 @@ public class SparkPageRankAppTest extends TestBase {
     ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
 
     // Send a stream events to the Stream
-    StreamWriter streamWriter = appManager.getStreamWriter("backlinkURLStream");
-    streamWriter.send(URL_PAIR12);
-    streamWriter.send(URL_PAIR13);
-    streamWriter.send(URL_PAIR21);
-    streamWriter.send(URL_PAIR31);
+    StreamManager streamManager = getStreamManager("backlinkURLStream");
+    streamManager.send(URL_PAIR12);
+    streamManager.send(URL_PAIR13);
+    streamManager.send(URL_PAIR21);
+    streamManager.send(URL_PAIR31);
 
     // Start GoogleTypePR
     ServiceManager transformServiceManager = appManager.startService(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);

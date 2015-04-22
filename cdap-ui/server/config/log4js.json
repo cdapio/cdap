@@ -1,6 +1,6 @@
 {
   "appenders": [
-    { 
+    {
       "category" : "default",
       "type" : "console"
     }

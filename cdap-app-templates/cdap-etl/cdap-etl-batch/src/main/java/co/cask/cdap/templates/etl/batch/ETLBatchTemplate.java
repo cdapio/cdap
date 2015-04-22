@@ -22,6 +22,7 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
+import co.cask.cdap.templates.etl.batch.sinks.CubeSink;
 import co.cask.cdap.templates.etl.batch.sinks.DBSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
@@ -34,6 +35,7 @@ import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
@@ -63,8 +65,10 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         StreamBatchSource.class,
                                         TimePartitionedFileSetDatasetAvroSink.class,
                                         ScriptFilterTransform.class,
+                                        ProjectionTransform.class,
                                         DBSource.class,
-                                        DBSink.class));
+                                        DBSink.class,
+                                        CubeSink.class));
   }
 
   @Override

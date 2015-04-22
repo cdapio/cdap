@@ -67,7 +67,7 @@ angular.module(PKG.name + '.feature.workflows')
               ncyBreadcrumb: {
                 label: '{{$state.params.runid}}'
               },
-              templateUrl: '/assets/features/workflows/templates/tabs/runs/runs-detail.html',
+              templateUrl: '/assets/features/workflows/templates/tabs/runs/run-detail.html',
               controller: 'WorkflowsRunsDetailController'
             })
 

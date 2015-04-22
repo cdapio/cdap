@@ -43,17 +43,18 @@ import java.util.Map;
  */
 public abstract class AbstractCubeTest {
   protected abstract Cube getCube(String name, int[] resolutions,
-                                  Collection<? extends Aggregation> aggregations) throws Exception;
+                                  Map<String, ? extends Aggregation> aggregations) throws Exception;
 
   @Test
-  public void test() throws Exception {
+  public void testBasics() throws Exception {
     Aggregation agg1 = new DefaultAggregation(ImmutableList.of("tag1", "tag2", "tag3"),
                                               ImmutableList.of("tag1", "tag2"));
     Aggregation agg2 = new DefaultAggregation(ImmutableList.of("tag1", "tag2"),
                                               ImmutableList.of("tag1"));
 
     int resolution = 1;
-    Cube cube = getCube("myCube", new int[] {resolution}, ImmutableList.of(agg1, agg2));
+    Cube cube = getCube("myCube", new int[] {resolution},
+                        ImmutableMap.<String, Aggregation>of("agg1", agg1, "agg2", agg2));
 
     // write some data
     // NOTE: we mostly use different ts, as we are interested in checking incs not at persist, but rather at query time
@@ -68,8 +69,8 @@ public abstract class AbstractCubeTest {
     writeInc(cube, "metric1",  6,  6,  "1", null, null);
     writeInc(cube, "metric1",  7,  3,  "1",  "1", null);
     // writing using BatchWritable APIs
-    writeIncViaBatchWritable(cube, "metric1",  8,  2, null,  "1", null);
-    writeIncViaBatchWritable(cube, "metric1",  9,  1, null, null, null);
+    writeIncViaBatchWritable(cube, "metric1", 8, 2, null, "1", null);
+    writeIncViaBatchWritable(cube, "metric1", 9, 1, null, null, null);
     // writing in batch
     cube.add(ImmutableList.of(
       getFact("metric1", 10,  2,  "1",  "1",  "1",  "1"),
@@ -78,7 +79,7 @@ public abstract class AbstractCubeTest {
       getFact("metric1", 13,  5, null, null, null,  "1")
     ));
 
-    writeInc(cube, "metric2",  1,  1,  "1",  "1",  "1");
+    writeInc(cube, "metric2", 1, 1, "1", "1", "1");
 
     // todo: do some write instead of increments - test those as well
 
@@ -104,11 +105,22 @@ public abstract class AbstractCubeTest {
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(3, 5))));
 
+
+    // test querying specific aggregations
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(1, 2, 3, 8, 7, 3, 10, 2, 11, 3))));
+    verifyCountQuery(cube, "agg2", 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(1, 2, 3, 8, 4, 4, 6, 6, 7, 3, 10, 2, 11, 3))));
+
+
     // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
     CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                                "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
@@ -118,7 +130,8 @@ public abstract class AbstractCubeTest {
 
     // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
 
-    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"), "metric1");
+    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"),
+                                "metric1");
     cube.delete(query);
 
     verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
@@ -131,7 +144,8 @@ public abstract class AbstractCubeTest {
     Aggregation agg1 = new DefaultAggregation(ImmutableList.of("tag1", "tag2", "tag3"),
                                               ImmutableList.of("tag1", "tag2", "tag3"));
     int resolution = 1;
-    Cube cube = getCube("myInterpolatedCube", new int[] {resolution}, ImmutableList.of(agg1));
+    Cube cube = getCube("myInterpolatedCube", new int[] {resolution},
+                        ImmutableMap.<String, Aggregation>of("agg1", agg1));
     // test step interpolation
     long startTs = 1;
     long endTs = 10;
@@ -150,7 +164,8 @@ public abstract class AbstractCubeTest {
                      new Interpolators.Step());
 
     CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
+                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                                "metric1");
     cube.delete(query);
     //test small-slope linear interpolation
     startTs = 1;
@@ -166,7 +181,8 @@ public abstract class AbstractCubeTest {
                      new Interpolators.Linear());
 
     query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"), "metric1");
+                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                "metric1");
     cube.delete(query);
 
     //test big-slope linear interpolation
@@ -226,18 +242,37 @@ public abstract class AbstractCubeTest {
     return tagValues;
   }
 
-  private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution, String measureName,
-                                Map<String, String> sliceByTagValues, List<String> groupByTags,
+  private void verifyCountQuery(Cube cube, String aggregation, long startTs, long endTs, int resolution,
+                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
                                 Collection<TimeSeries> expected) throws Exception {
 
-    verifyCountQuery(cube, startTs, endTs, resolution, measureName, sliceByTagValues, groupByTags, expected, null);
+    verifyCountQuery(cube, aggregation, startTs, endTs, resolution,
+                     measureName, sliceByTagValues, groupByTags, expected, null);
   }
 
   private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution, String measureName,
                                 Map<String, String> sliceByTagValues, List<String> groupByTags,
+                                Collection<TimeSeries> expected) throws Exception {
+
+    verifyCountQuery(cube, null, startTs, endTs, resolution,
+                     measureName, sliceByTagValues, groupByTags, expected, null);
+  }
+
+  private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution,
+                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
-    CubeQuery query = new CubeQuery(startTs, endTs, resolution, Integer.MAX_VALUE, measureName, MeasureType.COUNTER,
-                                    sliceByTagValues, groupByTags, interpolator);
+
+    verifyCountQuery(cube, null, startTs, endTs, resolution,
+                     measureName, sliceByTagValues, groupByTags, expected, interpolator);
+  }
+
+  private void verifyCountQuery(Cube cube, String aggregation, long startTs, long endTs, int resolution,
+                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
+                                Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
+
+    CubeQuery query = new CubeQuery(aggregation, startTs, endTs, resolution, Integer.MAX_VALUE,
+                                    measureName, MeasureType.COUNTER, sliceByTagValues, groupByTags, interpolator);
+
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
     Assert.assertTrue(expected.containsAll(result));

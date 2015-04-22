@@ -114,25 +114,25 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   static class ProgramId {
     private final String appId;
-    private final String runnableId;
-    private final ProgramType runnableType;
+    private final String programId;
+    private final ProgramType programType;
 
-    ProgramId(String applicationId, String runnableId, ProgramType runnableType) {
+    ProgramId(String applicationId, String programId, ProgramType programType) {
       this.appId = applicationId;
-      this.runnableId = runnableId;
-      this.runnableType = runnableType;
+      this.programId = programId;
+      this.programType = programType;
     }
 
     public String getApplicationId() {
       return this.appId;
     }
 
-    public String getRunnableId() {
-      return this.runnableId;
+    public String getProgramId() {
+      return this.programId;
     }
 
-    public ProgramType getRunnableType() {
-      return this.runnableType;
+    public ProgramType getProgramType() {
+      return this.programType;
     }
   }
 
@@ -306,6 +306,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
     Id.Stream streamId = Id.Stream.from(applicationId.getNamespace(), streamName);
     return streamWriterFactory.create(streamId);
@@ -350,7 +351,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
           appFabricClient.stopProgram(applicationId.getNamespaceId(), id.getApplicationId(),
-                                      id.getRunnableId(), id.getRunnableType());
+                                      id.getProgramId(), id.getProgramType());
         }
       }
     } catch (Exception e) {
@@ -359,11 +360,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   void stopProgram(ProgramId programId) {
-    String programName = programId.getRunnableId();
+    String programName = programId.getProgramId();
     try {
       if (runningProcesses.remove(programName, programId)) {
         appFabricClient.stopProgram(applicationId.getNamespaceId(), applicationId.getId(),
-                                    programName, programId.getRunnableType());
+                                    programName, programId.getProgramType());
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -374,7 +375,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     try {
 
       String status = appFabricClient.getStatus(applicationId.getNamespaceId(), programId.getApplicationId(),
-                                                programId.getRunnableId(), programId.getRunnableType());
+                                                programId.getProgramId(), programId.getProgramType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {

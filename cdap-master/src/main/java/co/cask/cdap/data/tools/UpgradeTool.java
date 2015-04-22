@@ -18,6 +18,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -32,7 +33,6 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -337,8 +337,8 @@ public class UpgradeTool {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework);
     createNamespaces();
+    initializeDSFramework(cConf, dsFramework);
   }
 
   /**

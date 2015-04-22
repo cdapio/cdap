@@ -27,9 +27,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
  *
  * @param <I> Object sink operates on
  */
-public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext>, EndPointStage {
-
-  private SinkContext context;
+public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -44,27 +42,25 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext>, 
   /**
    * Initialize the Sink.
    *
-   * @param context {@link SinkContext}
+   * @param context {@link RealtimeContext}
    */
   @Override
-  public void initialize(SinkContext context) throws Exception {
-    this.context = context;
+  public void initialize(RealtimeContext context) throws Exception {
+    // no-op
   }
 
   /**
-   * Write the given object.
+   * Write the given objects.
    *
-   * @param object {@link Iterable} of T
-   * @throws Exception if there was some exception writing the object
+   * @param objects {@link Iterable} of I to write
+   * @param dataWriter {@link DataWriter} write to CDAP streams and datasets
+   * @return the number of items written. Used by metrics to report how many records written by the sink
+   * @throws Exception if there was some exception writing the objects
    */
-  public abstract void write(Iterable<I> object) throws Exception;
+  public abstract int write(Iterable<I> objects, DataWriter dataWriter) throws Exception;
 
   @Override
   public void destroy() {
     //no-op
-  }
-
-  protected SinkContext getContext() {
-    return context;
   }
 }

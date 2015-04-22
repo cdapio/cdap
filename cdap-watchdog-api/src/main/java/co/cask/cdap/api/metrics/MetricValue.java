@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,50 +13,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.metrics;
 
-import java.util.Map;
-
 /**
- * Carries the "raw" emitted metric data point: metric name, context, type, value, etc.
+ * Carries the "raw" emitted metric data point: metric name, type, and value
  */
 public class MetricValue {
-  private final Map<String, String> tags;
-  private final String name;
 
-  /**
-   * Timestamp in seconds.
-   */
-  private final long timestamp;
-  private final long value;
-  private final MetricType type;
+  String name;
+  MetricType type;
+  long value;
 
-  public MetricValue(Map<String, String> tags, String name, long timestamp, long value, MetricType type) {
-    this.tags = tags;
+  public MetricValue (String name, MetricType type, long value) {
     this.name = name;
-    this.timestamp = timestamp;
-    this.value = value;
     this.type = type;
-  }
-
-  public Map<String, String> getTags() {
-    return tags;
+    this.value = value;
   }
 
   public String getName() {
     return name;
   }
 
-  public long getTimestamp() {
-    return timestamp;
+  public MetricType getType() {
+    return type;
   }
 
   public long getValue() {
     return value;
   }
 
-  public MetricType getType() {
-    return type;
-  }
 }

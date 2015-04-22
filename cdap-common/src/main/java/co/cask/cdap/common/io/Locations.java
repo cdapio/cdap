@@ -28,11 +28,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +52,9 @@ import javax.annotation.Nullable;
 public final class Locations {
 
   private static final Logger LOG = LoggerFactory.getLogger(Locations.class);
+
+  // For converting local file into Location.
+  private static final LocalLocationFactory LOCAL_LOCATION_FACTORY = new LocalLocationFactory();
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
@@ -249,6 +254,13 @@ public final class Locations {
     } catch (IOException e) {
       LOG.error("IOException while deleting location {}", location.toURI(), e);
     }
+  }
+
+  /**
+   * Converts the given file into a local {@link Location}.
+   */
+  public static Location toLocation(File file) {
+    return LOCAL_LOCATION_FACTORY.create(file.getAbsoluteFile().toURI());
   }
 
   /**
