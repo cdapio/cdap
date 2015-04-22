@@ -133,6 +133,12 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
     String topic = topicPrefix;
+
+    if (getMetaTable() == null) {
+      LOG.info("Could not get Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+      return;
+    }
+
     for (int i : partitions) {
       long offset = getOffset(topic, i);
       if (offset >= 0) {
@@ -149,11 +155,6 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private long getOffset(String topic, int partition) {
     LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
     try {
-      KafkaConsumerMetaTable metaTable = getMetaTable();
-      if (metaTable == null) {
-        LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
-        return -1L;
-      }
       long offset = metaTable.get(new TopicPartition(topic, partition));
       LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
       return offset;
