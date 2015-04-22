@@ -22,6 +22,7 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -29,12 +30,15 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,14 +54,27 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultStreamWriter implements StreamWriter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamWriter.class);
+
   private final String namespaceId;
   private final EndpointStrategy endpointStrategy;
+  /**
+   * The program that is using this {@link StreamWriter}.
+   */
+  private final Id.Program program;
+  private final Map<Id.Stream, Boolean> isStreamRegistered;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public DefaultStreamWriter(@Assisted("namespaceId") String namespaceId,
+                             @Assisted("programId") Id.Program program,
+                             UsageRegistry usageRegistry,
                              DiscoveryServiceClient discoveryServiceClient) {
     this.namespaceId = namespaceId;
+    this.program = program;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
+    this.isStreamRegistered = Maps.newConcurrentMap();
+    this.usageRegistry = usageRegistry;
   }
 
   private URL getStreamURL(String stream) throws IOException {
@@ -80,6 +97,15 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
+    if (!isStreamRegistered.containsKey(stream)) {
+      try {
+        usageRegistry.register(program, stream);
+        isStreamRegistered.put(stream, true);
+      } catch (Exception e) {
+        LOG.warn("Failed to registry usage of {} -> {}", program, stream, e);
+      }
+    }
+
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {

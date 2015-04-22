@@ -22,7 +22,10 @@ import java.util.Map;
 
 /**
  * This interface defines ways to send data to a stream.
+ * @deprecated
+ * Use {@link StreamManager} instead
  */
+@Deprecated
 public interface StreamWriter {
 
   /**

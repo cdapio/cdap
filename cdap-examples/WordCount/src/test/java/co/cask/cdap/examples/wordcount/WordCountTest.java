@@ -20,7 +20,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -35,20 +35,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Word Count main test.
  */
 public class WordCountTest extends TestBase {
 
-  static Type stringMapType = new TypeToken<Map<String, String>>() {
-  }.getType();
-  static Type objectMapType = new TypeToken<Map<String, Object>>() {
-  }.getType();
+  static Type stringMapType = new TypeToken<Map<String, String>>() { }.getType();
+  static Type objectMapType = new TypeToken<Map<String, Object>>() { }.getType();
 
   @Test
-  public void testWordCount() throws IOException, TimeoutException, InterruptedException {
+  public void testWordCount() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WordCount.class);
 
@@ -56,10 +53,10 @@ public class WordCountTest extends TestBase {
     appManager.startFlow("WordCounter");
 
     // Send a few events to the stream
-    StreamWriter writer = appManager.getStreamWriter("wordStream");
-    writer.send("hello world");
-    writer.send("a wonderful world");
-    writer.send("the world says hello");
+    StreamManager streamManager = getStreamManager("wordStream");
+    streamManager.send("hello world");
+    streamManager.send("a wonderful world");
+    streamManager.send("the world says hello");
 
     // Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("WordCount", "WordCounter", "associator");

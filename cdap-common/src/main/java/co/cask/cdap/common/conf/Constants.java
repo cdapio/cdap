@@ -97,6 +97,11 @@ public final class Constants {
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
 
     /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "appfabric.http.handler";
+
+    /**
      * Defaults.
      */
     public static final int DEFAULT_BACKLOG = 20000;

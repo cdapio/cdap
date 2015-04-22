@@ -326,8 +326,9 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
-    return new RemoteStreamWriter(clientConfig, streamName);
+    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig, streamName));
   }
 
   @Override

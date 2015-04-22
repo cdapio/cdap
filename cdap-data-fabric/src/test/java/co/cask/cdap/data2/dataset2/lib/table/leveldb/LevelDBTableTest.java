@@ -23,8 +23,10 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import com.google.inject.Guice;
@@ -57,6 +59,8 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     service = injector.getInstance(LevelDBTableService.class);

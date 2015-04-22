@@ -65,6 +65,11 @@ public abstract class Id {
     }
   }
 
+  @Override
+  public String toString() {
+    return getIdRep();
+  }
+
   @Nullable
   protected abstract Id getParent();
 

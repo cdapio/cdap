@@ -33,8 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Stores program/adapter -> dataset/stream usage information.
- * It stores the mapping as an {@link OrderedPair} in {@link MetadataStoreDataset}.
+ * Store program/adapter -> dataset/stream usage information.
  */
 public class UsageDataset extends MetadataStoreDataset {
   // The following constans are used as row key prefixes. Any changes to these will make existing data unusable.

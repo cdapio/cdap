@@ -37,6 +37,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -119,6 +120,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
+  private final UsageRegistry usageRegistry;
+
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
@@ -128,7 +131,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           MapReduce mapReduce, MapReduceSpecification specification,
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          UsageRegistry usageRegistry) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -138,6 +142,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -556,6 +561,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     job.setInputFormatClass(StreamInputFormat.class);
+
+    try {
+      usageRegistry.register(context.getProgram().getId(), streamId);
+    } catch (Exception e) {
+      LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
+    }
 
     LOG.info("Using Stream as input from {}", streamPath.toURI());
   }

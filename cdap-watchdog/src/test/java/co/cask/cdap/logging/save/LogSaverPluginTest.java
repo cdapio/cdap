@@ -227,7 +227,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  LogMetricsPlugin) {
         LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoint(0, 10);
+        manager.saveCheckpoint(0, new Checkpoint(10, -1));
         Set<Integer> partitions = Sets.newHashSet(0, 1);
         plugin.init(partitions);
       }
@@ -245,7 +245,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
                                                                Names.named (Constants.LogSaver.MESSAGE_PROCESSORS)));
     for (KafkaLogProcessor processor : processors) {
       CheckpointManager checkpointManager = getCheckPointManager(processor);
-      Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
+      Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
     }
   }
 
