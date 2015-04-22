@@ -516,9 +516,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, workflowHistoryRuns.size());
     Assert.assertEquals(1, oneMRHistoryRuns.size());
     Assert.assertEquals(1, anotherMRHistoryRuns.size());
-
-    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), oneMRHistoryRuns.get(0).getPid());
-    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherMRHistoryRuns.get(0).getPid());
   }
 
   @Test

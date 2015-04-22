@@ -22,6 +22,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
@@ -30,6 +31,8 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
@@ -113,7 +116,10 @@ public class OpenCloseDataSetTest {
         continue;
       }
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new SimpleProgramOptions(program)));
+      BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                     RunIds.generate().getId()));
+      controllers.add(runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs,
+                                                                   new BasicArguments())));
     }
 
     // write some data to queue
@@ -186,7 +192,9 @@ public class OpenCloseDataSetTest {
       if (program.getType().equals(ProgramType.MAPREDUCE)) {
         ProgramRunner runner = runnerFactory.create(
           ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-        controller = runner.run(program, new SimpleProgramOptions(program));
+        BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                       RunIds.generate().getId()));
+        controller = runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments()));
       }
     }
     Assert.assertNotNull(controller);

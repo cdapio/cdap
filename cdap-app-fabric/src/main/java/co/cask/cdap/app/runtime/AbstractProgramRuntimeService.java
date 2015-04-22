@@ -16,8 +16,12 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -42,7 +46,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
-  private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
+  protected final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
@@ -54,10 +58,26 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
-    addRemover(runtimeInfo);
+    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, createProgramOptionsWithRunId(options)),
+                                                      program);
+    programStarted(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
+  }
+
+  private ProgramOptions createProgramOptionsWithRunId(ProgramOptions options) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.putAll(options.getArguments().asMap());
+    // Generate the new RunId and add it to the system arguments
+    RunId runId = RunIds.generate();
+    builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
+
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
+                                    options.isDebug());
+  }
+
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+    return new SimpleRuntimeInfo(controller, program);
   }
 
   @Override
@@ -116,11 +136,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
-      runtimeInfos.put(type, runId, addRemover(runtimeInfo));
+      runtimeInfos.put(type, runId, programStarted(runtimeInfo));
     }
   }
 
-  private RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
+  private RuntimeInfo programStarted(final RuntimeInfo runtimeInfo) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 

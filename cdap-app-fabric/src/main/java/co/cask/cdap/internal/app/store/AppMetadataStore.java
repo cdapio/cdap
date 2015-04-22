@@ -126,7 +126,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter) {
+  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -136,7 +136,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
-    write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter));
+    write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -186,7 +186,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, toStatus));
+    write(key, new RunRecord(record, null, toStatus));
   }
 
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
@@ -219,6 +219,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
     write(key, new RunRecord(started, stopTs, runStatus));
+  }
+
+  public List<RunRecord> getAllActiveRuns() {
+    MDSKey activeKey = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .build();
+    return list(activeKey, RunRecord.class);
   }
 
   public List<RunRecord> getRuns(Id.Program program, ProgramRunStatus status,

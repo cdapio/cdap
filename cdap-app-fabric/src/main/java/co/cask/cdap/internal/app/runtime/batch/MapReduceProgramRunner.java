@@ -121,11 +121,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-    final RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
-                    ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
-                    : RunIds.generate();
+
+    final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
                                 ? Long.parseLong(arguments
@@ -133,7 +131,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
-    String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    final String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -170,7 +170,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds);
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
       }
 
       @Override

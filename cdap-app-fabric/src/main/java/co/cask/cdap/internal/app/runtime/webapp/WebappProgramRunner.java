@@ -27,6 +27,7 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -106,7 +107,7 @@ public class WebappProgramRunner implements ProgramRunner {
       httpService.startAndWait();
       final InetSocketAddress address = httpService.getBindAddress();
 
-      RunId runId = RunIds.generate();
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
 
       // Register service, and the serving host names.
       final List<Cancellable> cancellables = Lists.newArrayList();

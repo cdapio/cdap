@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -332,7 +332,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Map<String, String> arguments = Maps.newHashMap(original.getArguments().asMap());
     arguments.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()));
     arguments.put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()));
-    arguments.put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId());
+    arguments.put(ProgramOptionConstants.RUN_ID, original.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    arguments.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
     arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
     arguments.putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))));
 

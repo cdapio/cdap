@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -159,11 +158,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter) {
+  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter,
+                       final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime, adapter);
+        mds.apps.recordProgramStart(id, pid, startTime, adapter, twillRunId);
         return null;
       }
     });
@@ -171,7 +171,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null);
+    setStart(id, pid, startTime, null, null);
   }
 
   @Override
@@ -225,6 +225,16 @@ public class DefaultStore implements Store {
   @Override
   public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
+  }
+
+  @Override
+  public List<RunRecord> getAllActiveRuns() {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+      @Override
+      public List<RunRecord> apply(AppMds mds) throws Exception {
+        return mds.apps.getAllActiveRuns();
+      }
+    });
   }
 
   /**

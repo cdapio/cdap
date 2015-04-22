@@ -100,6 +100,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
+    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
     if (programType != ProgramType.MAPREDUCE) {
       // MapReduce state recording is done by the MapReduceProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
@@ -112,7 +113,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds, adapterName);
+          store.setStart(id, runId, startTimeInSeconds, adapterName, twillRunId);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
