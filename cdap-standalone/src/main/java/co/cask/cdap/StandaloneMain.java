@@ -113,7 +113,7 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    userInterfaceService = (uiPath == null) ? null : injector.getInstance(UserInterfaceService.class);
+    userInterfaceService = injector.getInstance(UserInterfaceService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
@@ -252,7 +252,6 @@ public class StandaloneMain {
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --ui-path  Path to UI");
     out.println("  --help     To print this message");
     out.println("");
 
@@ -268,8 +267,6 @@ public class StandaloneMain {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
         return;
-      } else if ("--ui-path".equals(args[0])) {
-        uiPath = args[1];
       } else {
         usage(true);
       }
