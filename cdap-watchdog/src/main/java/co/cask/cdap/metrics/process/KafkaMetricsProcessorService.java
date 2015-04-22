@@ -135,7 +135,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     String topic = topicPrefix;
 
     if (getMetaTable() == null) {
-      LOG.info("Could not get Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+      LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
       return;
     }
 
