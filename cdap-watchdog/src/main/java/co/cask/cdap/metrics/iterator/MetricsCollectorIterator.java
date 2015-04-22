@@ -17,7 +17,7 @@
 package co.cask.cdap.metrics.iterator;
 
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.stats.GaugeStats;
 import com.google.common.collect.AbstractIterator;
@@ -30,22 +30,23 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@link Iterator} for {@link MetricValue} that maintains {@link GaugeStats} for the visited metrics.
+ * {@link Iterator} for {@link co.cask.cdap.api.metrics.MetricValues} that maintains {@link GaugeStats}
+ * for the visited metrics.
  */
-public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
+public class MetricsCollectorIterator extends AbstractIterator<MetricValues> {
 
   private final GaugeStats processDelayStats;
-  private final Iterator<MetricValue> rawMetricsItor;
+  private final Iterator<MetricValues> rawMetricsItor;
 
-  public MetricsCollectorIterator(Iterator<MetricValue> rawMetricsItor) {
+  public MetricsCollectorIterator(Iterator<MetricValues> rawMetricsItor) {
     this.rawMetricsItor = rawMetricsItor;
     this.processDelayStats = new GaugeStats();
   }
 
   @Override
-  protected MetricValue computeNext() {
+  protected MetricValues computeNext() {
     if (rawMetricsItor.hasNext()) {
-      MetricValue metric = rawMetricsItor.next();
+      MetricValues metric = rawMetricsItor.next();
       processDelayStats.gauge(metric.getTimestamp());
       return metric;
     } else {
@@ -53,7 +54,7 @@ public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
     }
   }
 
-  public Iterator<MetricValue> getMetaMetrics() {
+  public Iterator<MetricValues> getMetaMetrics() {
     if (processDelayStats.isEmpty()) {
       return Iterators.emptyIterator();
     }
@@ -64,20 +65,20 @@ public class MetricsCollectorIterator extends AbstractIterator<MetricValue> {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "system",
                                                Constants.Metrics.Tag.COMPONENT, "metrics.processor");
 
-    MetricValue delaySum = new MetricValue(
+    MetricValues delaySum = new MetricValues(
       tags, "processed.delay.sum", currentTimeSec,
       (currentTimeMs * processDelayStats.getCount()) - TimeUnit.SECONDS.toMillis(processDelayStats.getSum()),
       MetricType.COUNTER);
 
-    MetricValue delayMin = new MetricValue(
+    MetricValues delayMin = new MetricValues(
       tags, "processed.delay.min", currentTimeSec,
       currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getMin()), MetricType.GAUGE);
 
-    MetricValue delayMax = new MetricValue(
+    MetricValues delayMax = new MetricValues(
       tags, "processed.delay.max", currentTimeSec,
       currentTimeMs - TimeUnit.SECONDS.toMillis(processDelayStats.getMax()), MetricType.GAUGE);
 
-    MetricValue count = new MetricValue(
+    MetricValues count = new MetricValues(
       tags, "processed.count", currentTimeSec,
       processDelayStats.getCount(), MetricType.COUNTER);
 

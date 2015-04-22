@@ -1,7 +1,6 @@
+<h2>{{heading}}</h2>
+
 <div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">{{heading}}</h3>
-  </div>
 
   <div class="panel-body">
     <div class="alert alert-info" ng-if="systemPreferences.length > 0">
@@ -14,7 +13,7 @@
           <div ng-repeat="preference in preferences" class="h4">
             <div class="row">
               <div class="col-sm-4">
-                <input type="text" class="form-control" ng-model="preference.key" placeholder="key"/>
+                <input type="text" class="pref-key form-control" ng-model="preference.key" placeholder="key"/>
               </div>
               <div class="col-sm-7">
                 <input type="text" class="form-control" ng-model="preference.value" placeholder="value"/>
@@ -53,7 +52,6 @@
 
     <div class="system-preferences" ng-if="systemPreferences.length > 0">
       <hr/>
-      <h4>System Preferences</h4>
       <div class="table-responsive">
         <table class="table table-curved" cask-sortable>
           <thead>

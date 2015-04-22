@@ -1,35 +1,50 @@
 <div class="row">
   <div class="col-xs-6">
-    <h2 class="pull-left"> ETL Apps List </h2>
-  </div>
-  <div class="col-xs-6">
-    <a ui-sref="etlapps.create"
-        class="btn btn-default pull-right h2">
-      <span class="fa fa-plus"></span>
-       Create ETL App
-    </a>
+    <h2 class="pull-left"> All Adapters </h2>
   </div>
 </div>
 
 <br/>
 <div class="row" etl-apps-list>
-  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6" ng-repeat="app in etlapps">
-    <div class="well well-md">
-        <div>
-          <h3 tooltip="{{::app.name}}">
-            <i class="fa fa-heartbeat"></i>
-            {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
-          </h3>
-          <small> Type: {{::app.template}}  </small>
+  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6 text-center"
+        ng-click="$state.go('^.create')"
+        etl-add-app>
+    <div class="well well-lg">
+      <br/>
+      <h1>
+        <span class="fa fa-plus"></span>
+      </h1>
+      <br/>
+    </div>
+  </div>
+  <div as-sortable="dragdrop"
+        ng-model="etlapps">
+    <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
+         ng-repeat="app in etlapps">
+      <div class="well well-md" as-sortable-item>
+          <div>
+            <h3 tooltip="{{::app.name}}" as-sortable-item-handle>
+              <i class="fa fa-heartbeat"></i>
+              {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
+              <small>
+                <a ng-if="app.isdraft"
+                    class="fa fa-pencil text-primary"
+                    href
+                    ng-click="$state.go('^.create', {data: app.name})">
+                </a>
+              </small>
+            </h3>
+            <small> Type: {{::app.template}}  </small>
+          </div>
+        <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
+          <i class="fa fa-circle"></i>
+          <span> {{::app.status}} </span>
         </div>
-      <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
-        <i class="fa fa-circle"></i>
-        <span> {{::app.status}} </span>
-      </div>
-      <p class="description" tooltip="{{::app.description}}">
-        {{::app.description | myEllipsis: 50}}
-      </p>
+        <p class="description" tooltip="{{::app.description}}">
+          {{::app.description | myEllipsis: 50}}
+        </p>
 
+      </div>
     </div>
   </div>
 </div>

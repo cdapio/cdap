@@ -306,6 +306,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
     Id.Stream streamId = Id.Stream.from(applicationId.getNamespace(), streamName);
     return streamWriterFactory.create(streamId);

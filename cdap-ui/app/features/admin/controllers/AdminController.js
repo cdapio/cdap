@@ -9,9 +9,9 @@ angular.module(PKG.name + '.feature.admin')
 
     // whether or not to show submenus
     $scope.submenu = {
-      system: false,
+      system: true,
       security: false,
-      namespaces: false,
+      namespaces: true,
       perNs: {}
     };
 

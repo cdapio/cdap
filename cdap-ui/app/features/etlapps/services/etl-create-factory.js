@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .factory('ETLAppsApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout) {
+  .factory('ETLAppsApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings) {
     var filterFilter = $filter('filter');
     function ETLAppsApiFactory(scope) {
       this.scope = scope;
@@ -67,21 +67,18 @@ angular.module(PKG.name + '.feature.etlapps')
       this.scope.loadingEtlSinkProps = etlSink || false;
     }
 
-    ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform) {
+    ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform, index) {
       if(!etlTransform) return;
       this.dataSrc.request({
         _cdapPath: '/templates/etl.' + this.scope.metadata.type + '/transforms/' + etlTransform
       })
         .then(function(res) {
           var obj = {};
-          var match = filterFilter(this.scope.transforms, {name: res.name});
-          if(match.length) {
-            angular.forEach(res.properties, function(property) {
-              obj[property.name] = '';
-            });
-            match[0].properties = obj;
-          }
-          this.scope.transforms[this.scope.transforms.indexOf(match[0])].properties = obj;
+          angular.forEach(res.properties, function(property) {
+            obj[property.name] = '';
+          });
+          index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
+          this.scope.transforms[index].properties = obj;
         }.bind(this));
     }
 
@@ -95,13 +92,17 @@ angular.module(PKG.name + '.feature.etlapps')
         body: data
       })
         .then(function(res) {
-          $timeout(function() {
-            $state.go('etlapps.list', $state.params, {reload: true});
-          });
-          $alert({
-            type: 'success',
-            content: 'ETL Template: ' + this.scope.metadata.name + ' created successfully!'
-          });
+          delete this.scope.etlDrafts[this.scope.metadata.name];
+          mySettings.set('etldrafts', this.scope.etlDrafts)
+            .then(function() {
+              $timeout(function() {
+                $state.go('etlapps.list', $state.params, {reload: true});
+              });
+              $alert({
+                type: 'success',
+                content: 'ETL Template created successfully!'
+              });
+            })
         }.bind(this));
     }
     return ETLAppsApiFactory;

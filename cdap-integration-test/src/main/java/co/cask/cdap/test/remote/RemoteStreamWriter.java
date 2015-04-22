@@ -17,101 +17,67 @@
 package co.cask.cdap.test.remote;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
+ * @deprecated Use {@link RemoteStreamManager} instead
  */
+@Deprecated
 public class RemoteStreamWriter implements StreamWriter {
 
-  private final StreamClient streamClient;
-  private final String streamName;
+  private final RemoteStreamManager remoteStreamManager;
 
-  public RemoteStreamWriter(ClientConfig clientConfig, String streamName) {
-    this.streamClient = new StreamClient(clientConfig);
-    this.streamName = streamName;
+  public RemoteStreamWriter(RemoteStreamManager remoteStreamManager) {
+    this.remoteStreamManager = remoteStreamManager;
   }
 
   @Override
   public void createStream() throws IOException {
-    try {
-      streamClient.create(streamName);
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    remoteStreamManager.createStream();
   }
 
   @Override
   public void send(String content) throws IOException {
-    try {
-      streamClient.sendEvent(streamName, content);
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    remoteStreamManager.send(content);
   }
 
   @Override
   public void send(byte[] content) throws IOException {
-    try {
-      streamClient.sendEvent(streamName, new String(content, Charsets.UTF_8));
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    remoteStreamManager.send(content);
   }
 
   @Override
   public void send(byte[] content, int off, int len) throws IOException {
-    try {
-      streamClient.sendEvent(streamName, new String(content, off, len, Charsets.UTF_8));
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    remoteStreamManager.send(new String(content, off, len, Charsets.UTF_8));
   }
 
   @Override
   public void send(ByteBuffer buffer) throws IOException {
-    try {
-      streamClient.sendEvent(streamName, Bytes.toString(buffer));
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    remoteStreamManager.send(Bytes.toString(buffer));
   }
 
   @Override
   public void send(Map<String, String> headers, String content) throws IOException {
-    throw new UnsupportedOperationException("TODO");
+    remoteStreamManager.send(headers, content);
   }
 
   @Override
   public void send(Map<String, String> headers, byte[] content) throws IOException {
-    throw new UnsupportedOperationException("TODO");
+    remoteStreamManager.send(headers, content);
   }
 
   @Override
   public void send(Map<String, String> headers, byte[] content, int off, int len) throws IOException {
-    throw new UnsupportedOperationException("TODO");
+    remoteStreamManager.send(headers, content, off, len);
   }
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    throw new UnsupportedOperationException("TODO");
+    remoteStreamManager.send(headers, buffer);
   }
 }

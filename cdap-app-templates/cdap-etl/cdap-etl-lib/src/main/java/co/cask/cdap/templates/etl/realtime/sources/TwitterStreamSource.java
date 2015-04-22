@@ -16,13 +16,17 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.templates.etl.api.realtime.SourceContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
-import co.cask.cdap.templates.etl.common.Tweet;
+import com.google.common.collect.Queues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
@@ -31,8 +35,8 @@ import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
+import java.util.Date;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.annotation.Nullable;
 
 /**
@@ -40,10 +44,28 @@ import javax.annotation.Nullable;
  * Users should pass in the following runtime arguments with appropriate OAuth credentials
  * ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret.
  */
-public class TwitterStreamSource extends RealtimeSource<Tweet> {
+public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
+  private static final Logger LOG = LoggerFactory.getLogger(TwitterStreamSource.class);
+  private static final String CONSUMER_KEY = "ConsumerKey";
+  private static final String CONSUMER_SECRET = "ConsumerSecret";
+  private static final String ACCESS_TOKEN = "AccessToken";
+  private static final String ACCESS_SECRET = "AccessTokenSecret";
+
+  private static final String ID = "id";
+  private static final String MSG = "message";
+  private static final String LANG = "lang";
+  private static final String TIME = "time";
+  private static final String FAVC = "favCount";
+  private static final String RTC = "rtCont";
+  private static final String SRC = "source";
+  private static final String GLAT = "geolat";
+  private static final String GLNG = "geoLong";
+  private static final String ISRT = "isRetweet";
+
   private TwitterStream twitterStream;
   private StatusListener statusListener;
-  private Queue<Tweet> tweetQ = new ConcurrentLinkedQueue<Tweet>();
+  private Queue<Status> tweetQ = Queues.newConcurrentLinkedQueue();
+  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Configure the Twitter Source.
@@ -54,32 +76,68 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
   public void configure(StageConfigurer configurer) {
     configurer.setName(TwitterStreamSource.class.getSimpleName());
     configurer.setDescription("Twitter Realtime Source");
-    configurer.addProperty(new Property("ConsumerKey", "Consumer Key", true));
-    configurer.addProperty(new Property("ConsumerSecret", "Consumer Secret", true));
-    configurer.addProperty(new Property("AccessToken", "Access Token", true));
-    configurer.addProperty(new Property("AccessTokenSecret", "Access Token Secret", true));
+    configurer.addProperty(new Property(CONSUMER_KEY, "Consumer Key", true));
+    configurer.addProperty(new Property(CONSUMER_SECRET, "Consumer Secret", true));
+    configurer.addProperty(new Property(ACCESS_TOKEN, "Access Token", true));
+    configurer.addProperty(new Property(ACCESS_SECRET, "Access Token Secret", true));
+  }
+
+  private StructuredRecord convertTweet(Status tweet) {
+    recordBuilder.set(ID, tweet.getId());
+    recordBuilder.set(MSG, tweet.getText());
+    recordBuilder.set(LANG, tweet.getLang());
+    recordBuilder.set(TIME, convertDataToTimeStamp(tweet.getCreatedAt()));
+    recordBuilder.set(FAVC, tweet.getFavoriteCount());
+    recordBuilder.set(RTC, tweet.getRetweetCount());
+    recordBuilder.set(SRC, tweet.getSource());
+    if (tweet.getGeoLocation() != null) {
+      recordBuilder.set(GLAT, tweet.getGeoLocation().getLatitude());
+      recordBuilder.set(GLNG, tweet.getGeoLocation().getLongitude());
+    } else {
+      recordBuilder.set(GLAT, -1L);
+      recordBuilder.set(GLNG, -1L);
+    }
+    recordBuilder.set(ISRT, tweet.isRetweet());
+    return recordBuilder.build();
+  }
+
+  private long convertDataToTimeStamp(Date date) {
+    long startTime = date.getTime() * 1000000;
+    return System.nanoTime() - startTime;
   }
 
   @Nullable
   @Override
-  public SourceState poll(Emitter<Tweet> writer, SourceState currentState) {
+  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
     if (!tweetQ.isEmpty()) {
-      Tweet tweet = tweetQ.remove();
+      Status status = tweetQ.remove();
+      StructuredRecord tweet = convertTweet(status);
       writer.emit(tweet);
     }
     return currentState;
   }
 
   @Override
-  public void initialize(SourceContext context) throws Exception {
+  public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
+    Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
+    Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
+    Schema.Field timeField = Schema.Field.of(TIME, Schema.of(Schema.Type.LONG));
+    Schema.Field favCount = Schema.Field.of(FAVC, Schema.of(Schema.Type.INT));
+    Schema.Field rtCount = Schema.Field.of(RTC, Schema.of(Schema.Type.INT));
+    Schema.Field sourceField = Schema.Field.of(SRC, Schema.of(Schema.Type.STRING));
+    Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.of(Schema.Type.DOUBLE));
+    Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.of(Schema.Type.DOUBLE));
+    Schema.Field reTweetField = Schema.Field.of(ISRT, Schema.of(Schema.Type.BOOLEAN));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf(
+      "tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField, geoLatField, geoLongField,
+      reTweetField));
 
     statusListener = new StatusListener() {
       @Override
       public void onStatus(Status status) {
-        tweetQ.add(new Tweet(status.getId(), status.getText(), status.getLang(), status.getCreatedAt(),
-                             status.getFavoriteCount(), status.getRetweetCount(), status.getSource(),
-                             status.getGeoLocation(), status.isRetweet()));
+        tweetQ.add(status);
       }
 
       @Override
@@ -110,13 +168,20 @@ public class TwitterStreamSource extends RealtimeSource<Tweet> {
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
-        .setOAuthConsumerKey(context.getRuntimeArguments().get("ConsumerKey"))
-        .setOAuthConsumerSecret(context.getRuntimeArguments().get("ConsumerSecret"))
-        .setOAuthAccessToken(context.getRuntimeArguments().get("AccessToken"))
-        .setOAuthAccessTokenSecret(context.getRuntimeArguments().get("AccessTokenSecret"));
+        .setOAuthConsumerKey(context.getRuntimeArguments().get(CONSUMER_KEY))
+        .setOAuthConsumerSecret(context.getRuntimeArguments().get(CONSUMER_SECRET))
+        .setOAuthAccessToken(context.getRuntimeArguments().get(ACCESS_TOKEN))
+        .setOAuthAccessTokenSecret(context.getRuntimeArguments().get(ACCESS_SECRET));
 
     twitterStream = new TwitterStreamFactory(configurationBuilder.build()).getInstance();
     twitterStream.addListener(statusListener);
     twitterStream.sample();
+  }
+
+  @Override
+  public void destroy() {
+    if (twitterStream != null) {
+      twitterStream.shutdown();
+    }
   }
 }

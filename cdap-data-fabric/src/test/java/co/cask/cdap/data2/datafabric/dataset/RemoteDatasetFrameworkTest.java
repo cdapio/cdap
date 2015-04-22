@@ -16,10 +16,11 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -112,10 +113,13 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     opExecutorService.startAndWait();
 
-    InMemoryDatasetFramework mdsFramework =
-      new InMemoryDatasetFramework(registryFactory,
-                                   ImmutableMap.of("memoryTable", new InMemoryTableModule(),
-                                                   "core", new CoreDatasetsModule()), cConf);
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .put("memoryTable", new InMemoryTableModule())
+      .put("core", new CoreDatasetsModule())
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
+
+    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);

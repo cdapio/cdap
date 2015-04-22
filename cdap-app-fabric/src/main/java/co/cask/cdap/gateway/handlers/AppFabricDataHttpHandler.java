@@ -23,7 +23,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -70,29 +69,6 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of streams associated with application.
-   */
-  @GET
-  @Path("/apps/{app-id}/streams")
-  public void getStreamsByApp(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId,
-                              @PathParam("app-id") String appId) {
-    dataList(responder, store, dsFramework, Data.STREAM, namespaceId, null, appId);
-  }
-
-  /**
-   * Returns all flows associated with a stream.
-   */
-  @GET
-  @Path("/streams/{stream-id}/flows")
-  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("stream-id") String streamId) {
-    programListByDataAccess(responder, store, dsFramework, ProgramType.FLOW, Data.STREAM,
-                            namespaceId, streamId);
-  }
-
-  /**
    * Returns a list of dataset associated with namespace. This is here for the v2 API to use,
    * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
    */
@@ -109,52 +85,5 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("dataset-id") String datasetId) {
     dataList(responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
-  }
-
-  /**
-   * Returns a list of dataset associated with application.
-   */
-  @GET
-  @Path("/apps/{app-id}/datasets")
-  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId) {
-    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, null, appId);
-  }
-
-  /**
-   * Returns all flows associated with a dataset.
-   */
-  @GET
-  @Path("/data/datasets/{dataset-id}/flows")
-  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(responder, store, dsFramework, ProgramType.FLOW, Data.DATASET,
-                            namespaceId, datasetId);
-  }
-
-  /**
-   * Returns all workers associated with a dataset.
-   */
-  @GET
-  @Path("/data/datasets/{dataset-id}/workers")
-  public void getWorkersByDataset(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(responder, store, dsFramework, ProgramType.WORKER, Data.DATASET,
-                            namespaceId, datasetId);
-  }
-
-  /**
-   * Returns all mapreduce programs associated with a dataset.
-   */
-  @GET
-  @Path("/data/datasets/{dataset-id}/mapreduce")
-  public void getMapReduceByDataset(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("dataset-id") String datasetId) {
-    programListByDataAccess(responder, store, dsFramework, ProgramType.MAPREDUCE, Data.DATASET,
-                            namespaceId, datasetId);
   }
 }

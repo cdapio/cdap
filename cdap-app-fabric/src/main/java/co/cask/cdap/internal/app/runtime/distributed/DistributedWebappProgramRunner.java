@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Distributed program runner for webapp.
@@ -45,7 +46,7 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -55,8 +56,7 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
     LOG.info("Launching distributed webapp: " + program.getName());
-    TwillController controller = launcher.launch(new WebappTwillApplication(program, hConfFile,
-                                                                            cConfFile, eventHandler));
+    TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeFiles, eventHandler));
     return new WebappTwillProgramController(program.getName(), controller).startListen();
   }
 }

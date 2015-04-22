@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollector;
 
 import java.io.Externalizable;
 import java.io.IOException;

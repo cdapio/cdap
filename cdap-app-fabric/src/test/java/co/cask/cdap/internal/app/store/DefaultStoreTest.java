@@ -835,12 +835,16 @@ public class DefaultStoreTest {
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    AdapterSpecification spec1 = AdapterSpecification.builder("spec1", "template1")
+    AdapterSpecification spec1 = AdapterSpecification.builder("spec1", Id.Program.from(namespaceId,
+                                                                                       "template1",
+                                                                                       ProgramType.WORKFLOW,
+                                                                                       "program1"))
       .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
       .build();
 
     TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterSpecification spec2 = AdapterSpecification.builder("spec2", "template2")
+    AdapterSpecification spec2 = AdapterSpecification.builder("spec2", Id.Program.from(namespaceId, "template2",
+                                                                                       ProgramType.WORKER, "program2"))
       .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
       .build();
 

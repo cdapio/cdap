@@ -16,67 +16,40 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- * TwillApplication for Worker. Used to localize program jar location before running the TwillApllication.
+ * The {@link TwillApplication} for running {@link Worker} in distributed mode.
  */
-public class WorkerTwillApplication implements TwillApplication {
+public class WorkerTwillApplication extends AbstractProgramTwillApplication {
 
   private final WorkerSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
 
-  public WorkerTwillApplication(Program program, WorkerSpecification spec, File hConfig, File cConfig,
+  public WorkerTwillApplication(Program program, WorkerSpecification spec,
+                                Map<String, File> localizeFiles,
                                 EventHandler eventHandler) {
-    this.program = program;
+    super(program, localizeFiles, eventHandler);
     this.spec = spec;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
   }
 
   @Override
-  public TwillSpecification configure() {
-    TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s", ProgramType.WORKER.name().toLowerCase(), program.getNamespaceId(),
-                             program.getApplicationId(), spec.getName()))
-      .withRunnable();
-
-    Location programLocation = program.getJarLocation();
-    String programName = programLocation.getName();
-
-    // Add runnable for worker
-    Resources resources = spec.getResources();
-    TwillSpecification.Builder.RunnableSetter runnableSetter;
-    runnableSetter = moreRunnable.add(spec.getName(),
-                                      new WorkerTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-                                      createResourceSpec(resources, spec.getInstances()))
-                                  .withLocalFiles()
-                                      .add(programName, programLocation.toURI())
-                                      .add("hConf.xml", hConfig.toURI())
-                                      .add("cConf.xml", cConfig.toURI()).apply();
-
-    return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
+  protected ProgramType getType() {
+    return ProgramType.WORKER;
   }
 
-  private ResourceSpecification createResourceSpec(Resources resources, int instances) {
-    return ResourceSpecification.Builder.with()
-      .setVirtualCores(resources.getVirtualCores())
-      .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
+    runnables.put(spec.getName(), new RunnableResource(
+      new WorkerTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      createResourceSpec(spec.getResources(), spec.getInstances())
+    ));
   }
 }

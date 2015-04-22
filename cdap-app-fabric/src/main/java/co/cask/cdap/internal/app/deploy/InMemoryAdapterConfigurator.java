@@ -63,11 +63,13 @@ public final class InMemoryAdapterConfigurator implements Configurator {
   private final AdapterConfig adapterConfig;
   private final ApplicationSpecification templateSpec;
   private final String adapterName;
+  private final Id.Namespace namespaceId;
 
   public InMemoryAdapterConfigurator(Id.Namespace id, Location archive, String adapterName,
                                      AdapterConfig adapterConfig, ApplicationSpecification templateSpec) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
+    this.namespaceId = id;
     this.archive = archive;
     this.adapterConfig = adapterConfig;
     this.templateSpec = templateSpec;
@@ -103,7 +105,8 @@ public final class InMemoryAdapterConfigurator implements Configurator {
         }
 
         ApplicationTemplate template = (ApplicationTemplate) appMain;
-        DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(adapterName, adapterConfig, templateSpec);
+        DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(namespaceId, adapterName, adapterConfig,
+                                                                           templateSpec);
 
         TypeToken typeToken = TypeToken.of(template.getClass());
         TypeToken<?> resultToken = typeToken.resolveType(ApplicationTemplate.class.getTypeParameters()[0]);

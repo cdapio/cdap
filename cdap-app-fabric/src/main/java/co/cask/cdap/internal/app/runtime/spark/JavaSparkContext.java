@@ -27,6 +27,8 @@ import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -34,6 +36,8 @@ import java.io.IOException;
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Java.
  */
 class JavaSparkContext extends AbstractSparkContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(JavaSparkContext.class);
 
   org.apache.spark.api.java.JavaSparkContext originalSparkContext;
 
@@ -85,8 +89,8 @@ class JavaSparkContext extends AbstractSparkContext {
    * @return the {@link JavaPairRDD} created from the {@link Stream} to be read
    */
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
-                              Class<? extends StreamEventDecoder> decoderType) {
+  protected <T> T doReadFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                                   Class<? extends StreamEventDecoder> decoderType) {
       Configuration hConf;
       try {
         if (decoderType == null) {
@@ -97,8 +101,9 @@ class JavaSparkContext extends AbstractSparkContext {
       } catch (IOException e) {
         throw new RuntimeException("Failed to set input to specified stream: " + streamName);
       }
-      return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
-                                                       hConf);
+    T result = (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class,
+                                                         LongWritable.class, vClass, hConf);
+    return result;
   }
 
   /**

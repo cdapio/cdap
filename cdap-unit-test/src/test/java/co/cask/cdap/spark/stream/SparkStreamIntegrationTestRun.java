@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
@@ -39,9 +39,9 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
   @Test
   public void testSparkWithStream() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkStreamIntegrationApp.class);
-    StreamWriter writer = applicationManager.getStreamWriter("testStream");
+    StreamManager streamManager = getStreamManager("testStream");
     for (int i = 0; i < 50; i++) {
-      writer.send(String.valueOf(i));
+      streamManager.send(String.valueOf(i));
     }
 
     SparkManager sparkManager = applicationManager.startSpark("SparkStreamProgram");
