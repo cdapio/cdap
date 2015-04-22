@@ -78,11 +78,11 @@ function download_includes() {
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
   local ingest_url="${github_url}/cdap-ingest/${branch}"
 
-  download_readme_file_and_test ${includes_dir} ${ingest_url} 0d56d354a14260806e150732792ba96d cdap-flume
-  download_readme_file_and_test ${includes_dir} ${ingest_url} a3b24fee83ef104c075e58e1401517f2 cdap-stream-clients/java
+  download_readme_file_and_test ${includes_dir} ${ingest_url} c9b6db1741afa823c362237488c2d8f0 cdap-flume
+  download_readme_file_and_test ${includes_dir} ${ingest_url} f300df291b910f0bd416a5ea160fdbe1 cdap-stream-clients/java
 #   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
-  download_readme_file_and_test ${includes_dir} ${ingest_url} 682b6710598d7701908db3b048729a83 cdap-stream-clients/python
-  download_readme_file_and_test ${includes_dir} ${ingest_url} 8f479cb5eb14ee97cb7501c1e8d9f9e0 cdap-stream-clients/ruby
+  download_readme_file_and_test ${includes_dir} ${ingest_url} ed39963b6eb1cf6e727b4c1f75ce7963 cdap-stream-clients/python
+  download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 }
 
 function test_includes () {

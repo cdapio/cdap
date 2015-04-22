@@ -279,7 +279,7 @@ function test_an_include() {
   
   if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
     echo -e "${WARNING} MD5 Hash for ${relative_file_path} has changed! Compare files and update hash!"  
-    echo "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"
+    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
   else
     echo "MD5 Hash for ${relative_file_path} matches"  
   fi
