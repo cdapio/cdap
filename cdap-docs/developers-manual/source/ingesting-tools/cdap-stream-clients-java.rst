@@ -5,5 +5,8 @@
 .. highlight:: console
 
 .. include:: ../../build/_includes/cdap-stream-clients-java.rst
-   :end-before: License and Trademarks
-   
+
+.. pull-quote::
+
+  **Source Code Repository:** Source code (and other resources) for this page are available at the 
+  `CDAP Ingest Project GitHub repository <https://github.com/caskdata/cdap-ingest>`__.
