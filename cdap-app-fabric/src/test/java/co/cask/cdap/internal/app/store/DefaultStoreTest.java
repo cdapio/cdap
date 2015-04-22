@@ -539,14 +539,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
     store.removeAllApplications(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
@@ -557,14 +554,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
     store.removeAll(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should not survive deletion
-    Assert.assertEquals(0, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
@@ -575,14 +569,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing application
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test

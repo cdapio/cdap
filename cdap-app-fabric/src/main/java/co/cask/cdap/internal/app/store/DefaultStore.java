@@ -254,10 +254,6 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
 
-        for (StreamSpecification stream : spec.getStreams().values()) {
-          mds.apps.writeStream(id.getNamespaceId(), stream);
-        }
-
         return null;
       }
     });
