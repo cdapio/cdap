@@ -8,7 +8,8 @@ angular.module(PKG.name + '.feature.apps')
           'flows',
           'services',
           'mapreduce',
-          'workflows'
+          'workflows',
+          'spark'
         ];
     datasrc.request({
       _cdapNsPath: basePath
@@ -20,6 +21,7 @@ angular.module(PKG.name + '.feature.apps')
 
           fetchStatus(prog.type_plural.toLowerCase(), prog.name);
         });
+
         $scope.programs = res.programs;
       });
 
