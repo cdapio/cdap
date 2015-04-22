@@ -16,9 +16,12 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.ProcessInput;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
@@ -78,7 +81,7 @@ public class AllProgramsApp extends AbstractApplication {
 
     @Override
     public FlowSpecification configure() {
-     return FlowSpecification.Builder.with()
+      return FlowSpecification.Builder.with()
         .setName(NAME)
         .setDescription("NoOpflow")
         .withFlowlets()
@@ -93,6 +96,10 @@ public class AllProgramsApp extends AbstractApplication {
    *
    */
   public static final class A extends AbstractFlowlet {
+
+    @UseDataSet(DATASET_NAME)
+    private KeyValueTable store;
+
     public static final String NAME = "A";
 
     public A() {
@@ -166,6 +173,7 @@ public class AllProgramsApp extends AbstractApplication {
     @Override
     public void run(SparkContext context) {
       context.readFromStream(STREAM_NAME, String.class);
+      context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
     }
   }
 
@@ -211,6 +219,13 @@ public class AllProgramsApp extends AbstractApplication {
     public void run() {
       try {
         getContext().write(STREAM_NAME, ByteBuffer.wrap(Bytes.toBytes("NO-OP")));
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(DATASET_NAME);
+            table.write("NOOP", "NOOP");
+          }
+        });
       } catch (Exception e) {
         LOG.error("Worker ran into error", e);
       }

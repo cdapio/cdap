@@ -56,21 +56,25 @@ public class DatasetInstantiator implements DatasetContext {
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final MetricsCollector metricsCollector;
-  private final Id.Namespace namespaceId;
+  private final Id.Namespace namespace;
+  private final Id ownerId;
 
   /**
    * Constructor from data fabric.
    *
-   * @param namespaceId the {@link Id.Namespace} in which this dataset exists
-   * @param classLoader the class loader to use for loading data set classes.
+   * @param namespace the {@link Id.Namespace} in which this dataset is used
+   * @param ownerId the {@link Id} which is using this dataset
+   * @param classLoader the class loader to use for loading dataset classes.
    *                    If null, then the default class loader is used
    */
-  public DatasetInstantiator(Id.Namespace namespaceId,
+  public DatasetInstantiator(Id.Namespace namespace,
+                             @Nullable Id ownerId,
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
                              @Nullable
                              MetricsCollector metricsCollector) {
-    this.namespaceId = namespaceId;
+    this.namespace = namespace;
+    this.ownerId = ownerId;
     this.classLoader = classLoader;
     this.metricsCollector = metricsCollector;
     this.datasetFramework = datasetFramework;
@@ -89,11 +93,12 @@ public class DatasetInstantiator implements DatasetContext {
 
     T dataset;
     try {
-      if (!datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, name))) {
+      if (!datasetFramework.hasInstance(Id.DatasetInstance.from(namespace, name))) {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + name);
       }
 
-      dataset = datasetFramework.getDataset(Id.DatasetInstance.from(namespaceId, name), arguments, classLoader);
+      dataset = datasetFramework.getDataset(Id.DatasetInstance.from(namespace, name),
+                                            arguments, classLoader, ownerId);
       if (dataset == null) {
         throw new DatasetInstantiationException("Failed to access dataset: " + name);
       }

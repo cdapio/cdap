@@ -165,7 +165,8 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), program.getId(),
+                                             context, datasetFramework,
                                              getProgram().getClassLoader(), null, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

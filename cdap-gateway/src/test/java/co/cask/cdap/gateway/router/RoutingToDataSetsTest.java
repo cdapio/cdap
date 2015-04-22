@@ -85,7 +85,7 @@ public class RoutingToDataSetsTest {
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.DATASET_MANAGER,
-                                      new MockDatasetTypeHandler(), new DatasetInstanceHandler());
+                                      new MockDatasetTypeHandler(), new MockDatasetInstanceHandler());
     mockService.startAndWait();
   }
 
@@ -161,7 +161,7 @@ public class RoutingToDataSetsTest {
   }
 
   @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-  public static final class DatasetInstanceHandler extends AbstractHttpHandler {
+  public static final class MockDatasetInstanceHandler extends AbstractHttpHandler {
     @GET
     @Path("/data/datasets/")
     public void list(HttpRequest request, final HttpResponder responder) {
