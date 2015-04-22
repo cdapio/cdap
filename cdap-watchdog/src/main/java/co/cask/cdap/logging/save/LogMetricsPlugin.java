@@ -26,6 +26,7 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -35,9 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,9 +52,8 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   private final CheckpointManager checkpointManager;
   private final MetricsCollectionService metricsCollectionService;
 
-  private Map<Integer, Long> partitionOffsets = new ConcurrentHashMap<Integer, Long>();
+  private final Map<Integer, Checkpoint> partitionCheckpoints = Maps.newConcurrentMap();
   private ListeningScheduledExecutorService scheduledExecutor;
-  private ScheduledFuture<?> checkPointerFuture;
   private CheckPointWriter checkPointWriter;
 
   @Inject
@@ -70,20 +68,20 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
     super.init(partitions, checkpointManager);
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-metrics-plugin")));;
+      Threads.createDaemonThreadFactory("log-saver-metrics-plugin")));
 
-    partitionOffsets.clear();
+    partitionCheckpoints.clear();
     try {
       for (Integer partition : partitions) {
-        partitionOffsets.put(partition, checkpointManager.getCheckpoint(partition));
+        partitionCheckpoints.put(partition, checkpointManager.getCheckpoint(partition));
       }
     } catch (Exception e) {
       LOG.error("Caught exception while reading checkpoint", e);
       throw Throwables.propagate(e);
     }
 
-    checkPointWriter = new CheckPointWriter(checkpointManager, partitionOffsets);
-    checkPointerFuture = scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 200, TimeUnit.MILLISECONDS);
+    checkPointWriter = new CheckPointWriter(checkpointManager, partitionCheckpoints);
+    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 200, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -101,7 +99,8 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
       collector.increment(metricName, 1);
     }
 
-    partitionOffsets.put(event.getPartition(), event.getNextOffset());
+    partitionCheckpoints.put(event.getPartition(),
+                             new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
 
   }
 
@@ -127,7 +126,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public long getCheckPoint(int partition) {
+  public Checkpoint getCheckpoint(int partition) {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {

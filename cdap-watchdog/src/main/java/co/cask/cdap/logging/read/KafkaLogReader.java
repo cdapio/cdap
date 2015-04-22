@@ -47,7 +47,6 @@ public class KafkaLogReader implements LogReader {
 
   private final List<LoggingConfiguration.KafkaHost> seedBrokers;
   private final String topic;
-  private final int numPartitions;
   private final LoggingEventSerializer serializer;
   private final StringPartitioner partitioner;
 
@@ -56,7 +55,7 @@ public class KafkaLogReader implements LogReader {
    * @param cConfig configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  public KafkaLogReader(CConfiguration cConfig) {
+  public KafkaLogReader(CConfiguration cConfig, StringPartitioner partitioner) {
     try {
       this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
         cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
@@ -65,11 +64,7 @@ public class KafkaLogReader implements LogReader {
       this.topic = KafkaTopic.getTopic();
       Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is emtpty!");
 
-      this.numPartitions = cConfig.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
-      Preconditions.checkArgument(this.numPartitions > 0,
-                                  "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
-      this.partitioner = new StringPartitioner(numPartitions);
-
+      this.partitioner = partitioner;
       this.serializer = new LoggingEventSerializer();
 
     } catch (Exception e) {
@@ -85,7 +80,7 @@ public class KafkaLogReader implements LogReader {
       return;
     }
 
-    int partition = partitioner.partition(loggingContext.getLogPartition(), numPartitions);
+    int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
 
     callback.init();
 
@@ -123,7 +118,7 @@ public class KafkaLogReader implements LogReader {
   @Override
   public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
                          final Filter filter, final Callback callback) {
-    int partition = partitioner.partition(loggingContext.getLogPartition(), numPartitions);
+    int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
 
     callback.init();
 

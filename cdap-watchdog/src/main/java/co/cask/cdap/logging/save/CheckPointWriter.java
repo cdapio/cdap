@@ -28,16 +28,16 @@ import java.util.Map;
  */
 public class CheckPointWriter implements Flushable, Runnable {
 
-  private final Map<Integer, Long> partitionOffsets;
+  private final Map<Integer, Checkpoint> partitionCheckpoints;
   private final CheckpointManager checkpointManager;
 
-  public CheckPointWriter(CheckpointManager checkpointManager, Map<Integer, Long> partitionOffsets) {
-    this.partitionOffsets = partitionOffsets;
+  public CheckPointWriter(CheckpointManager checkpointManager, Map<Integer, Checkpoint> partitionCheckpoints) {
+    this.partitionCheckpoints = partitionCheckpoints;
     this.checkpointManager = checkpointManager;
   }
 
-  public void updateCheckPoint(Integer partition, long offset) {
-    partitionOffsets.put(partition, offset);
+  public void updateCheckPoint(Integer partition, Checkpoint checkpoint) {
+    partitionCheckpoints.put(partition, checkpoint);
   }
 
   @Override
@@ -52,7 +52,7 @@ public class CheckPointWriter implements Flushable, Runnable {
 
   private void checkpoint() {
     try {
-      for (Map.Entry<Integer, Long> entry : partitionOffsets.entrySet()) {
+      for (Map.Entry<Integer, Checkpoint> entry : partitionCheckpoints.entrySet()) {
         checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
       }
     } catch (Exception e) {
