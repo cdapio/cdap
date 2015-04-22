@@ -386,7 +386,7 @@ To search for the available metrics within a given context, perform an HTTP POST
        | `` "system.process.tuples.attempt.read","system.process.tuples.read","system.store.bytes",``
        | `` "system.store.ops","system.store.writes","user.names.bytes"]``
    * - Description
-     - Returns all metrics in the context of the flowlet *saver* of the application *PurchaseHistory* of the
+     - Returns all metrics in the context of the flowlet *saver* of the application *HelloWorld* of the
        *default* namespace; in this case, returns a list of system and user-defined metrics.
 
 Querying A Metric
