@@ -23,6 +23,7 @@ import com.google.common.base.Objects;
  */
 public class LogOffset {
   public static final LogOffset LATEST_OFFSET = new LogOffset(-1, -1);
+  public static final long INVALID_KAFKA_OFFSET = -10000;
 
   private final long kafkaOffset;
   private final long time;
