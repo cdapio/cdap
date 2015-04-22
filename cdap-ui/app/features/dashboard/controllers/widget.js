@@ -24,7 +24,9 @@ angular.module(PKG.name+'.feature.dashboard')
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
-        tags[parts[i]] = parts[i + 1]
+        // In context, '~' is used to represent '.'
+        var tagValue = parts[i + 1].replace(/~/g, '.');
+        tags[parts[i]] = tagValue;
       }
       return tags;
     }

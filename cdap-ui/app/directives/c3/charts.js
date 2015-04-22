@@ -106,8 +106,8 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     chartConfig.size = { height: 200 };
 
     if ($scope.options.formatAsTimestamp) {
-      var timestampFormat = function(timestamp) {
-        return $filter('amDateFormat')(timestamp, 'h:mm:ss a');
+      var timestampFormat = function(timestampSeconds) {
+        return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
       };
       chartConfig.axis = { x: { tick : { format: timestampFormat } } };
     }
