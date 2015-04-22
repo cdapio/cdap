@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -29,8 +29,7 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
-ALPHA_WEB_APP_PATH=${ALPHA_WEB_APP_PATH:-"web-app/alpha/server.js"}
+UI_PATH=${UI_PATH:-"ui/alpha/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`
@@ -153,7 +152,7 @@ check_before_start() {
       exit 0
     fi
   else
-    nodejs_pid=`ps | grep web-app/ | grep -v grep | awk ' { print $1 } '`
+    nodejs_pid=`ps | grep ui/ | grep -v grep | awk ' { print $1 } '`
     if [[ "x{nodejs_pid}" != "x" ]]; then
       kill -9 $nodejs_pid 2>/dev/null >/dev/null
     fi
@@ -210,7 +209,6 @@ rotate_log () {
 
 start() {
     debug=$1; shift
-    alpha_ui=$1; shift
     port=$1; shift
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_OPTS
@@ -223,12 +221,8 @@ start() {
         ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
 
-    if [ "$alpha_ui" == "true" ]; then
-      WEB_APP_PATH=$ALPHA_WEB_APP_PATH
-    fi 
-
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
-        --web-app-path ${WEB_APP_PATH} \
+        --ui-path ${UI_PATH} \
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid
 
@@ -308,12 +302,10 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
-    alpha_ui=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
-        --enable-alpha-ui) shift; alpha_ui=true;;
         *) shift; break;;
       esac
     done
@@ -328,7 +320,7 @@ case "$1" in
       fi
       CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    $command $debug $alpha_ui $port
+    $command $debug $port
   ;;
 
   stop)
@@ -347,7 +339,6 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
-    echo "--enable-alpha-ui Start new ui"
     exit 1
   ;;
 
