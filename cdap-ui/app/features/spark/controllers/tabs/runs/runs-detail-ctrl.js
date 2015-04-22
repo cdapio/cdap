@@ -6,10 +6,6 @@ angular.module(PKG.name + '.feature.spark')
       template: '/assets/features/spark/templates/tabs/runs/tabs/status.html'
     },
     {
-      title: 'Flowlets',
-      template: '/assets/features/spark/templates/tabs/runs/tabs/flowlets.html'
-    },
-    {
       title: 'Logs',
       template: '/assets/features/spark/templates/tabs/runs/tabs/log.html'
     }];
