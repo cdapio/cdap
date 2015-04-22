@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -22,14 +22,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
@@ -41,101 +35,22 @@ import javax.annotation.Nullable;
 
 /**
  * Transforms a {@link StructuredRecord} into a {@link CubeFact} object that can be written to a
- * {@link co.cask.cdap.api.dataset.lib.cube.Cube} dataset.
- * <p/>
- * This transformation requires a configuration for mapping {@link StructuredRecord} into a {@link CubeFact} that is
- * provided in JSON form in {@link #MAPPING_CONFIG_PROPERTY} property. Example of the configuration:
-<pre>
-  {
-    timestamp: {
-      sourceField: "timeField",
-      sourceFieldFormat: "HH:mm:ss"
-    }
-
-    tags: [
-      {
-        name: "tag1",
-        sourceField: "field1"
-      },
-      {
-        name: "tag2",
-        value: "staticValue"
-      }
-    ],
-
-    measurements: [
-      {
-        name: "metric1",
-        type: "COUNTER",
-        sourceField: "field7"
-      },
-      {
-        name: "metric2",
-        type: "GAUGE",
-        sourceField: "field7"
-      },
-      {
-        name: "metric3",
-        type: "COUNTER",
-        value: "1"
-      },
-    ],
-  }
-</pre>
- *
- * In general, the value for a timestamp, tag or measurement fields can be retrieved from {@link StructuredRecord}
- * field using 'srcField' property or set to a fixed value using 'value' property. If both are specified, then the one
- * in 'value' is used as the default when 'srcField' is not present in {@link StructuredRecord}.
- *
- * <h3>Special cases</h3>
- * <p/>
- * Timestamp is either retrieved from the record field or is set to a current ts (at processing) is used.
- * If record field is used, either dateFormat is used to parse the value, or it is assumed as epoch in ms.
- * To use current ts, configure it the following way:
- *
-<pre>
-  {
-    timestamp: {
-      value: "now"
-    },
-    ...
-  }
- </pre>
- *
- * <p/>
- * Measurement type (specified in 'type' property) can be one of {@link MeasureType} values.
- *
+ * {@link co.cask.cdap.api.dataset.lib.cube.Cube} dataset. See more information on how to configure it at
+ * {@link co.cask.cdap.templates.etl.batch.sinks.CubeSink}.
  */
-public class StructuredRecordToCubeFactTransform extends TransformStage<StructuredRecord, CubeFact> {
+class StructuredRecordToCubeFact {
   public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
 
-  private CubeFactBuilder factBuilder;
+  private final CubeFactBuilder factBuilder;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(StructuredRecordToCubeFactTransform.class.getSimpleName());
-    configurer.setDescription("Transforms a StructuredRecord to a CubeFact object used to write to a Cube.");
-    configurer.addProperty(new Property(MAPPING_CONFIG_PROPERTY,
-                                        "the StructuredRecord to CubeFact mapping configuration " +
-                                          "(see StructuredRecordToCubeFactTransform javadoc for detailed description).",
-                                        true));
-  }
-
-  @Override
-  public void initialize(StageContext context) {
-    String configAsString = context.getRuntimeArguments().get(MAPPING_CONFIG_PROPERTY);
-    Preconditions.checkArgument(configAsString != null && !configAsString.isEmpty(),
-                                "the mapping config must be given");
-    MappingConfig config = new Gson().fromJson(configAsString, MappingConfig.class);
+  StructuredRecordToCubeFact(MappingConfig config) {
     factBuilder = new CubeFactBuilder(config);
   }
 
-  @Override
-  public void transform(StructuredRecord record,
-                        Emitter<CubeFact> emitter) throws Exception {
+  public CubeFact transform(StructuredRecord record) throws Exception {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
-    emitter.emit(factBuilder.build(record));
+    return factBuilder.build(record);
   }
 
   private static final class CubeFactBuilder {

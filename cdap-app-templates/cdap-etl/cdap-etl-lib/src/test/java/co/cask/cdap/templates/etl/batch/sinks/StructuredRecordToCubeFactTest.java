@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -22,38 +22,30 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
-import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * 
  */
 @SuppressWarnings("unchecked")
-public class StructuredRecordToCubeFactTransformTest {
+public class StructuredRecordToCubeFactTest {
 
   private static final String DATE_FORMAT = "yyyy:MM:dd-HH:mm:ss Z";
 
   @Test
   public void testInvalidConfiguration() throws Exception {
-    // no config
-    verifyInvalidConfigDetected(null);
     // empty
-    verifyInvalidConfigDetected(new StructuredRecordToCubeFactTransform.MappingConfig());
+    verifyInvalidConfigDetected(new StructuredRecordToCubeFact.MappingConfig());
 
     // bad timestamp
-    StructuredRecordToCubeFactTransform.MappingConfig config = createValidConfig();
+    StructuredRecordToCubeFact.MappingConfig config = createValidConfig();
     config.timestamp = null;
     verifyInvalidConfigDetected(config);
 
@@ -109,11 +101,7 @@ public class StructuredRecordToCubeFactTransformTest {
   @Test
   public void testTransform() throws Exception {
     // initialize the transform
-    TransformStage transform = new StructuredRecordToCubeFactTransform();
-    StageContext context = new MockTransformContext(
-      ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
-                      new Gson().toJson(createValidConfig())));
-    transform.initialize(context);
+    StructuredRecordToCubeFact transform = new StructuredRecordToCubeFact(createValidConfig());
 
     Schema schema = Schema.recordOf(
       "record",
@@ -142,10 +130,7 @@ public class StructuredRecordToCubeFactTransformTest {
         .set("metricField1", "15")
         .build();
 
-    MockEmitter<CubeFact> emitter = new MockEmitter<CubeFact>();
-    transform.transform(record, emitter);
-
-    CubeFact transformed = emitter.getEmitted().get(0);
+    CubeFact transformed = transform.transform(record);
     // note: ts is in seconds
     Assert.assertEquals(ts / 1000, transformed.getTimestamp());
 
@@ -171,14 +156,11 @@ public class StructuredRecordToCubeFactTransformTest {
 
     // 2. Not all values are there, validate fallback to defaults and alternative timestamp retrieval
 
-    transform = new StructuredRecordToCubeFactTransform();
-    StructuredRecordToCubeFactTransform.MappingConfig config = createValidConfig();
+    StructuredRecordToCubeFact.MappingConfig config = createValidConfig();
     config.timestamp.sourceField = null;
     config.timestamp.sourceFieldFormat = null;
     config.timestamp.value = "now";
-    context = new MockTransformContext(ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
-                                                       new Gson().toJson(config)));
-    transform.initialize(context);
+    transform = new StructuredRecordToCubeFact(config);
 
     long tsStart = System.currentTimeMillis();
     record = StructuredRecord.builder(schema)
@@ -191,12 +173,9 @@ public class StructuredRecordToCubeFactTransformTest {
       .set("metricField1", "15")
       .build();
 
-    emitter = new MockEmitter<CubeFact>();
-    transform.transform(record, emitter);
+    transformed = transform.transform(record);
 
     long tsEnd = System.currentTimeMillis();
-
-    transformed = emitter.getEmitted().get(0);
     // verify that assigned ts was current ts
     Assert.assertTrue(tsStart / 1000 <= transformed.getTimestamp());
     Assert.assertTrue(1000 + tsEnd / 1000 >= transformed.getTimestamp());
@@ -222,65 +201,65 @@ public class StructuredRecordToCubeFactTransformTest {
 
   }
 
-  private StructuredRecordToCubeFactTransform.MappingConfig createValidConfig() {
-    StructuredRecordToCubeFactTransform.MappingConfig config = new StructuredRecordToCubeFactTransform.MappingConfig();
-    config.timestamp = new StructuredRecordToCubeFactTransform.ValueMapping();
+  private StructuredRecordToCubeFact.MappingConfig createValidConfig() {
+    StructuredRecordToCubeFact.MappingConfig config = new StructuredRecordToCubeFact.MappingConfig();
+    config.timestamp = new StructuredRecordToCubeFact.ValueMapping();
     config.timestamp.sourceField = "tsField";
     config.timestamp.sourceFieldFormat = DATE_FORMAT;
 
-    config.tags = new StructuredRecordToCubeFactTransform.ValueMapping[7];
-    config.tags[0] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags = new StructuredRecordToCubeFact.ValueMapping[7];
+    config.tags[0] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[0].name = "tag1";
     config.tags[0].sourceField = "tagField1";
 
-    config.tags[1] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[1] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[1].name = "tag2";
     config.tags[1].value = "value2";
 
-    config.tags[2] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[2] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[2].name = "tag3";
     config.tags[2].sourceField = "tagField3";
     config.tags[2].value = "defaultTagVal3";
 
-    config.tags[3] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[3] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[3].name = "boolTag";
     config.tags[3].sourceField = "boolField";
 
-    config.tags[4] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[4] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[4].name = "intTag";
     config.tags[4].sourceField = "intField";
 
-    config.tags[5] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[5] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[5].name = "floatTag";
     config.tags[5].sourceField = "floatField";
 
-    config.tags[6] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.tags[6] = new StructuredRecordToCubeFact.ValueMapping();
     config.tags[6].name = "bytesTag";
     config.tags[6].sourceField = "bytesField";
 
-    config.measurements = new StructuredRecordToCubeFactTransform.ValueMapping[5];
-    config.measurements[0] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.measurements = new StructuredRecordToCubeFact.ValueMapping[5];
+    config.measurements[0] = new StructuredRecordToCubeFact.ValueMapping();
     config.measurements[0].name = "metric1";
     config.measurements[0].type = "COUNTER";
     config.measurements[0].sourceField = "metricField1";
 
-    config.measurements[1] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.measurements[1] = new StructuredRecordToCubeFact.ValueMapping();
     config.measurements[1].name = "metric2";
     config.measurements[1].type = "COUNTER";
     config.measurements[1].value = "55";
 
-    config.measurements[2] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.measurements[2] = new StructuredRecordToCubeFact.ValueMapping();
     config.measurements[2].name = "intMetric";
     config.measurements[2].type = "GAUGE";
     config.measurements[2].sourceField = "intField";
     config.measurements[2].value = "66";
 
-    config.measurements[3] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.measurements[3] = new StructuredRecordToCubeFact.ValueMapping();
     config.measurements[3].name = "longMetric";
     config.measurements[3].type = "COUNTER";
     config.measurements[3].sourceField = "longField";
 
-    config.measurements[4] = new StructuredRecordToCubeFactTransform.ValueMapping();
+    config.measurements[4] = new StructuredRecordToCubeFact.ValueMapping();
     config.measurements[4].name = "floatMetric";
     config.measurements[4].type = "GAUGE";
     config.measurements[4].sourceField = "floatField";
@@ -288,14 +267,9 @@ public class StructuredRecordToCubeFactTransformTest {
     return config;
   }
 
-  private void verifyInvalidConfigDetected(StructuredRecordToCubeFactTransform.MappingConfig config) {
-    TransformStage transform = new StructuredRecordToCubeFactTransform();
-    StageContext context =
-      new MockTransformContext(config == null ? new HashMap<String, String>() :
-                                 ImmutableMap.of(StructuredRecordToCubeFactTransform.MAPPING_CONFIG_PROPERTY,
-                                                 new Gson().toJson(config)));
+  private void verifyInvalidConfigDetected(StructuredRecordToCubeFact.MappingConfig config) {
     try {
-      transform.initialize(context);
+      new StructuredRecordToCubeFact(config);
       Assert.fail("IllegalArgumentException is expected to be thrown on invalid config");
     } catch (IllegalArgumentException e) {
       // Expected
