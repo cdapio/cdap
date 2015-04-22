@@ -434,7 +434,7 @@ public class AdapterService extends AbstractIdleService {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-                       ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
+      ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);
   }
@@ -443,9 +443,16 @@ public class AdapterService extends AbstractIdleService {
     throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
-    scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
-    //TODO: Scheduler API should also manage the MDS.
-    store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+    try {
+      scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+      //TODO: Scheduler API should also manage the MDS.
+      store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+    } catch (NotFoundException e) {
+      // its possible a stop was already called and the schedule was deleted, but then there
+      // was some failure stopping the active run.  In that case, the next time stop is called
+      // the schedule will not be present. We don't want to fail in that scenario, so its ok if the
+      // schedule was not found.
+    }
     List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
                                          Integer.MAX_VALUE);
     for (RunRecord record : activeRuns) {
