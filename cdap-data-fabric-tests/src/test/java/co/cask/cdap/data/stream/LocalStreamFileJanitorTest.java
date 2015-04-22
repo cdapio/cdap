@@ -24,6 +24,8 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -60,6 +62,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new DataFabricLevelDBModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {

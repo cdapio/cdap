@@ -35,6 +35,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -77,6 +78,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final Store store;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
@@ -85,7 +87,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, Store store) {
+                                DiscoveryServiceClient discoveryServiceClient, Store store,
+                                UsageRegistry usageRegistry) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -95,6 +98,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = store;
+    this.usageRegistry = usageRegistry;
   }
 
   @Inject (optional = true)
@@ -156,7 +160,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
-                                                                        streamAdmin, txSystemClient);
+                                                                        streamAdmin, txSystemClient, usageRegistry);
     mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
       @Override
       public void starting() {

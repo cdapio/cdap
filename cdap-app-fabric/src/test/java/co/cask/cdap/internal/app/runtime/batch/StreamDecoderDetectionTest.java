@@ -41,7 +41,7 @@ public class StreamDecoderDetectionTest {
     // For testing purpose, we don't need all those parameters
     Configuration hConf = new Configuration();
     MapReduceRuntimeService runtimeService = new MapReduceRuntimeService(
-      CConfiguration.create(), hConf, null, null, null, null, null, null, null);
+      CConfiguration.create(), hConf, null, null, null, null, null, null, null, null);
 
     hConf.setClass(Job.MAP_CLASS_ATTR, IdentityMapper.class, Mapper.class);
     runtimeService.setStreamEventDecoder(hConf);

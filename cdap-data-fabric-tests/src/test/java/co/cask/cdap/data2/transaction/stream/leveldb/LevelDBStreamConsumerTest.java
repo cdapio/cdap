@@ -20,6 +20,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -66,6 +68,8 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())

@@ -61,6 +61,7 @@ import javax.annotation.Nullable;
  */
 public final class AppFabricServer extends AbstractIdleService {
 
+  public static final String HANDLERS_BINDING = "appfabric.http.handler";
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
 
   private final DiscoveryService discoveryService;

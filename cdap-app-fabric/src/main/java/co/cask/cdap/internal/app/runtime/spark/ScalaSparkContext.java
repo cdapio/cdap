@@ -90,8 +90,8 @@ class ScalaSparkContext extends AbstractSparkContext {
    * @return the RDD created from {@link Stream}
    */
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
-                              Class<? extends StreamEventDecoder> decoderType) {
+  public <T> T doReadFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                                Class<? extends StreamEventDecoder> decoderType) {
       Configuration hConf;
       try {
         if (decoderType == null) {
