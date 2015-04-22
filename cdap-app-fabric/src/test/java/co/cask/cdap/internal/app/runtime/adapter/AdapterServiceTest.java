@@ -90,7 +90,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
   @Test(expected = RuntimeException.class)
   public void testInvalidAdapter() throws Exception {
     Id.Namespace namespace = Id.Namespace.from(TEST_NAMESPACE1);
-    String adapterName = "myAdapter";
+    String adapterName = "myInvalidAdapter";
     // the template should check that the first field is not null.
     DummyBatchTemplate.Config config = new DummyBatchTemplate.Config(null, "0 0 1 1 *");
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
@@ -147,7 +147,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
   @Test
   public void testWorkerAdapter() throws Exception {
-    String adapter1 = "myAdapter";
+    String adapter1 = "myWorkerAdapter";
     String adapter2 = "newAdapter";
     DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
     DummyWorkerTemplate.Config config2 = new DummyWorkerTemplate.Config(3);
