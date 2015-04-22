@@ -191,17 +191,28 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
-                                          ClassLoader classLoader) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(
+    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
+    @Nullable ClassLoader classLoader,
+    @Nullable Id owner) throws DatasetManagementException, IOException {
+
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .getInstance(datasetInstanceId.getId());
+      .getInstance(datasetInstanceId.getId(), owner);
     if (instanceInfo == null) {
       return null;
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec(),
-                               arguments);
+    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                               instanceInfo.getSpec(), arguments);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(
+    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
+    @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
+
+    return getDataset(datasetInstanceId, arguments, classLoader, null);
   }
 
   @Override

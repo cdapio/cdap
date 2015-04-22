@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget) {
 
   if(!$state.params.namespace) {
     // the controller for "ns" state should handle the case of
@@ -35,7 +35,8 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.systemStatus = '';
   dataSrc.poll({
-    _cdapPath: '/system/services/status'
+    _cdapPath: '/system/services/status',
+    interval: 10000
   }, function(res) {
     var serviceStatuses = Object.keys(res).map(function(value, i) {
       return res[value];
@@ -73,4 +74,32 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG) {
     }
   });
 
+  $scope.wdgts = [];
+  // type field is overridden by what is rendered in view because we do not use widget.getPartial()
+  $scope.wdgts.push(new Widget({title: 'System', type: 'c3-line', isLive: true,
+                  metric: {
+                    context: 'namespace.*',
+                    names: ['system.log.error', 'system.log.warn'],
+                    startTime: 'now-3600s',
+                    endTime: 'now',
+                    resolution: '1m'
+                  },
+                  metricAlias: {'system.log.error': 'System Errors',
+                                'system.log.warn' : 'System Warnings'},
+                  interval: 60*1000,
+                  aggregate: 5
+  }));
+  $scope.wdgts.push(new Widget({title: 'App', type: 'c3-line', isLive: true,
+                  metric: {
+                    context: 'namespace.' + $state.params.namespace,
+                    names: ['system.app.log.error', 'system.app.log.warn'],
+                    startTime: 'now-3600s',
+                    endTime: 'now',
+                    resolution: '1m'
+                  },
+                  metricAlias: {'system.app.log.error': 'Application Errors',
+                                'system.app.log.warn' : 'Application Warnings'},
+                  interval: 60*1000,
+                  aggregate: 5
+  }));
 });

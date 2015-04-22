@@ -110,4 +110,13 @@
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
 
+    <!--
+        Template configuration
+    -->
+    <property>
+      <name>app.template.dir</name>
+      <value>plugins</value>
+      <description>Directory where all archives for app templates are stored</description>
+    </property>
+
 </configuration>

@@ -30,7 +30,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -71,7 +70,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     this.discoveryServiceClient = discoveryServiceClient;
 
     this.programMetrics = metricsCollector;
-    this.dsInstantiator = new DatasetInstantiator(Id.Namespace.from(namespaceId), dsFramework,
+    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), program.getId(), dsFramework,
                                                   program.getClassLoader(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...

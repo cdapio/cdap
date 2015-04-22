@@ -30,7 +30,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
@@ -103,7 +102,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
         }
       });
     this.txContext = new TransactionContext(txClient);
-    this.dynamicDatasetContext = new DynamicDatasetContext(Id.Namespace.from(getNamespaceId()),
+    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
+                                                           getProgram().getId(),
                                                            txContext, dsFramework,
                                                            program.getClassLoader(), null,
                                                            runtimeArguments.asMap()) {
