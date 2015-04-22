@@ -28,6 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -83,12 +84,14 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MDSDatasetsRegistry mdsDatasets,
                         ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
-                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin) throws Exception {
+                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin,
+                        UsageRegistry usageRegistry) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf);
+                                                                               opExecutorClient, exploreFacade, cConf,
+                                                                               usageRegistry);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);

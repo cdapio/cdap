@@ -37,7 +37,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
+import co.cask.tephra.runtime.TransactionClientModule;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
@@ -73,7 +76,8 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules());
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule());
 
     framework = new InMemoryDatasetFramework(new DatasetDefinitionRegistryFactory() {
       @Override
@@ -82,7 +86,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
         injector.injectMembers(registry);
         return registry;
       }
-    }, cConf);
+    }, cConf, injector.getInstance(TransactionExecutorFactory.class));
     framework.addModule(inMemory, new InMemoryTableModule());
     framework.addModule(core, new CoreDatasetsModule());
     framework.addModule(fileSet, new FileSetModule());
