@@ -53,13 +53,14 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   static final String UI;
   static {
     // Determine what's the path to the server.js, based on what's on the directory
-    // When run from IDE, the base is "ui".
+    // When run from IDE, the base is "cdap-ui" and from standalone it's ui.
     File base = new File("ui");
     if (!base.isDirectory()) {
-      // It's ok as the path might get pass from StandaloneMain
-      LOG.warn("Unable to determine UI directory");
+      base = new File("cdap-ui");
+    } else {
+      base = new File(base, UI_VERSION);
     }
-    UI = new File(new File(base, UI_VERSION), "server.js").getAbsolutePath();
+    UI = new File(base, "server.js").getAbsolutePath();
   }
 
   private final File uiBase;
