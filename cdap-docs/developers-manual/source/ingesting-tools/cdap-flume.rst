@@ -5,3 +5,5 @@
 .. highlight:: console
 
 .. include:: ../../build/_includes/cdap-flume.rst
+   :end-before: License and Trademarks
+   
