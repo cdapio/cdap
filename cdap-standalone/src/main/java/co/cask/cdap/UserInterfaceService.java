@@ -57,8 +57,6 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
     File base = new File("ui");
     if (!base.isDirectory()) {
       base = new File("cdap-ui");
-      // It's ok as the path might get pass from StandaloneMain
-      LOG.warn("Unable to determine UI directory");
     } else {
       base = new File(base, UI_VERSION);
     }
