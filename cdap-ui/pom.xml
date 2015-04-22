@@ -115,7 +115,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.depends>--depends cdap --replaces cdap-web-app</package.depends>
+        <package.depends>--depends cdap --replaces cdap-web-app --conflicts cdap-web-app</package.depends>
       </properties>
       <build>
         <plugins>
