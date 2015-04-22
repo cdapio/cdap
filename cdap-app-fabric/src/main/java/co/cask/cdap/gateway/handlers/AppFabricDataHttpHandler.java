@@ -16,17 +16,21 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.app.services.Data;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.Collection;
+import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -38,11 +42,6 @@ import javax.ws.rs.PathParam;
 public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
-   * Access Dataset Service
-   */
-  private final DatasetFramework dsFramework;
-
-  /**
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
@@ -51,11 +50,9 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricDataHttpHandler(Authenticator authenticator,
-                                  Store store, DatasetFramework dsFramework) {
+  public AppFabricDataHttpHandler(Authenticator authenticator, Store store) {
     super(authenticator);
     this.store = store;
-    this.dsFramework = dsFramework;
   }
 
   /**
@@ -64,26 +61,18 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/streams")
   public void getStreams(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
-    dataList(responder, store, dsFramework, Data.STREAM, namespaceId, null, null);
-  }
+                         @PathParam("namespace-id") String namespace) {
 
-  /**
-   * Returns a list of dataset associated with namespace. This is here for the v2 API to use,
-   * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
-   */
-  void getDatasets(HttpRequest request, HttpResponder responder,
-                   @PathParam("namespace-id") String namespaceId) {
-    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, null, null);
-  }
-
-  /**
-   * Returns a dataset associated with namespace. This is here for the v2 API to use,
-   * but was removed in v3 in favor of APIs in {@link DatasetInstanceHandler}.
-   */
-  void getDatasetSpecification(HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("dataset-id") String datasetId) {
-    dataList(responder, store, dsFramework, Data.DATASET, namespaceId, datasetId, null);
+    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    Collection<StreamSpecification> specs = store.getAllStreams(namespaceId);
+    List<StreamDetail> result = Lists.newArrayListWithExpectedSize(specs.size());
+    for (StreamSpecification spec : specs) {
+      result.add(new StreamDetail(spec.getName()));
+    }
+    if (result.isEmpty() && store.getNamespace(namespaceId) == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace '%s' not found.", namespace));
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, specs);
   }
 }
