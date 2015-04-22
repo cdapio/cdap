@@ -47,32 +47,6 @@
 
   <build>
     <plugins>
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.3.7</version>
-          <extensions>true</extensions>
-          <configuration>
-            <archive>
-              <manifest>
-                <mainClass>${app.main.class}</mainClass>
-              </manifest>
-            </archive>
-            <instructions>
-              <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-              <Embed-Transitive>true</Embed-Transitive>
-              <Embed-Directory>lib</Embed-Directory>
-            </instructions>
-          </configuration>
-          <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-              <goal>bundle</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
@@ -104,6 +78,34 @@
             </fileset>
           </filesets>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration combine.self="override">
+              <outputDirectory>${stage.lib.dir}</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.apache.twill,\
+                org.apache.httpcomponents,org.apache.thrift,org.apache.flume,org.apache.avro,org.ow2.asm,\
+                com.google.inject,org.apache.hadoop,commons-codec,com.google.inject.extensions,\
+                co.cask.http</excludeGroupIds>
+              <excludeArtifactIds>zkclient,servlet-api,common-http</excludeArtifactIds>
+              <prependGroupId>true</prependGroupId>
+              <silent>true</silent>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
