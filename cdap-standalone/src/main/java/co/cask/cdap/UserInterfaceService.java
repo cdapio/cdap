@@ -53,7 +53,7 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   static final String UI;
   static {
     // Determine what's the path to the server.js, based on what's on the directory
-    // When run from IDE, the base is "ui".
+    // When run from IDE, the base is "cdap-ui" and from standalone it's ui.
     File base = new File("ui");
     if (!base.isDirectory()) {
       base = new File("cdap-ui");
