@@ -17,10 +17,12 @@
 package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.app.deploy.ConfigResponse;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryAdapterConfigurator;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterSpecification;
@@ -44,18 +46,24 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+
+  private final CConfiguration cConf;
   private final Id.Namespace namespace;
   private final String adapterName;
   private final Location templateJarLocation;
+  private final PluginRepository pluginRepository;
 
   /**
    * Constructor with hit for handling type.
    */
-  public ConfigureAdapterStage(Id.Namespace namespace, String adapterName, Location templateJarLocation) {
+  public ConfigureAdapterStage(CConfiguration cConf, Id.Namespace namespace, String adapterName,
+                               Location templateJarLocation, PluginRepository pluginRepository) {
     super(TypeToken.of(AdapterDeploymentInfo.class));
+    this.cConf = cConf;
     this.namespace = namespace;
     this.adapterName = adapterName;
     this.templateJarLocation = templateJarLocation;
+    this.pluginRepository = pluginRepository;
   }
 
   /**
@@ -67,8 +75,9 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
   @Override
   public void process(AdapterDeploymentInfo deploymentInfo) throws Exception {
     InMemoryAdapterConfigurator inMemoryAdapterConfigurator =
-      new InMemoryAdapterConfigurator(namespace, templateJarLocation, adapterName,
-                                      deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec());
+      new InMemoryAdapterConfigurator(cConf, namespace, templateJarLocation, adapterName,
+                                      deploymentInfo.getAdapterConfig(), deploymentInfo.getTemplateSpec(),
+                                      pluginRepository);
 
     ConfigResponse configResponse;
 

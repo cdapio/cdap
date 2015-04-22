@@ -24,6 +24,7 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginVersion;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,18 +32,18 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.TreeMultimap;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
@@ -68,11 +69,14 @@ import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import javax.annotation.Nullable;
@@ -106,37 +110,72 @@ public class PluginRepository {
   private final CConfiguration cConf;
   private final File templateDir;
   private final File tmpDir;
-  private final AtomicReference<Map<String, Multimap<PluginInfo, PluginClass>>> plugins;
+  private final AtomicReference<Map<String, TreeMultimap<PluginInfo, PluginClass>>> plugins;
 
   @Inject
   PluginRepository(CConfiguration cConf) {
     this.cConf = cConf;
     this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    this.plugins = new AtomicReference<Map<String, Multimap<PluginInfo, PluginClass>>>(
-      new HashMap<String, Multimap<PluginInfo, PluginClass>>());
+    this.plugins = new AtomicReference<Map<String, TreeMultimap<PluginInfo, PluginClass>>>(
+      new HashMap<String, TreeMultimap<PluginInfo, PluginClass>>());
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
-   * Returns a {@link Multimap} of all plugins available for the given application template.
+   * Returns a {@link SortedMap} of all plugins available for the given application template. The keys
+   * are sorted by the {@link PluginInfo}. Only unique {@link PluginClass} are returned in the value
+   * Collection, where uniqueness is determined by the plugin class type and name only.
+   *
+   * @param template name of the template
    */
-  public Multimap<PluginInfo, PluginClass> getPlugins(String template) {
-    Multimap<PluginInfo, PluginClass> result = plugins.get().get(template);
-    return result == null ? ImmutableMultimap.<PluginInfo, PluginClass>of() : result;
+  public SortedMap<PluginInfo, Collection<PluginClass>> getPlugins(String template) {
+    TreeMultimap<PluginInfo, PluginClass> result = plugins.get().get(template);
+    return result == null ? ImmutableSortedMap.<PluginInfo, Collection<PluginClass>>of()
+                          : Collections.unmodifiableSortedMap(result.asMap());
+  }
+
+  /**
+   * Returns a {@link Map.Entry} represents the plugin information for the plugin being requested.
+   *
+   * @param template name of the template
+   * @param pluginType plugin type name
+   * @param pluginName plugin name
+   * @param selector for selecting which plugin to use
+   * @return the entry found or {@code null} if none was found
+   */
+  @Nullable
+  public Map.Entry<PluginInfo, PluginClass> findPlugin(String template, final String pluginType,
+                                                       final String pluginName, PluginSelector selector) {
+    // Transform by matching type, name. If there is no match, the map value is null.
+    // We then filter out null value
+    SortedMap<PluginInfo, PluginClass> plugins = ImmutableSortedMap.copyOf(Maps.filterValues(Maps.transformValues(
+      getPlugins(template), new Function<Collection<PluginClass>, PluginClass>() {
+        @Nullable
+        @Override
+        public PluginClass apply(Collection<PluginClass> input) {
+          for (PluginClass pluginClass : input) {
+            if (pluginClass.getType().equals(pluginType) && pluginClass.getName().equals(pluginName)) {
+              return pluginClass;
+            }
+          }
+          return null;
+        }
+      }), Predicates.notNull()));
+
+    return plugins.isEmpty() ? null : selector.select(plugins);
   }
 
   /**
    * Inspects plugins for all the templates.
    *
-   * @param templates map from template name to template jar file
+   * @param templates list of template information
    */
-  void inspectPlugins(Map<String, File> templates) throws IOException {
-    Map<String, Multimap<PluginInfo, PluginClass>> result = Maps.newHashMap();
-    for (Map.Entry<String, File> entry : templates.entrySet()) {
-      result.put(entry.getKey(), inspectPlugins(entry.getKey(), entry.getValue()));
+  void inspectPlugins(Iterable<? extends ApplicationTemplateInfo> templates) throws IOException {
+    Map<String, TreeMultimap<PluginInfo, PluginClass>> result = Maps.newHashMap();
+    for (ApplicationTemplateInfo info : templates) {
+      result.put(info.getName(), inspectPlugins(info.getName(), info.getFile()));
     }
-
     plugins.set(result);
   }
 
@@ -146,16 +185,12 @@ public class PluginRepository {
    * @param template name of the template
    * @param templateJar application jar for the application template
    */
-  private Multimap<PluginInfo, PluginClass> inspectPlugins(String template, File templateJar) throws IOException {
+  @VisibleForTesting
+  TreeMultimap<PluginInfo, PluginClass> inspectPlugins(String template, File templateJar) throws IOException {
     // We want the plugins sorted by the PluginInfo, which in turn is sorted by name and version.
-    Multimap<PluginInfo, PluginClass> templatePlugins = Multimaps.newMultimap(
-      Maps.<PluginInfo, Collection<PluginClass>>newTreeMap(), new Supplier<Collection<PluginClass>>() {
-        @Override
-        public Collection<PluginClass> get() {
-          return Lists.newArrayList();
-        }
-      });
-
+    // Also the PluginClass should be unique by its (type, name).
+    TreeMultimap<PluginInfo, PluginClass> templatePlugins = TreeMultimap.create(new PluginInfoComaprator(),
+                                                                                new PluginClassComparator());
     File pluginDir = new File(templateDir, template);
     List<File> pluginJars = DirUtils.listFiles(pluginDir, "jar");
     if (pluginJars.isEmpty()) {
@@ -201,6 +236,13 @@ public class PluginRepository {
     Reader reader = Files.newReader(configFile, Charsets.UTF_8);
     try {
       List<PluginClass> pluginClasses = GSON.fromJson(reader, CONFIG_OBJECT_TYPE);
+
+      // Put it one by one so that we can log duplicate plugin class
+      for (PluginClass pluginClass : pluginClasses) {
+        if (!templatePlugins.put(pluginFile.getPluginInfo(), pluginClass)) {
+          LOG.warn("Plugin already exists in {}. Ignore plugin class {}", pluginFile.getPluginInfo(), pluginClass);
+        }
+      }
       templatePlugins.putAll(pluginFile.getPluginInfo(), pluginClasses);
     } finally {
       Closeables.closeQuietly(reader);
@@ -223,21 +265,23 @@ public class PluginRepository {
 
     // Load the plugin class and inspect the config field.
     ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(pluginFile.getPluginInfo());
-    for (Class<?> pluginClass : getPluginClasses(exportPackages, pluginClassLoader)) {
-      Plugin pluginAnnotation = pluginClass.getAnnotation(Plugin.class);
+    for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
+      Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
       if (pluginAnnotation == null) {
         continue;
       }
       Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
       try {
-        String configField = getProperties(TypeToken.of(pluginClass), pluginProperties);
-        templatePlugins.put(pluginFile.getPluginInfo(), new PluginClass(pluginAnnotation.type(),
-                                                                        getPluginName(pluginClass),
-                                                                        getPluginDescription(pluginClass),
-                                                                        pluginClass.getName(),
-                                                                        configField, pluginProperties));
+        String configField = getProperties(TypeToken.of(cls), pluginProperties);
+        PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
+                                                  getPluginDescription(cls), cls.getName(),
+                                                  configField, pluginProperties);
+
+        if (!templatePlugins.put(pluginFile.getPluginInfo(), pluginClass)) {
+          LOG.warn("Plugin already exists in {}. Ignore plugin class {}", pluginFile.getPluginInfo(), pluginClass);
+        }
       } catch (UnsupportedTypeException e) {
-        LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", pluginClass, e);
+        LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
       }
     }
   }
@@ -441,6 +485,32 @@ public class PluginRepository {
     @Override
     public void close() throws IOException {
       closeable.close();
+    }
+  }
+
+  /**
+   * A {@link Comparator} that uses {@link PluginInfo} to perform comparison.
+   */
+  private static final class PluginInfoComaprator implements Comparator<PluginInfo> {
+
+    @Override
+    public int compare(PluginInfo first, PluginInfo second) {
+      return first.compareTo(second);
+    }
+  }
+
+  /**
+   * A {@link Comparator} for {@link PluginClass} that only compares with plugin type and name.
+   */
+  private static final class PluginClassComparator implements Comparator<PluginClass> {
+
+    @Override
+    public int compare(PluginClass first, PluginClass second) {
+      int cmp = first.getType().compareTo(second.getType());
+      if (cmp != 0) {
+        return cmp;
+      }
+      return first.getName().compareTo(second.getName());
     }
   }
 

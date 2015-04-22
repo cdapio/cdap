@@ -30,11 +30,14 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -46,6 +49,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
@@ -58,6 +62,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
@@ -76,6 +81,8 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -87,7 +94,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Performs the actual execution of mapreduce job.
@@ -233,22 +243,41 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // Localize the program jar, but not add it to class path
           // The ApplicationLoader will create ProgramClassLoader from it
           job.addCacheFile(programJarCopy.toURI());
-          MapReduceContextConfig contextConfig = new MapReduceContextConfig(job.getConfiguration());
-          // We start long-running tx to be used by mapreduce job tasks.
-          Transaction tx = txClient.startLong();
+
+          Location pluginArchive = createPluginArchive(context.getAdapterSpec(), context.getProgram().getId());
           try {
-            // We remember tx, so that we can re-use it in mapreduce tasks
-            contextConfig.set(context, cConf, tx, programJarCopy.toURI());
+            if (pluginArchive != null) {
+              job.addCacheArchive(pluginArchive.toURI());
+            }
 
-            LOG.info("Submitting MapReduce Job: {}", context);
-            // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-            job.submit();
+            MapReduceContextConfig contextConfig = new MapReduceContextConfig(job.getConfiguration());
+            // We start long-running tx to be used by mapreduce job tasks.
+            Transaction tx = txClient.startLong();
+            try {
+              // We remember tx, so that we can re-use it in mapreduce tasks
+              // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
+              CConfiguration cConfCopy = cConf;
+              if (pluginArchive != null) {
+                cConfCopy = CConfiguration.copy(cConf);
+                cConfCopy.set(Constants.AppFabric.APP_TEMPLATE_DIR, pluginArchive.getName());
+              }
+              contextConfig.set(context, cConfCopy, tx, programJarCopy.toURI());
 
-            this.job = job;
-            this.transaction = tx;
-            this.cleanupTask = createCleanupTask(jobJar, programJarCopy);
+              LOG.info("Submitting MapReduce Job: {}", context);
+              // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+              job.submit();
+
+              this.job = job;
+              this.transaction = tx;
+              this.cleanupTask = createCleanupTask(jobJar, programJarCopy, pluginArchive);
+            } catch (Throwable t) {
+              Transactions.invalidateQuietly(txClient, tx);
+              throw Throwables.propagate(t);
+            }
           } catch (Throwable t) {
-            Transactions.invalidateQuietly(txClient, tx);
+            if (pluginArchive != null) {
+              Locations.deleteQuietly(pluginArchive);
+            }
             throw Throwables.propagate(t);
           }
         } catch (Throwable t) {
@@ -829,13 +858,80 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     return programJarCopy;
   }
 
+  /**
+   * Creates a JAR file that contains all the plugin jars that are needed by the job. The plugin directory
+   * structure is maintained inside the jar so that MR framework can correctly expand and recreate the required
+   * structure.
+   *
+   * @return the {@link Location} for the archive file or {@code null} if there is no plugin files need to be localized
+   */
+  @Nullable
+  private Location createPluginArchive(@Nullable AdapterSpecification adapterSpec,
+                                       Id.Program programId) throws IOException {
+    if (adapterSpec == null) {
+      return null;
+    }
+
+    Set<PluginInfo> pluginInfos = adapterSpec.getPluginInfos();
+    if (pluginInfos.isEmpty()) {
+      return null;
+    }
+
+    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+    File jarFile = File.createTempFile("plugin", ".jar");
+    try {
+      JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile));
+      try {
+        // Create the directory entries
+        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/"));
+        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/lib/"));
+
+        // copy the plugin jars
+        for (PluginInfo plugin : pluginInfos) {
+          String entryName = String.format("%s/%s", adapterSpec.getTemplate(), plugin.getFileName());
+          output.putNextEntry(new JarEntry(entryName));
+          Files.copy(new File(pluginDir, plugin.getFileName()), output);
+        }
+
+        // copy the common plugin lib jars
+        for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
+          String entryName = String.format("%s/lib/%s", adapterSpec.getTemplate(), libJar.getName());
+          output.putNextEntry(new JarEntry(entryName));
+          Files.copy(libJar, output);
+        }
+
+      } finally {
+        output.close();
+      }
+
+      // Copy the jar to a location, based on the location factory
+      Location location = locationFactory.create(
+        String.format("%s.%s.%s.%s.%s.plugins.jar",
+                      ProgramType.MAPREDUCE.name().toLowerCase(),
+                      programId.getNamespaceId(), programId.getApplicationId(),
+                      programId.getId(), context.getRunId().getId()));
+      try {
+        Files.copy(jarFile, Locations.newOutputSupplier(location));
+        return location;
+      } catch (IOException e) {
+        Locations.deleteQuietly(location);
+        throw e;
+      }
+    } finally {
+      jarFile.delete();
+    }
+  }
+
   private Runnable createCleanupTask(final Location... locations) {
     return new Runnable() {
 
       @Override
       public void run() {
         for (Location location : locations) {
-          Locations.deleteQuietly(location);
+          if (location != null) {
+            Locations.deleteQuietly(location);
+          }
         }
       }
     };

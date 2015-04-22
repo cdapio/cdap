@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates;
 
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -27,32 +28,46 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.api.templates.plugins.PluginInfo;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.templates.plugins.PluginSelector;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
  * Default configurer for adapters.
  */
 public class DefaultAdapterConfigurer implements AdapterConfigurer {
+
   private final AdapterConfig adapterConfig;
+  private final Id.Program programId;
+  private final PluginRepository pluginRepository;
+  private final PluginInstantiator pluginInstantiator;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   private final Map<String, String> dataSetModules = Maps.newHashMap();
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, String> runtimeArgs = Maps.newHashMap();
+  private final Map<String, AdapterPlugin> adapterPlugins = Maps.newHashMap();
   private final ApplicationSpecification templateSpec;
-  private final Id.Namespace namespaceId;
-  private final ProgramType programType;
   private final String adapterName;
   private Schedule schedule;
   // only used if the adapter is using workers (i.e. schedule is null).
@@ -61,22 +76,32 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
 
   // passed app to be used to resolve default name and description
   public DefaultAdapterConfigurer(Id.Namespace namespaceId, String adapterName, AdapterConfig adapterConfig,
-                                  ApplicationSpecification templateSpec) {
-    this.namespaceId = namespaceId;
+                                  ApplicationSpecification templateSpec,
+                                  PluginRepository pluginRepository, PluginInstantiator pluginInstantiator) {
     this.adapterName = adapterName;
+    this.programId = getProgramId(namespaceId, templateSpec);
     this.adapterConfig = adapterConfig;
+    this.pluginRepository = pluginRepository;
+    this.pluginInstantiator = pluginInstantiator;
     this.templateSpec = templateSpec;
-    if (templateSpec.getWorkflows().size() == 1) {
-      programType = ProgramType.WORKFLOW;
-    } else if (templateSpec.getWorkers().size() == 1) {
-      programType = ProgramType.WORKER;
-    } else {
-      // this should never happen. it is verified when a template is deployed.
-      throw new IllegalArgumentException("Invalid adapter template. It must contain exactly one workflow or worker");
-    }
     // defaults
     this.resources = new Resources();
     this.instances = 1;
+  }
+
+  /**
+   * Gets the program Id of the app template for this adapter.
+   */
+  private Id.Program getProgramId(Id.Namespace namespaceId, ApplicationSpecification templateSpec) {
+    // Get the program spec. Either one should be non-null, but not both. Also, both cannot be null.
+    // It was verified during the template deployment time.
+    ProgramSpecification programSpec = Objects.firstNonNull(
+      Iterables.getFirst(templateSpec.getWorkers().values(), null),
+      Iterables.getFirst(templateSpec.getWorkflows().values(), null)
+    );
+
+    ProgramType programType = (programSpec instanceof WorkerSpecification) ? ProgramType.WORKER : ProgramType.WORKFLOW;
+    return Id.Program.from(namespaceId, templateSpec.getName(), programType, programSpec.getName());
   }
 
   @Override
@@ -119,6 +144,86 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     dataSetInstances.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
     dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
+    return usePlugin(pluginType, pluginName, pluginId, properties, new PluginSelector());
+  }
+
+  @Override
+  public <T> T usePlugin(final String pluginType, final String pluginName, String pluginId,
+                         PluginProperties properties, final PluginSelector selector) {
+
+    Preconditions.checkArgument(!adapterPlugins.containsKey(pluginId),
+                                "Plugin of type {}, name {} was already added.", pluginType, pluginName);
+    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
+
+    Map.Entry<PluginInfo, PluginClass> pluginEntry = pluginRepository.findPlugin(adapterConfig.getTemplate(),
+                                                                                 pluginType, pluginName, selector);
+    if (pluginEntry == null) {
+      return null;
+    }
+    try {
+      T instance = pluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      return instance;
+    } catch (IOException e) {
+      // If the plugin jar is deleted without notifying the adapter service.
+      return null;
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName,
+                                     String pluginId, PluginProperties properties) {
+    return usePluginClass(pluginType, pluginName, pluginId, properties, new PluginSelector());
+  }
+
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
+                                     PluginProperties properties, PluginSelector selector) {
+
+    Preconditions.checkArgument(adapterPlugins.containsKey(pluginId),
+                                "Plugin of type %s, name %s was already added.", pluginType, pluginName);
+    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
+
+    Map.Entry<PluginInfo, PluginClass> pluginEntry = pluginRepository.findPlugin(adapterConfig.getTemplate(),
+                                                                                 pluginType, pluginName, selector);
+    if (pluginEntry == null) {
+      return null;
+    }
+
+    // Just verify if all required properties are provided.
+    // No type checking is done for now.
+    for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
+      Preconditions.checkArgument(!field.isRequired() || properties.getProperties().containsKey(field.getName()),
+                                  "Required property '%s' missing for plugin of type %s, name %s.",
+                                  field.getName(), pluginType, pluginName);
+    }
+
+    try {
+      Class<T> cls = pluginInstantiator.loadClass(pluginEntry.getKey(), pluginEntry.getValue());
+      registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      return cls;
+    } catch (IOException e) {
+      // If the plugin jar is deleted without notifying the adapter service.
+      return null;
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Register the given plugin in this configurer.
+   */
+  private void registerPlugin(String pluginId, PluginInfo pluginInfo, PluginClass pluginClass,
+                              PluginProperties properties) {
+    adapterPlugins.put(pluginId, new AdapterPlugin(pluginInfo, pluginClass, properties));
   }
 
   @Override
@@ -167,29 +272,24 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   }
 
   public AdapterSpecification createSpecification() {
-    ScheduleSpecification scheduleSpec = null;
-    String programName;
-    if (programType == ProgramType.WORKFLOW) {
-      programName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
-      scheduleSpec = new ScheduleSpecification(schedule, new ScheduleProgramInfo(
-        SchedulableProgramType.WORKFLOW, programName), runtimeArgs);
-    } else {
-      programName = Iterables.getFirst(templateSpec.getWorkers().keySet(), null);
-    }
-
-    Id.Program program = Id.Program.from(namespaceId, adapterConfig.getTemplate(), programType, programName);
-
     AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, program)
+      AdapterSpecification.builder(adapterName, programId)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)
         .setDatasetModules(dataSetModules)
         .setStreams(streams)
         .setRuntimeArgs(runtimeArgs)
-        .setScheduleSpec(scheduleSpec)
+        .setPlugins(adapterPlugins)
         .setInstances(instances)
         .setResources(resources);
+
+    if (programId.getType() == ProgramType.WORKFLOW) {
+      String workflowName = Iterables.getFirst(templateSpec.getWorkflows().keySet(), null);
+      builder.setScheduleSpec(new ScheduleSpecification(schedule, new ScheduleProgramInfo(
+        SchedulableProgramType.WORKFLOW, workflowName), runtimeArgs));
+    }
+
     return builder.build();
   }
 }
