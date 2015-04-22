@@ -221,9 +221,8 @@ start() {
         ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
-        --ui-path ${UI_PATH} \
-        >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain >> \
+        $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid
 
     echo -n "Starting Standalone CDAP ..."
