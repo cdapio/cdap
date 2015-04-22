@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-  .factory('Widget', function (MyDataSource) {
+  .factory('Widget', function (MyDataSource, MyMetrics) {
 
     function Widget (opts) {
       opts = opts || {};
@@ -13,28 +13,6 @@ angular.module(PKG.name+'.feature.dashboard')
       this.color = opts.color;
       this.dataSrc = null;
       this.isLive = false;
-    }
-
-    // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
-    function contextToTags(context) {
-      var parts, tags, i;
-      parts = context.split('.');
-      if (parts.length % 2 != 0) {
-        throw "Metrics context has uneven number of parts: " + this.metric.context
-      }
-      tags = {};
-      for (i = 0; i < parts.length; i+=2) {
-        tags[parts[i]] = parts[i + 1]
-      }
-      return tags;
-    }
-
-    function constructQuery(queryId, tags, metrics) {
-      var timeRange, retObj;
-      timeRange = {'start': 'now-60s', 'end': 'now'};
-      retObj = {};
-      retObj[queryId] = {tags: tags, metrics: metrics, groupBy: [], timeRange: timeRange};
-      return retObj;
     }
 
     // The queryId value does not matter, as long as we are using the same value in the request
@@ -47,7 +25,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.dataSrc.request({
         _cdapPath: '/metrics/query',
         method: 'POST',
-        body: constructQuery(queryId, contextToTags(this.metric.context), this.metric.names)
+        body: MyMetrics.constructQuery(queryId, MyMetrics.contextToTags(this.metric.context), this.metric.names)
       })
         .then(this.processData.bind(this))
     }
@@ -62,7 +40,7 @@ angular.module(PKG.name+'.feature.dashboard')
         {
           _cdapPath: '/metrics/query',
           method: 'POST',
-          body: constructQuery(queryId, contextToTags(this.metric.context), this.metric.names)
+          body: MyMetrics.constructQuery(queryId, MyMetrics.contextToTags(this.metric.context), this.metric.names)
         },
         this.processData.bind(this)
       );
@@ -122,7 +100,7 @@ angular.module(PKG.name+'.feature.dashboard')
     };
   })
 
-  .controller('WidgetTimeseriesCtrl', function ($scope) {
+  .controller('WidgetTimeseriesCtrl', function ($scope, MyMetrics) {
     var pollingId = null;
     $scope.$watch('wdgt.isLive', function(newVal) {
       if (!angular.isDefined(newVal)) {
@@ -140,16 +118,7 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.$watch('wdgt.data', function (newVal) {
       var metricMap, arr, vs, hist;
       if(angular.isObject(newVal)) {
-        vs = [];
-        for (var i = 0; i < newVal.length; i++) {
-          metricMap = newVal[i];
-          vs.push(Object.keys(metricMap).map(function(key) {
-            return {
-              time: key,
-              y: metricMap[key]
-            };
-          }));
-        }
+        vs = MyMetrics.mapMetrics(newVal);
 
         if ($scope.chartHistory) {
           arr = [];
@@ -163,13 +132,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
         hist = [];
         for (var i = 0; i < vs.length; i++) {
-          // http://stackoverflow.com/questions/20306204/using-queryselector-with-ids-that-are-numbers
-          // http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
-          var metricName = $scope.wdgt.metric.names[i];
-          // Replace all invalid characters with '_'. This is ok for now, since we do not display the chart labels
-          // to the user. Source: http://stackoverflow.com/questions/13979323/how-to-test-if-selector-is-valid-in-jquery
-          var replacedMetricName = metricName.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=><\|])/g, '_');
-          hist.push({label: replacedMetricName, values: vs[i]});
+          hist.push({label: MyMetrics.cleanMetricName($scope.wdgt.metric.names[i]), values: vs[i]});
         }
         $scope.chartHistory = hist;
       }
@@ -177,18 +140,43 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  .controller('WidgetPieCtrl', function ($scope, $alert, MyDataSource) {
+  .controller('WidgetPieCtrl', function ($scope, MyMetrics) {
+    var pollingId = null;
+      $scope.$watch('wdgt.isLive', function(newVal) {
+        if (!angular.isDefined(newVal)) {
+          return;
+        }
+        if (newVal) {
+          pollingId = $scope.wdgt.startPolling();
+        } else {
+          $scope.wdgt.stopPolling(pollingId);
+        }
+      });
+    // TODO: zero-filling is not needed for pie charts because we aggregate the values anyways
+    $scope.wdgt.fetchData($scope);
+    $scope.chartHistory = null;
+    $scope.$watch('wdgt.data', function (newVal) {
+      var metricMap, arr, vs, hist;
+      if(angular.isObject(newVal)) {
+        vs = MyMetrics.mapMetrics(newVal);
 
-    $alert({
-      content: 'pie chart using fake data',
-      type: 'warning'
+        var hasNonZero = function(dataPts) {
+          for (var i = 0; i < dataPts.length; i++) {
+            if (dataPts[i].value !== 0) {
+              return true;
+            }
+          }
+          return false;
+        }
+        hist = [];
+        for (var i = 0; i < vs.length; i++) {
+          hist.push({label: MyMetrics.cleanMetricName($scope.wdgt.metric.names[i]), value: MyMetrics.aggregate(vs[i])});
+        }
+        var hasValues = hasNonZero(hist);
+        $scope.show = hasValues;
+        if (hasValues) {
+          $scope.chartHistory = hist;
+        }
+      }
     });
-
-    $scope.pieChartData = [
-      { label: 'Slice 1', value: 10 },
-      { label: 'Slice 2', value: 20 },
-      { label: 'Slice 3', value: 40 },
-      { label: 'Slice 4', value: 30 }
-    ];
-
   });

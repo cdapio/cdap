@@ -38,10 +38,14 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
     });
 
     if(!options.data) {
-      options.data = [{values:[{
-        time: Math.floor(Date.now() / 1000),
-        y: 0
-      }]}];
+      if (type == 'pie') {
+        options.data = [ { value: 1 } ];
+      } else {
+        options.data = [{values:[{
+          time: Math.floor(Date.now() / 1000),
+          y: 0
+        }]}];
+      }
     }
 
     $scope.type = type;
@@ -52,6 +56,9 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
       $scope.$watch('history', function (newVal) {
         if(newVal) {
           $scope.options.data = newVal;
+          if ($scope.options.updateFull) {
+            $scope.me.update(newVal);
+          }
           if(!once) {
             once = true;
             render();
@@ -94,7 +101,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
 ngEpoch.directive('epochPie', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initEpoch(elem, 'pie', attr);
+      scope.initEpoch(elem, 'pie', attr, {updateFull: true});
     }
   }, baseDirective);
 });
