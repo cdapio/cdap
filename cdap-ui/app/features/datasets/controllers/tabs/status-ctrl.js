@@ -3,16 +3,13 @@ angular.module(PKG.name + '.feature.datasets')
     function($scope, MyDataSource, $state, myHelpers) {
       $scope.writes = 0;
       $scope.reads = 0;
+      $scope.storage = 0;
       $scope.transactions = 0;
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
           currentDataset = $state.params.datasetId;
 
       [
-        {
-          name: 'system.dataset.store.bytes',
-          scopeProperty: 'storage'
-        },
         {
           name: 'system.dataset.store.reads',
           scopeProperty: 'reads'
@@ -42,6 +39,17 @@ angular.module(PKG.name + '.feature.datasets')
           $scope[metric.scopeProperty] = data;
         });
       }
+
+      dataSrc.poll({
+        _cdapPath : '/metrics/query?metric=system.dataset.store.bytes&context=namespace.' +
+                    $state.params.namespace + '.dataset.' + currentDataset + '&aggregate=true',
+        method: 'POST'
+      }, function(metricData) {
+        var data = query(metricData, 'series', 0, 'data', 0, 'value');
+        console.log('data', data);
+        $scope.storage = data;
+      });
+
 
       dataSrc.request({
         _cdapNsPath: '/data/explore/tables/dataset_' + currentDataset + '/info'
