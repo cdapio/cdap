@@ -11,10 +11,10 @@ angular.module(PKG.name+'.feature.dashboard')
     var dataSrc = new MyDataSource($scope);
     // waiting for system.request.received to be changed to query requests
     $scope.panels = [
-      ['Collect', 'EPS',   'system.collect.events'],
-      ['Process', 'events',     'system.process.events.processed'],
-      ['Store',   '/S',    'system.dataset.store.bytes', true],
-      ['Query',   'QPS',   'system.request.received']
+      ['Collect', 'EPS',    'system.collect.events'],
+      ['Process', 'events', 'system.process.events.processed'],
+      ['Store',   '/S',     'system.dataset.store.bytes', true],
+      ['Query',   'QPS',    'system.requests.count']
     ].map(op28helper.panelMap);
 
     angular.forEach($scope.panels, function (panel) {
@@ -51,9 +51,8 @@ angular.module(PKG.name+'.feature.dashboard')
     angular.forEach($scope.panels, function (panel) {
       var c = panel.chart;
       dataSrc.poll({
-          _cdapPath: '/metrics/metric?.' +
-                        c.metric +
-                        '&start=now-60s&end=now',
+          _cdapPath: '/metrics/query?metric=' +
+                      c.metric + '&start=now-60s&end=now',
           interval: 60 * 1000,
           method: 'POST'
         },

@@ -113,8 +113,8 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
 
     var xTick = {};
     if ($scope.options.formatAsTimestamp) {
-      var timestampFormat = function(timestamp) {
-        return $filter('amDateFormat')(timestamp, 'h:mm:ss a');
+      var timestampFormat = function(timestampSeconds) {
+        return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
       };
       xTick.format = timestampFormat;
     }
