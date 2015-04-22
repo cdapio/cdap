@@ -22,7 +22,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -47,9 +47,9 @@ public class ListStreamsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("name")
-      .setRows(streamClient.list(), new RowMaker<StreamRecord>() {
+      .setRows(streamClient.list(), new RowMaker<StreamDetail>() {
         @Override
-        public List<?> makeRow(StreamRecord object) {
+        public List<?> makeRow(StreamDetail object) {
           return Lists.newArrayList(object.getName());
         }
       }).build();
