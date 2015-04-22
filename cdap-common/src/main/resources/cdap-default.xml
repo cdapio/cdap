@@ -597,6 +597,12 @@
     </property>
 
     <property>
+        <name>app.template.dir</name>
+        <value>plugins</value>
+        <description>Directory where all archives for app templates are stored</description>
+    </property>
+
+    <property>
         <name>dataset.table.prefix</name>
         <value>${root.namespace}</value>
         <description>Prefix for dataset table name</description>
