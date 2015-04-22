@@ -311,8 +311,6 @@ public class AdapterService extends AbstractIdleService {
       throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
     }
     store.removeAdapter(namespace, adapterName);
-
-    // TODO: Delete the application if this is the last adapter
   }
 
   /**
