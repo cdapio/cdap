@@ -62,7 +62,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     
 ### Running from IDE (Intellij and Eclipse)
     cd cdap-ui
-    bower install && npm install (whenever there is change in UI packages)
+    bower install && npm install && gulp build (whenever there is change in UI packages)
     Then, run standalone from IDE.
     
 ## License and Trademarks
