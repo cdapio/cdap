@@ -74,6 +74,8 @@ public class LocalQueueTest extends QueueTest {
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getStandaloneModules(),
       new DataFabricLocalModule(),
       Modules.override(new StreamAdminModules().getStandaloneModules())
         .with(new AbstractModule() {

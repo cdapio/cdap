@@ -441,6 +441,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                         AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
     ServiceManager datasetWorkerServiceManager = applicationManager
       .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
+    WorkerManager datasetWorker = applicationManager.startWorker(AppWithServices.DATASET_UPDATE_WORKER, args);
     datasetWorkerServiceManager.waitForStatus(true);
 
     ServiceManager noopManager = applicationManager.startService("NoOpService");
@@ -458,6 +459,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
+    datasetWorker.stop();
     datasetWorkerServiceManager.stop();
     datasetWorkerServiceManager.waitForStatus(false);
     LOG.info("DatasetUpdateService Stopped");

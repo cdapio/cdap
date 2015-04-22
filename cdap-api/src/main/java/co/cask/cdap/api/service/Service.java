@@ -20,13 +20,12 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
  * Defines a custom user Service. Services are custom applications that run in program containers and provide
- * endpoints to serve requests. {@link ServiceWorker}s may also be added to perform additional operations and tasks on
- * behalf of the Service.
+ * endpoints to serve requests.
  */
 public interface Service {
 
   /**
-   * Configure the Service by adding {@link HttpServiceHandler}s to handle requests and {@link ServiceWorker}s.
+   * Configure the Service by adding {@link HttpServiceHandler}s to handle requests.
    * @param configurer to use to add handlers and workers to the Service.
    */
   void configure(ServiceConfigurer configurer);

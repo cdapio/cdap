@@ -31,9 +31,12 @@ import java.io.IOException;
 /**
  * Utility to create {@link UsageDataset}.
  */
-public class UsageDatasets {
+public final class UsageDatasets {
   private static final Id.DatasetInstance USAGE_INSTANCE_ID =
     Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, "usage.registry");
+
+  private UsageDatasets() {
+  }
 
   public static UsageDataset get(DatasetFramework framework) throws IOException, DatasetManagementException {
     return get(framework, USAGE_INSTANCE_ID);

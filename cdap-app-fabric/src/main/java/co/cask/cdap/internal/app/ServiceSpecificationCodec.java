@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
@@ -34,14 +33,12 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.internal.json.TwillSpecificationAdapter;
 
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Codec to serialize and deserialize {@link ServiceSpecification}
@@ -73,12 +70,10 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     String description = jsonObj.get("description").getAsString();
     Map<String, HttpServiceHandlerSpecification> handlers = deserializeMap(jsonObj.get("handlers"), context,
                                                                     HttpServiceHandlerSpecification.class);
-    Map<String, ServiceWorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
-                                                                     ServiceWorkerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, resources, instances);
   }
 
   @Override
@@ -88,7 +83,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.addProperty("name", spec.getName());
     object.addProperty("description", spec.getDescription());
     object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
-    object.add("workers", serializeMap(spec.getWorkers(), context, ServiceWorkerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
     return object;
@@ -102,7 +96,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     String className = json.get("classname").getAsString();
     TwillSpecification twillSpec = twillSpecificationAdapter.fromJson(json.get("spec").getAsString());
     Map<String, HttpServiceHandlerSpecification> handlers = Maps.newHashMap();
-    Map<String, ServiceWorkerSpecification> workers = Maps.newHashMap();
 
     RuntimeSpecification handlerSpec = twillSpec.getRunnables().get(twillSpec.getName());
     Map<String, String> configs = handlerSpec.getRunnableSpecification().getConfigs();
@@ -129,23 +122,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                        ImmutableList.<ServiceHttpEndpoint>of()));
     }
 
-    // Generates worker specs.
-    for (Map.Entry<String, RuntimeSpecification> entry : twillSpec.getRunnables().entrySet()) {
-      TwillRunnableSpecification runnableSpec = entry.getValue().getRunnableSpecification();
-      Set<String> datasets = GSON.fromJson(runnableSpec.getConfigs().get("service.datasets"),
-                                           new TypeToken<Set<String>>() { }.getType());
-      ResourceSpecification resourceSpec = entry.getValue().getResourceSpecification();
-      ServiceWorkerSpecification workerSpec = new ServiceWorkerSpecification(
-        runnableSpec.getConfigs().get("service.class.name"),
-        runnableSpec.getName(), runnableSpec.getName(),
-        runnableSpec.getConfigs(), datasets,
-        new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-        resourceSpec.getInstances());
-      workers.put(entry.getKey(), workerSpec);
-    }
-
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
-    return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers, workers,
+    return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers,
                                     new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
                                     resourceSpec.getInstances());
   }

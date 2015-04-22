@@ -28,16 +28,16 @@ import java.util.Set;
  */
 public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
 
-  private final Map<Integer, Long> partitionOffsets;
+  private final Map<Integer, Checkpoint> partitonCheckpoints;
   public AbstractKafkaLogProcessor() {
-    this.partitionOffsets = Maps.newHashMap();
+    this.partitonCheckpoints = Maps.newHashMap();
   }
 
   public void init(Set<Integer> partitions, CheckpointManager checkpointManager) {
-    partitionOffsets.clear();
+    partitonCheckpoints.clear();
     try {
      for (Integer partition : partitions) {
-        partitionOffsets.put(partition, checkpointManager.getCheckpoint(partition));
+        partitonCheckpoints.put(partition, checkpointManager.getCheckpoint(partition));
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -58,10 +58,9 @@ public abstract class AbstractKafkaLogProcessor implements KafkaLogProcessor {
   protected abstract void doProcess(KafkaLogEvent event);
 
   public boolean alreadyProcessed(KafkaLogEvent event) {
-    // If the offset is -1 then it is not processed.
-    // if the event offset is less than what is already checkpointed then the event is already processed
-    return event.getNextOffset() != -1 && event.getNextOffset() < partitionOffsets.get(event.getPartition()) ?
-           true :
-           false;
+    // If no checkpoint is found, then the event needs to be processed.
+    // if the event offset is less than or equal to what is already checkpointed then the event is already processed
+    Checkpoint checkpoint = partitonCheckpoints.get(event.getPartition());
+    return checkpoint != null && event.getNextOffset() <= checkpoint.getNextOffset();
   }
 }

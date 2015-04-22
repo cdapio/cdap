@@ -23,9 +23,6 @@ import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
@@ -38,17 +35,6 @@ import java.lang.reflect.Type;
  */
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
   implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT> {
-
-  private final Type outputType = new TypeToken<OUT>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link OUT}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getOutputType() {
-    return outputType;
-  }
 
   @Override
   public void configure(StageConfigurer configurer) {

@@ -63,7 +63,6 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
-import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;

@@ -65,11 +65,11 @@ abstract class AbstractSparkContext implements SparkContext {
   private static final String[] NO_ARGS = {};
   private static final String SPARK_METRICS_CONF_KEY = "spark.metrics.conf";
 
+  protected final BasicSparkContext basicSparkContext;
   private final Configuration hConf;
   private final long logicalStartTime;
   private final SparkSpecification spec;
   private final Map<String, String> runtimeArguments;
-  private final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
 
   public AbstractSparkContext(BasicSparkContext basicSparkContext) {
@@ -80,6 +80,9 @@ abstract class AbstractSparkContext implements SparkContext {
     this.runtimeArguments = basicSparkContext.getRuntimeArguments();
     this.sparkConf = initializeSparkConf();
   }
+
+  protected abstract <T> T doReadFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                                            Class<? extends StreamEventDecoder> decoderType);
 
   /**
    * Initializes the {@link SparkConf} with proper settings.
@@ -149,6 +152,21 @@ abstract class AbstractSparkContext implements SparkContext {
     return hConf;
   }
 
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    T result = doReadFromStream(streamName, vClass, startTime, endTime, decoderType);
+
+    Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), streamName);
+    try {
+      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+    } catch (Exception e) {
+      LOG.info("Failed to registry usage of {} -> {}", streamId, basicSparkContext.getProgram().getId(), e);
+    }
+
+    return result;
+  }
+
   /**
    * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
    *
@@ -199,7 +217,15 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
     throws IOException {
+
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
+
+    try {
+      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+    } catch (Exception e) {
+      LOG.info("Failed to registry usage of {} -> {}", streamId, basicSparkContext.getProgram().getId(), e);
+    }
+
     StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(streamId);
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
