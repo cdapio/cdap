@@ -10,15 +10,9 @@ angular.module(PKG.name+'.commons')
   .service('myRuntimeService', function($bootstrapModal, $rootScope){
     var modalInstance;
 
-    function close () {
-      modalInstance.close();
-    }
-
-    this.show = function(type) {
+    this.show = function() {
 
       var scope = $rootScope.$new();
-      scope.type = type;
-      scope.modalClose = close;
 
       modalInstance = $bootstrapModal.open({
         template: '<my-runtime-args></my-runtime-args>',
@@ -29,7 +23,7 @@ angular.module(PKG.name+'.commons')
     };
 
   })
-  .controller('RuntimeArgumentsController', function($scope, $state, MyDataSource) {
+  .controller('RuntimeArgumentsController', function($scope) {
 
     $scope.preferences = [];
 

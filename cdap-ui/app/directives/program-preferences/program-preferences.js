@@ -1,8 +1,7 @@
 angular.module(PKG.name+'.commons')
 
-  .controller('ProgramPreferencesController', function($scope, $state, MyDataSource, $filter) {
+  .controller('ProgramPreferencesController', function($scope, $state, MyDataSource) {
     var dataSrc = new MyDataSource($scope);
-    var filterFilter = $filter('filter');
 
     var parentPath = '/namespaces/' + $state.params.namespace
       + '/apps/' + $state.params.appId + '/preferences?resolved=true';
@@ -62,10 +61,8 @@ angular.module(PKG.name+'.commons')
     };
 
     $scope.removePreference = function(preference) {
-      var match = filterFilter($scope.preferences, preference);
-      if (match.length) {
-        $scope.preferences.splice($scope.preferences.indexOf(match[0]), 1);
-      }
+
+      $scope.preferences.splice($scope.preferences.indexOf(preference), 1);
     };
 
     $scope.save = function() {
