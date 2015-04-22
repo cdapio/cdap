@@ -71,7 +71,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                       @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("adapter-id") String adapterId) {
+                      @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
@@ -87,7 +87,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                            @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr,
-                           @QueryParam("adapter-id") String adapterId) {
+                           @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),
@@ -128,7 +128,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("adapter-id") String adapterId) {
+                   @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
                                              programId, getProgramType(ProgramType.valueOfCategoryName(programType)),
@@ -145,7 +145,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("adapter-id") String adapterId) {
+                        @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),
@@ -180,7 +180,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("adapter-id") String adapterId) {
+                   @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
@@ -196,7 +196,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("adapter-id") String adapterId) {
+                        @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),

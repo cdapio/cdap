@@ -180,7 +180,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       testPrevNoMax("testTemplate1", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, "testAdapter1");
       Assert.fail();
     } catch (AssertionError e) {
-      // this should fail.
+      // this must fail.
     }
     testPrevFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     testPrevNoFrom("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
@@ -200,7 +200,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     String img = escape ? "&lt;img&gt;" : "<img>";
     String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s",
                                    appId, entityType, entityId, getOffset(5), escape);
-    nextUrl = handleAdapterId(nextUrl, adapterId, "&");
+    nextUrl = getUrlWithAdapterId(nextUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -217,11 +217,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextNoMax(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testNextNoMax(String appId, String entityType, String entityId, String namespace,
+                             @Nullable String adapterId) throws Exception {
     String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s",
                                         appId, entityType, entityId, getOffset(10));
-    nextNoMaxUrl = handleAdapterId(nextNoMaxUrl, adapterId, "&");
+    nextNoMaxUrl = getUrlWithAdapterId(nextNoMaxUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -238,11 +238,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextFilter(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testNextFilter(String appId, String entityType, String entityId, String namespace,
+                              @Nullable String adapterId) throws Exception {
     String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR", appId,
                                          entityType, entityId, getOffset(12));
-    nextFilterUrl = handleAdapterId(nextFilterUrl, adapterId, "&");
+    nextFilterUrl = getUrlWithAdapterId(nextFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -259,10 +259,10 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextNoFrom(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testNextNoFrom(String appId, String entityType, String entityId, String namespace,
+                              @Nullable String adapterId) throws Exception {
     String nextNoFromUrl = String.format("apps/%s/%s/%s/logs/next", appId, entityType, entityId);
-    nextNoFromUrl = handleAdapterId(nextNoFromUrl, adapterId, "?");
+    nextNoFromUrl = getUrlWithAdapterId(nextNoFromUrl, adapterId, "?");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -279,11 +279,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextRunId(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testNextRunId(String appId, String entityType, String entityId, String namespace,
+                             @Nullable String adapterId) throws Exception {
     String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/1/logs/next?max=100", appId, entityType,
                                          entityId);
-    nextNoFromUrl = handleAdapterId(nextNoFromUrl, adapterId, "&");
+    nextNoFromUrl = getUrlWithAdapterId(nextNoFromUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -300,11 +300,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrev(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapteId) throws Exception {
+  private void testPrev(String appId, String entityType, String entityId, String namespace,
+                        @Nullable String adapteId) throws Exception {
     String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10", appId, entityType, entityId,
                                    getOffset(25));
-    prevUrl = handleAdapterId(prevUrl, adapteId, "&");
+    prevUrl = getUrlWithAdapterId(prevUrl, adapteId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -321,17 +321,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private String handleAdapterId(String prevUrl, @Nullable String adapteId, String joiner) {
-    if (adapteId != null) {
-       return String.format("%s%sadapter-id=%s", prevUrl, joiner, adapteId);
+  private String getUrlWithAdapterId(String prevUrl, @Nullable String adapterId, String joiner) {
+    if (adapterId != null) {
+       return String.format("%s%sadapterid=%s", prevUrl, joiner, adapterId);
     }
     return prevUrl;
   }
 
-  private void testPrevRunId(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testPrevRunId(String appId, String entityType, String entityId, String namespace,
+                             @Nullable String adapterId) throws Exception {
     String prevRunIdURL = String.format("apps/%s/%s/%s/runs/0/logs/prev?max=100", appId, entityType, entityId);
-    prevRunIdURL = handleAdapterId(prevRunIdURL, adapterId, "&");
+    prevRunIdURL = getUrlWithAdapterId(prevRunIdURL, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevRunIdURL, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -362,11 +362,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }
 
-  private void testPrevNoMax(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testPrevNoMax(String appId, String entityType, String entityId, String namespace,
+                             @Nullable String adapterId) throws Exception {
     String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s",
                                         appId, entityType, entityId, getOffset(70));
-    prevNoMaxUrl = handleAdapterId(prevNoMaxUrl, adapterId, "&");
+    prevNoMaxUrl = getUrlWithAdapterId(prevNoMaxUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -383,11 +383,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrevFilter(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testPrevFilter(String appId, String entityType, String entityId, String namespace,
+                              @Nullable String adapterId) throws Exception {
     String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=ERROR", appId,
                                          entityType, entityId, getOffset(41));
-    prevFilterUrl = handleAdapterId(prevFilterUrl, adapterId, "&");
+    prevFilterUrl = getUrlWithAdapterId(prevFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -404,10 +404,10 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace, @Nullable String
-    adapterId) throws Exception {
+  private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace,
+                              @Nullable String adapterId) throws Exception {
     String prevNoFrom = String.format("apps/%s/%s/%s/logs/prev", appId, entityType, entityId);
-    prevNoFrom = handleAdapterId(prevNoFrom, adapterId, "?");
+    prevNoFrom = getUrlWithAdapterId(prevNoFrom, adapterId, "?");
     HttpResponse response = doGet(getVersionedAPIPath(prevNoFrom, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -424,10 +424,10 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testLogs(String appId, String entityType, String entityId, String namespace, @Nullable String adapterId)
-    throws Exception {
+  private void testLogs(String appId, String entityType, String entityId, String namespace,
+                        @Nullable String adapterId) throws Exception {
     String logsUrl = String.format("apps/%s/%s/%s/logs?start=20&stop=35", appId, entityType, entityId);
-    logsUrl = handleAdapterId(logsUrl, adapterId, "&");
+    logsUrl = getUrlWithAdapterId(logsUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -443,7 +443,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testLogsRunId(String appId, String entityType, String entityId, String namespace,
                              @Nullable String adapterId) throws Exception {
-    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/0/logs?start=0&stop=100&adapter-id=%s", appId,
+    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/0/logs?start=0&stop=100&adapterid=%s", appId,
                                          entityType, entityId, adapterId);
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
