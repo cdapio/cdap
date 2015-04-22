@@ -26,7 +26,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,15 +42,13 @@ public class ProgramWorkflowRunnerFactory {
   private final WorkflowSpecification workflowSpec;
   private final ProgramRunnerFactory programRunnerFactory;
   private final Program workflowProgram;
-  private final RunId runId;
   private final ProgramOptions workflowProgramOptions;
 
   public ProgramWorkflowRunnerFactory(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                      Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
+                                      Program workflowProgram, ProgramOptions workflowProgramOptions) {
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
-    this.runId = runId;
     this.workflowProgramOptions = workflowProgramOptions;
   }
 
@@ -69,10 +66,10 @@ public class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
+          return new MapReduceProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, 
                                                     workflowProgramOptions, token);
         case SPARK:
-          return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram, runId,
+          return new SparkProgramWorkflowRunner(workflowSpec, programRunnerFactory, workflowProgram,
                                                 workflowProgramOptions, token);
         default:
           LOG.debug("No workflow program runner found for this program");

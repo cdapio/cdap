@@ -20,6 +20,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,8 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
   FlowTwillProgramController(String programId, TwillController controller,
-                             DistributedFlowletInstanceUpdater instanceUpdater) {
-    super(programId, controller);
+                             DistributedFlowletInstanceUpdater instanceUpdater, RunId runId) {
+    super(programId, controller, runId);
     this.lock = new ReentrantLock();
     this.instanceUpdater = instanceUpdater;
   }

@@ -155,7 +155,7 @@ public class DefaultStoreTest {
     RunId run1 = RunIds.generate(now - 20000);
 
     // Record start through an Adapter but try to stop the run outside of an adapter.
-    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter, null);
 
     // RunRecord should be available through RunRecord query for that Program.
     RunRecord programRun = store.getRun(programId, run1.getId());

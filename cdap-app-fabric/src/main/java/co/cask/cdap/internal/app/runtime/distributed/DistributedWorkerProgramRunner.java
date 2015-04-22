@@ -22,6 +22,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
@@ -32,6 +33,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
@@ -81,7 +83,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
                                                                             localizeFiles, eventHandler));
-    return new WorkerTwillProgramController(program.getName(), controller).startListen();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    return new WorkerTwillProgramController(program.getName(), controller, runId).startListen();
   }
 
   @Override

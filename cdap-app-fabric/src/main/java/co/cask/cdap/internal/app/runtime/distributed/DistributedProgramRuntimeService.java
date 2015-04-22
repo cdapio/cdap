@@ -26,6 +26,7 @@ import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -43,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -89,6 +91,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
 import static co.cask.cdap.proto.Containers.ContainerInfo;
 import static co.cask.cdap.proto.Containers.ContainerType.FLOWLET;
 
@@ -128,18 +132,45 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+    RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
+    return new SimpleRuntimeInfo(controller, program, twillRunId);
+  }
+
+  @Nullable
+  private synchronized RunId getTwillRunId(RunId runId) {
+    RuntimeInfo runtimeInfo = super.lookup(runId);
+    if (runtimeInfo != null) {
+      return runtimeInfo.getTwillRunId();
+    }
+    return null;
+  }
+
+  private synchronized boolean twillRunIdCached(RunId twillRunId) {
+    for (RuntimeInfo runtimeInfo : runtimeInfos.values()) {
+      if (runtimeInfo.getTwillRunId() != null && runtimeInfo.getTwillRunId().equals(twillRunId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public synchronized RuntimeInfo lookup(final RunId runId) {
     RuntimeInfo runtimeInfo = super.lookup(runId);
     if (runtimeInfo != null) {
       return runtimeInfo;
     }
 
+    RunId twillRunId = getTwillRunId(runId);
+    Preconditions.checkNotNull(twillRunId, String.format("No associated Twill RunId found for CDAP RunId %s",
+                                                         runId.getId()));
     // Lookup all live applications and look for the one that matches runId
     String appName = null;
     TwillController controller = null;
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       for (TwillController c : liveInfo.getControllers()) {
-        if (c.getRunId().equals(runId)) {
+        if (c.getRunId().equals(twillRunId)) {
           appName = liveInfo.getApplicationName();
           controller = c;
           break;
@@ -170,7 +201,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
 
     if (runtimeInfo != null) {
-      runtimeInfo = createRuntimeInfo(type, programId, controller);
+      runtimeInfo = createRuntimeInfo(type, programId, controller, runId);
       updateRuntimeInfo(type, runId, runtimeInfo);
       return runtimeInfo;
     } else {
@@ -184,7 +215,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     Map<RunId, RuntimeInfo> result = Maps.newHashMap();
     result.putAll(super.list(type));
 
-    // Goes through all live application, filter out the one that match the given type.
+    // Map that will hold the Id.Program and TwillController associated with each twill runid which is not yet
+    // cached in memory
+    Map<RunId, Map<Id.Program, TwillController>> twillRunIdMap = Maps.newHashMap();
+    // Goes through all live application and fill the twillRunIdMap for the given type
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
       Matcher matcher = APP_NAME_PATTERN.matcher(appName);
@@ -196,38 +230,55 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       for (TwillController controller : liveInfo.getControllers()) {
-        RunId runId = controller.getRunId();
-        if (result.containsKey(runId)) {
+        RunId twillRunId = controller.getRunId();
+        if (twillRunIdCached(twillRunId)) {
           continue;
         }
 
         Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
-        RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
-        if (runtimeInfo != null) {
-          result.put(runId, runtimeInfo);
-          updateRuntimeInfo(type, runId, runtimeInfo);
-        } else {
-          LOG.warn("Unable to find program {} {}", type, programId);
+        twillRunIdMap.put(twillRunId, ImmutableMap.of(programId, controller));
+      }
+    }
+
+    if (!twillRunIdMap.isEmpty()) {
+      // Some twill runids are not cached. Create the runtimeinfo for them and add it to the cache
+      // Get all active runs from the store
+      List<RunRecord> runningList = store.getAllActiveRuns();
+      for (RunRecord record : runningList) {
+        if (record.getTwillRunId() != null) {
+          RunId twillRunId = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+          RunId runId = RunIds.fromString(record.getPid());
+          for (Map.Entry<Id.Program, TwillController> entry : twillRunIdMap.get(twillRunId).entrySet()) {
+            RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
+            if (runtimeInfo != null) {
+              result.put(runId, runtimeInfo);
+              updateRuntimeInfo(type, runId, runtimeInfo);
+            } else {
+              LOG.warn("Unable to find program {} {}", type, entry.getKey());
+            }
+          }
         }
       }
     }
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller) {
+  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller,
+                                        RunId runId) {
     try {
       Program program = store.loadProgram(programId, type);
       Preconditions.checkNotNull(program, "Program not found");
 
-      ProgramController programController = createController(program, controller);
-      return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
+      ProgramController programController = createController(program, controller, runId);
+      return programController == null ? null : new SimpleRuntimeInfo(programController, programId,
+                                                                      controller.getRunId());
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
       return null;
     }
   }
 
-  private ProgramController createController(Program program, TwillController controller) {
+  private ProgramController createController(Program program, TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
     String programId = program.getId().getId();
 
@@ -237,25 +288,25 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
         );
-        programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
+        programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
         break;
       }
       case MAPREDUCE:
-        programController = new MapReduceTwillProgramController(programId, controller);
+        programController = new MapReduceTwillProgramController(programId, controller, runId);
         break;
       case WORKFLOW:
-        programController = new WorkflowTwillProgramController(programId, controller);
+        programController = new WorkflowTwillProgramController(programId, controller, runId);
         break;
       case WEBAPP:
-        programController = new WebappTwillProgramController(programId, controller);
+        programController = new WebappTwillProgramController(programId, controller, runId);
         break;
       case SERVICE:
         DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
           program, controller);
-        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater);
+        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater, runId);
         break;
       case WORKER:
-        programController = new WorkerTwillProgramController(programId, controller);
+        programController = new WorkerTwillProgramController(programId, controller, runId);
         break;
     }
     return programController == null ? null : programController.startListen();

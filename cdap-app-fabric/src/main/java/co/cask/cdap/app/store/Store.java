@@ -59,12 +59,13 @@ public interface Store {
   /**
    * Logs start of program run.
    *
-   * @param id        Info about program
-   * @param pid       run id
-   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param adapter   name of the adapter associated with the run
+   * @param id         Info about program
+   * @param pid        run id
+   * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param adapter    name of the adapter associated with the run
+   * @param twillRunId twill run id
    */
-  void setStart(Id.Program id, String pid, long startTime, String adapter);
+  void setStart(Id.Program id, String pid, long startTime, String adapter, @Nullable String twillRunId);
 
   /**
    * Logs start of program run.
@@ -126,6 +127,12 @@ public interface Store {
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+
+  /**
+   * Fetches all active run records.
+   * @return  list of active runs
+   */
+  List<RunRecord> getAllActiveRuns();
 
   /**
    * Fetches the run record for particular run of a program.

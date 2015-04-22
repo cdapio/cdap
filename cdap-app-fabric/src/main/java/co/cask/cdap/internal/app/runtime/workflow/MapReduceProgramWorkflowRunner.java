@@ -31,7 +31,6 @@ import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.twill.api.RunId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,9 +41,8 @@ import java.util.Map;
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions,
-                                 WorkflowToken token) {
-    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions, token);
+                                 Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token);
   }
 
   /**

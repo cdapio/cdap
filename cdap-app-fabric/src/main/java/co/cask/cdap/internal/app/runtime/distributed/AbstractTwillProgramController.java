@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
@@ -35,10 +36,18 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   protected final TwillController twillController;
   private volatile boolean stopRequested;
 
-  protected AbstractTwillProgramController(String programName, TwillController twillController) {
-    super(programName, twillController.getRunId());
+  protected AbstractTwillProgramController(String programName, TwillController twillController, RunId runId) {
+    super(programName, runId);
     this.programName = programName;
     this.twillController = twillController;
+  }
+
+  /**
+   * Get the RunId associated with the Twill controller.
+   * @return the Twill RunId
+   */
+  public RunId getTwillRunId() {
+    return twillController.getRunId();
   }
 
   /**

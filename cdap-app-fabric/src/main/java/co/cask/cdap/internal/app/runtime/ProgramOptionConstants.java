@@ -23,6 +23,8 @@ public final class ProgramOptionConstants {
 
   public static final String RUN_ID = "runId";
 
+  public static final String TWILL_RUN_ID = "twillRunId";
+
   public static final String INSTANCE_ID = "instanceId";
 
   public static final String INSTANCES = "instances";
