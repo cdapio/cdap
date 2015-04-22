@@ -46,7 +46,6 @@ angular.module(PKG.name + '.feature.datasets')
         method: 'POST'
       }, function(metricData) {
         var data = query(metricData, 'series', 0, 'data', 0, 'value');
-        console.log('data', data);
         $scope.storage = data;
       });
 
