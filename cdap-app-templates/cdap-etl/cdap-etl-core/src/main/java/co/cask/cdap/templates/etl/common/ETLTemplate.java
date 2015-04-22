@@ -253,7 +253,8 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
       }
     }
 
-    // Check isAssignable on the resolved list for every paired elements. 0 --> 1 | 2 --> 3 | 4 --> 5 etc.
+    // Check isAssignable on the resolved list for every paired elements. 0 --> 1 | 2 --> 3 | 4 --> 5 where | is a
+    // transform (which takes in type on its left and emits the type on its right).
     for (int i = 0; i < resTypeList.size(); i += 2) {
       Type firstType = resTypeList.get(i);
       Type secondType = resTypeList.get(i + 1);
