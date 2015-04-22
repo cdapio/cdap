@@ -82,7 +82,7 @@ public class MetricsDataMigrator {
       .put("u", ImmutableList.of(Constants.Metrics.Tag.APP,
                                  TYPE,
                                  Constants.Metrics.Tag.SERVICE,
-                                 Constants.Metrics.Tag.SERVICE_RUNNABLE,
+                                 Constants.Metrics.Tag.HANDLER,
                                  Constants.Metrics.Tag.INSTANCE_ID))
       .put("w", ImmutableList.of(Constants.Metrics.Tag.APP,
                                  TYPE,

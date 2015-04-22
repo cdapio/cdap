@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
@@ -52,14 +51,5 @@ public class ServiceTwillApplication extends AbstractProgramTwillApplication {
       new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
       createResourceSpec(spec.getResources(), spec.getInstances())
     ));
-
-    // Add runnables for all workers
-    for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-      ServiceWorkerSpecification workerSpec = entry.getValue();
-      runnables.put(workerSpec.getName(), new RunnableResource(
-        new ServiceTwillRunnable(workerSpec.getName(), "hConf.xml", "cConf.xml"),
-        createResourceSpec(workerSpec.getResources(), workerSpec.getInstances())
-      ));
-    }
   }
 }

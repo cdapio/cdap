@@ -16,9 +16,11 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.logging.LoggingConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
+import com.google.inject.Inject;
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
 
@@ -35,8 +37,11 @@ public final class StringPartitioner implements Partitioner<String> {
                                 "numPartitions should be at least 1. Got %s", this.numPartitions);
   }
 
-  public StringPartitioner(int numPartitions) {
-    this.numPartitions = numPartitions;
+  @Inject
+  public StringPartitioner(CConfiguration cConf) {
+    this.numPartitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
+    Preconditions.checkArgument(this.numPartitions > 0,
+                                "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
   }
 
   @Override

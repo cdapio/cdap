@@ -337,8 +337,8 @@ public class UpgradeTool {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework);
     createNamespaces();
+    initializeDSFramework(cConf, dsFramework);
   }
 
   /**

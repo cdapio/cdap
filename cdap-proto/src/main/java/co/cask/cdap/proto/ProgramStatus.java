@@ -21,12 +21,12 @@ package co.cask.cdap.proto;
  */
 public class ProgramStatus {
   private String applicationId;
-  private String runnableId;
+  private String programId;
   private String status;
 
-  public ProgramStatus(String applicationId, String runnableId, String status) {
+  public ProgramStatus(String applicationId, String programId, String status) {
     this.applicationId = applicationId;
-    this.runnableId = runnableId;
+    this.programId = programId;
     this.status = status;
   }
 

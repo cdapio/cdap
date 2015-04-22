@@ -30,11 +30,11 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -135,6 +135,7 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
+  private static UsageHandler usageHandler;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -470,6 +471,11 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expected, status);
   }
 
+  protected void deleteApp(Id.Application app, int expectedResponseCode) throws Exception {
+    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/apps/%s", app.getNamespaceId(), app.getId()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
+  }
+
   protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
     int trial = 0;
     HttpResponse response = null;
@@ -481,32 +487,6 @@ public abstract class AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertEquals(expectedReturnCode, response.getStatusLine().getStatusCode());
-  }
-
-  /**
-   * @deprecated Use {@link #startProgram(Id.Program)} or {@link #stopProgram(Id.Program)}.
-   */
-  @Deprecated
-  protected void getRunnableStartStop(String namespaceId, String appId,
-                                     String runnableType, String runnableId,
-                                     String action) throws Exception {
-    getRunnableStartStop(namespaceId, appId, runnableType, runnableId, action, 200);
-  }
-
-  /**
-   * @deprecated Use {@link #startProgram(Id.Program, int)} or {@link #stopProgram(Id.Program, int)}.
-   */
-  @Deprecated
-  protected void getRunnableStartStop(String namespaceId, String appId,
-                                      String runnableType, String runnableId,
-                                      String action, int expectedStatusCode) throws Exception {
-    Id.Program programId = Id.Program.from(namespaceId, appId,
-                                           ProgramType.valueOfCategoryName(runnableType), runnableId);
-    if ("start".equalsIgnoreCase(action)) {
-      startProgram(programId, expectedStatusCode);
-    } else if ("stop".equalsIgnoreCase(action)) {
-      stopProgram(programId, expectedStatusCode);
-    }
   }
 
   /**
@@ -562,15 +542,6 @@ public abstract class AppFabricTestBase {
   }
 
   /**
-   * @deprecated Use {@link #waitState(Id.Program, String)} instead
-   */
-  @Deprecated
-  protected void waitState(String namespaceId, String appId,
-                           String runnableType, String runnableId, String state) throws Exception {
-    waitState(Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(runnableType), runnableId), state);
-  }
-
-  /**
    * Waits for the given program to transit to the given state.
    */
   protected void waitState(final Id.Program programId, String state) throws Exception {
@@ -615,10 +586,12 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  protected String getRunnableStatus(String namespaceId, String appId, String runnableType, String runnableId)
-    throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("apps/" + appId + "/" + runnableType + "/" + runnableId +
-                                                        "/status", Constants.Gateway.API_VERSION_3_TOKEN, namespaceId));
+  protected String getProgramStatus(Id.Program program) throws Exception {
+    String path = String.format("apps/%s/%s/%s/status",
+                                program.getApplicationId(),
+                                program.getType().getCategoryName(),
+                                program.getId());
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);

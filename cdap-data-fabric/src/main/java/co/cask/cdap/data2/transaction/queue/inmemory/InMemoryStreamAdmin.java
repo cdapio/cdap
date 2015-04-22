@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -35,9 +36,12 @@ import javax.annotation.Nullable;
 @Singleton
 public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {
 
+  private final UsageRegistry usageRegistry;
+
   @Inject
-  public InMemoryStreamAdmin(InMemoryQueueService queueService) {
+  public InMemoryStreamAdmin(InMemoryQueueService queueService, UsageRegistry usageRegistry) {
     super(queueService);
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -90,4 +94,8 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     drop(QueueName.fromStream(streamId));
   }
 
+  @Override
+  public void register(Id.Stream streamId, Id.Program programId) {
+    usageRegistry.register(programId, streamId);
+  }
 }

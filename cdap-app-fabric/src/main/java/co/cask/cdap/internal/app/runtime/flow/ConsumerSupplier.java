@@ -18,8 +18,10 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -42,21 +44,28 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
+  private final Id.Program program;
+  private final UsageRegistry usageRegistry;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade,
+  static <T> ConsumerSupplier<T> create(Id.Program program, UsageRegistry usageRegistry,
+                                        DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
-    return create(dataFabricFacade, queueName, consumerConfig, -1);
+    return create(program, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade, QueueName queueName,
+  static <T> ConsumerSupplier<T> create(Id.Program program, UsageRegistry usageRegistry,
+                                        DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<T>(dataFabricFacade, queueName, consumerConfig, numGroups);
+    return new ConsumerSupplier<T>(program, usageRegistry, dataFabricFacade, queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(DataFabricFacade dataFabricFacade, QueueName queueName,
+  private ConsumerSupplier(Id.Program program, UsageRegistry usageRegistry,
+                           DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
+    this.program = program;
+    this.usageRegistry = usageRegistry;
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.numGroups = numGroups;
@@ -86,6 +95,11 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
+        try {
+          usageRegistry.register(program, queueName.toStreamId());
+        } catch (Exception e) {
+          LOG.warn("Failed to register usage of {} -> {}", program, queueName.toStreamId(), e);
+        }
         StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
         consumerConfig = streamConsumer.getConsumerConfig();
         consumer = streamConsumer;

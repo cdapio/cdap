@@ -24,13 +24,13 @@ import co.cask.cdap.common.logging.ApplicationLoggingContext;
 public class UserServiceLoggingContext extends ApplicationLoggingContext {
 
   public static final String TAG_USERSERVICE_ID = ".userserviceid";
-  public static final String TAG_RUNNABLE_ID = ".userrunnableid";
+  public static final String TAG_HANDLER_ID = ".userhandlerid";
 
-  public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId, String runnableId,
+  public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId, String handlerId,
                                    String runId, String instanceId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_USERSERVICE_ID, serviceId);
-    setSystemTag(TAG_RUNNABLE_ID, runnableId);
+    setSystemTag(TAG_HANDLER_ID, handlerId);
     setInstanceId(instanceId);
   }
 

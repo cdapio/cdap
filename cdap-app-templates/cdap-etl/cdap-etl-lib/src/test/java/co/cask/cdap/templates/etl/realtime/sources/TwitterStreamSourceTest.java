@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
@@ -24,7 +25,6 @@ import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.NoopMetrics;
-import co.cask.cdap.templates.etl.common.Tweet;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -107,15 +107,15 @@ public class TwitterStreamSourceTest {
     SourceState state = new SourceState();
 
 
-    Tweet tweet = getWithRetries(source, emitter, state, 10);
+    StructuredRecord tweet = getWithRetries(source, emitter, state, 10);
     Assert.assertNotNull(tweet);
   }
 
 
-  private Tweet getWithRetries(TwitterStreamSource source, MockEmitter emitter,
-                               SourceState state, int retryCount) throws Exception {
+  private StructuredRecord getWithRetries(TwitterStreamSource source, MockEmitter emitter,
+                                          SourceState state, int retryCount) throws Exception {
 
-    Tweet tweet = null;
+    StructuredRecord tweet = null;
     int count = 0;
     while (count <= retryCount) {
       count++;
@@ -130,16 +130,16 @@ public class TwitterStreamSourceTest {
     return tweet;
   }
 
-  private static class MockEmitter implements Emitter<Tweet> {
+  private static class MockEmitter implements Emitter<StructuredRecord> {
 
-    private Tweet tweet;
+    private StructuredRecord tweet;
 
     @Override
-    public void emit(Tweet value) {
+    public void emit(StructuredRecord value) {
       tweet = value;
     }
 
-    public Tweet getTweet() {
+    public StructuredRecord getTweet() {
       return tweet;
     }
 

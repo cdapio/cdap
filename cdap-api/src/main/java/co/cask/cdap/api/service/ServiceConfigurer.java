@@ -19,8 +19,6 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
-import java.util.Map;
-
 /**
  * Interface for configurers used to create custom Services.
  */
@@ -37,12 +35,6 @@ public interface ServiceConfigurer {
    * @param description to set for the Service.
    */
   void setDescription(String description);
-
-  /**
-   * Add a list of workers to the Service.
-   * @param workers map from worker name to {@link ServiceWorker}.
-   */
-  void addWorkers(Map<String, ServiceWorker> workers);
 
   /**
    * Add a a list of request handlers to the Service.

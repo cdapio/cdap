@@ -303,11 +303,11 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the Application being called
    * - ``"programType"``
-     - One of ``flow`` or ``service``
+     - One of ``flow``, ``service``, or ``worker``
    * - ``"programId"``
-     - Name of the program (*Flow* or *Custom Service*) being called
+     - Name of the program (*Flow*, *Service*, or *Worker*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Service*
+     - Name of the *Flowlet*, only required if the program type is ``flow``
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
 

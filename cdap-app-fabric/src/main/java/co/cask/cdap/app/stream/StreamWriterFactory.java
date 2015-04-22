@@ -17,6 +17,7 @@
 package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.proto.Id;
 import com.google.inject.assistedinject.Assisted;
 
 /**
@@ -25,8 +26,9 @@ import com.google.inject.assistedinject.Assisted;
 public interface StreamWriterFactory {
   /**
    * @param namespaceId the namespaceId for which to return a {@link StreamWriter}
+   * @param programId the programId that will be using the {@link StreamWriter}
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("namespaceId") String namespaceId);
+  StreamWriter create(@Assisted("namespaceId") String namespaceId, @Assisted("programId") Id.Program programId);
 }
 

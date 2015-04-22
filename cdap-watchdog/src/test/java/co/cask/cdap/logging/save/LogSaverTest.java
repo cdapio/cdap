@@ -182,8 +182,8 @@ public class LogSaverTest extends KafkaTestBase {
                                          Names.named (Constants.LogSaver.MESSAGE_PROCESSORS)));
     for (KafkaLogProcessor processor : processors) {
       CheckpointManager checkpointManager = getCheckPointManager(processor);
-      Assert.assertEquals(180, checkpointManager.getCheckpoint(0));
-      Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
+      Assert.assertEquals(180, checkpointManager.getCheckpoint(0).getNextOffset());
+      Assert.assertEquals(120, checkpointManager.getCheckpoint(1).getNextOffset());
     }
     txManager.stopAndWait();
   }

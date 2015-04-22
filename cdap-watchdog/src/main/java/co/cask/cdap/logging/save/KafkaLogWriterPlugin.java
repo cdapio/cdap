@@ -28,7 +28,6 @@ import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -50,7 +49,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,16 +71,13 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private final LogCleanup logCleanup;
   private final CheckpointManager checkpointManager;
 
-  private ScheduledFuture<?> logWriterFuture;
-  private ScheduledFuture<?> cleanupFuture;
   private CountDownLatch countDownLatch;
 
 
   @Inject
   public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                              LocationFactory locationFactory, LogSaverTableUtil tableUtil,
-                              TransactionExecutorFactory txExecutorFactory)
-                              throws Exception {
+                              LocationFactory locationFactory, CheckpointManagerFactory checkpointManagerFactory)
+    throws Exception {
 
     this.serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
@@ -140,8 +135,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
-    checkpointManager = new CheckpointManager(tableUtil, txExecutorFactory,
-                                              KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
+    checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
@@ -156,17 +150,16 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     super.init(partitions, checkpointManager);
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
+      Threads.createDaemonThreadFactory("log-saver-log-processor")));
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
-    logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
     countDownLatch = new CountDownLatch(1);
 
     if (partitions.contains(0)) {
       LOG.info("Scheduling cleanup task");
-      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
-                                                            logCleanupIntervalMins, TimeUnit.MINUTES);
+      scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     }
   }
 
@@ -182,7 +175,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
       // Sleep while we can add the entry
       while (true) {
         // Get the oldest bucket in the table
-        long oldestBucketKey = 0;
+        long oldestBucketKey;
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
           if (rowKeySet.isEmpty()) {
@@ -212,7 +205,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
       synchronized (messageTable) {
         Map.Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key,
                                                                       loggingContext.getLogPathFragment(logBaseDir));
-        List<KafkaLogEvent> msgList = null;
+        List<KafkaLogEvent> msgList;
         if (entry == null) {
           long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
           msgList = Lists.newArrayList();
@@ -251,7 +244,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   }
 
   @Override
-  public long getCheckPoint(int partition) {
+  public Checkpoint getCheckpoint(int partition) {
     try {
       return checkpointManager.getCheckpoint(partition);
     } catch (Exception e) {
