@@ -10,7 +10,24 @@ angular.module(PKG.name + '.feature.spark')
         $scope.runs.selected = match[0];
       }
     }
-    $scope.data = {};
+    $scope.data = {
+      running: 20,
+      failed: 50,
+      waiting: 30
+    };
+
+    $scope.runningTooltip = {
+      "title": 'Running'
+    };
+
+    $scope.waitingTooltip = {
+      "title": 'Waiting'
+    };
+
+    $scope.failedTooltip = {
+      "title": 'Failed'
+    };
+
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;

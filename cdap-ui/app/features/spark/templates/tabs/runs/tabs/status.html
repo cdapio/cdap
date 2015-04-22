@@ -1,36 +1,31 @@
-<div ng-controller="SparkRunsDetailStatusControler">
-    <div class="sparks-metrics clearfix">
-      <div class="spark-metrics-storage">
+<div ng-controller="SparkRunsDetailStatusControler" class="container">
+    <div class="sparks-metrics row clearfix">
+      <div class="spark-metrics-storage col-sm-3">
         <div class="title-storage">
           STORAGE
         </div>
 
-        <div class="metric-row">MB Remaining
-        </div>
+        <div class="metric-row">MB Remaining</div>
 
-        <div class="metric-row">MB Max Available
-        </div>
+        <div class="metric-row">MB Max Available</div>
 
-        <div class="metric-row">MB Used
-        </div>
+        <div class="metric-row">MB Used</div>
 
-        <div class="metric-row">MB Used on disk
-        </div>
+        <div class="metric-row">MB Used on disk</div>
       </div>
 
-      <div class="spark-metrics-stages">
+      <div class="spark-metrics-stages col-sm-offset-1 col-sm-7">
         <div class="title-stage">
           STAGES
         </div>
-
           <div class="progress stage-status-line">
-            <div class="progress-bar running" style="width:33.3%" title="">
+            <div class="progress-bar running" data-animation="am-flip-x" bs-tooltip="runningTooltip" ng-style="{ 'width': data.running + '%' }" title="">
             </div>
 
-            <div class="progress-bar failed" style="width:33.3%" title="">
+            <div class="progress-bar failed" data-animation="am-flip-x" bs-tooltip="failedTooltip" ng-style="{ 'width': data.failed + '%' }" title="">
             </div>
 
-            <div class="progress-bar waiting" style="width:33.3%" title="">
+            <div class="progress-bar waiting" data-animation="am-flip-x" bs-tooltip="waitingTooltip" ng-style="{ 'width': data.waiting + '%' }" title="">
             </div>
           </div>
       </div>
