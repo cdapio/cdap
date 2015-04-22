@@ -183,6 +183,11 @@ angular.module(PKG.name + '.feature.admin')
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
               controller: 'AdminDatasetsController'
             })
+              .state('admin.namespace.detail.data.datasetmetadata', {
+                url: '/:datasetId',
+                controller: 'AdminNamespaceDatasetMetadataController',
+                templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
+              })
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
                 onEnter: function($bootstrapModal, $state) {
