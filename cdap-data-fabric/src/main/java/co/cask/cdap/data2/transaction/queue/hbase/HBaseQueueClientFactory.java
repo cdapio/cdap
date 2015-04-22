@@ -68,19 +68,16 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final HBaseQueueAdmin queueAdmin;
-  private final HBaseStreamAdmin streamAdmin;
   private final HBaseQueueUtil queueUtil;
   private final HBaseTableUtil hBaseTableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
   public HBaseQueueClientFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil hBaseTableUtil,
-                                 QueueAdmin queueAdmin, HBaseStreamAdmin streamAdmin,
-                                 TransactionExecutorFactory txExecutorFactory) {
+                                 QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
-    this.streamAdmin = streamAdmin;
     this.queueUtil = new HBaseQueueUtilFactory().get();
     this.hBaseTableUtil = hBaseTableUtil;
     this.txExecutorFactory = txExecutorFactory;
@@ -223,15 +220,14 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
    * @throws IOException
    */
   private HBaseQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
-    HBaseQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
     try {
-      if (!admin.exists(queueName)) {
-        admin.create(queueName);
+      if (!queueAdmin.exists(queueName)) {
+        queueAdmin.create(queueName);
       }
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + admin.getDataTableId(queueName), e);
+      throw new IOException("Failed to open table " + queueAdmin.getDataTableId(queueName), e);
     }
-    return admin;
+    return queueAdmin;
   }
 
   private HTable createHTable(TableId tableId) throws IOException {

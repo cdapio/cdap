@@ -203,7 +203,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
       // TODO: Modify the REST API to support custom configurations.
       streamAdmin.create(streamId);
-      streamMetaStore.addStream(streamId);
 
       // TODO: For create successful, 201 Created should be returned instead of 200.
       responder.sendStatus(HttpResponseStatus.OK);
