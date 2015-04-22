@@ -16,19 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.internal.app.runtime.service.ServiceComponentProgramRunner;
+import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 
 /**
  * A TwillRunnable for running Service components in distributed mode.
  */
-public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServiceComponentProgramRunner> {
+public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServiceProgramRunner> {
 
   protected ServiceTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
 
   @Override
-  protected Class<ServiceComponentProgramRunner> getProgramClass() {
-    return ServiceComponentProgramRunner.class;
+  protected Class<ServiceProgramRunner> getProgramClass() {
+    return ServiceProgramRunner.class;
   }
 }

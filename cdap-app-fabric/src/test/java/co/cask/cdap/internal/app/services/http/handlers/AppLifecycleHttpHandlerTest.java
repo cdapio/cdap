@@ -23,6 +23,8 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -192,15 +194,16 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "start");
-    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "RUNNING");
+    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    startProgram(program);
+    waitState(program, "RUNNING");
     // Try to delete an App while its flow is running
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
 
-    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "stop");
-    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "STOPPED");
+    stopProgram(program);
+    waitState(program, "STOPPED");
 
     // Delete the app in the wrong namespace
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,

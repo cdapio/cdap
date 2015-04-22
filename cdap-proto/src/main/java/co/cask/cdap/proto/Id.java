@@ -534,7 +534,7 @@ public abstract class Id {
         .append(this.application.getNamespaceId())
         .append(", applicationId:")
         .append(this.application.getId())
-        .append(", runnableId:")
+        .append(", programId:")
         .append(this.id)
         .append(")")
         .toString();
@@ -575,42 +575,6 @@ public abstract class Id {
 
     public static Service from(Application application, String id) {
       return new Service(application, id);
-    }
-
-    /**
-     * Uniquely identifies a Service Runnable.
-     */
-    public static class Runnable extends NamespacedId {
-
-      private final Service service;
-      private final String id;
-
-      private Runnable(Service service, String id) {
-        Preconditions.checkArgument(service != null, "flow cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
-        this.service = service;
-        this.id = id;
-      }
-
-      public static Runnable from(Service service, String id) {
-        return new Runnable(service, id);
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return service.getNamespace();
-      }
-
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return service;
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
     }
   }
 

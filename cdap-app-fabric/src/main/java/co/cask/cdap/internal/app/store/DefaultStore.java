@@ -29,7 +29,6 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -415,7 +414,7 @@ public class DefaultStore implements Store {
         // Create a new spec copy from the old one, except with updated instances number
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               serviceSpec.getWorkers(), serviceSpec.getResources(), instances);
+                                               serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
@@ -442,63 +441,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setServiceWorkerInstances(final Id.Program id,
-                                        final String workerName, final int instances) {
-    Preconditions.checkArgument(instances > 0,
-                                "cannot change number of program instances to negative number: %s", instances);
-
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
-        ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
-
-        // Create a new worker spec copy from the old one, except with updated instances number
-        workerSpec = new ServiceWorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
-                                                    workerSpec.getDescription(), workerSpec.getProperties(),
-                                                    workerSpec.getDatasets(), workerSpec.getResources(),
-                                                    instances);
-
-        // Create a new spec copy from the old one, except with updated worker spec
-        Map<String, ServiceWorkerSpecification> updatedWorkers = Maps.newHashMap(serviceSpec.getWorkers());
-        updatedWorkers.put(workerName, workerSpec);
-        serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
-                                               serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               updatedWorkers, serviceSpec.getResources(), serviceSpec.getInstances());
-
-        ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
-
-        mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
-        return null;
-      }
-    });
-
-    LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplicationId(), id.getId(), instances);
-  }
-
-  @Override
   public int getWorkerInstances(final Id.Program id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
       @Override
       public Integer apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
-        return workerSpec.getInstances();
-      }
-    });
-  }
-
-  @Override
-  public int getServiceWorkerInstances(final Id.Program id, final String workerName) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
-      @Override
-      public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
-        ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
         return workerSpec.getInstances();
       }
     });
@@ -996,18 +944,6 @@ public class DefaultStore implements Store {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  private ServiceWorkerSpecification getServiceWorkerSpecOrFail(Id.Program id, ServiceSpecification serviceSpec,
-                                                                String workerName) {
-    ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(workerName);
-    if (workerSpec == null) {
-      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication() +
-                                         ", service id: " + id.getId() +
-                                         ", worker id: " + workerName);
-    }
-    return workerSpec;
   }
 
   private static FlowletDefinition getFlowletDefinitionOrFail(FlowSpecification flowSpec,

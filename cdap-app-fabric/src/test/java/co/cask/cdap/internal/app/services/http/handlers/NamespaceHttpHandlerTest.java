@@ -59,6 +59,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
   private static final String NAME = "test";
+  private static final Id.Namespace NAME_ID = Id.Namespace.from(NAME);
   private static final String DESCRIPTION = "test description";
   private static final String METADATA_VALID =
     String.format("{\"%s\":\"%s\", \"%s\":\"%s\"}", NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION);
@@ -262,7 +263,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Assert.assertTrue(streamAdmin.exists(myStream));
-    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
+    startProgram(program);
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because unrecoverable reset is disabled
@@ -271,7 +273,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // because service is running
     assertResponseCode(403, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
-    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    stopProgram(program);
     // delete should work now
     assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
@@ -308,7 +310,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
-    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "start");
+    Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
+    startProgram(program);
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because reset is not enabled
@@ -318,7 +321,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // because service is running
     assertResponseCode(403, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
-    getRunnableStartStop(NAME, "AppWithServices", ProgramType.SERVICE.getCategoryName(), "NoOpService", "stop");
+    stopProgram(program);
     assertResponseCode(200, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     Assert.assertTrue(getAppList(NAME).size() == 2);

@@ -32,19 +32,16 @@ public final class ServiceSpecification implements ProgramSpecification {
   private final String name;
   private final String description;
   private final Map<String, HttpServiceHandlerSpecification> handlers;
-  private final Map<String, ServiceWorkerSpecification> workers;
   private final Resources resources;
   private final int instances;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
-                              Map<String, ServiceWorkerSpecification> workers,
                               Resources resources, int instances) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.handlers = Collections.unmodifiableMap(new HashMap<String, HttpServiceHandlerSpecification>(handlers));
-    this.workers = Collections.unmodifiableMap(new HashMap<String, ServiceWorkerSpecification>(workers));
     this.resources = resources;
     this.instances = instances;
   }
@@ -76,13 +73,6 @@ public final class ServiceSpecification implements ProgramSpecification {
    */
   public int getInstances() {
     return instances;
-  }
-
-  /**
-   * Returns an immutable map from worker name to worker specification.
-   */
-  public Map<String, ServiceWorkerSpecification> getWorkers() {
-    return workers;
   }
 
   /**
