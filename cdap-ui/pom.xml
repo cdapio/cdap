@@ -98,8 +98,9 @@
               <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.apache.twill,\
                 org.apache.httpcomponents,org.apache.thrift,org.apache.flume,org.apache.avro,org.ow2.asm,\
                 com.google.inject,org.apache.hadoop,commons-codec,com.google.inject.extensions,\
-                co.cask.http</excludeGroupIds>
-              <excludeArtifactIds>zkclient,servlet-api,common-http</excludeArtifactIds>
+                co.cask.http,xmlenc,log4j,ch.qos.logback,org.scala-lang</excludeGroupIds>
+              <excludeArtifactIds>cdap-proto,tephra,zkclient,servlet-api,common-http,\
+                common-lang,common-io</excludeArtifactIds>
               <prependGroupId>true</prependGroupId>
               <silent>true</silent>
               <includeScope>runtime</includeScope>
