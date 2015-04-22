@@ -600,7 +600,7 @@ public class AdapterService extends AbstractIdleService {
       Map<File, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
 
       File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-      Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
+      Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, false);
       for (File file : files) {
         try {
           ApplicationTemplateInfo info = getTemplateInfo(file);
