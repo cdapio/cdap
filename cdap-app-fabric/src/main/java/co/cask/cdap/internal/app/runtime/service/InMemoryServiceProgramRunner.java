@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,8 +78,9 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
     //RunId for the service
     RunId runId = RunIds.generate();
-    Table<String, Integer, ProgramController> components = startAllComponents(program, runId,
-                                                                              options.getUserArguments(), serviceSpec);
+    Table<String, Integer, ProgramController> components = startServiceComponent(program, runId,
+                                                                                 options.getUserArguments(),
+                                                                                 serviceSpec);
     return new InMemoryProgramController(components, runId, program, serviceSpec, options.getUserArguments(),
                                          ProgramRunnerFactory.Type.SERVICE_COMPONENT);
   }
@@ -90,10 +91,9 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
    * @return A {@link Table} with component name in the row, instance id in the column and the {@link ProgramController}
    *         of the component runner as the cell value.
    */
-  // TODO: Move this method to AbstractInMemoryProgramRunner to reduce duplication of code.
-  private Table<String, Integer, ProgramController> startAllComponents(Program program, RunId runId,
-                                                                       Arguments userArguments,
-                                                                       ServiceSpecification spec) {
+  private Table<String, Integer, ProgramController> startServiceComponent(Program program, RunId runId,
+                                                                          Arguments userArguments,
+                                                                          ServiceSpecification spec) {
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
 
     try {
