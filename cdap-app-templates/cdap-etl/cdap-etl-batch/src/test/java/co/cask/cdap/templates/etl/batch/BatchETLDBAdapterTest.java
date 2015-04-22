@@ -203,6 +203,7 @@ public class BatchETLDBAdapterTest extends TestBase {
 
   @Test
   @Category(SlowTests.class)
+  @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
