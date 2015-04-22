@@ -23,7 +23,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -57,10 +56,10 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   private CheckPointWriter checkPointWriter;
 
   @Inject
-  public LogMetricsPlugin (MetricsCollectionService metricsCollectionService, LogSaverTableUtil tableUtil,
-                           TransactionExecutorFactory txExecutorFactory) {
+  public LogMetricsPlugin (MetricsCollectionService metricsCollectionService,
+                           CheckpointManagerFactory checkpointManagerFactory) {
     this.metricsCollectionService = metricsCollectionService;
-    this.checkpointManager = new CheckpointManager(tableUtil, txExecutorFactory, KafkaTopic.getTopic(), ROW_KEY_PREFIX);
+    this.checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), ROW_KEY_PREFIX);
   }
 
   @Override
