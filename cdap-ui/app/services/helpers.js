@@ -96,11 +96,46 @@ angular.module(PKG.name+'.services')
     return obj;
   }
 
+    var roundUpToNearest = function(val, nearest) {
+      return Math.ceil(val / nearest) * nearest;
+    };
+    var roundDownToNearest = function(val, nearest) {
+      return Math.floor(val / nearest) * nearest;
+    };
+
+    function aggregate(inputMetrics, by) {
+      // Given an object in the format: { ts1: value, ts2: value, ts3: value, ts4: value },
+      // This will return an object in the same format, where each sequence of {by} timestamps will be summed up.
+      // Not currently considering resolution of the metric values (It groups simply starting from the first timestamp),
+      // as opposed to grouping into 5-minute interval.
+      var aggregated = {};
+      var timeValues = Object.keys(inputMetrics);
+      var roundedDown = roundDownToNearest(timeValues.length, by);
+      for (var i = 0; i < roundedDown; i += by) {
+        var sum = 0;
+        for (var j = 0; j < by; j++) {
+          sum += inputMetrics[timeValues[i + j]];
+        }
+        aggregated[timeValues[i]] = sum;
+      }
+      // Add up remainder elements (in case number of elements in obj is not evenly divisible by {by}
+      if (roundedDown < timeValues.length) {
+        var finalKey = timeValues[roundedDown];
+        aggregated[finalKey] = 0;
+        for (var i = roundedDown; i < timeValues.length; i++) {
+          aggregated[finalKey] += inputMetrics[timeValues[j]]
+        }
+      }
+      return aggregated;
+    }
   /* ----------------------------------------------------------------------- */
 
   return {
     deepSet: deepSet,
     deepGet: deepGet,
-    objectQuery: objectQuery
+    objectQuery: objectQuery,
+    roundUpToNearest: roundUpToNearest,
+    roundDownToNearest: roundDownToNearest,
+    aggregate: aggregate
   };
 });

@@ -98,16 +98,24 @@
       </div>
     </div>
 
+
     <div class="col-xs-12 col-lg-8">
-      <div>
-        <p class="text-left"> <strong>Errors last hour</strong> </p>
-        <img src="assets/img/health_graph.png" alt="" />
-        <p class="text-center"> System </p>
-      </div>
-      <div>
-        <br />
-        <img src="assets/img/health_graph.png" alt="" />
-        <p class="text-center"> App </p>
+      <div ng-controller="WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="col-xs-5">
+        <p class="text-left" ng-show="$first">
+          <strong class="text-left"> Errors last hour </strong>
+        </p>
+        <br ng-hide="$first">
+        <c3-spline
+          data-history="chartHistory"
+          chart-size="{ height: 100 }"
+          chart-showx="false"
+          chart-showy="false"
+          chart-color="{ pattern: ['red', '#FFBF00'] }"
+          chart-legend="{ show: false, position: 'inset' }"
+          ></c3-spline>
+
+        <p class="text-center">{{wdgt.title}} - {{chartHistory[0].values.slice(-1)[0].y}} - {{chartHistory[1].values.slice(-1)[0].y}}</p>
+
       </div>
     </div>
   </div>
