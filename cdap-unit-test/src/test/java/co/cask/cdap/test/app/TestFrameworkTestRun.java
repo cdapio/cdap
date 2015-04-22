@@ -432,6 +432,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(2, serviceMetrics.getProcessed());
     Assert.assertEquals(1, serviceMetrics.getException());
 
+    // in the AppWithServices the handlerName is same as the serviceName - "ServerService" handler
     RuntimeMetrics handlerMetrics = RuntimeStats.getServiceHandlerMetrics(AppWithServices.APP_NAME,
                                                                           AppWithServices.SERVICE_NAME,
                                                                           AppWithServices.SERVICE_NAME);
