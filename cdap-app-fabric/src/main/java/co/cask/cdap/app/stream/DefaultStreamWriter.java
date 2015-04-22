@@ -47,6 +47,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,21 +57,18 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamWriter.class);
 
-  private final String namespaceId;
   private final EndpointStrategy endpointStrategy;
   /**
    * The program that is using this {@link StreamWriter}.
    */
   private final Id.Program program;
-  private final Map<Id.Stream, Boolean> isStreamRegistered;
+  private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
   private final UsageRegistry usageRegistry;
 
   @Inject
-  public DefaultStreamWriter(@Assisted("namespaceId") String namespaceId,
-                             @Assisted("programId") Id.Program program,
+  public DefaultStreamWriter(@Assisted("programId") Id.Program program,
                              UsageRegistry usageRegistry,
                              DiscoveryServiceClient discoveryServiceClient) {
-    this.namespaceId = namespaceId;
     this.program = program;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
@@ -89,7 +87,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, namespaceId, stream);
+                                Constants.Gateway.API_VERSION_3, program.getNamespaceId(), stream);
     if (batch) {
       path = String.format("%s/batch", path);
     }
@@ -97,19 +95,21 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
+    HttpResponse response = HttpRequests.execute(request);
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
+      throw new IOException(String.format("Stream %s not found", stream));
+    }
+
+    // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
       try {
+        // TODO: May want to rate-limit this
         usageRegistry.register(program, stream);
         isStreamRegistered.put(stream, true);
       } catch (Exception e) {
         LOG.warn("Failed to registry usage of {} -> {}", program, stream, e);
       }
-    }
-
-    HttpResponse response = HttpRequests.execute(request);
-    int responseCode = response.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new IOException(String.format("Stream %s not found", stream));
     }
 
     if (responseCode < 200 || responseCode >= 300) {
@@ -121,7 +121,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
     URL streamURL = getStreamURL(stream);
     HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(Id.Stream.from(namespaceId, stream), request);
+    writeToStream(Id.Stream.from(program.getNamespace(), stream), request);
   }
 
   @Override
@@ -148,7 +148,7 @@ public class DefaultStreamWriter implements StreamWriter {
   public void writeFile(String stream, File file, String contentType) throws IOException {
     URL url = getStreamURL(stream, true);
     HttpRequest request = HttpRequest.post(url).withBody(file).addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
-    writeToStream(Id.Stream.from(namespaceId, stream), request);
+    writeToStream(Id.Stream.from(program.getNamespace(), stream), request);
   }
 
   @Override
@@ -163,7 +163,7 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setChunkedStreamingMode(0);
     connection.connect();
     try {
-      return new DefaultStreamBatchWriter(connection, Id.Stream.from(namespaceId, stream));
+      return new DefaultStreamBatchWriter(connection, Id.Stream.from(program.getNamespace(), stream));
     } catch (IOException e) {
       connection.disconnect();
       throw e;
