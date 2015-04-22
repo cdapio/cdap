@@ -18,16 +18,10 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -36,11 +30,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -50,26 +40,20 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
@@ -80,12 +64,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -116,24 +96,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final CConfiguration configuration;
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final Scheduler scheduler;
-  private final StreamConsumerFactory streamConsumerFactory;
-  private final QueueAdmin queueAdmin;
-  private final PreferencesStore preferencesStore;
-  private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
-  private final MetricStore metricStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final UsageRegistry usageRegistry;
+  private final ApplicationLifecycleService applicationLifecycleService;
+  private final AdapterService adapterService;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
-                                 StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
-                                 PreferencesStore preferencesStore, AdapterService adapterService,
-                                 NamespaceAdmin namespaceAdmin, MetricStore metricStore,
-                                 NamespacedLocationFactory namespacedLocationFactory,
-                                 UsageRegistry usageRegistry) {
+                                 NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
+                                 ApplicationLifecycleService applicationLifecycleService,
+                                 AdapterService adapterService) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -142,12 +116,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
-    this.streamConsumerFactory = streamConsumerFactory;
-    this.queueAdmin = queueAdmin;
-    this.preferencesStore = preferencesStore;
+    this.applicationLifecycleService = applicationLifecycleService;
     this.adapterService = adapterService;
-    this.metricStore = metricStore;
-    this.usageRegistry = usageRegistry;
   }
 
   /**
@@ -216,7 +186,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") final String appId) throws Exception {
 
     Id.Application id = Id.Application.from(namespaceId, appId);
-    AppFabricServiceStatus appStatus = removeApplication(id);
+    // Deletion of a particular application is not allowed if that application is used by an adapter
+    AppFabricServiceStatus appStatus;
+    if (!adapterService.canDeleteApp(id)) {
+      appStatus = AbstractAppFabricHttpHandler.AppFabricServiceStatus.ADAPTER_CONFLICT;
+    } else {
+      appStatus= applicationLifecycleService.removeApplication(id);
+    }
     LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
     responder.sendString(appStatus.getCode(), appStatus.getMessage());
   }
@@ -230,7 +206,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId) throws Exception {
 
     Id.Namespace id = Id.Namespace.from(namespaceId);
-    AppFabricServiceStatus status = removeAll(id);
+    AppFabricServiceStatus status = applicationLifecycleService.removeAll(id);
     LOG.trace("Delete all call at AppFabricHttpHandler");
     responder.sendString(status.getCode(), status.getMessage());
   }
@@ -375,190 +351,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private AppFabricServiceStatus removeAll(Id.Namespace identifier) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
-      store.getAllApplications(identifier));
 
-    //Check if any program associated with this namespace is running
-    final Id.Namespace accId = Id.Namespace.from(identifier.getId());
-    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
-      @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().getNamespace().equals(accId);
-      }
-    }, ProgramType.values());
-
-    if (appRunning) {
-      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    }
-
-    //All Apps are STOPPED, delete them
-    for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
-      removeApplication(id);
-    }
-
-    return AppFabricServiceStatus.OK;
-  }
-
-  private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
-    // Deletion of a particular application is not allowed if that application is used by an adapter
-    if (!adapterService.canDeleteApp(appId)) {
-      return AppFabricServiceStatus.ADAPTER_CONFLICT;
-    }
-
-    //Check if all are stopped.
-    boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
-      @Override
-      public boolean apply(Id.Program programId) {
-        return programId.getApplication().equals(appId);
-      }
-    }, ProgramType.values());
-
-    if (appRunning) {
-      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-    }
-
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-    }
-
-    //Delete the schedules
-    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
-    }
-
-    deleteMetrics(appId.getNamespaceId(), appId.getId());
-
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId);
-
-    // Delete all streams and queues state of each flow
-    // TODO: This should be unified with the DeletedProgramHandlerStage
-    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
-
-      // Collects stream name to all group ids consuming that stream
-      Multimap<String, Long> streamGroups = HashMultimap.create();
-      for (FlowletConnection connection : flowSpecification.getConnections()) {
-        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
-          streamGroups.put(connection.getSourceName(), groupId);
-        }
-      }
-      // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
-      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
-                                      namespace, entry.getValue());
-      }
-
-      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
-    }
-    deleteProgramLocations(appId);
-
-    Location appArchive = store.getApplicationArchiveLocation(appId);
-    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
-    appArchive.delete();
-    store.removeApplication(appId);
-
-    try {
-      usageRegistry.unregister(appId);
-    } catch (Exception e) {
-      LOG.warn("Failed to unregister usage of app: {}", appId, e);
-    }
-
-    return AppFabricServiceStatus.OK;
-  }
-
-  /**
-   * Delete the metrics for an application, or if null is provided as the application ID, for all apps.
-   * @param applicationId the application to delete metrics for.
-   *                      If null, metrics for all applications in the namespace are deleted.
-   */
-  private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
-    Collection<ApplicationSpecification> applications = Lists.newArrayList();
-    if (applicationId == null) {
-      applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
-    } else {
-      ApplicationSpecification spec = this.store.getApplication
-        (new Id.Application(new Id.Namespace(namespaceId), applicationId));
-      applications.add(spec);
-    }
-
-    long endTs = System.currentTimeMillis() / 1000;
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
-    for (ApplicationSpecification application : applications) {
-      // add or replace application name in the tagMap
-      tags.put(Constants.Metrics.Tag.APP, application.getName());
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
-      metricStore.delete(deleteQuery);
-    }
-  }
-
-
-  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    return Iterables.concat(appSpec.getFlows().values(),
-                            appSpec.getMapReduce().values(),
-                            appSpec.getServices().values(),
-                            appSpec.getSpark().values(),
-                            appSpec.getWorkers().values(),
-                            appSpec.getWorkflows().values());
-  }
-
-  /**
-   * Delete the jar location of the program.
-   *
-   * @param appId        applicationId.
-   * @throws IOException if there are errors with location IO
-   */
-  private void deleteProgramLocations(Id.Application appId) throws IOException {
-    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
-    String appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
-    for (ProgramSpecification spec : programSpecs) {
-      ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appId, type, spec.getName());
-      try {
-        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
-        location.delete();
-      } catch (FileNotFoundException e) {
-        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
-      }
-    }
-
-    // Delete webapp
-    // TODO: this will go away once webapp gets a spec
-    try {
-      Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
-                                             ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
-                                                   ProgramType.WEBAPP);
-      location.delete();
-    } catch (FileNotFoundException e) {
-      // expected exception when webapp is not present.
-    }
-  }
-
-  /**
-   * Delete stored Preferences of the application and all its programs.
-   * @param appId applicationId
-   */
-  private void deletePreferences(Id.Application appId) {
-    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
-    for (ProgramSpecification spec : programSpecs) {
-
-      preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId(),
-                                        ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
-      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespaceId(), appId.getId(),
-                ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
-    }
-    preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId());
-    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
-  }
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
     List<ProgramRecord> programs = Lists.newArrayList();

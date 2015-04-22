@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Manager;
@@ -45,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.AdapterConfig;
@@ -111,6 +113,7 @@ public class AdapterService extends AbstractIdleService {
   private final AtomicReference<Map<String, ApplicationTemplateInfo>> appTemplateInfos;
   // jar file name to template info mapping
   private final AtomicReference<Map<File, ApplicationTemplateInfo>> fileToTemplateMap;
+  private final ApplicationLifecycleService applicationLifecycleService;
 
   @Inject
   public AdapterService(CConfiguration configuration, Scheduler scheduler, Store store,
@@ -120,7 +123,7 @@ public class AdapterService extends AbstractIdleService {
                         ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory,
                         NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService,
                         PropertiesResolver resolver,
-                        PluginRepository pluginRepository) {
+                        PluginRepository pluginRepository, ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.scheduler = scheduler;
     this.lifecycleService = lifecycleService;
@@ -134,8 +137,8 @@ public class AdapterService extends AbstractIdleService {
     this.fileToTemplateMap = new AtomicReference<Map<File, ApplicationTemplateInfo>>(
       new HashMap<File, ApplicationTemplateInfo>());
     this.resolver = resolver;
-
     this.pluginRepository = pluginRepository;
+    this.applicationLifecycleService = applicationLifecycleService;
   }
 
   @Override
@@ -304,7 +307,8 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Remove adapter identified by the namespace and name.
+   * Remove adapter identified by the namespace and name and also deletes the template for the adapter if this
+   * was the last adapter associated with it
    *
    * @param namespace namespace id
    * @param adapterName adapter name
@@ -315,12 +319,29 @@ public class AdapterService extends AbstractIdleService {
     throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    Id.Application applicationId = Id.Application.from(namespace, adapterSpec.getTemplate());
     if (adapterStatus != AdapterStatus.STOPPED) {
       throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
     }
     store.removeAdapter(namespace, adapterName);
+    try {
+      deleteApp(applicationId);
+    } catch (Exception e) {
+      LOG.warn("Failed to delete the template {} for after deleting the last adapter {} associated with it.",
+               adapterSpec.getTemplate(), adapterName);
+    }
+  }
 
-    // TODO: Delete the application if this is the last adapter
+  /**
+   * Deletes the application (template) if there is no associated adapter using it
+   * @param applicationId the {@link Id.Application} of the application (template)
+   * @throws Exception if failed to delete the application
+   */
+  private void deleteApp(Id.Application applicationId) throws Exception {
+    if (canDeleteApp(applicationId)) {
+      applicationLifecycleService.removeApplication(applicationId);
+    }
   }
 
   /**
