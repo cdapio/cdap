@@ -452,6 +452,8 @@ public class AdapterService extends AbstractIdleService {
       // was some failure stopping the active run.  In that case, the next time stop is called
       // the schedule will not be present. We don't want to fail in that scenario, so its ok if the
       // schedule was not found.
+      LOG.trace("Could not delete adapter workflow schedule {} because it does not exist. Ignoring and moving on.",
+                workflowId, e);
     }
     List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
                                          Integer.MAX_VALUE);
