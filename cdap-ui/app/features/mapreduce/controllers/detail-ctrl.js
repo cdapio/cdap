@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceDetailController', function(MyDataSource, $state, $scope) {
+  .controller('MapreduceDetailController', function(MyDataSource, $state, $scope, myProgramPreferencesService) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' +
             $state.params.appId +
@@ -35,5 +35,9 @@ angular.module(PKG.name + '.feature.mapreduce')
       }).then(function () {
         $state.go('mapreduce.detail.runs', {}, { reload: true });
       });
+    };
+
+    $scope.openPreferences = function() {
+      myProgramPreferencesService.show('mapreduce');
     };
   });
