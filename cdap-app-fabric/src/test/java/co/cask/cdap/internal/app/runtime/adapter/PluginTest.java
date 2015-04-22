@@ -91,6 +91,7 @@ public class PluginTest {
 
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     DirUtils.mkdirs(new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
 
