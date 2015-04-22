@@ -29,12 +29,12 @@ import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.templates.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeResolution;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -220,7 +220,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     resTypeList.add(unresTypeList.get(0));
     try {
       // Resolve the second type using just the first resolved type.
-      Type nType = (new TypeResolution()).where(unresTypeList.get(1), resTypeList.get(0)).resolveType(
+      Type nType = (new TypeResolver()).where(unresTypeList.get(1), resTypeList.get(0)).resolveType(
         unresTypeList.get(1));
       resTypeList.add(nType);
     } catch (IllegalArgumentException e) {
@@ -242,9 +242,9 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
         // Ex: Actual = List<String> ; Formal = List<T> ; ToResolve = T ==> newType = String which is not correct;
         // newType should be List<String>. Hence resolve only from the previous resolved type (Actual)
         if ((toResolveType instanceof TypeVariable) || (toResolveType instanceof GenericArrayType)) {
-          newType = (new TypeResolution()).where(toResolveType, actualType).resolveType(toResolveType);
+          newType = (new TypeResolver()).where(toResolveType, actualType).resolveType(toResolveType);
         } else {
-          newType = (new TypeResolution()).where(formalType, actualType).resolveType(toResolveType);
+          newType = (new TypeResolver()).where(formalType, actualType).resolveType(toResolveType);
         }
         resTypeList.add(newType);
       } catch (IllegalArgumentException e) {
