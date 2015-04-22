@@ -17,11 +17,14 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -71,6 +74,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
@@ -183,6 +187,7 @@ public class ConfigurableTestBase {
     cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
+    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("plugins").getAbsolutePath());
 
     if (additionalConfiguration != null) {
       for (Map.Entry<String, String> entry : additionalConfiguration.entrySet()) {
@@ -359,7 +364,6 @@ public class ConfigurableTestBase {
     return applicationManager;
   }
 
-
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * other programs defined in the application must be in the same or children package as the application.
@@ -370,6 +374,44 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
     return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+  }
+
+  /**
+   * Creates an adapter.
+   *
+   * @param adapterId The id of the adapter to create
+   * @param adapterConfig The configuration for the adapter
+   * @return An {@link AdapterManager} to manage the deployed adapter.
+   * @throws Exception if there was an exception deploying the adapter.
+   */
+  protected static AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig adapterConfig) throws Exception {
+    return getTestManager().deployAdapter(adapterId, adapterConfig);
+  }
+
+  /**
+   * Deploys an {@link ApplicationTemplate}.
+   *
+   * @param namespace The namespace to deploy to
+   * @param templateClz The template class
+   * @param templateId The id of the template. Must match the name set in
+   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
+   */
+  protected static void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
+                                       Class<? extends ApplicationTemplate> templateClz) throws IOException {
+    getTestManager().deployTemplate(namespace, templateId, templateClz);
+  }
+
+  /**
+   * Adds a plugin usable by the given template.
+   *
+   * @param templateId The id of the template to add the plugin for
+   * @param pluginClass The plugin class
+   * @param jarName The name to use for the plugin jar
+   * @throws IOException
+   */
+  protected static void addTemplatePlugin(Id.ApplicationTemplate templateId,
+                                          Class<?> pluginClass, String jarName) throws IOException {
+    getTestManager().addTemplatePlugin(templateId, pluginClass, jarName);
   }
 
   /**
