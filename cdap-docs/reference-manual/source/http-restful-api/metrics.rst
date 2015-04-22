@@ -190,13 +190,14 @@ These metrics are available in a Flowlet context:
    * - ``system.store.writes``
      - Write operations performed on Datasets
 
-These metrics are available in a Mappers and Reducers context:
+These metrics are available in a Mappers or Reducers context (specify whether a Mapper or
+Reducer context is desired, as shown above):
 
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Mappers and Reducers Metric
+   * - Mappers or Reducers Metric
      - Description
    * - ``system.process.completion``
      - A number from 0 to 100 indicating the progress of the Map or Reduce phase
@@ -514,6 +515,10 @@ with a JSON list as the request body that enumerates the name and attributes for
 metric. The format of the request and the JSON body depends on whether the metrics share
 the same context or are being called for different contexts. 
 
+In both cases, queries are identified by a ``<query-id>`` (in the examples below,
+*query1*, *query2*, *eventsIn*, *eventsOut*); the ``<query-id>`` is then used in the
+returned result to identify the series.
+
 .. rubric:: Multiple Metrics with the Same Context
 
 Retrieving multiple metrics at once for the same contexts can be accomplished by issuing a
@@ -563,17 +568,18 @@ structure (pretty-printed)::
     “query2”: {
         tags: {“namespace”: “default”},
         metrics: [“metric1”, “metric2”],
-        groupBy: [“app”, “dataset”],
         timeRange: {“start”: “now­2s”, “end”: “now”}
         }
   }
 
-For example, to retrieve multiple metrics using a ``curl`` call (results reformatted to fit)::
+For example, to retrieve multiple metrics using a ``curl`` call (command and results reformatted to fit)::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' 
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' \
       -d '{"eventsIn":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.in"], 
-           "timeRange": {"start":"now-5s", "count":"5"}}, "eventsOut":{"tags": {"flow":"CountRandom"}, 
-           "metrics": ["system.process.events.out"], "timeRange": {"start":"now-5s", "count":"5"}}}'
+                       "timeRange": {"start":"now-5s", "count":"5"} }, 
+           "eventsOut":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.out"],
+                        "timeRange": {"start":"now-5s", "count":"5"} }
+          }'
 
   {"eventsIn":{"startTime":1429593961,"endTime":1429593966,
                "series":[{"metricName":"system.process.events.in","grouping":{},
@@ -592,8 +598,7 @@ For example, to retrieve multiple metrics using a ``curl`` call (results reforma
                                    {"time":1429593964,"value":3906},
                                    {"time":1429593965,"value":3993}]
                           }]
-              }
-                                   
+              }               
   }
 
 If the context of the requested metric or metric itself doesn't exist, the system returns a
@@ -692,8 +697,8 @@ points for a metric. By default, 1 second resolution is used. Acceptable values 
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) >= 3610 seconds``, resolution will be 1 hour; 
-- ``(endTime - startTime) >= 610 seconds``, resolution will be 1 minute; 
+- ``(endTime - startTime) > 3600 seconds``, resolution will be 1 hour; 
+- ``(endTime - startTime) >  600 seconds``, resolution will be 1 minute; 
 - otherwise, resolution will be 1 second.
 
 .. list-table::
@@ -725,7 +730,7 @@ Example::
     metric=system.process.events.processed&start=now-1h&end=now&resolution=1m'
 
 This will return the value of the metric *system.process.events.processed* for the last
-hour at one-second intervals.
+hour at one-minute intervals.
 
 For aggregates, you cannot specify a time range. As an example, to return the total number
 of input objects processed since the Application *CountRandom* was deployed, assuming that
@@ -771,17 +776,17 @@ Examples of using a run-ID (with both commands and results reformatted to fit)::
    
   
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
-      PurchaseHistoryBuilder&tag=run:453-454-447683&metric=system.process.completion'
+      PurchaseHistoryBuilder&tag=run:453-454-447683&tag=tasktype:m&metric=system.process.completion'
 
   {"startTime":0,"endTime":1429498425,"series":[{"metricName":"system.process.completion",
-   "grouping":{},"data":[{"time":0,"value":200}]}]}
+   "grouping":{},"data":[{"time":0,"value":100}]}]}
    
   
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom&tag=run:
     bca50436-9650-448e-9ab1-f1d186eb2285&tag=flowlet:splitter&metric=system.process.events.processed&aggregate=true'
 
 The last example will return (where ``"time"=0`` means aggregated total number, and ``endTime`` is
-the query time |---| current time |---| or *now* at the time of the query) something similar to::
+the time of the query) something similar to::
 
   {"startTime":0,"endTime":1421188775,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
@@ -858,12 +863,21 @@ Query Tips
     POST '<base-url>/metrics/query?tag=namespace:default
       &metric=system.process.events.processed&start=now-5s&count=5'
 
-- To request user-defined metrics instead of system metrics, specify ``user`` instead of 
-  ``cdap`` in the URL and specify the user-defined metric at the end of the request.
+- User-defined metrics are always prefixed with the word ``user``, and must be queried by 
+  using that prefix with the metric name.
 
-  For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
+  For example, to request the user-defined metric *names.byte* for the *HelloWorld* Application's *WhoFlow* Flow::
 
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver
       &metric=user.names.bytes&aggregate=true'
+
+- To view the task-level information of Mappers or Reducers of a MapReduce program, instead of querying for each individual task, you can make a single query.
+
+  For example, to request the information for each of the mappers of the *PurchaseHistoryBuilder* MapReduce of the *Purchase* Application, this
+  query will return multiple series, each grouped by the instance and with the returned value being the completion status::
+
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:PurchaseHistoryBuilder
+      &tag=tasktype:m&groupBy=instance&metric=system.process.completion'
+
 
 
