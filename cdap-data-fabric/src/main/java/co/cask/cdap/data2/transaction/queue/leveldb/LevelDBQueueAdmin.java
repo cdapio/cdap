@@ -123,17 +123,6 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
     service.dropTable(tableName);
   }
 
-  // Only used by LevelDBStreamAdmin
-  void drop(QueueName queueName) throws Exception {
-    // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
-    if (doDropTable(queueName)) {
-      String actualTableName = getActualTableName(queueName);
-      service.dropTable(actualTableName);
-    } else {
-      LOG.warn("drop({}) on LevelDB queue table has no effect.", queueName);
-    }
-  }
-
   @Override
   public void dropAllInNamespace(String namespaceId) throws Exception {
     dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId, unqualifiedTableNamePrefix));

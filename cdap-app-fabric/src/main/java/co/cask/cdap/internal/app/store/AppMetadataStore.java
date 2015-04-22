@@ -120,10 +120,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     LOG.trace("Application exists in mds: id: {}, spec: {}", existing);
     ApplicationMeta updated = ApplicationMeta.updateSpec(existing, spec);
     write(key, updated);
-
-    for (StreamSpecification stream : spec.getStreams().values()) {
-      writeStream(namespaceId, stream);
-    }
   }
 
   public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter) {

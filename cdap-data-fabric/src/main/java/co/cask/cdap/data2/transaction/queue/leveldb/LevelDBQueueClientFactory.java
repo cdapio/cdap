@@ -48,19 +48,16 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private final LevelDBTableService service;
   private final ExecutorService evictionExecutor;
   private final LevelDBQueueAdmin queueAdmin;
-  private final LevelDBStreamAdmin streamAdmin;
 
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
   public LevelDBQueueClientFactory(CConfiguration cConf, LevelDBTableService service,
-                                   LevelDBQueueAdmin queueAdmin,
-                                   LevelDBStreamAdmin streamAdmin) throws Exception {
+                                   LevelDBQueueAdmin queueAdmin) throws Exception {
     this.cConf = cConf;
     this.service = service;
     this.evictionExecutor = createEvictionExecutor();
     this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -105,14 +102,13 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
    * @throws IOException
    */
   private LevelDBQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
-    LevelDBQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
     try {
       // it will create table if it is missing
-      admin.create(queueName);
+      queueAdmin.create(queueName);
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + admin.getActualTableName(queueName), e);
+      throw new IOException("Failed to open table " + queueAdmin.getActualTableName(queueName), e);
     }
-    return admin;
+    return queueAdmin;
   }
 
   private Object getQueueLock(String queueName) {

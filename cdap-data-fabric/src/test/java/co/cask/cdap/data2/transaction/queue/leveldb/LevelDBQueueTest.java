@@ -24,25 +24,19 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.runtime.DiscoveryModules;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -68,16 +62,7 @@ public class LevelDBQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      Modules.override(new StreamAdminModules().getStandaloneModules())
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
-            bind(StreamAdmin.class).to(LevelDBStreamAdmin.class);
-            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
-          }
-        }));
+      new TransactionMetricsModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
