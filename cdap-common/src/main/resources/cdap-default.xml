@@ -576,6 +576,13 @@
         <description>Root location for collecting logs</description>
     </property>
 
+    <!-- Template configuration -->
+    <property>
+        <name>app.template.dir</name>
+        <value>/opt/cdap/master/plugins</value>
+        <description>Directory where all archives for app templates are stored</description>
+    </property>
+
     <!-- App Fabric related changes -->
     <property>
         <name>app.bind.address</name>
