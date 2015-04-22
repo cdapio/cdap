@@ -35,6 +35,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.jms.Connection;
@@ -48,6 +49,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
+import javax.naming.Context;
 
 /**
  * Unit test for JMS ETL realtime source
@@ -112,7 +114,7 @@ public class JmsMessageToStringSourceTest {
 
       // Let's start the Connection
       queueConn.start();
-      sendMessage(queueConn, queueDestination, "Queue:" + queueDestination.getQueueName());
+      sendMessage(queueConn, queueDestination, "Queue with Mock Provider:" + queueDestination.getQueueName());
 
       // Verify if it is valid
       verifyEmittedText(jmsSource);
@@ -144,7 +146,7 @@ public class JmsMessageToStringSourceTest {
 
       // Let's start the Connection
       topicConn.start();
-      sendMessage(topicConn, topicDestination, "Topic:" + topicDestination.getTopicName());
+      sendMessage(topicConn, topicDestination, "Topic with Mock Provider:" + topicDestination.getTopicName());
 
       // Verify if it is valid
       verifyEmittedText(jmsSource);
@@ -158,6 +160,68 @@ public class JmsMessageToStringSourceTest {
       }
     }
 
+  }
+
+  @Test
+  public void testJndiBasedJmsProvider() throws Exception {
+    // Create ActiveMQ ConnectionFactory for the JNDI based JmsProvider
+    final Map<String, String> contextEnv = new HashMap<String, String>();
+    contextEnv.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+    contextEnv.put(Context.PROVIDER_URL, "vm://localhost?broker.persistent=false");
+    contextEnv.put(JmsSource.JMS_DESTINATION_NAME, "dynamicQueues/CDAP.QUEUE");
+
+    jmsSource.setSessionAcknowledgeMode(sessionAckMode);
+
+    jmsSource.initialize(new RealtimeContext() {
+      @Override
+      public Map<String, String> getRuntimeArguments() {
+        return contextEnv;
+      }
+
+      @Override
+      public StageSpecification getSpecification() {
+        return null;
+      }
+
+      @Override
+      public Metrics getMetrics() {
+        return null;
+      }
+
+      @Override
+      public int getInstanceId() {
+        return 0;
+      }
+
+      @Override
+      public int getInstanceCount() {
+        return 1;
+      }
+    });
+
+    jmsProvider = jmsSource.getJmsProvider();
+    ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
+    QueueConnection queueConn = null;
+    try {
+      queueConn = (QueueConnection) connectionFactory.createConnection();
+      Queue queueDestination = (Queue) jmsProvider.getDestination();
+
+      // Let's start the Connection
+      queueConn.start();
+      sendMessage(queueConn, queueDestination, "Queue with JNDI Provider:" + queueDestination.getQueueName());
+
+      // Verify if it is valid
+      verifyEmittedText(jmsSource);
+
+    } finally {
+      if (queueConn != null) {
+        try {
+          queueConn.close();
+        } catch (JMSException e) {
+          LOG.error("Exception when closing Queue connection.");
+        }
+      }
+    }
   }
 
   // Helper method to start sending message to destination
