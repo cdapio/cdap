@@ -18,13 +18,18 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -43,6 +48,37 @@ public interface TestManager {
    */
   ApplicationManager deployApplication(Id.Namespace namespace,
                                        Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+
+  /**
+   * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.
+   *
+   * @param namespace The namespace to deploy to
+   * @param templateClz The template class
+   * @param templateId The id of the template. Must match the name set in
+   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
+   */
+  void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
+                      Class<? extends ApplicationTemplate> templateClz) throws IOException;
+
+  /**
+   * Adds a plugin usable by the given template. Only supported in unit tests.
+   *
+   * @param templateId The id of the template to add the plugin for
+   * @param pluginClz The plugin class
+   * @param jarName The name to use for the plugin jar
+   * @throws IOException
+   */
+  void addTemplatePlugin(Id.ApplicationTemplate templateId, Class<?> pluginClz, String jarName) throws IOException;
+
+  /**
+   * Creates an adapter.
+   *
+   * @param adapterId The id of the adapter to create
+   * @param config The configuration for the adapter
+   * @return An {@link AdapterManager} to manage the deployed adapter.
+   * @throws Exception if there was an exception deploying the adapter.
+   */
+  AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception;
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
