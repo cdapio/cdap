@@ -24,6 +24,7 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import com.google.common.collect.Queues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.StallWarning;
@@ -36,7 +37,6 @@ import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.Date;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.annotation.Nullable;
 
 /**
@@ -46,6 +46,10 @@ import javax.annotation.Nullable;
  */
 public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TwitterStreamSource.class);
+  private static final String CONSUMER_KEY = "ConsumerKey";
+  private static final String CONSUMER_SECRET = "ConsumerSecret";
+  private static final String ACCESS_TOKEN = "AccessToken";
+  private static final String ACCESS_SECRET = "AccessTokenSecret";
 
   private static final String ID = "id";
   private static final String MSG = "message";
@@ -55,12 +59,13 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   private static final String RTC = "rtCont";
   private static final String SRC = "source";
   private static final String GLAT = "geolat";
-  private static final String GLNG = "goLong";
+  private static final String GLNG = "geoLong";
   private static final String ISRT = "isRetweet";
 
   private TwitterStream twitterStream;
   private StatusListener statusListener;
-  private Queue<Status> tweetQ = new ConcurrentLinkedQueue<Status>();
+  private Queue<Status> tweetQ = Queues.newConcurrentLinkedQueue();
+  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Configure the Twitter Source.
@@ -71,33 +76,20 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   public void configure(StageConfigurer configurer) {
     configurer.setName(TwitterStreamSource.class.getSimpleName());
     configurer.setDescription("Twitter Realtime Source");
-    configurer.addProperty(new Property("ConsumerKey", "Consumer Key", true));
-    configurer.addProperty(new Property("ConsumerSecret", "Consumer Secret", true));
-    configurer.addProperty(new Property("AccessToken", "Access Token", true));
-    configurer.addProperty(new Property("AccessTokenSecret", "Access Token Secret", true));
+    configurer.addProperty(new Property(CONSUMER_KEY, "Consumer Key", true));
+    configurer.addProperty(new Property(CONSUMER_SECRET, "Consumer Secret", true));
+    configurer.addProperty(new Property(ACCESS_TOKEN, "Access Token", true));
+    configurer.addProperty(new Property(ACCESS_SECRET, "Access Token Secret", true));
   }
 
   private StructuredRecord convertTweet(Status tweet) {
-    Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
-    Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
-    Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
-    Schema.Field timeField = Schema.Field.of(TIME, Schema.of(Schema.Type.LONG));
-    Schema.Field favCount = Schema.Field.of(FAVC, Schema.of(Schema.Type.INT));
-    Schema.Field rtCount = Schema.Field.of(RTC, Schema.of(Schema.Type.INT));
-    Schema.Field sourceField = Schema.Field.of(SRC, Schema.of(Schema.Type.STRING));
-    Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.of(Schema.Type.DOUBLE));
-    Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.of(Schema.Type.DOUBLE));
-    Schema.Field reTweetField = Schema.Field.of(ISRT, Schema.of(Schema.Type.BOOLEAN));
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf(
-      "tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField, geoLatField, geoLongField,
-      reTweetField));
-
     recordBuilder.set(ID, tweet.getId());
     recordBuilder.set(MSG, tweet.getText());
     recordBuilder.set(LANG, tweet.getLang());
     recordBuilder.set(TIME, convertDataToTimeStamp(tweet.getCreatedAt()));
     recordBuilder.set(FAVC, tweet.getFavoriteCount());
     recordBuilder.set(RTC, tweet.getRetweetCount());
+    recordBuilder.set(SRC, tweet.getSource());
     if (tweet.getGeoLocation() != null) {
       recordBuilder.set(GLAT, tweet.getGeoLocation().getLatitude());
       recordBuilder.set(GLNG, tweet.getGeoLocation().getLongitude());
@@ -120,7 +112,6 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
     if (!tweetQ.isEmpty()) {
       Status status = tweetQ.remove();
       StructuredRecord tweet = convertTweet(status);
-      LOG.error("Sending Tweet : {}", tweet);
       writer.emit(tweet);
     }
     return currentState;
@@ -129,6 +120,19 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
+    Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
+    Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
+    Schema.Field timeField = Schema.Field.of(TIME, Schema.of(Schema.Type.LONG));
+    Schema.Field favCount = Schema.Field.of(FAVC, Schema.of(Schema.Type.INT));
+    Schema.Field rtCount = Schema.Field.of(RTC, Schema.of(Schema.Type.INT));
+    Schema.Field sourceField = Schema.Field.of(SRC, Schema.of(Schema.Type.STRING));
+    Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.of(Schema.Type.DOUBLE));
+    Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.of(Schema.Type.DOUBLE));
+    Schema.Field reTweetField = Schema.Field.of(ISRT, Schema.of(Schema.Type.BOOLEAN));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf(
+      "tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField, geoLatField, geoLongField,
+      reTweetField));
 
     statusListener = new StatusListener() {
       @Override
@@ -164,10 +168,10 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
-        .setOAuthConsumerKey(context.getRuntimeArguments().get("ConsumerKey"))
-        .setOAuthConsumerSecret(context.getRuntimeArguments().get("ConsumerSecret"))
-        .setOAuthAccessToken(context.getRuntimeArguments().get("AccessToken"))
-        .setOAuthAccessTokenSecret(context.getRuntimeArguments().get("AccessTokenSecret"));
+        .setOAuthConsumerKey(context.getRuntimeArguments().get(CONSUMER_KEY))
+        .setOAuthConsumerSecret(context.getRuntimeArguments().get(CONSUMER_SECRET))
+        .setOAuthAccessToken(context.getRuntimeArguments().get(ACCESS_TOKEN))
+        .setOAuthAccessTokenSecret(context.getRuntimeArguments().get(ACCESS_SECRET));
 
     twitterStream = new TwitterStreamFactory(configurationBuilder.build()).getInstance();
     twitterStream.addListener(statusListener);
