@@ -40,6 +40,7 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -203,6 +204,13 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     validateTypes(unresTypeList);
   }
 
+  /**
+   * Takes in an unresolved type list and resolves the types and verifies if the types are assignable.
+   * Ex: An unresolved type could be : String, T, List<T>, List<String>
+   *     The above will resolve to   : String, String, List<String>, List<String>
+   *     And the assignability will be checked : String --> String && List<String> --> List<String>
+   *     which is true in the case above.
+   */
   @VisibleForTesting
   static void validateTypes(ArrayList<Type> unresTypeList) {
     Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
@@ -229,14 +237,14 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
       Type toResolveType = unresTypeList.get(i);
       try {
         Type newType;
-        newType = (new TypeResolution()).where(formalType, actualType).resolveType(toResolveType);
-
-        // If TypeResolution was not able to resolve or if the toResolveType is a TypeVariable, then try to resolve
+        // If the toResolveType is a TypeVariable or a Generic Array, then try to resolve
         // using just the previous resolved type.
         // Ex: Actual = List<String> ; Formal = List<T> ; ToResolve = T ==> newType = String which is not correct;
         // newType should be List<String>. Hence resolve only from the previous resolved type (Actual)
-        if (newType.equals(toResolveType) || (toResolveType instanceof TypeVariable)) {
+        if ((toResolveType instanceof TypeVariable) || (toResolveType instanceof GenericArrayType)) {
           newType = (new TypeResolution()).where(toResolveType, actualType).resolveType(toResolveType);
+        } else {
+          newType = (new TypeResolution()).where(formalType, actualType).resolveType(toResolveType);
         }
         resTypeList.add(newType);
       } catch (IllegalArgumentException e) {

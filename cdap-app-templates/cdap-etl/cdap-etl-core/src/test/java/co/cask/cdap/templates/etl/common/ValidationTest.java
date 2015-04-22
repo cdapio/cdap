@@ -43,6 +43,19 @@ public class ValidationTest {
     ETLTemplate.validateTypes(typeList);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testAnotherInvalidMatch() throws Exception {
+    // String --> Object | Object --> T | List<T> --> List<String>
+    // List<Object> -> List<String> should fail.
+    ArrayList<Type> typeList = Lists.newArrayList();
+    typeList.add(String.class);
+    typeList.add(Object.class);
+    typeList.add(Object.class);
+    typeList.addAll(getBothParameters(ParamToListParam.class));
+    typeList.add(getFirstTypeParameter(StringListSink.class));
+    ETLTemplate.validateTypes(typeList);
+  }
+
   @Test
   public void testSimpleValidType() throws Exception {
     // Child --> Parent | Integer --> Object

@@ -21,7 +21,8 @@ import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
 /**
- * Invokes methods in {@link TypeResolver} since it is a package private class in the Guava version used.
+ * Invokes methods in {@link TypeResolver} since it is a package private class in Guava 13.
+ * {@link TypeResolver} is a public class in Guava 15 but cdap-api has dependency on Guava 13.
  */
 public class TypeResolution {
   private TypeResolver resolver;
