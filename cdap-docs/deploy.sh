@@ -43,8 +43,6 @@ decho () {
   fi
 }
 
-# set the mandatory variables first (from info in project's main pom.xml)
-
 # get project version from main pom.xml
 function get_version () {
   TMP_VERSION=`grep "<version>" ../pom.xml`
@@ -65,7 +63,7 @@ function convert_branch_name () {
   DOC_DIR=`echo $DOC_DIR | tr '/' '-'`
 }
 
-# create remote directory based on type of build
+# Determines remote directory based on type of build
 #   3 scenarios (assuming remote base web directory=/var/www/html/cdap and VERSION=2.8.1)
 #     OPT_DIR is set via environment variables
 #         => remote directory=/var/www/html/cdap/${VERSION}-${OPT_DIR}
@@ -80,29 +78,37 @@ set_remote_dir () {
   if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* ]]; then
     REMOTE_DIR=''
   else
-    #REMOTE_DIR=branches/${DOC_DIR}
     REMOTE_DIR=${VERSION}-${DOC_DIR}
     BRANCH=yes
   fi
   decho "SUBDIR=${REMOTE_DIR}"
 }
 
-# parameters that can be passed to this script (as environment variables)
-DEBUG=${DEBUG:-no}
+################################
+### parameters that can be passed to this script (as environment variables)
+
+## bamboo plan variables
+# OPT_DIR           (optional) 
+DEBUG=${DEBUG:-no} #(optional)
 DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
-DOCS_SERVER1=${DOCS_SERVER1:-docs1.cask.co}
-DOCS_SERVER2=${DOCS_SERVER2:-docs2.cask.co}
-STG_SERVER=${STG_SERVER:-docs-staging.cask.co}
 REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/${PROJECT}}
 REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/${PROJECT}}
-# OPT_DIR (optional)
+
+## bamboo global variables
+# DOCS_SERVER1
+# DOCS_SERVER2
+# STG_SERVER
+################################
 
 decho "OPT_DIR=${OPT_DIR}"
 decho "BRANCH_NAME=${BRANCH_NAME}"
 
+# set the mandatory variables first (from info in project's main pom.xml)
 get_version
 get_project
+
+# Determine remote directory
 set_remote_dir
 
 #
@@ -120,8 +126,15 @@ RSYNC_PATH='sudo rsync'
 
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 
+# make sure PROJECT is set to something
 if [ "${PROJECT}" == '' ]; then
   echo "PROJECT not defined"
+  exit 1
+fi
+
+# make sure we have selected a location for deploying the docs
+if [[ "${DOCS_SERVER1}" == '' || "${DOCS_SERVER2}" == '' ]] && [[ "${STG_SERVER}" == '' ]]; then
+  echo "No servers defined for deployment!"
   exit 1
 fi
 
@@ -140,9 +153,9 @@ function copy_zip_file () {
 function make_remote_dir () {
   local _user=${1}
   local _host=${2}
-  local _remote_dir=${3}
-  decho "ssh ${_user}@${_host} \"sudo mkdir -p ${_remote_dir}\""
-  ssh ${_user}@${_host} "sudo mkdir -p ${_remote_dir}" || die "could not create ${_remote_dir} directory on ${_host}"
+  local _rdir=${3} # remote directory
+  decho "ssh ${_user}@${_host} \"sudo mkdir -p ${_rdir}\""
+  ssh ${_user}@${_host} "sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
   decho ""
 }
 
@@ -150,16 +163,17 @@ function make_remote_dir () {
 function sync_local_dir_to_remote_dir () {
   local _user=${1}
   local _host=${2}
-  local _remote_dir=${3}
+  local _rdir=${3} # remote directory
   local _zip_file=${4}
   local _local_dir=${5}
   local _version=${6}
+  # if there is no branch name to append, append version to directory name, otherwise all files end up one level too high
   if [ "${BRANCH}" == '' ]; then
-    _remote_dir=${_remote_dir}/${_version}
+    _rdir=${_rdir}/${_version}
   fi
   decho ""
-  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_remote_dir}\"" 
-  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_remote_dir}" || die "could not rsync ${_local_dir} to ${_remote_dir} on ${_host}" 
+  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_rdir}\"" 
+  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_rdir}" || die "could not rsync ${_local_dir} to ${_rdir} on ${_host}" 
 }
 
 # main deploy function
