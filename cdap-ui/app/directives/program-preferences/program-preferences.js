@@ -85,7 +85,7 @@ angular.module(PKG.name+'.commons')
         })
         .then(function() {
           $scope.loadProperties();
-          $scope.modalClose();
+          $scope.$close();
         });
     };
 
@@ -101,15 +101,10 @@ angular.module(PKG.name+'.commons')
   .service('myProgramPreferencesService', function($bootstrapModal, $rootScope){
     var modalInstance;
 
-    function close () {
-      modalInstance.close();
-    }
-
     this.show = function(type) {
 
       var scope = $rootScope.$new();
       scope.type = type;
-      scope.modalClose = close;
 
       modalInstance = $bootstrapModal.open({
         template: '<my-program-preferences></my-program-preferences>',

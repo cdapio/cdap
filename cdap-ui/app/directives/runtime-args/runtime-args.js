@@ -3,6 +3,7 @@ angular.module(PKG.name+'.commons')
   .directive('myRuntimeArgs', function() {
     return {
       restrict: 'E',
+      controller: 'RuntimeArgumentsController',
       templateUrl: 'runtime-args/runtime-args.html'
     };
   })
@@ -22,7 +23,6 @@ angular.module(PKG.name+'.commons')
       modalInstance = $bootstrapModal.open({
         template: '<my-runtime-args></my-runtime-args>',
         size: 'lg',
-        controller: 'RuntimeArgumentsController',
         scope: scope
       });
       return modalInstance;
