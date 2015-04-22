@@ -16,14 +16,21 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
+import co.cask.cdap.templates.etl.realtime.jms.JndiBasedJmsProvider;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
+import org.apache.hadoop.util.hash.Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Hashtable;
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -43,6 +50,8 @@ import javax.jms.TextMessage;
  */
 public class JmsSource extends RealtimeSource<String> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
+
+  public static final String JMS_DESTINATION_NAME = "jms.destination.name";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
   private static final String CDAP_JMS_SOURCE_NAME = "JMS Realtime Source";
@@ -66,6 +75,10 @@ public class JmsSource extends RealtimeSource<String> {
   public void configure(StageConfigurer configurer) {
     configurer.setName(CDAP_JMS_SOURCE_NAME);
     configurer.setDescription("CDAP JMS Realtime Source");
+    configurer.addProperty(new Property("jms.messages.receive", "Number messages should be retrieved " +
+      "for each poll", false));
+    configurer.addProperty(new Property("jms.destination.name", "Name of the destination to get messages " +
+      "from.", false));
   }
 
   /**
@@ -80,17 +93,37 @@ public class JmsSource extends RealtimeSource<String> {
       messagesToReceive = Integer.valueOf(context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE));
     }
 
+    // Try get the destination name
+    String destinationName = context.getRuntimeArguments().get(JMS_DESTINATION_NAME);
+
+    // Get environment vars - this would be prefixed with java.naming.*
+    final Hashtable<String, String> envVars = new Hashtable<String, String>();
+    Maps.filterEntries(context.getRuntimeArguments(), new Predicate<Map.Entry<String, String>>() {
+      @Override
+      public boolean apply(@Nullable Map.Entry<String, String> input) {
+        if (input.getKey() != null && input.getKey().startsWith("java.naming.")) {
+          envVars.put(input.getKey(), input.getValue());
+          return true;
+        }
+        return false;
+      }
+    });
+
     // Bootstrap the JMS consumer
-    initializeJMSConnection();
+    initializeJMSConnection(envVars, destinationName);
   }
 
   /**
    * Helper method to initialize the JMS Connection to start listening messages.
    */
-  private void initializeJMSConnection() {
+  private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName) {
     if (jmsProvider == null) {
-      throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
-                                         "Please set the right JMSProvider");
+      if (destinationName == null) {
+        throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
+                                          "Please set the right JMSProvider");
+      } else {
+        jmsProvider = new JndiBasedJmsProvider(envVars, destinationName);
+      }
     }
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
 
@@ -215,5 +248,14 @@ public class JmsSource extends RealtimeSource<String> {
    */
   public void setJmsProvider(JmsProvider provider) {
     jmsProvider = provider;
+  }
+
+  /**
+   * Return the internal {@link JmsProvider} used by the source.
+   *
+   * @return the instance of {@link JmsProvider} for this JMS source.
+   */
+  public JmsProvider getJmsProvider() {
+    return jmsProvider;
   }
 }
