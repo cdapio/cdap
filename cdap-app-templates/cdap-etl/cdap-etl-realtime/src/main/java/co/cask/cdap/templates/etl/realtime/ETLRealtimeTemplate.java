@@ -60,7 +60,7 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    configurer.setName("etlrealtime");
+    configurer.setName("etlRealtime");
     configurer.setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
     configurer.addWorker(new ETLWorker());
     configurer.createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
