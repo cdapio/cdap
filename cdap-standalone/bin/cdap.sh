@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -339,7 +339,6 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
-    echo "--enable-alpha-ui Start new ui"
     exit 1
   ;;
 
