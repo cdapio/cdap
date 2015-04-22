@@ -61,13 +61,15 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final AdapterService adapterService;
   private final NamespaceAdmin namespaceAdmin;
+  private final AppLifecycleHttpHandler appLifecycleHttpHandler;
 
   @Inject
   public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
-                            NamespaceAdmin namespaceAdmin) {
+                            NamespaceAdmin namespaceAdmin, AppLifecycleHttpHandler appLifecycleHttpHandler) {
     super(authenticator);
     this.namespaceAdmin = namespaceAdmin;
     this.adapterService = adapterService;
+    this.appLifecycleHttpHandler = appLifecycleHttpHandler;
   }
 
   /**
@@ -253,7 +255,12 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterName) {
     try {
-      adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
+      Id.Namespace namespace = Id.Namespace.from(namespaceId);
+      adapterService.removeAdapter(namespace, adapterName);
+      AdapterSpecification adapterSpec = adapterService.getAdapter(namespace, adapterName);
+      if (adapterService.canDeleteApp(Id.Application.from(namespace, adapterSpec.getTemplate()))) {
+        appLifecycleHttpHandler.deleteApp(request, responder, namespaceId, adapterSpec.getTemplate());
+      }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (CannotBeDeletedException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
