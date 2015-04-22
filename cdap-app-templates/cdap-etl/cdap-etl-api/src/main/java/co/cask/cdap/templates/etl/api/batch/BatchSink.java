@@ -16,57 +16,32 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 
 /**
- * Batch Sink forms the last stage of a Batch ETL Pipeline.
+ * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch job, the sink
+ * also transforms a single input object into a key value pair that the Batch job will output. By default, the input
+ * object is used as the key and null is used as the value.
  *
- * @param <KEY> Batch Output Key class
- * @param <VALUE> Batch Output Value class
+ * @param <IN> the type of input object to the sink
+ * @param <KEY_OUT> the type of key the sink outputs
+ * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class BatchSink<KEY, VALUE> {
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
+  implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>> {
 
-  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
-  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link KEY}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getKeyType() {
-    return keyType;
-  }
-
-  /**
-   * Get the Type of {@link VALUE}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getValueType() {
-    return valueType;
-  }
-
-  /**
-   * Configure the Sink.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
+  @Override
   public void configure(StageConfigurer configurer) {
     // no-op
   }
 
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
+  @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
@@ -77,4 +52,19 @@ public abstract class BatchSink<KEY, VALUE> {
    * @param context {@link BatchSinkContext}
    */
   public abstract void prepareJob(BatchSinkContext context);
+
+  /**
+   * Initialize the sink. This is called once each time the Hadoop Job runs, before any
+   * calls to {@link #transform(Object, Emitter)} are made.
+   *
+   * @param stageConfig the configuration for the stage.
+   */
+  public void initialize(ETLStage stageConfig) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void transform(IN input, Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
+    emitter.emit(new KeyValue<KEY_OUT, VAL_OUT>((KEY_OUT) input, null));
+  }
 }

@@ -1,23 +1,27 @@
 <div ncy-breadcrumb></div>
-<table class="table table-responsive" cask-sortable>
-  <thead>
-    <tr ng-class="{'sort-enabled': dataList.length>0}">
-      <th data-predicate="name" data-predicate-default="reverse"> Name </th>
-      <th data-predicate="dataType"> Type </th>
-      <th data-predicate="description"> Description </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
-        <td>
-          <a ng-click="goToDetail(data)"
-              href=""
-              ng-bind="data.name | caskCapitalizeFilter">
-          </a>
-        </td>
-        <td ng-bind="data.dataType">
-        </td>
-        <td ng-bind="data.description">  </td>
-    </tr>
-  <tbody>
-</table>
+<h2> All Datasets </h2>
+<div class="table-responsive">
+  <table class="table table-curved" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': dataList.length>0}">
+        <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+        <th data-predicate="dataType"> Type </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ng-click="goToDetail(data)"
+                href="">
+                <strong ng-bind="data.name | caskCapitalizeFilter"> </strong>
+            </a>
+          </td>
+          <td>
+            <img class="type-icon" ng-if="data.dataType === 'Stream'" src="assets/img/ico_stream_gray.png" alt="" />
+            <img class="type-icon" ng-if="data.dataType === 'Dataset'" src="assets/img/ico_datasets_gray.png" alt="" />
+            <span> {{data.dataType}} </span>
+          </td>
+      </tr>
+    <tbody>
+  </table>
+</div>

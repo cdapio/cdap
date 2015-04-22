@@ -34,13 +34,11 @@ public interface ServiceManager {
 
   /**
    * Returns the number of requested instances.
-   *
    */
   int getRequestedInstances();
 
   /**
-   * Returns the number of requested runnable instances.
-   *
+   * Returns the number of provisioned instances.
    */
   int getProvisionedInstances();
 

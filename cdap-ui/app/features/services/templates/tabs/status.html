@@ -1,66 +1,61 @@
 <div ng-controller="ServicesDetailStatusController">
-  <div class="row">
-    <div class="col-sm-6">
-      <div class="row">
-        <div class="col-sm-3">
-          <h4> Status </h4>
-          <em ng-bind="status"> </em>
-        </div>
-        <!-- <div class="col-sm-3">
-          <h4> Started </h4>
-        </div>
-        <div class="col-sm-3">
-          <h4> Last Run </h4>
-        </div> -->
-        <div class="col-sm-3">
-          <h4> Instances </h4>
-          <div> <em  ng-bind="instances.provisioned + ' provisioned'"></em> </div>
-          <div> <em ng-bind="instances.requested + ' requested'"> </em> </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 text-right h4">
-      <div ng-show="status == 'RUNNING'"
-           class="btn btn-default btn-md"
-           ng-click="stop()">
-        <span class="fa fa-stop"> </span>
-      </div>
 
-      <div ng-show="status == 'STOPPED'"
-           class="btn btn-default btn-md"
-           ng-click="start()">
-        <span class="fa fa-play"> </span>
-      </div>
-      <div ng-show="status == 'STARTING' || status == 'STOPPING'"
-           class="btn btn-default btn-md">
-        <span class="fa fa-refresh fa-spin"></span>
-      </div>
+  <div class="row">
+    <div class="col-xs-9">
+
+        <table class="table table-curved table-status">
+          <thead>
+            <th>Status</th>
+            <th>Instances</th>
+          </thead>
+          <tbody>
+            <td ng-bind="status"> </td>
+            <td>
+              <div class="row">
+                <div class="col-xs-6">
+                  <em  ng-bind="instances.provisioned + ' provisioned'"></em>
+                </div>
+                <div class="col-xs-6">
+                  <em ng-bind="instances.requested + ' requested'"> </em>
+                </div>
+              </div>
+            </td>
+          </tbody>
+        </table>
+
     </div>
   </div>
 
-  <h2> Endpoints </h2>
-  <table class="table table-condensed">
-    <thead>
-      <tr>
-        <th> Method </th>
-        <th> Path </th>
-        <th>  </th>
+  <div class="row">
+    <div class="col-xs-9">
+      <h2> Endpoints [{{endPoints.length}}] </h2>
+        <table class="table table-curved">
+          <thead>
+            <tr>
+              <th> Method </th>
+              <th> Path </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="ep in endPoints">
+              <td ng-bind="ep.method"></td>
+              <td>
+                <div class="row">
+                  <div class="col-xs-6">
+                    {{ep.path}}
+                  </div>
+                  <div class="col-xs-6">
+                    <a class="btn btn-default"
+                        ng-disabled="status !== 'RUNNING'"
+                        ui-sref=".makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
+                      Make Request </a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+    </div>
+  </div>
 
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="ep in endPoints">
-        <td ng-bind="ep.method"></td>
-        <td ng-bind="ep.path"></td>
-        <td>
-          <div class="btn-group btn-group-xs" role="group">
-            <a class="btn btn-default"
-                ng-disabled="status !== 'RUNNING'"
-                ui-sref=".makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
-              Make Request </a>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
 </div>

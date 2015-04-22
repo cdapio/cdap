@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -32,7 +33,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -180,6 +180,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+
+      // Alter the template directory to only the name part in the container directory.
+      // It works in pair with the ProgramRunner.
+      // See AbstractDistributedProgramRunner
+      File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+      cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, templateDir.getName());
 
       injector = Guice.createInjector(createModule(context));
 

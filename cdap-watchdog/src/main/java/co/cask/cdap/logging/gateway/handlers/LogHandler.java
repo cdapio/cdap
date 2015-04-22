@@ -25,13 +25,11 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
-import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -53,7 +51,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
-  private static final Gson GSON = new Gson();
 
   private final LogReader logReader;
   private final String logPattern;
@@ -73,10 +70,11 @@ public class LogHandler extends AuthenticatedHttpHandler {
                       @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
                       @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr) {
+                      @QueryParam("filter") @DefaultValue("") String filterStr,
+                      @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)));
+                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
     doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
@@ -88,11 +86,12 @@ public class LogHandler extends AuthenticatedHttpHandler {
                            @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
                            @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
-                           @QueryParam("filter") @DefaultValue("") String filterStr) {
+                           @QueryParam("filter") @DefaultValue("") String filterStr,
+                           @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),
-                                                      runId, null);
+                                                      runId, adapterId);
     doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
@@ -128,10 +127,12 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+                   @QueryParam("filter") @DefaultValue("") String filterStr,
+                   @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                             programId, getProgramType(ProgramType.valueOfCategoryName(programType)));
+                                             programId, getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                             adapterId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
 
@@ -143,11 +144,12 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr,
+                        @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),
-                                                      runId, null);
+                                                      runId, adapterId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
 
@@ -158,7 +160,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
-      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -176,10 +179,11 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr) {
+                   @QueryParam("filter") @DefaultValue("") String filterStr,
+                   @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)));
+                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
 
@@ -191,11 +195,12 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr,
+                        @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       getProgramType(ProgramType.valueOfCategoryName(programType)),
-                                                      runId, null);
+                                                      runId, adapterId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
 
@@ -205,7 +210,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       Filter filter = FilterParser.parse(filterStr);
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -214,50 +220,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/logs")
-  public void getAdapterLogs(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("adapter-id") String adapterId,
-                             // The following 3 query params should be removed,
-                             // when we have a way of querying adapter service
-                             // for the template and program, given an adapter name
-                             @QueryParam("template") String templateId,
-                             @QueryParam("programtype") String programType,
-                             @QueryParam("programid") String programId,
-                             @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
-                             @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
-                             @QueryParam("escape") @DefaultValue("true") boolean escape,
-                             @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext(namespaceId, templateId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
-    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs")
-  public void getAdapterRunIdLogs(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("adapter-id") String adapterId,
-                                  @PathParam("run-id") String runId,
-                                  // The following 3 query params should be removed,
-                                  // when we have a way of querying adapter service
-                                  // for the template and program, given an adapter name
-                                  @QueryParam("template") String templateId,
-                                  @QueryParam("programtype") String programType,
-                                  @QueryParam("programid") String programId,
-                                  @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
-                                  @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeMsParam,
-                                  @QueryParam("escape") @DefaultValue("true") boolean escape,
-                                  @QueryParam("filter") @DefaultValue("") String filterStr) {
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, templateId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
-                                                      runId, adapterId);
-    doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
   @GET
@@ -304,7 +266,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogNext(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -326,7 +289,8 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, parseLogOffset(fromOffsetStr), maxEvents, filter, logCallback);
+      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+                           maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -341,8 +305,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     switch (programType) {
       case FLOW:
         return ProgramType.FLOW;
-      case PROCEDURE:
-        return ProgramType.PROCEDURE;
       case MAPREDUCE:
         return ProgramType.MAPREDUCE;
       case SPARK:
@@ -354,12 +316,5 @@ public class LogHandler extends AuthenticatedHttpHandler {
       default:
         throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }
-  }
-
-  private LogOffset parseLogOffset(String offsetStr) {
-    if (offsetStr.isEmpty()) {
-      return LogOffset.LATEST_OFFSET;
-    }
-    return GSON.fromJson(offsetStr, LogOffset.class);
   }
 }

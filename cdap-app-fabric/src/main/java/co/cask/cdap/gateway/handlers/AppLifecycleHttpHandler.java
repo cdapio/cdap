@@ -38,6 +38,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.auth.Authenticator;
@@ -122,6 +123,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
   private final MetricStore metricStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -130,7 +132,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  StreamConsumerFactory streamConsumerFactory, QueueAdmin queueAdmin,
                                  PreferencesStore preferencesStore, AdapterService adapterService,
                                  NamespaceAdmin namespaceAdmin, MetricStore metricStore,
-                                 NamespacedLocationFactory namespacedLocationFactory) {
+                                 NamespacedLocationFactory namespacedLocationFactory,
+                                 UsageRegistry usageRegistry) {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
@@ -144,6 +147,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.preferencesStore = preferencesStore;
     this.adapterService = adapterService;
     this.metricStore = metricStore;
+    this.usageRegistry = usageRegistry;
   }
 
   /**
@@ -209,28 +213,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId) {
-    try {
-      Id.Application id = Id.Application.from(namespaceId, appId);
+                        @PathParam("app-id") final String appId) throws Exception {
 
-      // Deletion of a particular application is not allowed if that application is used by an adapter
-      if (!adapterService.canDeleteApp(id)) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-          "Cannot delete Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
-
-        return;
-      }
-
-      AppFabricServiceStatus appStatus = removeApplication(id);
-      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
-      responder.sendString(appStatus.getCode(), appStatus.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting app: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    Id.Application id = Id.Application.from(namespaceId, appId);
+    AppFabricServiceStatus appStatus = removeApplication(id);
+    LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
+    responder.sendString(appStatus.getCode(), appStatus.getMessage());
   }
 
   /**
@@ -239,19 +227,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
-    try {
-      Id.Namespace id = Id.Namespace.from(namespaceId);
-      AppFabricServiceStatus status = removeAll(id);
-      LOG.trace("Delete all call at AppFabricHttpHandler");
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while deleting all apps: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
+
+    Id.Namespace id = Id.Namespace.from(namespaceId);
+    AppFabricServiceStatus status = removeAll(id);
+    LOG.trace("Delete all call at AppFabricHttpHandler");
+    responder.sendString(status.getCode(), status.getMessage());
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,
@@ -338,9 +319,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         case FLOW:
           stopProgramIfRunning(programId, type);
           break;
-        case PROCEDURE:
-          stopProgramIfRunning(programId, type);
-          break;
         case WORKFLOW:
           scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
           break;
@@ -397,14 +375,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected AppFabricServiceStatus removeAll(Id.Namespace identifier) throws Exception {
+  private AppFabricServiceStatus removeAll(Id.Namespace identifier) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
       store.getAllApplications(identifier));
 
-    //Check if any App associated with this namespace is running
+    //Check if any program associated with this namespace is running
     final Id.Namespace accId = Id.Namespace.from(identifier.getId());
     boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -422,10 +397,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
       removeApplication(id);
     }
+
     return AppFabricServiceStatus.OK;
   }
 
   private AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
+    // Deletion of a particular application is not allowed if that application is used by an adapter
+    if (!adapterService.canDeleteApp(appId)) {
+      return AppFabricServiceStatus.ADAPTER_CONFLICT;
+    }
+
     //Check if all are stopped.
     boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -482,14 +463,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
     appArchive.delete();
     store.removeApplication(appId);
+
+    try {
+      usageRegistry.unregister(appId);
+    } catch (Exception e) {
+      LOG.warn("Failed to unregister usage of app: {}", appId, e);
+    }
+
     return AppFabricServiceStatus.OK;
   }
 
   /**
-   * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
-   * the reset API has a v3 version
+   * Delete the metrics for an application, or if null is provided as the application ID, for all apps.
+   * @param applicationId the application to delete metrics for.
+   *                      If null, metrics for all applications in the namespace are deleted.
    */
-  protected void deleteMetrics(String namespaceId, String applicationId) throws Exception {
+  private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
     if (applicationId == null) {
       applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
@@ -505,7 +494,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (ApplicationSpecification application : applications) {
       // add or replace application name in the tagMap
       tags.put(Constants.Metrics.Tag.APP, application.getName());
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
       metricStore.delete(deleteQuery);
     }
   }
@@ -515,7 +504,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationSpecification appSpec = store.getApplication(appId);
     return Iterables.concat(appSpec.getFlows().values(),
                             appSpec.getMapReduce().values(),
-                            appSpec.getProcedures().values(),
                             appSpec.getServices().values(),
                             appSpec.getSpark().values(),
                             appSpec.getWorkers().values(),
@@ -580,10 +568,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getProcedures().values()) {
-      programs.add(new ProgramRecord(ProgramType.PROCEDURE, spec.getName(),
                                      programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {

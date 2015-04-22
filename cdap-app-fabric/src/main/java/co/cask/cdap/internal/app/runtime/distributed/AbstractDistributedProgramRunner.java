@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
@@ -23,19 +24,24 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
@@ -47,8 +53,6 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,9 +63,12 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
@@ -99,96 +106,140 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   @Override
   public final ProgramController run(final Program program, final ProgramOptions options) {
-    final File hConfFile;
-    final File cConfFile;
     final Program copiedProgram;
     final File programDir;    // Temp directory for unpacking the program
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
 
+    final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                         cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
       if (schedulerQueueName != null) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
+      Map<String, File> localizeFiles = addAdapterPluginFiles(options, new HashMap<String, File>());
+
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      hConfFile = saveHConf(hConf, File.createTempFile("hConf", ".xml"));
-      cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
-      programDir = Files.createTempDir();
+      localizeFiles.put("hConf.xml", saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir)));
+      localizeFiles.put("cConf.xml", saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir)));
+      programDir = DirUtils.createTempDir(tempDir);
       copiedProgram = copyProgramJar(program, programDir);
+
+      final URI logbackURI = getLogBackURI(copiedProgram, programDir, tempDir);
+      final String programOptions = GSON.toJson(options);
+
+      // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
+      // Twill would also ignore it if it is not running in secure mode.
+      // The HDFS token should already obtained by Twill.
+      return launch(copiedProgram, options, localizeFiles, new ApplicationLauncher() {
+        @Override
+        public TwillController launch(TwillApplication twillApplication) {
+          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+          if (options.isDebug()) {
+            LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
+                     program.getId(), programOptions, logbackURI);
+            twillPreparer.enableDebugging();
+          }
+          // Add scheduler queue name if defined
+          if (schedulerQueueName != null) {
+            LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+            twillPreparer.setSchedulerQueue(schedulerQueueName);
+          }
+          if (logbackURI != null) {
+            twillPreparer.withResources(logbackURI);
+          }
+          TwillController twillController = twillPreparer
+            .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
+            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
+            .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
+            .withApplicationArguments(
+              String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
+              String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
+            ).start();
+          return addCleanupListener(twillController, program.getId(), tempDir);
+        }
+      });
     } catch (IOException e) {
+      deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
+  }
 
-    final File tempDir = Files.createTempDir();
-    URI logbackURI = null;
-    try {
-      // TODO: When CDAP-1273 is fixed you can get the resource directly from the program classloader.
-      // Make an unused call to getClassloader() to ensure that the jar is expanded into programDir.
-      copiedProgram.getClassLoader();
-      File logbackFile = new File(programDir, "logback.xml");
-      if (logbackFile.exists()) {
-        logbackURI = logbackFile.toURI();
-      } else {
-        URL containerLogbackURL = getClass().getResource("/logback-container.xml");
-        if (containerLogbackURL != null) {
-          File file = new File(tempDir.getPath(), "logback.xml");
-
-          try {
-            Files.copy(new File(containerLogbackURL.toURI()), file);
-            logbackURI = file.toURI();
-          } catch (IOException e) {
-            LOG.error("Error copying container logback.", e);
-          }
-        }
-      }
-    } catch (URISyntaxException e) {
-      LOG.error("Error getting logback for program.", e);
+  /**
+   * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
+   * modification will be done to the map.
+   */
+  private Map<String, File> addAdapterPluginFiles(ProgramOptions options, Map<String, File> localizeFiles) {
+    Arguments arguments = options.getArguments();
+    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
+      return localizeFiles;
     }
 
-    final URI programLogbackURI = logbackURI;
-    final String programOptions = GSON.toJson(options);
+    // Decode the adapter spec from program system argument
+    AdapterSpecification adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
+                                                     AdapterSpecification.class);
 
-    // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
-    // Twill would also ignore it if it is not running in secure mode.
-    // The HDFS token should already obtained by Twill.
-    return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
-      @Override
-      public TwillController launch(TwillApplication twillApplication) {
-        TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
-        if (options.isDebug()) {
-          LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
-                   program.getId(), programOptions, programLogbackURI);
-          twillPreparer.enableDebugging();
-        }
-        // Add scheduler queue name if defined
-        if (schedulerQueueName != null) {
-          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
-          twillPreparer.setSchedulerQueue(schedulerQueueName);
-        }
-        if (programLogbackURI != null) {
-          twillPreparer.withResources(programLogbackURI);
-        }
-        TwillController twillController = twillPreparer
-          .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
-          .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-          .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
-          .withApplicationArguments(
-            String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
-            String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
-          ).start();
-        return addCleanupListener(twillController, hConfFile, cConfFile, tempDir, copiedProgram, programDir);
-      }
-    });
+    // Get all unique PluginInfo from the adapter spec
+    Set<PluginInfo> plugins = adapterSpec.getPluginInfos();
+
+    // If there is no plugin used by the adapter, nothing need to be localized
+    if (plugins.isEmpty()) {
+      return localizeFiles;
+    }
+
+    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+
+    // Localize all required plugin jars
+    // Use the template dir name as the target directory name.
+    // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
+    for (PluginInfo plugin : plugins) {
+      String localizedName = String.format("%s/%s/%s",
+                                           templateDir.getName(), adapterSpec.getTemplate(), plugin.getFileName());
+      localizeFiles.put(localizedName, new File(pluginDir, plugin.getFileName()));
+    }
+
+    // Localize all files under template plugin "lib" directory
+    for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
+      String localizedName = String.format("%s/%s/lib/%s",
+                                           templateDir.getName(), adapterSpec.getTemplate(), libJar.getName());
+      localizeFiles.put(localizedName, libJar);
+    }
+
+    return localizeFiles;
+  }
+
+  /**
+   * Returns a {@link URI} for the logback.xml file to be localized to container and avaiable in the container
+   * classpath.
+   */
+  @Nullable
+  private URI getLogBackURI(Program program, File programDir, File tempDir) throws IOException {
+    // TODO: When CDAP-1273 is fixed you can get the resource directly from the program classloader.
+    // Make an unused call to getClassloader() to ensure that the jar is expanded into programDir.
+    program.getClassLoader();
+    File logbackFile = new File(programDir, "logback.xml");
+    if (logbackFile.exists()) {
+      return logbackFile.toURI();
+    }
+    URL resource = getClass().getClassLoader().getResource("logback-container.xml");
+    if (resource == null) {
+      return null;
+    }
+    // Copy the template
+    logbackFile = new File(tempDir, "logback.xml");
+    Files.copy(Resources.newInputStreamSupplier(resource), logbackFile);
+    return logbackFile.toURI();
   }
 
   /**
    * Sub-class overrides this method to launch the twill application.
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
-                                              File hConfFile, File cConfFile, ApplicationLauncher launcher);
+                                              Map<String, File> localizeFiles, ApplicationLauncher launcher);
 
 
   private File saveHConf(Configuration conf, File file) throws IOException {
@@ -223,9 +274,18 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         return program.getJarLocation().getInputStream();
       }
     }, tempJar);
+    return Programs.createWithUnpack(Locations.toLocation(tempJar), programDir);
+  }
 
-    final Location jarLocation = new LocalLocationFactory().create(tempJar.toURI());
-    return Programs.createWithUnpack(jarLocation, programDir);
+  /**
+   * Deletes the given directory recursively. Only log if there is {@link IOException}.
+   */
+  private void deleteDirectory(File directory) {
+    try {
+      DirUtils.deleteDirectoryContents(directory);
+    } catch (IOException e) {
+      LOG.warn("Failed to delete directory {}", directory, e);
+    }
   }
 
   /**
@@ -235,9 +295,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    *
    * @return The same TwillController instance.
    */
-  private TwillController addCleanupListener(TwillController controller, final File hConfFile,
-                                             final File cConfFile, final File tempDir,
-                                             final Program program, final File programDir) {
+  private TwillController addCleanupListener(TwillController controller,
+                                             final Id.Program programId, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     controller.addListener(new ServiceListenerAdapter() {
@@ -257,23 +316,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       private void cleanup() {
-        if (deleted.compareAndSet(false, true)) {
-          LOG.debug("Cleanup tmp files for {}: {} {} {}",
-                    program.getName(), hConfFile, cConfFile, program.getJarLocation().toURI());
-          hConfFile.delete();
-          cConfFile.delete();
-          tempDir.delete();
-          try {
-            program.getJarLocation().delete();
-          } catch (IOException e) {
-            LOG.warn("Failed to delete program jar {}", program.getJarLocation().toURI(), e);
-          }
-          try {
-            FileUtils.deleteDirectory(programDir);
-          } catch (IOException e) {
-            LOG.warn("Failed to delete program directory {}", programDir, e);
-          }
+        if (!deleted.compareAndSet(false, true)) {
+          return;
         }
+        LOG.debug("Cleanup tmp files for {}: {}", programId, tempDir);
+        deleteDirectory(tempDir);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
     return controller;

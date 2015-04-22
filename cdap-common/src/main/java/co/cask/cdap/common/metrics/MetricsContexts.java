@@ -39,17 +39,18 @@ public final class MetricsContexts {
       Constants.Metrics.Tag.FLOWLET, flowletId);
   }
 
-  public static Map<String, String> forProcedure(Id.Program id) {
-    return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
-      Constants.Metrics.Tag.APP, id.getApplicationId(),
-      Constants.Metrics.Tag.PROCEDURE, id.getId());
-  }
-
   public static Map<String, String> forService(Id.Program id) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
       Constants.Metrics.Tag.APP, id.getApplicationId(),
       Constants.Metrics.Tag.SERVICE, id.getId());
+  }
+
+  public static Map<String, String> forServiceHandler(Id.Program id, String handlerId) {
+    return ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
+      Constants.Metrics.Tag.APP, id.getApplicationId(),
+      Constants.Metrics.Tag.SERVICE, id.getId(),
+      Constants.Metrics.Tag.HANDLER, handlerId);
   }
 }

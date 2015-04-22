@@ -15,9 +15,10 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -25,56 +26,75 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramController;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Counters;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 
-import java.util.concurrent.Callable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * A {@link ProgramWorkflowRunner} that creates {@link Callable} for executing MapReduce job from Workflow.
+ * A {@link ProgramWorkflowRunner} that creates {@link Runnable} for executing MapReduce job from Workflow.
  */
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions) {
-    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions);
+                                 Program workflowProgram, RunId runId, ProgramOptions workflowProgramOptions,
+                                 WorkflowToken token) {
+    super(runId, workflowProgram, programRunnerFactory, workflowSpec, workflowProgramOptions, token);
   }
 
   /**
    * Gets the Specification of the program by its name from the {@link WorkflowSpecification}. Creates an
    * appropriate {@link Program} using this specification through a suitable concrete implementation of
-   * * {@link AbstractWorkflowProgram} and then gets the {@link Callable} of {@link RuntimeContext} for the program
+   * * {@link AbstractWorkflowProgram} and then gets the {@link Runnable} for the program
    * which can be called to execute the program
    *
    * @param name name of the program in the workflow
-   * @return {@link Callable} of {@link RuntimeContext} for associated with this program run.
+   * @return {@link Runnable} associated with this program run.
    */
   @Override
-  public Callable<RuntimeContext> create(String name) {
+  public Runnable create(String name) {
     ApplicationSpecification spec = workflowProgram.getApplicationSpecification();
     final MapReduceSpecification mapReduceSpec = spec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Application %s", name, spec.getName());
 
     final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
-    return getRuntimeContextCallable(name, mapReduceProgram);
+    return getProgramRunnable(name, mapReduceProgram);
   }
 
   /**
    * Executes given {@link Program} with the given {@link ProgramOptions} and block until it completed.
-   * On completion, return the {@link RuntimeContext} of the program.
    *
    * @throws Exception if execution failed.
    */
   @Override
-  public RuntimeContext runAndWait(Program program, ProgramOptions options) throws Exception {
+  public void runAndWait(Program program, ProgramOptions options) throws Exception {
     ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.MAPREDUCE).run(program,
                                                                                                         options);
     if (controller instanceof MapReduceProgramController) {
-      final RuntimeContext context = ((MapReduceProgramController) controller).getContext();
-      return executeProgram(controller, context);
+      MapReduceContext context = ((MapReduceProgramController) controller).getContext();
+      executeProgram(controller, context);
+      updateWorkflowToken(context);
     } else {
       throw new IllegalStateException("Failed to run program. The controller is not an instance of " +
                                         "MapReduceProgramController");
     }
+  }
+
+  private void updateWorkflowToken(MapReduceContext context) throws Exception {
+    Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
+    Counters counters = ((Job) context.getHadoopJob()).getCounters();
+    for (CounterGroup group : counters) {
+      mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
+      for (Counter counter : group) {
+        mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
+      }
+    }
+    ((BasicWorkflowToken) token).setMapReduceCounters(mapReduceCounters);
   }
 }

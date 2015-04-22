@@ -24,8 +24,6 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -35,7 +33,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -47,7 +44,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +106,7 @@ public class RemoteApplicationManager implements ApplicationManager {
       @Override
       public RuntimeMetrics getFlowletMetrics(String flowletId) {
         return metricsClient.getFlowletMetrics(
-          Id.Program.from(application, ProgramType.FLOW, flowId.getRunnableId()), flowletId);
+          Id.Program.from(application, ProgramType.FLOW, flowId.getProgramId()), flowletId);
       }
 
       @Override
@@ -213,28 +209,6 @@ public class RemoteApplicationManager implements ApplicationManager {
 
     if (isRunning(jobId)) {
       throw new TimeoutException("Time limit reached.");
-    }
-  }
-
-  @Override
-  @Deprecated
-  public ProcedureManager startProcedure(final String procedureName) {
-    try {
-      getProgramClient().start(application.getId(), ProgramType.PROCEDURE, procedureName);
-      return new RemoteProcedureManager(Id.Procedure.from(application, procedureName), clientConfig);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    try {
-      getProgramClient().start(application.getId(), ProgramType.PROCEDURE, procedureName, arguments);
-      return new RemoteProcedureManager(Id.Procedure.from(application, procedureName), clientConfig);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
   }
 
@@ -352,8 +326,9 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
-    return new RemoteStreamWriter(clientConfig, streamName);
+    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig, streamName));
   }
 
   @Override
@@ -369,7 +344,7 @@ public class RemoteApplicationManager implements ApplicationManager {
         // throw error when you stop something that is not running.
         ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
         if (isRunning(id)) {
-          getProgramClient().stop(application.getId(), id.getRunnableType(), id.getRunnableId());
+          getProgramClient().stop(application.getId(), id.getProgramType(), id.getProgramId());
         }
       }
     } catch (Exception e) {
@@ -378,9 +353,9 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   void stopProgram(ProgramId programId) {
-    String programName = programId.getRunnableId();
+    String programName = programId.getProgramId();
     try {
-      getProgramClient().stop(application.getId(), programId.getRunnableType(), programName);
+      getProgramClient().stop(application.getId(), programId.getProgramType(), programName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -388,8 +363,8 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   boolean isRunning(ProgramId programId) {
     try {
-      String status = getProgramClient().getStatus(application.getId(), programId.getRunnableType(),
-                                                   programId.getRunnableId());
+      String status = getProgramClient().getStatus(application.getId(), programId.getProgramType(),
+                                                   programId.getProgramId());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
@@ -398,18 +373,18 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   static class ProgramId {
-    private final String runnableId;
-    private final ProgramType runnableType;
+    private final String programId;
+    private final ProgramType programType;
 
-    ProgramId(String runnableId, ProgramType runnableType) {
-      this.runnableId = runnableId;
-      this.runnableType = runnableType;
+    ProgramId(String programId, ProgramType programType) {
+      this.programId = programId;
+      this.programType = programType;
     }
-    public String getRunnableId() {
-      return this.runnableId;
+    public String getProgramId() {
+      return this.programId;
     }
-    public ProgramType getRunnableType() {
-      return this.runnableType;
+    public ProgramType getProgramType() {
+      return this.programType;
     }
   }
 }

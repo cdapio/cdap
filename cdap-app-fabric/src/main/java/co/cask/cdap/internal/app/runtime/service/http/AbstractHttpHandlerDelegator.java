@@ -16,10 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -72,6 +73,11 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   }
 
   protected final DelayedHttpServiceResponder wrapResponder(HttpResponder responder) {
-    return new DelayedHttpServiceResponder(responder, metricsCollector);
+    MetricsCollector collector = this.metricsCollector;
+    if (context.getServiceContext() != null && context.getServiceContext().getSpecification() != null) {
+      collector = metricsCollector.childCollector(Constants.Metrics.Tag.HANDLER,
+                                                  context.getServiceContext().getSpecification().getName());
+    }
+    return new DelayedHttpServiceResponder(responder, collector);
   }
 }

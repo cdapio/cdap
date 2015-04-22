@@ -19,17 +19,14 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.TransformContext;
+import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.common.MockEmitter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.io.LongWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-
 /**
- * Tests {@link StructuredRecordToGenericRecordTransform#transform(LongWritable, StructuredRecord, Emitter)}
+ * Tests {@link StructuredRecordToGenericRecordTransform#transform(StructuredRecord, Emitter)}
  */
 public class StructuredRecordToGenericRecordTransformTest {
 
@@ -50,26 +47,13 @@ public class StructuredRecordToGenericRecordTransformTest {
     builder.set("field3", 3.0);
     StructuredRecord structuredRecord = builder.build();
 
-    TransformContext transformContext = new TransformContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
-      }
-    };
+    StageContext transformContext = new MockTransformContext(null);
     transformer.initialize(transformContext);
-    Emitter<LongWritable, GenericRecord> emitter = new Emitter<LongWritable, GenericRecord>() {
-      @Override
-      public void emit(LongWritable key, GenericRecord value) {
-        Assert.assertEquals("string1", value.get("field1"));
-        Assert.assertEquals(2, value.get("field2"));
-        Assert.assertEquals(3.0, value.get("field3"));
-      }
-    };
-    transformer.transform(null, structuredRecord, emitter);
+    MockEmitter<GenericRecord> emitter = new MockEmitter<GenericRecord>();
+    transformer.transform(structuredRecord, emitter);
+    GenericRecord value = emitter.getEmitted().get(0);
+    Assert.assertEquals("string1", value.get("field1"));
+    Assert.assertEquals(2, value.get("field2"));
+    Assert.assertEquals(3.0, value.get("field3"));
   }
 }

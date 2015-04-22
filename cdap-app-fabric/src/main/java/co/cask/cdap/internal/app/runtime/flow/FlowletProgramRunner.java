@@ -32,6 +32,8 @@ import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -48,8 +50,6 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
@@ -59,6 +59,7 @@ import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
@@ -129,6 +130,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -138,7 +140,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
-                              DatasetFramework dsFramework) {
+                              DatasetFramework dsFramework,
+                              UsageRegistry usageRegistry) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -147,6 +150,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
+    this.usageRegistry = usageRegistry;
   }
 
   @SuppressWarnings("unused")
@@ -476,6 +480,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
+    final Id.Program program = Id.Flow.from(flowletContext.getNamespaceId(),
+                                            flowletContext.getApplicationId(),
+                                            ProgramType.FLOW,
+                                            flowletContext.getFlowId());
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
@@ -492,7 +500,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
               if (entry.getKey().getType() == FlowletConnection.Type.STREAM) {
-                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade,
+                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(program, usageRegistry,
+                                                                                            dataFabricFacade,
                                                                                             queueName, consumerConfig);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
                 // No decoding is needed, as a process method can only have StreamEvent as type for consuming stream
@@ -512,8 +521,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 Function<ByteBuffer, T> decoder =
                   wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
-                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(dataFabricFacade, queueName,
-                                                                                            consumerConfig, numGroups);
+                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(program, usageRegistry,
+                                                                                           dataFabricFacade, queueName,
+                                                                                           consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
                 queueReaders.add(queueReaderFactory.createQueueReader(consumerSupplier, batchSize, decoder));
               }
@@ -670,20 +680,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
 
         @Override
-        public void ttlDeleted(Id.Stream streamId) {
-          LOG.debug("TTL for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
-          suspendAndResume();
-        }
-
-        @Override
         public void generationChanged(Id.Stream streamId, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamId, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationDeleted(Id.Stream streamId) {
-          LOG.debug("Generation for stream '{}' deleted for flowlet '{}'", streamId, flowletName);
+        public void deleted(Id.Stream streamId) {
+          LOG.debug("Properties deleted for stream '{}'", streamId);
           suspendAndResume();
         }
       };

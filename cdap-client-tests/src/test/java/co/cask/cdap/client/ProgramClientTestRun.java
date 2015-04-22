@@ -19,13 +19,11 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Test for {@link ProgramClient}.
@@ -46,14 +43,12 @@ public class ProgramClientTestRun extends ClientTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
 
   private ApplicationClient appClient;
-  private ProcedureClient procedureClient;
   private ProgramClient programClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     appClient = new ApplicationClient(clientConfig);
-    procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
   }
 
@@ -62,45 +57,6 @@ public class ProgramClientTestRun extends ClientTestBase {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
     try {
-      // start, scale, and stop procedure
-      LOG.info("Fetching procedure list");
-      verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
-
-      LOG.info("Fetching runtime args");
-      Map<String, String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                          FakeProcedure.NAME);
-      Assert.assertEquals(0, emptyRuntimeArgs.size());
-
-      LOG.info("Setting runtime args");
-      programClient.setRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                   FakeProcedure.NAME, ImmutableMap.of("a", "b", "c", "d"));
-
-      LOG.info("Fetching runtime args");
-      Map<String, String> runtimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                     FakeProcedure.NAME);
-      Assert.assertEquals(2, runtimeArgs.size());
-      Assert.assertEquals("b", runtimeArgs.get("a"));
-      Assert.assertEquals("d", runtimeArgs.get("c"));
-
-      LOG.info("Starting procedure");
-      programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
-      LOG.info("Getting live info");
-      programClient.getLiveInfo(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
-      LOG.info("Getting program logs");
-      programClient.getProgramLogs(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, 0, Long.MAX_VALUE);
-
-      LOG.info("Scaling procedure");
-      Assert.assertEquals(1, programClient.getProcedureInstances(FakeApp.NAME, FakeProcedure.NAME));
-      programClient.setProcedureInstances(FakeApp.NAME, FakeProcedure.NAME, 3);
-      assertProcedureInstances(programClient, FakeApp.NAME, FakeProcedure.NAME, 3);
-
-      LOG.info("Stopping procedure");
-      programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-
       // start, scale, and stop flow
       verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
 

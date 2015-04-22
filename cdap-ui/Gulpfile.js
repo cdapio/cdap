@@ -17,7 +17,9 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
       './bower_components/epoch/epoch.min.css',
-      './bower_components/ng-sortable/dist/ng-sortable.min.css'
+      './bower_components/ng-sortable/dist/ng-sortable.min.css',
+      './bower_components/angular-ui-select/dist/select.min.css',
+      './bower_components/c3/c3.min.css'
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
@@ -119,7 +121,12 @@ gulp.task('js:lib', function() {
       './bower_components/dagre-d3/dist/dagre-d3.core.js',
       './bower_components/moment/moment.js',
       './bower_components/angular-moment/angular-moment.js',
-      './bower_components/angular-bootstrap/ui-bootstrap-tpls.js'
+      './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
+
+      './bower_components/node-uuid/uuid.js',
+      './bower_components/angular-ui-select/dist/select.js',
+      './bower_components/angular-cookies/angular-cookies.min.js',
+      './bower_components/c3/c3.js'
 
 
     ].concat([

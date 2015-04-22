@@ -19,6 +19,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
@@ -27,8 +29,6 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -52,6 +52,8 @@ public class InMemoryQueueTest extends QueueTest {
       new ConfigModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       Modules.override(new StreamAdminModules().getInMemoryModules())

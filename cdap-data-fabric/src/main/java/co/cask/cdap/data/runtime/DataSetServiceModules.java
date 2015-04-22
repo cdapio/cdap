@@ -17,14 +17,16 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.DistributedUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.UnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
@@ -33,20 +35,26 @@ import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
+import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+
+import java.util.Map;
 
 /**
  * Bindings for DataSet Service.
@@ -62,9 +70,7 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
         bind(DatasetService.class);
@@ -73,7 +79,6 @@ public class DataSetServiceModules extends RuntimeModule {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
@@ -100,9 +105,7 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
@@ -115,7 +118,6 @@ public class DataSetServiceModules extends RuntimeModule {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
@@ -140,9 +142,7 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
-        //       as long as the data is durably persisted
-        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
+        bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
@@ -157,7 +157,6 @@ public class DataSetServiceModules extends RuntimeModule {
         Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandlerV2.class);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
@@ -170,5 +169,34 @@ public class DataSetServiceModules extends RuntimeModule {
         expose(UnderlyingSystemNamespaceAdmin.class);
       }
     };
+  }
+
+  private static final class DatasetMdsProvider implements Provider<DatasetFramework> {
+    private final DatasetDefinitionRegistryFactory registryFactory;
+    private final Map<String, DatasetModule> defaultModules;
+    private final CConfiguration configuration;
+    private final TransactionExecutorFactory txExecutorFactory;
+
+    @Inject
+    public DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
+                              @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
+                              CConfiguration configuration,
+                              TransactionExecutorFactory txExecutorFactory) {
+      this.registryFactory = registryFactory;
+      this.defaultModules = defaultModules;
+      this.configuration = configuration;
+      this.txExecutorFactory = txExecutorFactory;
+    }
+
+    @Override
+    public DatasetFramework get() {
+      Map<String, DatasetModule> modulesMap = ImmutableMap.<String, DatasetModule>builder()
+        .putAll(defaultModules)
+        .putAll(DatasetMetaTableUtil.getModules())
+        .build();
+      // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
+      //       as long as the data is durably persisted
+      return new StaticDatasetFramework(registryFactory, modulesMap, configuration, txExecutorFactory);
+    }
   }
 }

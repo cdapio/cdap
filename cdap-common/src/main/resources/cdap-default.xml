@@ -576,19 +576,11 @@
         <description>Root location for collecting logs</description>
     </property>
 
-    <!--
-        Account Service Configuration
-    -->
+    <!-- Template configuration -->
     <property>
-        <name>account.server.host</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the host for account server</description>
-    </property>
-
-    <property>
-        <name>account.server.port</name>
-        <value>8080</value>
-        <description>Specifies the port for account server</description>
+        <name>app.template.dir</name>
+        <value>/opt/cdap/master/plugins</value>
+        <description>Directory where all archives for app templates are stored</description>
     </property>
 
     <!-- App Fabric related changes -->
@@ -602,12 +594,6 @@
         <name>app.output.dir</name>
         <value>/programs</value>
         <description>Directory where all archives are stored</description>
-    </property>
-
-    <property>
-      <name>app.template.dir</name>
-      <value>/opt/cdap/master/plugins</value>
-      <description>Directory where all archives for app templates are stored</description>
     </property>
 
     <property>
@@ -1077,8 +1063,14 @@
     </property>
 
     <property>
+      <name>security.auth.server.address</name>
+      <value></value>
+      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
+    </property>
+
+    <property>
       <name>security.auth.server.bind.address</name>
-      <value>127.0.0.1</value>
+      <value>0.0.0.0</value>
     </property>
 
     <property>
@@ -1202,6 +1194,5 @@
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
-
 
 </configuration>

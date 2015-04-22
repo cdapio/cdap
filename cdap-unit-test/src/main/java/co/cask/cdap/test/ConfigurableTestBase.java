@@ -21,8 +21,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -32,7 +33,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
@@ -47,10 +47,8 @@ import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -68,7 +66,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -78,9 +75,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
-import co.cask.cdap.test.internal.DefaultProcedureClient;
+import co.cask.cdap.test.internal.DefaultStreamManager;
 import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalNamespaceClient;
+import co.cask.cdap.test.internal.LocalStreamWriter;
+import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
@@ -175,7 +174,7 @@ public class ConfigurableTestBase {
     CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -222,12 +221,10 @@ public class ConfigurableTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
+      new InMemoryProgramRunnerModule(LocalStreamWriter.class),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StreamHandlerV2.class).in(Scopes.SINGLETON);
-          bind(StreamFetchHandlerV2.class).in(Scopes.SINGLETON);
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
           bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class).in(Scopes.SINGLETON);
@@ -252,8 +249,8 @@ public class ConfigurableTestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
                     .build(StreamWriterFactory.class));
-          install(new FactoryModuleBuilder().implement(ProcedureClient.class, DefaultProcedureClient.class)
-                    .build(co.cask.cdap.test.internal.ProcedureClientFactory.class));
+          install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
+                    .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
         }
       }
@@ -348,8 +345,7 @@ public class ConfigurableTestBase {
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
-   * must be in the same or children package as the application.
+   * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
@@ -366,8 +362,7 @@ public class ConfigurableTestBase {
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
-   * must be in the same or children package as the application.
+   * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
    * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
@@ -504,6 +499,26 @@ public class ConfigurableTestBase {
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+  }
+
+  /**
+   * Returns a {@link StreamManager} for the specified stream in the default namespace
+   *
+   * @param streamName the specified stream
+   * @return {@link StreamManager} for the specified stream in the default namespace
+   */
+  protected final StreamManager getStreamManager(String streamName) throws Exception {
+    return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
+  }
+
+  /**
+   * Returns a {@link StreamManager} for the specified stream in the specified namespace
+   *
+   * @param streamName the specified stream
+   * @return {@link StreamManager} for the specified stream in the specified namespace
+   */
+  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
+    return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
 }
 

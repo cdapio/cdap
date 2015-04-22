@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -222,26 +221,6 @@ public interface Store {
   int getFlowletInstances(Id.Program id, String flowletId);
 
   /**
-   * Set the number of procedure instances.
-   *
-   * @param id     program id
-   * @param count  new number of instances.
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  void setProcedureInstances(Id.Program id, int count);
-
-  /**
-   * Gets the number of procedure instances.
-   *
-   * @param id  program id
-   * @return    number of instances
-   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
-   */
-  @Deprecated
-  int getProcedureInstances(Id.Program id);
-
-  /**
    * Sets the number of instances of a service.
    *
    * @param id program id
@@ -257,24 +236,6 @@ public interface Store {
   int getServiceInstances(Id.Program id);
 
   /**
-   * Sets the number of instances of a {@link ServiceWorker}.
-   *
-   * @param id program id
-   * @param workerName name of the {@link ServiceWorker}
-   * @param instances number of instances
-   */
-  void setServiceWorkerInstances(Id.Program id, String workerName, int instances);
-
-  /**
-   * Returns the number of instances of a {@link ServiceWorker}.
-   *
-   * @param id program id
-   * @param workerName name of the {@link ServiceWorker}.
-   * @return number of instances
-   */
-  int getServiceWorkerInstances(Id.Program id, String workerName);
-
-  /**
    * Sets the number of instances of a {@link Worker}
    *
    * @param id program id
@@ -284,6 +245,7 @@ public interface Store {
 
   /**
    * Gets the number of instances of a {@link Worker}
+   *
    * @param id program id
    * @return number of instances
    */

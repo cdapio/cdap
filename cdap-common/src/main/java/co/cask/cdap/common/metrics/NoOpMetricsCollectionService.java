@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.metrics;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.util.Map;

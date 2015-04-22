@@ -22,11 +22,14 @@ import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Scans facts in a {@link FactTable}.
@@ -45,15 +48,19 @@ public final class FactScanner implements Iterator<FactScanResult> {
   // Use an internal iterator to avoid leaking AbstractIterator methods to outside.
   private final Iterator<FactScanResult> internalIterator;
 
+  // set of measureNames - useful to process measures that are requested while scanning.
+  private final Set<String> measureNames;
+
   /**
    * Construct a FactScanner. Should only be called by FactTable.
    */
-  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs) {
+  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs, Collection<String> measureNames) {
     this.scanner = scanner;
     this.codec = codec;
     this.internalIterator = createIterator();
     this.startTs = startTs;
     this.endTs = endTs;
+    this.measureNames = ImmutableSet.copyOf(measureNames);
   }
 
   public void close() {
@@ -90,6 +97,10 @@ public final class FactScanner implements Iterator<FactScanResult> {
 
           // Decode context and metric from key
           String measureName = codec.getMeasureName(rowKey);
+          // if measureNames is empty we include all metrics
+          if (!measureNames.isEmpty() && !measureNames.contains(measureName)) {
+            continue;
+          }
           // todo: codec.getTagValues(rowKey) needs to un-encode tag names which may result in read in entity table
           //       (depending on the cache and its state). To avoid that, we can pass to scanner the list of tag names
           //       as we *always* know it (it is given) at the time of scanning

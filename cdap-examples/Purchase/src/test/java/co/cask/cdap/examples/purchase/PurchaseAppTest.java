@@ -22,7 +22,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -31,11 +31,9 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link PurchaseApp}.
@@ -45,7 +43,7 @@ public class PurchaseAppTest extends TestBase {
   private static final Gson GSON = new Gson();
 
   @Test
-  public void test() throws TimeoutException, InterruptedException, IOException {
+  public void test() throws Exception {
     // Deploy the PurchaseApp application
     ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
@@ -53,12 +51,12 @@ public class PurchaseAppTest extends TestBase {
     FlowManager flowManager = appManager.startFlow("PurchaseFlow");
 
     // Send stream events to the "purchaseStream" Stream
-    StreamWriter streamWriter = appManager.getStreamWriter("purchaseStream");
-    streamWriter.send("bob bought 3 apples for $30");
-    streamWriter.send("joe bought 1 apple for $100");
-    streamWriter.send("joe bought 10 pineapples for $20");
-    streamWriter.send("cat bought 3 bottles for $12");
-    streamWriter.send("cat bought 2 pops for $14");
+    StreamManager streamManager = getStreamManager("purchaseStream");
+    streamManager.send("bob bought 3 apples for $30");
+    streamManager.send("joe bought 1 apple for $100");
+    streamManager.send("joe bought 10 pineapples for $20");
+    streamManager.send("cat bought 3 bottles for $12");
+    streamManager.send("cat bought 2 pops for $14");
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds

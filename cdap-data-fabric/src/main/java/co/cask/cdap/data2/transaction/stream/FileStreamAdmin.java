@@ -26,6 +26,8 @@ import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
@@ -75,6 +77,8 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamConsumerStateStoreFactory stateStoreFactory;
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
+  private final UsageRegistry usageRegistry;
+  private final StreamMetaStore streamMetaStore;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -82,13 +86,17 @@ public class FileStreamAdmin implements StreamAdmin {
                          CConfiguration cConf,
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
-                         NotificationFeedManager notificationFeedManager) {
+                         NotificationFeedManager notificationFeedManager,
+                         UsageRegistry usageRegistry,
+                         StreamMetaStore streamMetaStore) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
+    this.usageRegistry = usageRegistry;
+    this.streamMetaStore = streamMetaStore;
   }
 
   @SuppressWarnings("unused")
@@ -100,8 +108,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
-    // Simply increment the generation of all streams. The actual deletion of file, just like truncate case,
-    // is done external to this class.
     List<Location> locations;
     try {
       locations = getStreamBaseLocation(namespace).list();
@@ -286,19 +292,21 @@ public class FileStreamAdmin implements StreamAdmin {
         }
 
         Properties properties = (props == null) ? new Properties() : props;
-        long partitionDuration = Long.parseLong(properties.getProperty(Constants.Stream.PARTITION_DURATION,
-                                                                       cConf.get(Constants.Stream.PARTITION_DURATION)));
-        long indexInterval = Long.parseLong(properties.getProperty(Constants.Stream.INDEX_INTERVAL,
-                                                                   cConf.get(Constants.Stream.INDEX_INTERVAL)));
-        long ttl = Long.parseLong(properties.getProperty(Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-        int threshold = Integer.parseInt(properties.getProperty(Constants.Stream.NOTIFICATION_THRESHOLD,
-                                                                cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+        long partitionDuration = Long.parseLong(properties.getProperty(
+          Constants.Stream.PARTITION_DURATION,  cConf.get(Constants.Stream.PARTITION_DURATION)));
+        long indexInterval = Long.parseLong(properties.getProperty(
+          Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
+        long ttl = Long.parseLong(properties.getProperty(
+          Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
+        int threshold = Integer.parseInt(properties.getProperty(
+          Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
 
-        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval, ttl, streamLocation,
-                                               null, threshold);
+        StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
+                                               ttl, streamLocation, null, threshold);
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true);
+        streamMetaStore.addStream(streamId);
         return config;
       }
     });
@@ -340,6 +348,11 @@ public class FileStreamAdmin implements StreamAdmin {
     doDrop(streamId, getStreamLocation(streamId));
   }
 
+  @Override
+  public void register(Id.Stream streamId, Id.Program programId) {
+    usageRegistry.register(programId, streamId);
+  }
+
   /**
    * Returns the location that points the config file for the given stream.
    */
@@ -373,18 +386,22 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void doDrop(final Id.Stream streamId, final Location streamLocation) throws Exception {
-    streamCoordinatorClient.deleteStream(streamId, new Callable<CoordinatorStreamProperties>() {
+    // Delete the stream config so that calls that try to access the stream will fail after this call returns.
+    // The stream coordinator client will notify all clients that stream has been deleted.
+    streamCoordinatorClient.deleteStream(streamId, new Runnable() {
       @Override
-      public CoordinatorStreamProperties call() throws Exception {
-        Location configLocation = getConfigLocation(streamId);
-        if (!configLocation.exists()) {
-          return null;
+      public void run() {
+        try {
+          Location configLocation = getConfigLocation(streamId);
+          if (!configLocation.exists()) {
+            return;
+          }
+          alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
+          configLocation.delete();
+          streamMetaStore.removeStream(streamId);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
-        alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
-        configLocation.delete();
-        int newGeneration = StreamUtils.getGeneration(streamLocation) + 1;
-        Locations.mkdirsIfNotExists(StreamUtils.createGenerationLocation(streamLocation, newGeneration));
-        return new CoordinatorStreamProperties(null, null, null, newGeneration);
       }
     });
   }

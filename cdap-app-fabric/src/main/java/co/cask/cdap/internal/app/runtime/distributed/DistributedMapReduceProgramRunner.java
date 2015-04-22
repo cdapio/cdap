@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Runs Mapreduce programm in distributed environment
@@ -46,7 +47,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -60,7 +61,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     TwillController controller = launcher.launch(new MapReduceTwillApplication(program, spec,
-                                                                               hConfFile, cConfFile, eventHandler));
+                                                                               localizeFiles, eventHandler));
 
     return new MapReduceTwillProgramController(program.getName(), controller).startListen();
   }

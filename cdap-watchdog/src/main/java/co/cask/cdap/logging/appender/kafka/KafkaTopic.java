@@ -16,8 +16,6 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import java.io.IOException;
-
 /**
  * Generates Kafka topic containing schema for logging.
  */
@@ -28,9 +26,8 @@ public final class KafkaTopic {
 
   /**
    * @return Kafka topic with schema.
-   * @throws IOException
    */
-  public static String getTopic() throws IOException {
+  public static String getTopic() {
     return KAFKA_TOPIC;
   }
 }

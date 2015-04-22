@@ -18,21 +18,21 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -42,6 +42,7 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -51,8 +52,13 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
@@ -130,7 +136,8 @@ public abstract class DatasetServiceTestBase {
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules());
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule());
 
     DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
@@ -147,19 +154,22 @@ public abstract class DatasetServiceTestBase {
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(
-        new DatasetAdminOpHTTPHandlerV2(new NoAuthenticator(),
-                                        new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework)));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
 
-    Map<String, DatasetModule> defaultModules =
-      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                   Names.named("defaultDatasetModules")));
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .putAll(injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                           Names.named("defaultDatasetModules"))))
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
+
+    TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, defaultModules, cConf));
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(
+        registryFactory, modules, cConf, injector.getInstance(TransactionExecutorFactory.class)));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
@@ -176,7 +186,8 @@ public abstract class DatasetServiceTestBase {
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade));
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, dsFramework));
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -215,8 +226,9 @@ public abstract class DatasetServiceTestBase {
     return port;
   }
 
-  protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
+  protected URL getUrl(String path) throws MalformedURLException {
+    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, path));
   }
 
   protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {

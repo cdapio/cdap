@@ -45,18 +45,22 @@ import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -79,6 +83,7 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -126,6 +131,7 @@ public class LogSaverTest extends KafkaTestBase {
       new TransactionModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getNoopModules(),
       new LoggingModules().getDistributedModules()
     );
 
@@ -170,12 +176,29 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = injector.getInstance(CheckpointManager.class);
-    Assert.assertEquals(180, checkpointManager.getCheckpoint(0));
-    Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
 
+    TypeToken token = new TypeToken<Set<KafkaLogProcessor>> () { };
+    Set<KafkaLogProcessor> processors = (Set<KafkaLogProcessor>) injector.getInstance(Key.get(token.getType(),
+                                         Names.named (Constants.LogSaver.MESSAGE_PROCESSORS)));
+    for (KafkaLogProcessor processor : processors) {
+      CheckpointManager checkpointManager = getCheckPointManager(processor);
+      Assert.assertEquals(180, checkpointManager.getCheckpoint(0).getNextOffset());
+      Assert.assertEquals(120, checkpointManager.getCheckpoint(1).getNextOffset());
+    }
     txManager.stopAndWait();
   }
+
+  private static CheckpointManager getCheckPointManager(KafkaLogProcessor processor) {
+    if (processor instanceof KafkaLogWriterPlugin) {
+      KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
+      return plugin.getCheckPointManager();
+    } else if (processor instanceof LogMetricsPlugin) {
+      LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
+      return plugin.getCheckPointManager();
+    }
+    throw new IllegalArgumentException("Invalid processor");
+  }
+
 
   @Test
   public void testLogRead1() throws Exception {
@@ -187,6 +210,8 @@ public class LogSaverTest extends KafkaTestBase {
     distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
       0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
     Assert.assertEquals(120, logCallback.getEvents().size());
+
+
   }
 
   @Test

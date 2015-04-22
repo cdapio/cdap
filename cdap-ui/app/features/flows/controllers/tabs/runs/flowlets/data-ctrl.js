@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers) {
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $state.params.flowletid;
+    var flowletid = $scope.$parent.activeFlowlet.name;
     $scope.datasets = [];
 
     // Initialize

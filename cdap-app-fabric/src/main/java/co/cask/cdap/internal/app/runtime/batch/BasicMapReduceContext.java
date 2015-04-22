@@ -21,21 +21,25 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
@@ -58,7 +62,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final String workflowBatch;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
-  private final String adapterName;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -80,13 +83,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
-                               @Nullable String adapterName) {
+                               @Nullable AdapterSpecification adapterSpec,
+                               @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterName),
-          dsFramework, discoveryServiceClient);
+          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
+          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
-    this.adapterName = adapterName;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -94,14 +97,20 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       this.userMetrics = null;
     }
-    this.loggingContext = new MapReduceLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
-                                                      getRunId().getId(), getAdapterName());
+    this.loggingContext = createLoggingContext(program.getId(), runId, adapterSpec);
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
     this.outputDatasetName = spec.getOutputDataSet();
+  }
+
+  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
+                                              @Nullable AdapterSpecification adapterSpec) {
+    String adapterName = adapterSpec == null ? null : adapterSpec.getName();
+    return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
+                                       programId.getId(), runId.getId(), adapterName);
   }
 
   @Override
@@ -127,14 +136,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return workflowBatch;
   }
 
-  /**
-   * @return the adapter name if run from within adapter, otherwise null
-   */
-  @Nullable
-  public String getAdapterName() {
-    return adapterName;
-  }
-
   public void setJob(Job job) {
     this.job = job;
   }
@@ -143,6 +144,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public <T> T getHadoopJob() {
     return (T) job;
+  }
+
+  @Override
+  public void setInput(StreamBatchReadable stream) {
+    setInput(stream.toURI().toString());
   }
 
   @Override
@@ -245,7 +251,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private static MetricsCollector getMetricCollector(Program program, String runId, String taskId,
                                                      @Nullable MetricsCollectionService service,
                                                      @Nullable MapReduceMetrics.TaskType type,
-                                                     @Nullable String adapterName) {
+                                                     @Nullable AdapterSpecification adapterSpec) {
     if (service == null) {
       return null;
     }
@@ -262,8 +268,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       tags.putAll(getMetricsContext(program, runId));
     }
 
-    if (adapterName != null) {
-      tags.put(Constants.Metrics.Tag.ADAPTER, adapterName);
+    if (adapterSpec != null) {
+      tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
     }
 
     return service.getCollector(tags);

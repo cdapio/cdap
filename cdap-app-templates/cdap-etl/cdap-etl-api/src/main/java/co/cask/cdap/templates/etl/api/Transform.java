@@ -16,103 +16,20 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import javax.annotation.Nullable;
-
 /**
- * Transform Stage.
+ * Transforms an input object into zero or more output objects.
  *
- * @param <KEY_IN> Type of KeyInput object
- * @param <VALUE_IN> Type of ValueInput object
- * @param <KEY_OUT> Type of KeyOutput object
- * @param <VALUE_OUT> Type of ValueOutput object
+ * @param <IN> Type of input object
+ * @param <OUT> Type of output object
  */
-public abstract class Transform<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> implements ProgramLifecycle<TransformContext> {
-
-  private final Type keyInType = new TypeToken<KEY_IN>(getClass()) { }.getType();
-  private final Type valueInType = new TypeToken<VALUE_IN>(getClass()) { }.getType();
-  private final Type keyOutType = new TypeToken<KEY_OUT>(getClass()) { }.getType();
-  private final Type valueOutType = new TypeToken<VALUE_OUT>(getClass()) { }.getType();
+public interface Transform<IN, OUT> {
 
   /**
-   * Get the Type of {@link KEY_IN}.
+   * Process input and emit output using {@link Emitter}.
    *
-   * @return {@link Type}
-   */
-  public final Type getKeyInType() {
-    return keyInType;
-  }
-
-  /**
-   * Get the Type of {@link VALUE_IN}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getValueInType() {
-    return valueInType;
-  }
-
-  /**
-   * Get the Type of {@link KEY_OUT}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getKeyOutType() {
-    return keyOutType;
-  }
-
-  /**
-   * Get the Typf of {@link VALUE_OUT}
-   *
-   * @return {@link Type}
-   */
-  public final Type getValueOutType() {
-    return valueOutType;
-  }
-
-  private TransformContext context;
-
-  /**
-   * Configure the Transform stage. Used to provide information about the Transform.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  /**
-   * Initialize the Transform Stage. Called during the runtime with context of the Transform.
-   *
-   * @param context {@link TransformContext}
-   */
-  public void initialize(TransformContext context) {
-    this.context = context;
-  }
-
-  /**
-   * Process input Key and Value and emit output using {@link Emitter}.
-   *
-   * @param inputKey input key, can be null if key is not available/applicable
-   * @param inputValue input value
+   * @param input the input to transform
    * @param emitter {@link Emitter} to emit data to the next stage
    * @throws Exception
    */
-  public void transform(@Nullable final KEY_IN inputKey, VALUE_IN inputValue,
-                                 final Emitter<KEY_OUT, VALUE_OUT> emitter) throws Exception {
-    throw new UnsupportedOperationException();
-  }
-
-
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected TransformContext getContext() {
-    return context;
-  }
+  void transform(IN input, Emitter<OUT> emitter) throws Exception;
 }

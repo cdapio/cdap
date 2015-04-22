@@ -16,7 +16,7 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -24,19 +24,14 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.ServiceWorkerContext;
-import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.worker.WorkerContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -56,13 +51,13 @@ public class AppWithServices extends AbstractApplication {
   public static final String APP_NAME = "AppWithServices";
   public static final String SERVICE_NAME = "ServerService";
   public static final String DATASET_WORKER_SERVICE_NAME = "DatasetUpdateService";
+  public static final String DATASET_UPDATE_WORKER = "DatasetUpdateWorker";
   public static final String DATASET_TEST_KEY = "testKey";
   public static final String DATASET_TEST_VALUE = "testValue";
   public static final String DATASET_TEST_KEY_STOP = "testKeyStop";
   public static final String DATASET_TEST_KEY_STOP_2 = "testKeyStop2";
   public static final String DATASET_TEST_VALUE_STOP = "testValueStop";
   public static final String DATASET_TEST_VALUE_STOP_2 = "testValueStop2";
-  public static final String PROCEDURE_DATASET_KEY = "key";
 
   private static final String DATASET_NAME = "AppWithServicesDataset";
   private static final String INIT_KEY = "init";
@@ -79,24 +74,24 @@ public class AppWithServices extends AbstractApplication {
     public void configure() {
       setName(APP_NAME);
       addStream(new Stream("text"));
-      addProcedure(new NoOpProcedure());
+      addService(new BasicService("NoOpService", new NoOpHandler()));
       addService(new BasicService(SERVICE_NAME, new ServerService()));
       addService(new DatasetUpdateService());
       addService(new TransactionalHandlerService());
+      addWorker(new DatasetUpdateWorker());
       createDataset(DATASET_NAME, KeyValueTable.class);
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
 
-
-  public static final class NoOpProcedure extends AbstractProcedure {
-
+  public static final class NoOpHandler extends AbstractHttpServiceHandler {
     @UseDataSet(DATASET_NAME)
     private KeyValueTable table;
 
-    @Handle("ping")
-    public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String key = request.getArgument(PROCEDURE_DATASET_KEY);
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(key)));
+    @GET
+    @Path("ping/{key}")
+    public void ping(HttpServiceRequest request, HttpServiceResponder responder,
+                     @PathParam("key") String key) throws IOException {
+      responder.sendJson(Bytes.toString(table.read(key)));
     }
   }
 
@@ -196,99 +191,92 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(DATASET_WORKER_SERVICE_NAME);
       addHandler(new NoOpHandler());
-      addWorker("updater", new DatasetUpdateWorker(DATASET_NAME));
     }
 
     private static final class NoOpHandler extends AbstractHttpServiceHandler {
       // no-op
     }
+  }
 
-    private static final class DatasetUpdateWorker extends AbstractServiceWorker {
+  private static final class DatasetUpdateWorker extends AbstractWorker {
 
-      private static int datasetHashCode;
-      private volatile boolean workerStopped = false;
+    private static int datasetHashCode;
+    private volatile boolean workerStopped = false;
 
-      @Property
-      private long sleepMs = 1000;
+    @Property
+    private long sleepMs = 1000;
 
-      private String dataset;
-      private String valueToWriteOnRun;
-      private String valueToWriteOnStop;
+    private String dataset;
+    private String valueToWriteOnRun;
+    private String valueToWriteOnStop;
 
-      public DatasetUpdateWorker(String dataset) {
-        // Remember the dataset name so that it can set in configure time.
-        // It's done like this to test the @Property is working.
-        this.dataset = dataset;
-      }
+    @Override
+    public void configure() {
+      setName(DATASET_UPDATE_WORKER);
+    }
 
-      @Override
-      protected void configure() {
-        useDatasets(dataset);
-      }
+    @Override
+    public void initialize(WorkerContext context) throws Exception {
+      super.initialize(context);
+      valueToWriteOnRun = context.getRuntimeArguments().get(WRITE_VALUE_RUN_KEY);
+      valueToWriteOnStop = context.getRuntimeArguments().get(WRITE_VALUE_STOP_KEY);
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          KeyValueTable table = context.getDataset(DATASET_NAME);
+          datasetHashCode = System.identityHashCode(table);
+        }
+      });
+    }
 
-      @Override
-      public void initialize(ServiceWorkerContext context) throws Exception {
-        super.initialize(context);
-        valueToWriteOnRun = context.getRuntimeArguments().get(WRITE_VALUE_RUN_KEY);
-        valueToWriteOnStop = context.getRuntimeArguments().get(WRITE_VALUE_STOP_KEY);
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataset(DATASET_NAME);
-            datasetHashCode = System.identityHashCode(table);
-          }
-        });
-      }
+    @Override
+    public void stop() {
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          KeyValueTable table = context.getDataset(DATASET_NAME);
+          table.write(DATASET_TEST_KEY_STOP, valueToWriteOnStop);
 
-      @Override
-      public void stop() {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataset(DATASET_NAME);
-            table.write(DATASET_TEST_KEY_STOP, valueToWriteOnStop);
+          // Test different cases of getting datasets - datasets with the same arguments should be the same instance
+          // while datasets with different arguments should be different instances
+          KeyValueTable table2 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
+          KeyValueTable table3 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
+          KeyValueTable table4 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value2"));
 
-            // Test different cases of getting datasets - datasets with the same arguments should be the same instance
-            // while datasets with different arguments should be different instances
-            KeyValueTable table2 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
-            KeyValueTable table3 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
-            KeyValueTable table4 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value2"));
-
-            // table and table2 have different arguments and thus should be different instances
-            if (System.identityHashCode(table) != System.identityHashCode(table2)) {
-              // table2 and table3 have the same arguments and thus should be the same instance
-              if (System.identityHashCode(table2) == System.identityHashCode(table3)) {
-                // table2 and table4 have different arguments and thus should be different instances
-                if (System.identityHashCode(table2) != System.identityHashCode(table4)) {
-                  table2.write(DATASET_TEST_KEY_STOP_2, DATASET_TEST_VALUE_STOP_2);
-                }
+          // table and table2 have different arguments and thus should be different instances
+          if (System.identityHashCode(table) != System.identityHashCode(table2)) {
+            // table2 and table3 have the same arguments and thus should be the same instance
+            if (System.identityHashCode(table2) == System.identityHashCode(table3)) {
+              // table2 and table4 have different arguments and thus should be different instances
+              if (System.identityHashCode(table2) != System.identityHashCode(table4)) {
+                table2.write(DATASET_TEST_KEY_STOP_2, DATASET_TEST_VALUE_STOP_2);
               }
             }
           }
-        });
-        workerStopped = true;
-      }
-
-      @Override
-      public void run() {
-        try {
-          // Run this loop till stop is called.
-          while (!workerStopped) {
-            getContext().execute(new TxRunnable() {
-              @Override
-              public void run(DatasetContext context) throws Exception {
-                KeyValueTable table = context.getDataset(DATASET_NAME);
-                // Write only if the dataset instance is the same as the one gotten in initialize.
-                if (datasetHashCode == System.identityHashCode(table)) {
-                  table.write(DATASET_TEST_KEY, valueToWriteOnRun);
-                }
-              }
-            });
-            TimeUnit.MILLISECONDS.sleep(sleepMs);
-          }
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
         }
+      });
+      workerStopped = true;
+    }
+
+    @Override
+    public void run() {
+      try {
+        // Run this loop till stop is called.
+        while (!workerStopped) {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              KeyValueTable table = context.getDataset(DATASET_NAME);
+              // Write only if the dataset instance is the same as the one gotten in initialize.
+              if (datasetHashCode == System.identityHashCode(table)) {
+                table.write(DATASET_TEST_KEY, valueToWriteOnRun);
+              }
+            }
+          });
+          TimeUnit.MILLISECONDS.sleep(sleepMs);
+        }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
       }
     }
   }

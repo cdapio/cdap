@@ -6,15 +6,19 @@ body.state-workflows{
     .panel.panel-default {
       > .panel-heading {
         > a {
-          &:hover {
-            text-decoration: none;
-          }
           color: white;
+          &:hover { text-decoration: none; }
         }
       }
     }
   }
-
+  .table.table-status { margin-top: 0; }
+  .col-sm-6 > div.btn-md { margin-top: 14px; }
+  .col-xs-12 > strong {
+    color: @cdap-header;
+    font-size: 14px;
+    padding-right: 5px;
+  }
 
   .schedule-heading {
     background-color: white;
@@ -27,20 +31,14 @@ body.state-workflows{
   }
 
   .schedule-content {
-
     .schedule-rows {
-
       .schedule-row {
         background-color: white;
         border: 1px solid @border-color;
         padding: 5px 0;
         line-height: 50px;
         cursor: pointer;
-
-        &.active {
-          background-color: #dcdce6;
-        }
-
+        &.active { background-color: #dcdce6; }
         p, i {
           vertical-align: middle;
           font-size: 15px;
@@ -52,20 +50,15 @@ body.state-workflows{
     .schedule-detail {
       background-color: #9d9fab;
       padding: 10px 0;
-
       .row {
         line-height: 30px;
-
         p {
           vertical-align: middle;
           margin-bottom: 0;
           color: white;
         }
       }
-
-      table {
-        width: inherit;
-      }
+      table { width: inherit; }
     }
   }
 }

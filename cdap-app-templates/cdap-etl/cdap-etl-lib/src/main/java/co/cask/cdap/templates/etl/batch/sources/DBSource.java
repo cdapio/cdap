@@ -16,6 +16,9 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -40,7 +43,7 @@ import java.util.Map;
 /**
  * Batch source to read from a Database table
  */
-public class DBSource extends BatchSource<LongWritable, DBRecord> {
+public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
 
   // TODO: Remove when plugin support is enabled
@@ -129,5 +132,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord> {
     }
     ETLDBInputFormat.setInput(job, DBRecord.class, dbImportQuery, dbCountQuery);
     job.setInputFormatClass(ETLDBInputFormat.class);
+  }
+
+  @Override
+  public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
+    emitter.emit(input.getValue().getRecord());
   }
 }

@@ -1,15 +1,56 @@
 <div ng-hide="welcomeIsHidden">
   <div class="panel panel-message">
-    <div class="panel-heading clearfix">
+    <a class="btn-close pull-right" ng-click="hideWelcome()">
+      <span class="fa fa-close"></span>
+      <span class="sr-only"> Hide Welcome Message </span>
+    </a>
+<!--     <div class="panel-heading clearfix">
+
+    </div> -->
+<!--     <div class="panel-heading clearfix">
       <a class="btn-close pull-right" ng-click="hideWelcome()">
         <span class="fa fa-close"></span>
         <span class="sr-only"> Hide Welcome Message </span>
       </a>
         <h2 class="text-uppercase"> Welcome! </h2>
         <p> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </p>
-    </div>
+    </div> -->
     <div class="panel-body text-center">
-      <div class="col-sm-4">
+
+      <div class="row">
+
+        <div class="col-xs-12 col-sm-3">
+          <div class="text-left">
+            <h2 class="text-uppercase"> Welcome! </h2>
+            <p> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </p>
+          </div>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img class="center-block" src="assets/img/ico_simplify.png" />
+          <h3 class="text-uppercase"> Simplify... </h3>
+          <p>
+            your way to actionable <br />
+            insights with Hadoop
+          </p>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img src="assets/img/ico_innovate.png" />
+            <h3 class="text-uppercase"> Innovate... </h3>
+            <p>
+              with your existing talent and <br />
+              domain experts on Hadoop
+            </p>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img src="assets/img/ico_accelerate.png" />
+            <h3 class="text-uppercase"> Accelerate... </h3>
+            <p>
+              Time-to-Market and <br />
+              Time-to-Value with Hadoop
+            </p>
+        </div>
+      </div>
+<!--       <div class="col-sm-4">
         <img class="center-block" src="assets/img/ico_simplify.png" />
         <h3 class="text-uppercase"> Simplify... </h3>
         <p>
@@ -18,7 +59,7 @@
         </p>
       </div>
       <div class="col-sm-4">
-      <img src="assets/img/ico_innovate.png" />
+        <img src="assets/img/ico_innovate.png" />
         <h3 class="text-uppercase"> Innovate... </h3>
         <p>
           with your existing talent and <br />
@@ -26,19 +67,19 @@
         </p>
       </div>
       <div class="col-sm-4">
-      <img src="assets/img/ico_accelerate.png" />
+        <img src="assets/img/ico_accelerate.png" />
         <h3 class="text-uppercase"> Accelerate... </h3>
         <p>
           Time-to-Market and <br />
           Time-to-Value with Hadoop
         </p>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>
 
 <section class="cdap-health"> <!-- ng-show="isEnterprise" -->
-  <h2> CDAP Health </h2>
+  <h2> System Health </h2>
   <div class="row">
     <div class="col-xs-12 col-lg-4">
       <div>
@@ -46,27 +87,35 @@
           <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="{{systemStatus}}" />
         </svg>
         <p ng-if="systemStatus === 'yellow'">
-          Please Check! Some <a ui-sref="admin.system.services"> Services</a> might be down.
+          Some <a ui-sref="admin.system.services"> services</a> might have an issue.
         </p>
         <p ng-if="systemStatus === 'red'">
-          Please Check! All <a ui-sref="admin.system.services"> Services</a> are down.
+          All <a ui-sref="admin.system.services"> services</a> are down.
         </p>
         <p ng-if="systemStatus === 'green'">
-          All services are OK!
+          All services are up and running
         </p>
       </div>
     </div>
 
+
     <div class="col-xs-12 col-lg-8">
-      <div>
-        <p class="text-left"> Errors last hour </p>
-        <img src="assets/img/health_graph.png" alt="" />
-        <p class="text-center"> System </p>
-      </div>
-      <div>
-        <br />
-        <img src="assets/img/health_graph.png" alt="" />
-        <p class="text-center"> App </p>
+      <div ng-controller="WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="col-xs-5">
+        <p class="text-left" ng-show="$first">
+          <strong class="text-left"> Errors last hour </strong>
+        </p>
+        <br ng-hide="$first">
+        <c3-spline
+          data-history="chartHistory"
+          chart-size="{ height: 100 }"
+          chart-showx="false"
+          chart-showy="false"
+          chart-color="{ pattern: ['red', '#FFBF00'] }"
+          chart-legend="{ show: false, position: 'inset' }"
+          ></c3-spline>
+
+        <p class="text-center">{{wdgt.title}} - {{chartHistory[0].values.slice(-1)[0].y}} - {{chartHistory[1].values.slice(-1)[0].y}}</p>
+
       </div>
     </div>
   </div>

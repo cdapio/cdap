@@ -94,7 +94,7 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void clear() throws Exception {
     programClient.stopAll();
-    metaClient.resetUnrecoverably();
+    namespaceClient.deleteAll();
   }
 
   @Override
@@ -135,5 +135,10 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
     namespaceClient.delete(namespace.getId());
+  }
+
+  @Override
+  public StreamManager getStreamManager(Id.Stream streamId) {
+    throw new UnsupportedOperationException();
   }
 }

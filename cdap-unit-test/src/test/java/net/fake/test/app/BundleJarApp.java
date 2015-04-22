@@ -16,7 +16,6 @@
 
 package net.fake.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -29,10 +28,11 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import com.google.common.collect.ImmutableMap;
@@ -44,9 +44,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
- * BundleJarApp contains a procedure that uses a third party library.
+ * BundleJarApp contains a service that uses a third party library.
  */
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
@@ -61,9 +64,9 @@ public class BundleJarApp extends AbstractApplication {
     createDataset("simpleInputDataset", KeyValueTable.class);
     createDataset("simpleOutputDataset", KeyValueTable.class);
     addFlow(new SimpleFlow());
-    addProcedure(new SimpleGetOutput());
-    addProcedure(new SimpleGetInput());
-    addProcedure(new PrintProcedure());
+    addService(new BasicService("SimpleGetOutput", new SimpleGetOutput()));
+    addService(new BasicService("SimpleGetInput", new SimpleGetInput()));
+    addService(new BasicService("PrintService", new PrintHandler()));
     addMapReduce(new SimpleMapReduce());
   }
 
@@ -82,14 +85,14 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Contains a method that can be run to check if expected classes are loaded.
    */
-  public static class PrintProcedure extends AbstractProcedure {
-    private static final Logger LOG = LoggerFactory.getLogger(PrintProcedure.class);
+  public static class PrintHandler extends AbstractHttpServiceHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(PrintHandler.class);
 
-    @Handle("load")
-    public void load(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("load/{class}")
+    public void load(HttpServiceRequest request, HttpServiceResponder responder,
+                     @PathParam("class") String className)
       throws IOException, InterruptedException {
-
-      String className = request.getArgument("class");
 
       responder.sendJson(
         ImmutableMap.builder()
@@ -112,19 +115,20 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Queries simpleOutputDataset.
    */
-  public static class SimpleGetOutput extends AbstractProcedure {
+  public static class SimpleGetOutput extends AbstractHttpServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleGetOutput.class);
 
     @UseDataSet("simpleOutputDataset")
     private KeyValueTable output;
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("get/{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key)
       throws IOException, InterruptedException {
 
       LOG.info("Hello " + loadTestClasses());
 
-      String key = request.getArgument("key");
       String value = Bytes.toString(output.read(Bytes.toBytes(key)));
       if (value == null) {
         value = "null";
@@ -137,19 +141,20 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Queries simpleInputDataset.
    */
-  public static class SimpleGetInput extends AbstractProcedure {
+  public static class SimpleGetInput extends AbstractHttpServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleGetInput.class);
 
     @UseDataSet("simpleInputDataset")
     private KeyValueTable input;
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("get/{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key)
       throws IOException, InterruptedException {
 
       LOG.info("Hello " + loadTestClasses());
 
-      String key = request.getArgument("key");
       String value = Bytes.toString(input.read(Bytes.toBytes(key)));
       if (value == null) {
         value = "null";

@@ -21,24 +21,26 @@ import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.stream.DefaultStreamWriter;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -49,7 +51,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -60,8 +61,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -71,7 +72,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
-  private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final Metrics userMetrics;
@@ -87,13 +87,15 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             MetricsCollectionService metricsCollectionService,
                             DatasetFramework datasetFramework,
                             TransactionSystemClient transactionSystemClient,
-                            DiscoveryServiceClient discoveryServiceClient) {
+                            DiscoveryServiceClient discoveryServiceClient,
+                            StreamWriterFactory streamWriterFactory,
+                            @Nullable AdapterSpecification adapterSpec,
+                            @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, runId.getId(), instanceId),
-          datasetFramework, discoveryServiceClient);
+          datasetFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.program = program;
     this.specification = spec;
-    this.datasets = ImmutableSet.copyOf(spec.getDatasets());
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
@@ -101,7 +103,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  runId.getId(), instanceId));
     this.runtimeArgs = runtimeArgs.asMap();
-    this.streamWriter = new DefaultStreamWriter(program.getNamespaceId(), getDiscoveryServiceClient());
+    this.streamWriter = streamWriterFactory.create(program.getId());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
@@ -168,7 +170,8 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), context, datasetFramework,
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), program.getId(),
+                                             context, datasetFramework,
                                              getProgram().getClassLoader(), null, runtimeArgs) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

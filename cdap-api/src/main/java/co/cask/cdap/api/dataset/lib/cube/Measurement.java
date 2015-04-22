@@ -37,6 +37,17 @@ public class Measurement {
   }
 
   /**
+   * Creates a {@link Measurement}.
+   * @param measurement existing measurement
+   * @param name name of the measurement
+   */
+  public Measurement(Measurement measurement, String name) {
+    this.name = name;
+    this.type = measurement.getType();
+    this.value = measurement.getValue();
+  }
+
+  /**
    * @return name of this {@link Measurement}
    */
   public String getName() {

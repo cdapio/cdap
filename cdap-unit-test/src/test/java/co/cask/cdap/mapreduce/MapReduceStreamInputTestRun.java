@@ -18,7 +18,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -44,15 +44,15 @@ public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
 
     ApplicationManager applicationManager = deployApplication(AppWithMapReduceUsingStream.class);
     Schema schema = new Schema.Parser().parse(AppWithMapReduceUsingStream.SCHEMA.toString());
-    StreamWriter streamWriter = applicationManager.getStreamWriter("mrStream");
-    streamWriter.send(createEvent(schema, "YHOO", 100, 10.0f));
-    streamWriter.send(createEvent(schema, "YHOO", 10, 10.1f));
-    streamWriter.send(createEvent(schema, "YHOO", 13, 9.9f));
+    StreamManager streamManager = getStreamManager("mrStream");
+    streamManager.send(createEvent(schema, "YHOO", 100, 10.0f));
+    streamManager.send(createEvent(schema, "YHOO", 10, 10.1f));
+    streamManager.send(createEvent(schema, "YHOO", 13, 9.9f));
     float yhooTotal = 100 * 10.0f + 10 * 10.1f + 13 * 9.9f;
-    streamWriter.send(createEvent(schema, "AAPL", 5, 300.0f));
-    streamWriter.send(createEvent(schema, "AAPL", 3, 298.34f));
-    streamWriter.send(createEvent(schema, "AAPL", 50, 305.23f));
-    streamWriter.send(createEvent(schema, "AAPL", 1000, 284.13f));
+    streamManager.send(createEvent(schema, "AAPL", 5, 300.0f));
+    streamManager.send(createEvent(schema, "AAPL", 3, 298.34f));
+    streamManager.send(createEvent(schema, "AAPL", 50, 305.23f));
+    streamManager.send(createEvent(schema, "AAPL", 1000, 284.13f));
     float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
     MapReduceManager mrManager = applicationManager.startMapReduce("BodyTracker");

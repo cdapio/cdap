@@ -3,16 +3,20 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-  .factory('Widget', function (MyDataSource) {
+  .factory('Widget', function (MyDataSource, myHelpers) {
 
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
       this.type = opts.type;
       this.metric = opts.metric || false;
+      // TODO: reconsider this field once Epoch is removed.
       this.color = opts.color;
       this.dataSrc = null;
-      this.isLive = false;
+      this.isLive = opts.isLive || false;
+      this.interval = opts.interval;
+      this.aggregate = opts.aggregate;
+      this.metricAlias =  opts.metricAlias || {};
     }
 
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
@@ -24,16 +28,22 @@ angular.module(PKG.name+'.feature.dashboard')
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
-        tags[parts[i]] = parts[i + 1]
+        // In context, '~' is used to represent '.'
+        var tagValue = parts[i + 1].replace(/~/g, '.');
+        tags[parts[i]] = tagValue;
       }
       return tags;
     }
 
-    function constructQuery(queryId, tags, metrics) {
+    function constructQuery(queryId, tags, metric) {
       var timeRange, retObj;
-      timeRange = {'start': 'now-60s', 'end': 'now'};
+      timeRange = {'start': metric.startTime || 'now-60s',
+                  'end': metric.endTime || 'now'};
+      if (metric.resolution) {
+        timeRange['resolution'] = metric.resolution;
+      }
       retObj = {};
-      retObj[queryId] = {tags: tags, metrics: metrics, groupBy: [], timeRange: timeRange};
+      retObj[queryId] = {tags: tags, metrics: metric.names, groupBy: [], timeRange: timeRange};
       return retObj;
     }
 
@@ -47,7 +57,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.dataSrc.request({
         _cdapPath: '/metrics/query',
         method: 'POST',
-        body: constructQuery(queryId, contextToTags(this.metric.context), this.metric.names)
+        body: constructQuery(queryId, contextToTags(this.metric.context), this.metric)
       })
         .then(this.processData.bind(this))
     }
@@ -62,7 +72,8 @@ angular.module(PKG.name+'.feature.dashboard')
         {
           _cdapPath: '/metrics/query',
           method: 'POST',
-          body: constructQuery(queryId, contextToTags(this.metric.context), this.metric.names)
+          body: constructQuery(queryId, contextToTags(this.metric.context), this.metric),
+          interval: this.interval
         },
         this.processData.bind(this)
       );
@@ -71,6 +82,26 @@ angular.module(PKG.name+'.feature.dashboard')
     Widget.prototype.stopPolling = function(id) {
       if (!this.dataSrc) return;
       this.dataSrc.stopPoll(id);
+    };
+
+    var zeroFill = function(resolution, result) {
+        // interpolating (filling with zeros) the data since backend returns only metrics at specific time periods
+        // instead of for the whole range. We have to interpolate the rest with 0s to draw the graph.
+        if (resolution == '1h') {
+          skipAmt = 60 * 60;
+        } else if (resolution == '1m') {
+          skipAmt = 60;
+        } else {
+          skipAmt = 1;
+        }
+
+        var startTime = myHelpers.roundUpToNearest(result.startTime, skipAmt);
+        var endTime = myHelpers.roundDownToNearest(result.endTime, skipAmt);
+        var tempMap = {};
+        for (j = startTime; j <= endTime; j += skipAmt) {
+          tempMap[j] = 0;
+        }
+        return tempMap;
     };
 
     Widget.prototype.processData = function (queryResults) {
@@ -82,12 +113,7 @@ angular.module(PKG.name+'.feature.dashboard')
       metrics = this.metric.names;
       for (i = 0; i < metrics.length; i++) {
         metric = metrics[i];
-        tempMap[metric] = {};
-        // interpolating the data since backend returns only metrics at specific time periods instead of
-        // for the whole range. We have to interpolate the rest with 0s to draw the graph.
-        for (j = result.startTime; j <= result.endTime; j++) {
-          tempMap[metric][j] = 0;
-        }
+        tempMap[metric] = zeroFill(this.metric.resolution, result);
       }
       for (i = 0; i < result.series.length; i++) {
         data = result.series[i].data;
@@ -98,7 +124,11 @@ angular.module(PKG.name+'.feature.dashboard')
         }
       }
       for (i = 0; i < metrics.length; i++) {
-        tmpData.push(tempMap[metrics[i]]);
+        var thisMetricData = tempMap[metrics[i]];
+        if (this.aggregate) {
+          thisMetricData = myHelpers.aggregate(thisMetricData, this.aggregate);
+        }
+        tmpData.push(thisMetricData);
       }
       this.data = tmpData;
     };
@@ -163,7 +193,20 @@ angular.module(PKG.name+'.feature.dashboard')
 
         hist = [];
         for (var i = 0; i < vs.length; i++) {
-          hist.push({label: $scope.wdgt.metric.names[i], values: vs[i]});
+          // http://stackoverflow.com/questions/20306204/using-queryselector-with-ids-that-are-numbers
+          // http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
+          var metricName = $scope.wdgt.metric.names[i];
+
+          var metricAlias = $scope.wdgt.metricAlias[metricName];
+          if (metricAlias !== undefined) {
+            metricName = metricAlias;
+          }
+          // Replace all invalid characters with '_'. This is ok for now, since we do not display the chart labels
+          // to the user. Source: http://stackoverflow.com/questions/13979323/how-to-test-if-selector-is-valid-in-jquery
+          var replacedMetricName = metricName.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=><\|])/g, '_');
+          // TODO: This replacement is not required for c3 (only for Epoch). c3 does it internally, where needed.
+          //       Need to take advantage of that, once we remove Epoch
+          hist.push({label: metricName, values: vs[i]});
         }
         $scope.chartHistory = hist;
       }

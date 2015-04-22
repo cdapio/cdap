@@ -16,10 +16,11 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -27,7 +28,6 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -42,6 +42,7 @@ import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -108,17 +109,19 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                            new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(
-        new DatasetAdminOpHTTPHandlerV2(new NoAuthenticator(),
-                                        new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework)));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), framework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
 
-    InMemoryDatasetFramework mdsFramework =
-      new InMemoryDatasetFramework(registryFactory,
-                                   ImmutableMap.of("memoryTable", new InMemoryTableModule(),
-                                                   "core", new CoreDatasetsModule()), cConf);
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .put("memoryTable", new InMemoryTableModule())
+      .put("core", new CoreDatasetsModule())
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
+
+    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(
+      registryFactory, modules, cConf, txExecutorFactory);
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
@@ -134,7 +137,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade));
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, framework));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

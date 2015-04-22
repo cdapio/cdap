@@ -24,14 +24,16 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.templates.AdapterContext;
 
 import java.util.List;
 
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, AdapterContext {
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
    */
@@ -49,6 +51,13 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   /**
    */
   <T> T getHadoopJob();
+
+  /**
+   * Overrides the input configuration of this MapReduce job to use the specific stream.
+   *
+   * @param stream the input stream.
+   */
+  void setInput(StreamBatchReadable stream);
 
   /**
    * Overrides the input configuration of this MapReduce job to use

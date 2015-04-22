@@ -34,8 +34,6 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
-import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -55,7 +53,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 
 /**
- * Tests that injection for local mode uses in-memory for queues and levelDB for streams.
+ * Tests that injection for local mode uses in-memory for queues.
  */
 public class LocalQueueTest extends QueueTest {
 
@@ -74,16 +72,9 @@ public class LocalQueueTest extends QueueTest {
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
-      new DataFabricLocalModule(),
-      Modules.override(new StreamAdminModules().getStandaloneModules())
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
-            bind(StreamAdmin.class).to(LevelDBStreamAdmin.class);
-            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
-          }
-        }));
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

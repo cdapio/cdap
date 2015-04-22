@@ -132,15 +132,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   /**
-   * This determines whether dropping a queue is supported (by dropping the queue's table).
-   */
-  public boolean doDropTable(@SuppressWarnings("unused") QueueName queueName) {
-    // no-op because this would drop all tables for the flow
-    // todo: introduce a method dropAllFor(flow) or similar
-    return false;
-  }
-
-  /**
    * This determines whether truncating a queue is supported (by truncating the queue's table).
    */
   public boolean doTruncateTable(@SuppressWarnings("unused") QueueName queueName) {
@@ -254,19 +245,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
 
   QueueConstants.QueueType getType() {
     return type;
-  }
-
-  // Only used by HBaseStreamAdmin
-  void drop(QueueName queueName) throws Exception {
-    // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
-    if (doDropTable(queueName)) {
-      drop(getDataTableId(queueName));
-      // If delete of state failed, the residue states won't affect the new queue created with the same name in future,
-      // since states are recording the startRow, which has transaction info inside.
-      deleteConsumerStates(queueName);
-    } else {
-      LOG.warn("drop({}) on HBase queue table has no effect.", queueName);
-    }
   }
 
   HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {

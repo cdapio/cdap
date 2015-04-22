@@ -17,6 +17,8 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -26,8 +28,6 @@ import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -169,8 +169,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
 
+    runtimeInfo = createRuntimeInfo(type, programId, controller);
     if (runtimeInfo != null) {
-      runtimeInfo = createRuntimeInfo(type, programId, controller);
       updateRuntimeInfo(type, runId, runtimeInfo);
       return runtimeInfo;
     } else {
@@ -240,9 +240,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
         break;
       }
-      case PROCEDURE:
-        programController = new ProcedureTwillProgramController(programId, controller);
-        break;
       case MAPREDUCE:
         programController = new MapReduceTwillProgramController(programId, controller);
         break;

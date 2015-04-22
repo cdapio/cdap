@@ -18,7 +18,7 @@ package co.cask.cdap.app.mapreduce;
 
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -112,6 +112,9 @@ public class MapReduceMetricsInfoTest {
     MRJobInfo mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(runId);
 
 
+    // Incomplete because MapReduceMetricsInfo does not provide task-level state and start/end times.
+    Assert.assertFalse(mrJobInfo.isComplete());
+
     // Check job-level counters
     Map<String, Long> jobCounters = mrJobInfo.getCounters();
     Assert.assertEquals((Long) 38L, jobCounters.get(TaskCounter.MAP_INPUT_RECORDS.name()));
@@ -155,7 +158,7 @@ public class MapReduceMetricsInfoTest {
   }
 
   private void gauge(Map<String, String> context, String metric, long timestamp, Long value) throws Exception {
-    metricStore.add(new MetricValue(context, metric, timestamp, value, MetricType.GAUGE));
+    metricStore.add(new MetricValues(context, metric, timestamp, value, MetricType.GAUGE));
   }
 
   // Returned copied map, with new key-value pair.

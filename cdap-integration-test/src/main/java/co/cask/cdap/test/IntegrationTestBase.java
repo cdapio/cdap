@@ -273,22 +273,6 @@ public class IntegrationTestBase {
     return result;
   }
 
-  @SuppressWarnings("deprecation")
-  private void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    // TODO: replace with programClient.waitForProcedureInstances()
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getProcedureInstances(appId, procedureId);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
-  }
-
   private void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
                                         int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.util.List;
 
 /**
@@ -79,7 +78,7 @@ import java.util.List;
 public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
-  private final WebCloudAppService webCloudAppService;
+  private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
@@ -99,7 +98,7 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
+  private StandaloneMain(List<Module> modules, CConfiguration configuration, String uiPath) {
     this.configuration = configuration;
 
     Injector injector = Guice.createInjector(modules);
@@ -114,7 +113,7 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
+    userInterfaceService = injector.getInstance(UserInterfaceService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
@@ -167,8 +166,8 @@ public class StandaloneMain {
 
     metricsQueryService.startAndWait();
     router.startAndWait();
-    if (webCloudAppService != null) {
-      webCloudAppService.startAndWait();
+    if (userInterfaceService != null) {
+      userInterfaceService.startAndWait();
     }
 
     if (securityEnabled) {
@@ -194,9 +193,9 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
 
     try {
-      // order matters: first shut down web app 'cause it will stop working after router is down
-      if (webCloudAppService != null) {
-        webCloudAppService.stopAndWait();
+      // order matters: first shut down UI 'cause it will stop working after router is down
+      if (userInterfaceService != null) {
+        userInterfaceService.stopAndWait();
       }
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
@@ -249,12 +248,11 @@ public class StandaloneMain {
     if (OSDetector.isWindows()) {
       out.println("  cdap.bat [options]");
     } else {
-      out.println("  ./cdap.sh [options]");
+      out.println("  cdap.sh [options]");
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --web-app-path  Path to Webapp");
-    out.println("  --help          To print this message");
+    out.println("  --help     To print this message");
     out.println("");
 
     if (error) {
@@ -263,14 +261,12 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    String webAppPath = WebCloudAppService.WEB_APP;
+    String uiPath = UserInterfaceService.UI;
 
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
         return;
-      } else if ("--web-app-path".equals(args[0])) {
-        webAppPath = args[1];
       } else {
         usage(true);
       }
@@ -279,7 +275,7 @@ public class StandaloneMain {
     StandaloneMain main = null;
 
     try {
-      main = create(webAppPath);
+      main = create(uiPath);
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
@@ -292,21 +288,21 @@ public class StandaloneMain {
   }
 
   public static StandaloneMain create() {
-    return create(WebCloudAppService.WEB_APP);
+    return create(UserInterfaceService.UI);
   }
 
   /**
    * The root of all goodness!
    */
-  public static StandaloneMain create(String webAppPath) {
-    return create(webAppPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create(String uiPath) {
+    return create(uiPath, CConfiguration.create(), new Configuration());
   }
 
   public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
-    return create(WebCloudAppService.WEB_APP, cConf, hConf);
+    return create(UserInterfaceService.UI, cConf, hConf);
   }
 
-  public static StandaloneMain create(String webAppPath, CConfiguration cConf, Configuration hConf) {
+  public static StandaloneMain create(String uiPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -336,13 +332,13 @@ public class StandaloneMain {
     }
 
     //Run dataset service on random port
-    List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
+    List<Module> modules = createPersistentModules(cConf, hConf, uiPath);
 
-    return new StandaloneMain(modules, cConf, webAppPath);
+    return new StandaloneMain(modules, cConf, uiPath);
   }
 
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf,
-                                                      final String webAppPath) {
+                                                      final String uiPath) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     String environment =
@@ -357,8 +353,8 @@ public class StandaloneMain {
       new AbstractModule() {
         @Override
         protected void configure() {
-          if (webAppPath != null) {
-            bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
+          if (uiPath != null) {
+            bindConstant().annotatedWith(Names.named("ui-path")).to(uiPath);
           }
         }
       },

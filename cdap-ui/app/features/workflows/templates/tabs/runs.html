@@ -1,5 +1,6 @@
 <div class="row">
-  <div class="col-lg-4 col-md-5 col-sm-6 col-xs-12">
+  <div class="col-xs-12">
+    <strong> View Run: </strong>
     <div class="btn-group"
           dropdown is-open="dropdown.isopen">
       <button type="button"
@@ -19,36 +20,15 @@
 </div>
 <br/>
 <div ng-if="runs.length">
-
-
-<div class="panel panel-default" ng-if="!$stateParams.runid">
-  <div class="panel-heading">
-    <div class="panel-title">
-      {{::runs.selected.runid}}
+  <div ng-if="runs.length">
+    <div ng-include="'/assets/features/workflows/templates/tabs/runs/run-detail.html'"
+          ng-if="!$stateParams.runid">
+    </div>
+    <div ui-view  ng-if="$stateParams.runid"> </div>
+  </div>
+  <div ng-if="!runs.length">
+    <div class="well well-lg text-center h3">
+      <div>No runs yet! Start one.</div>
     </div>
   </div>
-  <div class="panel-body">
-
-    <div ng-include="'/assets/features/workflows/templates/tabs/runs/runs-detail.html'">
-    </div>
-  </div>
-</div>
-<div class="panel panel-default" ng-if="$stateParams.runid">
-  <div class="panel-heading">
-    <div class="panel-title">
-      {{$stateParams.runid}}
-    </div>
-  </div>
-  <div class="panel-body">
-    <div ui-view> </div>
-  </div>
-</div>
-</div>
-<div ng-if="!runs.length">
-  <div class="well well-lg text-center h3">
-    <div>No runs yet! Start one.</div>
-  </div>
-</div>
-
-
 </div>

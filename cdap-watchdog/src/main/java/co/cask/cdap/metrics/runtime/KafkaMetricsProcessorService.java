@@ -16,7 +16,7 @@
 package co.cask.cdap.metrics.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
@@ -45,8 +45,8 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   public KafkaMetricsProcessorService(CConfiguration conf,
                                       ZKClientService zkClientService,
                                       KafkaMetricsProcessorServiceFactory kafkaMetricsProcessorServiceFactory) {
-    int partitionSize = conf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
-                                    MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
+    int partitionSize = conf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE,
+                                    Constants.Metrics.DEFAULT_KAFKA_PARTITION_SIZE);
     multiElection = new MultiLeaderElection(
       zkClientService, "metrics-processor", partitionSize,
       createPartitionChangeHandler(kafkaMetricsProcessorServiceFactory));

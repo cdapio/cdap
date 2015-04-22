@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -24,8 +25,10 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
@@ -35,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -42,6 +46,7 @@ import java.io.File;
 public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkerProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   @Inject
   DistributedWorkerProgramRunner(TwillRunner twillRunner, Configuration hConfig, CConfiguration cConfig) {
@@ -49,8 +54,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options, File hConfFile, File cConfFile,
-                                     ApplicationLauncher launcher) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -61,10 +66,21 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
+    String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
+                                                        String.valueOf(workerSpec.getInstances()));
+    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
+    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
+      workerSpec.getResources();
+
+    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                                                workerSpec.getDescription(), workerSpec.getProperties(),
+                                                                workerSpec.getDatasets(), newResources,
+                                                                Integer.valueOf(instances));
+
     LOG.info("Launching distributed worker {}", program.getName());
 
-    TwillController controller = launcher.launch(new WorkerTwillApplication(program, workerSpec, hConfFile, cConfFile,
-                                                                            eventHandler));
+    TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
+                                                                            localizeFiles, eventHandler));
     return new WorkerTwillProgramController(program.getName(), controller).startListen();
   }
 

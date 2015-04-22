@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -42,8 +43,9 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
 
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
-                             @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf);
+                             @Named("serviceModule") DatasetModule datasetModule,
+                             TransactionExecutorFactory txExecutorFactory) throws Exception {
+    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf, txExecutorFactory);
     this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 

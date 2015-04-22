@@ -16,18 +16,19 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -42,7 +43,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,19 +84,19 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MDSDatasetsRegistry mdsDatasets,
                         ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
-                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin) throws Exception {
+                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin,
+                        UsageRegistry usageRegistry) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
-    DatasetTypeHandlerV2 datasetTypeHandlerV2 = new DatasetTypeHandlerV2(datasetTypeHandler);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf);
-    DatasetInstanceHandlerV2 datasetInstanceHandlerV2 = new DatasetInstanceHandlerV2(datasetInstanceHandler);
+                                                                               opExecutorClient, exploreFacade, cConf,
+                                                                               usageRegistry);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
-    builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler, datasetTypeHandlerV2,
-                                             datasetInstanceHandler, datasetInstanceHandlerV2,
+    builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
+                                             datasetInstanceHandler,
                                              underlyingSystemNamespaceHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,

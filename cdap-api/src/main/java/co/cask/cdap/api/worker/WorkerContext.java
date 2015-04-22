@@ -20,11 +20,12 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.api.templates.AdapterContext;
 
 /**
  * Context for {@link Worker}.
  */
-public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter {
+public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter, AdapterContext {
 
   /**
    * Returns the specification used to configure {@link Worker} bounded to this context.

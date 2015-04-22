@@ -18,12 +18,12 @@ package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.proto.MetricQueryResult;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -93,8 +93,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
                                                                  "run1", "counter"));
-    collector.increment("reads", 1);
-    collector = collectionService.getCollector(getProcedureContext("yourspace", "WCount1", "RCounts"));
     collector.increment("reads", 1);
     collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
                                                                        MapReduceMetrics.TaskType.Mapper,
@@ -178,8 +176,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
                        getSearchResultExpected("flow", "WCounter",
                                                "flow", "WordCounter",
-                                               "mapreduce", "ClassicWordCount",
-                                               "procedure", "RCounts"
+                                               "mapreduce", "ClassicWordCount"
                        ));
 
     // No more tags when you specify namespace and adapter
@@ -219,8 +216,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("flow", "WCounter",
                                                        "flow", "WordCounter",
                                                        "flow", DOT_FLOW,
-                                                       "mapreduce", "ClassicWordCount",
-                                                       "procedure", "RCounts"));
+                                                       "mapreduce", "ClassicWordCount"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=flow:*",
                                getSearchResultExpected("run", "run1",
@@ -272,8 +268,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1",
                        ImmutableList.<String>of("namespace.yourspace.app.WCount1.flow.WCounter",
                                                 "namespace.yourspace.app.WCount1.flow.WordCounter",
-                                                "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount",
-                                                "namespace.yourspace.app.WCount1.procedure.RCounts"));
+                                                "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace.app.WCount1",
                        ImmutableList.<String>of());
@@ -313,8 +308,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                        ImmutableList.<String>of("namespace.*.app.*.flow.WCounter",
                                                 "namespace.*.app.*.flow.WordCounter",
                                                 "namespace.*.app.*.flow." + DOT_FLOW_ESCAPED,
-                                                "namespace.*.app.*.mapreduce.ClassicWordCount",
-                                                "namespace.*.app.*.procedure.RCounts"));
+                                                "namespace.*.app.*.mapreduce.ClassicWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.*.flow.WCounter",
                        ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.run.run1"));
@@ -632,12 +626,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     long start = System.currentTimeMillis() / 1000;
     long end = start + 3;
     Map<String, String> sliceBy = getFlowletContext("interspace", "WordCount1", "WordCounter", "run1", "splitter");
-    MetricValue value =
-      new MetricValue(sliceBy, "reads", start, 100, MetricType.COUNTER);
+    MetricValues value =
+      new MetricValues(sliceBy, "reads", start, 100, MetricType.COUNTER);
     metricStore.add(value);
 
     value =
-      new MetricValue(sliceBy, "reads", end, 400, MetricType.COUNTER);
+      new MetricValues(sliceBy, "reads", end, 400, MetricType.COUNTER);
     metricStore.add(value);
 
     verifyRangeQueryResult(
@@ -651,7 +645,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         + end, 4, 1000);
 
     // delete the added metrics for testing interpolator
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, null, sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, sliceBy);
     metricStore.delete(deleteQuery);
   }
 
@@ -662,17 +656,17 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
     // 30 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
     // 1 minute
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
     // 10 minutes
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
     // 1 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
     // 10 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
 
     // seconds
     verifyRangeQueryResult(
@@ -699,7 +693,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         + (start + 36000), 3, 6);
 
     // delete the added metrics for testing auto resolutions
-    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), null, sliceBy);
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), sliceBy);
     metricStore.delete(deleteQuery);
   }
 
@@ -959,15 +953,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
     // 30 second
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
     // 1 minute
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
     // 10 minutes
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
     // 1 hour
-    metricStore.add(new MetricValue(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
 
     // count is one record
     verifyRangeQueryResult(

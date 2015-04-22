@@ -20,6 +20,8 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -28,10 +30,12 @@ import javax.ws.rs.Path;
  * Handles ping requests.
  */
 public class PingHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(PingHandler.class);
 
   @Path("/ping")
   @GET
   public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+    LOG.trace("Ping request received");
     responder.sendString(HttpResponseStatus.OK, "OK.\n");
   }
 

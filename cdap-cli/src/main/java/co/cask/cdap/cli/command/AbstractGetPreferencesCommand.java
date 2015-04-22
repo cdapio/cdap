@@ -72,7 +72,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case APP:
         return client.getApplicationPreferences(parseAppId(programIdParts), resolved);
       case FLOW:
-      case PROCEDURE:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:

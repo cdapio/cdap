@@ -1,4 +1,17 @@
-<div class="well well-lg text-center h2">
-  <div> Flow: Flowlets - Work In Progress for Run:{{$state.params.runId}}</div>
+<div ng-controller="FlowletsController">
+<div class="panel-group">
+  <div class="panel panel-default" ng-repeat="flowlet in flowlets">
+    <div class="panel-heading" ng-click="selectFlowlet(flowlet)">
+      <span
+        ng-class="{'fa-caret-right': !flowlet.isOpen,
+                   'fa-caret-down': flowlet.isOpen}"
+        class="fa fa-fw"
+      ></span>
+      {{flowlet.name}}
+    </div>
+    <div class="panel-body" ng-if="flowlet.isOpen">
+      <div ng-include="'/assets/features/flows/templates/tabs/runs/flowlets/detail.html'"></div>
+    </div>
+  </div>
 </div>
-<ui-view role="tabpanel"/>
+</div>

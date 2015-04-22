@@ -13,7 +13,8 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.etlapps'
+      PKG.name+'.feature.etlapps',
+      PKG.name+'.feature.explore'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -27,7 +28,8 @@ angular
         'ui.router',
         'cask-angular-window-manager',
         'cask-angular-theme',
-        'cask-angular-focus'
+        'cask-angular-focus',
+        'ngCookies'
       ]).name,
 
       angular.module(PKG.name+'.filters', [
@@ -60,7 +62,8 @@ angular
       'mgcrea.ngStrap.modal',
 
       'ncy-angular-breadcrumb',
-      'angularMoment'
+      'angularMoment',
+      'ui.select'
 
     ]).name,
 
@@ -110,26 +113,29 @@ angular
   })
 
   .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
-
-    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
+    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
       myAlert({
         title: 'Error',
-        content: sockEvent.reason || 'could not connect to the server',
+        content: data.reason || 'Unable to connect to CDAP',
         type: 'danger'
       });
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
-
-      if(data.statusCode>399) {
+      if(data.statusCode > 399) {
         myAlert({
           title: data.statusCode.toString(),
-          content: data.response || 'Something went terribly wrong',
+          content: data.response || 'Server had an issue, please try refreshing the page',
           type: 'danger'
         });
       }
 
-      if(data.warning) {
+      // The user doesn't need to know that the backend node 
+      // is unable to connect to CDAP. Error messages add no
+      // more value than the pop showing that the FE is waiting 
+      // for system to come back up. Most of the issues are with 
+      // connect, other than that pass everything else to user. 
+      if(data.warning && data.error.syscall !== 'connect') {
         myAlert({
           content: data.warning,
           type: 'warning'
@@ -147,7 +153,8 @@ angular
               MY_CONFIG.cdap.routerServerUrl,
               ':',
               MY_CONFIG.cdap.routerServerPort,
-              '/status'].join('')
+              '/status'].join(''),
+        interval: 2000
       }, function(res) {
         EventPipe.emit('backendUp');
       }, function(res) {
@@ -166,7 +173,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, MyDataSource, EventPipe, MY_CONFIG) {
 
     var activeThemeClass = caskTheme.getClassName();
 

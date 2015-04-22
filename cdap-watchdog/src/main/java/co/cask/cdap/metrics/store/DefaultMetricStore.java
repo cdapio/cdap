@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
+import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -31,6 +32,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
@@ -46,6 +48,7 @@ import com.google.inject.Inject;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation of {@link MetricStore}.
@@ -79,16 +82,15 @@ public class DefaultMetricStore implements MetricStore {
     });
   }
 
-  private static List<Aggregation> createAggregations() {
+  private static Map<String, Aggregation> createAggregations() {
     // NOTE: changing aggregations will require more work than just changing the below code. See CDAP-1466 for details.
-    List<Aggregation> aggs = Lists.newLinkedList();
+    Map<String, Aggregation> aggs = Maps.newHashMap();
 
     // Namespaces:
-    aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE)));
+    aggs.put("namespace", new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
 
     // Applications:
-    aggs.add(new DefaultAggregation(
+    aggs.put("app", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET),
       // i.e. for programs only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP)));
@@ -103,7 +105,7 @@ public class DefaultMetricStore implements MetricStore {
     // "writes into dataset A per program" would be potentially scannig thru whole program history.
 
     // flow
-    aggs.add(new DefaultAggregation(
+    aggs.put("flow", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.FLOWLET,
@@ -112,7 +114,7 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW)));
     // mapreduce
-    aggs.add(new DefaultAggregation(
+    aggs.put("mapreduce", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.MR_TASK_TYPE,
@@ -121,16 +123,27 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.MAPREDUCE)));
     // service
-    aggs.add(new DefaultAggregation(
+    aggs.put("service", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.SERVICE_RUNNABLE,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
+                       Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID),
+      // i.e. for service only
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.SERVICE)));
+
+    // service -- todo : can remove the above service aggregation after CDAP-1544
+    aggs.put("service", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
                        Constants.Metrics.Tag.INSTANCE_ID),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
+
     // worker
-    aggs.add(new DefaultAggregation(
+    aggs.put("worker", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
@@ -138,17 +151,8 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER)));
 
-    // procedure
-    aggs.add(new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROCEDURE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
-      // i.e. for procedure only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.PROCEDURE)));
-
     // workflow
-    aggs.add(new DefaultAggregation(
+    aggs.put("workflow", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID),
@@ -157,7 +161,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.WORKFLOW)));
 
     // spark
-    aggs.add(new DefaultAggregation(
+    aggs.put("spark", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID),
@@ -166,48 +170,54 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SPARK)));
 
     // batch adapters - can only contain mapreduce for now
-    aggs.add(new DefaultAggregation(
+    aggs.put("adapter", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER),
       // i.e. for adapter only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER)));
 
     // Streams:
-    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
-                                    // i.e. for streams only
-                                    ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
+    aggs.put("stream", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
+      // i.e. for streams only
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
 
     // Datasets:
-    aggs.add(new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
-                                    // i.e. for datasets only
-                                    ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
+    aggs.put("dataset", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
+      // i.e. for datasets only
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
 
     // System components:
-    aggs.add(new DefaultAggregation(ImmutableList.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-      Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
-                                    // i.e. for components only
-                                    ImmutableList.of(
-                                      Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
-
+    aggs.put("component", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+      // i.e. for components only
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     return aggs;
   }
 
   @Override
-  public void add(MetricValue metricValue) throws Exception {
-    add(ImmutableList.of(metricValue));
+  public void add(MetricValues metricValues) throws Exception {
+    add(ImmutableList.of(metricValues));
   }
 
   @Override
-  public void add(Collection<? extends MetricValue> metricValues) throws Exception {
+  public void add(Collection<? extends MetricValues> metricValues) throws Exception {
     List<CubeFact> facts = Lists.newArrayListWithCapacity(metricValues.size());
-    for (MetricValue metricValue : metricValues) {
+    for (MetricValues metricValue : metricValues) {
       String scope = metricValue.getTags().get(Constants.Metrics.Tag.SCOPE);
-      String measureName = (scope == null ? "system." : scope + ".") + metricValue.getName();
+      List<Measurement> metrics = Lists.newArrayList();
+      // todo improve this logic?
+      for (MetricValue metric : metricValue.getMetrics()) {
+        String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
+        MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
+        metrics.add(new Measurement(measureName, type, metric.getValue()));
+      }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
         .addTags(metricValue.getTags())
-        .addMeasurement(measureName, toMeasureType(metricValue.getType()), metricValue.getValue());
+        .addMeasurements(metrics);
       facts.add(fact);
     }
     cube.get().add(facts);
@@ -226,7 +236,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricName(),
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricNames(),
                          toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
@@ -238,7 +248,7 @@ public class DefaultMetricStore implements MetricStore {
       if (TOTALS_RESOLUTION == resolution) {
         continue;
       }
-      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap(), null);
+      CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Maps.<String, String>newHashMap());
       cube.get().delete(query);
     }
   }
@@ -251,8 +261,7 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public void deleteAll() throws Exception {
     // this will delete all aggregates metrics data
-    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, null,
-                                             Maps.<String, String>newHashMap()));
+    delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Maps.<String, String>newHashMap()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
@@ -261,7 +270,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getSliceByTags(), query.getMetricName());
+                               query.getSliceByTags(), query.getMetricNames());
   }
 
   @Override

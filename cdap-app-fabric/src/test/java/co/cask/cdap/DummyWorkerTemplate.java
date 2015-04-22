@@ -16,6 +16,8 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.worker.AbstractWorker;
@@ -32,18 +34,18 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
   public static final String NAME = "workerTemplate";
   private static final String ADAPTER_NAME = "adapterName";
 
+  @Override
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName(NAME);
+    configurer.addWorker(new TWorker());
+  }
+
   public static class Config {
     private final int instances;
 
     public Config(int instances) {
       this.instances = instances;
     }
-  }
-
-  @Override
-  public void configure() {
-    setName(NAME);
-    addWorker(new TWorker());
   }
 
   @Override
@@ -54,7 +56,13 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
 
   public static class TWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(TWorker.class);
+    public static final String NAME = TWorker.class.getSimpleName();
     private volatile boolean running;
+
+    @Override
+    public void configure() {
+      setName(NAME);
+    }
 
     @Override
     public void run() {

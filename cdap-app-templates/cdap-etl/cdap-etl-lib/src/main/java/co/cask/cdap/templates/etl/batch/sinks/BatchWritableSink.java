@@ -17,8 +17,6 @@
 package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -31,10 +29,11 @@ import com.google.common.base.Preconditions;
  * Sink for CDAP Datasets that are batch writable, which means they can be used as output of a
  * mapreduce job. User is responsible for providing any necessary dataset properties.
  *
- * @param <KEY> the type of key
- * @param <VALUE> the type of value
+ * @param <IN> the type of input object to the sink
+ * @param <KEY_OUT> the type of key the sink outputs
+ * @param <VAL_OUT> the type of value the sink outputs
  */
-public class BatchWritableSink<KEY, VALUE> extends BatchSink<KEY, VALUE> {
+public class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
   protected static final String NAME = "name";
   protected static final String TYPE = "type";
 

@@ -16,6 +16,8 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
@@ -31,7 +33,7 @@ import java.util.UUID;
  * App Template to test adapter lifecycle.
  */
 public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.Config> {
-  public static final String NAME = "DummyTemplate";
+  public static final String NAME = DummyBatchTemplate.class.getSimpleName();
 
   public static class Config {
     private final String sourceName;
@@ -63,19 +65,19 @@ public class DummyBatchTemplate extends ApplicationTemplate<DummyBatchTemplate.C
   }
 
   @Override
-  public void configure() {
-    setName(NAME);
+  public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+    configurer.setName(NAME);
     // make the description different each time to distinguish between deployed versions in unit tests
-    setDescription(UUID.randomUUID().toString());
-    addWorkflow(new AdapterWorkflow());
-    addMapReduce(new DummyMapReduceJob());
+    configurer.setDescription(UUID.randomUUID().toString());
+    configurer.addWorkflow(new AdapterWorkflow());
+    configurer.addMapReduce(new DummyMapReduceJob());
   }
 
   @Override
   public void configureAdapter(String adapterName, Config configuration,
                                AdapterConfigurer configurer) throws Exception {
-    Preconditions.checkNotNull(configuration.sourceName);
-    Preconditions.checkNotNull(configuration.crontab);
+    Preconditions.checkArgument(configuration.sourceName != null, "sourceName must be specified.");
+    Preconditions.checkArgument(configuration.crontab != null, "crontab must be specified.");
 
     Schedule schedule = Schedules.createTimeSchedule("dummy.schedule", "a dummy schedule", configuration.crontab);
     configurer.setSchedule(schedule);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -131,7 +133,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("mydataset", dataset.get("name").getAsString());
 
     JsonArray programs = result.get("programs").getAsJsonArray();
-    Assert.assertEquals(7, programs.size());
+    Assert.assertEquals(6, programs.size());
     JsonObject[] progs = new JsonObject[programs.size()];
     for (int i = 0; i < programs.size(); i++) {
       progs[i] = programs.get(i).getAsJsonObject();
@@ -147,10 +149,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("Worker", progs[i].get("type").getAsString());
     Assert.assertEquals("LazyGuy", progs[i].get("name").getAsString());
     Assert.assertEquals("nothing to describe", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Service", progs[i].get("type").getAsString());
-    Assert.assertEquals("NoopService", progs[i].get("name").getAsString());
-    Assert.assertEquals("Dummy Service", progs[i].get("description").getAsString());
     i++;
     Assert.assertEquals("Workflow", progs[i].get("type").getAsString());
     Assert.assertEquals("SingleStep", progs[i].get("name").getAsString());
@@ -168,9 +166,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("WordCountFlow", progs[i].get("name").getAsString());
     Assert.assertEquals("Flow for counting words", progs[i].get("description").getAsString());
     i++;
-    Assert.assertEquals("Procedure", progs[i].get("type").getAsString());
-    Assert.assertEquals("WordFrequency", progs[i].get("name").getAsString());
-    Assert.assertEquals("Procedure for executing WordFrequency.", progs[i].get("description").getAsString());
+    Assert.assertEquals("Service", progs[i].get("type").getAsString());
+    Assert.assertEquals("WordFrequencyService", progs[i].get("name").getAsString());
+    Assert.assertEquals("", progs[i].get("description").getAsString());
 
     //get and verify app details in testnamespace2
     result = getAppDetails(TEST_NAMESPACE2, appName);
@@ -196,15 +194,16 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "start");
-    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "RUNNING");
+    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    startProgram(program);
+    waitState(program, "RUNNING");
     // Try to delete an App while its flow is running
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(403, response.getStatusLine().getStatusCode());
 
-    getRunnableStartStop(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "stop");
-    waitState(TEST_NAMESPACE1, "WordCountApp", "flows", "WordCountFlow", "STOPPED");
+    stopProgram(program);
+    waitState(program, "STOPPED");
 
     // Delete the app in the wrong namespace
     response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,

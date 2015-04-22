@@ -22,14 +22,12 @@ package co.cask.cdap.cli;
 public enum ArgumentName {
   PROGRAM("app-id.program-id"),
   STREAM("stream-id"),
-  PROCEDURE("app-id.procedure-id"),
   WORKER("app-id.worker-id"),
   METHOD("app-id.method-id"),
   FLOW("app-id.flow-id"),
   FLOWLET("app-id.flow-id.flowlet-id"),
   WORKFLOW("app-id.workflow-id"),
   SERVICE("app-id.service-id"),
-  RUNNABLE("app-id.service-id.runnable-id"),
   MAPREDUCE("app-id.mapreduce-id"),
   SPARK("app-id.spark-id"),
 

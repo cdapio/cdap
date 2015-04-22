@@ -18,14 +18,15 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.RunIds;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -33,21 +34,23 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -68,6 +71,7 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
@@ -78,6 +82,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final Store store;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
@@ -86,7 +91,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, Store store) {
+                                DiscoveryServiceClient discoveryServiceClient, Store store,
+                                UsageRegistry usageRegistry) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -96,6 +102,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = store;
+    this.usageRegistry = usageRegistry;
   }
 
   @Inject (optional = true)
@@ -130,7 +137,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
-    String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    AdapterSpecification adapterSpec = getAdapterSpecification(arguments);
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -140,11 +148,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
 
     final DynamicMapReduceContext context =
-      new DynamicMapReduceContext(program, null, runId, null,
-                                  options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch, adapterName,
-                                  discoveryServiceClient, metricsCollectionService,
-                                  txSystemClient, datasetFramework);
+      new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
+                                  logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                  txSystemClient, datasetFramework, adapterSpec,
+                                  createPluginInstantiator(adapterSpec, program.getClassLoader()));
 
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
@@ -157,7 +164,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                         program.getJarLocation(), locationFactory,
-                                                                        streamAdmin, txSystemClient);
+                                                                        streamAdmin, txSystemClient, usageRegistry);
     mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
       @Override
       public void starting() {
@@ -216,5 +223,22 @@ public class MapReduceProgramRunner implements ProgramRunner {
       mapReduceRuntimeService.start();
     }
     return controller;
+  }
+
+  @Nullable
+  private AdapterSpecification getAdapterSpecification(Arguments arguments) {
+    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
+      return null;
+    }
+    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterSpecification.class);
+  }
+
+  @Nullable
+  private PluginInstantiator createPluginInstantiator(@Nullable AdapterSpecification adapterSpec,
+                                                      ClassLoader programClassLoader) {
+    if (adapterSpec == null) {
+      return null;
+    }
+    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 }

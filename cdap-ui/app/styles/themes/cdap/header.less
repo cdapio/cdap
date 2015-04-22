@@ -4,37 +4,44 @@
 body {
   header [my-navbar] {
     .navbar-right li.dropdown {
-      padding: 10px;
+      padding: 11px 5px;
       a.dropdown-toggle {
-        max-width: 32px;
         height: auto;
-        padding: 0;
         text-align: left;
-        img { max-width: 32px; }
+        .fa-cog:before { font-size: 16px; }
       }
 
       @media (max-width: @screen-sm-max) {
+        a.dropdown-toggle {
+          padding-left: 11px;
+          span.fa-cog { display: none; }
+          &:before {
+            content: 'Settings';
+            padding-right: 5px;
+          }
+        }
         ul.dropdown-menu {
           > li > a {
-            padding-left: 0;
+            padding-left: 10px;
+            padding-top: 5px;
+            padding-bottom: 5px;
           }
           li.nav-subsection {
             color: #9d9d9d;
+            padding-left: 10px;
           }
         }
       }
 
       @media (min-width: @screen-sm-min) {
         a.dropdown-toggle {
+          color: lightgray;
+          padding: 5px 3px;
           text-align: right;
         }
         ul.dropdown-menu {
-          > li > a {
-            padding-left: 14px;
-          }
-          li.nav-subsection {
-            margin: 10px 0 0 10px;
-          }
+          > li > a { padding-left: 14px; }
+          li.nav-subsection { margin: 10px 0 0 10px; }
         }
       }
     }
@@ -53,7 +60,7 @@ body {
           top: -5px;
           &:after {
             position: absolute;
-            content: 'ALPHA';
+            content: 'BETA';
             width: 76px;
             text-align: center;
             background-color: @cdap-bluegray;
@@ -83,16 +90,31 @@ body {
       }
     }
     @media (max-width: @screen-sm-max) {
-      .navbar-inverse .navbar-nav > .open {
-        > a, > a:hover, > a:focus {
-          background-color: white;
-          color: @cdap-darkness;
-        }
+      // Disable dropdown menu animations on smaller devices
+      ul.dropdown-menu.am-flip-x {
+        .transition(none);
+        -webkit-animation-duration: 0s;
+        animation-duration: 0s;
       }
-      .navbar-inverse .navbar-nav > .active {
-        > a {
-          background-color: transparent;
-          color: @cdap-orange;
+      .navbar-collapse.in {
+        margin-top: 15px;
+        max-height: none;
+      }
+      .navbar-inverse {
+        .navbar-toggle {
+          &:hover, &:focus { background-color: lighten(@cdap-header, 10%); }
+        }
+        .navbar-nav {
+          > .open {
+            > a, > a:hover, > a:focus {
+              background-color: white;
+              color: @cdap-darkness;
+            }
+          }
+          > .active > a {
+            background-color: transparent;
+            color: @cdap-orange;
+          }
         }
       }
     }
@@ -140,9 +162,8 @@ body {
             a.dropdown-toggle {
               background-color: @cdap-white;
               color:@cdap-header;
-              border-top-left-radius: @border-radius-base;
-              border-top-right-radius: @border-radius-base;
               font-size: 14px;
+              .border-radius(4px);
             }
           }
 
@@ -192,9 +213,7 @@ body {
               span {
                 color: lightgray;
                 &:first-child { padding-right: 5px; }
-                &.fa-caret-down {
-                  .cdap-caret();
-                }
+                &.fa-caret-down { .cdap-caret(); }
               }
             }
             &.open {
@@ -205,7 +224,10 @@ body {
                 .border-radius(4px);
                 span {
                   &:first-child { color: @cdap-darkness; }
-                  &:last-child { color: lightgray; }
+                  &:last-child {
+                    color: lightgray;
+                    float: right;
+                  }
                 }
               }
             }
@@ -214,7 +236,7 @@ body {
         }
         .navbar-right li.dropdown {
           ul.dropdown-menu {
-            .border-radius(4px 0 4px 4px);
+            .border-radius(4px);
             li {
               &.nav-subsection { border: 0; }
             }

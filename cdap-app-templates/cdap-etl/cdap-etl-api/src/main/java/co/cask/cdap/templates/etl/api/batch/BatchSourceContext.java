@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.api.batch;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.List;
@@ -27,6 +28,13 @@ import java.util.List;
  * Context of a Batch Source.
  */
 public interface BatchSourceContext extends BatchContext {
+
+  /**
+   * Overrides the input configuration of this Batch job to use the specific stream.
+   *
+   * @param stream the input stream.
+   */
+  void setInput(StreamBatchReadable stream);
 
   /**
    * Overrides the input configuration of this Batch job to use

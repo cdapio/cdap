@@ -28,19 +28,19 @@ import java.util.concurrent.TimeUnit;
 public class ETLUtils {
 
   /**
-   * Parses a frequency String to its long value.
+   * Parses a duration String to its long value.
    * Frequency string consists of a number followed by an unit, with 's' for seconds, 'm' for minutes, 'h' for hours
    * and 'd' for days. For example, an input of '5m' means 5 minutes which will be parsed to 300000 milliseconds.
    *
-   * @param frequencyStr the frequency string (ex: 5m, 5h etc).
-   * @return long which is milliseconds equivalent of the frequency string
+   * @param durationStr the duration string (ex: 5m, 5h etc).
+   * @return long which is milliseconds equivalent of the duration string
    */
-  public static long parseFrequency(String frequencyStr) {
+  public static long parseDuration(String durationStr) {
     //TODO: replace with TimeMathParser (available only internal to cdap)
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(frequencyStr));
-    frequencyStr = frequencyStr.toLowerCase();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(durationStr));
+    durationStr = durationStr.toLowerCase();
 
-    String value = frequencyStr.substring(0, frequencyStr.length() - 1);
+    String value = durationStr.substring(0, durationStr.length() - 1);
     int parsedValue = 0;
     try {
       parsedValue = Integer.parseInt(value);
@@ -49,7 +49,7 @@ public class ETLUtils {
     }
     Preconditions.checkArgument(parsedValue > 0);
 
-    char lastChar = frequencyStr.charAt(frequencyStr.length() - 1);
+    char lastChar = durationStr.charAt(durationStr.length() - 1);
     switch (lastChar) {
       case 's':
         return TimeUnit.SECONDS.toMillis(parsedValue);

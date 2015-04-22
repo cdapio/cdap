@@ -17,61 +17,50 @@
 package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.templates.etl.api.EndPointStage;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * Realtime Sink.
  *
  * @param <I> Object sink operates on
  */
-public abstract class RealtimeSink<I> implements ProgramLifecycle<SinkContext> {
+public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
 
-  private SinkContext context;
+  @Override
+  public void configure(StageConfigurer configurer) {
+    // no-op
+  }
 
-  /**
-   * Configure the Sink.
-   *
-   * @param configurer {@link RealtimeConfigurer}
-   */
-  public void configure(RealtimeConfigurer configurer) {
+  @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 
   /**
    * Initialize the Sink.
    *
-   * @param context {@link SinkContext}
+   * @param context {@link RealtimeContext}
    */
-  public void initialize(SinkContext context) {
-    this.context = context;
+  @Override
+  public void initialize(RealtimeContext context) throws Exception {
+    // no-op
   }
 
   /**
-   * Write the given object.
+   * Write the given objects.
    *
-   * @param object object to be written
+   * @param objects {@link Iterable} of I to write
+   * @param dataWriter {@link DataWriter} write to CDAP streams and datasets
+   * @return the number of items written. Used by metrics to report how many records written by the sink
+   * @throws Exception if there was some exception writing the objects
    */
-  public abstract void write(I object);
-
-  /**
-   * Invoked when source is suspended.
-   */
-  public void onSuspend() {
-    // no-op
-  }
-
-  /**
-   * Resume/reconfigure from the state of suspension.
-   */
-  public void onResume() {
-    // no-op
-  }
+  public abstract int write(Iterable<I> objects, DataWriter dataWriter) throws Exception;
 
   @Override
   public void destroy() {
     //no-op
-  }
-
-  protected SinkContext getContext() {
-    return context;
   }
 }

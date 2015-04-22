@@ -25,7 +25,10 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     { name: 'Histogram (bar)',       type: 'bar' },
     { name: 'Timeseries (area)',     type: 'area' },
     { name: 'Pie Chart',             type: 'pie' },
-    { name: 'Debug',                 type: 'json' }
+    { name: 'Line (c3)',             type: 'c3-line'},
+    { name: 'Bar (c3)',              type: 'c3-bar'},
+    { name: 'Pie (c3)',              type: 'c3-pie'},
+    { name: 'Donut (c3)',            type: 'c3-donut'},
   ];
 
   $scope.$watch('model.metric.name', function (newVal) {
@@ -58,7 +61,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
           new Widget({
             type: $scope.model.type,
             title: $scope.model.metric.title,
-            color: classes[(generateHash($scope.model.metric.context) * 13) % classes.length],
+            color: classes[(generateHash(value) * 13) % classes.length],
             metric: {
               context: $scope.model.metric.context,
               names: [value],
@@ -69,7 +72,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       });
       $scope.currentDashboard.addWidget(widgets);
     } else {
-      $scope.model.color = classes[(generateHash($scope.model.metric.context) * 13) % classes.length];
+      $scope.model.color = classes[(generateHash($scope.model.metric.name) * 13) % classes.length];
       $scope.currentDashboard.addWidget($scope.model);
     }
     $scope.$close();

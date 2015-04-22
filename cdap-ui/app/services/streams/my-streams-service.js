@@ -36,7 +36,8 @@ angular.module(PKG.name + '.services')
       dataSrc.request({
         _cdapNsPath: '/streams/' + $scope.streamId,
         method: 'POST',
-        body: $scope.userInput
+        body: $scope.userInput,
+        json: false
       });
       $scope.userInput = null;
     };

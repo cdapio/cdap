@@ -43,7 +43,7 @@ public class CubeDataset extends AbstractDataset implements Cube {
 
   public CubeDataset(String name, Table entityTable,
                      Map<Integer, Table> resolutionTables,
-                     Collection<Aggregation> aggregations) {
+                     Map<String, ? extends Aggregation> aggregations) {
     super(name, entityTable, resolutionTables.values().toArray(new Dataset[resolutionTables.values().size()]));
     this.entityTable = entityTable;
     this.resolutionTables = resolutionTables;
@@ -85,6 +85,11 @@ public class CubeDataset extends AbstractDataset implements Cube {
   @Override
   public Collection<String> findMeasureNames(CubeExploreQuery query) {
     return cube.findMeasureNames(query);
+  }
+
+  @Override
+  public void write(Object ignored, CubeFact cubeFact) {
+    add(cubeFact);
   }
 
   @Override

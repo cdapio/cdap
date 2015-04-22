@@ -26,14 +26,11 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamFetchHandlerV2;
 import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamHandlerV2;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
@@ -41,13 +38,12 @@ import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MockETLHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
-import co.cask.cdap.gateway.handlers.MonitorHandlerV2;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
+import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
@@ -59,6 +55,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
@@ -120,8 +117,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
-                                                      StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -166,8 +162,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandlerV2.class, StreamFetchHandlerV2.class,
-                                                      StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -290,18 +285,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(Store.class).to(DefaultStore.class);
       bind(AdapterService.class).in(Scopes.SINGLETON);
+      bind(PluginRepository.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                        Names.named("appfabric.http.handler"));
+      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
-      handlerBinder.addBinding().to(AppFabricHttpHandler.class);
       handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
-      handlerBinder.addBinding().to(MonitorHandlerV2.class);
-      handlerBinder.addBinding().to(ServiceHttpHandler.class);
+      handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);

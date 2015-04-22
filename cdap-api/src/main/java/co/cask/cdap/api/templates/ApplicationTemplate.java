@@ -17,7 +17,7 @@
 package co.cask.cdap.api.templates;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import javax.annotation.Nullable;
@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 //TODO: Add more description about what an app template is.
 @Beta
-public abstract class ApplicationTemplate<T> extends AbstractApplication {
+public abstract class ApplicationTemplate<T> implements Application {
 
   /**
    * Given the adapter configuration, configures the {@link AdapterConfigurer}.
@@ -37,7 +37,8 @@ public abstract class ApplicationTemplate<T> extends AbstractApplication {
    * @param name name of the adapter
    * @param configuration adapter configuration
    * @param configurer {@link AdapterConfigurer}
-   * @throws Exception if the configuration is not valid
+   * @throws IllegalArgumentException if the configuration is not valid
+   * @throws Exception if there was some other error configuring the adapter
    */
   public void configureAdapter(String name, T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op

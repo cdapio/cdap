@@ -30,6 +30,10 @@ import javax.annotation.Nullable;
  */
 public abstract class Id {
 
+  public static String getType(Class<? extends Id> type) {
+    return type.getSimpleName().toLowerCase();
+  }
+
   private static boolean isId(String name) {
     return CharMatcher.inRange('A', 'Z')
       .or(CharMatcher.inRange('a', 'z'))
@@ -51,18 +55,26 @@ public abstract class Id {
       .or(CharMatcher.is('$')).matchesAllOf(datasetId);
   }
 
-  public final String getIdType() {
-    // TODO: refactor
-    return this.getClass().getSimpleName().toLowerCase();
+  public String getIdType() {
+    return getType(this.getClass());
   }
 
-  public final String getIdRep() {
+  protected String getIdForRep() {
+    return getId();
+  }
+
+  public String getIdRep() {
     Id parent = getParent();
     if (parent == null) {
-      return getIdType() + ":" + getId();
+      return getIdType() + ":" + getIdForRep();
     } else {
-      return parent.getIdRep() + "/" + getIdType() + ":" + getId();
+      return parent.getIdRep() + "/" + getIdType() + ":" + getIdForRep();
     }
+  }
+
+  @Override
+  public String toString() {
+    return getIdRep();
   }
 
   @Nullable
@@ -351,6 +363,20 @@ public abstract class Id {
     public Id getParent() {
       return namespace;
     }
+
+    public static Application fromStrings(String[] strings, int position) {
+      Preconditions.checkArgument(position == 1);
+      String[] tokens = strings[position].split(":");
+      Preconditions.checkArgument(tokens.length == 2);
+
+      String[] nextTokens = strings[position - 1].split(":");
+      Preconditions.checkArgument(nextTokens.length == 2);
+      return from(Namespace.from(nextTokens[1]), tokens[1]);
+    }
+
+    public static Application fromStrings(String[] strings) {
+      return fromStrings(strings, strings.length - 1);
+    }
   }
 
   /**
@@ -405,6 +431,20 @@ public abstract class Id {
 
     public static Adapter from(String namespaceId, String adapterId) {
       return new Adapter(Namespace.from(namespaceId), adapterId);
+    }
+
+    public static Adapter fromStrings(String[] strings, int position) {
+      Preconditions.checkArgument(position == 1);
+      String[] tokens = strings[position - 1].split(":");
+      Preconditions.checkArgument(tokens.length == 2);
+
+      String[] nextTokens = strings[position - 1].split(":");
+      Preconditions.checkArgument(nextTokens.length == 2);
+      return from(Namespace.from(nextTokens[1]), tokens[1]);
+    }
+
+    public static Adapter fromStrings(String[] strings) {
+      return fromStrings(strings, strings.length - 1);
     }
 
     @Override
@@ -491,6 +531,11 @@ public abstract class Id {
     }
 
     @Override
+    protected String getIdForRep() {
+      return type.getCategoryName() + ":" + id;
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -522,30 +567,27 @@ public abstract class Id {
       return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("ProgramId(");
+    /**
+     * @param strings from {@link Id#toString()}, split by "/"
+     * @param position index into the string where parsing should begin
+     * @return the {@link Program}
+     */
+    public static Program fromStrings(String[] strings, int position) {
+      Preconditions.checkArgument(position >= 1);
 
-      sb.append("namespaceId:");
-      if (this.application.getNamespaceId() == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.application.getNamespaceId());
-      }
-      sb.append(", applicationId:");
-      if (this.application.getId() == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.application.getId());
-      }
-      sb.append(", runnableId:");
-      if (this.id == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.id);
-      }
-      sb.append(")");
-      return sb.toString();
+      String[] tokens = strings[position].split(":");
+      Preconditions.checkArgument(tokens.length == 3);
+      ProgramType programType = ProgramType.valueOfCategoryName(tokens[1]);
+      String programId = tokens[2];
+      return from(Application.fromStrings(strings, position - 1), programType, programId);
+    }
+
+    /**
+     * @param strings from {@link Id#toString()}, split by "/"
+     * @return the {@link Program}
+     */
+    public static Program fromStrings(String[] strings) {
+      return fromStrings(strings, strings.length - 1);
     }
 
     @Override
@@ -583,42 +625,6 @@ public abstract class Id {
 
     public static Service from(Application application, String id) {
       return new Service(application, id);
-    }
-
-    /**
-     * Uniquely identifies a Service Runnable.
-     */
-    public static class Runnable extends NamespacedId {
-
-      private final Service service;
-      private final String id;
-
-      private Runnable(Service service, String id) {
-        Preconditions.checkArgument(service != null, "flow cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
-        this.service = service;
-        this.id = id;
-      }
-
-      public static Runnable from(Service service, String id) {
-        return new Runnable(service, id);
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return service.getNamespace();
-      }
-
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return service;
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
     }
   }
 
@@ -671,60 +677,6 @@ public abstract class Id {
       @Override
       protected Id getParent() {
         return flow;
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
-    }
-  }
-
-  /**
-   * Uniquely identifies a Procedure.
-   */
-  public static class Procedure extends Program {
-
-    private Procedure(Application application, String id) {
-      super(application, ProgramType.PROCEDURE, id);
-    }
-
-    public static Procedure from(Application application, String id) {
-      return new Procedure(application, id);
-    }
-
-    public static Procedure from(String appId, String procedureId) {
-      return new Procedure(Id.Application.from(Namespace.DEFAULT, appId), procedureId);
-    }
-
-    /**
-     * Uniquely identifies a Procedure Handler.
-     */
-    public static class Method extends NamespacedId {
-
-      private final Procedure procedure;
-      private final String id;
-
-      private Method(Procedure procedure, String id) {
-        Preconditions.checkArgument(procedure != null, "procedure cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
-        this.procedure = procedure;
-        this.id = id;
-      }
-
-      public static Method from(Procedure procedure, String id) {
-        return new Method(procedure, id);
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return procedure.getNamespace();
-      }
-
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return procedure;
       }
 
       @Override

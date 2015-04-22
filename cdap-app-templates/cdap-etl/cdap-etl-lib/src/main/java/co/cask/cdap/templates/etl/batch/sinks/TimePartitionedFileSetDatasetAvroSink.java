@@ -17,8 +17,10 @@
 package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -42,7 +44,8 @@ import java.util.Map;
 /**
  * A {@link BatchSink} to write Avro record to {@link TimePartitionedFileSet}
  */
-public class TimePartitionedFileSetDatasetAvroSink extends BatchSink<AvroKey<GenericRecord>, NullWritable> {
+public class TimePartitionedFileSetDatasetAvroSink extends
+  BatchSink<GenericRecord, AvroKey<GenericRecord>, NullWritable> {
 
   private static final String TPFS_NAME = "name";
   private static final String SCHEMA = "schema";
@@ -87,5 +90,12 @@ public class TimePartitionedFileSetDatasetAvroSink extends BatchSink<AvroKey<Gen
     Schema avroSchema = new Schema.Parser().parse(context.getRuntimeArguments().get(SCHEMA));
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
+  }
+
+  @Override
+  public void transform(GenericRecord input, Emitter<KeyValue<AvroKey<GenericRecord>,
+    NullWritable>> emitter) throws Exception {
+    emitter.emit(new KeyValue<AvroKey<GenericRecord>, NullWritable>(
+      new AvroKey<GenericRecord>(input), NullWritable.get()));
   }
 }

@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -63,6 +64,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handles dataset instance management calls.
@@ -80,21 +82,18 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final boolean allowDatasetUncheckedUpgrade;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf) {
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
+                                UsageRegistry usageRegistry) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
+    this.usageRegistry = usageRegistry;
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
-  }
-
-  // the v2 version of the list API, which returns a collection of DatasetSpecification instead of
-  // a collection of DatasetSpecificationSummary
-  void v2list(HttpResponder responder, String namespaceId) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll(Id.Namespace.from(namespaceId)));
   }
 
   @GET
@@ -110,8 +109,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/{name}")
   public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                      @PathParam("name") String name) {
-    DatasetSpecification spec = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
+                      @PathParam("name") String name,
+                      @Nullable @QueryParam("ownerType") String ownerType,
+                      @Nullable @QueryParam("ownerId") String ownerId) {
+
+    Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
+    DatasetSpecification spec = instanceManager.get(datasetId);
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -125,6 +128,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       }
       // typeMeta is guaranteed to be non-null now.
       DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
+      if (ownerType != null && ownerId != null) {
+        try {
+          if (ownerType.equals(Id.getType(Id.Program.class))) {
+            usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
+          } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
+            usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), datasetId);
+          }
+        } catch (Exception e) {
+          LOG.warn("Failed to register usage of {} -> {}", ownerId, datasetId);
+        }
+      }
       responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }

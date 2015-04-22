@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -23,7 +24,6 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -190,7 +190,8 @@ public class DFSStreamHeartbeatsTest {
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
       HttpURLConnection urlConn =
-        openURL(String.format("http://%s:%d/v2/streams/%s", hostname, port, streamName), HttpMethod.POST);
+        openURL(String.format("http://%s:%d/v3/namespaces/default/streams/%s", hostname, port, streamName),
+                HttpMethod.POST);
       urlConn.setDoOutput(true);
       urlConn.addRequestProperty("test_stream1.header1", Integer.toString(i));
       urlConn.getOutputStream().write(TWO_BYTES);

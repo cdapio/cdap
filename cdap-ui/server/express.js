@@ -11,38 +11,31 @@ module.exports = {
 };
 
 var pkg = require('../package.json'),
-    morgan = require('morgan'),
     express = require('express'),
+    cookieParser = require('cookie-parser'),
     compression = require('compression'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
     request = require('request'),
+    uuid = require('node-uuid'),
+    log4js = require('log4js'),
     bodyParser = require('body-parser'),
-    colors = require('colors/safe'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     );
 
-morgan.token('ms', function (req, res){
-  if (!res._header || !req._startAt) { return ''; }
-  var diff = process.hrtime(req._startAt);
-  var ms = diff[0] * 1e3 + diff[1] * 1e-6;
-  return Math.ceil(ms)+'ms';
-});
-
-var httpStaticLogger = morgan(colors.green('http')+' :method :url :ms :status');
-var httpIndexLogger = morgan(colors.inverse('http')+' :method :url :ms :status');
+var log = log4js.getLogger('default');
 
 function makeApp (authAddress, cdapConfig) {
 
   var app = express();
-  console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
 
   // middleware
   try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
-  catch(e) { console.error('Favicon missing! Did you run `gulp build`?'); }
+  catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
   app.use(compression());
   app.use(bodyParser.json());
+  app.use(cookieParser());
 
   // serve the config file
   app.get('/config.js', function (req, res) {
@@ -101,7 +94,6 @@ function makeApp (authAddress, cdapConfig) {
 
   // serve static assets
   app.use('/assets', [
-    //httpStaticLogger,
     express.static(DIST_PATH + '/assets', {
       index: false
     }),
@@ -111,7 +103,6 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
   app.get('/robots.txt', [
-    //httpStaticLogger,
     function (req, res) {
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
@@ -140,7 +131,6 @@ function makeApp (authAddress, cdapConfig) {
   }
 
   app.get('/test/playground', [
-    //httpStaticLogger,
     function (req, res) {
       res.sendFile(DIST_PATH + '/test.html');
     }
@@ -173,9 +163,18 @@ function makeApp (authAddress, cdapConfig) {
 
   // any other path, serve index.html
   app.all('*', [
-    httpIndexLogger,
     function (req, res) {
-      res.sendFile(DIST_PATH + '/index.html');
+      // BCookie is the browser cookie, that is generated and will live for a year.
+      // This cookie is always generated to provide unique id for the browser that 
+      // is being used to interact with the CDAP backend.
+      var date = new Date();
+      date.setDate(date.getDate() + 365); // Expires after a year.
+      if(! req.cookies.bcookie) {
+        res.cookie('bcookie', uuid.v4(), { expires: date});
+      } else {
+        res.cookie('bcookie', req.cookies.bcookie, { expires: date});
+      }
+     res.sendFile(DIST_PATH + '/index.html');
     }
   ]);
 

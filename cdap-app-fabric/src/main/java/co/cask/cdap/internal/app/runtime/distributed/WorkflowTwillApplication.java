@@ -15,61 +15,49 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- *
+ * The {@link TwillApplication} for running {@link Workflow} in distributed mode.
  */
-public class WorkflowTwillApplication implements TwillApplication {
+public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
 
   private static final int WORKFLOW_MEMORY_MB = 512;
 
   private final WorkflowSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
 
   public WorkflowTwillApplication(Program program, WorkflowSpecification spec,
-                                  File hConfig, File cConfig, EventHandler eventHandler) {
+                                  Map<String, File> localizeFiles,
+                                  EventHandler eventHandler) {
+    super(program, localizeFiles, eventHandler);
     this.spec = spec;
-    this.program = program;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
   }
 
   @Override
-  public TwillSpecification configure() {
+  protected ProgramType getType() {
+    return ProgramType.WORKFLOW;
+  }
+
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(1)
       .setMemory(WORKFLOW_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(1)
       .build();
 
-    Location programLocation = program.getJarLocation();
-
-    return TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s",
-                             ProgramType.WORKFLOW.name().toLowerCase(),
-                             program.getNamespaceId(), program.getApplicationId(), spec.getName()))
-      .withRunnable()
-      .add(spec.getName(),
-           new WorkflowTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-           resourceSpec)
-      .withLocalFiles()
-      .add(programLocation.getName(), programLocation.toURI())
-      .add("hConf.xml", hConfig.toURI())
-      .add("cConf.xml", cConfig.toURI()).apply()
-      .anyOrder().withEventHandler(eventHandler).build();
+    runnables.put(spec.getName(), new RunnableResource(
+      new WorkflowTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      resourceSpec
+    ));
   }
 }

@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -34,15 +37,24 @@ import javax.annotation.Nullable;
  */
 @Singleton
 public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {
+  private final StreamMetaStore streamMetaStore;
+  private final UsageRegistry usageRegistry;
 
   @Inject
-  public InMemoryStreamAdmin(InMemoryQueueService queueService) {
+  public InMemoryStreamAdmin(InMemoryQueueService queueService,
+                             UsageRegistry usageRegistry,
+                             StreamMetaStore streamMetaStore) {
     super(queueService);
+    this.usageRegistry = usageRegistry;
+    this.streamMetaStore = streamMetaStore;
   }
 
   @Override
   public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
+    for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
+      streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
+    }
   }
 
   @Override
@@ -78,6 +90,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
+    streamMetaStore.addStream(streamId);
   }
 
   @Override
@@ -88,6 +101,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void drop(Id.Stream streamId) throws Exception {
     drop(QueueName.fromStream(streamId));
+    streamMetaStore.removeStream(streamId);
   }
 
+  @Override
+  public void register(Id.Stream streamId, Id.Program programId) {
+    usageRegistry.register(programId, streamId);
+  }
 }

@@ -33,6 +33,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
+import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -63,22 +64,25 @@ public class UnitTestManager implements TestManager {
   private final DiscoveryServiceClient discoveryClient;
   private final ApplicationManagerFactory appManagerFactory;
   private final NamespaceAdmin namespaceAdmin;
+  private final StreamManagerFactory streamManagerFactory;
 
   @Inject
   public UnitTestManager(AppFabricClient appFabricClient, DatasetFramework datasetFramework,
                          TransactionSystemClient txSystemClient, DiscoveryServiceClient discoveryClient,
-                         ApplicationManagerFactory appManagerFactory, NamespaceAdmin namespaceAdmin) {
+                         ApplicationManagerFactory appManagerFactory, NamespaceAdmin namespaceAdmin,
+                         StreamManagerFactory streamManagerFactory) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryClient = discoveryClient;
     this.appManagerFactory = appManagerFactory;
     this.namespaceAdmin = namespaceAdmin;
+    this.streamManagerFactory = streamManagerFactory;
   }
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * {@link co.cask.cdap.api.procedure.Procedure Procedures} defined in the application
+   * other programs defined in the application
    * must be in the same or children package as the application.
    *
    * @param applicationClz The application class
@@ -226,4 +230,8 @@ public class UnitTestManager implements TestManager {
     namespaceAdmin.deleteNamespace(namespace);
   }
 
+  @Override
+  public StreamManager getStreamManager(Id.Stream streamId) {
+    return streamManagerFactory.create(streamId);
+  }
 }

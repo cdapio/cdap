@@ -18,13 +18,15 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -69,7 +71,8 @@ public abstract class AbstractMapReduceContextBuilder {
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName,
-                                     @Nullable String adapterName) {
+                                     @Nullable AdapterSpecification adapterSpec,
+                                     @Nullable PluginInstantiator pluginInstantiator) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -107,7 +110,7 @@ public abstract class AbstractMapReduceContextBuilder {
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
                                 logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework, adapterName);
+                                datasetFramework, adapterSpec, pluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

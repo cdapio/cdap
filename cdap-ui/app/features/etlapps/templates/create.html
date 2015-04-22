@@ -1,5 +1,5 @@
 <div class="row">
-  
+
     <div class="panel panel-default">
       <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
         <span class="pull-left"> Metadata</span>
@@ -18,14 +18,21 @@
         </div>
         <div class="col-lg-4 col-md-4 col-xs-12">
           <label for="etlAdapaterName" class="control-label">Name</label>
-          <input type="text"
-                  name="etlAdapaterName"
-                  class="form-control"
-                  id="etlAdapaterName"
-                  ng-model="metadata.name">
+          <ui-select ng-model="selectedEtlDraft"
+             on-select="onDraftChange($item, $model)"
+             theme="bootstrap"
+             ng-disabled="disabled"
+             tagging-tokens="ENTER|TAB"
+             tagging tagging-label="(custom 'new' label)"
+             reset-search-input="false"
+             title="Create/Choose a ETL Template to Create">
+            <ui-select-match placeholder="Create/Edit already saved ETL Drafts" > {{selectedEtlDraft}}</ui-select-match>
+            <ui-select-choices repeat="etl in etlDraftList| filter: $select.search">
+              <div ng-bind-html="etl | highlight: $select.search"></div>
+            </ui-select-choices>
+          </ui-select>
         </div>
         <div class="col-lg-4">
-
         </div>
       </div>
     </div>
@@ -56,20 +63,27 @@
 
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
-        <span class=pull-left>Adapter Canvas</span>
-        <button type="button"
-                name="button"
-                class="btn btn-success pull-right"
-                ng-click="doSave()">
-            Create!
-        </button>
+        <span class=pull-left>{{metadata.name}}</span>
+        <div class="btn-group pull-right" role="group" aria-label="...">
+          <button type="button"
+                  class="btn btn-default"
+                  ng-click="doSave()">
+              Create!
+          </button>
+          <button type="button"
+                  class="btn btn-default"
+                  ng-click="saveAsDraft()">
+            Save As Draft
+          </button>
+        </div>
       </div>
       <div class="panel-body">
-        <div class="col-lg-4 col-md-4 col-sm-12">
+        <div class="col-lg-12 col-md-12 col-sm-12">
           <div ng-include="'/assets/features/etlapps/templates/create/plugins.html'">
           </div>
         </div>
-        <div class="col-lg-8 col-md-8 col-sm-12">
+        <br />
+        <div class="col-lg-12 col-md-12 col-sm-12" etl-canvas-template>
           <div ng-include="'/assets/features/etlapps/templates/create/etlcanvas.html'">
 
           </div>

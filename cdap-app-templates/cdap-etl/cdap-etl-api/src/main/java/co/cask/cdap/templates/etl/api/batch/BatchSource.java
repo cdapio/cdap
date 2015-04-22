@@ -16,57 +16,32 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 
 /**
- * Batch Source forms the first stage of a Batch ETL Pipeline.
+ * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
+ * also transforms the key value pairs provided by the Batch job into a single output type to be consumed by
+ * subsequent transforms. By default, the value of the key value pair will be ouput.
  *
- * @param <KEY> Batch Input Key class
- * @param <VALUE> Batch Input Value class
+ * @param <KEY_IN> the type of input key from the Batch job
+ * @param <VAL_IN> the type of input value from the Batch job
+ * @param <OUT> the type of output for the source
  */
-public abstract class BatchSource<KEY, VALUE> {
+public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
+  implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT> {
 
-  private final Type keyType = new TypeToken<KEY>(getClass()) { }.getType();
-  private final Type valueType = new TypeToken<VALUE>(getClass()) { }.getType();
-
-  /**
-   * Get the Type of {@link KEY}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getKeyType() {
-    return keyType;
-  }
-
-  /**
-   * Get the Type of {@link VALUE}.
-   *
-   * @return {@link Type}
-   */
-  public final Type getValueType() {
-    return valueType;
-  }
-
-  /**
-   * Configure the Batch Source stage.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
+  @Override
   public void configure(StageConfigurer configurer) {
     // no-op
   }
 
-  /**
-   * Configure an ETL pipeline, adding datasets and streams that the source needs.
-   *
-   * @param stageConfig the configuration for the source
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   */
+  @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
@@ -77,4 +52,19 @@ public abstract class BatchSource<KEY, VALUE> {
    * @param context {@link BatchSourceContext}
    */
   public abstract void prepareJob(BatchSourceContext context);
+
+  /**
+   * Initialize the source. This is called once each time the Hadoop Job runs, before any
+   * calls to {@link #transform(KeyValue, Emitter)} are made.
+   *
+   * @param stageConfig the configuration for the stage.
+   */
+  public void initialize(ETLStage stageConfig) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
+    emitter.emit((OUT) input.getValue());
+  }
 }

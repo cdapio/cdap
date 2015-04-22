@@ -21,13 +21,16 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
@@ -46,16 +49,16 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Plugin that writes the log data.
  */
-public class KafkaLogWriterPlugin implements KafkaLogProcessor {
+public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
   private static final long SLEEP_TIME_MS = 100;
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
+  private static final int CHECKPOINT_ROW_KEY_PREFIX = 100;
 
   private ListeningScheduledExecutorService scheduledExecutor;
   private final String logBaseDir;
@@ -66,16 +69,15 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
   private final long maxNumberOfBucketsInTable;
   private final LoggingEventSerializer serializer;
   private final LogCleanup logCleanup;
+  private final CheckpointManager checkpointManager;
 
-  private ScheduledFuture<?> logWriterFuture;
-  private ScheduledFuture<?> cleanupFuture;
   private CountDownLatch countDownLatch;
 
 
   @Inject
   public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
-                              CheckpointManager checkpointManager, LocationFactory locationFactory)
-                              throws Exception {
+                              LocationFactory locationFactory, CheckpointManagerFactory checkpointManagerFactory)
+    throws Exception {
 
     this.serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
@@ -133,6 +135,8 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
                                                        logBaseDir, serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, inactiveIntervalMs);
 
+    checkpointManager = checkpointManagerFactory.create(KafkaTopic.getTopic(), CHECKPOINT_ROW_KEY_PREFIX);
+
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
     String namespacesDir = cConfig.get(Constants.Namespace.NAMESPACES_DIR);
@@ -143,24 +147,25 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
   @Override
   public void init(Set<Integer> partitions) {
+    super.init(partitions, checkpointManager);
 
     scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("log-saver-log-processor")));;
+      Threads.createDaemonThreadFactory("log-saver-log-processor")));
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
-    logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
     countDownLatch = new CountDownLatch(1);
 
     if (partitions.contains(0)) {
       LOG.info("Scheduling cleanup task");
-      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
-                                                            logCleanupIntervalMins, TimeUnit.MINUTES);
+      scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     }
   }
 
   @Override
-  public void process(KafkaLogEvent event) {
+  public void doProcess(KafkaLogEvent event) {
+
     LoggingContext loggingContext = event.getLoggingContext();
     ILoggingEvent logEvent = event.getLogEvent();
     try {
@@ -170,7 +175,7 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
       // Sleep while we can add the entry
       while (true) {
         // Get the oldest bucket in the table
-        long oldestBucketKey = 0;
+        long oldestBucketKey;
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
           if (rowKeySet.isEmpty()) {
@@ -200,7 +205,7 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
       synchronized (messageTable) {
         Map.Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key,
                                                                       loggingContext.getLogPathFragment(logBaseDir));
-        List<KafkaLogEvent> msgList = null;
+        List<KafkaLogEvent> msgList;
         if (entry == null) {
           long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
           msgList = Lists.newArrayList();
@@ -226,9 +231,8 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
 
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdown();
+        scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
       }
-
-      scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
 
       logFileWriter.flush();
       logFileWriter.close();
@@ -237,5 +241,19 @@ public class KafkaLogWriterPlugin implements KafkaLogProcessor {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);
     }
     messageTable.clear();
+  }
+
+  @Override
+  public Checkpoint getCheckpoint(int partition) {
+    try {
+      return checkpointManager.getCheckpoint(partition);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @VisibleForTesting
+  CheckpointManager getCheckPointManager() {
+    return this.checkpointManager;
   }
 }

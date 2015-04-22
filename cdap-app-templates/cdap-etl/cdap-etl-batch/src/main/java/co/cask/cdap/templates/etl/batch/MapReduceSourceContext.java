@@ -17,24 +17,29 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * MapReduce Source Context.
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
-  private final ETLStage sourceStage;
 
-  public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage, StageSpecification specification) {
-    super(context, specification);
-    this.sourceStage = sourceStage;
+  public MapReduceSourceContext(MapReduceContext context, ETLStage sourceStage,
+                                StageSpecification specification, Metrics metrics) {
+    super(context, sourceStage, specification, metrics);
+  }
+
+  @Override
+  public void setInput(StreamBatchReadable stream) {
+    mrContext.setInput(stream);
   }
 
   @Override
@@ -50,10 +55,5 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   @Override
   public void setInput(String datasetName, Dataset dataset) {
     mrContext.setInput(datasetName, dataset);
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return sourceStage.getProperties();
   }
 }

@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Keep track of the sizes of the files written by one {@link StreamHandlerV2}.
+ * Keep track of the sizes of the files written by one {@link StreamHandler}.
  */
 public interface StreamWriterSizeCollector extends Service {
 

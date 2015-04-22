@@ -1,53 +1,45 @@
 <div ncy-breadcrumb></div>
-<h1><span ng-bind="$state.params.programId | caskCapitalizeFilter"></span></h1>
-<p> Type: Tigon </p>
 
-
-<div class="row">
-  <div class="col-sm-6 h4">
-
-      <ng-pluralize data-count="activeRuns"
-          data-when="{'one': '1 Active Run', 'other': '{{activeRuns}} Active Runs'}"></ng-pluralize>
-
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+    </h2>
+    <div class="type-block">
+      <small> Type: Tigon </small>
+    </div>
   </div>
   <div class="col-sm-6 text-right">
+    <div ng-show="status == 'RUNNING'"
+         class="btn btn-danger btn-md"
+         ng-click="stop()">
+      <span class="fa fa-stop"> </span>
+      <span>Stop</span>
+    </div>
 
-    <a ng-show = "activeRuns === 0"
-         class="btn btn-success"
-         ng-click="do('start')">
-      Start a new run
-    </a>
-
-    <a ng-show="activeRuns > 0"
-        class="btn btn-default"
-        ng-click="do('stop')">
-      <i class="fa fa-stop"></i>
-    </a>
-
-    <a ng-show="status == 'start' || status == 'stop'"
-         class="btn btn-default">
+    <div ng-show="status == 'STOPPED'"
+         class="btn btn-success btn-md"
+         ng-click="start()">
+      <span class="fa fa-play"> </span>
+      <span>Start</span>
+    </div>
+    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
+         class="btn btn-md"
+         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
       <span class="fa fa-refresh fa-spin"></span>
-    </a>
-
+      <span>{{status | caskCapitalizeFilter}}</span>
+    </div>
   </div>
 </div>
 
-<br />
-
-<ul class="nav nav-tabs" role="tablist">
-
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.runs" role="tab">Runs</a>
   </li>
-
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="flows.detail.flowlets" role="tab">Flowlets</a>
-  </li>
-
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="flows.detail.history" role="tab">History</a>
   </li>
-
 </ul>
 
 <br />

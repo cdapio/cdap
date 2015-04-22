@@ -72,25 +72,17 @@ public enum ElementType {
          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  PROCEDURE(new Noun("procedure"), new Noun("Procedure"), ProgramType.PROCEDURE, null,
-            ArgumentName.PROCEDURE,
-            Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
-
   SERVICE(new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
           Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
-
-  RUNNABLE(new Noun("runnable"), new Noun("Runnable"), null, ProgramType.SERVICE,
-           ArgumentName.RUNNABLE,
-           Capability.SCALE, Capability.LOGS),
 
   MAPREDUCE(new Noun("mapreduce", "mapreduce programs"), new Noun("MapReduce Program", "MapReduce Programs"),
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+
   SPARK(new Noun("spark", "spark programs"), new Noun("Spark Program", "Spark Programs"),
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
