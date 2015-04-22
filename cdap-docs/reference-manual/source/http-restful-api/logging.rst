@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-logging:
 
 ===========================================================
 Logging HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 Downloading Application Logs
 ----------------------------

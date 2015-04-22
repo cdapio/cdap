@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-monitor:
 
 ===========================================================
 Monitor HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 CDAP internally uses a variety of System Services that are critical to its functionality.
 This section describes the RESTful APIs that can be used to see into System Services.

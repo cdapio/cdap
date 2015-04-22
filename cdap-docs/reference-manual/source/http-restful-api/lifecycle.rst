@@ -3,6 +3,9 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-lifecycle:
 
 ===========================================================
@@ -11,8 +14,6 @@ Lifecycle HTTP RESTful API
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
 Flows, MapReduce programs, Workflows, Workers, and Custom Services.
-
-.. highlight:: console
 
 Deploy an Application
 ---------------------

@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-service:
 
 ========================
 Service HTTP RESTful API
 ========================
-
-.. highlight:: console
 
 This interface supports listing all Services and making requests to the methods of an Application’s Services.
 See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of Services.

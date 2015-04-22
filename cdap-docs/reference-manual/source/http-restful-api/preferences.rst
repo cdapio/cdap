@@ -3,14 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. highlight:: console
+
 .. _http-restful-api-preferences:
 .. _http-restful-api-v3-preferences:
 
 ============================
 Preferences HTTP RESTful API
 ============================
-
-.. highlight:: console
 
 Use the CDAP Preferences HTTP RESTful API to save, retrieve, and delete preferences in CDAP.
 

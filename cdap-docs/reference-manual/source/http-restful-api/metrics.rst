@@ -3,13 +3,14 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
+.. highlight:: console
+
+
 .. _http-restful-api-metrics:
 
 ===========================================================
 Metrics HTTP RESTful API
 ===========================================================
-
-.. highlight:: console
 
 As Applications process data, CDAP collects metrics about the Application’s behavior and
 performance. Some of these metrics are the same for every Application—how many events are
