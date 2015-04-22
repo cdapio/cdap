@@ -28,12 +28,18 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
       return;
     }
 
-    // TODO: Implement support for chart-* options to customize chart, by using attrs of directive.
     // Default options:
     var options = {stack: false, formatAsTimestamp: true};
     angular.extend(options, forcedOpts || {}, {
       el: elem[0]
     });
+
+    angular.forEach(attr, function (v, k) {
+      if ( v && k.indexOf('chart')===0 ) {
+        var key = k.substring(5);
+        this[key.charAt(0).toLowerCase() + key.slice(1)] = $scope.$eval(v);
+      }
+    }, options);
 
     options.data = { x: 'x', columns: [] };
 
@@ -82,7 +88,7 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
 
           render()
           // WARN: using load() API has funny animation (when inserting new data points to the right)
-          //  $scope.me.load(myData);  // Alternative to render()
+//            $scope.me.load(myData);  // Alternative to render()
         }
       });
     }
@@ -103,14 +109,21 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     }
 
     var chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
-    chartConfig.size = { height: 200 };
+    chartConfig.size = $scope.options.size;
 
+    var xTick = {};
     if ($scope.options.formatAsTimestamp) {
       var timestampFormat = function(timestamp) {
         return $filter('amDateFormat')(timestamp, 'h:mm:ss a');
       };
-      chartConfig.axis = { x: { tick : { format: timestampFormat } } };
+      xTick.format = timestampFormat;
     }
+    chartConfig.axis = { x: { show: $scope.options.showx,
+                              tick : xTick },
+                         y: { show: $scope.options.showy } };
+    chartConfig.color = $scope.options.color;
+    chartConfig.legend = $scope.options.legend;
+    chartConfig.point = { show: false };
     $scope.me = c3.generate(chartConfig);
   }
 

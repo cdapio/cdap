@@ -82,7 +82,16 @@ body.state-overview {
             .box-shadow(inset 0 0 5px lightgray);
           }
           path { stroke: lightgray; }
-          > g > g { display: none; }
+          .c3-line {
+            stroke-width: 2px;
+          }
+        }
+        .c3 {
+          svg {
+            border-radius: 5px;
+            border: 2px solid #E2E3E9;
+            background-color: #E2E3E9;
+          }
         }
       }
       &.data-apps {
