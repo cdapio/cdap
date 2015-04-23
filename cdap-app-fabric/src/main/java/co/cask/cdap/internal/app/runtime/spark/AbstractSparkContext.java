@@ -160,7 +160,7 @@ abstract class AbstractSparkContext implements SparkContext {
 
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), streamName);
     try {
-      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getOwners());
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
     } catch (Exception e) {
       LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
     }
@@ -222,7 +222,7 @@ abstract class AbstractSparkContext implements SparkContext {
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
 
     try {
-      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getOwners());
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
     } catch (Exception e) {
       LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
     }

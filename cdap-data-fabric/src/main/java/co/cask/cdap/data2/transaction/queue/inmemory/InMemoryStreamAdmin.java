@@ -28,7 +28,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -106,7 +105,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void register(Id.Stream streamId, List<Id> owners) {
+  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
     usageRegistry.registerAll(owners, streamId);
   }
 }

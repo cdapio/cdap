@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.app.program.Program;
@@ -107,8 +106,9 @@ public class SparkProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, null, dsFramework,
-                                                  SparkProgramRunnerTest.class.getClassLoader(), null);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  SparkProgramRunnerTest.class.getClassLoader(),
+                                                  null, null);
 
     txService.startAndWait();
   }

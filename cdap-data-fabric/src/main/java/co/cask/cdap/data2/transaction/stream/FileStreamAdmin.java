@@ -349,7 +349,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void register(Id.Stream streamId, List<Id> owners) {
+  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
     usageRegistry.registerAll(owners, streamId);
   }
 

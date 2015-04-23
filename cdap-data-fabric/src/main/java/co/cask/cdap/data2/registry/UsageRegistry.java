@@ -28,8 +28,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -63,10 +63,21 @@ public class UsageRegistry {
    * @param users the users of the stream
    * @param streamId the stream
    */
-  public void registerAll(List<Id> users, Id.Stream streamId) {
-    for (Id user : users) {
-      register(user, streamId);
-    }
+  public void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
+      @Override
+      public Void apply(UsageDatasetIterable input) throws Exception {
+        for (Id user : users) {
+          // TODO: CDAP-2251: remove redundancy
+          if (user instanceof Id.Program) {
+            register((Id.Program) user, streamId);
+          } else if (user instanceof Id.Adapter) {
+            register((Id.Adapter) user, streamId);
+          }
+        }
+        return null;
+      }
+    });
   }
 
   /**
@@ -76,12 +87,7 @@ public class UsageRegistry {
    * @param streamId the stream
    */
   public void register(Id user, Id.Stream streamId) {
-    // TODO: kind of hacky
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, streamId);
-    } else if (user instanceof Id.Adapter) {
-      register((Id.Adapter) user, streamId);
-    }
+    registerAll(Collections.singleton(user), streamId);
   }
 
   /**
@@ -90,10 +96,21 @@ public class UsageRegistry {
    * @param users the users of the dataset
    * @param datasetId the dataset
    */
-  public void registerAll(List<Id> users, Id.DatasetInstance datasetId) {
-    for (Id user : users) {
-      register(user, datasetId);
-    }
+  public void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
+      @Override
+      public Void apply(UsageDatasetIterable input) throws Exception {
+        for (Id user : users) {
+          // TODO: CDAP-2251: remove redundancy
+          if (user instanceof Id.Program) {
+            register((Id.Program) user, datasetId);
+          } else if (user instanceof Id.Adapter) {
+            register((Id.Adapter) user, datasetId);
+          }
+        }
+        return null;
+      }
+    });
   }
 
   /**
@@ -103,12 +120,7 @@ public class UsageRegistry {
    * @param datasetId the dataset
    */
   public void register(Id user, Id.DatasetInstance datasetId) {
-    // TODO: kind of hacky
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, datasetId);
-    } else if (user instanceof Id.Adapter) {
-      register((Id.Adapter) user, datasetId);
-    }
+    registerAll(Collections.singleton(user), datasetId);
   }
 
   /**

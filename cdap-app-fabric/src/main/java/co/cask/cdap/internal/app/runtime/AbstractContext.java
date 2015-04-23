@@ -99,8 +99,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.discoveryServiceClient = discoveryServiceClient;
 
     this.programMetrics = metricsCollector;
-    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), getOwners(), dsFramework,
-                                                  program.getClassLoader(), programMetrics);
+    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
+                                                  program.getClassLoader(), getOwners(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further

@@ -30,7 +30,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -58,7 +57,7 @@ public class DatasetInstantiator implements DatasetContext {
 
   private final MetricsCollector metricsCollector;
   private final Id.Namespace namespace;
-  private final List<? extends Id> owners;
+  private final Iterable<? extends Id> owners;
 
   /**
    * Constructor from data fabric.
@@ -69,11 +68,10 @@ public class DatasetInstantiator implements DatasetContext {
    *                    If null, then the default class loader is used
    */
   public DatasetInstantiator(Id.Namespace namespace,
-                             @Nullable List<? extends Id> owners,
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
-                             @Nullable
-                             MetricsCollector metricsCollector) {
+                             @Nullable Iterable<? extends Id> owners,
+                             @Nullable MetricsCollector metricsCollector) {
     this.namespace = namespace;
     this.owners = owners;
     this.classLoader = classLoader;

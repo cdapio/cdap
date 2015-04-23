@@ -52,7 +52,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   private final Map<String, String> runtimeArguments;
   private final Set<DatasetCacheKey> txnInProgressDatasets = Sets.newHashSet();
   private final Id.Namespace namespace;
-  private final List<? extends Id> owners;
+  private final List<Id> owners;
 
   @Nullable
   protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();

@@ -40,7 +40,6 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -52,6 +51,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -90,9 +90,10 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.datasetInstantiator = new DatasetInstantiator(applicationId.getNamespace(), ImmutableList.of(applicationId),
+      this.datasetInstantiator = new DatasetInstantiator(applicationId.getNamespace(),
                                                          datasetFramework,
                                                          new DataSetClassLoader(classLoader),
+                                                         Collections.singleton(applicationId),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null);
     } catch (IOException e) {

@@ -85,7 +85,7 @@ class DatasetServiceClient {
 
   @Nullable
   public DatasetMeta getInstance(String instanceName,
-                                 @Nullable List<? extends Id> owners) throws DatasetManagementException {
+                                 @Nullable Iterable<? extends Id> owners) throws DatasetManagementException {
 
     String query = "";
     if (owners != null) {

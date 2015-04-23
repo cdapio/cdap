@@ -27,7 +27,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -203,7 +202,7 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                   @Nullable ClassLoader classLoader, @Nullable List<? extends Id> owners)
+                                   @Nullable ClassLoader classLoader, @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException;
 
   /**
