@@ -187,7 +187,7 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties, PluginSelector selector) {
 
-    Preconditions.checkArgument(adapterPlugins.containsKey(pluginId),
+    Preconditions.checkArgument(!adapterPlugins.containsKey(pluginId),
                                 "Plugin of type %s, name %s was already added.", pluginType, pluginName);
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
 
@@ -271,9 +271,9 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     runtimeArgs.put(key, value);
   }
 
-  public AdapterSpecification createSpecification() {
-    AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, programId)
+  public AdapterDefinition createSpecification() {
+    AdapterDefinition.Builder builder =
+      AdapterDefinition.builder(adapterName, programId)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)

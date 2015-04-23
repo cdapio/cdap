@@ -69,7 +69,7 @@ function download_file() {
   fi
 }
 
-function pandoc_includes() {
+function download_includes() {
   echo "Downloading source files includes from GitHub..."
   version
   local includes=$1/$TUTORIAL_WISE
@@ -86,6 +86,7 @@ function pandoc_includes() {
   local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
+  
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
   download_file $includes $project_main BounceCountsMapReduce.java f2f8d36e4049ba69b40282057accf38a
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7

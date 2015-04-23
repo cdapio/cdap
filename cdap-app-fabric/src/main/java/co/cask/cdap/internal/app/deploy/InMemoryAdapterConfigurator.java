@@ -30,7 +30,7 @@ import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but
@@ -129,8 +130,9 @@ public final class InMemoryAdapterConfigurator implements Configurator {
           } else {
             configType = Object.class;
           }
-          template.configureAdapter(adapterName, GSON.fromJson(adapterConfig.getConfig(), configType), configurer);
-          AdapterSpecification spec = configurer.createSpecification();
+
+          template.configureAdapter(adapterName, decodeConfig(adapterConfig, configType), configurer);
+          AdapterDefinition spec = configurer.createSpecification();
           result.set(new DefaultConfigResponse(0, CharStreams.newReaderSupplier(GSON.toJson(spec))));
         } finally {
           Closeables.closeQuietly(pluginInstantiator);
@@ -144,6 +146,14 @@ public final class InMemoryAdapterConfigurator implements Configurator {
       LOG.error(t.getMessage(), t);
       return Futures.immediateFailedFuture(t);
     }
+  }
+
+  @Nullable
+  private <T> T decodeConfig(AdapterConfig config, Type type) {
+    if (config.getConfig() == null) {
+      return null;
+    }
+    return GSON.fromJson(config.getConfig(), type);
   }
 
   private void removeDir(File dir) {

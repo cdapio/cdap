@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -110,7 +110,6 @@ function usage() {
   echo ""
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-includes Clean conversion of linked markdown to _includes directory reST files"
   echo "    build-github   Clean build and zip for placing on GitHub"
   echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
   echo ""
@@ -238,21 +237,23 @@ function build_web() {
 
 function check_includes() {
   if [ $CHECK_INCLUDES == $TRUE ]; then
-    if hash pandoc 2>/dev/null; then
-      echo "Confirmed that pandoc is installed; checking includes."
-      # Build includes
-      BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
-      rm -rf $BUILD_INCLUDES_DIR
-      mkdir $BUILD_INCLUDES_DIR
-      pandoc_includes $BUILD_INCLUDES_DIR
-      # Test included files
-      test_includes
-    else
-      echo -e "$WARNING pandoc is not installed; checked-in includes will be used instead."
-    fi
+    echo "Downloading and checking includes."
+    # Build includes
+    BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
+    rm -rf $BUILD_INCLUDES_DIR
+    mkdir $BUILD_INCLUDES_DIR
+    download_includes $BUILD_INCLUDES_DIR
+    # Test included files
+    test_includes
   else
     echo "No includes to be checked."
   fi
+}
+
+function download_includes() {
+  # $1 passed is the directory to which the downloaded files are to be written.
+  # For an example of over-riding this function, see developer/build.sh
+  echo "No includes to be downloaded."
 }
 
 function test_includes () {
@@ -261,6 +262,30 @@ function test_includes () {
 }
 
 function test_an_include() {
+  # Tests a relative_file_path and checks that it hasn't changed.
+  # Uses md5 hashes to monitor if any files have changed.
+  local new_md5_hash
+  local md5_hash=${1}
+  local relative_file_path=${2}
+  
+  local includes_dir=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
+  local target=${includes_dir}/${relative_file_path}
+
+  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
+    new_md5_hash=`md5 -q ${target}`
+  else
+    new_md5_hash=`md5sum ${target} | awk '{print $1}'`
+  fi
+  
+  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
+    echo -e "${WARNING} MD5 Hash for ${relative_file_path} has changed! Compare files and update hash!"  
+    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
+  else
+    echo "MD5 Hash for ${relative_file_path} matches"  
+  fi
+}
+
+function test_an_include_diff() {
   BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
   SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
   EXAMPLE=$1
@@ -275,24 +300,6 @@ function test_an_include() {
     echo -e "$WARNING Not testing includes: using checked-in version..."
     cp -f $SOURCE_INCLUDES_DIR/$1 $BUILD_INCLUDES_DIR/$1
   fi
-}
-
-function build_includes() {
-  if hash pandoc 2>/dev/null; then
-    echo "Confirmed that pandoc is installed; rebuilding the README includes."
-    SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
-    rm -rf $SOURCE_INCLUDES_DIR
-    mkdir $SOURCE_INCLUDES_DIR
-    pandoc_includes $SOURCE_INCLUDES_DIR
-  else
-    echo -e "$WARNING pandoc not installed; checked-in README includes will be used instead."
-  fi
-}
-
-function pandoc_includes() {
-  # $1 passed is the directory to which the translated files are to be written.
-  # For an example of over-riding this function, see developer/build.sh
-  echo "No includes to be translated."
 }
 
 function build_standalone() {
@@ -376,7 +383,6 @@ function rewrite() {
 function run_command() {
   case "$1" in
     build )             build; exit 1;;
-    build-includes )    build_includes; exit 1;;
     build-github )      build_github; exit 1;;
     build-web )         build_web; exit 1;;
     check-includes )    check_includes; exit 1;;

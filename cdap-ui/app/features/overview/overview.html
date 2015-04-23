@@ -78,7 +78,7 @@
   </div>
 </div>
 
-<section class="cdap-health"> <!-- ng-show="isEnterprise" -->
+<section class="system-health"> <!-- ng-show="isEnterprise" -->
   <h2> System Health </h2>
   <div class="row">
     <div class="col-xs-12 col-lg-4">
@@ -100,21 +100,26 @@
 
 
     <div class="col-xs-12 col-lg-8">
-      <div ng-controller="WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="col-xs-5">
+      <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="col-xs-5">
         <p class="text-left" ng-show="$first">
           <strong class="text-left"> Errors last hour </strong>
         </p>
         <br ng-hide="$first">
+        <div class="health-metric warn">
+          <span> {{chartHistory[0].values.slice(-1)[0].y}} </span>
+        </div>
+        <div class="health-metric error">
+          <span> {{chartHistory[1].values.slice(-1)[0].y}} </span>
+        </div>
         <c3-spline
-          data-history="chartHistory"
+          data-chart-data="chartData"
           chart-size="{ height: 100 }"
           chart-showx="false"
           chart-showy="false"
           chart-color="{ pattern: ['red', '#FFBF00'] }"
           chart-legend="{ show: false, position: 'inset' }"
           ></c3-spline>
-
-        <p class="text-center">{{wdgt.title}} - {{chartHistory[0].values.slice(-1)[0].y}} - {{chartHistory[1].values.slice(-1)[0].y}}</p>
+        <p class="text-center">{{wdgt.title}}</p>
 
       </div>
     </div>

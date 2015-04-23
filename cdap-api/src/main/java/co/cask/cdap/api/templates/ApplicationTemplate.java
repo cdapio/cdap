@@ -35,12 +35,12 @@ public abstract class ApplicationTemplate<T> implements Application {
    * Given the adapter configuration, configures the {@link AdapterConfigurer}.
    *
    * @param name name of the adapter
-   * @param configuration adapter configuration
+   * @param configuration adapter configuration. It will be {@code null} if there is no configuration provided.
    * @param configurer {@link AdapterConfigurer}
    * @throws IllegalArgumentException if the configuration is not valid
    * @throws Exception if there was some other error configuring the adapter
    */
-  public void configureAdapter(String name, T configuration, AdapterConfigurer configurer) throws Exception {
+  public void configureAdapter(String name, @Nullable T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op
   }
 

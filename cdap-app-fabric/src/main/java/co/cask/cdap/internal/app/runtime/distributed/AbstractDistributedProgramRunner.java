@@ -33,7 +33,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -179,8 +179,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
 
     // Decode the adapter spec from program system argument
-    AdapterSpecification adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
-                                                     AdapterSpecification.class);
+    AdapterDefinition adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
+                                                     AdapterDefinition.class);
 
     // Get all unique PluginInfo from the adapter spec
     Set<PluginInfo> plugins = adapterSpec.getPluginInfos();

@@ -30,7 +30,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -371,17 +371,17 @@ public interface Store {
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
-  void addAdapter(Id.Namespace id, AdapterSpecification adapterSpec);
+  void addAdapter(Id.Namespace id, AdapterDefinition adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
    * @param id  Namespace id.
    * @param name Adapter name
-   * @return an instance of {@link AdapterSpecification}.
+   * @return an instance of {@link AdapterDefinition}.
    */
   @Nullable
-  AdapterSpecification getAdapter(Id.Namespace id, String name);
+  AdapterDefinition getAdapter(Id.Namespace id, String name);
 
   /**
    * Fetch the status for an adapter identified by the name in a give namespace.
@@ -410,7 +410,7 @@ public interface Store {
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
-  Collection<AdapterSpecification> getAllAdapters(Id.Namespace id);
+  Collection<AdapterDefinition> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.

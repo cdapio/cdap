@@ -19,6 +19,7 @@ package co.cask.cdap.templates;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
@@ -26,8 +27,10 @@ import co.cask.cdap.proto.ProgramType;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import java.lang.reflect.Type;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -37,8 +40,9 @@ import javax.annotation.Nullable;
 /**
  * Specification of an adapter.
  */
-public final class AdapterSpecification {
+public final class AdapterDefinition implements AdapterSpecification {
 
+  private static final Gson GSON = new Gson();
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
                                                                                ProgramType.WORKER);
   private final String name;
@@ -57,15 +61,15 @@ public final class AdapterSpecification {
   // but the platform itself never interprets it but just passes it along.
   private final JsonElement config;
 
-  private AdapterSpecification(String name, String description, Id.Program program,
-                               ScheduleSpecification scheduleSpec, int instances,
-                               Map<String, StreamSpecification> streams,
-                               Map<String, DatasetCreationSpec> datasets,
-                               Map<String, String> datasetModules,
-                               Map<String, String> runtimeArgs,
-                               Map<String, AdapterPlugin> plugins,
-                               Resources resources,
-                               JsonElement config) {
+  private AdapterDefinition(String name, String description, Id.Program program,
+                            ScheduleSpecification scheduleSpec, int instances,
+                            Map<String, StreamSpecification> streams,
+                            Map<String, DatasetCreationSpec> datasets,
+                            Map<String, String> datasetModules,
+                            Map<String, String> runtimeArgs,
+                            Map<String, AdapterPlugin> plugins,
+                            Resources resources,
+                            JsonElement config) {
     this.name = name;
     this.description = description;
     this.program = program;
@@ -80,14 +84,17 @@ public final class AdapterSpecification {
     this.resources = resources;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public String getDescription() {
     return description;
   }
 
+  @Override
   public String getTemplate() {
     return program.getApplicationId();
   }
@@ -100,8 +107,8 @@ public final class AdapterSpecification {
     return runtimeArgs;
   }
 
-  @Nullable
-  public ScheduleSpecification getScheduleSpec() {
+  @Override
+  public ScheduleSpecification getScheduleSpecification() {
     return scheduleSpec;
   }
 
@@ -141,8 +148,19 @@ public final class AdapterSpecification {
     return resources;
   }
 
+  @Nullable
   public JsonElement getConfig() {
     return config;
+  }
+
+  @Override
+  public <T> T getConfig(Type configType) {
+    return config == null ? null : GSON.<T>fromJson(config, configType);
+  }
+
+  @Override
+  public String getConfigString() {
+    return config == null ? null : config.toString();
   }
 
   public static Builder builder(String name, Id.Program program) {
@@ -227,8 +245,8 @@ public final class AdapterSpecification {
       return this;
     }
 
-    public AdapterSpecification build() {
-      return new AdapterSpecification(name, description, program, schedule, instances,
+    public AdapterDefinition build() {
+      return new AdapterDefinition(name, description, program, schedule, instances,
                                       streams, datasets, datasetModules, runtimeArgs, plugins, resources, config);
     }
   }
@@ -242,7 +260,7 @@ public final class AdapterSpecification {
       return false;
     }
 
-    AdapterSpecification that = (AdapterSpecification) o;
+    AdapterDefinition that = (AdapterDefinition) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&

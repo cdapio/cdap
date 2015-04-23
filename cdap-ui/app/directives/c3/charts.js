@@ -5,7 +5,7 @@ var baseDirective = {
   replace: true,
   template: '<div class="c3"></div>',
   scope: {
-    history: '='
+    chartData: '='
   },
   controller: 'c3Controller'
 };
@@ -47,40 +47,13 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     $scope.options = options;
 
 
-    if(attr.history) {
-      $scope.$watch('history', function (newVal) {
-        if(newVal && newVal.length) {
-          // format Data as acceptable by c3.
-          // TODO: if we get rid of epoch, we can more easily change the format of 'history',
-          // to avoid an intermediary data format
-          var columns = [];
-          var metricNames = [];
-          // Iterate over the different metrics in each chart
-          for (var i = 0; i < newVal.length; i++) {
-            var thisMetric = newVal[i];
-            var thisData = [];
-            thisData.push(thisMetric.label);
-            metricNames.push(thisMetric.label);
-            // For each metric, iterate over all the time values, to construct an array in the format:
-            // [metricName, v1, v2, v3]
-            for (var j = 0; j < thisMetric.values.length; j++) {
-              thisData.push(thisMetric.values[j].y);
-            }
-            columns.push(thisData);
-          }
-          // Need to construct an array in the format: ['x', ts1, ts2, ts3],
-          // so extract the timestamp values from the first metric's timeseries.
-          var xValues = ['x'];
-          for (var i = 0; i < newVal[0].values.length; i++) {
-            xValues.push(newVal[0].values[i].time);
-          }
-          columns.push(xValues);
-
-
-          myData = { x: 'x', columns: columns, keys: {x: 'x'} };
+    if(attr.chartData) {
+      $scope.$watch('chartData', function (chartData) {
+        if(chartData) {
+          myData = { x: 'x', columns: chartData.columns, keys: {x: 'x'} };
 
           if ($scope.options.stack) {
-            myData.groups = [metricNames];
+            myData.groups = [chartData.metricNames];
           }
 
           // Save the data for when it gets resized.

@@ -1,0 +1,65 @@
+<div class="row">
+  <div class="col-xs-6">
+    <h2>{{ ::$state.params.datasetId }}: Metadata</h2>
+  </div>
+  <div class="col-xs-6">
+
+    <div class="text-right">
+
+      <div class="btn-group" dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+          Action
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li>
+            <a href="#"
+              ng-click="caskConfirm()"
+              cask-confirmable="deleteDataset()"
+              data-confirmable-content="Are you sure you want to delete this dataset?"
+            >
+              <span class="fa fa-fw fa-trash"></span>
+              Delete
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<table class="table table-curved">
+  <tr>
+    <td>Table</td>
+    <td>{{ metadata.table_name }}</td>
+  </tr>
+
+  <tr>
+    <td>Database</td>
+    <td>{{ metadata.db_name }}</td>
+  </tr>
+
+  <tr>
+    <td>Owner</td>
+    <td>{{ metadata.owner }}</td>
+  </tr>
+
+  <tr>
+    <td>Creation Time</td>
+    <td>
+      {{ metadata.creation_time  | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a' }}
+    </td>
+  </tr>
+
+  <tr>
+    <td>Compressed</td>
+    <td>{{ metadata.compressed }}</td>
+  </tr>
+
+  <tr>
+    <td>Is Dataset</td>
+    <td>{{ metadata.from_dataset }}</td>
+  </tr>
+</table>
