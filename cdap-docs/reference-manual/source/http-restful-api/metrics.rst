@@ -764,10 +764,10 @@ For example, this request will retrieve the completion percentage for the map-st
 ``PurchaseHistoryBuilder`` (reformatted to fit)::
 
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
-    &tag=mapreduce:PurchaseHistoryBuilder&metric=system.process.completion&aggregate=true'
+    &tag=mapreduce:PurchaseHistoryBuilder&tage=tasktype:m&metric=system.process.completion&aggregate=true'
     
   {"startTime":0,"endTime":1429497700,"series":[{"metricName":"system.process.completion",
-   "grouping":{},"data":[{"time":0,"value":200}]}]} 
+   "grouping":{},"data":[{"time":0,"value":100}]}]} 
 
  
 .. _http-restful-api-metrics-querying-by-run-id:
@@ -793,7 +793,6 @@ Examples of using a run-ID (with both commands and results reformatted to fit)::
   
   {"startTime":0,"endTime":1429498228,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":10}]}]}
-   
   
   POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:
       PurchaseHistoryBuilder&tag=run:453-454-447683&tag=tasktype:m&metric=system.process.completion'
