@@ -15,6 +15,9 @@ to a Workflow using the ``scheduleWorkflow`` method of the
 The `Schedules <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html>`__
 class contains static methods to create schedules based on time, or schedules based on data availability.
 
+The name of a Schedule must be unique in the Application that it is in; the same name can
+be used in different Applications.
+
 Time Schedules
 ==============
 
