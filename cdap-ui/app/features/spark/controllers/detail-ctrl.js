@@ -1,5 +1,6 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkDetailController', function($scope, MyDataSource, $state) {
+  .controller('SparkDetailController', function($scope, MyDataSource, $state, MY_CONFIG) {
+    $scope.isEnterprise = MY_CONFIG.isEnterprise;
     var dataSrc = new MyDataSource($scope),
         path = '/apps/' +
           $state.params.appId + '/spark/' +
