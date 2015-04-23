@@ -16,12 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.kafka;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -37,6 +39,7 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * <p>
@@ -139,7 +142,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   }
 
   /**
-   * WIll be called by external source to start poll the Kafka messages one at the time.
+   * Will be called by external source to start poll the Kafka messages one at the time.
    *
    * @param emitter instance of {@link Emitter} to emit the messages.
    */
@@ -215,9 +218,8 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   protected void processMessage(KafkaMessage<OFFSET> message, Emitter<ByteBuffer> emitter) {
     // Should only receive messages from partitions that it can process
     int partition = message.getTopicPartition().getPartition();
-    if ((partition % getContext().getInstanceCount()) != getContext().getInstanceId()) {
-      throw new IllegalArgumentException("Received unexpected partition " + partition);
-    }
+    Preconditions.checkArgument((partition % getContext().getInstanceCount()) == getContext().getInstanceId(),
+                                "Received unexpected partition " + partition);
 
     processMessage(decodeKey(message.getKey()), decodePayload(message.getPayload()), emitter);
   }
@@ -255,6 +257,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param buffer The bytes representing the key in the Kafka message
    * @return The decoded key
    */
+  @Nullable
   protected KEY decodeKey(ByteBuffer buffer) {
     return (keyDecoder != null) ? keyDecoder.apply(buffer) : null;
   }
@@ -265,6 +268,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param buffer The bytes representing the payload in the Kafka message
    * @return The decoded payload
    */
+  @Nullable
   protected PAYLOAD decodePayload(ByteBuffer buffer) {
     return (payloadDecoder != null) ? payloadDecoder.apply(buffer) : null;
   }
@@ -348,7 +352,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
       @Override
       public String apply(ByteBuffer input) {
         input.mark();
-        String result = Charsets.UTF_8.decode(input).toString();
+        String result = Bytes.toString(input, Charsets.UTF_8);
         input.reset();
         return result;
       }

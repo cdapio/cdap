@@ -16,10 +16,12 @@
 
 package co.cask.cdap.templates.etl.realtime.kafka;
 
+import javax.annotation.Nullable;
+
 /**
  * Contains information about Kafka cluster as configured by user.
  */
-public class KafkaConfig {
+public final class KafkaConfig {
 
   private final String zookeeper;
   private final String brokers;
@@ -33,6 +35,7 @@ public class KafkaConfig {
    * Returns the ZooKeeper connection string as set through {@link KafkaConsumerConfigurer#setZooKeeper(String)}
    * or {@code null}.
    */
+  @Nullable
   public String getZookeeper() {
     return zookeeper;
   }
@@ -40,6 +43,7 @@ public class KafkaConfig {
   /**
    * Returns brokers information as set through {@link KafkaConsumerConfigurer#setBrokers(String)} or {@code null}.
    */
+  @Nullable
   public String getBrokers() {
     return brokers;
   }

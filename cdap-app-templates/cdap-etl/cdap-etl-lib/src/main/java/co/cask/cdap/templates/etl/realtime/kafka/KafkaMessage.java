@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  *
  * @param <OFFSET> Type of message offset
  */
-public class KafkaMessage<OFFSET> {
+public final class KafkaMessage<OFFSET> {
 
   private final TopicPartition topicPartition;
   private final OFFSET nextOffset;

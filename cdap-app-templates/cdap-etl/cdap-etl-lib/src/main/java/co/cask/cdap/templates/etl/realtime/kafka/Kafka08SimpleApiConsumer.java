@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 
+import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
 import com.google.common.base.Splitter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -64,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * <p>
@@ -87,19 +89,19 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   @Override
   protected void configureKafka(KafkaConfigurer configurer) {
     Map<String, String> runtimeArgs = getContext().getRuntimeArguments();
-    if (runtimeArgs.containsKey("kafka.zookeeper")) {
-      configurer.setZooKeeper(runtimeArgs.get("kafka.zookeeper"));
-    } else if (runtimeArgs.containsKey("kafka.brokers")) {
-      configurer.setBrokers(runtimeArgs.get("kafka.brokers"));
+    if (runtimeArgs.containsKey(KafkaSource.KAFKA_ZOOKEEPER)) {
+      configurer.setZooKeeper(runtimeArgs.get(KafkaSource.KAFKA_ZOOKEEPER));
+    } else if (runtimeArgs.containsKey(KafkaSource.KAFKA_BROKERS)) {
+      configurer.setBrokers(runtimeArgs.get(KafkaSource.KAFKA_BROKERS));
     }
     setupTopicPartitions(configurer, runtimeArgs);
   }
 
   private void setupTopicPartitions(KafkaConsumerConfigurer configurer, Map<String, String> runtimeArgs) {
-    int partitions = Integer.parseInt(runtimeArgs.get("kafka.partitions"));
+    int partitions = Integer.parseInt(runtimeArgs.get(KafkaSource.KAFKA_PARTITIONS));
     int instanceId = getContext().getInstanceId();
     int instances = getContext().getInstanceCount();
-    String kafkaTopic = runtimeArgs.get("kafka.topic");
+    String kafkaTopic = runtimeArgs.get(KafkaSource.KAFKA_TOPIC);
     for (int i = 0; i < partitions; i++) {
       if ((i % instances) == instanceId) {
         configurer.addTopicPartition(kafkaTopic, i);
@@ -255,7 +257,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
   @Override
   protected long getDefaultOffset(TopicPartition topicPartition) {
-    String argValue = getContext().getRuntimeArguments().get("kafka.default.offset");
+    String argValue = getContext().getRuntimeArguments().get(KafkaSource.KAFKA_DEFAULT_OFFSET);
     if (argValue != null) {
       return Long.valueOf(argValue);
     } else {
@@ -281,6 +283,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    * Returns a {@link SimpleConsumer} for the given consumer info or {@code null} if no leader broker is currently
    * available.
    */
+  @Nullable
   private SimpleConsumer getConsumer(KafkaConsumerInfo<Long> consumerInfo) {
     TopicPartition topicPartition = consumerInfo.getTopicPartition();
     SimpleConsumer consumer = kafkaConsumers.getIfPresent(topicPartition);
@@ -342,7 +345,6 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
     return constructor.newInstance(zkClient);
   }
 
-
   /**
    * Loads the class that implements {@link BrokerService}.
    */
@@ -358,6 +360,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    *
    * @return the address for the leader broker or {@code null} if no leader is currently available.
    */
+  @Nullable
   private InetSocketAddress getLeader(String topic, int partition) {
     // If BrokerService is available, it will use information from ZooKeeper
     if (brokerService != null) {
@@ -374,6 +377,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    *
    * @return the address for the leader broker or {@code null} if no leader is currently available.
    */
+  @Nullable
   private InetSocketAddress findLeader(String brokers, String topic, int partition) {
     // Splits the broker list of format "host:port,host:port" into a map<host, port>
     Map<String, String> brokerMap = Splitter.on(',').withKeyValueSeparator(":").split(brokers);
