@@ -11,14 +11,14 @@
     <tbody>
       <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
           <td>
+            <img class="type-icon" ng-if="data.dataType === 'Stream'" src="assets/img/ico_stream_gray.png" alt="" />
+            <img class="type-icon" ng-if="data.dataType === 'Dataset'" src="assets/img/ico_datasets_gray.png" alt="" />
             <a ng-click="goToDetail(data)"
                 href="">
                 <strong ng-bind="data.name | caskCapitalizeFilter"> </strong>
             </a>
           </td>
           <td>
-            <img class="type-icon" ng-if="data.dataType === 'Stream'" src="assets/img/ico_stream_gray.png" alt="" />
-            <img class="type-icon" ng-if="data.dataType === 'Dataset'" src="assets/img/ico_datasets_gray.png" alt="" />
             <span> {{data.dataType}} </span>
           </td>
       </tr>
