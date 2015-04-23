@@ -17,6 +17,10 @@ angular.module(PKG.name + '.feature.admin')
     dataSrc.request({
       _cdapPath: '/namespaces/' + $stateParams.nsadmin + '/streams'
     }, function(res) {
+      angular.forEach(res, function(r) {
+        r.type = 'Stream';
+      });
+
       $scope.streams = res;
     });
   });
