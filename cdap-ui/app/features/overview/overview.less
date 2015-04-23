@@ -31,9 +31,7 @@ body.state-overview {
         position: relative;
         text-align: center;
         @media (min-width: @screen-lg-min) { text-align: right; }
-        > div {
-          display: inline-block;
-          margin-right: 20px;
+        .row > div {
           text-align: center;
           p.text-left { padding-left: 5px; }
         }
@@ -46,6 +44,8 @@ body.state-overview {
           z-index: 10;
           line-height: 16px;
           vertical-align: middle;
+          font-weight: 700;
+          .border-radius(4px);
           &.warn { background-color: @brand-warning; }
           &.error {
             background-color: @brand-danger;
