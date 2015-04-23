@@ -1,11 +1,18 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsDetailController', function($scope, MyDataSource, $state) {
+  .controller('WorkflowsRunsDetailController', function($scope, MyDataSource, $state, $filter) {
     var dataSrc = new MyDataSource($scope),
+        filterFilter = $filter('filter'),
         basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;;
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
 
+    if ($state.params.runid) {
+      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      if (match.length) {
+        $scope.runs.selected = match[0];
+      }
+    }
     if ($scope.runs.length) {
       dataSrc.poll({
         _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid

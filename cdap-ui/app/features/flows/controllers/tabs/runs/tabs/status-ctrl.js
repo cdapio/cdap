@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
+  .controller('FlowsRunDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
