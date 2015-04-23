@@ -162,24 +162,32 @@ Retrieving Metrics
 
 .. highlight:: console
 
-You can now query the metrics that are emitted by the flow. To see the value of the ``names.bytes`` metric,
-you can make an HTTP request to the :ref:`http-restful-api-metrics` using curl::
+You can now query the metrics that are emitted by the Flow and Service. If a particular
+metric has no value, it will return an empty array in the ``"series"`` of the results, such
+as::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
-  {"data":3}
+  {"startTime":0,"endTime":1429475995,"series":[]}
 
-To see the value of the ``names.longnames`` metric (the number of names greater than 10 characters),
+To see the value of the ``names.bytes`` metric, you can make an HTTP request to the
+:ref:`http-restful-api-metrics` using curl::
+
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
+  {"startTime":0,"endTime":1429477634,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}
+
+To see the value of the ``names.longnames`` metric (the number of names, each greater than 10 characters),
 you can use::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.longnames?aggregate=true
-  {"data":2}
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true'
+  {"startTime":0,"endTime":1429476082,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":1}]}]}
   
-To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been seen),
+To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been "greeted"),
 you can use::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate=true
-  {"data":0}
-  
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true'
+  {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":0}]}]}
+
+The results you receive will vary depending on the entries you have made to the Flow.
+
 Stopping the Application
 -------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
