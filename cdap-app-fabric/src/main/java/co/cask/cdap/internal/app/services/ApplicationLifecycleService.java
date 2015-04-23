@@ -29,13 +29,14 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
@@ -119,10 +120,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Remove all the applications inside the given {@link Id.Namespace}
    *
    * @param identifier the {@link Id.Namespace} under which all application should be deleted
-   * @return and appropriate {@link AbstractAppFabricHttpHandler.AppFabricServiceStatus}
    * @throws Exception
    */
-  public AbstractAppFabricHttpHandler.AppFabricServiceStatus removeAll(Id.Namespace identifier) throws Exception {
+  public void removeAll(Id.Namespace identifier) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
       store.getAllApplications(identifier));
 
@@ -136,7 +136,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }, ProgramType.values());
 
     if (appRunning) {
-      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+      throw new CannotBeDeletedException(identifier, "One of the program associated with this namespace is still " +
+        "running");
     }
 
     //All Apps are STOPPED, delete them
@@ -144,18 +145,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Id.Application id = Id.Application.from(identifier.getId(), appSpec.getName());
       removeApplication(id);
     }
-
-    return AbstractAppFabricHttpHandler.AppFabricServiceStatus.OK;
   }
 
   /**
    * Delete an application specified by appId.
    *
    * @param appId the {@link Id.Application} of the application to be removed
-   * @return an appropriate {@link AbstractAppFabricHttpHandler.AppFabricServiceStatus}
    * @throws Exception
    */
-  public AbstractAppFabricHttpHandler.AppFabricServiceStatus removeApplication(final Id.Application appId) throws Exception {
+  public void removeApplication(final Id.Application appId) throws Exception {
     //Check if all are stopped.
     boolean appRunning = runtimeService.checkAnyRunning(new Predicate<Id.Program>() {
       @Override
@@ -165,12 +163,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }, ProgramType.values());
 
     if (appRunning) {
-      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+      throw new CannotBeDeletedException(appId);
     }
 
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
-      return AbstractAppFabricHttpHandler.AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      throw new NotFoundException(appId);
     }
 
     //Delete the schedules
@@ -218,8 +216,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
-
-    return AbstractAppFabricHttpHandler.AppFabricServiceStatus.OK;
   }
 
   /**

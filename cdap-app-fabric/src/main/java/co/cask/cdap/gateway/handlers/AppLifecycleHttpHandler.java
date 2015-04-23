@@ -27,6 +27,8 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
@@ -191,7 +193,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (!adapterService.canDeleteApp(id)) {
       appStatus = AbstractAppFabricHttpHandler.AppFabricServiceStatus.ADAPTER_CONFLICT;
     } else {
-      appStatus= applicationLifecycleService.removeApplication(id);
+      try {
+        applicationLifecycleService.removeApplication(id);
+        appStatus = AppFabricServiceStatus.OK;
+      } catch (NotFoundException nfe) {
+        appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      } catch (CannotBeDeletedException cbde) {
+        appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+      } catch (Exception e) {
+        appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
+      }
     }
     LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
     responder.sendString(appStatus.getCode(), appStatus.getMessage());
@@ -206,7 +217,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId) throws Exception {
 
     Id.Namespace id = Id.Namespace.from(namespaceId);
-    AppFabricServiceStatus status = applicationLifecycleService.removeAll(id);
+    AppFabricServiceStatus status;
+    try {
+      applicationLifecycleService.removeAll(id);
+      status = AppFabricServiceStatus.OK;
+    } catch (NotFoundException nfe) {
+      status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    } catch (CannotBeDeletedException cbde) {
+      status = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    } catch (Exception e) {
+      status = AppFabricServiceStatus.INTERNAL_ERROR;
+    }
     LOG.trace("Delete all call at AppFabricHttpHandler");
     responder.sendString(status.getCode(), status.getMessage());
   }
