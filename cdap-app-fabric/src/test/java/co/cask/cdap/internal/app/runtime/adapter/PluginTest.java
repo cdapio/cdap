@@ -37,12 +37,14 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -62,6 +64,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -78,6 +81,7 @@ public class PluginTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final String TEMPLATE_NAME = "PluginTest";
+  private static final Gson GSON = new Gson();
 
   private static CConfiguration cConf;
   private static File appTemplateJar;
@@ -164,37 +168,51 @@ public class PluginTest {
     // Create a jar, without any export package information
     createJar(TestPlugin.class, new File(templatePluginDir, "external-plugin-1.0.jar"));
 
-    // Create a config json file.
-    PluginClass pluginClass = new PluginClass("plugin", "External", "External Plugin", TestPlugin.class.getName(), null,
-      ImmutableMap.of(
-        "class.name", new PluginPropertyField("class.name", "Name of the class", "string", true),
-        "timeout", new PluginPropertyField("timeout", "Timeout value", "long", false)
-      ));
+    // Create a config json file that expose two plugins (to the same class).
+    // One of the plugin has no property field
+    List<JsonObject> pluginDefs = ImmutableList.of(
+      createPluginJson("plugin", "External", "External Plugin", TestPlugin.class.getName(),
+                       new PluginPropertyField("class.name", "Name of the class", "string", true),
+                       new PluginPropertyField("timeout", "Timeout value", "long", false)
+      ),
+      createPluginJson("plugin2", "External2", "External Plugin2", TestPlugin.class.getName())
+    );
+
     File configFile = new File(templatePluginDir, "external-plugin-1.0.json");
     Writer writer = Files.newWriter(configFile, Charsets.UTF_8);
     try {
-      new Gson().toJson(ImmutableList.of(pluginClass), writer);
+      GSON.toJson(pluginDefs, writer);
     } finally {
       writer.close();
     }
 
     // Build up the plugin repository.
     PluginRepository repository = new PluginRepository(cConf);
-    Multimap<PluginInfo, PluginClass> plugins = repository.inspectPlugins(TEMPLATE_NAME, appTemplateJar);
+    TreeMultimap<PluginInfo, PluginClass> plugins = repository.inspectPlugins(TEMPLATE_NAME, appTemplateJar);
 
     // There should be one for the external-plugin
-    Map.Entry<PluginInfo, PluginClass> pluginEntry = null;
+    PluginInfo pluginInfo = null;
     for (Map.Entry<PluginInfo, PluginClass> entry : plugins.entries()) {
       if (entry.getKey().getName().equals("external-plugin")) {
-        pluginEntry = entry;
+        pluginInfo = entry.getKey();
         break;
       }
     }
 
-    Assert.assertNotNull(pluginEntry);
-    // There should be exactly one plugin class for the external plugin.
-    Assert.assertEquals(1, plugins.get(pluginEntry.getKey()).size());
-    Assert.assertEquals(pluginClass, pluginEntry.getValue());
+    Assert.assertNotNull(pluginInfo);
+
+    // There should be two plugin classes
+    Assert.assertEquals(2, plugins.get(pluginInfo).size());
+
+    // The first one have two property fields, the second one has no property field
+    // The collection is always sorted by the plugin name (guaranteed by plugin repository
+    PluginClass pluginClass = plugins.get(pluginInfo).first();
+    Assert.assertEquals("External", pluginClass.getName());
+    Assert.assertEquals(2, pluginClass.getProperties().size());
+
+    pluginClass = plugins.get(pluginInfo).last();
+    Assert.assertEquals("External2", pluginClass.getName());
+    Assert.assertEquals(0, pluginClass.getProperties().size());
   }
 
   @Test
@@ -292,5 +310,22 @@ public class PluginTest {
     } finally {
       byteCode.close();
     }
+  }
+
+  private JsonObject createPluginJson(String type, String name, String description,
+                                      String className, PluginPropertyField...fields) {
+    JsonObject json = new JsonObject();
+    json.addProperty("type", type);
+    json.addProperty("name", name);
+    json.addProperty("description", description);
+    json.addProperty("className", className);
+    if (fields.length > 0) {
+      Map<String, PluginPropertyField> properties = Maps.newHashMap();
+      for (PluginPropertyField field : fields) {
+        properties.put(field.getName(), field);
+      }
+      json.add("properties", GSON.toJsonTree(properties));
+    }
+    return json;
   }
 }
