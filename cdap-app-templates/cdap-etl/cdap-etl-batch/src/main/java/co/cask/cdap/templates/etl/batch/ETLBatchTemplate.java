@@ -21,8 +21,8 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.BatchCubeSink;
 import co.cask.cdap.templates.etl.batch.sinks.BatchWritableSink;
-import co.cask.cdap.templates.etl.batch.sinks.CubeSink;
 import co.cask.cdap.templates.etl.batch.sinks.DBSink;
 import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
@@ -68,7 +68,7 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         ProjectionTransform.class,
                                         DBSource.class,
                                         DBSink.class,
-                                        CubeSink.class));
+                                        BatchCubeSink.class));
   }
 
   @Override
