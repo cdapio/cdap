@@ -74,11 +74,14 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   @Inject
   public UserInterfaceService(@Named("ui-path") String uiPath, CConfiguration cConf, SConfiguration sConf) {
     this.uiPath = new File(uiPath);
-    Preconditions.checkArgument(this.uiPath.exists(),
-                                "UI file does not exist: " + this.uiPath.getAbsolutePath());
+    if (!uiPath.isEmpty()) {
+      this.uiBase = this.uiPath.getParentFile().getParentFile().getParentFile();
+    } else {
+      this.uiBase = null;
+      LOG.warn("UI Path is empty");
+    }
     // This is ok since this class is only used in standalone, the path is always [base]/server/local/main.js
     // However, this could change if the layer of ui changed, which require adjustment to this class anyway
-    this.uiBase = this.uiPath.getParentFile().getParentFile().getParentFile();
     this.cConf = cConf;
     this.sConf = sConf;
   }
