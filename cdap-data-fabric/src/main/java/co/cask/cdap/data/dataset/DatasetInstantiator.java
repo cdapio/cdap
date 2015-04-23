@@ -57,24 +57,23 @@ public class DatasetInstantiator implements DatasetContext {
 
   private final MetricsCollector metricsCollector;
   private final Id.Namespace namespace;
-  private final Id ownerId;
+  private final Iterable<? extends Id> owners;
 
   /**
    * Constructor from data fabric.
    *
    * @param namespace the {@link Id.Namespace} in which this dataset is used
-   * @param ownerId the {@link Id} which is using this dataset
+   * @param owners the {@link Id} which is using this dataset
    * @param classLoader the class loader to use for loading dataset classes.
    *                    If null, then the default class loader is used
    */
   public DatasetInstantiator(Id.Namespace namespace,
-                             @Nullable Id ownerId,
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
-                             @Nullable
-                             MetricsCollector metricsCollector) {
+                             @Nullable Iterable<? extends Id> owners,
+                             @Nullable MetricsCollector metricsCollector) {
     this.namespace = namespace;
-    this.ownerId = ownerId;
+    this.owners = owners;
     this.classLoader = classLoader;
     this.metricsCollector = metricsCollector;
     this.datasetFramework = datasetFramework;
@@ -98,7 +97,7 @@ public class DatasetInstantiator implements DatasetContext {
       }
 
       dataset = datasetFramework.getDataset(Id.DatasetInstance.from(namespace, name),
-                                            arguments, classLoader, ownerId);
+                                            arguments, classLoader, owners);
       if (dataset == null) {
         throw new DatasetInstantiationException("Failed to access dataset: " + name);
       }

@@ -109,7 +109,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       this.userMetrics = null;
     }
     this.runtimeArgs = runtimeArgs.asMap();
-    this.streamWriter = streamWriterFactory.create(program.getId());
+    this.streamWriter = streamWriterFactory.create(program.getId().getNamespace(), getOwners());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
@@ -188,9 +188,9 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), program.getId(),
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()),
                                              context, datasetFramework,
-                                             getProgram().getClassLoader(), null, runtimeArgs) {
+                                             getProgram().getClassLoader(), runtimeArgs, null, getOwners()) {
         @Override
         protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
           return datasetsCache;

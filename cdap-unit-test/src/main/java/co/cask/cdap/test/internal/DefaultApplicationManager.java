@@ -51,6 +51,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -89,9 +90,10 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.datasetInstantiator = new DatasetInstantiator(applicationId.getNamespace(), applicationId,
+      this.datasetInstantiator = new DatasetInstantiator(applicationId.getNamespace(),
                                                          datasetFramework,
                                                          new DataSetClassLoader(classLoader),
+                                                         Collections.singleton(applicationId),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null);
     } catch (IOException e) {

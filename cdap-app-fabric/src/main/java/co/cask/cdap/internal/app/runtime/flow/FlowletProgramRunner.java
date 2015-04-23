@@ -500,7 +500,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
               || inputNames.contains(FlowletDefinition.ANY_INPUT))) {
 
               if (entry.getKey().getType() == FlowletConnection.Type.STREAM) {
-                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(program, usageRegistry,
+                ConsumerSupplier<StreamConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
+                                                                                            flowletContext.getOwners(),
+                                                                                            usageRegistry,
                                                                                             dataFabricFacade,
                                                                                             queueName, consumerConfig);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
@@ -521,7 +523,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
                 Function<ByteBuffer, T> decoder =
                   wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
-                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(program, usageRegistry,
+                ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
+                                                                                           flowletContext.getOwners(),
+                                                                                           usageRegistry,
                                                                                            dataFabricFacade, queueName,
                                                                                            consumerConfig, numGroups);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
