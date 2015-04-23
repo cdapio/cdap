@@ -270,10 +270,10 @@ otherwise, the other path will be taken. The diagram for this code would be:
    :align: center
 
 For this 3.0 release, CDAP only supports predicate conditions based on counters from your
-MapReduce programs. Because of this, condition nodes can currently only follow MapReduce
-nodes that make use of one or more counters. In a later version, we will expose many more
-kinds of conditions, for other components, to allow other possible execution paths and
-structures.
+MapReduce programs. Because of this, condition nodes are currently only useful when they
+follow MapReduce nodes that make use of one or more counters. In a later version, we will
+expose many more kinds of conditions, for other components, to allow other possible
+execution paths and structures.
 
 Example of Using a Workflow
 ===========================
