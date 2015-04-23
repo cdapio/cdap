@@ -90,7 +90,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       /**
        * Overflow of leaf into the flowlet/stream shape.
        */
-      var leafBuffer = 20;
+      var leafBuffer = flowletCircleRadius * 0.4;
 
       var numberFilter = $filter('myNumber');
       scope.getShapes = function() {
