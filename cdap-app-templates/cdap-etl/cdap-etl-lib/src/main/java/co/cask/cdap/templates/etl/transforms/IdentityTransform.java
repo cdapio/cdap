@@ -28,7 +28,7 @@ import co.cask.cdap.templates.etl.api.TransformStage;
  * @param <T> any type
  */
 @Plugin(type = "transform")
-@Name("IdentityTransform")
+@Name("Identity")
 @Description("Transform that just passes data through without any modification")
 public class IdentityTransform<T> extends TransformStage<T, T> {
 
