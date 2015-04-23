@@ -1,7 +1,6 @@
 angular.module(PKG.name+'.feature.dashboard')
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
-    var path = '/assets/features/operation28/';
     /**
      * State Configurations
      */
@@ -32,19 +31,19 @@ angular.module(PKG.name+'.feature.dashboard')
         .state('dashboard.standard.cdap', {
           url: '/cdap',
           templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-          controller: 'Op28CdapCtrl'
+          controller: 'OpsCdapCtrl'
         })
 
         .state('dashboard.standard.system', {
           url: '/system',
           templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-          controller: 'Op28SystemCtrl'
+          controller: 'OpsSystemCtrl'
         })
 
         .state('dashboard.standard.apps', {
           url: '/apps',
-          templateUrl: path + 'tab/apps.html',
-          controller: 'Op28AppsCtrl'
+          templateUrl: '/assets/features/operations/tab/apps.html',
+          controller: 'OpsAppsCtrl'
         })
 
         .state('dashboard.user', {

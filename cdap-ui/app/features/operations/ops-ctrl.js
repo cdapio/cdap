@@ -5,8 +5,8 @@
 angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
 
-  .controller('Op28CdapCtrl',
-  function ($scope, op28helper, Widget) {
+  .controller('OpsCdapCtrl',
+  function ($scope, opshelper, Widget) {
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
@@ -16,13 +16,13 @@ angular.module(PKG.name+'.feature.dashboard')
       ['Query',   '', ['system.requests.count'],           'c3-line']
     ];
 
-    $scope.currentBoard = op28helper.createBoardFromPanels(panels);
+    $scope.currentBoard = opshelper.createBoardFromPanels(panels);
   })
 
 /* ------------------------------------------------------ */
 
-  .controller('Op28SystemCtrl',
-  function ($scope, op28helper) {
+  .controller('OpsSystemCtrl',
+  function ($scope, opshelper) {
     // Same format as above
     var panels = [
       ['AppFabric - Containers', '', ['system.resources.used.containers'], 'c3-line'],
@@ -31,12 +31,12 @@ angular.module(PKG.name+'.feature.dashboard')
       ['DataFabric',             '', ['system.resources.used.storage'],    'c3-line']
     ];
 
-    $scope.currentBoard = op28helper.createBoardFromPanels(panels);
+    $scope.currentBoard = opshelper.createBoardFromPanels(panels);
   })
 
 /* ------------------------------------------------------ */
 
-  .controller('Op28AppsCtrl',
+  .controller('OpsAppsCtrl',
   function ($scope, $state, myHelpers, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
@@ -86,7 +86,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('op28helper', function (Widget) {
+  .factory('opshelper', function (Widget) {
     function createWidget(title, context, metricNames, type) {
       return new Widget({title: title, type: type, isLive: true,
         metric: {
