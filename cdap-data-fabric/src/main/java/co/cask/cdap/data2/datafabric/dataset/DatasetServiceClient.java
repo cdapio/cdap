@@ -91,7 +91,7 @@ class DatasetServiceClient {
     if (owners != null) {
       Set<String> ownerParams = Sets.newHashSet();
       for (Id owner : owners) {
-        ownerParams.add("owner=" + owner.getIdType() + "//" + owner.getIdRep());
+        ownerParams.add("owner=" + owner.getIdType() + "::" + owner.getIdRep());
       }
       query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
     }

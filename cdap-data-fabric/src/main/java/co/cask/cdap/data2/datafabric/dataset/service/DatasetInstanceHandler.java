@@ -130,7 +130,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       // typeMeta is guaranteed to be non-null now.
       DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
       for (String owner : owners) {
-        String[] parts = owner.split("//", 2);
+        String[] parts = owner.split("::", 2);
         Preconditions.checkArgument(parts.length == 2);
         String ownerType = parts[0];
         String ownerId = parts[1];
