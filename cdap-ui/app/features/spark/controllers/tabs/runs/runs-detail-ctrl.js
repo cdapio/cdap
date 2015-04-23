@@ -16,11 +16,4 @@ angular.module(PKG.name + '.feature.spark')
       event.targetScope.runs.selected = null;
     });
 
-    $scope.selectTab = function(tab, node) {
-      if (tab.title === 'Flowlets') {
-        $scope.activeFlowlet = node;
-      }
-      $scope.activeTab = tab;
-
-    };
   });
