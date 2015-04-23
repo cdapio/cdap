@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -69,6 +70,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
   private final boolean exploreEnabled;
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public LocalApplicationTemplateManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -79,7 +81,8 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
                                          StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                                          AdapterService adapterService,
                                          PreferencesStore preferencesStore,
-                                         @Assisted ProgramTerminator programTerminator, MetricStore metricStore) {
+                                         @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
+                                         UsageRegistry usageRegistry) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -95,6 +98,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
     this.preferencesStore = preferencesStore;
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -110,7 +114,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, metricStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
-    pipeline.addLast(new ApplicationRegistrationStage(store));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new EnableConcurrentRunsStage(preferencesStore));
     return pipeline.execute(input);
   }
