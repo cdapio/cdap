@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: cdap
-# Recipe:: web_app_init
+# Recipe:: ui_init
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 # Dependencies
 # Need to make sure certpath and keypath attributes are set
 
-include_recipe 'cdap::web_app'
+include_recipe 'cdap::ui'
 
 ### Generate a certificate if SSL is enabled
-execute 'generate-webapp-ssl-cert' do
+execute 'generate-ui-ssl-cert' do
   ssl_enabled =
     if node['cdap']['version'].to_f < 2.5 && node['cdap'].key?('cdap_site') &&
        node['cdap']['cdap_site'].key?('security.server.ssl.enabled')

@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: cdap
-# Recipe:: web_app
+# Recipe:: ui
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ end
 
 include_recipe 'cdap::repo'
 
-package 'cdap-web-app' do
+package 'cdap-ui' do
   action :install
   version node['cdap']['version']
 end
 
-if node['cdap'].key?('web_app')
-  my_vars = { :options => node['cdap']['web_app'] }
+if node['cdap'].key?('ui')
+  my_vars = { :options => node['cdap']['ui'] }
 
   directory '/etc/default' do
     owner 'root'
@@ -41,14 +41,14 @@ if node['cdap'].key?('web_app')
     action :create
   end
 
-  template '/etc/default/cdap-web-app' do
+  template '/etc/default/cdap-ui' do
     source 'generic-env.sh.erb'
     mode '0755'
     owner 'root'
     group 'root'
     action :create
     variables my_vars
-  end # End /etc/default/cdap-web-app
+  end # End /etc/default/cdap-ui
 end
 
 service 'cdap-web-app' do
