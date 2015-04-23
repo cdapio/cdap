@@ -15,11 +15,8 @@
  */
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.stream.DefaultStreamWriter;
-import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
@@ -34,7 +31,6 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 
 import java.util.Map;
@@ -59,10 +55,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-
-    // Create StreamWriter factory.
-    install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
-              .build(StreamWriterFactory.class));
   }
 
   @Singleton

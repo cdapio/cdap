@@ -19,6 +19,7 @@ package co.cask.cdap.templates;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -29,12 +30,14 @@ import com.google.gson.JsonElement;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 /**
  * Specification of an adapter.
  */
-public final class AdapterSpecification {
+public final class AdapterDefinition {
 
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
                                                                                ProgramType.WORKER);
@@ -47,29 +50,32 @@ public final class AdapterSpecification {
   private final Map<String, DatasetCreationSpec> datasets;
   private final Map<String, String> datasetModules;
   private final Map<String, String> runtimeArgs;
+  private final Map<String, AdapterPlugin> plugins;
   private final Resources resources;
   // this is a json representation of some config that templates will use to configure
   // an adapter. At configuration time it will be translated into the correct object,
   // but the platform itself never interprets it but just passes it along.
   private final JsonElement config;
 
-  private AdapterSpecification(String name, String description, Id.Program program,
-                               ScheduleSpecification scheduleSpec, int instances,
-                               Map<String, StreamSpecification> streams,
-                               Map<String, DatasetCreationSpec> datasets,
-                               Map<String, String> datasetModules,
-                               Map<String, String> runtimeArgs, Resources resources,
-                               JsonElement config) {
+  private AdapterDefinition(String name, String description, Id.Program program,
+                            ScheduleSpecification scheduleSpec, int instances,
+                            Map<String, StreamSpecification> streams,
+                            Map<String, DatasetCreationSpec> datasets,
+                            Map<String, String> datasetModules,
+                            Map<String, String> runtimeArgs,
+                            Map<String, AdapterPlugin> plugins,
+                            Resources resources,
+                            JsonElement config) {
     this.name = name;
     this.description = description;
     this.program = program;
     this.scheduleSpec = scheduleSpec;
     this.instances = instances;
-    this.streams = streams == null ? ImmutableMap.<String, StreamSpecification>of() : ImmutableMap.copyOf(streams);
-    this.datasets = datasets == null ? ImmutableMap.<String, DatasetCreationSpec>of() : ImmutableMap.copyOf(datasets);
-    this.datasetModules = datasetModules == null ?
-      ImmutableMap.<String, String>of() : ImmutableMap.copyOf(datasetModules);
-    this.runtimeArgs = runtimeArgs == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(runtimeArgs);
+    this.streams = streams;
+    this.datasets = datasets;
+    this.datasetModules = datasetModules;
+    this.runtimeArgs = runtimeArgs;
+    this.plugins = plugins;
     this.config = config;
     this.resources = resources;
   }
@@ -111,6 +117,21 @@ public final class AdapterSpecification {
     return datasetModules;
   }
 
+  public Map<String, AdapterPlugin> getPlugins() {
+    return plugins;
+  }
+
+  /**
+   * Returns set of {@link PluginInfo} for the plugins in this specification.
+   */
+  public NavigableSet<PluginInfo> getPluginInfos() {
+    NavigableSet<PluginInfo> result = new TreeSet<PluginInfo>();
+    for (AdapterPlugin plugin : plugins.values()) {
+      result.add(plugin.getPluginInfo());
+    }
+    return result;
+  }
+
   @Nullable
   public Integer getInstances() {
     return instances;
@@ -136,10 +157,11 @@ public final class AdapterSpecification {
     private final Id.Program program;
     private String description;
     private ScheduleSpecification schedule;
-    private Map<String, String> runtimeArgs;
-    private Map<String, StreamSpecification> streams;
-    private Map<String, DatasetCreationSpec> datasets;
-    private Map<String, String> datasetModules;
+    private Map<String, String> runtimeArgs = ImmutableMap.of();
+    private Map<String, StreamSpecification> streams = ImmutableMap.of();
+    private Map<String, DatasetCreationSpec> datasets = ImmutableMap.of();
+    private Map<String, String> datasetModules = ImmutableMap.of();
+    private Map<String, AdapterPlugin> plugins = ImmutableMap.of();
     private int instances;
     private Resources resources;
     private JsonElement config;
@@ -166,22 +188,27 @@ public final class AdapterSpecification {
     }
 
     public Builder setRuntimeArgs(Map<String, String> runtimeArgs) {
-      this.runtimeArgs = runtimeArgs;
+      this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
       return this;
     }
 
     public Builder setStreams(Map<String, StreamSpecification> streams) {
-      this.streams = streams;
+      this.streams = ImmutableMap.copyOf(streams);
       return this;
     }
 
     public Builder setDatasets(Map<String, DatasetCreationSpec> datasets) {
-      this.datasets = datasets;
+      this.datasets = ImmutableMap.copyOf(datasets);
       return this;
     }
 
     public Builder setDatasetModules(Map<String, String> modules) {
-      this.datasetModules = modules;
+      this.datasetModules = ImmutableMap.copyOf(modules);
+      return this;
+    }
+
+    public Builder setPlugins(Map<String, AdapterPlugin> plugins) {
+      this.plugins = ImmutableMap.copyOf(plugins);
       return this;
     }
 
@@ -200,9 +227,9 @@ public final class AdapterSpecification {
       return this;
     }
 
-    public AdapterSpecification build() {
-      return new AdapterSpecification(name, description, program, schedule, instances,
-                                      streams, datasets, datasetModules, runtimeArgs, resources, config);
+    public AdapterDefinition build() {
+      return new AdapterDefinition(name, description, program, schedule, instances,
+                                      streams, datasets, datasetModules, runtimeArgs, plugins, resources, config);
     }
   }
 
@@ -215,7 +242,7 @@ public final class AdapterSpecification {
       return false;
     }
 
-    AdapterSpecification that = (AdapterSpecification) o;
+    AdapterDefinition that = (AdapterDefinition) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&
@@ -226,13 +253,14 @@ public final class AdapterSpecification {
       Objects.equal(streams, that.streams) &&
       Objects.equal(datasets, that.datasets) &&
       Objects.equal(datasetModules, that.datasetModules) &&
-      Objects.equal(instances, that.instances);
+      Objects.equal(instances, that.instances) &&
+      Objects.equal(plugins, that.plugins);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(name, description, program, config, scheduleSpec, runtimeArgs,
-                            streams, datasets, datasetModules, instances);
+                            streams, datasets, datasetModules, instances, plugins);
   }
 
   @Override
@@ -248,6 +276,8 @@ public final class AdapterSpecification {
       .add("datasets", datasets)
       .add("datasetModules", datasetModules)
       .add("instances", instances)
+      .add("plugins", plugins)
       .toString();
   }
+
 }

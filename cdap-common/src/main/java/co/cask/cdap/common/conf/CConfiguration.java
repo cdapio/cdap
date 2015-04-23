@@ -38,6 +38,10 @@ public class CConfiguration extends Configuration {
     // Shouldn't be used other than in this class.
   }
 
+  private CConfiguration(Configuration other) {
+    super(other);
+  }
+
   /**
    * Creates an instance of configuration.
    *
@@ -50,5 +54,12 @@ public class CConfiguration extends Configuration {
     conf.addResource("cdap-default.xml");
     conf.addResource("cdap-site.xml");
     return conf;
+  }
+
+  /**
+   * Creates a new instance which clones all configurations from another {@link CConfiguration}.
+   */
+  public static CConfiguration copy(CConfiguration other) {
+    return new CConfiguration(other);
   }
 }

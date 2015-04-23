@@ -16,9 +16,12 @@
 
 package co.cask.cdap.api.templates.plugins;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Base class for writing configuration class for template plugin.
  */
+@Beta
 public abstract class PluginConfig {
 
   private PluginProperties properties;

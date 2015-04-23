@@ -60,7 +60,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Objects;
@@ -539,14 +539,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
     store.removeAllApplications(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
@@ -557,14 +554,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing flow
     store.removeAll(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should not survive deletion
-    Assert.assertEquals(0, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
@@ -575,14 +569,11 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
 
     // removing application
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
-    // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, store.getAllStreams(new Id.Namespace("account1")).size());
   }
 
   @Test
@@ -835,16 +826,16 @@ public class DefaultStoreTest {
   public void testAdapterMDSOperations() throws Exception {
     Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
 
-    AdapterSpecification spec1 = AdapterSpecification.builder("spec1", Id.Program.from(namespaceId,
-                                                                                       "template1",
-                                                                                       ProgramType.WORKFLOW,
-                                                                                       "program1"))
+    AdapterDefinition spec1 = AdapterDefinition.builder("spec1", Id.Program.from(namespaceId,
+                                                                                 "template1",
+                                                                                 ProgramType.WORKFLOW,
+                                                                                 "program1"))
       .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
       .build();
 
     TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterSpecification spec2 = AdapterSpecification.builder("spec2", Id.Program.from(namespaceId, "template2",
-                                                                                       ProgramType.WORKER, "program2"))
+    AdapterDefinition spec2 = AdapterDefinition.builder("spec2", Id.Program.from(namespaceId, "template2",
+                                                                                 ProgramType.WORKER, "program2"))
       .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
       .build();
 
@@ -852,13 +843,13 @@ public class DefaultStoreTest {
     store.addAdapter(namespaceId, spec2);
 
     // check get all adapters
-    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespaceId);
+    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespaceId);
     Assert.assertEquals(2, adapters.size());
     // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
     // them in a set and compare...
-    Iterator<AdapterSpecification> iter = adapters.iterator();
-    AdapterSpecification actual1 = iter.next();
-    AdapterSpecification actual2 = iter.next();
+    Iterator<AdapterDefinition> iter = adapters.iterator();
+    AdapterDefinition actual1 = iter.next();
+    AdapterDefinition actual2 = iter.next();
     // since order is not guaranteed...
     if (actual1.getName().equals(spec1.getName())) {
       Assert.assertEquals(actual1, spec1);
@@ -869,11 +860,11 @@ public class DefaultStoreTest {
     }
 
     // Get non existing spec
-    AdapterSpecification retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
+    AdapterDefinition retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
     Assert.assertNull(retrievedAdapter);
 
     //Retrieve specs
-    AdapterSpecification retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
+    AdapterDefinition retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
     Assert.assertEquals(spec1, retrievedSpec1);
     // Remove spec
     store.removeAdapter(namespaceId, spec1.getName());
@@ -883,7 +874,7 @@ public class DefaultStoreTest {
     Assert.assertNull(retrievedAdapter);
 
     // verify the other adapter still exists
-    AdapterSpecification retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
+    AdapterDefinition retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
     Assert.assertEquals(spec2, retrievedSpec2);
 
     // remove all

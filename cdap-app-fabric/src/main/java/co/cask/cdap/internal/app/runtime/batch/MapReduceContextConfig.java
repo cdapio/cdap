@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -41,6 +42,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Helper class for getting and setting specific config settings for a job context.
@@ -53,7 +55,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
-  private static final String HCONF_ATTR_ADAPTER_NAME = "hconf.program.adapter.name";
+  private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -71,23 +73,16 @@ public final class MapReduceContextConfig {
     return hConf;
   }
 
-  public void set(BasicMapReduceContext context, CConfiguration conf,
-                  Transaction tx, URI programJarURI) {
+  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    if (context.getWorkflowBatch() != null) {
-      setWorkflowBatch(context.getWorkflowBatch());
-    }
-    if (context.getAdapterName() != null) {
-      setAdapterName(context.getAdapterName());
-    }
+    setWorkflowBatch(context.getWorkflowBatch());
+    setAdapterSpec(context.getAdapterSpec());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
     setConf(conf);
     setTx(tx);
-    if (context.getInputDataSelection() != null) {
-      setInputSelection(context.getInputDataSelection());
-    }
+    setInputSelection(context.getInputDataSelection());
   }
 
   private void setArguments(Map<String, String> arguments) {
@@ -116,20 +111,29 @@ public final class MapReduceContextConfig {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private void setWorkflowBatch(String workflowBatch) {
-    hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+  private void setWorkflowBatch(@Nullable String workflowBatch) {
+    if (workflowBatch != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+    }
   }
 
   public String getWorkflowBatch() {
     return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
   }
 
-  private void setAdapterName(String adapterName) {
-    hConf.set(HCONF_ATTR_ADAPTER_NAME, adapterName);
+  private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {
+    if (adapterSpec != null) {
+      hConf.set(HCONF_ATTR_ADAPTER_SPEC, GSON.toJson(adapterSpec));
+    }
   }
 
-  public String getAdapterName() {
-    return hConf.get(HCONF_ATTR_ADAPTER_NAME);
+  @Nullable
+  public AdapterDefinition getAdapterSpec() {
+    String spec = hConf.get(HCONF_ATTR_ADAPTER_SPEC);
+    if (spec == null) {
+      return null;
+    }
+    return GSON.fromJson(spec, AdapterDefinition.class);
   }
 
   private void setProgramJarURI(URI programJarURI) {
@@ -148,7 +152,10 @@ public final class MapReduceContextConfig {
     return hConf.get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
   }
 
-  private void setInputSelection(List<Split> splits) {
+  private void setInputSelection(@Nullable List<Split> splits) {
+    if (splits == null) {
+      return;
+    }
     // todo: this is ugly
     Class<? extends Split> splitClass;
     if (splits.size() > 0) {

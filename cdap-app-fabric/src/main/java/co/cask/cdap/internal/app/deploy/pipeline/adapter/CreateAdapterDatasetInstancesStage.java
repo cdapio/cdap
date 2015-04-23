@@ -21,29 +21,29 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.DatasetInstanceCreator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link co.cask.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
-public class CreateAdapterDatasetInstancesStage extends AbstractStage<AdapterSpecification> {
+public class CreateAdapterDatasetInstancesStage extends AbstractStage<AdapterDefinition> {
   private final DatasetInstanceCreator datasetInstanceCreator;
 
   public CreateAdapterDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
                                             Id.Namespace namespace) {
-    super(TypeToken.of(AdapterSpecification.class));
+    super(TypeToken.of(AdapterDefinition.class));
     this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework, namespace);
   }
 
   /**
    * Creates the dataset instances contained in the give adapter specification.
    *
-   * @param input An instance of {@link AdapterSpecification}
+   * @param input An instance of {@link AdapterDefinition}
    */
   @Override
-  public void process(AdapterSpecification input) throws Exception {
+  public void process(AdapterDefinition input) throws Exception {
     datasetInstanceCreator.createInstances(input.getDatasets());
 
     // Emit the input to next stage.

@@ -14,7 +14,9 @@ We distinguish between the Developer Interface and the Client Interface.
 - The Client interface is a RESTful API and the only way that external clients can interact with CDAP and
   applications. It includes APIs that are not accessible from inside containers, such as application
   lifecycle management and monitoring. As an alternative to HTTP, clients can also use the client libraries
-  provided for different programming languages, which include Java, JavaScript, and Python.
+  provided for different programming languages, which include Java, Python, and Ruby.
+
+..  provided for different programming languages, which include Java, JavaScript, and Python.
 
 .. image:: ../_images/arch_interfaces.png
    :width: 5in

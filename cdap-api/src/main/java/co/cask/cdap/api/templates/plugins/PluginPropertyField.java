@@ -16,9 +16,12 @@
 
 package co.cask.cdap.api.templates.plugins;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Contains information about a property used by a plugin.
  */
+@Beta
 public class PluginPropertyField {
 
   private final String name;

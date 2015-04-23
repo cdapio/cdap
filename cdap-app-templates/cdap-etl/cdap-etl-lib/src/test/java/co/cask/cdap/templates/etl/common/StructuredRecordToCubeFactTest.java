@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch.sinks;
+package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -23,12 +23,15 @@ import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,6 +44,8 @@ public class StructuredRecordToCubeFactTest {
 
   @Test
   public void testInvalidConfiguration() throws Exception {
+    // no config
+    verifyInvalidConfigDetected(null);
     // empty
     verifyInvalidConfigDetected(new StructuredRecordToCubeFact.MappingConfig());
 
@@ -101,7 +106,7 @@ public class StructuredRecordToCubeFactTest {
   @Test
   public void testTransform() throws Exception {
     // initialize the transform
-    StructuredRecordToCubeFact transform = new StructuredRecordToCubeFact(createValidConfig());
+    StructuredRecordToCubeFact transform = new StructuredRecordToCubeFact(toProperties(createValidConfig()));
 
     Schema schema = Schema.recordOf(
       "record",
@@ -160,7 +165,7 @@ public class StructuredRecordToCubeFactTest {
     config.timestamp.sourceField = null;
     config.timestamp.sourceFieldFormat = null;
     config.timestamp.value = "now";
-    transform = new StructuredRecordToCubeFact(config);
+    transform = new StructuredRecordToCubeFact(toProperties(config));
 
     long tsStart = System.currentTimeMillis();
     record = StructuredRecord.builder(schema)
@@ -199,6 +204,13 @@ public class StructuredRecordToCubeFactTest {
 
     verifyMeasurements(expectedMeasurements, transformed.getMeasurements());
 
+  }
+
+  private Map<String, String> toProperties(StructuredRecordToCubeFact.MappingConfig conf) {
+    if (conf == null) {
+      return new HashMap<String, String>();
+    }
+    return ImmutableMap.of(StructuredRecordToCubeFact.MAPPING_CONFIG_PROPERTY, new Gson().toJson(conf));
   }
 
   private StructuredRecordToCubeFact.MappingConfig createValidConfig() {
@@ -269,7 +281,7 @@ public class StructuredRecordToCubeFactTest {
 
   private void verifyInvalidConfigDetected(StructuredRecordToCubeFact.MappingConfig config) {
     try {
-      new StructuredRecordToCubeFact(config);
+      new StructuredRecordToCubeFact(toProperties(config));
       Assert.fail("IllegalArgumentException is expected to be thrown on invalid config");
     } catch (IllegalArgumentException e) {
       // Expected

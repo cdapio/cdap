@@ -50,7 +50,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -262,10 +262,6 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
-
-        for (StreamSpecification stream : spec.getStreams().values()) {
-          mds.apps.writeStream(id.getNamespaceId(), stream);
-        }
 
         return null;
       }
@@ -805,7 +801,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addAdapter(final Id.Namespace id, final AdapterSpecification adapterSpec) {
+  public void addAdapter(final Id.Namespace id, final AdapterDefinition adapterSpec) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -817,10 +813,10 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public AdapterSpecification getAdapter(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterSpecification>() {
+  public AdapterDefinition getAdapter(final Id.Namespace id, final String name) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterDefinition>() {
       @Override
-      public AdapterSpecification apply(AppMds mds) throws Exception {
+      public AdapterDefinition apply(AppMds mds) throws Exception {
         return mds.apps.getAdapter(id, name);
       }
     });
@@ -849,10 +845,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<AdapterSpecification> getAllAdapters(final Id.Namespace id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterSpecification>>() {
+  public Collection<AdapterDefinition> getAllAdapters(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterDefinition>>() {
       @Override
-      public Collection<AdapterSpecification> apply(AppMds mds) throws Exception {
+      public Collection<AdapterDefinition> apply(AppMds mds) throws Exception {
         return mds.apps.getAllAdapters(id);
       }
     });

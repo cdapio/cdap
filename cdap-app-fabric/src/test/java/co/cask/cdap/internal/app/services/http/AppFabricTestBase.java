@@ -149,7 +149,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
     conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
-
+    conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("plugins").getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));

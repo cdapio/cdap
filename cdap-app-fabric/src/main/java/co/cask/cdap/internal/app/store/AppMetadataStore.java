@@ -31,7 +31,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -120,10 +120,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     LOG.trace("Application exists in mds: id: {}, spec: {}", existing);
     ApplicationMeta updated = ApplicationMeta.updateSpec(existing, spec);
     write(key, updated);
-
-    for (StreamSpecification stream : spec.getStreams().values()) {
-      writeStream(namespaceId, stream);
-    }
   }
 
   public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId) {
@@ -475,14 +471,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public void writeAdapter(Id.Namespace id, AdapterSpecification adapterSpec,
+  public void writeAdapter(Id.Namespace id, AdapterDefinition adapterSpec,
                            AdapterStatus adapterStatus) {
     write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
           new AdapterMeta(adapterSpec, adapterStatus));
   }
 
   @Nullable
-  public AdapterSpecification getAdapter(Id.Namespace id, String name) {
+  public AdapterDefinition getAdapter(Id.Namespace id, String name) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
@@ -509,8 +505,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getFirst(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
-  public List<AdapterSpecification> getAllAdapters(Id.Namespace id) {
-    List<AdapterSpecification> adapterSpecs = Lists.newArrayList();
+  public List<AdapterDefinition> getAllAdapters(Id.Namespace id) {
+    List<AdapterDefinition> adapterSpecs = Lists.newArrayList();
     List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
                                           AdapterMeta.class);
     for (AdapterMeta adapterMeta : adapterMetas) {

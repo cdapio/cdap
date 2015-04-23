@@ -33,6 +33,7 @@ import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -51,7 +52,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -69,7 +70,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -98,13 +98,15 @@ public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory;
-  private final ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory;
+  private final ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory;
   private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final ProgramLifecycleService lifecycleService;
   private final Store store;
   private final PropertiesResolver resolver;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final PluginRepository pluginRepository;
+
   // template name to template info mapping
   private final AtomicReference<Map<String, ApplicationTemplateInfo>> appTemplateInfos;
   // jar file name to template info mapping
@@ -115,9 +117,10 @@ public class AdapterService extends AbstractIdleService {
                         @Named("templates")
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
                         @Named("adapters")
-                        ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
+                        ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory,
                         NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService,
-                        PropertiesResolver resolver) {
+                        PropertiesResolver resolver,
+                        PluginRepository pluginRepository) {
     this.configuration = configuration;
     this.scheduler = scheduler;
     this.lifecycleService = lifecycleService;
@@ -125,11 +128,14 @@ public class AdapterService extends AbstractIdleService {
     this.store = store;
     this.templateManagerFactory = templateManagerFactory;
     this.adapterManagerFactory = adapterManagerFactory;
+
     this.appTemplateInfos = new AtomicReference<Map<String, ApplicationTemplateInfo>>(
       new HashMap<String, ApplicationTemplateInfo>());
     this.fileToTemplateMap = new AtomicReference<Map<File, ApplicationTemplateInfo>>(
       new HashMap<File, ApplicationTemplateInfo>());
     this.resolver = resolver;
+
+    this.pluginRepository = pluginRepository;
   }
 
   @Override
@@ -141,6 +147,14 @@ public class AdapterService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down AdapterService");
+  }
+
+  /**
+   * Returns an immutable collection of all templates that are known to this service.
+   * The returned information are ordered by the template name.
+   */
+  public Collection<ApplicationTemplateInfo> getAllTemplates() {
+    return appTemplateInfos.get().values();
   }
 
   /**
@@ -183,8 +197,8 @@ public class AdapterService extends AbstractIdleService {
    * @return requested {@link AdapterConfig} or null if no such AdapterInfo exists
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterSpecification getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = store.getAdapter(namespace, adapterName);
+  public AdapterDefinition getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterDefinition adapterSpec = store.getAdapter(namespace, adapterName);
     if (adapterSpec == null) {
       throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
@@ -208,7 +222,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   public boolean canDeleteApp(Id.Application id) {
-    Collection<AdapterSpecification> adapterSpecs = getAdapters(id.getNamespace(), id.getId());
+    Collection<AdapterDefinition> adapterSpecs = getAdapters(id.getNamespace(), id.getId());
     return adapterSpecs.isEmpty();
   }
 
@@ -235,7 +249,7 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace the namespace to look up the adapters
    * @return {@link Collection} of {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace) {
+  public Collection<AdapterDefinition> getAdapters(Id.Namespace namespace) {
     return store.getAllAdapters(namespace);
   }
 
@@ -246,12 +260,12 @@ public class AdapterService extends AbstractIdleService {
    * @param template the template of requested adapters
    * @return Collection of requested {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace, final String template) {
+  public Collection<AdapterDefinition> getAdapters(Id.Namespace namespace, final String template) {
     // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
     // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
-    List<AdapterSpecification> adaptersByType = Lists.newArrayList();
-    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespace);
-    for (AdapterSpecification adapterSpec : adapters) {
+    List<AdapterDefinition> adaptersByType = Lists.newArrayList();
+    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespace);
+    for (AdapterDefinition adapterSpec : adapters) {
       if (adapterSpec.getTemplate().equals(template)) {
         adaptersByType.add(adapterSpec);
       }
@@ -328,7 +342,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
 
     LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
     ProgramType programType = adapterSpec.getProgram().getType();
@@ -362,7 +376,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already started.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
 
     ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
@@ -419,7 +433,7 @@ public class AdapterService extends AbstractIdleService {
     return getProgramId(namespace, getAdapter(namespace, adapterName));
   }
 
-  private Id.Program getProgramId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+  private Id.Program getProgramId(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
@@ -429,17 +443,20 @@ public class AdapterService extends AbstractIdleService {
                            adapterSpec.getProgram().getType(), adapterSpec.getProgram().getId());
   }
 
-  private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+  private void startWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-      ImmutableMap.of(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName()));
+                       ImmutableMap.of(
+                         ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
+                         ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec)
+                       ));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);
   }
 
-  private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+  private void stopWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
     String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
@@ -462,7 +479,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException,
     IOException {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
@@ -472,6 +489,7 @@ public class AdapterService extends AbstractIdleService {
 
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
+      sysArgs.put(ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec));
       sysArgs.put(ProgramOptionConstants.INSTANCES, String.valueOf(adapterSpec.getInstances()));
       sysArgs.put(ProgramOptionConstants.RESOURCES, GSON.toJson(adapterSpec.getResources()));
 
@@ -518,7 +536,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException,
     ExecutionException, InterruptedException {
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
@@ -532,12 +550,12 @@ public class AdapterService extends AbstractIdleService {
 
   // deploys an adapter. This will call configureAdapter() on the adapter's template. It may create
   // datasets and streams. At the end it will write to the store with the adapter spec.
-  private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
+  private AdapterDefinition deployAdapter(Id.Namespace namespace, String adapterName,
                                              ApplicationTemplateInfo applicationTemplateInfo,
                                              ApplicationSpecification templateSpec,
                                              AdapterConfig adapterConfig) throws IllegalArgumentException {
 
-    Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
+    Manager<AdapterDeploymentInfo, AdapterDefinition> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
@@ -609,7 +627,7 @@ public class AdapterService extends AbstractIdleService {
       Map<File, ApplicationTemplateInfo> newFileTemplateMap = Maps.newHashMap();
 
       File baseDir = new File(configuration.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-      Collection<File> files = FileUtils.listFiles(baseDir, new String[]{"jar"}, true);
+      List<File> files = DirUtils.listFiles(baseDir, "jar");
       for (File file : files) {
         try {
           ApplicationTemplateInfo info = getTemplateInfo(file);
@@ -621,6 +639,10 @@ public class AdapterService extends AbstractIdleService {
       }
       appTemplateInfos.set(newInfoMap);
       fileToTemplateMap.set(newFileTemplateMap);
+
+      // Always update all plugins for all template.
+      // TODO: Performance improvement to only rebuild plugin information for those that changed
+      pluginRepository.inspectPlugins(newInfoMap.values());
     } catch (Exception e) {
       LOG.warn("Unable to read the plugins directory");
     }

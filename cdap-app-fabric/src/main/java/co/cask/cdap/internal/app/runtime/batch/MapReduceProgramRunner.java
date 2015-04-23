@@ -40,14 +40,17 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -68,6 +71,7 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
@@ -121,6 +125,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
+    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
 
     final RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
@@ -131,9 +136,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
-    final String adapterName = arguments.getOption(ProgramOptionConstants.ADAPTER_NAME);
+    final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
+    
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -143,11 +148,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
 
     final DynamicMapReduceContext context =
-      new DynamicMapReduceContext(program, null, runId, null,
-                                  options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch, adapterName,
-                                  discoveryServiceClient, metricsCollectionService,
-                                  txSystemClient, datasetFramework);
+      new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
+                                  logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                  txSystemClient, datasetFramework, adapterSpec,
+                                  createPluginInstantiator(adapterSpec, program.getClassLoader()));
 
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
@@ -170,7 +174,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterSpec.getName(), twillRunId);
       }
 
       @Override
@@ -219,5 +223,22 @@ public class MapReduceProgramRunner implements ProgramRunner {
       mapReduceRuntimeService.start();
     }
     return controller;
+  }
+
+  @Nullable
+  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
+    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
+      return null;
+    }
+    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
+  }
+
+  @Nullable
+  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
+                                                      ClassLoader programClassLoader) {
+    if (adapterSpec == null) {
+      return null;
+    }
+    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 }

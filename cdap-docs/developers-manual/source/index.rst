@@ -53,8 +53,8 @@ CDAP Developers’ Manual
 .. _ingesting-tools: ingesting-tools/index.html
 
 - |ingesting-tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
-  tools help with **ingesting data into CDAP:** using Java or Python, the bulk ingestion of files,
-  a daemon to tail local files and an Apache Flume Sink implementation.
+  tools help with **ingesting data into CDAP** using Java, Python, and Ruby APIs, 
+  and include an Apache Flume Sink implementation.
 
 
 .. |data-exploration| replace:: **Data Exploration:**

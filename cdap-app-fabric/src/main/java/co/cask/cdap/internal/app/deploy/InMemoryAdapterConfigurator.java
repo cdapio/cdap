@@ -22,15 +22,19 @@ import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.program.Archive;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -56,24 +60,28 @@ import java.util.jar.Manifest;
 public final class InMemoryAdapterConfigurator implements Configurator {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryAdapterConfigurator.class);
-  /**
-   * JAR file path.
-   */
+
+  private final CConfiguration cConf;
+  private final Id.Namespace namespaceId;
   private final Location archive;
   private final AdapterConfig adapterConfig;
   private final ApplicationSpecification templateSpec;
   private final String adapterName;
-  private final Id.Namespace namespaceId;
+  private final PluginRepository pluginRepository;
 
-  public InMemoryAdapterConfigurator(Id.Namespace id, Location archive, String adapterName,
-                                     AdapterConfig adapterConfig, ApplicationSpecification templateSpec) {
+  public InMemoryAdapterConfigurator(CConfiguration cConf, Id.Namespace id, Location archive, String adapterName,
+                                     AdapterConfig adapterConfig, ApplicationSpecification templateSpec,
+                                     PluginRepository pluginRepository) {
     Preconditions.checkNotNull(id);
     Preconditions.checkNotNull(archive);
+
+    this.cConf = cConf;
     this.namespaceId = id;
     this.archive = archive;
     this.adapterConfig = adapterConfig;
     this.templateSpec = templateSpec;
     this.adapterName = adapterName;
+    this.pluginRepository = pluginRepository;
   }
 
   /**
@@ -105,22 +113,28 @@ public final class InMemoryAdapterConfigurator implements Configurator {
         }
 
         ApplicationTemplate template = (ApplicationTemplate) appMain;
-        DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(namespaceId, adapterName, adapterConfig,
-                                                                           templateSpec);
-
-        TypeToken typeToken = TypeToken.of(template.getClass());
-        TypeToken<?> resultToken = typeToken.resolveType(ApplicationTemplate.class.getTypeParameters()[0]);
-        Type configType;
-        // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
-        // we can deserialize the config into that object. Otherwise it'll just be an Object
-        if (resultToken.getType() instanceof Class) {
-          configType = resultToken.getType();
-        } else {
-          configType = Object.class;
+        PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, adapterConfig.getTemplate(),
+                                                                       template.getClass().getClassLoader());
+        try {
+          DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(namespaceId, adapterName,
+                                                                             adapterConfig, templateSpec,
+                                                                             pluginRepository, pluginInstantiator);
+          TypeToken typeToken = TypeToken.of(template.getClass());
+          TypeToken<?> resultToken = typeToken.resolveType(ApplicationTemplate.class.getTypeParameters()[0]);
+          Type configType;
+          // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
+          // we can deserialize the config into that object. Otherwise it'll just be an Object
+          if (resultToken.getType() instanceof Class) {
+            configType = resultToken.getType();
+          } else {
+            configType = Object.class;
+          }
+          template.configureAdapter(adapterName, GSON.fromJson(adapterConfig.getConfig(), configType), configurer);
+          AdapterDefinition spec = configurer.createSpecification();
+          result.set(new DefaultConfigResponse(0, CharStreams.newReaderSupplier(GSON.toJson(spec))));
+        } finally {
+          Closeables.closeQuietly(pluginInstantiator);
         }
-        template.configureAdapter(adapterName, GSON.fromJson(adapterConfig.getConfig(), configType), configurer);
-        AdapterSpecification spec = configurer.createSpecification();
-        result.set(new DefaultConfigResponse(0, CharStreams.newReaderSupplier(GSON.toJson(spec))));
       } finally {
         removeDir(unpackedJarDir);
       }
