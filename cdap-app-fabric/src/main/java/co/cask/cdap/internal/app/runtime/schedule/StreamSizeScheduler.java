@@ -282,6 +282,12 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
+  public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
+    return ImmutableList.of();
+  }
+
+  @Override
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
     return ImmutableList.of();

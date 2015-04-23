@@ -111,7 +111,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   private void setAndTestRuntimeArgs(Id.Program programId, Map<String, String> args) throws Exception {
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {
+    }.getType());
     String path = String.format("apps/%s/workflows/%s/runtimeargs", programId.getApplicationId(), programId.getId());
     String versionedRuntimeArgsUrl = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                          programId.getNamespaceId());
@@ -161,19 +162,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return inputDir.getAbsolutePath();
   }
 
-  private Long getNextScheduledRunTime(Id.Program program, String schedule) throws Exception {
-    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/nextruntime", program.getApplicationId(),
-                                          program.getId());
+  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, String schedule, String prevOrNext) throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%s", program.getApplicationId(), program.getId(),
+                                          prevOrNext);
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    List<ScheduledRuntime> runtimes = readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
-    ScheduledRuntime runtime = runtimes.get(0);
-    Assert.assertNotNull(runtime);
-    String id = runtime.getId();
-    Long time = runtime.getTime();
-    Assert.assertTrue(id.contains(schedule));
-    return time;
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
   }
 
   private String getStatusURL(String namespace, String appName, String schedule) throws Exception {
@@ -545,8 +540,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
-
     // get schedules
     List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(1, schedules.size());
@@ -554,12 +547,24 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
+
+    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
+    Assert.assertTrue(previousRuntimes.size() == 0);
+
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
+
     long current = System.currentTimeMillis();
-    Long nextRunTime = getNextScheduledRunTime(programId, scheduleName);
-    Assert.assertNotNull(nextRunTime);
+
+    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, scheduleName, "nextruntime");
+    String id = runtimes.get(0).getId();
+    Assert.assertTrue(id.contains(scheduleName));
+    Long nextRunTime = runtimes.get(0).getTime();
     Assert.assertTrue(nextRunTime > current);
 
     verifyProgramRuns(programId, "completed");
+
+    previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
+    Assert.assertEquals(1, previousRuntimes.size());
 
     //Check schedule status
     String statusURL = getStatusURL(TEST_NAMESPACE2, appName, scheduleName);

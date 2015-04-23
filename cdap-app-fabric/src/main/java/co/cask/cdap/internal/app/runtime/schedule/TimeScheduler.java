@@ -180,15 +180,36 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
+  public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
+    return getScheduledRuntime(program, programType, "previous");
+  }
+
+  @Override
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
+    return getScheduledRuntime(program, programType, "next");
+  }
+
+  private List<ScheduledRuntime> getScheduledRuntime(Id.Program program, SchedulableProgramType programType,
+                                                     String prevOrNext) throws SchedulerException {
     checkInitialized();
 
     List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
-        ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(),
-                                                        trigger.getNextFireTime().getTime());
+        long time;
+        if (prevOrNext.equals("previous")) {
+          if (trigger.getPreviousFireTime() == null) {
+            // previous fire time can be null for the triggers which are not yet fired
+            continue;
+          }
+          time = trigger.getPreviousFireTime().getTime();
+        } else {
+          time = trigger.getNextFireTime().getTime();
+        }
+
+        ScheduledRuntime runtime = new ScheduledRuntime(trigger.getKey().toString(), time);
         scheduledRuntimes.add(runtime);
       }
     } catch (org.quartz.SchedulerException e) {
