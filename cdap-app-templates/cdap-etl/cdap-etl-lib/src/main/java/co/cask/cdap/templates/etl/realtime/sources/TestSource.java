@@ -57,7 +57,7 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    type = context.getRuntimeArguments().get("type");
+    type = context.getPluginProperties().getProperties().get("type");
   }
 
   @Nullable

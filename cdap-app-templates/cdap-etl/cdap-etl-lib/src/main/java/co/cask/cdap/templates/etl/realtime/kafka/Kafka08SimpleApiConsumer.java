@@ -88,7 +88,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
   @Override
   protected void configureKafka(KafkaConfigurer configurer) {
-    Map<String, String> runtimeArgs = getContext().getRuntimeArguments();
+    Map<String, String> runtimeArgs = getContext().getPluginProperties().getProperties();
     if (runtimeArgs.containsKey(KafkaSource.KAFKA_ZOOKEEPER)) {
       configurer.setZooKeeper(runtimeArgs.get(KafkaSource.KAFKA_ZOOKEEPER));
     } else if (runtimeArgs.containsKey(KafkaSource.KAFKA_BROKERS)) {
@@ -257,7 +257,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
   @Override
   protected long getDefaultOffset(TopicPartition topicPartition) {
-    String argValue = getContext().getRuntimeArguments().get(KafkaSource.KAFKA_DEFAULT_OFFSET);
+    String argValue = getContext().getPluginProperties().getProperties().get(KafkaSource.KAFKA_DEFAULT_OFFSET);
     if (argValue != null) {
       return Long.valueOf(argValue);
     } else {

@@ -109,7 +109,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
 
   @Override
   public void prepareJob(BatchSourceContext context) {
-    config = new Config(context.getRuntimeArguments());
+    config = new Config(context.getPluginProperties().getProperties());
 
     long endTime = context.getLogicalStartTime() - config.delay;
     long startTime = endTime - config.duration;

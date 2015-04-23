@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
@@ -30,7 +29,7 @@ import javax.annotation.Nullable;
  *
  * @param <T> Type of object that the source emits
  */
-public abstract class RealtimeSource<T> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
+public abstract class RealtimeSource<T> implements EndPointStage {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -47,7 +46,6 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<RealtimeCont
 
    * @param context {@link RealtimeContext}
    */
-  @Override
   public void initialize(RealtimeContext context) throws Exception {
     // no-op
   }
@@ -65,7 +63,6 @@ public abstract class RealtimeSource<T> implements ProgramLifecycle<RealtimeCont
   /**
    * Destroy the Source.
    */
-  @Override
   public void destroy() {
     // no-op
   }

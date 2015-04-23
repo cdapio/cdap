@@ -110,7 +110,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void prepareJob(BatchSourceContext context) {
-    Map<String, String> runtimeArguments = context.getRuntimeArguments();
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     String dbDriverClass = runtimeArguments.get(Properties.DB.DRIVER_CLASS);
     String dbConnectionString = runtimeArguments.get(Properties.DB.CONNECTION_STRING);
     String dbUser = runtimeArguments.get(Properties.DB.USER);

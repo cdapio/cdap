@@ -83,11 +83,12 @@ public class TimePartitionedFileSetDatasetAvroSink extends
 
   @Override
   public void prepareJob(BatchSinkContext context) {
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     Map<String, String> sinkArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(context.getRuntimeArguments().get(TPFS_NAME), sinkArgs);
-    context.setOutput(context.getRuntimeArguments().get(TPFS_NAME), sink);
-    Schema avroSchema = new Schema.Parser().parse(context.getRuntimeArguments().get(SCHEMA));
+    TimePartitionedFileSet sink = context.getDataset(runtimeArguments.get(TPFS_NAME), sinkArgs);
+    context.setOutput(runtimeArguments.get(TPFS_NAME), sink);
+    Schema avroSchema = new Schema.Parser().parse(runtimeArguments.get(SCHEMA));
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
   }

@@ -25,7 +25,6 @@ import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import co.cask.cdap.templates.etl.realtime.jms.JndiBasedJmsProvider;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.util.hash.Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,7 @@ public class JmsSource extends RealtimeSource<String> {
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
-  private static final String CDAP_JMS_SOURCE_NAME = "JMS Realtime Source";
+  private static final String CDAP_JMS_SOURCE_NAME = JmsSource.class.getSimpleName();
   private static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
@@ -88,17 +87,18 @@ public class JmsSource extends RealtimeSource<String> {
    */
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
 
-    if (context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE) != null) {
-      messagesToReceive = Integer.parseInt(context.getRuntimeArguments().get(JMS_MESSAGES_TO_RECEIVE));
+    if (runtimeArguments.get(JMS_MESSAGES_TO_RECEIVE) != null) {
+      messagesToReceive = Integer.parseInt(runtimeArguments.get(JMS_MESSAGES_TO_RECEIVE));
     }
 
     // Try get the destination name
-    String destinationName = context.getRuntimeArguments().get(JMS_DESTINATION_NAME);
+    String destinationName = runtimeArguments.get(JMS_DESTINATION_NAME);
 
     // Get environment vars - this would be prefixed with java.naming.*
     final Hashtable<String, String> envVars = new Hashtable<String, String>();
-    Maps.filterEntries(context.getRuntimeArguments(), new Predicate<Map.Entry<String, String>>() {
+    Maps.filterEntries(runtimeArguments, new Predicate<Map.Entry<String, String>>() {
       @Override
       public boolean apply(@Nullable Map.Entry<String, String> input) {
         if (input.getKey() != null && input.getKey().startsWith("java.naming.")) {

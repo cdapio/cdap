@@ -82,7 +82,7 @@ public class ProjectionTransform extends TransformStage<StructuredRecord, Struct
 
   @Override
   public void initialize(StageContext context) {
-    Map<String, String> properties = context.getRuntimeArguments();
+    Map<String, String> properties = context.getPluginProperties().getProperties();
 
     String dropStr = properties.get(DROP);
     if (dropStr != null) {

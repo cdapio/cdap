@@ -71,7 +71,7 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = context.getRuntimeArguments();
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     String rowField = runtimeArguments.get(Table.PROPERTY_SCHEMA_ROW_FIELD);
     recordPutTransformer = new RecordPutTransformer(rowField);
     datasetName = runtimeArguments.get(NAME);

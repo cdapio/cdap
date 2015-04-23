@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.batch.sources;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -71,6 +72,7 @@ public class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN
 
   @Override
   public void prepareJob(BatchSourceContext context) {
-    context.setInput(context.getRuntimeArguments().get(NAME));
+    PluginProperties pluginProperties = context.getPluginProperties();
+    context.setInput(pluginProperties.getProperties().get(NAME));
   }
 }

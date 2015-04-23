@@ -76,7 +76,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = context.getRuntimeArguments();
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     streamName = runtimeArguments.get(Properties.Stream.NAME);
     headersField = runtimeArguments.containsKey(Properties.Stream.HEADERS_FIELD) ?
       runtimeArguments.get(Properties.Stream.HEADERS_FIELD) : Properties.Stream.DEFAULT_HEADERS_FIELD;
