@@ -16,20 +16,21 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
  * Context passed to ETL stages.
  */
-public interface StageContext extends RuntimeContext {
+public interface StageContext extends AdapterContext {
 
   /**
-   * Return the specification of this state.
+   * Gets the {@link PluginProperties} associated with the stage.
    *
-   * @return {@link StageSpecification}
+   * @return the {@link PluginProperties}.
    */
-  StageSpecification getSpecification();
+  PluginProperties getPluginProperties();
 
   /**
    * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by

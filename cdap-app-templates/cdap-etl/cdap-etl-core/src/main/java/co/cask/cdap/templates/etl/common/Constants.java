@@ -23,6 +23,7 @@ public final class Constants {
 
   public static final String ADAPTER_NAME = "name";
   public static final String CONFIG_KEY = "config";
+  public static final String ID_SEPARATOR = ":";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -32,7 +33,8 @@ public final class Constants {
    * Constants related to Source.
    */
   public static final class Source {
-    public static final String SPECIFICATION = "templates.etl.adapter.source.specification";
+    public static final String PLUGINID = "sourceId";
+    public static final String PLUGINTYPE = "source";
 
     private Source() {
       throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -43,7 +45,8 @@ public final class Constants {
    * Constants related to Sink.
    */
   public static final class Sink {
-    public static final String SPECIFICATION = "templates.etl.adapter.sink.specification";
+    public static final String PLUGINID = "sinkId";
+    public static final String PLUGINTYPE = "sink";
 
     private Sink() {
       throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -54,7 +57,8 @@ public final class Constants {
    * Constants related to Transform.
    */
   public static final class Transform {
-    public static final String SPECIFICATIONS = "templates.etl.adapter.transform.specifications";
+    public static final String PLUGINIDS = "transformIds";
+    public static final String PLUGINTYPE = "transform";
 
     private Transform() {
       throw new AssertionError("Suppress default constructor for noninstantiability");

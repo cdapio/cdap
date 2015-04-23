@@ -16,14 +16,13 @@
 
 package co.cask.cdap.templates.etl.api.batch;
 
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.templates.etl.api.StageContext;
 
 /**
  * Context passed to Batch Source and Sink.
  */
-public interface BatchContext extends RuntimeContext, DatasetContext, StageContext {
+public interface BatchContext extends DatasetContext, StageContext {
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch

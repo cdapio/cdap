@@ -19,38 +19,17 @@ package co.cask.cdap.templates.etl.realtime;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
  */
-public class WorkerRealtimeContext implements RealtimeContext {
+public class WorkerRealtimeContext extends RealtimeStageContext implements RealtimeContext {
   private final WorkerContext context;
-  private final StageSpecification specification;
-  private final ETLStage stage;
-  private final Metrics metrics;
 
-  public WorkerRealtimeContext(WorkerContext context, StageSpecification specification,
-                               ETLStage stage, Metrics metrics) {
+  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
+    super(context, metrics, pluginPrefix);
     this.context = context;
-    this.specification = specification;
-    this.stage = stage;
-    this.metrics = metrics;
-  }
-
-  @Override
-  public StageSpecification getSpecification() {
-    return specification;
-  }
-
-  @Override
-  public Metrics getMetrics() {
-    return metrics;
   }
 
   @Override
@@ -61,10 +40,5 @@ public class WorkerRealtimeContext implements RealtimeContext {
   @Override
   public int getInstanceCount() {
     return context.getInstanceCount();
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return Collections.unmodifiableMap(stage.getProperties());
   }
 }

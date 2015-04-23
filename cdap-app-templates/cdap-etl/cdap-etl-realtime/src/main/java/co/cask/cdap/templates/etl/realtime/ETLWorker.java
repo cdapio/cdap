@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
@@ -34,7 +33,6 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultEmitter;
-import co.cask.cdap.templates.etl.common.DefaultTransformContext;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
@@ -55,8 +53,8 @@ import java.util.Map;
  */
 public class ETLWorker extends AbstractWorker {
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
+  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Gson GSON = new Gson();
-  private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
   private static final String SEPARATOR = ":";
 
   private String adapterName;
@@ -85,9 +83,9 @@ public class ETLWorker extends AbstractWorker {
 
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.PLUGINID));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.PLUGINID));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.PLUGINIDS));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Realtime.UNIQUE_ID));
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
@@ -125,53 +123,45 @@ public class ETLWorker extends AbstractWorker {
   }
 
   private void initializeSource(WorkerContext context, ETLStage stage) throws Exception {
-    StageSpecification spec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Source.SPECIFICATION),
-                                            StageSpecification.class);
-    source = (RealtimeSource) Class.forName(spec.getClassName()).newInstance();
-    RealtimeContext sourceContext = new WorkerRealtimeContext(context, spec, stage, metrics);
+    String sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
+    source = context.newPluginInstance(sourcePluginId);
+    RealtimeContext sourceContext = new WorkerRealtimeContext(context, metrics, sourcePluginId);
     LOG.info("Source Stage : {}", stage.getName());
-    LOG.info("Source Class : {}", stage.getClass().getName());
-    LOG.info("Specifications of Source : {}", spec);
+    LOG.info("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
-    sourceEmitter = new DefaultEmitter(new StageMetrics(metrics, StageMetrics.Type.SOURCE, spec.getName()));
+    sourceEmitter = new DefaultEmitter(new StageMetrics(metrics, StageMetrics.Type.SOURCE, stage.getName()));
   }
 
+  @SuppressWarnings("unchecked")
   private void initializeSink(WorkerContext context, ETLStage stage) throws Exception {
-    StageSpecification spec = GSON.fromJson(context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION),
-                                            StageSpecification.class);
-    sink = (RealtimeSink) Class.forName(spec.getClassName()).newInstance();
-    RealtimeContext sinkContext = new WorkerRealtimeContext(context, spec, stage, metrics);
+    String sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
+    sink = context.newPluginInstance(sinkPluginId);
+    RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkPluginId);
     LOG.info("Sink Stage : {}", stage.getName());
-    LOG.info("Sink Class : {}", stage.getClass().getName());
-    LOG.info("Specifications of Sink : {}", spec);
+    LOG.info("Sink Class : {}", sink.getClass().getName());
     sink.initialize(sinkContext);
-    sink = new TrackedRealtimeSink(sink, metrics, spec.getName());
+    sink = new TrackedRealtimeSink(sink, metrics, stage.getName());
   }
 
-  private void initializeTransforms(WorkerContext context, List<ETLStage> stages) throws Exception {
-    List<StageSpecification> specs = GSON.fromJson(context.getRuntimeArguments().get(
-      Constants.Transform.SPECIFICATIONS), SPEC_LIST_TYPE);
-    transformMetrics = Lists.newArrayListWithCapacity(specs.size());
-    for (int i = 0; i < specs.size(); i++) {
-      StageSpecification spec = specs.get(i);
+  private void initializeTransforms(WorkerContext context, List<ETLStage> stages) {
+    List<String> transformIds = GSON.fromJson(context.getRuntimeArguments().get(Constants.Transform.PLUGINIDS),
+                                              STRING_LIST_TYPE);
+    Preconditions.checkArgument(transformIds != null);
+    Preconditions.checkArgument(stages.size() == transformIds.size());
+    transformMetrics = Lists.newArrayListWithCapacity(stages.size());
+    for (int i = 0; i < stages.size(); i++) {
       ETLStage stage = stages.get(i);
+      String transformId = transformIds.get(i);
       try {
-        TransformStage transform = (TransformStage) Class.forName(spec.getClassName()).newInstance();
-        DefaultTransformContext transformContext = new DefaultTransformContext(spec, stage.getProperties(), metrics);
+        TransformStage transform = context.newPluginInstance(transformId);
+        RealtimeStageContext transformContext = new RealtimeStageContext(context, metrics, transformId);
         LOG.info("Transform Stage : {}", stage.getName());
-        LOG.info("Transform Class : {}", stage.getClass().getName());
-        LOG.info("Specifications of Transform : {}", spec);
+        LOG.info("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         transforms.add(transform);
-        transformMetrics.add(new StageMetrics(metrics, StageMetrics.Type.TRANSFORM, spec.getName()));
-      } catch (ClassNotFoundException e) {
-        LOG.error("Unable to load Transform : {}", spec.getClassName(), e);
-        Throwables.propagate(e);
+        transformMetrics.add(new StageMetrics(metrics, StageMetrics.Type.TRANSFORM, stage.getName()));
       } catch (InstantiationException e) {
-        LOG.error("Unable to instantiate Transform : {}", spec.getClassName(), e);
-        Throwables.propagate(e);
-      } catch (IllegalAccessException e) {
-        LOG.error("Error while creating instance of Transform : {}", spec.getClassName(), e);
+        LOG.error("Unable to instantiate Transform : {}", stage.getName(), e);
         Throwables.propagate(e);
       }
     }
