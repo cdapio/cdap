@@ -55,7 +55,7 @@ angular.module(PKG.name + '.feature.spark')
       });
 
     $scope.getStagePercentage = function (type) {
-      var total = ($scope.data.schedulerRunningStages 
+      var total = ($scope.data.schedulerRunningStages
         + $scope.data.schedulerFailedStages
         + $scope.data.schedulerWaitingStages);
       switch(type) {
@@ -69,9 +69,14 @@ angular.module(PKG.name + '.feature.spark')
     }
 
     function pollMetrics(runId) {
-      var metricsBasePath = ('system/apps/' + $state.params.appId + 
-        '/spark/' + $state.params.programId + '/runs/' + runId +
-        '/' + $state.params.programId);
+      var metricsBasePath = '/metrics/query?' +
+        'tag=namespace:' + $state.params.namespace +
+        '&tag=app:' + $state.params.appId +
+        '&tag=spark:' + $state.params.programId +
+        '&tag=run:' + runId +
+        '&metric=' + $state.params.appId;
+
+
       var metricPaths = {};
       metricPaths[metricsBasePath + '.BlockManager.memory.remainingMem_MB?aggregate=true'] = 'blockRemainingMemory';
       metricPaths[metricsBasePath + '.BlockManager.memory.maxMem_MB?aggregate=true'] = 'blockMaxMemory';
@@ -82,12 +87,13 @@ angular.module(PKG.name + '.feature.spark')
       metricPaths[metricsBasePath + '.DAGScheduler.stage.failedStages?aggregate=true'] = 'schedulerFailedStages';
       metricPaths[metricsBasePath + '.DAGScheduler.stage.runningStages?aggregate=true'] = 'schedulerRunningStages';
       metricPaths[metricsBasePath + '.DAGScheduler.stage.waitingStages?aggregate=true'] = 'schedulerWaitingStages';
-      
+
       angular.forEach(metricPaths, function (path, name) {
         dataSrc.poll({
-          _cdapNsPath: name
+          _cdapPath: name,
+          method: 'POST'
         }, function(res) {
-          
+          $scope.data[name] = myHelpers.objectQuery(res, 'series', 0, 'data', 0, 'value') || 0;
         });
       });
 
