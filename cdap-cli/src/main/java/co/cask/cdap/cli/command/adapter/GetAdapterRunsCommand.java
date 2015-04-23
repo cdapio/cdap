@@ -14,29 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.adapter;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.AdapterClient;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 
 /**
- * Deletes an adapter.
+ * Gets the runs of an adapter.
  */
-public class DeleteAdapterCommand extends AbstractAuthCommand {
+public class GetAdapterRunsCommand extends AbstractCommand {
 
   private final AdapterClient adapterClient;
 
   @Inject
-  public DeleteAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
+  public GetAdapterRunsCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.adapterClient = adapterClient;
   }
@@ -44,18 +47,24 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
+    ProgramRunStatus adapterStatus = ProgramRunStatus.valueOf(
+      arguments.get(ArgumentName.RUN_STATUS.toString()).toUpperCase());
+    long now = System.currentTimeMillis();
+    long startTs = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), now);
+    long endTs = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), now);
+    String resultLimitStr = arguments.get(ArgumentName.LIMIT.toString(), "");
+    Integer resultLimit = resultLimitStr == null ? null : Integer.parseInt(resultLimitStr);
 
-    adapterClient.delete(adapterName);
-    output.printf("Successfully deleted adapter named '%s'\n", adapterName);
+    List<RunRecord> runs = adapterClient.getRuns(adapterName, adapterStatus, startTs, endTs, resultLimit);
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete adapter <%s>", ArgumentName.ADAPTER);
+    return String.format("get adapter runs <%s>", ArgumentName.ADAPTER);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Gets the runs of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
   }
 }
