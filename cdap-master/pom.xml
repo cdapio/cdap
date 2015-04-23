@@ -380,5 +380,16 @@
     </profile>
 
   </profiles>
-
+  <build>
+    <!-- Resource filtering for non xml files only -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <excludes>
+          <exclude>**/*.xml</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
 </project>
