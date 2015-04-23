@@ -39,9 +39,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -57,6 +57,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -85,14 +86,17 @@ class DatasetServiceClient {
   @Nullable
   public DatasetMeta getInstance(String instanceName,
                                  @Nullable List<? extends Id> owners) throws DatasetManagementException {
-    Multimap<String, String> headers = HashMultimap.create();
+
+    String query = "";
     if (owners != null) {
+      Set<String> ownerParams = Sets.newHashSet();
       for (Id owner : owners) {
-        headers.put(Constants.Header.DATASET_OWNER, owner.getIdType() + "//" + owner.getIdRep());
+        ownerParams.add("owner=" + owner.getIdType() + "//" + owner.getIdRep());
       }
+      query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
     }
 
-    HttpResponse response = doGet("datasets/" + instanceName, headers);
+    HttpResponse response = doGet("datasets/" + instanceName + query);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }

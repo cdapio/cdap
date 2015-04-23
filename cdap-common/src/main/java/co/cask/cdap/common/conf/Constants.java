@@ -52,14 +52,6 @@ public final class Constants {
   }
 
   /**
-   * Header names.
-   */
-  public static final class Header {
-    /** Internal header used to pass dataset owner to DatasetInstanceHandler */
-    public static final String DATASET_OWNER = "CDAP-DatasetOwner";
-  }
-
-  /**
    * Zookeeper Configuration.
    */
   public static final class Zookeeper {
