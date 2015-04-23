@@ -871,8 +871,8 @@ Query Tips
 
   For example, to request the information for each of the Flowlets of the
   *PurchaseHistory* Application, this query will return a multiple series, each grouped by
-  the instance (in this case a Flowlet) and with the returned value being the number of
-  events processed (command and result reformatted to fit)::
+  Flowlet and with the returned value being the number of events processed (command and
+  result reformatted to fit)::
 
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
       &tag=flow:PurchaseFlow&groupBy=flowlet&metric=system.process.events.processed'
