@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -62,21 +61,21 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
    * @param name Name of the component
    * @param instances Number of instances to start
    * @param runId The runId
-   * @param userArguments User runtime arguments
+   * @param options System and User runtime arguments
    * @param components A Table for storing the resulting ProgramControllers
    * @param type Type of ProgramRunnerFactory
    */
-  protected void startComponent(Program program, String name, int instances, RunId runId, Arguments userArguments,
+  protected void startComponent(Program program, String name, int instances, RunId runId, ProgramOptions options,
                               Table<String, Integer, ProgramController> components, ProgramRunnerFactory.Type type) {
     for (int instanceId = 0; instanceId < instances; instanceId++) {
-      ProgramOptions componentOptions = createComponentOptions(name, instanceId, instances, runId, userArguments);
+      ProgramOptions componentOptions = createComponentOptions(name, instanceId, instances, runId, options);
       ProgramController controller = programRunnerFactory.create(type).run(program, componentOptions);
       components.put(name, instanceId, controller);
     }
   }
 
   protected abstract ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                                           Arguments userArguments);
+                                                           ProgramOptions options);
 
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
@@ -85,18 +84,18 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private final Table<String, Integer, ProgramController> components;
     private final Program program;
     private final ProgramSpecification spec;
-    private final Arguments userArguments;
+    private final ProgramOptions options;
     private final Lock lock = new ReentrantLock();
     private final ProgramRunnerFactory.Type type;
 
     public InMemoryProgramController(Table<String, Integer, ProgramController> components,
                               RunId runId, Program program, ProgramSpecification spec,
-                              Arguments userArguments, ProgramRunnerFactory.Type type) {
+                              ProgramOptions options, ProgramRunnerFactory.Type type) {
       super(program.getName(), runId);
       this.program = program;
       this.components = components;
       this.spec = spec;
-      this.userArguments = userArguments;
+      this.options = options;
       this.type = type;
       started();
     }
@@ -175,8 +174,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
-        ProgramOptions options = createComponentOptions(runnableName, instanceId, newCount, getRunId(), userArguments);
-        ProgramController controller = programRunnerFactory.create(type).run(program, options);
+        ProgramOptions programOptions = createComponentOptions(runnableName, instanceId, newCount, getRunId(), options);
+        ProgramController controller = programRunnerFactory.create(type).run(program, programOptions);
         components.put(runnableName, instanceId, controller);
       }
 

@@ -20,7 +20,6 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -35,8 +34,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -79,9 +78,9 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
     //RunId for the service
     RunId runId = RunIds.generate();
     Table<String, Integer, ProgramController> components = startServiceComponent(program, runId,
-                                                                                 options.getUserArguments(),
+                                                                                 options,
                                                                                  serviceSpec);
-    return new InMemoryProgramController(components, runId, program, serviceSpec, options.getUserArguments(),
+    return new InMemoryProgramController(components, runId, program, serviceSpec, options,
                                          ProgramRunnerFactory.Type.SERVICE_COMPONENT);
   }
 
@@ -92,13 +91,13 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
    *         of the component runner as the cell value.
    */
   private Table<String, Integer, ProgramController> startServiceComponent(Program program, RunId runId,
-                                                                          Arguments userArguments,
+                                                                          ProgramOptions options,
                                                                           ServiceSpecification spec) {
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
 
     try {
       // Starts the http service. The name is the same as the service name.
-      startComponent(program, program.getName(), spec.getInstances(), runId, userArguments, components,
+      startComponent(program, program.getName(), spec.getInstances(), runId, options, components,
                      ProgramRunnerFactory.Type.SERVICE_COMPONENT);
     } catch (Throwable t) {
       LOG.error("Failed to start all service components upon startup failure.", t);
@@ -123,11 +122,13 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
   @Override
   public ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                               Arguments userArguments) {
-    Map<String, String> options = ImmutableMap.of(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
-                                                  ProgramOptionConstants.INSTANCES, Integer.toString(instances),
-                                                  ProgramOptionConstants.RUN_ID, runId.getId(),
-                                                  ProgramOptionConstants.HOST, host);
-    return new SimpleProgramOptions(name, new BasicArguments(options), userArguments);
+                                               ProgramOptions options) {
+    Map<String, String> systemOptions = Maps.newHashMap();
+    systemOptions.putAll(options.getArguments().asMap());
+    systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
+    systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
+    systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    systemOptions.put(ProgramOptionConstants.HOST, host);
+    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
   }
 }
