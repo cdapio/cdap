@@ -76,7 +76,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget) {
 
   $scope.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
-  $scope.wdgts.push(new Widget({title: 'System', type: 'c3-line', isLive: true,
+  $scope.wdgts.push(new Widget({title: 'System Health', type: 'c3-line', isLive: true,
                   metric: {
                     context: 'namespace.*',
                     names: ['system.log.error', 'system.log.warn'],
@@ -89,7 +89,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget) {
                   interval: 60*1000,
                   aggregate: 5
   }));
-  $scope.wdgts.push(new Widget({title: 'App', type: 'c3-line', isLive: true,
+  $scope.wdgts.push(new Widget({title: 'Applications Health', type: 'c3-line', isLive: true,
                   metric: {
                     context: 'namespace.' + $state.params.namespace,
                     names: ['system.app.log.error', 'system.app.log.warn'],
