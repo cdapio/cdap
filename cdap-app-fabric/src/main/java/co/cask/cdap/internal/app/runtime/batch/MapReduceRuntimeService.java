@@ -244,7 +244,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // The ApplicationLoader will create ProgramClassLoader from it
           job.addCacheFile(programJarCopy.toURI());
 
-          Location pluginArchive = createPluginArchive(context.getAdapterSpec(), context.getProgram().getId());
+          Location pluginArchive = createPluginArchive(context.getAdapterSpecification(), context.getProgram().getId());
           try {
             if (pluginArchive != null) {
               job.addCacheArchive(pluginArchive.toURI());

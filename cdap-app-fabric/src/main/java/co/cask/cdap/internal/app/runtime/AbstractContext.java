@@ -109,7 +109,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public abstract Metrics getMetrics();
 
   @Nullable
-  public AdapterDefinition getAdapterSpec() {
+  public AdapterDefinition getAdapterSpecification() {
     return adapterSpec;
   }
 

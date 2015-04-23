@@ -19,6 +19,7 @@ package co.cask.cdap.templates;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
@@ -26,8 +27,10 @@ import co.cask.cdap.proto.ProgramType;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import java.lang.reflect.Type;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -37,8 +40,9 @@ import javax.annotation.Nullable;
 /**
  * Specification of an adapter.
  */
-public final class AdapterDefinition {
+public final class AdapterDefinition implements AdapterSpecification {
 
+  private static final Gson GSON = new Gson();
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
                                                                                ProgramType.WORKER);
   private final String name;
@@ -80,14 +84,17 @@ public final class AdapterDefinition {
     this.resources = resources;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public String getDescription() {
     return description;
   }
 
+  @Override
   public String getTemplate() {
     return program.getApplicationId();
   }
@@ -100,8 +107,8 @@ public final class AdapterDefinition {
     return runtimeArgs;
   }
 
-  @Nullable
-  public ScheduleSpecification getScheduleSpec() {
+  @Override
+  public ScheduleSpecification getScheduleSpecification() {
     return scheduleSpec;
   }
 
@@ -143,6 +150,16 @@ public final class AdapterDefinition {
 
   public JsonElement getConfig() {
     return config;
+  }
+
+  @Override
+  public <T> T getConfig(Type configType) {
+    return GSON.fromJson(config, configType);
+  }
+
+  @Override
+  public String getConfigString() {
+    return config.toString();
   }
 
   public static Builder builder(String name, Id.Program program) {
