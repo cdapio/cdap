@@ -339,6 +339,7 @@ should be replaced, as it will be removed in a later version of CDAP::
      - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any run; 
        in this case, it returns all available Flowlets.
 
+.. _http-restful-api-metrics-search-for-metrics:
 
 Search for Metrics
 ..................
@@ -356,6 +357,11 @@ To search for the available metrics within a given context, perform an HTTP POST
      - Description
    * - ``<context>``
      - Metrics context to search within. Consists of a collection of tags.
+     
+**Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP::
+
+  POST '<base-url>/metrics/search?target=metric&context=<context>'
 
 .. rubric:: Example
 
@@ -395,6 +401,8 @@ To search for the available metrics within a given context, perform an HTTP POST
      - Returns all metrics in the context of the flowlet *saver* of the application *HelloWorld* of the
        *default* namespace; in this case, returns a list of system and user-defined metrics.
 
+.. _http-restful-api-metrics-querying-a-metric:
+
 Querying A Metric
 -----------------
 
@@ -432,6 +440,10 @@ To query a metric within a given context, perform an HTTP POST request::
    * - ``<tags>`` *[Optional]*
      - :ref:`Tag list <http-restful-api-metrics-groupby>` by which to group results (optional)
 
+**Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP::
+
+  POST '<base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'
 
 Query Examples
 ..............
@@ -630,9 +642,11 @@ multiple tags for grouping by providing a list, similar to a tag combination lis
    * - Tag List
      - Description
    * - ``groupBy=app``
-     - Retrieves the time series for each application. 
-   * - ``groupBy=app&groupBy=flow``
-     - Retrieves a time series for each app and flow combination
+     - Retrieves the time series for each Application. 
+    * - ``groupBy=flowlet``
+     - Retrieves the time series for each Flowlet. 
+  * - ``groupBy=app&groupBy=flow``
+     - Retrieves a time series for each App and Flow combination
 
 An example method::
 
@@ -851,39 +865,36 @@ Query Tips
   |---| and thus across all Flowlets |---| since this metric was actually emitted at the
   Flowlet level, the resulting values retrieved will be a sum across all Flowlets of the Flow.
 
-- If you want the number of input objects processed across all Flowlets of a Flow, you 
-  address the Metrics API at the Flow context::
+- To see events processed by all Flowlets of a Flow in an Application, instead of querying
+  for each individual Flowlet of the Flow, you can perform a single query, using 
+  ``groupBy=flowlet``.
 
-    POST '<base-url>/metrics/query?tag=namespace:default.app:CountRandom?tag=flow:CountRandom?tag=flowlet:*
-      &metric=system.process.events.processed&start=now-5s&count=5'
+  For example, to request the information for each of the Flowlets of the
+  *PurchaseHistory* Application, this query will return a multiple series, each grouped by
+  the instance (in this case a Flowlet) and with the returned value being the number of
+  events processed (command and result reformatted to fit)::
 
-  Similarly, you can address the context of all Flows of an Application, an entire Application, 
-  or the entire  namespace of a CDAP instance::
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
+      &tag=flow:PurchaseFlow&groupBy=flowlet&metric=system.process.events.processed'
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:*
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
-    POST '<base-url>/metrics/query?tag=namespace:default
-      &metric=system.process.events.processed&start=now-5s&count=5'
-
+    {"startTime":0,
+     "endTime":1429756509,
+     "series":[{"metricName":"system.process.events.processed",
+                "grouping":{"flowlet":"collector"},
+                "data":[{"time":0,"value":5}]},
+               {"metricName":"system.process.events.processed",
+                "grouping":{"flowlet":"reader"},
+                "data":[{"time":0,"value":5}]}
+              ]
+    }
+    
 - User-defined metrics are always prefixed with the word ``user``, and must be queried by 
   using that prefix with the metric name.
 
-  For example, to request the user-defined metric *names.byte* for the *HelloWorld* Application's *WhoFlow* Flow::
+  For example, to request the user-defined metric *names.byte* for the *HelloWorld*
+  Application's *WhoFlow* Flow::
 
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver
-      &metric=user.names.bytes&aggregate=true'
-
-- To view the task-level information of Mappers or Reducers of a MapReduce program, instead of querying for each individual task, you can make a single query.
-
-  For example, to request the information for each of the mappers of the *PurchaseHistoryBuilder* MapReduce of the *Purchase* Application, this
-  query will return multiple series, each grouped by the instance and with the returned value being the completion status::
-
-    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory&tag=mapreduce:PurchaseHistoryBuilder
-      &tag=tasktype:m&groupBy=instance&metric=system.process.completion'
-
+    POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld
+      &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
 
 
