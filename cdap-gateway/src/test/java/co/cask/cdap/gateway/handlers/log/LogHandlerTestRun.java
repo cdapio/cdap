@@ -134,23 +134,23 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     } catch (AssertionError e) {
       // should fail
     }
-    testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
   }
 
   @Test
   public void testServiceLogs() throws Exception {
     testLogs("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
     testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
   }
 
   @Test
   public void testMapReduceLogs() throws Exception {
     testLogs("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE);
+    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
     try {
-      testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE);
+      testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
       Assert.fail();
     } catch (AssertionError e) {
       // should fail
@@ -172,7 +172,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     } catch (AssertionError e) {
       // Expected exception
     }
-
+    testLogsFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     // TODO: https://issues.cask.co/browse/CDAP-2249
     // tests adapter logs with run id
 //    testLogsRunId("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
@@ -503,11 +503,13 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testLogsFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
+  private void testLogsFilter(String appId, String entityType, String entityId, String namespace,
+                              @Nullable String adapterId) throws Exception {
     long startTime = MockLogReader.getMockTimeSecs(20);
     long stopTime = MockLogReader.getMockTimeSecs(35);
-    String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR",
-                                         appId, entityType, entityId, startTime, stopTime);
+    String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
+                                         entityType, entityId, startTime, stopTime);
+    logsFilterUrl = getUrlWithAdapterId(logsFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
