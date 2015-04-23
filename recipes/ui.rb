@@ -51,7 +51,7 @@ if node['cdap'].key?('ui')
   end # End /etc/default/cdap-ui
 end
 
-service 'cdap-web-app' do
-  status_command 'service cdap-web-app status'
+service 'cdap-ui' do
+  status_command 'service cdap-ui status'
   action :nothing
 end
