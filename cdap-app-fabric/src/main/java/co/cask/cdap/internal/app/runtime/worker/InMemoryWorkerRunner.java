@@ -95,7 +95,7 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
                                                                 Integer.valueOf(instances));
 
     //RunId for worker
-    RunId runId = RunIds.generate();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     Table<String, Integer, ProgramController> components = startWorkers(program, runId, options, newWorkerSpec);
     return new InMemoryProgramController(components, runId, program, workerSpec, options,
                                          ProgramRunnerFactory.Type.WORKER_COMPONENT);

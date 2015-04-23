@@ -100,6 +100,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
+    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
     if (programType != ProgramType.MAPREDUCE) {
       // MapReduce state recording is done by the MapReduceProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
@@ -112,7 +113,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds, adapterName);
+          store.setStart(id, runId, startTimeInSeconds, adapterName, twillRunId);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
@@ -161,13 +162,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Stop a Program given its {@link RunId}.
    *
+   * @param programId The id of the program
    * @param runId {@link RunId} of the program
    * @throws ExecutionException
    * @throws InterruptedException
    */
   //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program
-  public void stopProgram(RunId runId) throws ExecutionException, InterruptedException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(runId);
+  public void stopProgram(Id.Program programId, RunId runId) throws ExecutionException, InterruptedException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, runId);
     runtimeInfo.getController().stop().get();
   }
 

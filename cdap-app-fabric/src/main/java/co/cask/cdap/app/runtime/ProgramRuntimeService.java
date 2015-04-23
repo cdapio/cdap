@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Service for interacting with the runtime system.
@@ -40,6 +41,9 @@ public interface ProgramRuntimeService extends Service {
     ProgramType getType();
 
     Id.Program getProgramId();
+
+    @Nullable
+    RunId getTwillRunId();
   }
 
   /**
@@ -54,10 +58,11 @@ public interface ProgramRuntimeService extends Service {
   /**
    * Find the {@link RuntimeInfo} for a running program with the given {@link RunId}.
    *
-   * @param runId The program {@link RunId}.
+   * @param programId The id of the program.
+   * @param runId     The program {@link RunId}.
    * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is found.
    */
-  RuntimeInfo lookup(RunId runId);
+  RuntimeInfo lookup(Id.Program programId, RunId runId);
 
   /**
    * Get {@link RuntimeInfo} for all running programs of the given type.

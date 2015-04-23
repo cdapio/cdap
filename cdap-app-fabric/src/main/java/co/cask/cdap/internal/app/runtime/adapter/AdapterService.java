@@ -474,7 +474,7 @@ public class AdapterService extends AbstractIdleService {
     List<RunRecord> activeRuns = getRuns(namespace, adapterSpec.getName(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
                                          Integer.MAX_VALUE);
     for (RunRecord record : activeRuns) {
-      lifecycleService.stopProgram(RunIds.fromString(record.getPid()));
+      lifecycleService.stopProgram(workflowId, RunIds.fromString(record.getPid()));
     }
   }
 
@@ -543,7 +543,7 @@ public class AdapterService extends AbstractIdleService {
     RunRecord adapterRun = Iterables.getFirst(runRecords, null);
     if (adapterRun != null) {
       RunId runId = RunIds.fromString(adapterRun.getPid());
-      lifecycleService.stopProgram(runId);
+      lifecycleService.stopProgram(workerId, runId);
     }
   }
 

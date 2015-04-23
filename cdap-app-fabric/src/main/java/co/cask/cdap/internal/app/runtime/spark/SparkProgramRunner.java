@@ -92,8 +92,7 @@ public class SparkProgramRunner implements ProgramRunner {
 
     // Optionally get runId. If the spark started by other program (e.g. Workflow), it inherit the runId.
     Arguments arguments = options.getArguments();
-    RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID) ? RunIds.fromString(arguments.getOption
-      (ProgramOptionConstants.RUN_ID)) : RunIds.generate();
+    RunId runId = RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID));
 
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();

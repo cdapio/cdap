@@ -31,6 +31,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -58,12 +59,13 @@ public interface Store {
   /**
    * Logs start of program run.
    *
-   * @param id        Info about program
-   * @param pid       run id
-   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param adapter   name of the adapter associated with the run
+   * @param id         Info about program
+   * @param pid        run id
+   * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param adapter    name of the adapter associated with the run
+   * @param twillRunId twill run id
    */
-  void setStart(Id.Program id, String pid, long startTime, String adapter);
+  void setStart(Id.Program id, String pid, long startTime, String adapter, @Nullable String twillRunId);
 
   /**
    * Logs start of program run.
@@ -125,6 +127,14 @@ public interface Store {
    * @return          list of logged runs
    */
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+
+  /**
+   * Fetches the run records for the particular status.
+   * @param status  status of the program running/completed/failed or all
+   * @param filter  predicate to be passed to filter the records
+   * @return        list of logged runs
+   */
+  List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter);
 
   /**
    * Fetches the run record for particular run of a program.

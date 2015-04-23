@@ -24,9 +24,11 @@ import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
@@ -93,8 +95,10 @@ public class WorkflowTest {
 
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), userArgs);
+    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
@@ -174,7 +178,9 @@ public class WorkflowTest {
       }
     }).next();
 
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), new BasicArguments());
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
+    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {

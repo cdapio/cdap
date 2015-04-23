@@ -57,6 +57,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -158,11 +159,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter) {
+  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter,
+                       final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime, adapter);
+        mds.apps.recordProgramStart(id, pid, startTime, adapter, twillRunId);
         return null;
       }
     });
@@ -170,7 +172,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null);
+    setStart(id, pid, startTime, null, null);
   }
 
   @Override
@@ -224,6 +226,16 @@ public class DefaultStore implements Store {
   @Override
   public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
+  }
+
+  @Override
+  public List<RunRecord> getRuns(final ProgramRunStatus status, final Predicate<RunRecord> filter) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+      @Override
+      public List<RunRecord> apply(AppMds mds) throws Exception {
+        return mds.apps.getRuns(status, filter);
+      }
+    });
   }
 
   /**
@@ -627,7 +639,7 @@ public class DefaultStore implements Store {
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
         String scheduleName = scheduleSpecification.getSchedule().getName();
         Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
-          scheduleName  + "' already exists.");
+          scheduleName + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()

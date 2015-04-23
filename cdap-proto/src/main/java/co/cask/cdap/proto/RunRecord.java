@@ -28,6 +28,9 @@ public final class RunRecord {
   @SerializedName("runid")
   private final String pid;
 
+  @SerializedName("twillrunid")
+  private final String twillRunId;
+
   @SerializedName("start")
   private final long startTs;
 
@@ -41,22 +44,22 @@ public final class RunRecord {
   @SerializedName("adapter")
   private final String adapterName;
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
-                   ProgramRunStatus status, @Nullable String adapterName) {
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
+                   @Nullable String adapterName, @Nullable String twillRunId) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
     this.adapterName = adapterName;
+    this.twillRunId = twillRunId;
   }
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs,
-                   ProgramRunStatus status) {
-    this(pid, startTs, stopTs, status, null);
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
+    this(pid, startTs, stopTs, status, null, null);
   }
 
   public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status, started.getAdapterName());
+    this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getTwillRunId());
   }
 
   public String getPid() {
@@ -81,6 +84,11 @@ public final class RunRecord {
     return adapterName;
   }
 
+  @Nullable
+  public String getTwillRunId() {
+    return twillRunId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -96,12 +104,13 @@ public final class RunRecord {
       Objects.equal(this.startTs, that.startTs) &&
       Objects.equal(this.stopTs, that.stopTs) &&
       Objects.equal(this.status, that.status) &&
-      Objects.equal(this.adapterName, that.adapterName);
+      Objects.equal(this.adapterName, that.adapterName) &&
+      Objects.equal(this.twillRunId, that.twillRunId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, adapterName);
+    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, twillRunId);
   }
 
   @Override
@@ -112,6 +121,7 @@ public final class RunRecord {
       .add("stopTs", stopTs)
       .add("status", status)
       .add("adapter", adapterName)
+      .add("twillrunid", twillRunId)
       .toString();
   }
 }
