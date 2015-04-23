@@ -34,14 +34,14 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class TwitterStreamSourceTest {
+public class TwitterSourceTest {
 
   //NOTE: This test is ignored as it tests the twitter integration
   //In-order to test twitter API please pass in required credentials in the getRuntimeArguments method
   @Ignore
   @Test
   public void testIntegratedTwitterStream() throws Exception {
-    TwitterStreamSource source = new TwitterStreamSource();
+    TwitterSource source = new TwitterSource();
     source.configure(new StageConfigurer() {
 
       @Override
@@ -84,7 +84,7 @@ public class TwitterStreamSourceTest {
   }
 
 
-  private StructuredRecord getWithRetries(TwitterStreamSource source, MockEmitter emitter,
+  private StructuredRecord getWithRetries(TwitterSource source, MockEmitter emitter,
                                           SourceState state, int retryCount) throws Exception {
 
     StructuredRecord tweet = null;
