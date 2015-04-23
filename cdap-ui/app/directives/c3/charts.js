@@ -195,7 +195,7 @@ ngC3.directive('c3AreaSpline', function () {
 ngC3.directive('c3AreaSplineStacked', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'area-spline', attr, {stack: true});
+      scope.initC3(elem, 'area-spline', attr, {stack: true, xtickcount: 5});
     }
   }, baseDirective);
 });
