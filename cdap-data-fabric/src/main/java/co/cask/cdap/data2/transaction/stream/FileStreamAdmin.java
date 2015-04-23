@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -108,9 +107,9 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
-    List<Location> locations;
+    Iterable<Location> locations;
     try {
-      locations = getStreamBaseLocation(namespace).list();
+      locations = StreamUtils.listAllStreams(getStreamBaseLocation(namespace));
     } catch (FileNotFoundException e) {
       // If the stream base doesn't exists, nothing need to be deleted
       locations = ImmutableList.of();
@@ -266,7 +265,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public boolean exists(Id.Stream streamId) throws Exception {
     try {
-      return getConfigLocation(streamId).exists();
+      return streamMetaStore.streamExists(streamId) && getConfigLocation(streamId).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;
@@ -293,7 +292,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
         Properties properties = (props == null) ? new Properties() : props;
         long partitionDuration = Long.parseLong(properties.getProperty(
-          Constants.Stream.PARTITION_DURATION,  cConf.get(Constants.Stream.PARTITION_DURATION)));
+          Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
         long indexInterval = Long.parseLong(properties.getProperty(
           Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
         long ttl = Long.parseLong(properties.getProperty(
@@ -398,6 +397,15 @@ public class FileStreamAdmin implements StreamAdmin {
           }
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
           configLocation.delete();
+
+          // Move the stream directory to the deleted directory
+          // The target directory has a timestamp appended to the stream name
+          // It is for the case when a stream is created and deleted in a short period of time before
+          // the stream janitor kicks in.
+          Location deleted = StreamUtils.getDeletedLocation(getStreamBaseLocation(streamId.getNamespace()));
+          Locations.mkdirsIfNotExists(deleted);
+          streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
+
           streamMetaStore.removeStream(streamId);
         } catch (Exception e) {
           throw Throwables.propagate(e);

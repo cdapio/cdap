@@ -88,7 +88,6 @@ public final class ConcurrentStreamWriter implements Closeable {
 
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final StreamAdmin streamAdmin;
-  private final StreamMetaStore streamMetaStore;
   private final int workerThreads;
   private final StreamMetricsCollectorFactory metricsCollectorFactory;
   private final ConcurrentMap<Id.Stream, EventQueue> eventQueues;
@@ -98,11 +97,10 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final Lock createLock;
 
   ConcurrentStreamWriter(StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
-                         StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
-                         int workerThreads, StreamMetricsCollectorFactory metricsCollectorFactory) {
+                         StreamFileWriterFactory writerFactory, int workerThreads,
+                         StreamMetricsCollectorFactory metricsCollectorFactory) {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.streamAdmin = streamAdmin;
-    this.streamMetaStore = streamMetaStore;
     this.workerThreads = workerThreads;
     this.metricsCollectorFactory = metricsCollectorFactory;
     this.eventQueues = new MapMaker().concurrencyLevel(workerThreads).makeMap();
@@ -221,7 +219,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         return eventQueue;
       }
 
-      if (!streamMetaStore.streamExists(streamId)) {
+      if (!streamAdmin.exists(streamId)) {
         throw new IllegalArgumentException("Stream not exists");
       }
       StreamUtils.ensureExists(streamAdmin, streamId);

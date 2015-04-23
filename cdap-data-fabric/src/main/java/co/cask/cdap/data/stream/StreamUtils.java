@@ -28,8 +28,10 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import org.apache.twill.filesystem.Location;
 
 import java.io.DataInput;
@@ -46,6 +48,10 @@ import java.util.concurrent.TimeUnit;
  * TODO: Usage of this class needs to be refactor, as some methods are temporary (e.g. encodeMap/decodeMap).
  */
 public final class StreamUtils {
+
+  // The directory name for storing stream files that are pending for deletion
+  // StreamId cannot have "." there, so it's safe that it won't crash with any stream name
+  private static final String DELETED = ".deleted";
 
   /**
    * Decode a map.
@@ -454,6 +460,30 @@ public final class StreamUtils {
     String namespace = namespaceDir.getName();
     String streamName = streamBaseLocation.getName();
     return Id.Stream.from(namespace, streamName);
+  }
+
+  /**
+   * Returns the location of the stream deleted location.
+   *
+   * @param streamRootLocation the root location that all streams go under
+   */
+  public static Location getDeletedLocation(Location streamRootLocation) throws IOException {
+    return streamRootLocation.append(DELETED);
+  }
+
+  /**
+   * Lists all stream locations under the given root.
+   *
+   * @param streamRootLocation the root location that all streams go under
+   */
+  public static Iterable<Location> listAllStreams(Location streamRootLocation) throws IOException {
+    return Iterables.filter(streamRootLocation.list(), new Predicate<Location>() {
+      @Override
+      public boolean apply(Location location) {
+        // Any directories started with "." is special system directory, which is not regular stream directory
+        return !location.getName().startsWith(".");
+      }
+    });
   }
 
   private StreamUtils() {
