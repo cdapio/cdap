@@ -51,6 +51,15 @@ public final class Properties {
   }
 
   /**
+   * Properties for the TimePartitionedFileSetDatasetAvroSink
+   */
+  public static class TimePartitionedFileSetDataset {
+    public static final String TPFS_NAME = "name";
+    public static final String SCHEMA = "schema";
+    public static final String BASE_PATH = "basePath";
+  }
+
+  /**
    * Properties for KeyValueTables
    */
   public static class KeyValueTable {

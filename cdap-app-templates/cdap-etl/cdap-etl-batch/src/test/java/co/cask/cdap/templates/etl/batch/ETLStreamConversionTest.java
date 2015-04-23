@@ -128,9 +128,11 @@ public class ETLStreamConversionTest extends TestBase {
       .put("format.setting.delimiter", "|")
       .build());
     ETLStage structuredRecordToGeneric = new ETLStage(StructuredRecordToGenericRecordTransform.class.getSimpleName(),
-      ImmutableMap.<String, String>of());
+                                                      ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getSimpleName(),
-                                 ImmutableMap.of("schema", EVENT_SCHEMA.toString(), "name", fileSetName));
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 EVENT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(structuredRecordToGeneric);
     return new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
