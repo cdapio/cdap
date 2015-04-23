@@ -190,7 +190,7 @@
         <extensions>true</extensions>
         <configuration>
           <instructions>
-            <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms</Export-Package>
+            <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*</Export-Package>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
             <Embed-Directory>lib</Embed-Directory>
