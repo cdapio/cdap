@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
@@ -25,6 +26,8 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -69,6 +72,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -386,9 +390,23 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           });
 
           bind(Store.class).to(DefaultStore.class);
+
+          // For binding StreamWriter
+          install(createStreamFactoryModule());
         }
       }
     );
+  }
+
+  private Module createStreamFactoryModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
+                  .build(StreamWriterFactory.class));
+        expose(StreamWriterFactory.class);
+      }
+    };
   }
 
   private Module createProgramFactoryModule() {
