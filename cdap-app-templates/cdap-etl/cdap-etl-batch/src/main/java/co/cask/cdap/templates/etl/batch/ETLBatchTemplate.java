@@ -42,11 +42,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * ETL Batch Template.
  */
 public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLBatchTemplate.class);
   private static final Gson GSON = new Gson();
 
   public ETLBatchTemplate() throws Exception {
@@ -86,7 +93,7 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    configurer.setName("etlbatch");
+    configurer.setName(getAppName("etl.batch.plugin.name"));
     configurer.setDescription("Batch Extract-Transform-Load (ETL) Adapter");
     configurer.addMapReduce(new ETLMapReduce());
     configurer.addWorkflow(new ETLWorkflow());
