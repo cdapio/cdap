@@ -42,7 +42,7 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.AvroFileReader;
-import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -53,7 +53,6 @@ import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -61,6 +60,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -195,7 +195,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
 
     LogCallback logCallback = new LogCallback();
-    DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
+    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
     distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
                                 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
     Assert.assertEquals(60, logCallback.getEvents().size());
@@ -220,9 +220,10 @@ public class LogSaverPluginTest extends KafkaTestBase {
   }
 
   private void resetMetricsPluginCheckPoint() throws Exception {
-    TypeToken token = new TypeToken<Set<KafkaLogProcessor>> () { };
-    Set<KafkaLogProcessor> processors = (Set<KafkaLogProcessor>) injector.getInstance(Key.get(token.getType(),
-                                                                Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
+    Set<KafkaLogProcessor> processors =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+
     for (KafkaLogProcessor processor : processors) {
       if (processor instanceof  LogMetricsPlugin) {
         LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
@@ -240,9 +241,10 @@ public class LogSaverPluginTest extends KafkaTestBase {
   }
 
   public void verifyCheckpoint() throws Exception {
-    TypeToken token = new TypeToken<Set<KafkaLogProcessor>> () { };
-    Set<KafkaLogProcessor> processors = (Set<KafkaLogProcessor>) injector.getInstance(Key.get(token.getType(),
-                                                               Names.named (Constants.LogSaver.MESSAGE_PROCESSORS)));
+    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
+    Set<KafkaLogProcessor> processors =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+
     for (KafkaLogProcessor processor : processors) {
       CheckpointManager checkpointManager = getCheckPointManager(processor);
       Assert.assertEquals(60, checkpointManager.getCheckpoint(0).getNextOffset());
@@ -262,7 +264,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
     LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
-    DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
+    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);

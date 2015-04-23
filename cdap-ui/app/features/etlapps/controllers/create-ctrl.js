@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, $q, $alert, $bootstrapModal, $state, ETLAppsApiFactory, mySettings, $filter) {
+  .controller('ETLAppsCreateController', function($scope, $q, $alert, $state, ETLAppsApiFactory, mySettings, $filter, $rootScope) {
     var apiFactory = new ETLAppsApiFactory($scope);
     $scope.ETLMetadataTabOpen = true;
     $scope.ETLSourcesTabOpen = true;
@@ -148,52 +148,61 @@ angular.module(PKG.name + '.feature.etlapps')
       if ($scope.source.placeHolderSource) {
         return;
       }
-      $bootstrapModal.open({
-        templateUrl: '/assets/features/etlapps/templates/create/sourceProperties.html',
-        scope: $scope,
-        backdrop: true,
-        keyboard: true
-      });
+      var filterFilter = $filter('filter'),
+          match;
+      match = filterFilter($scope.tabs, {type: 'source'});
+      if (match.length) {
+        $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
+      } else {
+        $scope.tabs.push({
+          title: $scope.source.name,
+          type: 'source',
+          active: true,
+          partial: '/assets/features/etlapps/templates/create/tabs/sourcePropertyEdit.html'
+        })
+      }
     };
     $scope.editSinkProperties = function() {
       if ($scope.sink.placeHolderSink) {
         return;
       }
-      $bootstrapModal.open({
-        templateUrl: '/assets/features/etlapps/templates/create/sinkProperties.html',
-        scope: $scope,
-        backdrop: true,
-        keyboard: true
 
-      });
-
+      var filterFilter = $filter('filter'),
+          match;
+      match = filterFilter($scope.tabs, {type: 'sink'});
+      if (match.length) {
+        $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
+      } else {
+        $scope.tabs.active = ($scope.tabs.push({
+          title: $scope.sink.name,
+          type: 'sink',
+          active: true,
+          partial: '/assets/features/etlapps/templates/create/tabs/sinkPropertyEdit.html'
+        })) -1;
+      }
     };
     $scope.editTransformProperty = function(transform) {
       if (transform.placeHolderTransform){
         return;
       }
-      $bootstrapModal.open({
-        templateUrl: '/assets/features/etlapps/templates/create/transformProperty.html',
-        controller: ['$scope', function($scope) {
-          $scope.transform = transform;
-        }],
-        size: 'lg',
-        backdrop: true,
-        keyboard: true
+      var filterFilter = $filter('filter'),
+          match;
+      match = filterFilter($scope.tabs, {
+        transformid: transform.$$hashKey,
+        type: 'transform'
       });
-    }
-    $scope.editTransformProperties = function() {
-      if ($scope.transforms.length === 0) {
-        return;
+      if (match.length) {
+        $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
+      } else {
+        $scope.tabs.active = ($scope.tabs.push({
+          title: transform.name,
+          transformid: transform.$$hashKey,
+          transform: transform,
+          active: true,
+          type: 'transform',
+          partial: '/assets/features/etlapps/templates/create/tabs/transformPropertyEdit.html'
+        })) -1;
       }
-      $bootstrapModal.open({
-        templateUrl: '/assets/features/etlapps/templates/create/transformProperties.html',
-        scope: $scope,
-        size: 'lg',
-        backdrop: true,
-        keyboard: true
-
-      });
     };
 
     $scope.deleteTransformProperty = function(transform) {
@@ -285,4 +294,24 @@ angular.module(PKG.name + '.feature.etlapps')
         $state.go('^.list');
       });
     }
+
+    $scope.tabs = [
+      {
+        title: 'Default',
+        isCloseable: false,
+        partial: '/assets/features/etlapps/templates/create/tabs/default.html'
+      }
+    ];
+
+    $scope.closeTab = function(index) {
+      $scope.tabs.splice(index, 1);
+    }
+
+    $scope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+      if (fromState.name === 'adapters.create') {
+        if(!confirm("Are you sure you want to leave this page?")) {
+          event.preventDefault();
+        }
+      }
+    });
   });

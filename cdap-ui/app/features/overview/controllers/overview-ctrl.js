@@ -70,6 +70,10 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget) {
     _cdapNsPath: '/streams'
   }, function(res) {
     if (angular.isArray(res) && res.length) {
+      angular.forEach(res, function(r) {
+        r.type = 'Stream';
+      });
+
       $scope.dataList = $scope.dataList.concat(res);
     }
   });

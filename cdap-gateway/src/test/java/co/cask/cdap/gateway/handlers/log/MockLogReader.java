@@ -30,6 +30,7 @@ import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.logging.read.ReadRange;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -76,10 +77,10 @@ public class MockLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
+  public void getLogNext(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset.getKafkaOffset() < 0) {
-      getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+    if (readRange.getKafkaOffset() < 0) {
+      getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
     }
 
@@ -89,7 +90,7 @@ public class MockLogReader implements LogReader {
     try {
       int count = 0;
       for (LogEvent logLine : logEvents) {
-        if (logLine.getOffset().getKafkaOffset() >= fromOffset.getKafkaOffset()) {
+        if (logLine.getOffset().getKafkaOffset() >= readRange.getKafkaOffset()) {
           if (!contextFilter.match(logLine.getLoggingEvent())) {
             continue;
           }
@@ -113,10 +114,10 @@ public class MockLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents, Filter filter,
+  public void getLogPrev(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
                          Callback callback) {
-    if (fromOffset.getKafkaOffset() < 0) {
-      fromOffset = new LogOffset(MAX, MAX);
+    if (readRange.getKafkaOffset() < 0) {
+      readRange = ReadRange.createToRange(new LogOffset(MAX, MAX));
     }
 
     Filter contextFilter = LoggingContextHelper.createFilter(loggingContext);
@@ -124,14 +125,14 @@ public class MockLogReader implements LogReader {
     callback.init();
     try {
       int count = 0;
-      long startOffset = fromOffset.getKafkaOffset() - maxEvents;
+      long startOffset = readRange.getKafkaOffset() - maxEvents;
       for (LogEvent logLine : logEvents) {
         if (!contextFilter.match(logLine.getLoggingEvent())) {
           continue;
         }
 
         if (logLine.getOffset().getKafkaOffset() >= startOffset &&
-          logLine.getOffset().getKafkaOffset() < fromOffset.getKafkaOffset()) {
+          logLine.getOffset().getKafkaOffset() < readRange.getKafkaOffset()) {
           if (++count > maxEvents) {
             break;
           }
@@ -154,7 +155,7 @@ public class MockLogReader implements LogReader {
   public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
                      Callback callback) {
     long fromOffset = fromTimeMs / 1000;
-    getLogNext(loggingContext, new LogOffset(fromOffset, fromOffset),
+    getLogNext(loggingContext, ReadRange.createFromRange(new LogOffset(fromOffset, fromOffset)),
                (int) (toTimeMs - fromTimeMs) / 1000, filter, callback);
   }
 

@@ -32,6 +32,11 @@ public interface Callback {
   void handle(LogEvent event);
 
   /**
+   * @return number of log events accepted after filtering, if any in the callback
+   */
+  int getCount();
+
+  /**
    * Called once at the end after all log events are done.
    */
   void close();

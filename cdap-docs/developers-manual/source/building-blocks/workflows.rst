@@ -13,8 +13,8 @@ Workflows
 allows for both sequential and :ref:`parallel execution <workflow_parallel>` of programs.
 
 The workflow system allows specifying, executing, scheduling, and monitoring complex
-series of jobs and tasks in CDAP. The system can manage thousand of workflows and maintain
-millions of historic workflow logs. 
+series of jobs and tasks in CDAP. The system can manage thousands of workflows and
+maintain millions of historic workflow logs. 
 
 Overview
 ========
@@ -97,11 +97,11 @@ concurrently. To enable concurrent runs for a Workflow, set its runtime argument
 Parallelizing Workflow Execution
 ================================
 
-The control flow of a Workflow can be described as a directed, acyclic graph of actions.
+The control flow of a Workflow can be described as a directed, acyclic graph (DAG) of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
 single start node and a single finish node. In between, execution can fork into concurrent
 branches, but the graph may not have cycles. Every action can be a batch job or a custom
-action (implemented in Java; for example, making a REST call to an external system).
+action (implemented in Java; for example, making a RESTful call to an external system).
 
 For example, a simple control flow could be computing user and product profiles from
 purchase events. After the start, a batch job could start that joins the events with the
@@ -185,6 +185,100 @@ The diagram for this code would be:
    :width: 8in
    :align: center
 
+Conditional Node
+----------------
+
+You can provide a *conditional* node in your structure that allows for branching based on 
+a boolean predicate.
+
+Taking our first example and modifying it, you could use code such as::
+
+  public class ConditionalWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void configure() {
+      setName("ConditionalWorkflow");
+      setDescription("Demonstration of conditional execution of a Workflow");
+      
+      addMapReduce("JoinWithCatalogMR");
+      
+      condition(new MyPredicate())
+        .addMapReduce("BuildProductProfileMR")
+      .otherwise()
+        .addMapReduce("BuildUserProfileMR")
+      .end();
+      
+      addAction(new UploadProfilesCA());
+    }
+  }
+
+where ``MyPredicate`` is a public class which implements the ``Predicate`` interface as::
+
+  public static class MyPredicate implements Predicate<WorkflowContext> {
+
+     @Override
+      public boolean apply(@Nullable WorkflowContext input) {
+         if (input == null) {
+            return false;
+         }
+         Map<String, Map<String, Long>> mapReduceCounters = input.getToken().getMapReduceCounters();
+         if (mapReduceCounters == null) {
+            return false;
+         }
+         Map<String, Long> customCounters = mapReduceCounters.get("MyCustomCounters");
+         if (customCounters.get("BuildProductProfile") > 0) {
+           return true;
+         }
+         return false;
+     }
+  }
+
+In the ``JoinWithCatalogMR`` MapReduce, it could have in its Mapper class code that 
+governs which condition to follow::
+
+  public static final class JoinWithCatalogMR extends AbstractMapReduce {
+
+    @Override
+    public void configure() {
+      setName("JoinWithCatalogMR");
+      setDescription("MapReduce program to demonstrate a Conditional Workflow");
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      job.setMapperClass(MyVerifier.class);
+      String inputPath = context.getRuntimeArguments().get("inputPath");
+      String outputPath = context.getRuntimeArguments().get("outputPath");
+      FileInputFormat.addInputPath(job, new Path(inputPath));
+      FileOutputFormat.setOutputPath(job, new Path(outputPath));
+    }
+  }
+
+  public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
+    public void map(LongWritable key, Text value, Context context)
+      throws IOException, InterruptedException {
+      if (value != null and value.toString().equals("BuildProductProfile")) {
+        context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(1L);
+      } else {
+        context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(0);
+      }
+    }
+  }
+
+In this case, if the predicate finds that the a ``MapReduceCounter`` *BuildProductProfile*
+is greater than zero, the logic will follow the path of *BuildProductProfileMR*;
+otherwise, the other path will be taken. The diagram for this code would be:
+
+.. image:: /_images/conditional-workflow.png
+   :width: 8in
+   :align: center
+
+For this 3.0 release, CDAP only supports predicate conditions based on counters from
+previous MapReduce programs. Because of this, condition nodes are currently only useful
+when they follow MapReduce nodes; they can then make use of counters emitted by the
+MapReduce program to take the decision. In a later version, we will add more information
+to the ``WorkflowContext`` which will allow for more complex decisions.
 
 Example of Using a Workflow
 ===========================

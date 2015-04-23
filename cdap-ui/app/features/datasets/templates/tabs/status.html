@@ -13,15 +13,15 @@
         <tbody>
           <td>
             <em ng-if="storage"> {{storage | bytes}} </em>
-            <em ng-if="!storage"> &mdash; </em>
+            <em ng-if="!storage"> 0b </em>
           </td>
           <td>
             <em ng-if="writes"> {{writes | bytes}}/s </em>
-            <em ng-if="!writes"> &mdash; </em>
+            <em ng-if="!writes"> 0b/s </em>
           </td>
           <td>
             <em ng-if="reads"> {{reads | bytes}}/s </em>
-            <em ng-if="!reads"> &mdash; </em>
+            <em ng-if="!reads"> 0b/s </em>
           </td>
         </tbody>
       </table>
