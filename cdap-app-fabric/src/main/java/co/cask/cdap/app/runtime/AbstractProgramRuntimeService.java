@@ -67,6 +67,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return runtimeInfo;
   }
 
+  /**
+   * Return the copy of the {@link ProgramOptions} including RunId in it.
+   * @param options The {@link ProgramOptions} in which the RunId to be included
+   * @param runId   The RunId to be included
+   * @return the copy of the program options with RunId included in them
+   */
   private ProgramOptions addRunId(ProgramOptions options, RunId runId) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
@@ -80,7 +86,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return new SimpleRuntimeInfo(controller, program);
   }
 
-  protected List<RuntimeInfo> getRuntimeInfos() {
+  protected synchronized List<RuntimeInfo> getRuntimeInfos() {
     return ImmutableList.copyOf(runtimeInfos.values());
   }
 

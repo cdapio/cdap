@@ -156,16 +156,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return runtimeInfo;
     }
 
-    RunRecord record = store.getRun(programId, runId.getId());
-    if (record == null) {
-      return null;
-    }
-    if (record.getTwillRunId() == null) {
-      LOG.warn("Twill RunId does not exist for the program {}, runId {}", programId, runId.getId());
-      return null;
-    }
-    RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
-
     // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
@@ -181,6 +171,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
+      RunRecord record = store.getRun(programId, runId.getId());
+      if (record == null) {
+        return null;
+      }
+      if (record.getTwillRunId() == null) {
+        LOG.warn("Twill RunId does not exist for the program {}, runId {}", programId, runId.getId());
+        return null;
+      }
+      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+
       for (TwillController controller : liveInfo.getControllers()) {
         RunId twillRunId = controller.getRunId();
         if (!twillRunId.equals(twillRunIdFromRecord)) {
@@ -195,7 +195,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return runtimeInfo;
       }
     }
-    return runtimeInfo;
+    return null;
   }
 
   @Override
