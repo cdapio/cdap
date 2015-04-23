@@ -21,20 +21,26 @@
         ng-model="etlapps">
     <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
          ng-repeat="app in etlapps">
+      <div class="label etlappcontainer" ng-if="app.isdraft">
+        Draft
+      </div>
+      <div class="label etlappcontainer green" ng-if="!app.isdraft">
+        Published
+      </div>
       <div class="well well-md" as-sortable-item>
           <div>
             <h3 tooltip="{{::app.name}}" as-sortable-item-handle>
               <i class="fa fa-heartbeat"></i>
-              {{::app.name | caskCapitalizeFilter | myEllipsis:9}}
-              <small>
-                <a ng-if="app.isdraft"
-                    class="fa fa-pencil text-primary"
-                    href
-                    ng-click="$state.go('^.create', {data: app.name})">
-                </a>
-              </small>
+              {{::app.name | caskCapitalizeFilter | myEllipsis:6}}
             </h3>
-            <small> Type: {{::app.template}}  </small>
+            <small>
+              Type: {{::app.template}}
+              <a ng-if="app.isdraft"
+                  class="fa fa-pencil text-primary"
+                  href
+                  ng-click="$state.go('^.create', {data: app.name})">
+              </a>
+            </small>
           </div>
         <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
           <i class="fa fa-circle"></i>

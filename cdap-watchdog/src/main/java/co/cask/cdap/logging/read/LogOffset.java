@@ -22,7 +22,9 @@ import com.google.common.base.Objects;
  * Represents log offset containing Kafka offset and time of logging event.
  */
 public class LogOffset {
-  public static final LogOffset LATEST_OFFSET = new LogOffset(-1, -1);
+  public static final long LATEST_KAFKA_OFFSET = -1;
+  public static final LogOffset LATEST_OFFSET = new LogOffset(-1, LATEST_KAFKA_OFFSET);
+  public static final long INVALID_KAFKA_OFFSET = -10000;
 
   private final long kafkaOffset;
   private final long time;

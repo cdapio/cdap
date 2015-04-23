@@ -28,14 +28,14 @@
       <ul class="list-group" >
         <li class="list-group-item" ng-repeat="data in dataList | orderBy:'name' | limitTo: 5 track by $index ">
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
-            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
+            <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
               <span> Stream </span>
             </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
-            <p ng-bind="data.name | caskCapitalizeFilter"> </p>
+            <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
               <span> Dataset </span>

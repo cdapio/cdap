@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -77,7 +77,7 @@ public final class MapReduceContextConfig {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setWorkflowBatch(context.getWorkflowBatch());
-    setAdapterSpec(context.getAdapterSpec());
+    setAdapterSpec(context.getAdapterSpecification());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
     setConf(conf);
@@ -121,19 +121,19 @@ public final class MapReduceContextConfig {
     return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
   }
 
-  private void setAdapterSpec(@Nullable AdapterSpecification adapterSpec) {
+  private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {
     if (adapterSpec != null) {
       hConf.set(HCONF_ATTR_ADAPTER_SPEC, GSON.toJson(adapterSpec));
     }
   }
 
   @Nullable
-  public AdapterSpecification getAdapterSpec() {
+  public AdapterDefinition getAdapterSpec() {
     String spec = hConf.get(HCONF_ATTR_ADAPTER_SPEC);
     if (spec == null) {
       return null;
     }
-    return GSON.fromJson(spec, AdapterSpecification.class);
+    return GSON.fromJson(spec, AdapterDefinition.class);
   }
 
   private void setProgramJarURI(URI programJarURI) {

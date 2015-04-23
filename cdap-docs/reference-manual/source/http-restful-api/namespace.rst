@@ -48,7 +48,7 @@ Properties for the namespace are passed in the JSON request body:
      - Default Value (if not defined)
    * - ``description``
      - Display description of the namespace
-     - An empty string ("")
+     - An empty string (``""``)
    * - ``config``
      - Configuration preferences for the namespace
      - A JSON string of configuration key-value pairs

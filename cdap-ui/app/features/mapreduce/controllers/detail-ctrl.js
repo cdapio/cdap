@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceDetailController', function(MyDataSource, $state, $scope) {
+  .controller('MapreduceDetailController', function(MyDataSource, $state, $scope, myProgramPreferencesService, myRuntimeService) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' +
             $state.params.appId +
@@ -29,11 +29,27 @@ angular.module(PKG.name + '.feature.mapreduce')
 
     $scope.toggleFlow = function(action) {
       $scope.status = (action === 'start'? 'STARTING': 'STOPPING');
-      dataSrc.request({
-        method: 'POST',
-        _cdapNsPath: basePath + '/' + action
-      }).then(function () {
+      var requestObj = {
+        _cdapNsPath: basePath + '/' + action,
+        method: 'POST'
+      };
+
+      if ($scope.runtimeArgs && Object.keys($scope.runtimeArgs).length > 0) {
+        requestObj.body = $scope.runtimeArgs;
+      }
+
+      dataSrc.request(requestObj).then(function () {
         $state.go('mapreduce.detail.runs', {}, { reload: true });
+      });
+    };
+
+    $scope.openPreferences = function() {
+      myProgramPreferencesService.show('mapreduce');
+    };
+
+    $scope.openRuntime = function() {
+      myRuntimeService.show().result.then(function(res) {
+        $scope.runtimeArgs = res;
       });
     };
   });

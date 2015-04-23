@@ -38,6 +38,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * LogReader callback to encode log events, and send them as chunked stream.
@@ -51,6 +52,7 @@ class ChunkedLogReaderCallback implements Callback {
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
+  private final AtomicInteger count = new AtomicInteger();
   private ChunkResponder chunkResponder;
 
   ChunkedLogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
@@ -82,10 +84,16 @@ class ChunkedLogReaderCallback implements Callback {
     try {
       // Encode logLine and send chunks
       encodeSend(CharBuffer.wrap(logLine), false);
+      count.incrementAndGet();
     } catch (IOException e) {
       // Just propagate the exception, the caller of this Callback should be handling it.
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public int getCount() {
+    return count.get();
   }
 
   @Override

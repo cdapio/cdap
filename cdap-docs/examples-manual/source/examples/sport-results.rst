@@ -168,20 +168,37 @@ Exploring with Ad-hoc SQL
 Both of the partitioned file sets are registered as external tables in Hive and can be explored with SQL. To
 see the existing partitions of a dataset, use the ``show partitions`` query::
 
-  $ cdap-cli.sh execute \"show partitions results\"
+  $ cdap-cli.sh execute \"show partitions dataset_results\"
 
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
 seasons (that have been uploaded), and for all seasons of all sport leagues::
 
-  $ cdap-cli.sh execute "\"select * from results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
-  $ cdap-cli.sh execute "\"select * from results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
-  $ cdap-cli.sh execute "\"select * from results order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap-cli.sh execute \""select * from dataset_results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3"\"
+  $ cdap-cli.sh execute \""select * from dataset_results where league='nfl' order by winnerpoints-loserpoints desc limit 3"\"
+  $ cdap-cli.sh execute \""select * from dataset_results order by winnerpoints-loserpoints desc limit 3"\"
 
 You can also explore the ``totals`` dataset. For example, to find the NFL teams team that, over their history,
 have scored the least points compared to the points they conceded::
 
-  $ cdap-cli.sh execute "\"select * from totals where league = 'nfl' order by conceded - scored desc limit 3\""
+  $ cdap-cli.sh execute \""select * from dataset_totals where league = 'nfl' order by conceded - scored desc limit 3"\"
+  
+The last command would produce results (reformatted to fit) such as::
+
+  Successfully connected CDAP instance at http://localhost:10000
+  +==================================================================================================================================+
+  | dataset_totals.team: | dataset_totals. | dataset_totals. | dataset_totals. | dataset_totals. | dataset_totals. | dataset_totals. |
+  | STRING               | wins: INT       | ties: INT       | loses: INT      | scored: INT     | conceded: INT   | league: STRING  |
+  +==================================================================================================================================+
+  | Kansas City Chiefs   | 2               | 0               | 14              | 211             | 425             | nfl             |
+  |----------------------------------------------------------------------------------------------------------------------------------|
+  | Jacksonville Jaguars | 2               | 0               | 14              | 255             | 444             | nfl             |
+  |                      |                 |                 |                 |                 |                 |                 |
+  |----------------------------------------------------------------------------------------------------------------------------------|
+  | Philadelphia Eagles  | 4               | 0               | 12              | 280             | 444             | nfl             |
+  |                      |                 |                 |                 |                 |                 |                 |
+  +==================================================================================================================================+
+  Fetched 3 rows
 
 Stopping the Application
 ------------------------
@@ -195,5 +212,5 @@ Once done, you can stop the application as described above in `Stopping an Appli
   Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh stop service SportResults.UploadService``
+    $ cdap-cli.sh stop service SportResults.UploadService
 

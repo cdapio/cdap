@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Reads log events from a file.
@@ -68,10 +67,10 @@ public class FileLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
                               final Filter filter, final Callback callback) {
-    if (fromOffset.getTime() < 0) {
-      getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+    if (readRange == ReadRange.LATEST) {
+      getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
     }
 
@@ -80,7 +79,7 @@ public class FileLogReader implements LogReader {
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
-      long fromTimeMs = fromOffset.getTime() + 1;
+      long fromTimeMs = readRange.getFromMillis() + 1;
 
       SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
@@ -91,7 +90,8 @@ public class FileLogReader implements LogReader {
       Location prevPath = null;
       List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
-        if (entry.getKey() >= fromTimeMs && prevPath != null) {
+        if (entry.getKey() >= readRange.getFromMillis() &&
+          prevPath != null && entry.getKey() <= readRange.getToMillis()) {
           tailFiles.add(prevPath);
         }
         prevInterval = entry.getKey();
@@ -103,11 +103,9 @@ public class FileLogReader implements LogReader {
       }
 
       AvroFileReader logReader = new AvroFileReader(schema);
-      CountingCallback countingCallback = new CountingCallback(callback);
       for (Location file : tailFiles) {
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
-                          countingCallback);
-        if (countingCallback.getCount() >= maxEvents) {
+        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+        if (callback.getCount() >= maxEvents) {
           break;
         }
       }
@@ -119,38 +117,8 @@ public class FileLogReader implements LogReader {
     }
   }
 
-  /**
-   * Counts the number of times handle is called.
-   */
-  private static class CountingCallback implements Callback {
-    private final Callback callback;
-    private final AtomicInteger count = new AtomicInteger(0);
-
-    private CountingCallback(Callback callback) {
-      this.callback = callback;
-    }
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void handle(LogEvent event) {
-      count.incrementAndGet();
-      callback.handle(event);
-    }
-
-    public int getCount() {
-      return count.get();
-    }
-
-    @Override
-    public void close() {
-    }
-  }
-
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
                               final Filter filter, final Callback callback) {
     callback.init();
     try {
@@ -163,11 +131,11 @@ public class FileLogReader implements LogReader {
         return;
       }
 
-      long fromTimeMs = fromOffset.getTime() >= 0 ? fromOffset.getTime() - 1 : System.currentTimeMillis();
+      long fromTimeMs = readRange != ReadRange.LATEST ? readRange.getToMillis() - 1 : System.currentTimeMillis();
 
       List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
-        if (entry.getKey() <= fromTimeMs) {
+        if (entry.getKey() >= readRange.getFromMillis() && entry.getKey() <= readRange.getToMillis()) {
           tailFiles.add(entry.getValue());
         }
       }
@@ -176,8 +144,7 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
       for (Location file : tailFiles) {
-        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                            maxEvents - count);
+        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
         logSegments.add(events);
         count += events.size();
         if (count >= maxEvents) {

@@ -96,7 +96,7 @@ angular.module(PKG.name + '.feature.etlapps')
           mySettings.set('etldrafts', this.scope.etlDrafts)
             .then(function() {
               $timeout(function() {
-                $state.go('etlapps.list', $state.params, {reload: true});
+                $state.go('^.list', $state.params, {reload: true});
               });
               $alert({
                 type: 'success',

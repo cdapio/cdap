@@ -55,12 +55,12 @@ import java.util.concurrent.TimeUnit;
  * Plugin that writes the log data.
  */
 public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
+
+  public static final int CHECKPOINT_ROW_KEY_PREFIX = 100;
 
   private static final long SLEEP_TIME_MS = 100;
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
-  private static final int CHECKPOINT_ROW_KEY_PREFIX = 100;
 
-  private ListeningScheduledExecutorService scheduledExecutor;
   private final String logBaseDir;
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final RowSortedTable<Long, String, Map.Entry<Long, List<KafkaLogEvent>>> messageTable;
@@ -71,8 +71,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private final LogCleanup logCleanup;
   private final CheckpointManager checkpointManager;
 
+  private ListeningScheduledExecutorService scheduledExecutor;
   private CountDownLatch countDownLatch;
-
 
   @Inject
   public KafkaLogWriterPlugin(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,

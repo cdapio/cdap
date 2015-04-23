@@ -21,6 +21,7 @@ import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageSpecification;
 import com.google.common.collect.Lists;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -50,8 +51,8 @@ public class DefaultStageConfigurer implements StageConfigurer {
   }
 
   @Override
-  public void addProperties(List<Property> properties) {
-    properties.addAll(properties);
+  public void addProperties(Collection<Property> properties) {
+    this.properties.addAll(properties);
   }
 
   @Override

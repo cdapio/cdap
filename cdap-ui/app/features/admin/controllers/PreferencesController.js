@@ -1,27 +1,36 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, source) {
+  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, rSource) {
     var dataSrc = new MyDataSource($scope);
     var filterFilter = $filter('filter');
 
     var path = '';
+    var parentPath = ''; // to fetch resolved preferences of parent
 
-    if (source === 'SYSTEM') {
+    if (rSource === 'SYSTEM') {
       path = '/preferences';
 
       $scope.heading = 'System Preferences';
-    } else {
+    } else if (rSource === 'NAMESPACE') {
       path = '/namespaces/' + $state.params.nsadmin + '/preferences';
+      parentPath = '/preferences';
+      $scope.messages = 'Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.';
 
       $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
+    } else if (rSource === 'APPLICATION') {
+      path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId + '/preferences';
+      parentPath = '/namespaces/' + $state.params.nsadmin + '/preferences?resolved=true';
+      $scope.messages = 'Specify new or override namespace configurations that will be accessible in all programs within this application.';
+
+      $scope.heading = 'Application Preferences: ' + $state.params.appId;
     }
 
     $scope.preferences = [];
 
     $scope.loadProperties = function () {
-      if (source !== 'SYSTEM') {
+      if (rSource !== 'SYSTEM') {
         dataSrc
           .request({
-            _cdapPath: '/preferences'
+            _cdapPath: parentPath
           })
           .then(function (res) {
 
@@ -34,7 +43,7 @@ angular.module(PKG.name + '.feature.admin')
               });
             });
 
-            $scope.systemPreferences = arr;
+            $scope.parentPreferences = arr;
           });
       }
 
@@ -43,7 +52,7 @@ angular.module(PKG.name + '.feature.admin')
           _cdapPath: path
         }).then(function (res) {
           var arr = [];
-
+          console.log('res', res);
           angular.forEach(res, function(v, k) {
             arr.push({
               key: k,

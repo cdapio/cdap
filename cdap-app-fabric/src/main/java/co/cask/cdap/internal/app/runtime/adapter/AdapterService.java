@@ -52,7 +52,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -98,7 +98,7 @@ public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory;
-  private final ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory;
+  private final ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory;
   private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final ProgramLifecycleService lifecycleService;
@@ -117,7 +117,7 @@ public class AdapterService extends AbstractIdleService {
                         @Named("templates")
                         ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory,
                         @Named("adapters")
-                        ManagerFactory<AdapterDeploymentInfo, AdapterSpecification> adapterManagerFactory,
+                        ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory,
                         NamespacedLocationFactory namespacedLocationFactory, ProgramLifecycleService lifecycleService,
                         PropertiesResolver resolver,
                         PluginRepository pluginRepository) {
@@ -197,8 +197,8 @@ public class AdapterService extends AbstractIdleService {
    * @return requested {@link AdapterConfig} or null if no such AdapterInfo exists
    * @throws AdapterNotFoundException if the requested adapter is not found
    */
-  public AdapterSpecification getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
-    AdapterSpecification adapterSpec = store.getAdapter(namespace, adapterName);
+  public AdapterDefinition getAdapter(Id.Namespace namespace, String adapterName) throws AdapterNotFoundException {
+    AdapterDefinition adapterSpec = store.getAdapter(namespace, adapterName);
     if (adapterSpec == null) {
       throw new AdapterNotFoundException(Id.Adapter.from(namespace, adapterName));
     }
@@ -222,7 +222,7 @@ public class AdapterService extends AbstractIdleService {
   }
 
   public boolean canDeleteApp(Id.Application id) {
-    Collection<AdapterSpecification> adapterSpecs = getAdapters(id.getNamespace(), id.getId());
+    Collection<AdapterDefinition> adapterSpecs = getAdapters(id.getNamespace(), id.getId());
     return adapterSpecs.isEmpty();
   }
 
@@ -249,7 +249,7 @@ public class AdapterService extends AbstractIdleService {
    * @param namespace the namespace to look up the adapters
    * @return {@link Collection} of {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace) {
+  public Collection<AdapterDefinition> getAdapters(Id.Namespace namespace) {
     return store.getAllAdapters(namespace);
   }
 
@@ -260,12 +260,12 @@ public class AdapterService extends AbstractIdleService {
    * @param template the template of requested adapters
    * @return Collection of requested {@link AdapterConfig}
    */
-  public Collection<AdapterSpecification> getAdapters(Id.Namespace namespace, final String template) {
+  public Collection<AdapterDefinition> getAdapters(Id.Namespace namespace, final String template) {
     // Alternative is to construct the key using adapterType as well, when storing the the adapterSpec. That approach
     // will make lookup by adapterType simpler, but it will increase the complexity of lookup by namespace + adapterName
-    List<AdapterSpecification> adaptersByType = Lists.newArrayList();
-    Collection<AdapterSpecification> adapters = store.getAllAdapters(namespace);
-    for (AdapterSpecification adapterSpec : adapters) {
+    List<AdapterDefinition> adaptersByType = Lists.newArrayList();
+    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespace);
+    for (AdapterDefinition adapterSpec : adapters) {
       if (adapterSpec.getTemplate().equals(template)) {
         adaptersByType.add(adapterSpec);
       }
@@ -342,7 +342,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already stopped.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
 
     LOG.info("Received request to stop Adapter {} in namespace {}", adapterName, namespace.getId());
     ProgramType programType = adapterSpec.getProgram().getType();
@@ -376,7 +376,7 @@ public class AdapterService extends AbstractIdleService {
       throw new InvalidAdapterOperationException("Adapter is already started.");
     }
 
-    AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
 
     ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
@@ -433,20 +433,19 @@ public class AdapterService extends AbstractIdleService {
     return getProgramId(namespace, getAdapter(namespace, adapterName));
   }
 
-  private Id.Program getProgramId(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException {
+  private Id.Program getProgramId(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException {
     Id.Application appId = Id.Application.from(namespace, adapterSpec.getTemplate());
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
-                           adapterSpec.getProgram().getType(), adapterSpec.getProgram().getId());
+    return adapterSpec.getProgram();
   }
 
-  private void startWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+  private void startWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
-    ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
+    ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpecification();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(
                          ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
@@ -456,10 +455,10 @@ public class AdapterService extends AbstractIdleService {
     store.addSchedule(workflowId, scheduleSpec);
   }
 
-  private void stopWorkflowAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec)
+  private void stopWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
-    String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
+    String scheduleName = adapterSpec.getScheduleSpecification().getSchedule().getName();
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
       //TODO: Scheduler API should also manage the MDS.
@@ -479,7 +478,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  private void startWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+  private void startWorkerAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException,
     IOException {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
@@ -536,7 +535,7 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
-  private void stopWorkerAdapter(Id.Namespace namespace, AdapterSpecification adapterSpec) throws NotFoundException,
+  private void stopWorkerAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException,
     ExecutionException, InterruptedException {
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
@@ -550,12 +549,12 @@ public class AdapterService extends AbstractIdleService {
 
   // deploys an adapter. This will call configureAdapter() on the adapter's template. It may create
   // datasets and streams. At the end it will write to the store with the adapter spec.
-  private AdapterSpecification deployAdapter(Id.Namespace namespace, String adapterName,
+  private AdapterDefinition deployAdapter(Id.Namespace namespace, String adapterName,
                                              ApplicationTemplateInfo applicationTemplateInfo,
                                              ApplicationSpecification templateSpec,
                                              AdapterConfig adapterConfig) throws IllegalArgumentException {
 
-    Manager<AdapterDeploymentInfo, AdapterSpecification> manager = adapterManagerFactory.create(
+    Manager<AdapterDeploymentInfo, AdapterDefinition> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
         @Override
         public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {

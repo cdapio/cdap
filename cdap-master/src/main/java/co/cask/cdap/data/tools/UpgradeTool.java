@@ -70,7 +70,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.base.Throwables;
@@ -478,11 +478,11 @@ public class UpgradeTool {
     List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       String namespace = namespaceMeta.getName();
-      Collection<AdapterSpecification> adapters = adapterService.getAdapters(Id.Namespace
+      Collection<AdapterDefinition> adapters = adapterService.getAdapters(Id.Namespace
                                                                                .from(namespace));
       Id.Program program = Id.Program.from(namespace, "stream-conversion", ProgramType.WORKFLOW,
                                            "StreamConversionWorkflow");
-      for (AdapterSpecification adapter : adapters) {
+      for (AdapterDefinition adapter : adapters) {
         TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(
           program, SchedulableProgramType.WORKFLOW, adapter.getName() + "StreamConversionWorkflow"));
         if (datasetBasedTimeScheduleStore.removeTrigger(triggerKey)) {

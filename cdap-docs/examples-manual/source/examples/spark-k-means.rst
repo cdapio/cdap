@@ -213,6 +213,6 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow SparkKMeans.CentersService``
+      - ``$ ./bin/cdap-cli.sh stop service SparkKMeans.CentersService``
     * - On Windows:
-      - ``> bin\cdap-cli.bat start flow SparkKMeans.CentersService``    
+      - ``> bin\cdap-cli.bat stop service SparkKMeans.CentersService``    

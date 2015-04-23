@@ -18,18 +18,18 @@ package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for verifying an adapter specification.
  */
-public class AdapterVerificationStage extends AbstractStage<AdapterSpecification> {
+public class AdapterVerificationStage extends AbstractStage<AdapterDefinition> {
   private final ApplicationSpecification templateSpec;
 
   public AdapterVerificationStage(ApplicationSpecification templateSpec) {
-    super(TypeToken.of(AdapterSpecification.class));
+    super(TypeToken.of(AdapterDefinition.class));
     this.templateSpec = templateSpec;
   }
 
@@ -38,15 +38,15 @@ public class AdapterVerificationStage extends AbstractStage<AdapterSpecification
    * Receives an input containing adapter specification and location
    * and verifies both.
    *
-   * @param input An instance of {@link AdapterSpecification}
+   * @param input An instance of {@link AdapterDefinition}
    */
   @Override
-  public void process(AdapterSpecification input) throws Exception {
+  public void process(AdapterDefinition input) throws Exception {
     Preconditions.checkNotNull(input);
 
     // if this adapter uses a workflow, a schedule should be set
     if (templateSpec.getWorkflows().size() == 1) {
-      if (input.getScheduleSpec() == null) {
+      if (input.getScheduleSpecification() == null) {
         throw new IllegalArgumentException("A schedule must be set for workflow adapters");
       }
     }

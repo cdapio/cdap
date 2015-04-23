@@ -29,7 +29,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
-import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.read.KafkaLogReader;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
@@ -97,7 +97,7 @@ public class TestKafkaLogging extends KafkaTestBase {
     // Check with null runId and null instanceId
     LoggingContext loggingContext = new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "",
                                                               "RUN1", "INSTANCE1");
-    DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
+    KafkaLogReader logReader = injector.getInstance(KafkaLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
   }
@@ -105,7 +105,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   @Test
   public void testGetPrev() throws Exception {
     LoggingContext loggingContext = new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
-    DistributedLogReader logReader = injector.getInstance(DistributedLogReader.class);
+    KafkaLogReader logReader = injector.getInstance(KafkaLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
   }

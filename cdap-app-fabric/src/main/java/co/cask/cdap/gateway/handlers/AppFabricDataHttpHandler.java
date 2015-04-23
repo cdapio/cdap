@@ -73,6 +73,6 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace '%s' not found.", namespace));
       return;
     }
-    responder.sendJson(HttpResponseStatus.OK, specs);
+    responder.sendJson(HttpResponseStatus.OK, result);
   }
 }

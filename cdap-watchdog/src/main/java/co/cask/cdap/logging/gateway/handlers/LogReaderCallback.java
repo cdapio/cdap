@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Callback to handle log events from LogReader.
@@ -37,6 +38,7 @@ class LogReaderCallback implements Callback {
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
+  private final AtomicInteger count = new AtomicInteger();
 
   LogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
     this.logResults = Lists.newArrayList();
@@ -63,6 +65,12 @@ class LogReaderCallback implements Callback {
     log = escape ? StringEscapeUtils.escapeHtml(log) : log;
 
     logResults.add(new FormattedLogEvent(log, event.getOffset()));
+    count.incrementAndGet();
+  }
+
+  @Override
+  public int getCount() {
+    return count.get();
   }
 
   @Override

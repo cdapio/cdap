@@ -30,7 +30,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +58,7 @@ public class TwitterStreamSourceTest {
       }
 
       @Override
-      public void addProperties(List<Property> properties) {
+      public void addProperties(Collection<Property> properties) {
         // No-op
       }
 

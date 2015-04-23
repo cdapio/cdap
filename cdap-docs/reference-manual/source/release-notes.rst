@@ -30,6 +30,11 @@ Cask Data Application Platform Release Notes
 General
 -------
 
+- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
+  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
+  are no longer supported as of Release 3.0.
+
+
 New Features
 ------------
 
@@ -38,6 +43,21 @@ Improvement
 
 API Changes
 -----------
+
+- The endpoint (``POST '<base-url>/metrics/search?target=childContext[&context=<context>]'``)
+  that searched for the available contexts of metrics has been deprecated, pending removal
+  in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
+  :ref:`replacement endpoint <http-restful-api-metrics-search-for-contexts>` is available.
+
+- The endpoint (``POST '<base-url>/metrics/search?target=metric&context=<context>'``)
+  that searched for metrics in a specified context has been deprecated, pending removal
+  in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
+  :ref:`replacement endpoint <http-restful-api-metrics-search-for-metrics>` is available.
+
+- The endpoint (``POST '<base-url>/metrics/query?context=<context>[&groupBy=<tags>]&metric=<metric>&<time-range>'``)
+  that queried for a metric has been deprecated, pending removal
+  in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
+  :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
 
 .. _known-issues-300:
 

@@ -2,7 +2,7 @@
 <div class="row">
   <div class="col-sm-6">
     <h2>
-      <span ng-bind="$state.params.streamId | caskCapitalizeFilter"></span>
+      <span ng-bind="$state.params.streamId"></span>
     </h2>
     <div class="type-block">
       <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" /><small> Type: Stream </small>
@@ -15,6 +15,11 @@
         Action <span class="caret"></span>
       </button>
       <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="" ng-click="sendEvents()">
+            Send Events
+          </a>
+        </li>
         <li>
           <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $state.params.namespace, streamid: $state.params.streamId})">Edit Properties</a>
         </li>
@@ -40,5 +45,5 @@
  -->
 <my-tabs
   data-tabs-partial-path="/assets/features/streams/templates/tabs/"
-  data-tabs-list="['Status', 'Explore']">
+  data-tabs-list="['Status', 'Explore', 'Metadata']">
 </my-tabs>

@@ -29,6 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -37,7 +38,7 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -53,6 +54,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AdapterService life cycle tests.
@@ -107,7 +110,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
     // Create an adapter to deploy template application.
     adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
-    AdapterSpecification adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
+    AdapterDefinition adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(adapterSpec);
 
     // We should not be able to delete the application since we have created an adapter.
@@ -147,8 +150,8 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
   @Test
   public void testWorkerAdapter() throws Exception {
-    String adapter1 = "myWorkerAdapter";
-    String adapter2 = "newAdapter";
+    final String adapter1 = "myWorkerAdapter";
+    final String adapter2 = "newAdapter";
     DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
     DummyWorkerTemplate.Config config2 = new DummyWorkerTemplate.Config(3);
     AdapterConfig adapterConfig1 = new AdapterConfig("desc1", DummyWorkerTemplate.NAME, GSON.toJsonTree(config1));
@@ -185,14 +188,23 @@ public class AdapterServiceTest extends AppFabricTestBase {
     Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter1));
     Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapter2));
 
-    runRecords = adapterService.getRuns(NAMESPACE, adapter2, ProgramRunStatus.ALL,
-                                        0, Long.MAX_VALUE, Integer.MAX_VALUE);
-    Assert.assertTrue(runRecords.size() == 1);
-    runRecord = Iterables.getFirst(runRecords, null);
-    Assert.assertEquals(ProgramRunStatus.KILLED, runRecord.getStatus());
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        List<RunRecord> runs = adapterService.getRuns(NAMESPACE, adapter1, ProgramRunStatus.KILLED,
+                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE);
+        return runs.size();
+      }
+    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
 
-    stopRecord = adapterService.getRun(NAMESPACE, adapter2, runRecord.getPid());
-    Assert.assertEquals(runRecord, stopRecord);
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        List<RunRecord> runs = adapterService.getRuns(NAMESPACE, adapter2, ProgramRunStatus.KILLED,
+                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE);
+        return runs.size();
+      }
+    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
 
     // Delete Adapter
     adapterService.removeAdapter(NAMESPACE, adapter1);
@@ -233,14 +245,14 @@ public class AdapterServiceTest extends AppFabricTestBase {
       // expected
     }
 
-    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
+    AdapterDefinition actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     assertDummyConfigEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
+    Collection<AdapterDefinition> adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
-    AdapterSpecification actual = adapters.iterator().next();
+    AdapterDefinition actual = adapters.iterator().next();
     assertDummyConfigEquals(adapterConfig, actual);
 
     // adapter should be stopped
@@ -291,7 +303,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
     Assert.assertTrue(datasetExists(Id.DatasetInstance.from(NAMESPACE, tableName)));
   }
 
-  private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
+  private void assertDummyConfigEquals(AdapterConfig expected, AdapterDefinition actual) {
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
     Assert.assertEquals(expected.getConfig(), actual.getConfig());
