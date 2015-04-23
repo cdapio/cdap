@@ -43,7 +43,7 @@ function extractConfig(param) {
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      log.info('Using development configuration for' + '"' + param + '"');
+      log.info('Using development configuration for "' + param + '"');
       cache[param] = require('./development/'+param+'.json');
     }
 

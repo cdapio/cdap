@@ -1,0 +1,22 @@
+<div class="row" ng-controller="WidgetColCtrl">
+  <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-6': colWidth.oneThird }"
+       ng-repeat="column in currentBoard.columns"
+       ng-model="column">
+
+    <div class="panel"
+      ng-class="wdgt.getClassName()"
+      ng-repeat="wdgt in column">
+
+      <div class="panel-heading">
+        <div class="btn-group btn-group-xs" role="toolbar" no-drag></div>
+
+        <span ng-bind="wdgt.title | myEllipsis: 25 " tooltip="{{wdgt.title}}"></span>
+      </div>
+
+      <div class="panel-body"
+        ng-include="wdgt.getPartial()"></div>
+
+    </div>
+  </div>
+
+</div>

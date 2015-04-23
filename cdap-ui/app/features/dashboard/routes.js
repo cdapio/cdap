@@ -31,13 +31,13 @@ angular.module(PKG.name+'.feature.dashboard')
       })
         .state('dashboard.standard.cdap', {
           url: '/cdap',
-          templateUrl: path + 'tab/charts.html',
+          templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
           controller: 'Op28CdapCtrl'
         })
 
         .state('dashboard.standard.system', {
           url: '/system',
-          templateUrl: path + 'tab/charts.html',
+          templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
           controller: 'Op28SystemCtrl'
         })
 

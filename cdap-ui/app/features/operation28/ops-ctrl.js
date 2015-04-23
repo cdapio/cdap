@@ -6,65 +6,35 @@ angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
 
   .controller('Op28CdapCtrl',
-  function ($scope, $state, op28helper, MyDataSource) {
+  function ($scope, op28helper, Widget) {
+    var panels = [
+   // Format:
+   // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
+      ['Collect', '', ['system.collect.events'],           'c3-line'],
+      ['Process', '', ['system.process.events.processed'], 'c3-line'],
+      ['Store',   '', ['system.dataset.store.bytes'],      'c3-line'],
+      ['Query',   '', ['system.requests.count'],           'c3-line']
+    ];
 
-    var dataSrc = new MyDataSource($scope);
-    // waiting for system.request.received to be changed to query requests
-    $scope.panels = [
-      ['Collect', 'EPS',    'system.collect.events'],
-      ['Process', 'events', 'system.process.events.processed'],
-      ['Store',   '/S',     'system.dataset.store.bytes', true],
-      ['Query',   'QPS',    'system.requests.count']
-    ].map(op28helper.panelMap);
-
-    angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart;
-      console.log('c', c.metric);
-      dataSrc.poll({
-          _cdapPath: '/metrics/query?metric=' +
-              c.metric + '&start=now-60s&end=now',
-          interval: 1000,
-          method: 'POST'
-        },
-        op28helper.pollCb.bind(c)
-      );
-    });
-
+    $scope.currentBoard = op28helper.createBoardFromPanels(panels);
   })
 
-
 /* ------------------------------------------------------ */
-
 
   .controller('Op28SystemCtrl',
-  function ($scope, op28helper, MyDataSource) {
+  function ($scope, op28helper) {
+    // Same format as above
+    var panels = [
+      ['AppFabric - Containers', '', ['system.resources.used.containers'], 'c3-line'],
+      ['Processors - Cores',     '', ['system.resources.used.vcores'],     'c3-line'],
+      ['Memory',                 '', ['system.resources.used.memory'],     'c3-line'],
+      ['DataFabric',             '', ['system.resources.used.storage'],    'c3-line']
+    ];
 
-    var dataSrc = new MyDataSource($scope);
-
-    $scope.panels = [
-      ['AppFabric',  'Containers', 'system.resources.used.containers'],
-      ['Processors', 'Cores',      'system.resources.used.vcores'],
-      ['Memory',     '',           'system.resources.used.memory', true],
-      ['DataFabric', '',           'system.resources.used.storage', true]
-    ].map(op28helper.panelMap);
-
-    angular.forEach($scope.panels, function (panel) {
-      var c = panel.chart;
-      dataSrc.poll({
-          _cdapPath: '/metrics/query?metric=' +
-                      c.metric + '&start=now-60s&end=now',
-          interval: 60 * 1000,
-          method: 'POST'
-        },
-        op28helper.pollCb.bind(c)
-      );
-    });
-
+    $scope.currentBoard = op28helper.createBoardFromPanels(panels);
   })
 
-
 /* ------------------------------------------------------ */
-
 
   .controller('Op28AppsCtrl',
   function ($scope, $state, myHelpers, MyDataSource) {
@@ -114,54 +84,43 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-
 /* ------------------------------------------------------ */
 
-
-  .factory('op28helper', function (myHelpers) {
-
-    function panelMap (d) {
-      return {
-        title: d[0],
-        unit: d[1],
-        useByteFilter: d[3],
-        chart: {
-          metric: d[2],
-          context: 'system',
-          history: null,
-          stream: null,
-          lastValue: 0
-        }
-      };
+  .factory('op28helper', function (Widget) {
+    function createWidget(title, context, metricNames, type) {
+      return new Widget({title: title, type: type, isLive: true,
+        metric: {
+          context: context,
+          names: metricNames,
+          startTime: 'now-3600s',
+          endTime: 'now',
+          resolution: '1m'
+        },
+        interval: 15000
+      })
     }
 
-
-    function pollCb (res) {
-      var result = myHelpers.objectQuery(res, 'series', 0, 'data');
-      if (!result) {
-        return;
-      }
-      var v = result.map(function (o) {
-        return {
-          time: o.time,
-          y: o.value
-        };
+    function createBoardFromPanels(panels) {
+      var widgets = [];
+      panels.forEach(function(panel) {
+        widgets.push(createWidget(panel[0], panel[1], panel[2], panel[3]));
       });
-      if(this.history) {
-        this.stream = v.slice(-1); // because poll is once per second
+      // Note: It doesn't seem like this matters (as long as its high enough)
+      var widgetsPerRow = 2;
+      var columns = [];
+      for (var i = 0; i < widgetsPerRow; i++) {
+        columns.push([]);
       }
-      this.history = [{
-        label: this.metric,
-        values: v
-      }];
-      this.lastValue = v.pop().value;
+      for (var i = 0; i < widgets.length; i++) {
+        columns[i % widgetsPerRow].push(widgets[i]);
+      }
+      // Note: title is not currently used in the view
+      return {title : "System metrics", columns : columns};
     }
 
     return {
-      panelMap: panelMap,
-      pollCb: pollCb
+      createBoardFromPanels: createBoardFromPanels
     };
-
   })
 
   ;
