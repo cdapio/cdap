@@ -319,6 +319,8 @@ public class AdapterService extends AbstractIdleService {
     throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    // TODO: The logic is not transactional and there can be race that one thread is creating and the other
+    // thread is deleting.
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     Id.Application applicationId = Id.Application.from(namespace, adapterSpec.getTemplate());
     if (adapterStatus != AdapterStatus.STOPPED) {

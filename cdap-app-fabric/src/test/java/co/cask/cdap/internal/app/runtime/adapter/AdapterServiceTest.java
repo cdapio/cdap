@@ -89,6 +89,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
     AdapterConfig adapterConfig = new AdapterConfig("desc", ExtendedBatchTemplate.class.getSimpleName(),
                                                     GSON.toJsonTree(config));
     adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap", adapterConfig);
+    adapterService.removeAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap");
   }
 
   @Test(expected = RuntimeException.class)
