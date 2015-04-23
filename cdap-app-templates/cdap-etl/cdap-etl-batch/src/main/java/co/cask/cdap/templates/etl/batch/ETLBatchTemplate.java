@@ -18,8 +18,6 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
@@ -95,23 +93,9 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    Properties prop = new Properties();
-    InputStream input = getClass().getResourceAsStream("/etl.properties");
-    try {
-      prop.load(input);
-      configurer.setName(prop.getProperty("etl.batch.plugin.name"));
-      configurer.setDescription("Batch Extract-Transform-Load (ETL) Adapter");
-      configurer.addMapReduce(new ETLMapReduce());
-      configurer.addWorkflow(new ETLWorkflow());
-    } catch (IOException e) {
-      LOG.warn("ETL properties not read: {}", e.getMessage(), e);
-    } finally {
-      try {
-        input.close();
-      } catch (Exception e) {
-        LOG.warn("ETL properties not read: {}", e.getMessage(), e);
-      }
-    }
-
+    configurer.setName(getAppName("etl.batch.plugin.name"));
+    configurer.setDescription("Batch Extract-Transform-Load (ETL) Adapter");
+    configurer.addMapReduce(new ETLMapReduce());
+    configurer.addWorkflow(new ETLWorkflow());
   }
 }

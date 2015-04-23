@@ -34,7 +34,6 @@ import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,22 +77,9 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    Properties prop = new Properties();
-    InputStream input = getClass().getResourceAsStream("/etl.properties");
-    try {
-      prop.load(input);
-      configurer.setName(prop.getProperty("etl.realtime.plugin.name"));
-      configurer.setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
-      configurer.addWorker(new ETLWorker());
-      configurer.createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
-    } catch (IOException e) {
-      LOG.warn("ETL properties not read: {}", e.getMessage(), e);
-    } finally {
-      try {
-        input.close();
-      } catch (Exception e) {
-        LOG.warn("ETL properties not read: {}", e.getMessage(), e);
-      }
-    }
+    configurer.setName(getAppName("etl.realtime.plugin.name"));
+    configurer.setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
+    configurer.addWorker(new ETLWorker());
+    configurer.createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
   }
 }

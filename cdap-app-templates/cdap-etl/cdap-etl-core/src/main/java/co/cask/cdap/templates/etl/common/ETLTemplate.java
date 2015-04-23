@@ -40,12 +40,15 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Base ETL Template.
@@ -161,6 +164,25 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     Resources resources = etlConfig.getResources();
     if (resources != null) {
       configurer.setResources(resources);
+    }
+  }
+
+  protected String getAppName(String key) {
+    Properties prop = new Properties();
+    InputStream input = getClass().getResourceAsStream("/etl.properties");
+    try {
+      prop.load(input);
+      return prop.getProperty(key);
+    } catch (IOException e) {
+      LOG.warn("ETL properties not read: {}", e.getMessage(), e);
+      throw Throwables.propagate(e);
+    } finally {
+      try {
+        input.close();
+      } catch (Exception e) {
+        LOG.warn("ETL properties not read: {}", e.getMessage(), e);
+        throw Throwables.propagate(e);
+      }
     }
   }
 
