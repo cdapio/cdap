@@ -107,8 +107,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
         }
       });
     this.txContext = new TransactionContext(txClient);
-    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
-                                                           getProgram().getId(),
+    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(), getOwners(),
                                                            txContext, dsFramework,
                                                            program.getClassLoader(), null,
                                                            runtimeArguments.asMap()) {

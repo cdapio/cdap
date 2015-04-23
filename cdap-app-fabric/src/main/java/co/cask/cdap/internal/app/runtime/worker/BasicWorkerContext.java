@@ -170,7 +170,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), program.getId(),
+      runnable.run(new DynamicDatasetContext(Id.Namespace.from(program.getNamespaceId()), getOwners(),
                                              context, datasetFramework,
                                              getProgram().getClassLoader(), null, runtimeArgs) {
         @Override

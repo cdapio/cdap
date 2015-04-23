@@ -361,7 +361,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
-                                          @Nullable List<Id> owners) throws IOException {
+                                          @Nullable List<? extends Id> owners) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);

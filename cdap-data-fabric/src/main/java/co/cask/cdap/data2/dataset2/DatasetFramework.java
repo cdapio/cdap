@@ -203,7 +203,7 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                   @Nullable ClassLoader classLoader, @Nullable List<Id> owners)
+                                   @Nullable ClassLoader classLoader, @Nullable List<? extends Id> owners)
     throws DatasetManagementException, IOException;
 
   /**

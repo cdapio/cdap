@@ -83,7 +83,8 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName, @Nullable List<Id> owners) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName,
+                                 @Nullable List<? extends Id> owners) throws DatasetManagementException {
     Multimap<String, String> headers = HashMultimap.create();
     if (owners != null) {
       for (Id owner : owners) {
