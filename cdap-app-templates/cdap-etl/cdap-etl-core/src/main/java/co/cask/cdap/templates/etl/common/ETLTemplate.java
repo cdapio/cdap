@@ -71,10 +71,18 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     EndPointStage source = configurer.usePlugin(
       Constants.Source.PLUGINTYPE, sourceConfig.getName(), sourcePluginId,
       PluginProperties.builder().addAll(sourceConfig.getProperties()).build());
+    if (source == null) {
+      throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+                                                       Constants.Source.PLUGINTYPE, sourceConfig.getName()));
+    }
 
     EndPointStage sink = configurer.usePlugin(
       Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
       PluginProperties.builder().addAll(sinkConfig.getProperties()).build());
+    if (sink == null) {
+      throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+                                                       Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
+    }
 
     // Store transform id list to be serialized and passed to the driver program
     List<String> transformIds = Lists.newArrayListWithCapacity(transformConfigs.size());
@@ -88,6 +96,11 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
       TransformStage transformObj = configurer.usePlugin(
         Constants.Transform.PLUGINTYPE, transformConfig.getName(), transformId,
         PluginProperties.builder().addAll(transformConfig.getProperties()).build());
+      if (transformObj == null) {
+        throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+                                                         Constants.Transform.PLUGINTYPE, transformConfig.getName()));
+      }
+
       transformIds.add(transformId);
       transforms.add(transformObj);
     }

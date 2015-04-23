@@ -21,6 +21,7 @@ import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.common.NoopMetrics;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -33,6 +34,10 @@ public class MockStageContext implements StageContext {
 
   public MockStageContext(Map<String, String> args) {
     this.pluginProperties = PluginProperties.builder().addAll(args).build();
+  }
+
+  public MockStageContext() {
+    this(Maps.<String, String>newHashMap());
   }
 
   @Override
