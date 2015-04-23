@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
+import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.templates.AdapterDefinition;
 
 /**
