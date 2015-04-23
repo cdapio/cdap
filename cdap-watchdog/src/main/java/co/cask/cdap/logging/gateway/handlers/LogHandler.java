@@ -25,7 +25,9 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.FilterParser;
+import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -160,8 +162,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
-      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
-                           maxEvents, filter, logCallback);
+      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      ReadRange readRange = ReadRange.createFromRange(logOffset);
+      logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -210,7 +213,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
       Filter filter = FilterParser.parse(filterStr);
 
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      ReadRange readRange = ReadRange.createToRange(logOffset);
+      logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -266,7 +271,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogNext(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      ReadRange readRange = ReadRange.createFromRange(logOffset);
+      logReader.getLogNext(loggingContext, readRange,
                            maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -289,7 +296,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
-      logReader.getLogPrev(loggingContext, FormattedLogEvent.parseLogOffset(fromOffsetStr),
+      LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
+      ReadRange readRange = ReadRange.createToRange(logOffset);
+      logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
