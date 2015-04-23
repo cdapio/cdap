@@ -32,6 +32,30 @@
           </tbody>
       </table>
   </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h3>Programs</h3>
+
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': apps.programs.length > 0}">
+            <th data-predicate="name">Name</th>
+            <th data-predicate="type">Type</th>
+            <th data-predicate="description">Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="program in apps.programs | orderBy:sortable.predicate:sortable.reverse">
+            <td>{{ ::program.name }}</td>
+            <td>{{ ::program.type }}</td>
+            <td>{{ ::program.description }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <div ui-view></div>

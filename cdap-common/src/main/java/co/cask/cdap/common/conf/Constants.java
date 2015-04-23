@@ -250,7 +250,7 @@ public final class Constants {
   }
 
   /**
-   * Stream configurations.
+   * Stream configurations and constants.
    */
   public static final class Stream {
     /* Begin CConfiguration keys */
@@ -287,6 +287,7 @@ public final class Constants {
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
     public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
+    public static final String URL_PREFIX = "stream://";
 
     /**
      * Contains HTTP headers used by Stream handler.

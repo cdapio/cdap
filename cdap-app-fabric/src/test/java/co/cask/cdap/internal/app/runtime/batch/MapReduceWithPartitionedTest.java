@@ -116,8 +116,9 @@ public class MapReduceWithPartitionedTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, null, dsFramework,
-                                                  MapReduceWithPartitionedTest.class.getClassLoader(), null);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceWithPartitionedTest.class.getClassLoader(),
+                                                  null, null);
 
     txService.startAndWait();
   }
