@@ -1,0 +1,30 @@
+<br/>
+<h3>Editing {{transform.name}} Properties</h3>
+<div class="row">
+  <div class="col-xs-6" ng-init="isSaved=false">
+    <div class="text-success" ng-if="isSaved">
+      Saved!
+    </div>
+    <form class="form-horizontal">
+      <div ng-repeat="(name, value) in transform.properties track by $index">
+        <div class="form-group">
+          <label class="control-label col-sm-2">{{ name | caskCapitalizeFilter}}</label>
+          <div class="col-sm-10">
+            <input type="text"
+                    class="form-control"
+                    ng-model="transform.properties[name]"
+                    ng-change="$parent.isSaved=false"
+                    />
+          </div>
+        </div>
+      </div>
+    </form>
+    <div class="btn-group pull-right">
+      <button type="button" class="btn btn-success" ng-click="isSaved = true;">Save</button>
+      <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
+    </div>
+  </div>
+  <div class="col-xs-6">
+
+  </div>
+</div>
