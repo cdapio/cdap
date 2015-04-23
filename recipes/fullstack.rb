@@ -19,6 +19,8 @@
 
 include_recipe 'cdap::default'
 
-%w(cli gateway kafka master web_app).each do |recipe|
+ui_recipe = node['cdap']['version'].to_i < 3 ? 'web_app' : 'ui'
+
+%W(cli gateway kafka master #{ui_recipe}).each do |recipe|
   include_recipe "cdap::#{recipe}"
 end
