@@ -119,6 +119,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     collector.increment("areads", 3);
     collector.increment("awrites", 4);
 
+    collector = collectionService.getCollector(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
+                                                                       "run1", "task1", "adapter2"));
+
+    collector.increment("workerreads", 5);
+    collector.increment("workerwrites", 6);
+
     // also: user metrics
     Metrics userMetrics = new ProgramUserMetrics(
       collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
@@ -163,7 +169,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
                        getSearchResultExpected("app", "WordCount1"));
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace",
-                       getSearchResultExpected("adapter", "adapter1", "app", "WCount1"));
+                       getSearchResultExpected("adapter", "adapter1", "adapter", "adapter2", "app", "WCount1"));
+
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace",
+                               getSearchResultExpected("adapter", "adapter1", "adapter", "adapter2", "app", "WCount1"));
 
     // WordCount should be found in myspace, not in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WordCount1",
@@ -176,7 +185,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
                        getSearchResultExpected("flow", "WCounter",
                                                "flow", "WordCounter",
-                                               "mapreduce", "ClassicWordCount"
+                                               "mapreduce", "ClassicWordCount",
+                                               "worker", "WorkerWordCount"
                        ));
 
     // No more tags when you specify namespace and adapter
@@ -203,10 +213,18 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                  "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m&tag=instance:task1",
                                getSearchResultExpected());
 
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=worker:WorkerWordCount",
+                               getSearchResultExpected("run", "run1"));
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
+                                 "&tag=worker:WorkerWordCount&tag=run:run1",
+                               getSearchResultExpected("instance", "task1"));
+
     // verify "*"
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
                                getSearchResultExpected("adapter", "adapter1",
+                                                       "adapter", "adapter2",
                                                        "app", "WordCount1",
                                                        "app", "WCount1",
                                                        "app", DOT_APP,
@@ -216,7 +234,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("flow", "WCounter",
                                                        "flow", "WordCounter",
                                                        "flow", DOT_FLOW,
-                                                       "mapreduce", "ClassicWordCount"));
+                                                       "mapreduce", "ClassicWordCount",
+                                                       "worker", "WorkerWordCount"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=flow:*",
                                getSearchResultExpected("run", "run1",
@@ -248,27 +267,30 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchContext() throws Exception {
     // empty context
     verifySearchResultContains("/v3/metrics/search?target=childContext",
-                               ImmutableList.<String>of("namespace." + DOT_NAMESPACE_ESCAPED,
-                                                        "namespace.myspace", "namespace.yourspace"));
+                               ImmutableList.of("namespace." + DOT_NAMESPACE_ESCAPED,
+                                                "namespace.myspace", "namespace.yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace",
-                       ImmutableList.<String>of("namespace.myspace.app.WordCount1"));
+                       ImmutableList.of("namespace.myspace.app.WordCount1"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace",
-                       ImmutableList.<String>of("namespace.yourspace.adapter.adapter1",
-                                                "namespace.yourspace.app.WCount1"));
+                       ImmutableList.of("namespace.yourspace.adapter.adapter1",
+                                        "namespace.yourspace.app.WCount1",
+                                        "namespace.yourspace.adapter.adapter2",
+                                        "namespace.yourspace.app.WCount1"));
 
     // WordCount should be found in myspace, not in yourspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace.app.WordCount1",
-                       ImmutableList.<String>of("namespace.myspace.app.WordCount1.flow.WordCounter"));
+                       ImmutableList.of("namespace.myspace.app.WordCount1.flow.WordCounter"));
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WordCount1",
                        ImmutableList.<String>of());
 
     // WCount should be found in yourspace, not in myspace
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1",
-                       ImmutableList.<String>of("namespace.yourspace.app.WCount1.flow.WCounter",
-                                                "namespace.yourspace.app.WCount1.flow.WordCounter",
-                                                "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount"));
+                       ImmutableList.of("namespace.yourspace.app.WCount1.flow.WCounter",
+                                        "namespace.yourspace.app.WCount1.flow.WordCounter",
+                                        "namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount",
+                                        "namespace.yourspace.app.WCount1.worker.WorkerWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.myspace.app.WCount1",
                        ImmutableList.<String>of());
@@ -280,20 +302,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // verify other metrics for WCount app
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
                          ".mapreduce.ClassicWordCount",
-                       ImmutableList.<String>of("namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.run.run1"));
+                       ImmutableList.of("namespace.yourspace.app.WCount1" +
+                                          ".mapreduce.ClassicWordCount.run.run1"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
                          ".mapreduce.ClassicWordCount.run.run1",
-                       ImmutableList.<String>of("namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.run.run1.tasktype.m",
-                                                "namespace.yourspace.app.WCount1" +
-                                                  ".mapreduce.ClassicWordCount.run.run1.tasktype.r"));
+                       ImmutableList.of("namespace.yourspace.app.WCount1" +
+                                          ".mapreduce.ClassicWordCount.run.run1.tasktype.m",
+                                        "namespace.yourspace.app.WCount1" +
+                                          ".mapreduce.ClassicWordCount.run.run1.tasktype.r"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
                          ".mapreduce.ClassicWordCount.run.run1.tasktype.m",
-                       ImmutableList.<String>of("namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount" +
-                                                  ".run.run1.tasktype.m.instance.task1"));
+                       ImmutableList.of("namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount" +
+                                          ".run.run1.tasktype.m.instance.task1"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.WCount1" +
                          ".mapreduce.ClassicWordCount.run.run1.tasktype.m.instance.task1",
@@ -301,17 +323,18 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // verify "*"
     verifySearchResultContains("/v3/metrics/search?target=childContext&context=namespace.*",
-                               ImmutableList.<String>of("namespace.*.app.WordCount1",
-                                                        "namespace.*.app.WCount1"));
+                               ImmutableList.of("namespace.*.app.WordCount1",
+                                                "namespace.*.app.WCount1"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.*.app.*",
-                       ImmutableList.<String>of("namespace.*.app.*.flow.WCounter",
-                                                "namespace.*.app.*.flow.WordCounter",
-                                                "namespace.*.app.*.flow." + DOT_FLOW_ESCAPED,
-                                                "namespace.*.app.*.mapreduce.ClassicWordCount"));
+                       ImmutableList.of("namespace.*.app.*.flow.WCounter",
+                                        "namespace.*.app.*.flow.WordCounter",
+                                        "namespace.*.app.*.flow." + DOT_FLOW_ESCAPED,
+                                        "namespace.*.app.*.mapreduce.ClassicWordCount",
+                                        "namespace.*.app.*.worker.WorkerWordCount"));
 
     verifySearchResult("/v3/metrics/search?target=childContext&context=namespace.yourspace.app.*.flow.WCounter",
-                       ImmutableList.<String>of("namespace.yourspace.app.*.flow.WCounter.run.run1"));
+                       ImmutableList.of("namespace.yourspace.app.*.flow.WCounter.run.run1"));
 
     // verify dots more
     String parts[] = new String[] {
@@ -362,6 +385,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     verifyAggregateQueryResult(
       "/v3/metrics/query?context=namespace.yourspace.app.WCount1.mapreduce.ClassicWordCount" +
         "&metric=system.awrites&aggregate=true", 4);
+
+    // for adapters, the same metrics should be available at both, just adapter level as well as worker level
+    // adapter level
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=namespace.yourspace.adapter.adapter2&metric=system.workerreads&aggregate=true", 5);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=namespace.yourspace.adapter.adapter2&metric=system.workerwrites&aggregate=true", 6);
+    // worker level
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=namespace.yourspace.app.WCount1.worker.WorkerWordCount" +
+        "&metric=system.workerreads&aggregate=true", 5);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?context=namespace.yourspace.app.WCount1.worker.WorkerWordCount" +
+        "&metric=system.workerwrites&aggregate=true", 6);
 
 
     // aggregate result, in the wrong namespace
@@ -573,6 +610,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&mapreduce:ClassicWordCount" +
         "&metric=system.awrites&aggregate=true", 4);
 
+    // for adapters, the same metrics should be available at both, just adapter level as well as worker level
+    // adapter level
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&metric=system.workerreads&aggregate=true", 5);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:yourspace&tag=adapter:adapter2&metric=system.workerwrites&aggregate=true", 6);
+    // worker level
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&worker:WorkerWordCount" +
+        "&metric=system.workerreads&aggregate=true", 5);
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?tag=namespace:yourspace&tag=app:WCount1&worker:WorkerWordCount" +
+        "&metric=system.workerwrites&aggregate=true", 6);
+
     // aggregate result, in the wrong namespace
     verifyEmptyQueryResult(
       "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter") +
@@ -752,20 +803,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                "tag=" + Tag.DATASET + ":*&" +
                                "tag=" + Tag.RUN_ID + ":" + DOT_RUN + "&" +
                                "tag=" + Tag.FLOWLET + ":" + DOT_FLOWLET,
-                             ImmutableList.<String>of("system.dot.reads"));
+                             ImmutableList.of("system.dot.reads"));
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
                                "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
-                             ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
+                             ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
                                "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:collector",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+                             ImmutableList.of("system.aa", "system.ab", "system.zz"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
                                "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1" +
@@ -776,10 +827,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // metrics in yourspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1" +
                                "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
-                             ImmutableList.<String>of("system.reads"));
+                             ImmutableList.of("system.reads"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=adapter:adapter1",
-                             ImmutableList.<String>of("system.areads", "system.awrites"));
+                             ImmutableList.of("system.areads", "system.awrites"));
+
+    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=adapter:adapter2",
+                             ImmutableList.of("system.workerreads", "system.workerwrites"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +
@@ -789,12 +843,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // verify "*"
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
                                "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:*",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
                                "&tag=flow:*&tag=dataset:*&tag=run:run1",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
   // can remove this test after context (query-param) based searching is removed
@@ -809,20 +863,20 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                Tag.DATASET + ".*." +
                                Tag.RUN_ID + "." + DOT_RUN_ESCAPED + "." +
                                Tag.FLOWLET + "." + DOT_FLOWLET_ESCAPED,
-                             ImmutableList.<String>of("system.dot.reads"));
+                             ImmutableList.of("system.dot.reads"));
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                                ".flow.WordCounter.dataset.*.run.run1.flowlet.splitter",
-                             ImmutableList.<String>of("system.reads", "system.writes", "user.reads", "user.writes"));
+                             ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                                ".flow.WordCounter.dataset.*.run.run1.flowlet.collector",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.zz"));
+                             ImmutableList.of("system.aa", "system.ab", "system.zz"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                                ".flow.WordCounter.dataset.*.run.run1",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WordCount1." +
@@ -833,10 +887,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // metrics in yourspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.yourspace.app.WCount1" +
                                ".flow.WCounter.dataset.*.run.run1.flowlet.splitter",
-                             ImmutableList.<String>of("system.reads"));
+                             ImmutableList.of("system.reads"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.yourspace.adapter.adapter1",
-                             ImmutableList.<String>of("system.areads", "system.awrites"));
+                             ImmutableList.of("system.areads", "system.awrites"));
+
+    verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.yourspace.adapter.adapter2",
+                             ImmutableList.of("system.workerreads", "system.workerwrites"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WCount1" +
@@ -846,12 +903,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // verify "*"
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                                ".flow.WordCounter.dataset.*.run.run1.flowlet.*",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
     verifySearchMetricResult("/v3/metrics/search?target=metric&context=namespace.myspace.app.WordCount1" +
                                ".flow.*.dataset.*.run.run1",
-                             ImmutableList.<String>of("system.aa", "system.ab", "system.reads",
-                                                      "system.writes", "system.zz", "user.reads", "user.writes"));
+                             ImmutableList.of("system.aa", "system.ab", "system.reads",
+                                              "system.writes", "system.zz", "user.reads", "user.writes"));
   }
 
   /**
