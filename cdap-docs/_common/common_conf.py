@@ -36,7 +36,6 @@ from datetime import datetime
 
 def get_sdk_version():
     # Sets the Build Version
-    grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     short_version = None
     full_version = None
