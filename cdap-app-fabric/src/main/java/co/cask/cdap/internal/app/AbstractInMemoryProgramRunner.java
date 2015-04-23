@@ -66,7 +66,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
    * @param type Type of ProgramRunnerFactory
    */
   protected void startComponent(Program program, String name, int instances, RunId runId, ProgramOptions options,
-                              Table<String, Integer, ProgramController> components, ProgramRunnerFactory.Type type) {
+                                Table<String, Integer, ProgramController> components, ProgramRunnerFactory.Type type) {
     for (int instanceId = 0; instanceId < instances; instanceId++) {
       ProgramOptions componentOptions = createComponentOptions(name, instanceId, instances, runId, options);
       ProgramController controller = programRunnerFactory.create(type).run(program, componentOptions);
