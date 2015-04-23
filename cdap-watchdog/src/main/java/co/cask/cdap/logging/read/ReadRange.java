@@ -19,34 +19,47 @@ package co.cask.cdap.logging.read;
 import com.google.common.base.Objects;
 
 /**
- * Represents log offset containing Kafka offset and time of logging event.
+ * Boundary of a log read request.
  */
-public class LogOffset {
-  public static final long LATEST_KAFKA_OFFSET = -1;
-  public static final LogOffset LATEST_OFFSET = new LogOffset(-1, LATEST_KAFKA_OFFSET);
-  public static final long INVALID_KAFKA_OFFSET = -10000;
+public class ReadRange {
+  public static final ReadRange LATEST = new ReadRange(-1, Long.MAX_VALUE, LogOffset.LATEST_KAFKA_OFFSET);
 
+  private final long fromMillis;
+  private final long toMillis;
   private final long kafkaOffset;
-  private final long time;
 
-  public LogOffset(long kafkaOffset, long time) {
+  public ReadRange(long fromMillis, long toMillis, long kafkaOffset) {
+    this.fromMillis = fromMillis;
+    this.toMillis = toMillis;
     this.kafkaOffset = kafkaOffset;
-    this.time = time;
+  }
+
+  public long getFromMillis() {
+    return fromMillis;
+  }
+
+  public long getToMillis() {
+    return toMillis;
   }
 
   public long getKafkaOffset() {
     return kafkaOffset;
   }
 
-  public long getTime() {
-    return time;
+  public static ReadRange createFromRange(LogOffset logOffset) {
+    return new ReadRange(logOffset.getTime(), Long.MAX_VALUE, logOffset.getKafkaOffset());
+  }
+
+  public static ReadRange createToRange(LogOffset logOffset) {
+    return new ReadRange(-1, logOffset.getTime(), logOffset.getKafkaOffset());
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
+      .add("fromMillis", fromMillis)
+      .add("toMillis", toMillis)
       .add("kafkaOffset", kafkaOffset)
-      .add("time", time)
       .toString();
   }
 }
