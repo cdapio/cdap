@@ -51,10 +51,10 @@ import java.util.Map;
  *
  * <pre>
  * {@code
- *
- * class MyMapReduce implements MapReduce {
- *    public void beforeSubmit(MapReduceContext context) {
- *      context.setInput(new StreamBatchReadable("mystream"));
+ *    class MyMapReduce implements MapReduce {
+ *        public void beforeSubmit(MapReduceContext context) {
+ *          context.setInput(new StreamBatchReadable("mystream"));
+ *        }
  *    }
  * }
  * </pre>
