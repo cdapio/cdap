@@ -85,6 +85,7 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     chartConfig.size = $scope.options.size;
 
     var xTick = {};
+    xTick.count = $scope.options.xtickcount
     if ($scope.options.formatAsTimestamp) {
       var timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
@@ -97,6 +98,13 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     chartConfig.color = $scope.options.color;
     chartConfig.legend = $scope.options.legend;
     chartConfig.point = { show: false };
+    if($scope.options.subchart) {
+      chartConfig.subchart = $scope.options.subchart;
+    }
+    chartConfig.zoom = { enabled: true};
+    chartConfig.transition = {
+                        duration: 1000
+                    }
     $scope.me = c3.generate(chartConfig);
   }
 
@@ -107,7 +115,7 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
 ngC3.directive('c3Line', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'line', attr);
+      scope.initC3(elem, 'line', attr, {xtickcount: 5});
     }
   }, baseDirective);
 });
@@ -136,10 +144,18 @@ ngC3.directive('c3Donut', function () {
   }, baseDirective);
 });
 
+ngC3.directive('c3Scatter', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initC3(elem, 'scatter', attr, {xtickcount: 5});
+    }
+  }, baseDirective);
+});
+
 ngC3.directive('c3Spline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'spline', attr);
+      scope.initC3(elem, 'spline', attr, { xtickcount: 5});
     }
   }, baseDirective);
 });
@@ -147,7 +163,7 @@ ngC3.directive('c3Spline', function () {
 ngC3.directive('c3Step', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'step', attr);
+      scope.initC3(elem, 'step', attr, {xtickcount: 5});
     }
   }, baseDirective);
 });
@@ -155,7 +171,7 @@ ngC3.directive('c3Step', function () {
 ngC3.directive('c3Area', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'area', attr);
+      scope.initC3(elem, 'area', attr, {xtickcount: 5});
     }
   }, baseDirective);
 });
@@ -163,7 +179,7 @@ ngC3.directive('c3Area', function () {
 ngC3.directive('c3AreaStep', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'area-step', attr);
+      scope.initC3(elem, 'area-step', attr, {xtickcount: 5});
     }
   }, baseDirective);
 });
@@ -171,7 +187,15 @@ ngC3.directive('c3AreaStep', function () {
 ngC3.directive('c3AreaSpline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'area-spline', attr);
+      scope.initC3(elem, 'area-spline', attr, {xtickcount: 5} );
+    }
+  }, baseDirective);
+});
+
+ngC3.directive('c3AreaSplineStacked', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initC3(elem, 'area-spline', attr, {stack: true, xtickcount: 5});
     }
   }, baseDirective);
 });
