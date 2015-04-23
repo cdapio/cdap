@@ -642,10 +642,10 @@ multiple tags for grouping by providing a list, similar to a tag combination lis
    * - Tag List
      - Description
    * - ``groupBy=app``
-     - Retrieves the time series for each Application. 
-    * - ``groupBy=flowlet``
-     - Retrieves the time series for each Flowlet. 
-  * - ``groupBy=app&groupBy=flow``
+     - Retrieves the time series for each Application
+   * - ``groupBy=flowlet``
+     - Retrieves the time series for each Flowlet
+   * - ``groupBy=app&groupBy=flow``
      - Retrieves a time series for each App and Flow combination
 
 An example method::
