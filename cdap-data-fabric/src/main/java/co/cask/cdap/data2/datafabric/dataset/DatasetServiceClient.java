@@ -196,8 +196,8 @@ class DatasetServiceClient {
     throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                           ImmutableMultimap.of("X-Class-Name", className),
-                           Locations.newInputSupplier(jarLocation));
+                                      ImmutableMultimap.of("X-Class-Name", className),
+                                      Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
