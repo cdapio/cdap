@@ -11,9 +11,9 @@ angular.module(PKG.name + '.feature.spark')
       }
     }
     $scope.data = {
-      running: 20,
-      failed: 50,
-      waiting: 30
+      running: 33.3,
+      failed: 33.3,
+      waiting: 33.3
     };
 
     $scope.runningTooltip = {
@@ -41,30 +41,4 @@ angular.module(PKG.name + '.feature.spark')
         $scope.status = res.status;
         $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
       });
-
-    function pollMetrics() {
-      var nodes = $scope.data.nodes;
-      // Requesting Metrics data
-      angular.forEach(nodes, function (node) {
-        dataSrc.poll({
-          _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
-          method: 'POST'
-        }, function (data) {
-            $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
-          });
-      });
-    }
-
-    $scope.stopFlow = function() {
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      })
-      .then(function() {
-        $timeout(function() {
-          $state.go($state.current, {}, { reload: true });
-        });
-      });
-    };
-
   });
