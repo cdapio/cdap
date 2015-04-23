@@ -71,16 +71,14 @@ needs_sphinx = '1.3'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
     'sphinxcontrib.googleanalytics',
-    'sphinx.ext.todo',
-    'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
 ]
 
 intersphinx_mapping = {
   'introduction': ('../../introduction/',        os.path.abspath('../../introduction/build/html/objects.inv')),
+  'users':        ('../../users-manual',         os.path.abspath('../../users-manual/build/html/objects.inv')),
   'developers':   ('../../developers-manual/',   os.path.abspath('../../developers-manual/build/html/objects.inv')),
   'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
   'integrations': ('../../integrations/',        os.path.abspath('../../integrations/build/html/objects.inv')),
@@ -248,6 +246,7 @@ html_theme = 'cdap'
 # icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
     ["introduction",        "Introduction to CDAP",            "",],
+    ["users-manual",        u"Users’ Manual",                  "",],
     ["developers-manual",  u"Developers’ Manual",              "",],
     ["admin-manual",        "Administration Manual",           "",],
     ["integrations",        "Integrations",                    "",],

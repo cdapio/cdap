@@ -54,6 +54,14 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
     technologies available from the Hadoop ecosystem and using CDAP
 
 
+.. |users-manual| replace:: **Users’ Manual:**
+.. _users-manual: users-manual/index.html
+
+- |users-manual|_
+
+  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases
+
+
 .. |developers-manual| replace:: **Developers’ Manual:**
 .. _developers-manual: developers-manual/index.html
 

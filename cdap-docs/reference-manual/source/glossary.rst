@@ -102,9 +102,12 @@ Glossary
    DAG
       A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP Console.
       
-   CDAP Console
-      The CDAP Console is a web-based application used to deploy CDAP Applications, and
+   CDAP UI
+      The CDAP UI is a web-based application used to deploy CDAP Applications, create ETL Applications, and
       query and manage the Cask Data Application Platform instance.
+
+   CDAP Console
+      See :term:`CDAP UI`.
 
    Apache Spark
       See :term:`Spark Program <spark>`.
@@ -145,3 +148,72 @@ Glossary
       the data model and the schema that represents the data are optimized for querying
       and aggregating over time ranges.
 
+   .. ETL and Application Templates
+
+   Structured Record
+      The format used to exchange events between different ETL :term:`Components <component>`
+      
+   Sink
+      A :term:`Component` that accepts events and persists them.
+      
+   Source
+      A :term:`Component` that produces events.
+      
+   Transformation
+      A :term:`Component` that accepts events, performs modifications on them, and then transmits them.
+
+   Filter
+      A type of :term:`Transformation` that only passes events that meet a specific criteria.
+      
+   Projection
+      A type of :term:`Transformation` that modifies events that meet a specific criteria.
+      Possible modifications include renaming and dropping of fields.
+
+   Manifest
+      A JSON Object, either in-memory or in a file, that defines either an :term:`ETL Application`,
+      an :term:`App-Template`, a :term:`Component`, or an :term:`ETL Pipeline`.
+      
+   App-Template
+      A set of :term:`Components <component>` that can combined together to create an
+      :term:`ETL Pipeline`, consisting of one or more :term:`Sources <source>`, one or
+      more :term:`Sinks <sink>`, and one or more :term:`Transformations <transformation>`.
+      Each must be interchangeable, in that any Source can hook to any Transform and any Sink.
+    
+   Pipeline
+      A linked set of a specific :term:`Source` and :term:`Sink`, with a set of one or more
+      :term:`Transformations <transformation>` in between.
+    
+   ETL
+      Refers to the Engesting, Transforming and Loading of data. 
+    
+   ETL Pipeline
+      See :term:`Pipeline`.
+
+   ETL Application
+      A packaged :term:`ETL Pipeline <pipeline>`, either in a JAR file or manifested in the :term:`CDAP UI`.
+    
+   Component
+      One of a :term:`Sink`, :term:`Source` or :term:`Transformation`, packaged in a JAR file format, for use as a
+      :term:`Plugin`.
+
+   ETL Component
+      See :term:`Component`.
+
+   Plugin
+      Specially-constructed files (JAR Files) that add custom features to CDAP.
+      Current Plugins include an :term:`App-Template` and an :term:`ETL Component` JAR.
+      
+   Plugins Directory
+      The specific directory on a CDAP installation where a :term:`Plugin` is placed.
+      
+   Realtime
+      A sequence of events characterized as ones that happen outside of the control of the
+      receiving system. The flow of the sequence cannot be initiated, started nor stopped
+      by the receiving system; they must simply be accepted or rejected as they arrive.
+    
+   Batch
+      A sequence of events characterized as ones that happen inside the control of the
+      receiving system. The flow of the sequence is initiated, started or stopped by the
+      receiving system; the number of events that are dealt with in a single interaction
+      can be controlled and set by the receiving system.
+      

@@ -1,32 +1,35 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :description: Users' Manual
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
-:hide-toc: true
 
-============================================
-Advanced Topics
-============================================
+.. _users-index:
+
+==================================================
+CDAP Users’ Manual
+==================================================
 
 .. toctree::
    :maxdepth: 1
    
-    Best Practices <best-practices>
-    Adapters <adapters>
-    Creating Custom ETL Applications <etl>
-    Application Logback <application-logback>
+    ETL Applications in CDAP <etl/index>
+    ETL Application Components <etl/components>
+    Creating An ETL Application <etl/creating>
+    Operating An ETL Application <etl/operations>
+    
 
 This section of the documentation includes articles that cover advanced topics on CDAP that
 will be of interest to developers who want a deeper dive into CDAP:
 
 .. |best-practices| replace:: **Best Practices:**
-.. _best-practices: best-practices.html
+.. _best-practices: etl/index.html
 
 - |best-practices|_ Suggestions when developing a CDAP application.
 
 
 .. |adapters| replace:: **Adapters:**
-.. _adapters: adapters.html
+.. _adapters: etl/components.html
 
 - |adapters|_ Adapters connect a data source to a data sink.
   CDAP currently provides a stream conversion Adapter that regularly reads data from a Stream and
@@ -34,13 +37,14 @@ will be of interest to developers who want a deeper dive into CDAP:
 
 
 .. |etl| replace:: **Creating Custom ETL Applications:**
-.. _etl: etl.html
+.. _etl: etl/creating.html
 
 - |etl|_ Covers creating custom ETL Applications and Components, including custom
   Sources, Sinks, Transformations, and Plugins, that connect data sources to data sinks.
 
 
 .. |application-logback| replace:: **Application Logback:**
-.. _application-logback: application-logback.html
+.. _application-logback: etl/operations.html
 
 - |application-logback|_ Adding a custom logback to a CDAP application.
+
