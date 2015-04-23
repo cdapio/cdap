@@ -21,6 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
@@ -54,13 +55,15 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
   private final DatasetFramework inMemoryDatasetFramework;
   private final Store store;
   private final PluginRepository pluginRepository;
+  private final UsageRegistry usageRegistry;
 
   @Inject
   public LocalAdapterManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                              DatasetFramework datasetFramework,
                              @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                              StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                             Store store, PluginRepository pluginRepository) {
+                             Store store, PluginRepository pluginRepository,
+                             UsageRegistry usageRegistry) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.datasetFramework = datasetFramework;
@@ -70,6 +73,7 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
     this.store = store;
     this.pluginRepository = pluginRepository;
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -84,7 +88,7 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
                                                           datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateAdapterDatasetInstancesStage(configuration, datasetFramework, namespace));
     pipeline.addLast(new CreateAdapterStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
-    pipeline.addLast(new AdapterRegistrationStage(namespace, store));
+    pipeline.addLast(new AdapterRegistrationStage(namespace, store, usageRegistry));
     return pipeline.execute(input);
   }
 }
