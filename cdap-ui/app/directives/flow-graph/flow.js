@@ -44,15 +44,54 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
     link: function (scope, elem, attr) {
       scope.render = genericRender.bind(null, scope, $filter);
       scope.parentSelector = attr.parent;
-      var metricCircleRadius = 25;
-      var streamMetricCircleRadius = metricCircleRadius - 5;
+      /**
+       * Circle radius for instance count.
+       * @type {Number}
+       */
       var instanceCircleRadius = 10;
+      /**
+       * Circle radius for flowlets.
+       */
       var flowletCircleRadius = 50;
+
       // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
+      /**
+       * Inside padding for metric count.
+       */
       var metricCountPadding = 5;
+      /**
+       * Width of stream diagram.
+       */
       var streamDiagramWidth = 40;
+      /**
+       * Height of stream diagram.
+       */
       var streamDiagramHeight = 30;
+      /**
+       * Number of pixes instance should display above base.
+       */
       var instanceBufferHeight = 30;
+
+      /**
+       * Leaf node variables.
+       */
+      /**
+       * Width of the leaf diagram relative to flowlet circle radius.
+       */
+      var leafDiagramWidth = flowletCircleRadius * 0.75;
+      /**
+       * Shrinks or expands height of leaf shape.
+       */
+      var leafYFactor = 0.9;
+      /**
+       * Shrinks or expands width of leaf shape.
+       */
+      var leafXFactor = 1.25;
+      /**
+       * Overflow of leaf into the flowlet/stream shape.
+       */
+      var leafBuffer = 20;
+
       var numberFilter = $filter('myNumber');
       scope.getShapes = function() {
         var shapes = {};
@@ -87,16 +126,18 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             .text(instances)
             .attr('class', 'flow-shapes flowlet-instance-count');
 
-          parent.insert('circle')
-            .attr('cx', - flowletCircleRadius)
-            .attr('r', metricCircleRadius)
-            .attr('class', 'flow-shapes flowlet-events');
-
+          var leafOptions = {
+            classNames: ['flowlet-events'],
+            circleRadius: flowletCircleRadius,
+            diagramWidth: leafDiagramWidth
+          };
+          drawLeafShape(parent, leafOptions);
+          
           parent.insert('text')
-            .attr('x', - flowletCircleRadius)
+            .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
-            .attr('class', 'flow5shapes flowlet-event-count');
+            .attr('class', 'flow-shapes flowlet-event-count');
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
@@ -123,14 +164,16 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           // Elements are positioned with respect to shapeSvg.
           var width = shapeSvg.node().getBBox().width+10;
           var circleXPos = -1 * width/2;
-
-          parent.append('circle')
-            .attr('cx', circleXPos)
-            .attr('r', streamMetricCircleRadius)
-            .attr('class', 'flow-shapes stream-events');
-
+          
+          var leafOptions = {
+            classNames: ['stream-events'],
+            circleRadius: flowletCircleRadius,
+            diagramWidth: leafDiagramWidth
+          };
+          drawLeafShape(parent, leafOptions);
+          
           parent.append('text')
-            .attr('x', circleXPos)
+            .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
             .attr('class', 'flow-shapes stream-event-count');
@@ -185,6 +228,58 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         var extra = (instances.toString().length - 1) * base / 2;
         return base + extra;
       };
+
+      /**
+       * Draws a leaf shape and positions it next to the parent svg.
+       */
+      function drawLeafShape(svgParent, properties) {
+        var diagramWidth = leafDiagramWidth;
+        var yFactor = leafYFactor;
+        var xFactor = leafXFactor;
+        var circleRadius = flowletCircleRadius;
+        var classNamesStr = 'flow-shapes leaf-shape';
+        
+        if (properties && Object.prototype.toString.call(properties) === '[object Object]') {
+          diagramWidth = properties.diagramWidth || diagramWidth;
+          yFactor = properties.yFactor || yFactor;
+          xFactor = properties.xFactor || xFactor;
+          circleRadius = properties.circleRadius || circleRadius;
+          if (angular.isArray(properties.classNames)) {
+            var classNames = properties.classNames.join(' ');
+            classNamesStr = classNames ? 'flow-shapes leaf-shape ' + classNames : 'flow-shapes leaf-shape';
+          }
+        }
+
+        var pathinfo = [
+          {x: 0, y: 0},
+          {x: diagramWidth * xFactor, y: -diagramWidth * yFactor},
+          {x: diagramWidth * 2, y: 0},
+          {x: diagramWidth * xFactor, y: diagramWidth * yFactor},
+          {x: 0, y: 0}
+        ];
+
+        var line = d3.svg.line()
+          .x(function(d){return d.x;})
+          .y(function(d){return d.y;})
+          // Must use basis interpolation for curve.
+          .interpolate("basis-closed");
+
+        svgParent.insert("svg:path")
+          .attr("d", line(pathinfo))
+          .attr('class', classNamesStr)
+          .attr("transform", function(d) {
+            return "translate(" 
+              + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
+          });
+      }
+
+      /**
+       * Calcualtes where event count should be placed relative to leaf shape and centers it.
+       */
+      function calculateLeafBuffer(parent, nodeOptions) {
+        var w = parent.select(".leaf-shape").node().getBBox().width;
+        return - nodeOptions.circleRadius - w / 2 + leafBuffer / 2;
+      }
 
     }
   }, baseDirective);
@@ -330,7 +425,7 @@ function genericRender(scope, $filter) {
 
   g.setGraph({
     nodesep: 60,
-    ranksep: 70,
+    ranksep: 100,
     rankdir: 'LR',
     marginx: 30,
     marginy: 30
