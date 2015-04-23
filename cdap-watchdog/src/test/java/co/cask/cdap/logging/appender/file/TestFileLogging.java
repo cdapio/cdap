@@ -70,6 +70,8 @@ public class TestFileLogging {
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + TestFileLogging.class.getSimpleName();
+    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),

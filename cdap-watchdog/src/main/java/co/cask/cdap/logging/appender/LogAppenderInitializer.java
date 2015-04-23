@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.ILoggerFactory;
@@ -42,25 +43,27 @@ public class LogAppenderInitializer implements Closeable {
   }
 
   public void initialize() {
+    if (initMap.putIfAbsent(org.slf4j.Logger.ROOT_LOGGER_NAME, logAppender.getName()) != null) {
+      // Already initialized.
+      LOG.warn("Log appender {} is already initialized.", logAppender.getName());
+      return;
+    }
+
     initialize(org.slf4j.Logger.ROOT_LOGGER_NAME);
   }
 
+  @VisibleForTesting
   public void initialize(String rootLoggerName) {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     // TODO: fix logging issue in mapreduce:  ENG-3279
     if (!(loggerFactory instanceof LoggerContext)) {
       LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
                  "Logback might not be in the classpath");
+      return;
     }
 
     LoggerContext loggerContext = (LoggerContext) loggerFactory;
     Logger rootLogger = loggerContext.getLogger(rootLoggerName);
-
-    if (initMap.putIfAbsent(rootLoggerName, logAppender.getName()) != null) {
-      // Already initialized.
-      LOG.trace("Log appender {} is already initialized.", logAppender.getName());
-      return;
-    }
 
     LOG.info("Initializing log appender {}", logAppender.getName());
 
