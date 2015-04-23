@@ -16,18 +16,13 @@
 
 package co.cask.cdap.templates.etl.api;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import com.google.common.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-
 /**
  * Transform Stage.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<StageContext>, Transform<IN, OUT> {
+public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
 
   private StageContext context;
 
@@ -50,7 +45,6 @@ public abstract class TransformStage<IN, OUT> implements ProgramLifecycle<StageC
     this.context = context;
   }
 
-  @Override
   public void destroy() {
     //no-op
   }

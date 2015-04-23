@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
@@ -31,7 +30,6 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
-import co.cask.cdap.templates.etl.common.DefaultTransformContext;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import com.google.common.base.Preconditions;
@@ -70,9 +68,9 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.SPECIFICATION));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.SPECIFICATION));
-    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.SPECIFICATIONS));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.PLUGINID));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.PLUGINID));
+    Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.PLUGINIDS));
 
     ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
 
@@ -87,24 +85,20 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   private void prepareSource(MapReduceContext context, ETLStage sourceStage) throws Exception {
-    StageSpecification sourceSpec = GSON.fromJson(
-      context.getRuntimeArguments().get(Constants.Source.SPECIFICATION), StageSpecification.class);
-    BatchSource source = (BatchSource) Class.forName(sourceSpec.getClassName()).newInstance();
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, sourceStage, sourceSpec, mrMetrics);
+    String sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
+    BatchSource source = context.newPluginInstance(sourcePluginId);
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     LOG.info("Source Stage : {}", sourceStage);
     LOG.info("Source Class : {}", source.getClass().getName());
-    LOG.info("Specifications of Source : {}", sourceSpec);
     source.prepareJob(sourceContext);
   }
 
   private void prepareSink(MapReduceContext context, ETLStage sinkStage) throws Exception {
-    StageSpecification sinkSpec = GSON.fromJson(
-      context.getRuntimeArguments().get(Constants.Sink.SPECIFICATION), StageSpecification.class);
-    BatchSink sink = (BatchSink) Class.forName(sinkSpec.getClassName()).newInstance();
-    BatchSinkContext sinkContext = new MapReduceSinkContext(context, sinkStage, sinkSpec, mrMetrics);
+    String sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
+    BatchSink sink = context.newPluginInstance(sinkPluginId);
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", sink.getClass().getName());
-    LOG.info("Specifications of Sink : {}", sinkSpec);
     sink.prepareJob(sinkContext);
   }
 
@@ -118,7 +112,7 @@ public class ETLMapReduce extends AbstractMapReduce {
    */
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceContext> {
     private static final Gson GSON = new Gson();
-    private static final Type SPEC_LIST_TYPE = new TypeToken<List<StageSpecification>>() { }.getType();
+    private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
     private TransformExecutor<KeyValue, KeyValue> transformExecutor;
     private Metrics mapperMetrics;
@@ -127,50 +121,46 @@ public class ETLMapReduce extends AbstractMapReduce {
     public void initialize(MapReduceContext context) throws Exception {
       Map<String, String> runtimeArgs = context.getRuntimeArguments();
       ETLBatchConfig etlConfig = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
+      String sourceId = runtimeArgs.get(Constants.Source.PLUGINID);
+      String sinkId = runtimeArgs.get(Constants.Sink.PLUGINID);
+      List<String> transformIds = GSON.fromJson(runtimeArgs.get(Constants.Transform.PLUGINIDS), STRING_LIST_TYPE);
 
-      List<StageSpecification> specificationList = GSON.fromJson(
-        runtimeArgs.get(Constants.Transform.SPECIFICATIONS), SPEC_LIST_TYPE);
-      StageSpecification sourceSpec = GSON.fromJson(
-        runtimeArgs.get(Constants.Source.SPECIFICATION), StageSpecification.class);
-      StageSpecification sinkSpec = GSON.fromJson(
-        runtimeArgs.get(Constants.Sink.SPECIFICATION), StageSpecification.class);
 
       List<ETLStage> stageList = etlConfig.getTransforms();
       LOG.info("Transform Stages : {}", stageList);
-      LOG.info("Specifications of Transforms : {}", specificationList);
 
       List<Transform> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
 
-      BatchSource source = instantiateStage(sourceSpec);
+      BatchSource source = context.newPluginInstance(sourceId);
       source.initialize(etlConfig.getSource());
       pipeline.add(source);
-      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, sourceSpec.getName()));
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, etlConfig.getSource().getName()));
 
-      addTransforms(specificationList, stageList, pipeline, stageMetrics);
+      addTransforms(stageList, pipeline, stageMetrics, transformIds, context);
 
-      BatchSink sink = instantiateStage(sinkSpec);
+      BatchSink sink = context.newPluginInstance(sinkId);
       sink.initialize(etlConfig.getSink());
       pipeline.add(sink);
-      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, sinkSpec.getName()));
+      stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
 
       transformExecutor = new TransformExecutor<KeyValue, KeyValue>(pipeline, stageMetrics);
     }
 
-    private void addTransforms(List<StageSpecification> specList, List<ETLStage> stageConfigs,
-                               List<Transform> pipeline, List<StageMetrics> stageMetrics) {
-      Preconditions.checkArgument(specList.size() == stageConfigs.size());
+    private void addTransforms(List<ETLStage> stageConfigs, List<Transform> pipeline,
+                               List<StageMetrics> stageMetrics, List<String> transformIds,
+                               MapReduceContext context) throws InstantiationException {
+      Preconditions.checkArgument(stageConfigs.size() == transformIds.size());
 
-      for (int i = 0; i < specList.size(); i++) {
-        StageSpecification spec = specList.get(i);
+      for (int i = 0; i < stageConfigs.size(); i++) {
         ETLStage stageConfig = stageConfigs.get(i);
-        TransformStage transform = instantiateStage(spec);
-        DefaultTransformContext transformContext =
-          new DefaultTransformContext(spec, stageConfig.getProperties(), mapperMetrics);
+        String transformId = transformIds.get(i);
+        TransformStage transform = context.newPluginInstance(transformId);
+        BatchStageContext transformContext = new BatchStageContext(context, mapperMetrics, transformId);
         transform.initialize(transformContext);
 
         pipeline.add(transform);
-        stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, spec.getName()));
+        stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, stageConfig.getName()));
       }
     }
 
@@ -190,22 +180,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     @Override
     public void destroy() {
       // no-op
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T instantiateStage(StageSpecification spec) {
-    try {
-      return (T) Class.forName(spec.getClassName()).newInstance();
-    } catch (ClassNotFoundException e) {
-      LOG.error("Unable to find class {}", spec.getClassName(), e);
-      throw Throwables.propagate(e);
-    } catch (InstantiationException e) {
-      LOG.error("Unable to instantiate {}", spec.getClassName(), e);
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
-      LOG.error("Illegal access while instantiating {}", spec.getClassName(), e);
-      throw Throwables.propagate(e);
     }
   }
 }

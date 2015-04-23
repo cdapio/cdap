@@ -34,7 +34,7 @@ public class ScriptFilterTransformTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidScript() throws Exception {
     TransformStage transform = new ScriptFilterTransform();
-    StageContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockStageContext(
       ImmutableMap.of("script", "funtion() { return false; }"));
     transform.initialize(transformContext);
   }
@@ -42,7 +42,7 @@ public class ScriptFilterTransformTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidFilter() throws Exception {
     TransformStage transform = new ScriptFilterTransform();
-    StageContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockStageContext(
       ImmutableMap.of("script", "return 'foobar'"));
     transform.initialize(transformContext);
 
@@ -57,7 +57,7 @@ public class ScriptFilterTransformTest {
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
     TransformStage transform = new ScriptFilterTransform();
-    StageContext transformContext = new MockTransformContext(
+    StageContext transformContext = new MockStageContext(
       ImmutableMap.of("script", "return input.x * 1024 < 2048"));
     transform.initialize(transformContext);
 
@@ -123,7 +123,7 @@ public class ScriptFilterTransformTest {
       .build();
 
     TransformStage transform = new ScriptFilterTransform();
-    StageContext transformContext = new MockTransformContext(ImmutableMap.of(
+    StageContext transformContext = new MockStageContext(ImmutableMap.of(
       "script", "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > e.val;"));
     transform.initialize(transformContext);
 
@@ -133,7 +133,7 @@ public class ScriptFilterTransformTest {
     emitter.clear();
 
     transform = new ScriptFilterTransform();
-    transformContext = new MockTransformContext(ImmutableMap.of(
+    transformContext = new MockStageContext(ImmutableMap.of(
       "script", "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > 10 * e.val;"));
     transform.initialize(transformContext);
     transform.transform(input, emitter);

@@ -20,11 +20,12 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.templates.AdapterPluginRegistry;
 
 /**
  * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
  */
-public interface PipelineConfigurer {
+public interface PipelineConfigurer extends AdapterPluginRegistry {
 
   /**
    * Adds a {@link Stream} to the pipeline. The stream will be created during pipeline creation if it does not

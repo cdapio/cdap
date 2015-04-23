@@ -24,24 +24,10 @@ import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
-import co.cask.cdap.templates.etl.realtime.sinks.RealtimeCubeSink;
-import co.cask.cdap.templates.etl.realtime.sinks.RealtimeTableSink;
-import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
-import co.cask.cdap.templates.etl.realtime.sources.TestSource;
-import co.cask.cdap.templates.etl.realtime.sources.TwitterStreamSource;
-import co.cask.cdap.templates.etl.transforms.IdentityTransform;
-import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
-import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 /**
  * ETL Realtime Template.
@@ -50,21 +36,6 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(ETLRealtimeTemplate.class);
   public static final String STATE_TABLE = "etlrealtimesourcestate";
   private static final Gson GSON = new Gson();
-
-  public ETLRealtimeTemplate() throws Exception {
-    super();
-    // Add class from lib here to be made available for use in the ETL Worker.
-    // TODO : Remove this when plugins management is available.
-    initTable(Lists.<Class>newArrayList(IdentityTransform.class,
-                                        TwitterStreamSource.class,
-                                        TestSource.class,
-                                        StructuredRecordToGenericRecordTransform.class,
-                                        ScriptFilterTransform.class,
-                                        ProjectionTransform.class,
-                                        StreamSink.class,
-                                        RealtimeTableSink.class,
-                                        RealtimeCubeSink.class));
-  }
 
   @Override
   public void configureAdapter(String adapterName, ETLRealtimeConfig etlConfig, AdapterConfigurer configurer)

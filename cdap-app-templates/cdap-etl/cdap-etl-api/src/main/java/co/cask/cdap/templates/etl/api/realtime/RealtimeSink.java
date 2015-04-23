@@ -16,7 +16,6 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
-import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -27,7 +26,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
  *
  * @param <I> Object sink operates on
  */
-public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContext>, EndPointStage {
+public abstract class RealtimeSink<I> implements EndPointStage {
 
   @Override
   public void configure(StageConfigurer configurer) {
@@ -44,7 +43,6 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContex
    *
    * @param context {@link RealtimeContext}
    */
-  @Override
   public void initialize(RealtimeContext context) throws Exception {
     // no-op
   }
@@ -59,7 +57,6 @@ public abstract class RealtimeSink<I> implements ProgramLifecycle<RealtimeContex
    */
   public abstract int write(Iterable<I> objects, DataWriter dataWriter) throws Exception;
 
-  @Override
   public void destroy() {
     //no-op
   }

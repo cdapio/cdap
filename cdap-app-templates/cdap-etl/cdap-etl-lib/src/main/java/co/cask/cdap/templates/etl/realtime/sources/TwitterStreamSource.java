@@ -36,6 +36,7 @@ import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Queue;
 import javax.annotation.Nullable;
 
@@ -120,6 +121,7 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    Map<String, String> runtimeArgs = context.getPluginProperties().getProperties();
     Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
     Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
     Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
@@ -168,10 +170,10 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
-        .setOAuthConsumerKey(context.getRuntimeArguments().get(CONSUMER_KEY))
-        .setOAuthConsumerSecret(context.getRuntimeArguments().get(CONSUMER_SECRET))
-        .setOAuthAccessToken(context.getRuntimeArguments().get(ACCESS_TOKEN))
-        .setOAuthAccessTokenSecret(context.getRuntimeArguments().get(ACCESS_SECRET));
+        .setOAuthConsumerKey(runtimeArgs.get(CONSUMER_KEY))
+        .setOAuthConsumerSecret(runtimeArgs.get(CONSUMER_SECRET))
+        .setOAuthAccessToken(runtimeArgs.get(ACCESS_TOKEN))
+        .setOAuthAccessTokenSecret(runtimeArgs.get(ACCESS_SECRET));
 
     twitterStream = new TwitterStreamFactory(configurationBuilder.build()).getInstance();
     twitterStream.addListener(statusListener);

@@ -90,7 +90,7 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = context.getRuntimeArguments();
+    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     datasetName = runtimeArguments.get(NAME_PROPERTY);
     transform = new StructuredRecordToCubeFact(runtimeArguments);
   }

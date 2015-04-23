@@ -19,18 +19,15 @@ package co.cask.cdap.templates.etl.batch;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * MapReduce Sink Context.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
 
-  public MapReduceSinkContext(MapReduceContext context, ETLStage sinkStage,
-                              StageSpecification specification, Metrics metrics) {
-    super(context, sinkStage, specification, metrics);
+  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, String prefixId) {
+    super(context, metrics, prefixId);
   }
 
   @Override

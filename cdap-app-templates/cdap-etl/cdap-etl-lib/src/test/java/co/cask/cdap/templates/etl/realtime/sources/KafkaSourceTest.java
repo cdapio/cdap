@@ -16,17 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
-
+import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
-
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.internal.utils.Networks;
@@ -115,33 +112,7 @@ public class KafkaSourceTest {
   @Test
   public void testKafkaConsumerSimple() throws Exception {
     final String topic = "testKafkaConsumerSimple";
-    RealtimeContext sourceContext = new RealtimeContext() {
-
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Metrics getMetrics() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return PARTITIONS;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return getRuntimeArgs(topic, PARTITIONS, false);
-      }
-    };
+    RealtimeContext sourceContext = new MockRealtimeContext(getRuntimeArgs(topic, PARTITIONS, false));
 
     kafkaSource.initialize(sourceContext);
 

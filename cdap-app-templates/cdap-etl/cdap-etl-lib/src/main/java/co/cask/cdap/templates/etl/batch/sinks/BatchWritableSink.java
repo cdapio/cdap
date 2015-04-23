@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.batch.sinks;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -67,6 +68,7 @@ public class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_O
 
   @Override
   public void prepareJob(BatchSinkContext context) {
-    context.setOutput(context.getRuntimeArguments().get(NAME));
+    PluginProperties pluginProperties = context.getPluginProperties();
+    context.setOutput(pluginProperties.getProperties().get(NAME));
   }
 }

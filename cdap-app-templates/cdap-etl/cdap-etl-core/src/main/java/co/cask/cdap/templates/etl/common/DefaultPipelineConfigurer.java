@@ -21,16 +21,22 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.AdapterConfigurer;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+
+import javax.annotation.Nullable;
 
 /**
  * Configurer for a pipeline, that delegates all operations to an AdapterConfigurer.
  */
 public class DefaultPipelineConfigurer implements PipelineConfigurer {
   private final AdapterConfigurer adapterConfigurer;
+  private final String pluginPrefix;
 
-  public DefaultPipelineConfigurer(AdapterConfigurer adapterConfigurer) {
+  public DefaultPipelineConfigurer(AdapterConfigurer adapterConfigurer, String pluginPrefix) {
     this.adapterConfigurer = adapterConfigurer;
+    this.pluginPrefix = pluginPrefix;
   }
 
   @Override
@@ -56,5 +62,36 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
     adapterConfigurer.createDataset(datasetName, datasetClass, props);
+  }
+
+  @Nullable
+  @Override
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
+    return adapterConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
+  }
+
+  @Nullable
+  @Override
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
+                         PluginSelector selector) {
+    return adapterConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+  }
+
+  @Nullable
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
+                                     PluginProperties properties) {
+    return adapterConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
+  }
+
+  @Nullable
+  @Override
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
+                                     PluginSelector selector) {
+    return adapterConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+  }
+  
+  private String getPluginId(String childPluginId) {
+    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }

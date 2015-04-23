@@ -20,34 +20,20 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.StageSpecification;
 import co.cask.cdap.templates.etl.api.batch.BatchContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public abstract class MapReduceBatchContext implements BatchContext {
-  private final StageSpecification specification;
-  private final ETLStage stage;
-  private final Metrics metrics;
+public abstract class MapReduceBatchContext extends BatchStageContext implements BatchContext {
 
   protected final MapReduceContext mrContext;
 
-  public MapReduceBatchContext(MapReduceContext context, ETLStage stage, StageSpecification specification,
-                               Metrics metrics) {
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, String prefixId) {
+    super(context, metrics, prefixId);
     this.mrContext = context;
-    this.specification = specification;
-    this.stage = stage;
-    this.metrics = metrics;
-  }
-
-  @Override
-  public StageSpecification getSpecification() {
-    return specification;
   }
 
   @Override
@@ -69,15 +55,5 @@ public abstract class MapReduceBatchContext implements BatchContext {
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return mrContext.getDataset(name, arguments);
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return Collections.unmodifiableMap(stage.getProperties());
-  }
-
-  @Override
-  public Metrics getMetrics() {
-    return metrics;
   }
 }

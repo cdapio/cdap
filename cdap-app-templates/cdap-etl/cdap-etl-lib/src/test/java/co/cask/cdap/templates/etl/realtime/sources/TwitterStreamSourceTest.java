@@ -17,14 +17,11 @@
 package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
-import co.cask.cdap.templates.etl.common.NoopMetrics;
+import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -68,40 +65,15 @@ public class TwitterStreamSourceTest {
       }
     });
 
-    source.initialize(new RealtimeContext() {
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Metrics getMetrics() {
-        return NoopMetrics.INSTANCE;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 0;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        Map<String, String> args = Maps.newHashMap();
-        // NOTE: To get the valid credentials for testing please visit
-        // https://dev.twitter.com/oauth/reference/post/oauth2/token
-        // to get OAuth Consumer Key, Consumer Secret, Access Token and Access Token Secret
-        args.put("ConsumerKey", "dummy");
-        args.put("ConsumerSecret", "dummy");
-        args.put("AccessToken", "dummy");
-        args.put("AccessTokenSecret", "dummy");
-        return args;
-      }
-    });
+    Map<String, String> args = Maps.newHashMap();
+    // NOTE: To get the valid credentials for testing please visit
+    // https://dev.twitter.com/oauth/reference/post/oauth2/token
+    // to get OAuth Consumer Key, Consumer Secret, Access Token and Access Token Secret
+    args.put("ConsumerKey", "dummy");
+    args.put("ConsumerSecret", "dummy");
+    args.put("AccessToken", "dummy");
+    args.put("AccessTokenSecret", "dummy");
+    source.initialize(new MockRealtimeContext(args));
 
     MockEmitter emitter = new MockEmitter();
     SourceState state = new SourceState();
