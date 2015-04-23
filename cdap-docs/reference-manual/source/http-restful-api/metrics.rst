@@ -272,6 +272,7 @@ The process of retrieving a metric involves these steps:
 #. Obtain (usually through a search within the context) the available metrics;
 #. Querying for a specific metric, supplying the context and any parameters.
 
+.. _http-restful-api-metrics-search-for-contexts:
 
 Search for Contexts
 ...................
@@ -287,6 +288,11 @@ can be used to query for a lower-level of contexts.
 You can also define the query to search in a given context across all values of one or
 more tags provided in the context by specifying ``*`` as a value for a tag. See the
 examples below for its use.
+
+**Note:** An earlier version of this API (introduced in CDAP 2.8.0) has been deprecated, and
+should be replaced, as it will be removed in a later version of CDAP::
+
+  POST '<base-url>/metrics/search?target=childContext[&context=<context>]'
 
 .. list-table::
    :widths: 20 80
@@ -449,7 +455,7 @@ Query Examples
    * - Returns
      - ``{"startTime":0,"endTime":1429328212,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":8}]}]}``
    * - Description
-     - Querying the *User-defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
+     - Querying the *User-defined* metric *names.bytes*, of the Flowlet *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
@@ -515,10 +521,6 @@ with a JSON list as the request body that enumerates the name and attributes for
 metric. The format of the request and the JSON body depends on whether the metrics share
 the same context or are being called for different contexts. 
 
-In both cases, queries are identified by a ``<query-id>`` (in the examples below,
-*query1*, *query2*, *eventsIn*, *eventsOut*); the ``<query-id>`` is then used in the
-returned result to identify the series.
-
 .. rubric:: Multiple Metrics with the Same Context
 
 Retrieving multiple metrics at once for the same contexts can be accomplished by issuing a
@@ -571,6 +573,10 @@ structure (pretty-printed)::
         timeRange: {“start”: “now­2s”, “end”: “now”}
         }
   }
+
+Queries are identified by a ``<query-id>`` (in the example above, *query1*, *query2*; in
+the example below, *eventsIn*, *eventsOut*). The ``<query-id>`` is then used in the
+returned result to identify the series.
 
 For example, to retrieve multiple metrics using a ``curl`` call (command and results reformatted to fit)::
 
@@ -697,8 +703,8 @@ points for a metric. By default, 1 second resolution is used. Acceptable values 
 above. If ``resolution=auto``, the resolution will be determined based on a time
 difference calculated between the start and end times:
 
-- ``(endTime - startTime) > 3600 seconds``, resolution will be 1 hour; 
-- ``(endTime - startTime) >  600 seconds``, resolution will be 1 minute; 
+- ``(endTime - startTime) > 36000 seconds`` (ten hours), resolution will be 1 hour; 
+- ``(endTime - startTime) >  600 seconds`` (ten minutes), resolution will be 1 minute; 
 - otherwise, resolution will be 1 second.
 
 .. list-table::
