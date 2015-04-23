@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -27,56 +27,66 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
-function pandoc_includes() {
-  # Uses pandoc to translate the README markdown files to rst in the target directory
-  INCLUDES_DIR=$1
+function download_readme_file_and_test() {
+  # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
+  # Uses md5 hashes to monitor if any files have changed.
+
+  local file_name='README.rst'
   
-  if [ $TEST_INCLUDES == $TEST_INCLUDES_LOCAL ]; then
-    # For the local to work, must have the local sources synced to the correct branch as the remote.
-    MD_CLIENTS="../../../cdap-clients"
-    MD_INGEST="../../../cdap-ingest"
-  elif [ $TEST_INCLUDES == $TEST_INCLUDES_REMOTE ]; then
-    # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.md
-    # https://raw.githubusercontent.com/caskdata/cdap-ingest/release/1.0.0/cdap-file-drop-zone/README.md
-    GITHUB_URL="https://raw.githubusercontent.com/caskdata"
-    MD_CLIENTS="$GITHUB_URL/cdap-clients/release/1.1.0"
-    MD_INGEST="$GITHUB_URL/cdap-ingest/release/1.0.0"
+  local includes_dir=${1}
+  local source_url=${2}
+  local md5_hash=${3}
+  local relative_path=${4}
+
+  # Replace any path components with dashes
+  local target_file_name=${relative_path//\//-}.rst
+
+  echo "Downloading using curl ${file_name} from ${source_url}"
+  curl ${source_url}/${relative_path}/${file_name} --output ${includes_dir}/${target_file_name} --silent
+  test_an_include ${md5_hash} ${target_file_name}
+}
+
+function download_includes() {
+  echo "Downloading source files includes from GitHub..."
+  local github_url="https://raw.githubusercontent.com/caskdata"
+  
+  local includes_dir=${1}
+  if [ ! -d "${includes_dir}" ]; then
+    mkdir ${includes_dir}
+    echo "Creating Includes Directory: ${includes_dir}"
   fi
 
-  local java_client_working="$INCLUDES_DIR/cdap-authentication-clients-java_working.rst"
-  local java_client="$INCLUDES_DIR/cdap-authentication-clients-java.rst"
+  version
+  local project_version=${PROJECT_SHORT_VERSION}
 
-  if [ "x$TEST_INCLUDES" == "x$TEST_INCLUDES_LOCAL" -o "x$TEST_INCLUDES" == "x$TEST_INCLUDES_REMOTE" ]; then
-    echo "Using $TEST_INCLUDES includes..."
-
-    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
-    pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
-
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-    pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
-    pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
-    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-    pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+  if [ "x${GIT_BRANCH_TYPE}" == "xdevelop" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
+    local branch="develop"
   else
-    echo -e "$WARNING Not testing includes: $TEST_INCLUDES includes..."
-    local java_client_source="$SCRIPT_PATH/$SOURCE/$INCLUDES/cdap-authentication-clients-java.rst"
-    cp -f $java_client_source $java_client_working
+    local branch="release/cdap-${project_version}-compatible"
   fi
+
+# cdap-clients
+# https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
+  local clients_url="${github_url}/cdap-clients/${branch}"
+
+  download_readme_file_and_test ${includes_dir} ${clients_url} bf10a586e605be8191b3b554c425c3aa cdap-authentication-clients/java
+  download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
+  download_readme_file_and_test ${includes_dir} ${clients_url} 1f8330e0370b3895c38452f9af72506a cdap-authentication-clients/python
+  download_readme_file_and_test ${includes_dir} ${clients_url} 33b06b7ca1e423e93f2bb2c6f7d00e21 cdap-authentication-clients/ruby
   
-  # Fix version(s)
-  local release_version="1.1.0-SNAPSHOT" # Version to be written into file
-  rewrite $java_client_working $java_client "{version}" $release_version
+# cdap-ingest
+# https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
+  local ingest_url="${github_url}/cdap-ingest/${branch}"
+
+  download_readme_file_and_test ${includes_dir} ${ingest_url} c9b6db1741afa823c362237488c2d8f0 cdap-flume
+  download_readme_file_and_test ${includes_dir} ${ingest_url} f300df291b910f0bd416a5ea160fdbe1 cdap-stream-clients/java
+#   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
+  download_readme_file_and_test ${includes_dir} ${ingest_url} b6dedd629c708dbc68bc918b768edda5 cdap-stream-clients/python
+  download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 }
 
 function test_includes () {
-  # List of includes to be tested
-  test_an_include cdap-authentication-clients-java.rst
-  test_an_include cdap-authentication-clients-python.rst
-  test_an_include cdap-file-drop-zone.rst
-  test_an_include cdap-file-tailer.rst
-  test_an_include cdap-flume.rst
-  test_an_include cdap-stream-clients-java.rst
-  test_an_include cdap-stream-clients-python.rst
+  echo "All includes tested."
 }
 
-run_command $1
+run_command ${1}

@@ -4,7 +4,7 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/cdap-stream-clients-java.rst
+.. include:: ../../build/_includes/cdap-stream-clients-ruby.rst
 
 Source Code Repository
 ======================
