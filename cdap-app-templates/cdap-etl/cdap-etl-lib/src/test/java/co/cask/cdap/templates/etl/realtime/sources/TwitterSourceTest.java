@@ -41,7 +41,24 @@ public class TwitterSourceTest {
   @Ignore
   @Test
   public void testIntegratedTwitterStream() throws Exception {
-    TwitterSource source = new TwitterSource();
+    // NOTE: To get the valid credentials for testing please visit
+    // https://dev.twitter.com/oauth/reference/post/oauth2/token
+    // to get OAuth Consumer Key, Consumer Secret, Access Token and Access Token Secret
+
+    String consumerKey = "dummy";
+    String consumerSecret = "dummy";
+    String accessToken = "dummy";
+    String accessTokenSecret = "dummy";
+
+    TwitterSource.TwitterConfig twitterConfig = new TwitterSource.TwitterConfig(consumerKey, consumerSecret,
+                                                                                accessToken, accessTokenSecret);
+    Map<String, String> args = Maps.newHashMap();
+    args.put("ConsumerKey", consumerKey);
+    args.put("ConsumerSecret", consumerSecret);
+    args.put("AccessToken", accessToken);
+    args.put("AccessTokenSecret", accessTokenSecret);
+
+    TwitterSource source = new TwitterSource(twitterConfig);
     source.configure(new StageConfigurer() {
 
       @Override
@@ -65,14 +82,6 @@ public class TwitterSourceTest {
       }
     });
 
-    Map<String, String> args = Maps.newHashMap();
-    // NOTE: To get the valid credentials for testing please visit
-    // https://dev.twitter.com/oauth/reference/post/oauth2/token
-    // to get OAuth Consumer Key, Consumer Secret, Access Token and Access Token Secret
-    args.put("ConsumerKey", "dummy");
-    args.put("ConsumerSecret", "dummy");
-    args.put("AccessToken", "dummy");
-    args.put("AccessTokenSecret", "dummy");
     source.initialize(new MockRealtimeContext(args));
 
     MockEmitter emitter = new MockEmitter();

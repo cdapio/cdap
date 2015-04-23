@@ -73,9 +73,13 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private StructuredRecord.Builder recordBuilder;
 
 
-  private TwitterConfig twitterConfig;
+  private final TwitterConfig twitterConfig;
 
-  private static final class TwitterConfig extends PluginConfig {
+  public TwitterSource(TwitterConfig twitterConfig) {
+    this.twitterConfig = twitterConfig;
+  }
+
+  public static class TwitterConfig extends PluginConfig {
 
     @Name(CONSUMER_KEY)
     @Description("Consumer Key")
@@ -92,6 +96,13 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     @Name(ACCESS_SECRET)
     @Description("Access Token Secret")
     private String accessTokenSecret;
+
+    public TwitterConfig(String consumerKey, String consumeSecret, String accessToken, String accessTokenSecret) {
+      this.consumerKey = consumerKey;
+      this.consumeSecret = consumeSecret;
+      this.accessToken = accessToken;
+      this.accessTokenSecret = accessTokenSecret;
+    }
   }
 
   private StructuredRecord convertTweet(Status tweet) {

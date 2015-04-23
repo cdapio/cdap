@@ -27,7 +27,6 @@ import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
@@ -57,9 +56,13 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   private static final String HEADERS_FIELD_DESC = "Name of the field in the record that contains headers. " +
     "Headers are presumed to be a map of string to string.";
 
-  private StreamConfig streamConfig;
+  private final StreamConfig streamConfig;
 
-  private static final class StreamConfig extends PluginConfig {
+  public StreamSink(StreamConfig streamConfig) {
+    this.streamConfig = streamConfig;
+  }
+
+  public static class StreamConfig extends PluginConfig {
 
     @Name(Properties.Stream.NAME)
     @Description(NAME_DESC)
@@ -74,6 +77,12 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     @Description(DATA_FIELD_DESC)
     @Nullable
     private String dataField = Properties.Stream.DEFAULT_DATA_FIELD;
+
+    public StreamConfig(String streamName, String headersField, String dataField) {
+      this.streamName = streamName;
+      this.headersField = headersField;
+      this.dataField = dataField;
+    }
   }
 
   @Override
@@ -82,11 +91,6 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     String streamName = properties.get(Properties.Stream.NAME);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(streamName), "Stream name should be non-null, non-empty.");
     pipelineConfigurer.addStream(new Stream(streamName));
-  }
-
-  @Override
-  public void initialize(RealtimeContext context) throws Exception {
-    super.initialize(context);
   }
 
   @Override
