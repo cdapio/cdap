@@ -110,7 +110,7 @@
   "app.exec.threads": "20",
   "stream.bind.address": "127.0.0.1",
   "data.tx.snapshot.dir": "/cdap/tx.snapshot",
-  "dashboard.bind.port": "8888",
+  "dashboard.bind.port": "9999",
   "metadata.bind.port": "45004",
   "stream.partition.duration": "3600000",
   "log.collection.root": "data/logs",
