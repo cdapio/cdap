@@ -37,8 +37,6 @@ import com.google.inject.assistedinject.Assisted;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,12 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultStreamWriter implements StreamWriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamWriter.class);
-
   private final EndpointStrategy endpointStrategy;
-  /**
-   * (stream, owner) -> bool
-   */
   private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
   private final UsageRegistry usageRegistry;
 
