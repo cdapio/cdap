@@ -134,33 +134,29 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
     String topic = topicPrefix;
 
-    if (getMetaTable() == null) {
+    try {
+      for (int i : partitions) {
+        long offset = getOffset(topic, i);
+        if (offset >= 0) {
+          preparer.add(topic, i, offset);
+        } else {
+          preparer.addFromBeginning(topic, i);
+        }
+      }
+    } catch (Exception e) {
       LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
       return;
-    }
-
-    for (int i : partitions) {
-      long offset = getOffset(topic, i);
-      if (offset >= 0) {
-        preparer.add(topic, i, offset);
-      } else {
-        preparer.addFromBeginning(topic, i);
-      }
     }
 
     unsubscribe = preparer.consume(callbackFactory.create(getMetaTable()));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
   }
 
-  private long getOffset(String topic, int partition) {
+  private long getOffset(String topic, int partition) throws Exception {
     LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-    try {
-      long offset = metaTable.get(new TopicPartition(topic, partition));
-      LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
-      return offset;
-    } catch (Exception e) {
-      LOG.error("Failed to get offset from meta table. Defaulting to beginning. {}", e.getMessage(), e);
-    }
-    return -1L;
+    KafkaConsumerMetaTable metaTable = getMetaTable();
+    long offset = metaTable.get(new TopicPartition(topic, partition));
+    LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
+    return offset;
   }
 }
