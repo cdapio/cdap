@@ -108,8 +108,8 @@ public interface StreamAdmin {
   /**
    * Register stream used by program.
    *
+   * @param owners the ids that are using the stream
    * @param streamId the stream being used
-   * @param programId the program that is using the stream
    */
-  public void register(Id.Stream streamId, Id.Program programId);
+  public void register(Iterable<? extends Id> owners, Id.Stream streamId);
 }

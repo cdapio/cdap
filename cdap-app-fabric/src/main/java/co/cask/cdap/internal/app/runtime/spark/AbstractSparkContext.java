@@ -61,6 +61,7 @@ import java.util.regex.Pattern;
 abstract class AbstractSparkContext implements SparkContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
+  private static final Gson GSON = new Gson();
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
   private static final String SPARK_METRICS_CONF_KEY = "spark.metrics.conf";
@@ -159,9 +160,9 @@ abstract class AbstractSparkContext implements SparkContext {
 
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), streamName);
     try {
-      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
     } catch (Exception e) {
-      LOG.info("Failed to registry usage of {} -> {}", streamId, basicSparkContext.getProgram().getId(), e);
+      LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
     }
 
     return result;
@@ -221,9 +222,9 @@ abstract class AbstractSparkContext implements SparkContext {
     Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
 
     try {
-      basicSparkContext.getStreamAdmin().register(streamId, basicSparkContext.getProgram().getId());
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
     } catch (Exception e) {
-      LOG.info("Failed to registry usage of {} -> {}", streamId, basicSparkContext.getProgram().getId(), e);
+      LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
     }
 
     StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(streamId);

@@ -485,7 +485,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     String inputDatasetName = context.getInputDatasetName();
 
     // TODO: It's a hack for stream
-    if (inputDatasetName != null && inputDatasetName.startsWith("stream://")) {
+    if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
       StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
       configureStreamInput(job, stream);
       return;
