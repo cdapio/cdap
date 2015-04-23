@@ -148,18 +148,19 @@ public final class AdapterDefinition implements AdapterSpecification {
     return resources;
   }
 
+  @Nullable
   public JsonElement getConfig() {
     return config;
   }
 
   @Override
   public <T> T getConfig(Type configType) {
-    return GSON.fromJson(config, configType);
+    return config == null ? null : GSON.<T>fromJson(config, configType);
   }
 
   @Override
   public String getConfigString() {
-    return config.toString();
+    return config == null ? null : config.toString();
   }
 
   public static Builder builder(String name, Id.Program program) {

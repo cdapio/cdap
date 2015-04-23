@@ -37,22 +37,27 @@ public interface AdapterSpecification {
   String getName();
 
   /**
-   * Returns the description of the adapter.
+   * Returns the description of the adapter or {@code null} if there is no description.
    */
+  @Nullable
   String getDescription();
 
   /**
-   * Returns the string representation of the configuration used to create the adapter.
+   * Returns the string representation of the configuration used to create the adapter
+   * or {@code null} if there is no configuration.
    */
+  @Nullable
   String getConfigString();
 
   /**
-   * Returns the configuration object used to create the adapter.
+   * Returns the configuration object used to create the adapter
+   * or {@code null} if there is no configuration.
    *
    * @param configType A {@link Type} representing the configuration object type.
    * @param <T> Type of the configuration object.
    * @return The configuration object
    */
+  @Nullable
   <T> T getConfig(Type configType);
 
   /**
