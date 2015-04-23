@@ -61,15 +61,6 @@
 <br/>
 <div class="row">
 
-  <!-- <div ng-model="tabs.activeTab" bs-tabs>
-    <section data-title="{{tab.title}}" ng-repeat="tab in tabs" bs-pane>
-
-      <div ng-include="tab.partial"
-            ng-init="transform = tab.transform"
-            ng-if="tabs.activeTab === $index"></div>
-    </section>
-  </div> -->
-
   <tabset>
     <tab ng-repeat="tab in tabs" active="tab.active">
       <tab-heading>
