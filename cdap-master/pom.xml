@@ -138,7 +138,6 @@
     <profile>
       <id>dist</id>
       <properties>
-        <stage.plugins.dir>${project.build.directory}/plugins</stage.plugins.dir>
         <etl.batch.plugin.name>etlBatch</etl.batch.plugin.name>
         <etl.realtime.plugin.name>etlRealtime</etl.realtime.plugin.name>
         <package.depends>--depends cdap --depends cdap-hbase-compat-0.94 --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98</package.depends>

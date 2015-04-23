@@ -105,7 +105,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>co.cask.cdap.etl.api.*</Export-Package>
+              <Export-Package>co.cask.cdap.etl.templates.api.*</Export-Package>
             </instructions>
           </configuration>
           <executions>
