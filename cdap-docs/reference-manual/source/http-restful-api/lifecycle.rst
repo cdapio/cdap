@@ -515,8 +515,8 @@ end time and program status::
    * - ``<program-id>``
      - Name of the program
 
-You can filter the runs either by the status of a program or the start and end times, 
-and can limit the number of returned records.
+You can filter the runs by the status of a program, the start and end times, 
+and can limit the number of returned records:
 
 .. list-table::
    :widths: 20 80
@@ -533,24 +533,37 @@ and can limit the number of returned records.
    * - ``<limit>``
      - maximum number of returned records
 
-
-.. rubric:: Example
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
-   * - Description
-     - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
-   * - Returns
-
-     - ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
-       ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
-
-The *runid* field is a UUID that uniquely identifies a run within CDAP,
+The result returned will include the *runid* field, a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
+Use that runid in subsequent calls to obtain additional information.
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving Run Records
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
+      
+     * - HTTP Method
+       - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
+         
+     * - Returns
+       - | ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
+         | ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+         | ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+
+
+Retrieving Specific Run Information
+...................................
 
 To fetch the run record for a particular run of a program, use::
 
@@ -574,23 +587,37 @@ To fetch the run record for a particular run of a program, use::
    * - ``<run-id>``
      - Run id of the run
 
-.. rubric:: Example
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
 
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
-   * - Description
-     - Retrieve the run record of the Flow *WhoFlow* of the Application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
-   * - Returns
-     - ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
+.. container:: table-block-example
 
-For Services, you can retrieve the history of successfully completed Twill Service using::
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed
+     * - Example: Retrieving A Particular Run Record
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
 
-For Workflows, you can also retrieve:
+     * - Description
+       - Retrieve the run record of the Flow *WhoFlow* of the Application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
+      
+     * - HTTP Method
+       - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
+         
+     * - Returns
+       - | ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
+
+
+For Services, you can retrieve:
+
+- the history of successfully completed Twill Service runs using::
+
+    GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed
+
+For Workflows, you can retrieve:
 
 - the information about the specific run currently running::
 
@@ -604,42 +631,195 @@ For Workflows, you can also retrieve:
 
     GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
-Schedules can be suspended or resumed:
-
-- to suspend a schedule::
-
-    POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
-
-- to resume a schedule::
-
-    POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
 
 .. rubric:: Examples
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving The Most Recent Run
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieve the most recent successful completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
+         
+     * - Returns
+       - | ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
+
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving A Schedule
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
+         
+     * - Returns
+       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+         
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving The Next Runtime
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
+         
+     * - Returns
+       - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
+       
+
+Schedules: Suspend and Resume
+...........................................
+
+For Schedules, you can suspend and resume them using the RESTful API.
+
+To *suspend* a Schedule means that the program associated with that schedule will not
+trigger again until the Schedule is resumed.
+
+To *resume* a Schedule means that the trigger is reset, and the program associated will
+run again at the next scheduled time.
+
+To suspend or resume a Schedule use::
+
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
+
+where:
+
 .. list-table::
-   :widths: 10 90
-   :stub-columns: 1
+   :widths: 20 80
+   :header-rows: 1
 
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
-   * - Description
-     - Retrieve the most recent successful completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
-   * - Returns
-     - ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
-   * - Description
-     - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
-   * - Returns
-     - ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-       ``"program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-   * - 
-     - 
-   * - HTTP Method
-     - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
-   * - Description
-     - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
-   * - Returns
-     - ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<schedule-name>``
+     - Name of the Schedule
 
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Suspending A Schedule
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Suspends the Schedule *DailySchedule* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``POST <base-url>/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
+         
+     * - Returns
+       - | ``OK`` if successfully set as suspended
+
+
+Workflows: Suspend and Resume
+...........................................
+
+For Workflows, you can suspend and resume them using the RESTful API.
+
+To *suspend* means that the current activity will be taken to completion, but no further 
+programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
+
+In the case of a Workflow with multiple MapReduce programs, if one of them is running (first of
+three perhaps) and you suspend the Workflow, that first MapReduce will be completed but the
+following two will not be started.
+
+To *resume* means that activity will start up where it was left off, beginning with the start
+of the next program in the sequence.
+
+In the case of the Workflow mentioned above, resuming it after suspension would start up with the
+second of the three MapReduce programs, which is where it would have left off when it was suspended.
+
+With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
+either a currently running or suspended Workflow.
+
+To suspend or resume a Workflow, use::
+  
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<workflow-name>``
+     - Name of the Workflow
+   * - ``<run-id>``
+     - UUID of the Workflow run
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Suspending A Workflow
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the Workflow
+         *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``POST <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend``
+         
+     * - Returns
+       - | ``Program run suspended.`` if successfully set as suspended

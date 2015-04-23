@@ -36,11 +36,18 @@ import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTran
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * ETL Realtime Template.
  */
 public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLRealtimeTemplate.class);
   public static final String STATE_TABLE = "etlrealtimesourcestate";
   private static final Gson GSON = new Gson();
 
@@ -72,7 +79,7 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
 
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
-    configurer.setName("etlrealtime");
+    configurer.setName(getAppName("etl.realtime.plugin.name"));
     configurer.setDescription("Realtime Extract-Transform-Load (ETL) Adapter");
     configurer.addWorker(new ETLWorker());
     configurer.createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
