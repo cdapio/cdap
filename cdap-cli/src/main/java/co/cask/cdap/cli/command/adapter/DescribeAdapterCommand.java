@@ -14,49 +14,52 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.adapter;
 
+import co.cask.cdap.api.templates.AdapterSpecification;
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
-import co.cask.cdap.proto.AdapterDetail;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Lists adapters.
+ * Describes an adapter.
  */
-public class ListAdaptersCommand extends AbstractAuthCommand {
+public class DescribeAdapterCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
   private final AdapterClient adapterClient;
 
   @Inject
-  public ListAdaptersCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
+  public DescribeAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.adapterClient = adapterClient;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<AdapterDetail> list = adapterClient.list();
+    String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
+    AdapterSpecification spec = adapterClient.get(adapterName);
 
     Table table = Table.builder()
-      .setHeader("name", "description", "template", "config")
-      .setRows(list, new RowMaker<AdapterDetail>() {
+      .setHeader("name", "description", "template", "config", "schedule")
+      .setRows(Collections.singletonList(spec), new RowMaker<AdapterSpecification>() {
         @Override
-        public List<?> makeRow(AdapterDetail object) {
+        public List<?> makeRow(AdapterSpecification object) {
           return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
-                                    GSON.toJson(object.getConfig()));
+                                    object.getConfigString(), GSON.toJson(object.getScheduleSpecification()));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
@@ -64,7 +67,7 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return "list adapters";
+    return String.format("describe adapter <%s>", ArgumentName.ADAPTER);
   }
 
   @Override
