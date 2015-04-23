@@ -216,18 +216,23 @@ where ``MyPredicate`` is a public class which implements the ``Predicate`` inter
 
   public static class MyPredicate implements Predicate<WorkflowContext> {
 
-    @Override
-    public boolean apply(@Nullable WorkflowContext input) {
-      if (input != null && input.containsKey("BuildProductProfile")) {
-        Map<String, Long> customCounters = input.getToken().getMapReduceCounters().get("MyCustomCounters");
-        if (customCounters.get("BuildProductProfile") > 0) {
-          return true;
-        }
-      }
-      return false;
-    }
+     @Override
+      public boolean apply(@Nullable WorkflowContext input) {
+         if (input == null) {
+            return false;
+         }
+         Map<String, Map<String, Long>> mapReduceCounters = input.getToken().getMapReduceCounters();
+         if (mapReduceCounters == null) {
+            return false;
+         }
+         Map<String, Long> customCounters = mapReduceCounters.get("MyCustomCounters");
+         if (customCounters.get("BuildProductProfile") > 0) {
+           return true;
+         }
+         return false;
+     }
   }
-  
+
 In the ``JoinWithCatalogMR`` MapReduce, it could have in its Mapper class code that 
 governs which condition to follow::
 
