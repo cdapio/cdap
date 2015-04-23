@@ -81,7 +81,7 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} c9b6db1741afa823c362237488c2d8f0 cdap-flume
   download_readme_file_and_test ${includes_dir} ${ingest_url} f300df291b910f0bd416a5ea160fdbe1 cdap-stream-clients/java
 #   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
-  download_readme_file_and_test ${includes_dir} ${ingest_url} ed39963b6eb1cf6e727b4c1f75ce7963 cdap-stream-clients/python
+  download_readme_file_and_test ${includes_dir} ${ingest_url} b6dedd629c708dbc68bc918b768edda5 cdap-stream-clients/python
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 }
 
