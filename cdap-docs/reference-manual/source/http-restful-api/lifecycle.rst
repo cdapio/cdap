@@ -704,35 +704,21 @@ For Workflows, you can retrieve:
        - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
        
 
-Schedules and Workflows: Suspend and Resume
+Schedules: Suspend and Resume
 ...........................................
 
-For both Schedules and Workflows, you can suspend and resume them using the RESTful API.
+For Schedules, you can suspend and resume them using the RESTful API.
 
-To *suspend* means that the current activity will be taken to completion, but no further 
-programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
+To *suspend* a Schedule means that the program associated with that schedule will not
+trigger again until the Schedule is resumed.
 
-In the case of a Workflow with multiple MapReduce programs, if one of them is running (first of
-three perhaps) and you suspend the Workflow, that first MapReduce will be completed but the
-following two will not be started.
+To *resume* a Schedule means that the trigger is reset, and the program associated will
+run again at the next scheduled time.
 
-To *resume* means that activity will start up where it was left off, beginning with the start
-of the next program in the sequence.
-
-In the case of the Workflow mentioned above, resuming it after suspension would start up with the
-second of the three MapReduce programs, which is where it would have left off when it was suspended.
-
-With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
-either a currently running or suspended Workflow.
-
-
-To suspend or resume a Schedule or a Workflow, use::
+To suspend or resume a Schedule use::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
-  
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
 
 where:
 
@@ -748,10 +734,6 @@ where:
      - Name of the Application
    * - ``<schedule-name>``
      - Name of the Schedule
-   * - ``<workflow-name>``
-     - Name of the Workflow
-   * - ``<run-id>``
-     - UUID of the Workflow run
 
 .. container:: table-block-example
 
@@ -774,3 +756,70 @@ where:
          
      * - Returns
        - | ``OK`` if successfully set as suspended
+
+
+Workflows: Suspend and Resume
+...........................................
+
+For Workflows, you can suspend and resume them using the RESTful API.
+
+To *suspend* means that the current activity will be taken to completion, but no further 
+programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
+
+In the case of a Workflow with multiple MapReduce programs, if one of them is running (first of
+three perhaps) and you suspend the Workflow, that first MapReduce will be completed but the
+following two will not be started.
+
+To *resume* means that activity will start up where it was left off, beginning with the start
+of the next program in the sequence.
+
+In the case of the Workflow mentioned above, resuming it after suspension would start up with the
+second of the three MapReduce programs, which is where it would have left off when it was suspended.
+
+With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
+either a currently running or suspended Workflow.
+
+To suspend or resume a Workflow, use::
+  
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application
+   * - ``<workflow-name>``
+     - Name of the Workflow
+   * - ``<run-id>``
+     - UUID of the Workflow run
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Suspending A Workflow
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the Workflow
+         *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``POST <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend``
+         
+     * - Returns
+       - | ``Program run suspended.`` if successfully set as suspended
