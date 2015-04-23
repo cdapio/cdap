@@ -36,15 +36,24 @@ from datetime import datetime
 
 def get_sdk_version():
     # Sets the Build Version
-    grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     short_version = None
     full_version = None
     try:
-        full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
+# Python 2.7 commands
+#         grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
+#         print "grep_version_cmd: %s" % grep_version_cmd
+#         full_version_temp = subprocess.check_output(grep_version_cmd, shell=True)
+# Python 2.6 commands
+        p1 = subprocess.Popen(["grep" , "<version>", "../../../pom.xml" ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["awk", "NR==1;START{print $1}"], stdin=p1.stdout, stdout=subprocess.PIPE)
+        full_version_temp = p2.communicate()[0]
+#
+	full_version = full_version_temp.strip().replace("<version>", "").replace("</version>", "")
         version = full_version.replace("-SNAPSHOT", "")
         short_version = '%s.%s' % tuple(version.split('.')[0:2])
     except:
+        print "Unexpected error:", sys.exc_info()[0]
         pass
     return version, short_version, full_version
 
