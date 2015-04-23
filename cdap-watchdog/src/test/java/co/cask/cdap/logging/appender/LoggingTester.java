@@ -28,6 +28,7 @@ import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.logging.read.ReadRange;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
@@ -110,7 +111,7 @@ public class LoggingTester {
 
   public void testGetNext(LogReader logReader, LoggingContext loggingContext) throws Exception {
     LogCallback logCallback1 = new LogCallback();
-    logReader.getLogNext(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER, logCallback1);
+    logReader.getLogNext(loggingContext, ReadRange.LATEST, 10, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> events = logCallback1.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -120,42 +121,43 @@ public class LoggingTester {
     LogOffset penultimateOffset = events.get(8).getOffset();
 
     LogCallback logCallback2 = new LogCallback();
-    logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
-                         logCallback2);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback1.getFirstOffset()), 20,
+                         Filter.EMPTY_FILTER, logCallback2);
     events = logCallback2.getEvents();
     Assert.assertEquals(20, events.size());
     Assert.assertEquals("Test log message 30 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 49 arg1 arg2", events.get(19).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback3 = new LogCallback();
-    logReader.getLogNext(loggingContext, logCallback2.getLastOffset(), 20, Filter.EMPTY_FILTER,
-                         logCallback3);
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(logCallback2.getLastOffset()), 20,
+                         Filter.EMPTY_FILTER, logCallback3);
     events = logCallback3.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 59 arg1 arg2", events.get(9).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback4 = new LogCallback();
-    logReader.getLogNext(loggingContext, logCallback2.getFirstOffset(), 20, Filter.EMPTY_FILTER,
-                         logCallback4);
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(logCallback2.getFirstOffset()), 20,
+                         Filter.EMPTY_FILTER, logCallback4);
     events = logCallback4.getEvents();
     Assert.assertEquals(20, events.size());
     Assert.assertEquals("Test log message 31 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(19).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback5 = new LogCallback();
-    logReader.getLogNext(loggingContext, ultimateOffset, 20, Filter.EMPTY_FILTER,
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(ultimateOffset), 20, Filter.EMPTY_FILTER,
                          logCallback5);
     events = logCallback5.getEvents();
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback6 = new LogCallback();
-    logReader.getLogNext(loggingContext, getNextOffset(ultimateOffset), 20, Filter.EMPTY_FILTER, logCallback6);
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(getNextOffset(ultimateOffset)), 20,
+                         Filter.EMPTY_FILTER, logCallback6);
     events = logCallback6.getEvents();
     Assert.assertEquals(0, events.size());
 
     LogCallback logCallback7 = new LogCallback();
-    logReader.getLogNext(loggingContext, penultimateOffset, 20, Filter.EMPTY_FILTER,
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(penultimateOffset), 20, Filter.EMPTY_FILTER,
                          logCallback7);
     events = logCallback7.getEvents();
     Assert.assertEquals(1, events.size());
@@ -164,7 +166,7 @@ public class LoggingTester {
     // Try with a different run
     LogCallback logCallback10 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, "RUN2")),
-                         LogOffset.LATEST_OFFSET, 20, Filter.EMPTY_FILTER, logCallback10);
+                         ReadRange.LATEST, 20, Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertEquals(20, events.size());
     Assert.assertEquals("RUN2 Test log message 40 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -173,7 +175,7 @@ public class LoggingTester {
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null)),
-                         LogOffset.LATEST_OFFSET, 35, Filter.EMPTY_FILTER, logCallback11);
+                         ReadRange.LATEST, 35, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertEquals(35, events.size());
     Assert.assertEquals("RUN2 Test log message 45 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -182,7 +184,7 @@ public class LoggingTester {
 
   public void testGetPrev(LogReader logReader, LoggingContext loggingContext) throws Exception {
     LogCallback logCallback1 = new LogCallback();
-    logReader.getLogPrev(loggingContext, LogOffset.LATEST_OFFSET, 10, Filter.EMPTY_FILTER, logCallback1);
+    logReader.getLogPrev(loggingContext, ReadRange.LATEST, 10, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> events = logCallback1.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -191,30 +193,30 @@ public class LoggingTester {
     LogOffset ultimateOffset =  events.get(9).getOffset();
 
     LogCallback logCallback2 = new LogCallback();
-    logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
-                         logCallback2);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback1.getFirstOffset()), 20,
+                         Filter.EMPTY_FILTER, logCallback2);
     events = logCallback2.getEvents();
     Assert.assertEquals(20, events.size());
     Assert.assertEquals("Test log message 30 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 49 arg1 arg2", events.get(19).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback3 = new LogCallback();
-    logReader.getLogNext(loggingContext, logCallback2.getLastOffset(), 20, Filter.EMPTY_FILTER,
-                         logCallback3);
+    logReader.getLogNext(loggingContext, ReadRange.createFromRange(logCallback2.getLastOffset()), 20,
+                         Filter.EMPTY_FILTER, logCallback3);
     events = logCallback3.getEvents();
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 50 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 59 arg1 arg2", events.get(9).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback4 = new LogCallback();
-    logReader.getLogPrev(loggingContext, logCallback2.getFirstOffset(), 15, Filter.EMPTY_FILTER,
-                         logCallback4);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback2.getFirstOffset()), 15,
+                         Filter.EMPTY_FILTER, logCallback4);
     events = logCallback4.getEvents();
     // In kafka mode, we'll get only 10 lines, need to run the call again.
     if (events.size() < 15) {
       LogCallback logCallback41 = new LogCallback();
-      logReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 5, Filter.EMPTY_FILTER,
-                           logCallback41);
+      logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback4.getFirstOffset()), 5,
+                           Filter.EMPTY_FILTER, logCallback41);
       events.addAll(0, logCallback41.getEvents());
       logCallback4 = logCallback41;
     }
@@ -222,29 +224,31 @@ public class LoggingTester {
     Assert.assertEquals("Test log message 15 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 29 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback5 = new LogCallback();
-    logReader.getLogPrev(loggingContext, new LogOffset(0, 0), 15, Filter.EMPTY_FILTER, logCallback5);
-    events = logCallback5.getEvents();
-    Assert.assertEquals(0, events.size());
-
     LogCallback logCallback6 = new LogCallback();
-    logReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 25, Filter.EMPTY_FILTER,
-                         logCallback6);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback4.getFirstOffset()), 25,
+                         Filter.EMPTY_FILTER, logCallback6);
     events = logCallback6.getEvents();
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 0 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 14 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
+    LogCallback logCallback5 = new LogCallback();
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback6.getFirstOffset()), 15,
+                         Filter.EMPTY_FILTER, logCallback5);
+    events = logCallback5.getEvents();
+    Assert.assertEquals(0, events.size());
+
     LogCallback logCallback7 = new LogCallback();
-    logReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 15, Filter.EMPTY_FILTER,
-                         logCallback7);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(logCallback4.getFirstOffset()), 15,
+                         Filter.EMPTY_FILTER, logCallback7);
     events = logCallback7.getEvents();
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 0 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 14 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());
 
     LogCallback logCallback9 = new LogCallback();
-    logReader.getLogPrev(loggingContext, getNextOffset(ultimateOffset), 15, Filter.EMPTY_FILTER, logCallback9);
+    logReader.getLogPrev(loggingContext, ReadRange.createToRange(getNextOffset(ultimateOffset)), 15,
+                         Filter.EMPTY_FILTER, logCallback9);
     events = logCallback9.getEvents();
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 45 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -253,7 +257,7 @@ public class LoggingTester {
     // Try with a different run
     LogCallback logCallback10 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, "RUN2")),
-                         LogOffset.LATEST_OFFSET, 20, Filter.EMPTY_FILTER, logCallback10);
+                         ReadRange.LATEST, 20, Filter.EMPTY_FILTER, logCallback10);
     events = logCallback10.getEvents();
     Assert.assertEquals(20, events.size());
     Assert.assertEquals("RUN2 Test log message 40 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
@@ -262,7 +266,7 @@ public class LoggingTester {
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUNID_ID, null)),
-                         LogOffset.LATEST_OFFSET, 40, Filter.EMPTY_FILTER, logCallback11);
+                         ReadRange.LATEST, 40, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
     Assert.assertEquals(40, events.size());
     Assert.assertEquals("RUN2 Test log message 40 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());

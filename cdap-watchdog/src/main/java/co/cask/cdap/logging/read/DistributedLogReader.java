@@ -52,14 +52,14 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
+  public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
                               final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
-    if (fromOffset != LogOffset.LATEST_OFFSET) {
+    if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
       // Read from file only if logs are saved for the loggingContext until fromTime
-      if (fromOffset.getTime() < checkpointTime) {
-        fileLogReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, callback);
+      if (readRange.getFromMillis() < checkpointTime) {
+        fileLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
         // If there are events from fileLogReader, return. Otherwise try in kafkaLogReader.
         if (callback.getCount() != 0) {
           return;
@@ -67,23 +67,23 @@ public final class DistributedLogReader implements LogReader {
       }
     }
 
-    kafkaLogReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, callback);
+    kafkaLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
   }
 
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
+  public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
                               final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
-    if (fromOffset != LogOffset.LATEST_OFFSET) {
+    if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
       // Read from file only if logs are saved for the loggingContext until fromTime
-      if (fromOffset.getTime() < checkpointTime) {
-        fileLogReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+      if (readRange.getToMillis() < checkpointTime) {
+        fileLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
         return;
       }
     }
 
-    kafkaLogReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+    kafkaLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
   }
 
   @Override

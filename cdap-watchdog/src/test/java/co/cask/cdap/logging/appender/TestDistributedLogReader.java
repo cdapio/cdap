@@ -38,6 +38,7 @@ import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
+import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.logging.save.Checkpoint;
 import co.cask.cdap.logging.save.CheckpointManager;
 import co.cask.cdap.logging.save.CheckpointManagerFactory;
@@ -147,12 +148,13 @@ public class TestDistributedLogReader extends KafkaTestBase {
   public void testDistributedLogPrev() throws Exception {
     DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
     int count = 60;
-    LogOffset firstOffset = LogOffset.LATEST_OFFSET;
+    ReadRange readRange = ReadRange.LATEST;
     for (int i = 0; i < 15; ++i) {
       LoggingTester.LogCallback callback = new LoggingTester.LogCallback();
-      distributedLogReader.getLogPrev(LOGGING_CONTEXT, firstOffset, 4, Filter.EMPTY_FILTER, callback);
+      distributedLogReader.getLogPrev(LOGGING_CONTEXT, readRange, 4, Filter.EMPTY_FILTER, callback);
       List<LogEvent> events = callback.getEvents();
-      firstOffset = events.get(0).getOffset();
+      Assert.assertFalse(events.isEmpty());
+      readRange = ReadRange.createToRange(events.get(0).getOffset());
 
       Collections.reverse(events);
       for (LogEvent event : events) {
@@ -167,12 +169,13 @@ public class TestDistributedLogReader extends KafkaTestBase {
   public void testDistributedLogNext() throws Exception {
     DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
     int count = 0;
-    LogOffset firstOffset = new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, 0);
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
     for (int i = 0; i < 20; ++i) {
       LoggingTester.LogCallback callback = new LoggingTester.LogCallback();
-      distributedLogReader.getLogNext(LOGGING_CONTEXT, firstOffset, 3, Filter.EMPTY_FILTER, callback);
+      distributedLogReader.getLogNext(LOGGING_CONTEXT, readRange, 3, Filter.EMPTY_FILTER, callback);
       List<LogEvent> events = callback.getEvents();
-      firstOffset = events.get(events.size() - 1).getOffset();
+      Assert.assertFalse(events.isEmpty());
+      readRange = ReadRange.createFromRange(events.get(events.size() - 1).getOffset());
 
       for (LogEvent event : events) {
         Assert.assertEquals("TestDistributedLogReader Log message " + count++,
