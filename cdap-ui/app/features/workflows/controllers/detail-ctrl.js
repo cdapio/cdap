@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource) {
+  .controller('WorkflowsDetailController', function($scope, $state, $timeout, MyDataSource, myProgramPreferencesService, myRuntimeService) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' +
             $state.params.appId +
@@ -29,10 +29,16 @@ angular.module(PKG.name + '.feature.workflows')
 
     $scope.start = function() {
       $scope.status = 'STARTING';
-      dataSrc.request({
+      var requestObj = {
         _cdapNsPath: basePath + '/start',
         method: 'POST'
-      })
+      };
+
+      if ($scope.runtimeArgs && Object.keys($scope.runtimeArgs).length > 0) {
+        requestObj.body = $scope.runtimeArgs;
+      }
+
+      dataSrc.request(requestObj)
         .then(function() {
           $state.go('workflows.detail.runs', {}, {reload: true});
         });
@@ -42,6 +48,16 @@ angular.module(PKG.name + '.feature.workflows')
       dataSrc.request({
         _cdapNsPath: basePath + '/stop',
         method: 'POST'
+      });
+    };
+
+    $scope.openPreferences = function() {
+      myProgramPreferencesService.show('workflows');
+    };
+
+    $scope.openRuntime = function() {
+      myRuntimeService.show().result.then(function(res) {
+        $scope.runtimeArgs = res;
       });
     };
 

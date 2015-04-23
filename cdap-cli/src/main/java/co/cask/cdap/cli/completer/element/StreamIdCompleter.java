@@ -19,7 +19,7 @@ package co.cask.cdap.cli.completer.element;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.proto.StreamDetail;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
@@ -41,11 +41,11 @@ public class StreamIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<StreamRecord> list = streamClient.list();
+          List<StreamDetail> list = streamClient.list();
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<StreamRecord, String>() {
+            Iterables.transform(list, new Function<StreamDetail, String>() {
               @Override
-              public String apply(StreamRecord input) {
+              public String apply(StreamDetail input) {
                 return input.getName();
               }
             })

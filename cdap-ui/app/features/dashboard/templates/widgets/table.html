@@ -1,0 +1,13 @@
+<div class="{{wdgt.color}}" ng-controller="C3WidgetTimeseriesCtrl" style="height:200px">
+  <table class="table table-curved" ng-controller="WidgetTableCtrl">
+    <thead>
+    <th>Timestamp</th>
+    <th ng-repeat="metricName in chartData.metricNames">{{::metricName}}</th>
+    </thead>
+    <tbody>
+    <tr ng-repeat="row in tableData">
+      <td ng-repeat="value in row track by $index">{{::value}}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>

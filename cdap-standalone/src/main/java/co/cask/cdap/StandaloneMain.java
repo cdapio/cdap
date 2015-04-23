@@ -355,6 +355,8 @@ public class StandaloneMain {
         protected void configure() {
           if (uiPath != null) {
             bindConstant().annotatedWith(Names.named("ui-path")).to(uiPath);
+          } else {
+            bindConstant().annotatedWith(Names.named("ui-path")).to("");
           }
         }
       },

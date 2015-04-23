@@ -2,7 +2,7 @@
 <div class="row">
   <div class="col-sm-6">
     <h2>
-      <span ng-bind="$state.params.datasetId | caskCapitalizeFilter"></span>
+      <span ng-bind="$state.params.datasetId"></span>
     </h2>
     <div class="type-block">
       <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" /><small> Type: Dataset </small>
@@ -36,6 +36,6 @@
 </my-tabs> -->
 
 <my-tabs
-  data-tabs-list="['Status', 'Explore']"
+  data-tabs-list="['Status', 'Explore', 'Metadata']"
   data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
 </my-tabs>

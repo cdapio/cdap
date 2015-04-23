@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesDetailController', function($scope, MyDataSource, $state) {
+  .controller('ServicesDetailController', function($scope, MyDataSource, $state, myRuntimeService, myProgramPreferencesService) {
     var dataSrc = new MyDataSource($scope),
         path = '/apps/' +
           $state.params.appId + '/services/' +
@@ -7,10 +7,17 @@ angular.module(PKG.name + '.feature.services')
 
     $scope.start = function() {
       $scope.status = 'STARTING';
-      dataSrc.request({
+
+      var requestObj = {
         _cdapNsPath: path + '/start',
         method: 'POST'
-      });
+      };
+
+      if ($scope.runtimeArgs && Object.keys($scope.runtimeArgs).length > 0) {
+        requestObj.body = $scope.runtimeArgs;
+      }
+
+      dataSrc.request(requestObj);
     };
 
     $scope.stop = function() {
@@ -26,4 +33,15 @@ angular.module(PKG.name + '.feature.services')
     }, function(res) {
       $scope.status = res.status;
     });
+
+    $scope.openPreferences = function() {
+      myProgramPreferencesService.show('services');
+    };
+
+    $scope.openRuntime = function() {
+      myRuntimeService.show().result.then(function(res) {
+        $scope.runtimeArgs = res;
+      });
+    };
+
   });

@@ -3,8 +3,8 @@
 <div class="panel panel-default">
 
   <div class="panel-body">
-    <div class="alert alert-info" ng-if="systemPreferences.length > 0">
-      <p>Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.</p>
+    <div class="alert alert-info" ng-if="parentPreferences.length > 0">
+      <p>{{ messages }}</p>
     </div>
 
     <form ng-show="preferences.length > 0">
@@ -50,18 +50,18 @@
       </div>
     </div>
 
-    <div class="system-preferences" ng-if="systemPreferences.length > 0">
+    <div class="system-preferences" ng-if="parentPreferences.length > 0">
       <hr/>
       <div class="table-responsive">
         <table class="table table-curved" cask-sortable>
           <thead>
-            <tr ng-class="{'sort-enabled': systemPreferences.length>0}">
+            <tr ng-class="{'sort-enabled': parentPreferences.length>0}">
               <th data-predicate="key" data-predicate-default="reverse">Name</th>
               <th data-predicate="value" data-predicate-default="reverse">Value</th>
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="pref in systemPreferences | orderBy:sortable.predicate:sortable.reverse">
+            <tr ng-repeat="pref in parentPreferences | orderBy:sortable.predicate:sortable.reverse">
               <td>{{ pref.key }}</td>
               <td>{{ pref.value }}</td>
             </tr>

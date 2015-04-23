@@ -137,10 +137,10 @@ Running the Example
 Deleting an Existing Dataset
 ----------------------------
 
-If it has been created from an earlier run of the example, delete the ``profiles``
-Dataset, either through the CDAP Command Line Interface or by making a ``curl`` call::
+If a ``profiles`` Dataset has been created from an earlier run of the example, delete the ``profiles``
+Dataset, either by using the CDAP Command Line Interface or by making a ``curl`` call::
 
-  curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
+  curl -w'\n' -X DELETE 'http://localhost:10000/v3/namespaces/default/data/datasets/profiles' 
 
 
 Starting the Service and the Flow
@@ -148,53 +148,31 @@ Starting the Service and the Flow
 
 Once the application is deployed:
 
-- Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
-  Application detail page, click:
+  - Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
+    Application detail page, click:
   
-  - ``ActivityFlow`` in the *Flow* pane to get to the Flow detail page, then click the *Start* button; or
-  - ``UserProfileService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
+    - ``UserProfileService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
+    - ``ActivityFlow`` in the *Flow* pane to get to the Flow detail page, then click the *Start* button; 
   
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+or:
+  
+  - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-      - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
-      - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
+    - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
+    - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
 
-..  .. list-table::
-..    :widths: 20 80
-..    :stub-columns: 1
-
-..    * - On Linux:
-..      - ``$ ./bin/cdap-cli.sh start flow UserProfiles.ActivityFlow``
-..    * - 
-..      - ``$ ./bin/cdap-cli.sh start service UserProfiles.UserProfileService``
-      
-..    * - On Windows:
-..      - ``> bin\cdap-cli.bat start flow UserProfiles.ActivityFlow``    
-..    * - 
-..      - ``> bin\cdap-cli.bat start service UserProfiles.UserProfileService``    
 
 Populate the ``profiles`` Table
 -------------------------------
 
-Populate the ``profiles`` tables with users using a script. From the example's directory, use:
+Populate the ``profiles`` table with users using a script. From the example's directory, use:
 
   - ``$ ./bin/add-users.sh``
-
-..  .. list-table::
-..    :widths: 20 80
-..    :stub-columns: 1
-
-..    * - On Linux:
-..      - ``$ ./bin/add-users.sh``
-
-..    * - On Windows:
-..      - ``> bin\add-users.bat``    
 
 
 Create a Conflict
 -----------------
-Now, from two
-different terminals, run the following commands concurrently:
+Now, from two different terminals, run the following commands concurrently:
 
 - ``bin/update-login.sh`` to randomly update the time of last login for users; and
 - ``bin/send-events.sh`` to generate random user activity events and send them to the stream.

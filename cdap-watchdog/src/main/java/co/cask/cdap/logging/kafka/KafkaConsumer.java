@@ -53,6 +53,9 @@ import static kafka.api.OffsetRequest.CurrentVersion;
 public final class KafkaConsumer implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaConsumer.class);
 
+  public static final long EARLIEST_OFFSET = -2;
+  public static final long LATEST_OFFSET = -1;
+
   private static final int MAX_KAFKA_FETCH_RETRIES = 5;
   public static final int BUFFER_SIZE_BYTES = 1024 * 1024;
   public static final int TIMEOUT_MS = 3000;
@@ -65,23 +68,6 @@ public final class KafkaConsumer implements Closeable {
 
   // Simple consumer is thread safe
   private volatile SimpleConsumer consumer;
-
-  /**
-   * Represents the Kafka offsets that can be fetched by KafkaConsumer. Only earliest and latest offset are supported.
-   */
-  public enum Offset {
-    EARLIEST(-2), LATEST(-1);
-
-    private int value;
-
-    private Offset(int value) {
-      this.value = value;
-    }
-
-    public int getValue() {
-      return value;
-    }
-  }
 
   /**
    * Creates a KafkaConsumer with initial set of seed brokers, topic and partition.
@@ -116,14 +102,14 @@ public final class KafkaConsumer implements Closeable {
   }
 
   /**
-   * Fetch the earliest or latest available Kafka message offset.
-   * @param offset offset to fetch.
-   * @return Kafka message offset.
+   * Fetch offset before given time.
+   * @param timeMillis offset to fetch before timeMillis.
+   * @return Kafka message offset
    */
-  public long fetchOffset(Offset offset) {
+  public long fetchOffsetBefore(long timeMillis) {
     TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
     Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = Maps.newHashMap();
-    requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(offset.getValue(), 1));
+    requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(timeMillis, 1));
     OffsetRequest request = new OffsetRequest(requestInfo, CurrentVersion(), clientName);
 
     if (consumer == null) {
@@ -147,19 +133,23 @@ public final class KafkaConsumer implements Closeable {
     }
     long[] offsets = response.offsets(topic, partition);
     if (offsets.length == 0) {
-      closeConsumer();
-      String message =
-        String.format("Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partiton %d",
-                      offset, consumer.host(), consumer.port(), topic, partition);
-      LOG.error(message);
-      throw new RuntimeException(message);
+      // No offsets returned for given time. If this is not a request for earliest offset, return earliest offset.
+      // Otherwise throw exception.
+      if (timeMillis != EARLIEST_OFFSET) {
+        return fetchOffsetBefore(EARLIEST_OFFSET);
+      }
+
+      try {
+        String message =
+          String.format("Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partiton %d",
+                        timeMillis, consumer.host(), consumer.port(), topic, partition);
+        LOG.error(message);
+        throw new RuntimeException(message);
+      } finally {
+        closeConsumer();
+      }
     }
     return offsets[0];
-  }
-
-  public boolean isLeaderPresent() {
-    PartitionMetadata metadata = fetchPartitonMetadata();
-    return !(metadata == null || metadata.errorCode() != ErrorMapping.NoError());
   }
 
   private void closeConsumer() {

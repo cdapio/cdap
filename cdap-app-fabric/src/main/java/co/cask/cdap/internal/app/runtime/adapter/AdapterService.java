@@ -439,14 +439,13 @@ public class AdapterService extends AbstractIdleService {
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    return Id.Program.from(namespace.getId(), adapterSpec.getTemplate(),
-                           adapterSpec.getProgram().getType(), adapterSpec.getProgram().getId());
+    return adapterSpec.getProgram();
   }
 
   private void startWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
-    ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpec();
+    ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpecification();
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(
                          ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
@@ -459,7 +458,7 @@ public class AdapterService extends AbstractIdleService {
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
     throws NotFoundException, SchedulerException, ExecutionException, InterruptedException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
-    String scheduleName = adapterSpec.getScheduleSpec().getSchedule().getName();
+    String scheduleName = adapterSpec.getScheduleSpecification().getSchedule().getName();
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
       //TODO: Scheduler API should also manage the MDS.

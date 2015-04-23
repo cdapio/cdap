@@ -73,9 +73,9 @@ public class KafkaLogReader implements LogReader {
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
-                         final Filter filter, final Callback callback) {
-    if (fromOffset.getKafkaOffset() < 0) {
+  public void getLogNext(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents,
+                         Filter filter, Callback callback) {
+    if (fromOffset == LogOffset.LATEST_OFFSET) {
       getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
       return;
     }
@@ -85,11 +85,20 @@ public class KafkaLogReader implements LogReader {
     callback.init();
 
     KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, KAFKA_FETCH_TIMEOUT_MS);
+    long fromTimeMs = Long.MIN_VALUE;
     try {
+      // If Kafka offset is not valid, then we might be rolling over from file while reading.
+      // Try to get the offset corresponding to fromOffset.getTime()
+      if (fromOffset.getKafkaOffset() == LogOffset.INVALID_KAFKA_OFFSET) {
+        fromOffset =
+          new LogOffset(kafkaConsumer.fetchOffsetBefore(fromOffset.getTime()), fromOffset.getTime());
+        fromTimeMs = fromOffset.getTime();
+      }
+
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
+      long latestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.LATEST_OFFSET);
       long startOffset = fromOffset.getKafkaOffset() + 1;
 
       if (startOffset >= latestOffset) {
@@ -97,7 +106,7 @@ public class KafkaLogReader implements LogReader {
         return;
       }
 
-      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+      fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback, fromTimeMs);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
@@ -116,8 +125,12 @@ public class KafkaLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final LogOffset fromOffset, final int maxEvents,
-                         final Filter filter, final Callback callback) {
+  public void getLogPrev(LoggingContext loggingContext, LogOffset fromOffset, int maxEvents,
+                         Filter filter, Callback callback) {
+    if (fromOffset.getKafkaOffset() == LogOffset.INVALID_KAFKA_OFFSET) {
+      fromOffset = LogOffset.LATEST_OFFSET;
+    }
+
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
 
     callback.init();
@@ -127,8 +140,8 @@ public class KafkaLogReader implements LogReader {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-      long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+      long latestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.LATEST_OFFSET);
+      long earliestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.EARLIEST_OFFSET);
       long stopOffset;
       long startOffset;
 
@@ -152,7 +165,8 @@ public class KafkaLogReader implements LogReader {
       // we'll need to return at least 1 log offset for next getLogPrev call to work.
       int fetchCount = 0;
       while (fetchCount == 0) {
-        fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, maxEvents, callback);
+        fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, maxEvents, callback,
+                                    Long.MIN_VALUE);
         stopOffset = startOffset;
         if (stopOffset <= earliestOffset) {
           // Truly no log messages found.
@@ -182,15 +196,15 @@ public class KafkaLogReader implements LogReader {
   }
 
   @Override
-  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                     final Filter filter, final Callback callback) {
+  public void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                     Filter filter, Callback callback) {
     throw new UnsupportedOperationException("Getting logs by time is not supported by "
                                               + KafkaLogReader.class.getSimpleName());
   }
 
   private int fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long stopOffset,
-                             int maxEvents, Callback callback) {
-    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, stopOffset, maxEvents, callback);
+                             int maxEvents, Callback callback, long fromTimeMs) {
+    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, stopOffset, maxEvents, callback, fromTimeMs);
 
     while (kafkaCallback.getCount() < maxEvents && startOffset < stopOffset) {
       kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
@@ -212,22 +226,25 @@ public class KafkaLogReader implements LogReader {
     private final long stopOffset;
     private final int maxEvents;
     private final Callback callback;
+    private final long fromTimeMs;
+
     private long lastOffset = -1;
     private int count = 0;
 
     private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, long stopOffset, int maxEvents,
-                          Callback callback) {
+                          Callback callback, long fromTimeMs) {
       this.logFilter = logFilter;
       this.serializer = serializer;
       this.stopOffset = stopOffset;
       this.maxEvents = maxEvents;
       this.callback = callback;
+      this.fromTimeMs = fromTimeMs;
     }
 
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
       ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      if (offset < stopOffset && count < maxEvents && logFilter.match(event)) {
+      if (offset < stopOffset && count < maxEvents && logFilter.match(event) && event.getTimeStamp() > fromTimeMs) {
         ++count;
         callback.handle(new LogEvent(event, new LogOffset(offset, event.getTimeStamp())));
       }

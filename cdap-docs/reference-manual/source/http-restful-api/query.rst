@@ -256,11 +256,11 @@ been retrieved, then the returned list is empty.
    * - HTTP Request
      - ``POST <base-url>/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
    * - HTTP Response
-     - ``[{"columns": [ 10, 5]},``
-       `` {"columns": [ 20, 27]},``
-       `` {"columns": [ 50, 6]},``
-       `` {"columns": [ 90, 30]},``
-       `` {"columns": [ 95, 91]}]``
+     - | ``[{"columns": [ 10, 5]},``
+       | `` {"columns": [ 20, 27]},``
+       | `` {"columns": [ 50, 6]},``
+       | `` {"columns": [ 90, 30]},``
+       | `` {"columns": [ 95, 91]}]``
    * - Description
      - Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
@@ -354,14 +354,14 @@ The results are returned as a JSON array, with each element containing informati
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/data/explore/queries``
    * - HTTP Response
-     - ``[{``
-       ``   "timestamp": 1411266478717,``
-       ``   "statement": "SELECT * FROM dataset_mydataset",``
-       ``   "status": "FINISHED",``
-       ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
-       ``   "has_results": true,
-       ``   "is_active": false``
-       ``}]``
+     - | ``[{``
+       | `` "timestamp": 1411266478717,``
+       | `` "statement": "SELECT * FROM dataset_mydataset",``
+       | `` "status": "FINISHED",``
+       | `` "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",``
+       | `` "has_results": true,``
+       | `` "is_active": false``
+       | ``}]``
    * - Description
      - Retrieves all queries
 

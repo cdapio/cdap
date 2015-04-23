@@ -37,7 +37,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -113,9 +113,9 @@ public class IntegrationTestBase {
 
     // TODO: check no streams once streams can be deleted instead of truncating all streams
     StreamClient streamClient = getStreamClient();
-    List<StreamRecord> streamRecords = streamClient.list();
+    List<StreamDetail> streamRecords = streamClient.list();
     if (streamRecords.size() > 0) {
-      for (StreamRecord streamRecord : streamRecords) {
+      for (StreamDetail streamRecord : streamRecords) {
         try {
           streamClient.truncate(streamRecord.getName());
         } catch (Exception e) {

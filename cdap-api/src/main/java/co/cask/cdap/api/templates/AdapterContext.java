@@ -20,11 +20,20 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
+import javax.annotation.Nullable;
+
 /**
  * Provides access to template adapter context when a program is executing as an adapter.
  */
 @Beta
 public interface AdapterContext {
+
+  /**
+   * Returns the {@link AdapterSpecification} containing information about the adapter or {@code null} if the
+   * program is not running under the adapter context.
+   */
+  @Nullable
+  AdapterSpecification getAdapterSpecification();
 
   /**
    * Gets the {@link PluginProperties} associated with the given plugin type and name in the adapter context.

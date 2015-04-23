@@ -176,6 +176,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     Assert.assertEquals(config.getDescription(), spec.getDescription());
     Assert.assertEquals(config.getTemplate(), spec.getTemplate());
     Assert.assertEquals(config.getConfig(), spec.getConfig());
+    Assert.assertEquals(config.getConfig().toString(), spec.getConfigString());
   }
 
   @Test

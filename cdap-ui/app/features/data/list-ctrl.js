@@ -33,7 +33,7 @@ angular.module(PKG.name + '.feature.data')
         });
       } else if (data.dataType === 'Stream') {
         $state.go('streams.detail.overview', {
-          streamId: data.id
+          streamId: data.name
         });
       }
     };

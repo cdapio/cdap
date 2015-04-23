@@ -85,13 +85,13 @@ Once the application is deployed:
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start service SparkPageRank.GoogleTypePR``
-    * - 
       - ``$ ./bin/cdap-cli.sh start service SparkPageRank.RanksService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start service SparkPageRank.GoogleTypePR``    
     * - 
+      - ``$ ./bin/cdap-cli.sh start service SparkPageRank.GoogleTypePR``
+    * - On Windows:
       - ``> bin\cdap-cli.bat start service SparkPageRank.RanksService``    
+    * - 
+      - ``> bin\cdap-cli.bat start service SparkPageRank.GoogleTypePR``    
 
 Injecting URL Pairs
 ------------------------------
@@ -155,9 +155,9 @@ You can also use the Command Line Interface:
   :stub-columns: 1
 
   * - On Linux:
-    - ``$ ./bin/cdap-cli.sh call service PageRankApp.PageRankService GET 'pagerank?url=http://example.com/page1'``
+    - ``$ ./bin/cdap-cli.sh call service SparkPageRank.RanksService GET 'rank?url=http://example.com/page1'``
   * - On Windows:
-    - ``> bin\cdap-cli.bat call service PageRankApp.PageRankService GET 'pagerank?url=http://example.com/page1'``
+    - ``> bin\cdap-cli.bat call service SparkPageRank.RanksService GET 'rank?url=http://example.com/page1'``
 
 Stopping the Application
 -------------------------------
@@ -176,9 +176,9 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow PageRankApp.PageRankService``
+      - ``$ ./bin/cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram``
     * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow PageRankApp.PageRankService``    
+      - ``> bin\cdap-cli.bat stop spark SparkPageRank.SparkPageRankProgram``    
 
 **Stopping the Services**
 
@@ -192,10 +192,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.GoogleTypePR``
-    * - 
       - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.RanksService``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop service SparkPageRank.GoogleTypePR``    
     * - 
+      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.GoogleTypePR``
+    * - On Windows:
       - ``> bin\cdap-cli.bat stop service SparkPageRank.RanksService``    
+    * - 
+      - ``> bin\cdap-cli.bat stop service SparkPageRank.GoogleTypePR``    

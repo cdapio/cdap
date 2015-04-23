@@ -10,25 +10,51 @@
     </div>
   </div>
   <div class="col-sm-6 text-right">
-    <div ng-show="status == 'RUNNING'"
-         class="btn btn-danger btn-md"
-         ng-click="stop()">
-      <span class="fa fa-stop"> </span>
-      <span>Stop</span>
-    </div>
 
-    <div ng-show="status == 'STOPPED'"
-         class="btn btn-success btn-md"
-         ng-click="start()">
-      <span class="fa fa-play"> </span>
-      <span>Start</span>
+    <div class="btn-group" dropdown>
+      <div ng-if="status == 'STOPPED'"
+           class="btn btn-success btn-md"
+           ng-click="start()">
+        <span class="fa fa-play"> </span>
+        <span>Start</span>
+      </div>
+
+      <div ng-if="status == 'RUNNING'"
+           class="btn btn-danger btn-md"
+           ng-click="stop()">
+        <span class="fa fa-stop"> </span>
+        <span>Stop</span>
+      </div>
+
+      <div ng-if="status == 'STARTING' || status == 'STOPPING'"
+           class="btn btn-md"
+           ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
+        <span class="fa fa-refresh fa-spin"></span>
+        <span>{{status | caskCapitalizeFilter}}</span>
+      </div>
+
+      <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu" role="menu" ng-if="status === 'STOPPED'">
+        <li>
+          <a href="#" ng-click="openRuntime()">
+            <span class="fa fa-wrench"></span>
+            Runtime Arguments
+          </a>
+        </li>
+        <li>
+          <a href="#" ng-click="openPreferences()">
+            <span class="fa fa-cog"></span>
+            Preferences
+          </a>
+        </li>
+      </ul>
+
     </div>
-    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
-         class="btn btn-md"
-         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
-      <span class="fa fa-refresh fa-spin"></span>
-      <span>{{status | caskCapitalizeFilter}}</span>
-    </div>
+    <!-- END OF BUTTON GROUP -->
+
   </div>
 </div>
 

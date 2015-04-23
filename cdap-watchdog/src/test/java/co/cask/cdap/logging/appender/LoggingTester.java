@@ -293,6 +293,11 @@ public class LoggingTester {
     }
 
     @Override
+    public int getCount() {
+      return events.size();
+    }
+
+    @Override
     public void close() {
       latch.countDown();
     }

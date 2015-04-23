@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Reads log events from a file.
@@ -103,11 +102,9 @@ public class FileLogReader implements LogReader {
       }
 
       AvroFileReader logReader = new AvroFileReader(schema);
-      CountingCallback countingCallback = new CountingCallback(callback);
       for (Location file : tailFiles) {
-        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - countingCallback.getCount(),
-                          countingCallback);
-        if (countingCallback.getCount() >= maxEvents) {
+        logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
+        if (callback.getCount() >= maxEvents) {
           break;
         }
       }
@@ -116,36 +113,6 @@ public class FileLogReader implements LogReader {
       throw  Throwables.propagate(e);
     } finally {
       callback.close();
-    }
-  }
-
-  /**
-   * Counts the number of times handle is called.
-   */
-  private static class CountingCallback implements Callback {
-    private final Callback callback;
-    private final AtomicInteger count = new AtomicInteger(0);
-
-    private CountingCallback(Callback callback) {
-      this.callback = callback;
-    }
-
-    @Override
-    public void init() {
-    }
-
-    @Override
-    public void handle(LogEvent event) {
-      count.incrementAndGet();
-      callback.handle(event);
-    }
-
-    public int getCount() {
-      return count.get();
-    }
-
-    @Override
-    public void close() {
     }
   }
 
