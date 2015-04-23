@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.adapter;
 
 import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.cli.CLIConfig;
