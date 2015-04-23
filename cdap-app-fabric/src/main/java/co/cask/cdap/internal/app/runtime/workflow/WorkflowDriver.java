@@ -201,7 +201,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     status.put(node.getNodeId(), node);
 
-    WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token);
+    WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
     try {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
       try {
@@ -356,7 +356,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @SuppressWarnings("unchecked")
   private WorkflowAction initialize(WorkflowActionSpecification actionSpec,
                                     ClassLoader classLoader, InstantiatorFactory instantiator,
-                                    WorkflowToken token) throws Exception {
+                                    WorkflowToken token, String nodeId) throws Exception {
     Class<?> clz = Class.forName(actionSpec.getClassName(), true, classLoader);
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
@@ -366,7 +366,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       action.initialize(new BasicWorkflowContext(workflowSpec, actionSpec,
                                                  logicalStartTime,
                                                  workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec,
-                                                                                                       token),
+                                                                                                       token, nodeId),
                                                  runtimeArgs, token));
     } catch (Throwable t) {
       LOG.warn("Exception on WorkflowAction.initialize(), abort Workflow. {}", actionSpec, t);

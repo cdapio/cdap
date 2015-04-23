@@ -17,8 +17,10 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -44,14 +46,25 @@ public final class RunRecord {
   @SerializedName("adapter")
   private final String adapterName;
 
+  @Nullable
+  @SerializedName("properties")
+  private final Map<String, String> properties;
+
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable String twillRunId) {
+                   @Nullable String adapterName, @Nullable String twillRunId,
+                   @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
     this.adapterName = adapterName;
     this.twillRunId = twillRunId;
+    this.properties = properties;
+  }
+
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
+                   @Nullable String adapterName, @Nullable String twillRunId) {
+    this(pid, startTs, stopTs, status, adapterName, twillRunId, null);
   }
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
@@ -59,7 +72,8 @@ public final class RunRecord {
   }
 
   public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getTwillRunId());
+    this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getTwillRunId(),
+         started.getProperties());
   }
 
   public String getPid() {
@@ -89,6 +103,11 @@ public final class RunRecord {
     return twillRunId;
   }
 
+  @Nullable
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -105,12 +124,13 @@ public final class RunRecord {
       Objects.equal(this.stopTs, that.stopTs) &&
       Objects.equal(this.status, that.status) &&
       Objects.equal(this.adapterName, that.adapterName) &&
-      Objects.equal(this.twillRunId, that.twillRunId);
+      Objects.equal(this.twillRunId, that.twillRunId) &&
+      Objects.equal(this.properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, twillRunId);
+    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, twillRunId, properties);
   }
 
   @Override
@@ -122,6 +142,7 @@ public final class RunRecord {
       .add("status", status)
       .add("adapter", adapterName)
       .add("twillrunid", twillRunId)
+      .add("properties", properties)
       .toString();
   }
 }
