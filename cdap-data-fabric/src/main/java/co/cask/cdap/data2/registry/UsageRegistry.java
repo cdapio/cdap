@@ -60,34 +60,54 @@ public class UsageRegistry {
   /**
    * Registers usage of a stream by multiple ids.
    *
-   * @param owners the owners of the stream
+   * @param users the users of the stream
    * @param streamId the stream
    */
-  public void register(List<Id> owners, Id.Stream streamId) {
-    for (Id owner : owners) {
-      // TODO: kind of hacky
-      if (owner instanceof Id.Program) {
-        register((Id.Program) owner, streamId);
-      } else if (owner instanceof Id.Adapter) {
-        register((Id.Adapter) owner, streamId);
-      }
+  public void registerAll(List<Id> users, Id.Stream streamId) {
+    for (Id user : users) {
+      register(user, streamId);
+    }
+  }
+
+  /**
+   * Register usage of a stream by an id.
+   *
+   * @param user the user of the stream
+   * @param streamId the stream
+   */
+  public void register(Id user, Id.Stream streamId) {
+    // TODO: kind of hacky
+    if (user instanceof Id.Program) {
+      register((Id.Program) user, streamId);
+    } else if (user instanceof Id.Adapter) {
+      register((Id.Adapter) user, streamId);
     }
   }
 
   /**
    * Registers usage of a dataset by multiple ids.
    *
-   * @param owners the owners of the dataset
+   * @param users the users of the dataset
    * @param datasetId the dataset
    */
-  public void register(List<Id> owners, Id.DatasetInstance datasetId) {
-    for (Id owner : owners) {
-      // TODO: kind of hacky
-      if (owner instanceof Id.Program) {
-        register((Id.Program) owner, datasetId);
-      } else if (owner instanceof Id.Adapter) {
-        register((Id.Adapter) owner, datasetId);
-      }
+  public void registerAll(List<Id> users, Id.DatasetInstance datasetId) {
+    for (Id user : users) {
+      register(user, datasetId);
+    }
+  }
+
+  /**
+   * Registers usage of a dataset by multiple ids.
+   *
+   * @param user the user of the dataset
+   * @param datasetId the dataset
+   */
+  public void register(Id user, Id.DatasetInstance datasetId) {
+    // TODO: kind of hacky
+    if (user instanceof Id.Program) {
+      register((Id.Program) user, datasetId);
+    } else if (user instanceof Id.Adapter) {
+      register((Id.Adapter) user, datasetId);
     }
   }
 

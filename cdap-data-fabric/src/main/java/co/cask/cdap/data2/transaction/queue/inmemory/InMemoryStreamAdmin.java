@@ -107,6 +107,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void register(Id.Stream streamId, List<Id> owners) {
-    usageRegistry.register(owners, streamId);
+    usageRegistry.registerAll(owners, streamId);
   }
 }

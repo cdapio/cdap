@@ -374,11 +374,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                      spec, arguments, classLoader));
       if (owners != null) {
         for (Id owner : owners) {
-          if (owner instanceof Id.Program) {
-            usageRegistry.register((Id.Program) owner, datasetInstanceId);
-          } else if (owner instanceof Id.Adapter) {
-            usageRegistry.register((Id.Adapter) owner, datasetInstanceId);
-          }
+          usageRegistry.register(owner, datasetInstanceId);
         }
       }
       return result;

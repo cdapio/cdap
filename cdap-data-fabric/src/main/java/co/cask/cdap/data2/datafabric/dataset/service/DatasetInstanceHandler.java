@@ -35,6 +35,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -128,6 +129,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       List<String> owners = request.getHeaders(Constants.Header.DATASET_OWNER);
       for (String owner : owners) {
         String[] parts = owner.split("//", 2);
+        Preconditions.checkArgument(parts.length == 2);
         String ownerType = parts[0];
         String ownerId = parts[1];
         try {

@@ -107,10 +107,10 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
         }
       });
     this.txContext = new TransactionContext(txClient);
-    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(), getOwners(),
+    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
                                                            txContext, dsFramework,
-                                                           program.getClassLoader(), null,
-                                                           runtimeArguments.asMap()) {
+                                                           program.getClassLoader(),
+                                                           runtimeArguments.asMap(), null, getOwners()) {
       @Nullable
       @Override
       protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

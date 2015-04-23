@@ -71,28 +71,30 @@ public abstract class DynamicDatasetContext implements DatasetContext {
     return RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
   }
 
-  public DynamicDatasetContext(Id.Namespace namespace, @Nullable List<? extends Id> owners,
+  public DynamicDatasetContext(Id.Namespace namespace,
                                TransactionContext context, DatasetFramework datasetFramework,
                                ClassLoader classLoader) {
-    this(namespace, owners, context, datasetFramework, classLoader, null, EMPTY_MAP);
+    this(namespace, context, datasetFramework, classLoader, EMPTY_MAP, null, null);
   }
 
   /**
    * Create a dynamic dataset context that will get datasets and add them to the transaction context.
    *
    * @param namespace the {@link Id.Namespace} in which the transaction context is created
-   * @param owners the {@link Id}s which own this context
    * @param context the transaction context
    * @param datasetFramework the dataset framework for creating dataset instances
    * @param classLoader the classloader to use when creating dataset instances
-   * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
    *                         are expected to be scoped so that arguments for one dataset do not override arguments
+   * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
+   * @param owners the {@link Id}s which own this context
    */
-  public DynamicDatasetContext(Id.Namespace namespace, @Nullable List<? extends Id> owners, TransactionContext context,
+  public DynamicDatasetContext(Id.Namespace namespace, TransactionContext context,
                                DatasetFramework datasetFramework,
-                               ClassLoader classLoader, @Nullable Set<String> datasets,
-                               Map<String, String> runtimeArguments) {
+                               ClassLoader classLoader,
+                               Map<String, String> runtimeArguments,
+                               @Nullable Set<String> datasets,
+                               @Nullable List<? extends Id> owners) {
     this.namespace = namespace;
     this.owners = owners == null ? ImmutableList.<Id>of() : ImmutableList.copyOf(owners);
     this.context = context;

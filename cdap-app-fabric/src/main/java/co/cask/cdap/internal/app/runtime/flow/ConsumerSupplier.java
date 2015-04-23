@@ -100,12 +100,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
       } else {
         for (Id owner : owners) {
           try {
-            // TODO: redundant code
-            if (owner instanceof Id.Program) {
-              usageRegistry.register((Id.Program) owner, queueName.toStreamId());
-            } else if (owner instanceof Id.Adapter) {
-              usageRegistry.register((Id.Adapter) owner, queueName.toStreamId());
-            }
+            usageRegistry.register(owner, queueName.toStreamId());
           } catch (Exception e) {
             LOG.warn("Failed to register usage of {} -> {}", owner, queueName.toStreamId(), e);
           }

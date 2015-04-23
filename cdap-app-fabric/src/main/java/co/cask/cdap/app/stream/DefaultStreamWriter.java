@@ -107,7 +107,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
     // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      usageRegistry.register(owners, stream);
+      usageRegistry.registerAll(owners, stream);
       isStreamRegistered.put(stream, true);
     }
 
