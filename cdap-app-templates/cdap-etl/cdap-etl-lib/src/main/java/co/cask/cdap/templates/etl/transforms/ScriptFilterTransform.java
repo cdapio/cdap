@@ -62,7 +62,7 @@ public class ScriptFilterTransform extends TransformStage<StructuredRecord, Stru
   public void initialize(StageContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
-    String scriptStr = context.getRuntimeArguments().get(SCRIPT);
+    String scriptStr = context.getPluginProperties().getProperties().get(SCRIPT);
     Preconditions.checkArgument(scriptStr != null && !scriptStr.isEmpty(), "Filter script must be specified.");
 
     String script = "function shouldFilter() { " + scriptStr + " }";

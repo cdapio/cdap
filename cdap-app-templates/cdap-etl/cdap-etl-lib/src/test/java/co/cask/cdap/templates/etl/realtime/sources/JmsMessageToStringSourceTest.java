@@ -16,18 +16,13 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.StageSpecification;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
+import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
-
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -173,32 +168,7 @@ public class JmsMessageToStringSourceTest {
 
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
 
-    jmsSource.initialize(new RealtimeContext() {
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return contextEnv;
-      }
-
-      @Override
-      public StageSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Metrics getMetrics() {
-        return null;
-      }
-
-      @Override
-      public int getInstanceId() {
-        return 0;
-      }
-
-      @Override
-      public int getInstanceCount() {
-        return 1;
-      }
-    });
+    jmsSource.initialize(new MockRealtimeContext(contextEnv));
 
     jmsProvider = jmsSource.getJmsProvider();
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
@@ -270,35 +240,6 @@ public class JmsMessageToStringSourceTest {
 
     List<String> getCurrentValues() {
       return currentValues;
-    }
-  }
-
-  public static class MockRealtimeContext implements RealtimeContext {
-    private final Map<String, String> runtimeArgs = Maps.newHashMap();
-
-    @Override
-    public int getInstanceId() {
-      return 0;
-    }
-
-    @Override
-    public int getInstanceCount() {
-      return 1;
-    }
-
-    @Override
-    public Map<String, String> getRuntimeArguments() {
-      return runtimeArgs;
-    }
-
-    @Override
-    public StageSpecification getSpecification() {
-      return null;
-    }
-
-    @Override
-    public Metrics getMetrics() {
-      return null;
     }
   }
 }

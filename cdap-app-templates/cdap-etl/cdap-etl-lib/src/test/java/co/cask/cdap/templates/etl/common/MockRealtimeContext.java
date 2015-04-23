@@ -17,19 +17,31 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.templates.etl.api.StageSpecification;
+import co.cask.cdap.api.templates.AdapterSpecification;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock RealtimeContext for tests.
  */
 public class MockRealtimeContext implements RealtimeContext {
+  private final PluginProperties pluginProperties;
+
+  public MockRealtimeContext(Map<String, String> properties) {
+    this.pluginProperties = PluginProperties.builder().addAll(properties).build();
+  }
+
+  public MockRealtimeContext() {
+    this(Maps.<String, String>newHashMap());
+  }
 
   @Override
-  public StageSpecification getSpecification() {
-    return null;
+  public PluginProperties getPluginProperties() {
+    return pluginProperties;
   }
 
   @Override
@@ -44,11 +56,27 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public int getInstanceCount() {
-    return 0;
+    return 1;
+  }
+
+  @Nullable
+  @Override
+  public AdapterSpecification getAdapterSpecification() {
+    return null;
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments() {
+  public PluginProperties getPluginProperties(String pluginId) {
+    return null;
+  }
+
+  @Override
+  public <T> Class<T> loadPluginClass(String pluginId) {
+    return null;
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return null;
   }
 }
