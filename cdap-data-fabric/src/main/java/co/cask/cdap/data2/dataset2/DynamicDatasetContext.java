@@ -26,11 +26,13 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -50,7 +52,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   private final Map<String, String> runtimeArguments;
   private final Set<DatasetCacheKey> txnInProgressDatasets = Sets.newHashSet();
   private final Id.Namespace namespace;
-  private final Id ownerId;
+  private final List<Id> owners;
 
   @Nullable
   protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();
@@ -69,30 +71,32 @@ public abstract class DynamicDatasetContext implements DatasetContext {
     return RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
   }
 
-  public DynamicDatasetContext(Id.Namespace namespace, Id ownerId,
+  public DynamicDatasetContext(Id.Namespace namespace,
                                TransactionContext context, DatasetFramework datasetFramework,
                                ClassLoader classLoader) {
-    this(namespace, ownerId, context, datasetFramework, classLoader, null, EMPTY_MAP);
+    this(namespace, context, datasetFramework, classLoader, EMPTY_MAP, null, null);
   }
 
   /**
    * Create a dynamic dataset context that will get datasets and add them to the transaction context.
    *
    * @param namespace the {@link Id.Namespace} in which the transaction context is created
-   * @param ownerId the {@link Id} which owns this context
    * @param context the transaction context
    * @param datasetFramework the dataset framework for creating dataset instances
    * @param classLoader the classloader to use when creating dataset instances
-   * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
    *                         are expected to be scoped so that arguments for one dataset do not override arguments
+   * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
+   * @param owners the {@link Id}s which own this context
    */
-  public DynamicDatasetContext(Id.Namespace namespace, @Nullable Id ownerId, TransactionContext context,
+  public DynamicDatasetContext(Id.Namespace namespace, TransactionContext context,
                                DatasetFramework datasetFramework,
-                               ClassLoader classLoader, @Nullable Set<String> datasets,
-                               Map<String, String> runtimeArguments) {
+                               ClassLoader classLoader,
+                               Map<String, String> runtimeArguments,
+                               @Nullable Set<String> datasets,
+                               @Nullable List<? extends Id> owners) {
     this.namespace = namespace;
-    this.ownerId = ownerId;
+    this.owners = owners == null ? ImmutableList.<Id>of() : ImmutableList.copyOf(owners);
     this.context = context;
     this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
@@ -160,13 +164,13 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         Map<DatasetCacheKey, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
         dataset = threadLocalMap.get(datasetCacheKey);
         if (dataset == null) {
-          dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader, ownerId);
+          dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader, owners);
           if (dataset != null) {
             threadLocalMap.put(datasetCacheKey, dataset);
           }
         }
       } else {
-        dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader, ownerId);
+        dataset = datasetFramework.getDataset(datasetInstanceId, dsArguments, classLoader, owners);
       }
 
       if (dataset == null) {

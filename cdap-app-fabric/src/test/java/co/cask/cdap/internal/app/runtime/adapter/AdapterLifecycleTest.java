@@ -153,8 +153,8 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    // delete the application
-    deleteApplication(60, deleteURL, 200);
+    // the deletion of last associated adapter should have deleted the application and should not be found now
+    deleteApplication(60, deleteURL, 404);
     deployedApps = getAppList(namespaceId);
     Assert.assertTrue(deployedApps.isEmpty());
 
@@ -166,8 +166,8 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     response = deleteAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    // delete the application
-    deleteApplication(60, deleteURL, 200);
+    // the deletion of last associated adapter should have deleted the application and should not be found now
+    deleteApplication(60, deleteURL, 404);
     deployedApps = getAppList(namespaceId);
     Assert.assertTrue(deployedApps.isEmpty());
   }
@@ -266,10 +266,12 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     // delete adapters
     deleteAdapter(namespaceId, adapter1);
     deleteAdapter(namespaceId, adapter2);
+    // deleting the adaprer should have deleted the app too and they should not be found
+    // deleting the adaprer should have deleted the app too and they should not be found
     deleteApplication(60, getVersionedAPIPath("apps/" + DummyBatchTemplate.NAME,
-      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 200);
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 404);
     deleteApplication(60, getVersionedAPIPath("apps/" + DummyWorkerTemplate.NAME,
-      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 200);
+      Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE), 404);
 
     // check there are none
     response = listAdapters(namespaceId);

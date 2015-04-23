@@ -41,6 +41,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
+import com.google.gson.JsonObject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
@@ -88,6 +89,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
     AdapterConfig adapterConfig = new AdapterConfig("desc", ExtendedBatchTemplate.class.getSimpleName(),
                                                     GSON.toJsonTree(config));
     adapterService.createAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap", adapterConfig);
+    adapterService.removeAdapter(Id.Namespace.from(TEST_NAMESPACE1), "myAdap");
   }
 
   @Test(expected = RuntimeException.class)
@@ -128,10 +130,11 @@ public class AdapterServiceTest extends AppFabricTestBase {
                                                  adapterConfig.getTemplate(), DummyBatchTemplate.AdapterWorkflow.NAME));
     Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getStatusLine().getStatusCode());
 
-    // But should be able to delete the application
+    // the deletion of the only adapter using the application should have deleted the app and an attempt to delete the
+    // application should reutrn not found
     response = doDelete(String.format("%s/namespaces/%s/apps/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
                                       adapterConfig.getTemplate()));
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
 
     String workerAdapter = "workAdapter";
     DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
@@ -208,7 +211,16 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
     // Delete Adapter
     adapterService.removeAdapter(NAMESPACE, adapter1);
+
+    // check the template still exists
+    List<JsonObject> deployedApps = getAppList(NAMESPACE.getId());
+    Assert.assertEquals(1, deployedApps.size());
+
     adapterService.removeAdapter(NAMESPACE, adapter2);
+
+    // check if the template got deleted when we deleted the second and last adapter of that type
+    deployedApps = getAppList(NAMESPACE.getId());
+    Assert.assertEquals(0, deployedApps.size());
 
     try {
       adapterService.getAdapter(NAMESPACE, adapter1);

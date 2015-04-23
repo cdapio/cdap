@@ -52,6 +52,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
    */
   private static Map<String, String> getMetricContext(Program program, TwillContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId())
       .put(Constants.Metrics.Tag.RUN_ID, context.getRunId().getId())
       .put(Constants.Metrics.Tag.APP, program.getApplicationId());
 

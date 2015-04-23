@@ -78,6 +78,6 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void register(Id.Stream streamId, Id.Program programId) {
+  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
   }
 }
