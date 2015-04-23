@@ -32,7 +32,7 @@ public class PluginSelector {
    *
    * @param plugins set of available plugins. The {@link PluginInfo} is sorted in ascending order of plugin jar
    *                name followed by plugin version.
-   * @return a {@link Map.Entry} for the selected plugin.
+   * @return a {@link java.util.Map.Entry} for the selected plugin.
    */
   public Map.Entry<PluginInfo, PluginClass> select(SortedMap<PluginInfo, PluginClass> plugins) {
     return plugins.tailMap(plugins.lastKey()).entrySet().iterator().next();
