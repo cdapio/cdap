@@ -77,7 +77,7 @@ public final class MapReduceContextConfig {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setWorkflowBatch(context.getWorkflowBatch());
-    setAdapterSpec(context.getAdapterSpec());
+    setAdapterSpec(context.getAdapterSpecification());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
     setConf(conf);

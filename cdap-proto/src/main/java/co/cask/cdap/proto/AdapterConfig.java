@@ -19,6 +19,8 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 import com.google.gson.JsonElement;
 
+import javax.annotation.Nullable;
+
 /**
  * Config of an adapter. This is the input for requests to add an adapter.
  */
@@ -40,6 +42,7 @@ public final class AdapterConfig {
     this.config = config;
   }
 
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -48,6 +51,7 @@ public final class AdapterConfig {
     return template;
   }
 
+  @Nullable
   public JsonElement getConfig() {
     return config;
   }

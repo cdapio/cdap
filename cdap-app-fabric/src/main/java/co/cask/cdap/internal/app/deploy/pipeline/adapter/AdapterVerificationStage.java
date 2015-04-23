@@ -46,7 +46,7 @@ public class AdapterVerificationStage extends AbstractStage<AdapterDefinition> {
 
     // if this adapter uses a workflow, a schedule should be set
     if (templateSpec.getWorkflows().size() == 1) {
-      if (input.getScheduleSpec() == null) {
+      if (input.getScheduleSpecification() == null) {
         throw new IllegalArgumentException("A schedule must be set for workflow adapters");
       }
     }
