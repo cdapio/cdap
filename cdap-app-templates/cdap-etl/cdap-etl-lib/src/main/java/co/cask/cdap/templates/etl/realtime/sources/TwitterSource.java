@@ -16,11 +16,13 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -36,7 +38,6 @@ import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.Queue;
 import javax.annotation.Nullable;
 
@@ -45,8 +46,11 @@ import javax.annotation.Nullable;
  * Users should pass in the following runtime arguments with appropriate OAuth credentials
  * ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret.
  */
-public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(TwitterStreamSource.class);
+@Plugin(type = "source")
+@Name("TwitterSource")
+@Description("Twitter Realtime Source")
+public class TwitterSource extends RealtimeSource<StructuredRecord> {
+  private static final Logger LOG = LoggerFactory.getLogger(TwitterSource.class);
   private static final String CONSUMER_KEY = "ConsumerKey";
   private static final String CONSUMER_SECRET = "ConsumerSecret";
   private static final String ACCESS_TOKEN = "AccessToken";
@@ -68,19 +72,40 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   private Queue<Status> tweetQ = Queues.newConcurrentLinkedQueue();
   private StructuredRecord.Builder recordBuilder;
 
+
+  private final TwitterConfig twitterConfig;
+
+  public TwitterSource(TwitterConfig twitterConfig) {
+    this.twitterConfig = twitterConfig;
+  }
+
   /**
-   * Configure the Twitter Source.
-   *
-   * @param configurer {@link StageConfigurer}
+   * Config class for TwitterSource.
    */
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(TwitterStreamSource.class.getSimpleName());
-    configurer.setDescription("Twitter Realtime Source");
-    configurer.addProperty(new Property(CONSUMER_KEY, "Consumer Key", true));
-    configurer.addProperty(new Property(CONSUMER_SECRET, "Consumer Secret", true));
-    configurer.addProperty(new Property(ACCESS_TOKEN, "Access Token", true));
-    configurer.addProperty(new Property(ACCESS_SECRET, "Access Token Secret", true));
+  public static class TwitterConfig extends PluginConfig {
+
+    @Name(CONSUMER_KEY)
+    @Description("Consumer Key")
+    private String consumerKey;
+
+    @Name(CONSUMER_SECRET)
+    @Description("Consumer Secret")
+    private String consumeSecret;
+
+    @Name(ACCESS_TOKEN)
+    @Description("Access Token")
+    private String accessToken;
+
+    @Name(ACCESS_SECRET)
+    @Description("Access Token Secret")
+    private String accessTokenSecret;
+
+    public TwitterConfig(String consumerKey, String consumeSecret, String accessToken, String accessTokenSecret) {
+      this.consumerKey = consumerKey;
+      this.consumeSecret = consumeSecret;
+      this.accessToken = accessToken;
+      this.accessTokenSecret = accessTokenSecret;
+    }
   }
 
   private StructuredRecord convertTweet(Status tweet) {
@@ -121,7 +146,6 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArgs = context.getPluginProperties().getProperties();
     Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
     Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
     Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
@@ -170,10 +194,10 @@ public class TwitterStreamSource extends RealtimeSource<StructuredRecord> {
 
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
-        .setOAuthConsumerKey(runtimeArgs.get(CONSUMER_KEY))
-        .setOAuthConsumerSecret(runtimeArgs.get(CONSUMER_SECRET))
-        .setOAuthAccessToken(runtimeArgs.get(ACCESS_TOKEN))
-        .setOAuthAccessTokenSecret(runtimeArgs.get(ACCESS_SECRET));
+        .setOAuthConsumerKey(twitterConfig.consumerKey)
+        .setOAuthConsumerSecret(twitterConfig.consumeSecret)
+        .setOAuthAccessToken(twitterConfig.accessToken)
+        .setOAuthAccessTokenSecret(twitterConfig.accessTokenSecret);
 
     twitterStream = new TwitterStreamFactory(configurationBuilder.build()).getInstance();
     twitterStream.addListener(statusListener);
