@@ -26,6 +26,7 @@ import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -253,10 +254,10 @@ public class StreamClient {
    * @return list of {@link StreamRecord}s
    * @throws IOException if a network error occurred
    */
-  public List<StreamRecord> list() throws IOException, UnauthorizedException {
+  public List<StreamDetail> list() throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamRecord>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() { }).getResponseObject();
   }
 
   /**
