@@ -13,8 +13,8 @@ Workflows
 allows for both sequential and :ref:`parallel execution <workflow_parallel>` of programs.
 
 The workflow system allows specifying, executing, scheduling, and monitoring complex
-series of jobs and tasks in CDAP. The system can manage thousand of workflows and maintain
-millions of historic workflow logs. 
+series of jobs and tasks in CDAP. The system can manage thousands of workflows and
+maintain millions of historic workflow logs. 
 
 Overview
 ========
@@ -97,11 +97,11 @@ concurrently. To enable concurrent runs for a Workflow, set its runtime argument
 Parallelizing Workflow Execution
 ================================
 
-The control flow of a Workflow can be described as a directed, acyclic graph of actions.
+The control flow of a Workflow can be described as a directed, acyclic graph (DAG) of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
 single start node and a single finish node. In between, execution can fork into concurrent
 branches, but the graph may not have cycles. Every action can be a batch job or a custom
-action (implemented in Java; for example, making a REST call to an external system).
+action (implemented in Java; for example, making a RESTful call to an external system).
 
 For example, a simple control flow could be computing user and product profiles from
 purchase events. After the start, a batch job could start that joins the events with the
@@ -189,7 +189,7 @@ Conditional Node
 ----------------
 
 You can provide a *conditional* node in your structure that allows for branching based on 
-a true-false predicate.
+a boolean predicate.
 
 Taking our first example and modifying it, you could use code such as::
 
@@ -253,7 +253,7 @@ governs which condition to follow::
   public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
     public void map(LongWritable key, Text value, Context context)
       throws IOException, InterruptedException {
-      if (value.toString() and value.toString().equals("BuildProductProfile")) {
+      if (value != null and value.toString().equals("BuildProductProfile")) {
         context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(1L);
       } else {
         context.getCounter("MyCustomCounters", "BuildProductProfile").setValue(0);
@@ -268,6 +268,12 @@ otherwise, the other path will be taken. The diagram for this code would be:
 .. image:: /_images/conditional-workflow.png
    :width: 8in
    :align: center
+
+For this 3.0 release, CDAP only supports predicate conditions based on counters from your
+MapReduce programs. Because of this, condition nodes can currently only follow MapReduce
+nodes that make use of one or more counters. In a later version, we will expose many more
+kinds of conditions, for other components, to allow other possible execution paths and
+structures.
 
 Example of Using a Workflow
 ===========================
