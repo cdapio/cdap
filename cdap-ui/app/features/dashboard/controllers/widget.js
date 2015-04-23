@@ -145,6 +145,32 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
+  .controller('DropdownCtrl', function ($scope, $state, $dropdown) {
+    $scope.ddWidget = function(event){
+      var toggle = angular.element(event.target);
+      if(!toggle.hasClass('dropdown-toggle')) {
+        toggle = toggle.parent();
+      }
+
+      var scope = $scope.$new(),
+          dd = $dropdown(toggle, {
+            template: 'assets/features/dashboard/templates/partials/wdgt-dd.html',
+            animation: 'am-flip-x',
+            trigger: 'manual',
+            prefixEvent: 'wdgt-tab-dd',
+            scope: scope
+          });
+
+      dd.$promise.then(function(){
+        dd.show();
+      });
+
+      scope.$on('wdgt-tab-dd.hide', function () {
+        dd.destroy();
+      });
+    }
+  })
+
   .controller('WidgetColCtrl', function ($scope) {
     $scope.colWidth = {
       fullWidth: false,
