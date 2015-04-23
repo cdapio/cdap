@@ -56,31 +56,23 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+    try {
+      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
+      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
+      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app, 200);
 
-    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
-    Assert.assertEquals(1, getAppDatasetUsage(app).size());
-    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
-    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
-    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
-
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+      Assert.assertEquals(0, getAppStreamUsage(app).size());
+      Assert.assertEquals(0, getProgramStreamUsage(program).size());
+      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+    }
   }
 
   @Test
@@ -98,34 +90,31 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+    try {
+      startProgram(program);
+      waitState(program, "RUNNING");
+      stopProgram(program);
+      waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
+      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
+      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
-    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
-    Assert.assertEquals(1, getAppDatasetUsage(app).size());
-    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
-    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
-    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app, 200);
 
-    deleteApp(app, 200);
+      Assert.assertEquals(0, getAppStreamUsage(app).size());
+      Assert.assertEquals(0, getProgramStreamUsage(program).size());
+      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    Assert.assertEquals(0, getAppDatasetUsage(app).size());
-    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      Assert.assertEquals(0, getAppDatasetUsage(app).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
   }
 
   @Test
@@ -143,34 +132,26 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+    try {
+      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
+      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
+      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app, 200);
 
-    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
-    Assert.assertEquals(1, getAppDatasetUsage(app).size());
-    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
-    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
-    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+      Assert.assertEquals(0, getAppStreamUsage(app).size());
+      Assert.assertEquals(0, getProgramStreamUsage(program).size());
+      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    Assert.assertEquals(0, getAppDatasetUsage(app).size());
-    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      Assert.assertEquals(0, getAppDatasetUsage(app).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
   }
 
   @Test
@@ -188,34 +169,31 @@ public class UsageHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+    try {
+      startProgram(program);
+      waitState(program, "RUNNING");
+      stopProgram(program);
+      waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
+      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
+      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
-    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
-    Assert.assertEquals(1, getAppDatasetUsage(app).size());
-    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
-    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
-    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app, 200);
 
-    deleteApp(app, 200);
+      Assert.assertEquals(0, getAppStreamUsage(app).size());
+      Assert.assertEquals(0, getProgramStreamUsage(program).size());
+      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    Assert.assertEquals(0, getAppDatasetUsage(app).size());
-    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      Assert.assertEquals(0, getAppDatasetUsage(app).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
   }
 
   @Test
