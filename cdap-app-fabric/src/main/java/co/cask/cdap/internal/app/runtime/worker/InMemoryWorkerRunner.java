@@ -21,7 +21,6 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
@@ -35,8 +34,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -62,11 +61,13 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
   @Override
   protected ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                                  Arguments userArguments) {
-    Map<String, String> options = ImmutableMap.of(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
-                                                  ProgramOptionConstants.INSTANCES, Integer.toString(instances),
-                                                  ProgramOptionConstants.RUN_ID, runId.getId());
-    return new SimpleProgramOptions(name, new BasicArguments(options), userArguments);
+                                                  ProgramOptions options) {
+    Map<String, String> systemOptions = Maps.newHashMap();
+    systemOptions.putAll(options.getArguments().asMap());
+    systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
+    systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
+    systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
   }
 
   @Override
@@ -95,17 +96,16 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
     //RunId for worker
     RunId runId = RunIds.generate();
-    Table<String, Integer, ProgramController> components = startWorkers(program, runId, options.getUserArguments(),
-                                                                        newWorkerSpec);
-    return new InMemoryProgramController(components, runId, program, workerSpec, options.getUserArguments(),
+    Table<String, Integer, ProgramController> components = startWorkers(program, runId, options, newWorkerSpec);
+    return new InMemoryProgramController(components, runId, program, workerSpec, options,
                                          ProgramRunnerFactory.Type.WORKER_COMPONENT);
   }
 
-  private Table<String, Integer, ProgramController> startWorkers(Program program, RunId runId, Arguments arguments,
+  private Table<String, Integer, ProgramController> startWorkers(Program program, RunId runId, ProgramOptions options,
                                                                  WorkerSpecification spec) {
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
     try {
-      startComponent(program, program.getName(), spec.getInstances(), runId, arguments, components,
+      startComponent(program, program.getName(), spec.getInstances(), runId, options, components,
                      ProgramRunnerFactory.Type.WORKER_COMPONENT);
     } catch (Throwable t) {
       LOG.error("Failed to start all worker instances", t);
