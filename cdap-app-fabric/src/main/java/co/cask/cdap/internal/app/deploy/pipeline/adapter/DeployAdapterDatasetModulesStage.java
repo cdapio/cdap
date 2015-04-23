@@ -22,7 +22,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.DatasetModulesDeployer;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 
@@ -30,7 +30,7 @@ import org.apache.twill.filesystem.Location;
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link DatasetModule}s specified by an adapter.
  */
-public class DeployAdapterDatasetModulesStage extends AbstractStage<AdapterSpecification> {
+public class DeployAdapterDatasetModulesStage extends AbstractStage<AdapterDefinition> {
   private final DatasetModulesDeployer datasetModulesDeployer;
   private final Location templateJarLocation;
 
@@ -39,7 +39,7 @@ public class DeployAdapterDatasetModulesStage extends AbstractStage<AdapterSpeci
                                           Location templateJarLocation,
                                           DatasetFramework datasetFramework,
                                           DatasetFramework inMemoryDatasetFramework) {
-    super(TypeToken.of(AdapterSpecification.class));
+    super(TypeToken.of(AdapterDefinition.class));
     this.datasetModulesDeployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework,
                                                              namespace, configuration);
     this.templateJarLocation = templateJarLocation;
@@ -48,10 +48,10 @@ public class DeployAdapterDatasetModulesStage extends AbstractStage<AdapterSpeci
   /**
    * Deploys dataset modules present in the given adapter spec.
    *
-   * @param input An instance of {@link AdapterSpecification}
+   * @param input An instance of {@link AdapterDefinition}
    */
   @Override
-  public void process(AdapterSpecification input) throws Exception {
+  public void process(AdapterDefinition input) throws Exception {
 
     datasetModulesDeployer.deployModules(input.getDatasetModules(), templateJarLocation);
 

@@ -32,7 +32,7 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -130,7 +130,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
     try {
-      AdapterSpecification adapterSpec = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+      AdapterDefinition adapterSpec = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       responder.sendJson(HttpResponseStatus.OK, adapterSpec);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());

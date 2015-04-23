@@ -39,7 +39,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
@@ -83,7 +83,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
-                               @Nullable AdapterSpecification adapterSpec,
+                               @Nullable AdapterDefinition adapterSpec,
                                @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
@@ -107,7 +107,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
-                                              @Nullable AdapterSpecification adapterSpec) {
+                                              @Nullable AdapterDefinition adapterSpec) {
     String adapterName = adapterSpec == null ? null : adapterSpec.getName();
     return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
                                        programId.getId(), runId.getId(), adapterName);
@@ -251,7 +251,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private static MetricsCollector getMetricCollector(Program program, String runId, String taskId,
                                                      @Nullable MetricsCollectionService service,
                                                      @Nullable MapReduceMetrics.TaskType type,
-                                                     @Nullable AdapterSpecification adapterSpec) {
+                                                     @Nullable AdapterDefinition adapterSpec) {
     if (service == null) {
       return null;
     }

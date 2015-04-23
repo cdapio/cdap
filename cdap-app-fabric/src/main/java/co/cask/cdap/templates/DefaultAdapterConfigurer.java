@@ -271,9 +271,9 @@ public class DefaultAdapterConfigurer implements AdapterConfigurer {
     runtimeArgs.put(key, value);
   }
 
-  public AdapterSpecification createSpecification() {
-    AdapterSpecification.Builder builder =
-      AdapterSpecification.builder(adapterName, programId)
+  public AdapterDefinition createSpecification() {
+    AdapterDefinition.Builder builder =
+      AdapterDefinition.builder(adapterName, programId)
         .setDescription(adapterConfig.getDescription())
         .setConfig(adapterConfig.getConfig())
         .setDatasets(dataSetInstances)

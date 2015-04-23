@@ -31,7 +31,7 @@ import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
@@ -78,7 +78,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
-                                 @Nullable AdapterSpecification adapterSpec,
+                                 @Nullable AdapterDefinition adapterSpec,
                                  @Nullable PluginInstantiator pluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
           logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
