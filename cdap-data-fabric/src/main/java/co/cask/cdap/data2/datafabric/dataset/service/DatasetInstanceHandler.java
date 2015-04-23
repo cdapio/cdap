@@ -64,7 +64,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Handles dataset instance management calls.
@@ -109,9 +108,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/{name}")
   public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                      @PathParam("name") String name,
-                      @Nullable @QueryParam("ownerType") String ownerType,
-                      @Nullable @QueryParam("ownerId") String ownerId) {
+                      @PathParam("name") String name) {
 
     Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
     DatasetSpecification spec = instanceManager.get(datasetId);
@@ -128,7 +125,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       }
       // typeMeta is guaranteed to be non-null now.
       DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
-      if (ownerType != null && ownerId != null) {
+      List<String> owners = request.getHeaders(Constants.Header.DATASET_OWNER);
+      for (String owner : owners) {
+        String[] parts = owner.split("//", 2);
+        String ownerType = parts[0];
+        String ownerId = parts[1];
         try {
           if (ownerType.equals(Id.getType(Id.Program.class))) {
             usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);

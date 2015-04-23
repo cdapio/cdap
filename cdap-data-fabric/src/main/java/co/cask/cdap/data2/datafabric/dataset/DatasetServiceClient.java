@@ -39,7 +39,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -55,7 +57,6 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -82,13 +83,15 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName, @Nullable Id owner) throws DatasetManagementException {
-    String query = "";
-    if (owner != null) {
-      query = "?ownerType=" + owner.getIdType() + "&ownerId=" + owner;
+  public DatasetMeta getInstance(String instanceName, @Nullable List<Id> owners) throws DatasetManagementException {
+    Multimap<String, String> headers = HashMultimap.create();
+    if (owners != null) {
+      for (Id owner : owners) {
+        headers.put(Constants.Header.DATASET_OWNER, owner.getIdType() + "//" + owner.getIdRep());
+      }
     }
 
-    HttpResponse response = doGet("datasets/" + instanceName + query);
+    HttpResponse response = doGet("datasets/" + instanceName, headers);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
@@ -188,7 +191,7 @@ class DatasetServiceClient {
     throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                           ImmutableMap.of("X-Class-Name", className),
+                           ImmutableMultimap.of("X-Class-Name", className),
                            Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
@@ -244,6 +247,10 @@ class DatasetServiceClient {
     return doRequest(HttpMethod.GET, resource);
   }
 
+  private HttpResponse doGet(String resource, Multimap<String, String> headers) throws DatasetManagementException {
+    return doRequest(HttpMethod.GET, resource, headers, (InputSupplier<? extends InputStream>) null);
+  }
+
   private HttpResponse doPut(String resource, String body)
     throws DatasetManagementException {
 
@@ -255,7 +262,7 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doRequest(HttpMethod method, String resource,
-                                 @Nullable Map<String, String> headers,
+                                 @Nullable Multimap<String, String> headers,
                                  @Nullable String body) throws DatasetManagementException {
 
     String url = resolve(resource);
@@ -268,13 +275,14 @@ class DatasetServiceClient {
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      url, method,
+                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers.entries()),
                       body == null ? "null" : body), e);
     }
   }
 
   private HttpResponse doRequest(HttpMethod method, String resource,
-                                 @Nullable Map<String, String> headers,
+                                 @Nullable Multimap<String, String> headers,
                                  @Nullable InputSupplier<? extends InputStream> body)
     throws DatasetManagementException {
 
@@ -288,7 +296,8 @@ class DatasetServiceClient {
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
+                      url, method,
+                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers.entries()),
                       body == null ? "null" : body), e);
     }
   }

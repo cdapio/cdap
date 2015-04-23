@@ -27,6 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -195,14 +196,14 @@ public interface DatasetFramework {
    * @param datasetInstanceId dataset instance id
    * @param arguments runtime arguments for the dataset instance
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
-   * @param owner owner of the dataset
+   * @param owners owners of the dataset
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
    * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
    */
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                   @Nullable ClassLoader classLoader, @Nullable Id owner)
+                                   @Nullable ClassLoader classLoader, @Nullable List<Id> owners)
     throws DatasetManagementException, IOException;
 
   /**
