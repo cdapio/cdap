@@ -20,6 +20,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -109,7 +110,7 @@ public interface StreamAdmin {
    * Register stream used by program.
    *
    * @param streamId the stream being used
-   * @param programId the program that is using the stream
+   * @param owners the ids that are using the stream
    */
-  public void register(Id.Stream streamId, Id.Program programId);
+  public void register(Id.Stream streamId, List<Id> owners);
 }

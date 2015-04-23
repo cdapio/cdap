@@ -22,6 +22,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -78,6 +79,6 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void register(Id.Stream streamId, Id.Program programId) {
+  public void register(Id.Stream streamId, List<Id> owners) {
   }
 }

@@ -349,8 +349,8 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void register(Id.Stream streamId, Id.Program programId) {
-    usageRegistry.register(programId, streamId);
+  public void register(Id.Stream streamId, List<Id> owners) {
+    usageRegistry.register(owners, streamId);
   }
 
   /**

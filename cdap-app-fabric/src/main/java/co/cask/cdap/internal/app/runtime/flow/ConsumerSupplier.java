@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -44,27 +45,29 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
-  private final Id.Program program;
   private final UsageRegistry usageRegistry;
+  private final Id.Namespace namespace;
+  private final List<Id> owners;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(Id.Program program, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
                                         DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
-    return create(program, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
+    return create(namespace, owners, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(Id.Program program, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<T>(program, usageRegistry, dataFabricFacade, queueName, consumerConfig, numGroups);
+    return new ConsumerSupplier<T>(namespace, owners, usageRegistry, dataFabricFacade, queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(Id.Program program, UsageRegistry usageRegistry,
+  private ConsumerSupplier(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
                            DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
-    this.program = program;
+    this.namespace = namespace;
+    this.owners = owners;
     this.usageRegistry = usageRegistry;
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
@@ -95,10 +98,17 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
-        try {
-          usageRegistry.register(program, queueName.toStreamId());
-        } catch (Exception e) {
-          LOG.warn("Failed to register usage of {} -> {}", program, queueName.toStreamId(), e);
+        for (Id owner : owners) {
+          try {
+            // TODO: redundant code
+            if (owner instanceof Id.Program) {
+              usageRegistry.register((Id.Program) owner, queueName.toStreamId());
+            } else if (owner instanceof Id.Adapter) {
+              usageRegistry.register((Id.Adapter) owner, queueName.toStreamId());
+            }
+          } catch (Exception e) {
+            LOG.warn("Failed to register usage of {} -> {}", owner, queueName.toStreamId(), e);
+          }
         }
         StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
         consumerConfig = streamConsumer.getConsumerConfig();

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -57,7 +58,42 @@ public class UsageRegistry {
   }
 
   /**
+   * Registers usage of a stream by multiple ids.
+   *
+   * @param owners the owners of the stream
+   * @param streamId the stream
+   */
+  public void register(List<Id> owners, Id.Stream streamId) {
+    for (Id owner : owners) {
+      // TODO: kind of hacky
+      if (owner instanceof Id.Program) {
+        register((Id.Program) owner, streamId);
+      } else if (owner instanceof Id.Adapter) {
+        register((Id.Adapter) owner, streamId);
+      }
+    }
+  }
+
+  /**
+   * Registers usage of a dataset by multiple ids.
+   *
+   * @param owners the owners of the dataset
+   * @param datasetId the dataset
+   */
+  public void register(List<Id> owners, Id.DatasetInstance datasetId) {
+    for (Id owner : owners) {
+      // TODO: kind of hacky
+      if (owner instanceof Id.Program) {
+        register((Id.Program) owner, datasetId);
+      } else if (owner instanceof Id.Adapter) {
+        register((Id.Adapter) owner, datasetId);
+      }
+    }
+  }
+
+  /**
    * Registers usage of a dataset by a program.
+   *
    * @param programId program
    * @param datasetInstanceId dataset
    */
@@ -73,6 +109,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a dataset by an adapter.
+   *
    * @param adapterId adapter
    * @param datasetInstanceId dataset
    */
@@ -88,6 +125,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a stream by a program.
+   *
    * @param programId program
    * @param streamId stream
    */
@@ -103,6 +141,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a stream by an adapter.
+   *
    * @param adapterId adapter
    * @param streamId stream
    */
@@ -118,6 +157,7 @@ public class UsageRegistry {
 
   /**
    * Unregisters all usage information of an application.
+   *
    * @param applicationId application
    */
   public void unregister(final Id.Application applicationId) {
@@ -132,6 +172,7 @@ public class UsageRegistry {
 
   /**
    * Unregisters all usage information of an adapter.
+   *
    * @param adapterId application
    */
   public void unregister(final Id.Adapter adapterId) {
@@ -233,7 +274,6 @@ public class UsageRegistry {
       }
     });
   }
-
 
   /**
    * For passing {@link UsageDataset} to {@link Transactional#of}.

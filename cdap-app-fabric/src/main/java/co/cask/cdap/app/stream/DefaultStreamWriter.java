@@ -46,6 +46,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -59,17 +60,27 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private final EndpointStrategy endpointStrategy;
   /**
-   * The program that is using this {@link StreamWriter}.
+   * (stream, owner) -> bool
    */
-  private final Id.Program program;
   private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
   private final UsageRegistry usageRegistry;
 
+  /**
+   * The namespace that this {@link StreamWriter} belongs to.
+   */
+  private final Id.Namespace namespace;
+  /**
+   * The owners of this {@link StreamWriter}.
+   */
+  private final List<Id> owners;
+
   @Inject
-  public DefaultStreamWriter(@Assisted("programId") Id.Program program,
+  public DefaultStreamWriter(@Assisted("namespace") Id.Namespace namespace,
+                             @Assisted("owners") List<Id> owners,
                              UsageRegistry usageRegistry,
                              DiscoveryServiceClient discoveryServiceClient) {
-    this.program = program;
+    this.namespace = namespace;
+    this.owners = owners;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
     this.usageRegistry = usageRegistry;
@@ -87,7 +98,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, program.getNamespaceId(), stream);
+                                Constants.Gateway.API_VERSION_3, namespace.getId(), stream);
     if (batch) {
       path = String.format("%s/batch", path);
     }
@@ -103,13 +114,8 @@ public class DefaultStreamWriter implements StreamWriter {
 
     // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      try {
-        // TODO: May want to rate-limit this
-        usageRegistry.register(program, stream);
-        isStreamRegistered.put(stream, true);
-      } catch (Exception e) {
-        LOG.warn("Failed to registry usage of {} -> {}", program, stream, e);
-      }
+      usageRegistry.register(owners, stream);
+      isStreamRegistered.put(stream, true);
     }
 
     if (responseCode < 200 || responseCode >= 300) {
@@ -121,7 +127,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
     URL streamURL = getStreamURL(stream);
     HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(Id.Stream.from(program.getNamespace(), stream), request);
+    writeToStream(Id.Stream.from(namespace, stream), request);
   }
 
   @Override
@@ -148,7 +154,7 @@ public class DefaultStreamWriter implements StreamWriter {
   public void writeFile(String stream, File file, String contentType) throws IOException {
     URL url = getStreamURL(stream, true);
     HttpRequest request = HttpRequest.post(url).withBody(file).addHeader(HttpHeaders.CONTENT_TYPE, contentType).build();
-    writeToStream(Id.Stream.from(program.getNamespace(), stream), request);
+    writeToStream(Id.Stream.from(namespace, stream), request);
   }
 
   @Override
@@ -163,7 +169,7 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setChunkedStreamingMode(0);
     connection.connect();
     try {
-      return new DefaultStreamBatchWriter(connection, Id.Stream.from(program.getNamespace(), stream));
+      return new DefaultStreamBatchWriter(connection, Id.Stream.from(namespace, stream));
     } catch (IOException e) {
       connection.disconnect();
       throw e;
