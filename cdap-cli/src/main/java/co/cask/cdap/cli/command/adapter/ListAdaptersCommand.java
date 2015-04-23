@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.adapter;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -51,12 +51,13 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
     List<AdapterDetail> list = adapterClient.list();
 
     Table table = Table.builder()
-      .setHeader("name", "description", "template", "config")
+      .setHeader("name", "description", "template", "config", "schedule")
       .setRows(list, new RowMaker<AdapterDetail>() {
         @Override
         public List<?> makeRow(AdapterDetail object) {
           return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
-                                    GSON.toJson(object.getConfig()));
+                                    object.getConfig().toString(),
+                                    GSON.toJson(object.getSchedule()));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

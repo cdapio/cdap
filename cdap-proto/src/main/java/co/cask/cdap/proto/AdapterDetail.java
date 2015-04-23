@@ -16,24 +16,28 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import com.google.gson.JsonElement;
 
 /**
- * Adapter details that come back from get calls.
- * TODO: finalize what should be present here
+ * Represents an adapter returned for /adapters/{adapter-id}.
  */
-public final class AdapterDetail {
+public class AdapterDetail {
   private final String name;
   private final String description;
   private final String template;
+  private final Id.Program program;
   private final JsonElement config;
+  private final ScheduleSpecification schedule;
 
-  public AdapterDetail(String name, String description, String template, JsonElement config) {
+  public AdapterDetail(String name, String description, String template, Id.Program program,
+                       JsonElement config, ScheduleSpecification schedule) {
     this.name = name;
     this.description = description;
     this.template = template;
+    this.program = program;
     this.config = config;
+    this.schedule = schedule;
   }
 
   public String getName() {
@@ -48,39 +52,15 @@ public final class AdapterDetail {
     return template;
   }
 
+  public Id.Program getProgram() {
+    return program;
+  }
+
   public JsonElement getConfig() {
     return config;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    AdapterDetail that = (AdapterDetail) o;
-
-    return Objects.equal(name, that.name) &&
-      Objects.equal(description, that.description) &&
-      Objects.equal(template, that.template) &&
-      Objects.equal(config, that.config);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(name, description, template, config);
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("description", description)
-      .add("template", template)
-      .add("config", config)
-      .toString();
+  public ScheduleSpecification getSchedule() {
+    return schedule;
   }
 }

@@ -26,6 +26,9 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
+import co.cask.cdap.proto.AdapterStatus;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.io.Files;
@@ -81,17 +84,29 @@ public class AdapterClientTest extends ClientTestBase {
     AdapterConfig adapterConfig = new AdapterConfig("description", TemplateApp.NAME, null);
 
     // Create Adapter
-    adapterClient.create("someAdapter", adapterConfig);
+    adapterClient.create(adapterName, adapterConfig);
 
     // Check that the created adapter is present
-    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists("someAdapter"));
-    AdapterDetail someAdapter = adapterClient.get("someAdapter");
+    adapterClient.waitForExists(adapterName, 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists(adapterName));
+    AdapterDetail someAdapter = adapterClient.get(adapterName);
     Assert.assertNotNull(someAdapter);
 
     // list all adapters
     List<AdapterDetail> list = adapterClient.list();
     Assert.assertArrayEquals(new AdapterDetail[] {someAdapter}, list.toArray());
+
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
+    adapterClient.start(adapterName);
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STARTED, 30, TimeUnit.SECONDS);
+    adapterClient.stop(adapterName);
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
+
+    List<RunRecord> runs = adapterClient.getRuns(adapterName, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 10);
+    Assert.assertEquals(1, runs.size());
+
+    String logs = adapterClient.getLogs(adapterName);
+    Assert.assertNotNull(logs);
 
     // Delete Adapter
     adapterClient.delete(adapterName);

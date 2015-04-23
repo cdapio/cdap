@@ -29,11 +29,13 @@ import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpResponder;
+import com.clearspring.analytics.util.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -41,6 +43,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -114,11 +117,20 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
     }
+
+    Collection<AdapterDefinition> adapterDefinitions;
     if (template != null) {
-      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId), template));
+      adapterDefinitions = adapterService.getAdapters(Id.Namespace.from(namespaceId), template);
     } else {
-      responder.sendJson(HttpResponseStatus.OK, adapterService.getAdapters(Id.Namespace.from(namespaceId)));
+      adapterDefinitions = adapterService.getAdapters(Id.Namespace.from(namespaceId));
     }
+
+    List<AdapterDetail> adapterDetails = Lists.newArrayList();
+    for (AdapterDefinition def : adapterDefinitions) {
+      adapterDetails.add(new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
+                                           def.getProgram(), def.getConfig(), def.getScheduleSpecification()));
+    }
+    responder.sendJson(HttpResponseStatus.OK, adapterDetails);
   }
 
   /**

@@ -31,7 +31,6 @@ import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -76,7 +75,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                       @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+                                             ProgramType.valueOfCategoryName(programType), adapterId);
     doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
 
@@ -92,7 +91,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                            @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     doGetLogs(responder, loggingContext, fromTimeMsParam, toTimeMsParam, escape, filterStr);
   }
@@ -133,7 +132,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                             programId, getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                             programId, ProgramType.valueOfCategoryName(programType),
                                              adapterId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
@@ -150,7 +149,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
@@ -186,7 +185,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+                                             ProgramType.valueOfCategoryName(programType), adapterId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
 
@@ -202,7 +201,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr);
   }
@@ -305,25 +304,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private ProgramType getProgramType(ProgramType programType) {
-    Preconditions.checkNotNull(programType, "ProgramType cannot be null");
-
-    switch (programType) {
-      case FLOW:
-        return ProgramType.FLOW;
-      case MAPREDUCE:
-        return ProgramType.MAPREDUCE;
-      case SPARK:
-        return ProgramType.SPARK;
-      case SERVICE:
-        return ProgramType.SERVICE;
-      case WORKER:
-        return ProgramType.WORKER;
-      default:
-        throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }
   }
 }
