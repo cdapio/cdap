@@ -1,50 +1,54 @@
-<div class="row">
-  <div class="col-xs-6">
-    <h2> Datasets </h2>
+<div ng-if="$state.is('admin.namespace.detail.data')">
+  <div class="row">
+    <div class="col-xs-6">
+      <h2> Datasets </h2>
+    </div>
+    <div class="col-xs-6" ng-if="datasets.length > 0 || streams.length > 0">
+      <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
+    </div>
   </div>
-  <div class="col-xs-6" ng-if="datasets.length > 0 || streams.length > 0">
-    <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
+  <div ng-if="datasets.length > 0 || streams.length > 0">
+    <div class="table-responsive">
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': datasets.length>0}">
+            <th data-predicate="name">Name</th>
+            <th data-predicate="type">Type</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
+            </td>
+            <td>
+              <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
+              <span> {{dataset.type}} </span>
+            </td>
+            <td></td>
+          </tr>
+          <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
+            </td>
+            <td>
+              <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
+              <span> {{stream.type}} </span>
+            </td>
+            <td>
+              <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
-<div ng-if="datasets.length > 0 || streams.length > 0">
-  <div class="table-responsive">
-    <table class="table table-curved" cask-sortable>
-      <thead>
-        <tr ng-class="{'sort-enabled': datasets.length>0}">
-          <th data-predicate="name">Name</th>
-          <th data-predicate="type">Type</th>
-          <th>Edit</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
-          <td>
-            <a ui-sref="datasets.detail.overview({namespace: $stateParams.nsadmin, datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
-          </td>
-          <td>
-            <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
-            <span> {{dataset.type}} </span>
-          </td>
-          <td></td>
-        </tr>
-        <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
-          <td>
-            <a ui-sref="streams.detail.overview({namespace: $stateParams.nsadmin, streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
-          </td>
-          <td>
-            <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
-            <span> {{stream.type}} </span>
-          </td>
-          <td>
-            <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $stateParams.nsadmin, streamid: stream.name})"><i class="fa fa-cogs"></i></a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+
+  <div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
+    <p> Start by creating a Stream to ingest data. </p>
+    <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
   </div>
 </div>
 
-<div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
-  <p> Start by creating a Stream to ingest data. </p>
-  <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
-</div>
+<div ui-view ng-if="$state.includes('admin.namespace.detail.data.*')"></div>
