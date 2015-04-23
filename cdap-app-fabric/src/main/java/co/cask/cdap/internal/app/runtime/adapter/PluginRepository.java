@@ -39,6 +39,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -535,8 +536,10 @@ public class PluginRepository {
       String name = getRequired(jsonObj, "name").getAsString();
       String description = getRequired(jsonObj, "description").getAsString();
       String className = getRequired(jsonObj, "className").getAsString();
-      Map<String, PluginPropertyField> properties = context.deserialize(getRequired(jsonObj, "properties"),
-                                                                        PROPERTIES_TYPE);
+
+      Map<String, PluginPropertyField> properties = jsonObj.has("properties")
+        ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
+        : ImmutableMap.<String, PluginPropertyField>of();
 
       return new PluginClass(type, name, description, className, null, properties);
     }
