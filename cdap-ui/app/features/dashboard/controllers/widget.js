@@ -252,10 +252,36 @@ angular.module(PKG.name+'.feature.dashboard')
           }
           return metricName;
         });
-        $scope.chartData = {columns: columns, metricNames: metricNames};
+        // DO NOT change the format of this data without ensuring that whoever needs it is also changed!
+        // Some examples: c3 charts, table widget.
+        $scope.chartData = {columns: columns, metricNames: metricNames, xCoords: xCoords};
       }
     });
 
+  })
+
+  .controller('WidgetTableCtrl', function ($scope) {
+    $scope.$watch('chartData', function (chartData) {
+      if (!chartData) {
+        return;
+      }
+      var tableData = [];
+      chartData.xCoords.forEach(function(timestamp, index) {
+        if (index == 0) {
+          // the first index of each column is just 'x' or the metric name
+          return;
+        }
+        var rowData = [timestamp];
+        chartData.columns.forEach(function(column) {
+          // If it begins with 'x', it is timestamps
+          if (column.length && column[0] != 'x') {
+            rowData.push(column[index]);
+          }
+        });
+        tableData.push(rowData);
+      });
+      $scope.tableData = tableData;
+    })
   })
 
   .controller('WidgetPieCtrl', function ($scope, $alert, MyDataSource) {
