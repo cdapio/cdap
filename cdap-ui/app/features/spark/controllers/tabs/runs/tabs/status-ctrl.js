@@ -11,9 +11,15 @@ angular.module(PKG.name + '.feature.spark')
       }
     }
     $scope.data = {
-      running: 33.3,
-      failed: 33.3,
-      waiting: 33.3
+      'blockRemainingMemory': 0,
+      'blockMaxMemory': 0,
+      'blockUsedMemory': 0,
+      'blockDiskSpaceUsed': 0,
+      'schedulerActiveJobs': 0,
+      'schedulerAllJobs': 0,
+      'schedulerFailedStages': 0,
+      'schedulerRunningStages': 0,
+      'schedulerWaitingStages': 0
     };
 
     $scope.runningTooltip = {
@@ -28,6 +34,12 @@ angular.module(PKG.name + '.feature.spark')
       "title": 'Failed'
     };
 
+    $scope.$watch('runs.selected.runid', function (newVal, oldVal) {
+      if(newVal) {
+        pollMetrics(newVal);
+      }
+    });
+
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;
@@ -41,4 +53,44 @@ angular.module(PKG.name + '.feature.spark')
         $scope.status = res.status;
         $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
       });
+
+    $scope.getStagePercentage = function (type) {
+      var total = ($scope.data.schedulerRunningStages 
+        + $scope.data.schedulerFailedStages
+        + $scope.data.schedulerWaitingStages);
+      switch(type) {
+        case 'running':
+          return $scope.data.schedulerRunningStages * 100 / total;
+        case 'waiting':
+          return $scope.data.schedulerWaitingStages * 100 / total;
+        case 'failed':
+          return $scope.data.schedulerFailedStages * 100 / total;
+      }
+    }
+
+    function pollMetrics(runId) {
+      var metricsBasePath = ('system/apps/' + $state.params.appId + 
+        '/spark/' + $state.params.programId + '/runs/' + runId +
+        '/' + $state.params.programId);
+      var metricPaths = {};
+      metricPaths[metricsBasePath + '.BlockManager.memory.remainingMem_MB?aggregate=true'] = 'blockRemainingMemory';
+      metricPaths[metricsBasePath + '.BlockManager.memory.maxMem_MB?aggregate=true'] = 'blockMaxMemory';
+      metricPaths[metricsBasePath + '.BlockManager.memory.memUsed_MB?aggregate=true'] = 'blockUsedMemory';
+      metricPaths[metricsBasePath + '.BlockManager.disk.diskSpaceUsed_MB?aggregate=true'] = 'blockDiskSpaceUsed';
+      metricPaths[metricsBasePath + '.DAGScheduler.job.activeJobs?aggregate=true'] = 'schedulerActiveJobs';
+      metricPaths[metricsBasePath + '.DAGScheduler.job.allJobs?aggregate=true'] = 'schedulerAllJobs';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.failedStages?aggregate=true'] = 'schedulerFailedStages';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.runningStages?aggregate=true'] = 'schedulerRunningStages';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.waitingStages?aggregate=true'] = 'schedulerWaitingStages';
+      
+      angular.forEach(metricPaths, function (path, name) {
+        dataSrc.poll({
+          _cdapNsPath: name
+        }, function(res) {
+          
+        });
+      });
+
+    }
+
   });

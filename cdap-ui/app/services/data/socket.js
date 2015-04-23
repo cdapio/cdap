@@ -29,7 +29,7 @@ angular.module(PKG.name+'.services')
       socket.onmessage = function (event) {
         try {
           var data = JSON.parse(event.data);
-          $log.log('[mySocket] ←', event.data);
+          $log.log('[mySocket] ←', data);
           $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
         }
         catch(e) {

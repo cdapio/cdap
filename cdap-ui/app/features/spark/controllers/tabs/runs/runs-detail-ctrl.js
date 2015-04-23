@@ -16,4 +16,8 @@ angular.module(PKG.name + '.feature.spark')
       event.targetScope.runs.selected = null;
     });
 
+    $scope.selectTab = function(tab, node) {
+      $scope.activeTab = tab;
+
+    };
   });
