@@ -18,7 +18,6 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -30,7 +29,6 @@ import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +71,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   @Override
   protected void run() {
     LOG.info("Starting Metrics Processing for partitions {}.", partitions);
-    subscribe();
+    if (!subscribe()) {
+      return;
+    }
     LOG.info("Metrics Processing Service started for partitions {}.", partitions);
 
     while (isRunning()) {
@@ -127,36 +127,37 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     return metaTable;
   }
 
-  private void subscribe() {
-    List<Cancellable> cancels = Lists.newArrayList();
+  private boolean subscribe() {
     // Assuming there is only one process that pulling in all metrics.
     KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
     String topic = topicPrefix;
 
-    try {
-      for (int i : partitions) {
-        long offset = getOffset(topic, i);
-        if (offset >= 0) {
-          preparer.add(topic, i, offset);
-        } else {
-          preparer.addFromBeginning(topic, i);
+    for (int partition : partitions) {
+      long offset;
+      try {
+        LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
+        KafkaConsumerMetaTable metaTable = getMetaTable();
+        if (metaTable == null) {
+          LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+          return false;
         }
+        offset = metaTable.get(new TopicPartition(topic, partition));
+        LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
+      } catch (Exception e) {
+        LOG.info("Failed to get KafkaConsumerMetaTable, shutting down");
+        return false;
       }
-    } catch (Exception e) {
-      LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
-      return;
+
+      if (offset >= 0) {
+        preparer.add(topic, partition, offset);
+      } else {
+        preparer.addFromBeginning(topic, partition);
+      }
     }
 
     unsubscribe = preparer.consume(callbackFactory.create(getMetaTable()));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
-  }
-
-  private long getOffset(String topic, int partition) throws Exception {
-    LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-    KafkaConsumerMetaTable metaTable = getMetaTable();
-    long offset = metaTable.get(new TopicPartition(topic, partition));
-    LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
-    return offset;
+    return true;
   }
 }
