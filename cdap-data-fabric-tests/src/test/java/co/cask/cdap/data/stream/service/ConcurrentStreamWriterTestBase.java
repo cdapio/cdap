@@ -41,7 +41,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -208,9 +207,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     streamConfig.getLocation().mkdirs();
 
-    StreamMetaStore streamMetaStore = new InMemoryStreamMetaStore();
-    streamMetaStore.addStream(streamId);
-    return new ConcurrentStreamWriter(COORDINATOR_CLIENT, streamAdmin, streamMetaStore,
+    return new ConcurrentStreamWriter(COORDINATOR_CLIENT, streamAdmin,
                                       writerFactory, threads, new TestMetricsCollectorFactory());
   }
 
