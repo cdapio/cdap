@@ -150,6 +150,14 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
+   * Returns an immutable collection of all templates that are known to this service.
+   * The returned information are ordered by the template name.
+   */
+  public Collection<ApplicationTemplateInfo> getAllTemplates() {
+    return appTemplateInfos.get().values();
+  }
+
+  /**
    * Deploy the given application template in the given namespace.
    *
    * @param namespace the namespace to deploy in
