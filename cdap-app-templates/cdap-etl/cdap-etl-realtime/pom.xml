@@ -44,6 +44,7 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-lib</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -89,7 +90,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>co.cask.cdap.etl.templates.api.*</Export-Package>
+              <Export-Package>co.cask.cdap.templates.etl.api.*</Export-Package>
             </instructions>
           </configuration>
           <executions>
