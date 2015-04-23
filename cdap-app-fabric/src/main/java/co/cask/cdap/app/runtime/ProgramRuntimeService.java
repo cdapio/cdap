@@ -58,10 +58,11 @@ public interface ProgramRuntimeService extends Service {
   /**
    * Find the {@link RuntimeInfo} for a running program with the given {@link RunId}.
    *
-   * @param runId The program {@link RunId}.
+   * @param programId The id of the program.
+   * @param runId     The program {@link RunId}.
    * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is found.
    */
-  RuntimeInfo lookup(RunId runId);
+  RuntimeInfo lookup(Id.Program programId, RunId runId);
 
   /**
    * Get {@link RuntimeInfo} for all running programs of the given type.

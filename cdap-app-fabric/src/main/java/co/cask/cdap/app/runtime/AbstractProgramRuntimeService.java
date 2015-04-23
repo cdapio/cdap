@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -37,6 +38,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,7 +48,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
 
-  protected final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
+  private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
@@ -58,18 +60,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, createProgramOptionsWithRunId(options)),
-                                                      program);
+    ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
+    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithRunId), program);
     programStarted(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
   }
 
-  private ProgramOptions createProgramOptionsWithRunId(ProgramOptions options) {
+  private ProgramOptions addRunId(ProgramOptions options, RunId runId) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
-    // Generate the new RunId and add it to the system arguments
-    RunId runId = RunIds.generate();
     builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
 
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
@@ -80,14 +80,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return new SimpleRuntimeInfo(controller, program);
   }
 
+  protected List<RuntimeInfo> getRuntimeInfos() {
+    return ImmutableList.copyOf(runtimeInfos.values());
+  }
+
   @Override
-  public synchronized RuntimeInfo lookup(RunId runId) {
-    Map<ProgramType, RuntimeInfo> column = runtimeInfos.column(runId);
-    if (column.size() != 1) {
-      // It should be exactly one if the the program is running.
-      return null;
-    }
-    return column.values().iterator().next();
+  public synchronized RuntimeInfo lookup(Id.Program programId, RunId runId) {
+    return runtimeInfos.get(programId.getType(), runId);
   }
 
   @Override

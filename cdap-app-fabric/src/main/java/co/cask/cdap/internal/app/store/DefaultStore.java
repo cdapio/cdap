@@ -228,11 +228,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getAllActiveRuns() {
+  public List<RunRecord> getRuns(final ProgramRunStatus status, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getAllActiveRuns();
+        return mds.apps.getRuns(status, limit);
       }
     });
   }
@@ -642,7 +642,7 @@ public class DefaultStore implements Store {
         Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
         String scheduleName = scheduleSpecification.getSchedule().getName();
         Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
-          scheduleName  + "' already exists.");
+          scheduleName + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         // TODO: double check this ProgramType.valueOf()

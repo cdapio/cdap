@@ -128,10 +128,12 @@ public interface Store {
   List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
 
   /**
-   * Fetches all active run records.
-   * @return  list of active runs
+   * Fetches the run records for the particular status.
+   * @param status  status of the program running/completed/failed or all
+   * @param limit   max number of entries to fetch for this history call
+   * @return        lis of logged runs
    */
-  List<RunRecord> getAllActiveRuns();
+  List<RunRecord> getRuns(ProgramRunStatus status, int limit);
 
   /**
    * Fetches the run record for particular run of a program.
