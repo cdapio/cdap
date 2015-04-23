@@ -124,6 +124,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
       return Constants.Service.APP_FABRIC_HTTP;
     } else if (
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "programs") ||
       matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters") ||
       matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) {
       return Constants.Service.APP_FABRIC_HTTP;
