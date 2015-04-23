@@ -67,6 +67,13 @@ public final class Properties {
     public static final String VALUE_FIELD = "value.field";
   }
 
+  /**
+   * Common properties for BatchWritable source and sinks
+   */
+  public static class BatchWritable {
+    public static final String NAME = "name";
+  }
+
   private Properties() {
   }
 }
