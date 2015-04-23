@@ -49,6 +49,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -140,6 +141,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return null;
   }
 
+  // TODO SAGAR better data structure to support this efficiently
   private synchronized boolean isTwillRunIdCached(RunId twillRunId) {
     for (RuntimeInfo runtimeInfo : getRuntimeInfos()) {
       if (twillRunId.equals(runtimeInfo.getTwillRunId())) {
@@ -232,38 +234,35 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return ImmutableMap.copyOf(result);
     }
 
-    List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, 100);
-
-    for (RunId twillRunId : twillProgramInfo.columnKeySet()) {
-      // Search the twillRunId in the activeRunRecords
-      for (RunRecord record : activeRunRecords) {
-
+    final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
+    List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+      @Override
+      public boolean apply(RunRecord record) {
         if (record.getTwillRunId() == null) {
-          continue;
+          return false;
         }
+        return twillRunIds.contains(record.getTwillRunId());
+      }
+    });
 
-        RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
-        if (!twillRunId.equals(twillRunIdFromRecord)) {
-          continue;
-        }
+    for (RunRecord record : activeRunRecords) {
+      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+      // Get the CDAP RunId from RunRecord
+      RunId runId = RunIds.fromString(record.getPid());
+      // Get the Program and TwillController for the current twillRunId
+      Map<Id.Program, TwillController> mapForTwillId = twillProgramInfo.columnMap().get(twillRunIdFromRecord);
+      Map.Entry<Id.Program, TwillController> entry = mapForTwillId.entrySet().iterator().next();
 
-        // Get the CDAP RunId from RunRecord
-        RunId runId = RunIds.fromString(record.getPid());
-
-        // Get the Program and TwillController for the current twillRunId
-        Map<Id.Program, TwillController> mapForTwillId = twillProgramInfo.columnMap().get(twillRunId);
-        Map.Entry<Id.Program, TwillController> entry = mapForTwillId.entrySet().iterator().next();
-
-        // Create RuntimeInfo for the current Twill RunId
-        RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
-        if (runtimeInfo != null) {
-          result.put(runId, runtimeInfo);
-          updateRuntimeInfo(type, runId, runtimeInfo);
-        } else {
-          LOG.warn("Unable to find program {} {}", type, entry.getKey());
-        }
+      // Create RuntimeInfo for the current Twill RunId
+      RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
+      if (runtimeInfo != null) {
+        result.put(runId, runtimeInfo);
+        updateRuntimeInfo(type, runId, runtimeInfo);
+      } else {
+        LOG.warn("Unable to find program {} {}", type, entry.getKey());
       }
     }
+
     return ImmutableMap.copyOf(result);
   }
 

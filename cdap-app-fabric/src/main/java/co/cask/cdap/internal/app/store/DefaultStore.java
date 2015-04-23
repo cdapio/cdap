@@ -57,6 +57,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -228,11 +229,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRuns(final ProgramRunStatus status, final int limit) {
+  public List<RunRecord> getRuns(final ProgramRunStatus status, final Predicate<RunRecord> filter) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(status, limit);
+        return mds.apps.getRuns(status, filter);
       }
     });
   }

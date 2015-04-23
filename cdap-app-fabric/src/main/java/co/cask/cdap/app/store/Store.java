@@ -31,6 +31,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -130,10 +131,10 @@ public interface Store {
   /**
    * Fetches the run records for the particular status.
    * @param status  status of the program running/completed/failed or all
-   * @param limit   max number of entries to fetch for this history call
-   * @return        lis of logged runs
+   * @param filter  predicate to be passed to filter the records
+   * @return        list of logged runs
    */
-  List<RunRecord> getRuns(ProgramRunStatus status, int limit);
+  List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter);
 
   /**
    * Fetches the run record for particular run of a program.

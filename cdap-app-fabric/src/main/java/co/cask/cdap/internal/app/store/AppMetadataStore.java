@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Predicates.and;
+
 /**
  * Store for application metadata
  */
@@ -217,8 +219,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, new RunRecord(started, stopTs, runStatus));
   }
 
-  public List<RunRecord> getRuns(ProgramRunStatus status, int limit) {
-    return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, limit, null);
+  public List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter) {
+    return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, null, filter);
   }
 
   private MDSKey.Builder getProgramKeyBuilder(String searchType, @Nullable Id.Program program) {
@@ -233,20 +235,26 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecord> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                 long startTime, long endTime, int limit, String adapter) {
+                                 long startTime, long endTime, int limit, String adapter,
+                                 @Nullable Predicate<RunRecord> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecord> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, adapter));
-      resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, adapter));
-      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, adapter));
+      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, adapter, filter));
+      resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, adapter, filter));
+      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, adapter, filter));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
-      return getActiveRuns(program, startTime, endTime, limit, adapter);
+      return getActiveRuns(program, startTime, endTime, limit, adapter, filter);
     } else if (status.equals(ProgramRunStatus.SUSPENDED)) {
-      return getSuspendedRuns(program, startTime, endTime, limit, adapter);
+      return getSuspendedRuns(program, startTime, endTime, limit, adapter, filter);
     } else {
-      return getHistoricalRuns(program, status, startTime, endTime, limit, adapter);
+      return getHistoricalRuns(program, status, startTime, endTime, limit, adapter, filter);
     }
+  }
+
+  public List<RunRecord> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
+                                 long startTime, long endTime, int limit, String adapter) {
+    return getRuns(program, status, startTime, endTime, limit, adapter, null);
   }
 
   public RunRecord getRun(Id.Program program, final String runid) {
@@ -303,25 +311,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private List<RunRecord> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
-                                           final String adapter) {
+                                           final String adapter, @Nullable Predicate<RunRecord> filter) {
     MDSKey suspendKey = getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, program).build();
     MDSKey start = new MDSKey.Builder(suspendKey).add(getInvertedTsKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(suspendKey).add(getInvertedTsKeyPart(startTime)).build();
-    return list(start, stop, RunRecord.class, limit, new Predicate<RunRecord>() {
+    return list(start, stop, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
       @Override
       public boolean apply(@Nullable RunRecord record) {
         // Check if RunRecord matches with passed in adapter name
         return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
       }
-    });
+    }, filter));
   }
 
   private List<RunRecord> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
-                                        final String adapter) {
+                                        final String adapter, @Nullable Predicate<RunRecord> filter) {
     MDSKey activeKey = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, program).build();
 
-    return list(activeKey, null, RunRecord.class, limit,
-                new Predicate<RunRecord>() {
+    return list(activeKey, null, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
                   @Override
                   public boolean apply(RunRecord input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
@@ -331,33 +338,37 @@ public class AppMetadataStore extends MetadataStoreDataset {
                     }
                     return normalCheck;
                   }
-                });
-  }
+                }, filter));
+    }
 
   private List<RunRecord> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
-                                            final long startTime, final long endTime, int limit, final String adapter) {
+                                            final long startTime, final long endTime, int limit, final String adapter,
+                                            @Nullable Predicate<RunRecord> filter) {
     MDSKey historyKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
 
     MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return list(start, stop, RunRecord.class, limit, new Predicate<RunRecord>() {
+      return list(start, stop, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
         @Override
         public boolean apply(@Nullable RunRecord record) {
           // Check if RunRecord matches with passed in adapter name
           return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
         }
-      });
+      }, filter));
     }
 
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.COMPLETED, adapter));
+      return list(start, stop, RunRecord.class, limit,
+                  andPredicate(getPredicate(ProgramController.State.COMPLETED, adapter), filter));
     }
     if (status.equals(ProgramRunStatus.KILLED)) {
-      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.KILLED, adapter));
+      return list(start, stop, RunRecord.class, limit,
+                  andPredicate(getPredicate(ProgramController.State.KILLED, adapter), filter));
     }
-    return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.ERROR, adapter));
+    return list(start, stop, RunRecord.class, limit,
+                andPredicate(getPredicate(ProgramController.State.ERROR, adapter), filter));
   }
 
   private Predicate<RunRecord> getPredicate(final ProgramController.State state, final String adapter) {
@@ -372,6 +383,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
         return normalCheck;
       }
     };
+  }
+
+  private Predicate<RunRecord> andPredicate(Predicate<RunRecord> first, @Nullable Predicate<RunRecord> second) {
+    if (second != null) {
+      return and(first, second);
+    }
+    return first;
   }
 
   private long getInvertedTsKeyPart(long endTime) {
