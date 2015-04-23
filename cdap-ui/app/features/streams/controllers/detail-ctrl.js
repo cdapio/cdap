@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamDetailController', function($scope, MyDataSource, $state, $alert) {
+  .controller('CdapStreamDetailController', function($scope, MyDataSource, $state, $alert, myStreamService) {
     var dataSrc = new MyDataSource($scope);
 
     $scope.truncate = function() {
@@ -12,6 +12,10 @@ angular.module(PKG.name + '.feature.streams')
           content: 'Successfully truncated ' + $state.params.streamId + ' stream'
         });
       });
+    };
+
+    $scope.sendEvents = function() {
+      myStreamService.show($state.params.streamId);
     };
 
   });

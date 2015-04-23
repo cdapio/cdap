@@ -16,6 +16,11 @@
       </button>
       <ul class="dropdown-menu" role="menu">
         <li>
+          <a href="" ng-click="sendEvents()">
+            Send Events
+          </a>
+        </li>
+        <li>
           <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $state.params.namespace, streamid: $state.params.streamId})">Edit Properties</a>
         </li>
         <li>
