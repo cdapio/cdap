@@ -42,6 +42,7 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -51,8 +52,12 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -131,7 +136,8 @@ public abstract class DatasetServiceTestBase {
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules());
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule());
 
     DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
@@ -159,8 +165,11 @@ public abstract class DatasetServiceTestBase {
       .putAll(DatasetMetaTableUtil.getModules())
       .build();
 
+    TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
+
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(
+        registryFactory, modules, cConf, injector.getInstance(TransactionExecutorFactory.class)));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
@@ -177,7 +186,8 @@ public abstract class DatasetServiceTestBase {
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade));
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, dsFramework));
 
     // Start dataset service, wait for it to be discoverable
     service.start();

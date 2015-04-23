@@ -308,21 +308,21 @@ public class MetricQueryParserTest {
     assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
+      URI.create("/system/apps/app1/services/serve1/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
-               Tag.SERVICE_RUNNABLE, "run1");
+               Tag.HANDLER, "handler1");
     assertMetricName("system.reads", query);
 
     query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
+      URI.create("/system/apps/app1/services/serve1/runs/runid123/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Constants.DEFAULT_NAMESPACE,
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
-               Tag.SERVICE_RUNNABLE, "run1");
+               Tag.HANDLER, "handler1");
     assertMetricName("system.reads", query);
     Assert.assertEquals("runid123", query.getSliceByTags().get(Tag.RUN_ID));
   }

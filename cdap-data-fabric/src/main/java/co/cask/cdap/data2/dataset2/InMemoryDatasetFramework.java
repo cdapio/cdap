@@ -28,8 +28,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -87,16 +89,19 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   //       this in-mem implementation for now) and passed client (program) class loader
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
+  private final UsageRegistry usageRegistry;
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
-    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration,
+                                  TransactionExecutorFactory txExecutorFactory) {
+    this(registryFactory, new HashMap<String, DatasetModule>(), configuration, txExecutorFactory);
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                   @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                                  CConfiguration configuration) {
+                                  CConfiguration configuration, TransactionExecutorFactory txExecutorFactory) {
     this.registryFactory = registryFactory;
+    this.usageRegistry = new UsageRegistry(txExecutorFactory, this);
     this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
 
     this.namespaces = Sets.newHashSet();
@@ -354,8 +359,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
-                                                       Map<String, String> arguments,
-                                                       @Nullable ClassLoader classLoader) throws IOException {
+                                          Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader,
+                                          @Nullable Id owner) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
@@ -364,11 +370,26 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
       DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-                                 spec, arguments, classLoader));
+      T result = (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                                     spec, arguments, classLoader));
+      if (owner != null) {
+        if (owner instanceof Id.Program) {
+          usageRegistry.register((Id.Program) owner, datasetInstanceId);
+        } else if (owner instanceof Id.Adapter) {
+          usageRegistry.register((Id.Adapter) owner, datasetInstanceId);
+        }
+      }
+      return result;
     } finally {
       readLock.unlock();
     }
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          Map<String, String> arguments,
+                                          @Nullable ClassLoader classLoader) throws IOException {
+    return getDataset(datasetInstanceId, arguments, classLoader, null);
   }
 
   @Override

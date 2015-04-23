@@ -17,6 +17,10 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.common.conf.Constants;
@@ -24,9 +28,11 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.templates.etl.realtime.sinks.RealtimeTableSink;
 import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -92,5 +98,49 @@ public class ETLWorkerTest extends TestBase {
       Assert.assertEquals("v1", headers.get("h1"));
     }
     Assert.assertEquals("Hello", Bytes.toString(body, Charsets.UTF_8));
+  }
+
+  @Test
+  @SuppressWarnings("ConstantConditions")
+  public void testTableSink() throws Exception {
+    ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
+    ETLStage source = new ETLStage(TestSource.class.getSimpleName(),
+                                   ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
+    ETLStage sink = new ETLStage(RealtimeTableSink.class.getSimpleName(),
+                                 ImmutableMap.of("name", "table1",
+                                                 Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
+    ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
+    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
+    addDatasetInstances(adapterConfigurer);
+    Map<String, String> workerArgs = Maps.newHashMap(adapterConfigurer.getArguments());
+    WorkerManager workerManager = templateManager.startWorker(ETLWorker.class.getSimpleName(), workerArgs);
+    // Let the worker run for 5 seconds
+    TimeUnit.SECONDS.sleep(5);
+    workerManager.stop();
+    templateManager.stopAll();
+
+    // verify
+    DataSetManager<Table> tableManager = getDataset("table1");
+    Table table = tableManager.get();
+    // verify that atleast 1 record got written to the Table
+    Row row = table.get("Bob".getBytes(Charsets.UTF_8));
+
+    Assert.assertNotNull("Atleast 1 row should have been exported to the Table sink.", row);
+    Assert.assertEquals(1, (int) row.getInt("id"));
+    Assert.assertEquals("Bob", row.getString("name"));
+    Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
+    Assert.assertEquals(false, row.getBoolean("graduated"));
+    Assert.assertNotNull(row.getLong("time"));
+  }
+
+  private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
+    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
+      configurer.getDatasetInstances().entrySet()) {
+      String typeName = entry.getValue().getKey();
+      DatasetProperties properties = entry.getValue().getValue();
+      String instanceName = entry.getKey();
+      addDatasetInstance(typeName, instanceName, properties);
+    }
   }
 }

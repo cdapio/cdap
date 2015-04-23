@@ -169,8 +169,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
 
+    runtimeInfo = createRuntimeInfo(type, programId, controller);
     if (runtimeInfo != null) {
-      runtimeInfo = createRuntimeInfo(type, programId, controller);
       updateRuntimeInfo(type, runId, runtimeInfo);
       return runtimeInfo;
     } else {

@@ -30,9 +30,6 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
@@ -50,7 +47,6 @@ import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -82,7 +78,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -156,16 +151,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
         }
-      },
-      Modules.override(new StreamAdminModules().getDistributedModules())
-      .with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
-          bind(StreamAdmin.class).to(HBaseStreamAdmin.class);
-          bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
-        }
-      })
+      }
     );
 
     //create HBase namespace

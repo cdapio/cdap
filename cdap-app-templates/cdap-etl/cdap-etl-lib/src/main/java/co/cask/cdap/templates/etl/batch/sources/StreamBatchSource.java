@@ -103,7 +103,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    new Config(stageConfig.getProperties());
+    Config config = new Config(stageConfig.getProperties());
+    pipelineConfigurer.addStream(new Stream(config.name));
   }
 
   @Override

@@ -41,149 +41,181 @@ public class UsageHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
 
   @Test
-  public void testFlowStreamUsage() throws Exception {
+  public void testFlowUsage() throws Exception {
     final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
     final Id.Program program = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
     final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
+    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
     Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
-    deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
-
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
-
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
-
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-  }
-
-  @Test
-  public void testWorkerStreamUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
-
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
-
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
-
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-  }
-
-  @Test
-  public void testMapReduceStreamUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
-
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
-
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
-
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-  }
-
-  @Test
-  public void testSparkStreamUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    deploy(AllProgramsApp.class);
-    startProgram(program);
-    waitState(program, "RUNNING");
-    stopProgram(program);
-    waitState(program, "STOPPED");
-
-    Assert.assertEquals(1, getAppStreamUsage(app).size());
-    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
-
-    Assert.assertEquals(1, getProgramStreamUsage(program).size());
-    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
-    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
-    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
-
-    deleteApp(app, 200);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-  }
-
-  @Test
-  public void testProgramDatasetUsage() throws Exception {
-    final Id.Application app = Id.Application.from("somespace", "noapp");
-    final Id.Program program = Id.Program.from(app, ProgramType.FLOW, "noprogram");
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("somespace", "nods");
-
-    Assert.assertEquals(0, getAppDatasetUsage(app).size());
     Assert.assertEquals(0, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(0, getDatasetAdapterUsage(dataset).size());
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
-    getUsageRegistry().register(program, dataset);
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
+    stopProgram(program);
+    waitState(program, "STOPPED");
 
-    Assert.assertEquals(1, getAppDatasetUsage(app).size());
-    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
+    Assert.assertEquals(1, getAppStreamUsage(app).size());
+    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+
+    Assert.assertEquals(1, getProgramStreamUsage(program).size());
+    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
+    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
+    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+
     Assert.assertEquals(1, getProgramDatasetUsage(program).size());
     Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
+    Assert.assertEquals(1, getAppDatasetUsage(app).size());
+    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
     Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
     Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
 
-    getUsageRegistry().unregister(app);
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+  }
+
+  @Test
+  public void testWorkerUsage() throws Exception {
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME);
+    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
+    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
+    stopProgram(program);
+    waitState(program, "STOPPED");
+
+    Assert.assertEquals(1, getAppStreamUsage(app).size());
+    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+
+    Assert.assertEquals(1, getProgramStreamUsage(program).size());
+    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
+    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
+    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+
+    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
+    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
+    Assert.assertEquals(1, getAppDatasetUsage(app).size());
+    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
+    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
+    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+  }
+
+  @Test
+  public void testMapReduceUsage() throws Exception {
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME);
+    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
+    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
+    stopProgram(program);
+    waitState(program, "STOPPED");
+
+    Assert.assertEquals(1, getAppStreamUsage(app).size());
+    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+
+    Assert.assertEquals(1, getProgramStreamUsage(program).size());
+    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
+    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
+    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+
+    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
+    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
+    Assert.assertEquals(1, getAppDatasetUsage(app).size());
+    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
+    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
+    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+  }
+
+  @Test
+  public void testSparkUsage() throws Exception {
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
+    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
+    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+
+    deploy(AllProgramsApp.class);
+    startProgram(program);
+    waitState(program, "RUNNING");
+    stopProgram(program);
+    waitState(program, "STOPPED");
+
+    Assert.assertEquals(1, getAppStreamUsage(app).size());
+    Assert.assertEquals(stream, getAppStreamUsage(app).iterator().next());
+
+    Assert.assertEquals(1, getProgramStreamUsage(program).size());
+    Assert.assertEquals(stream, getProgramStreamUsage(program).iterator().next());
+    Assert.assertEquals(1, getStreamProgramUsage(stream).size());
+    Assert.assertEquals(program, getStreamProgramUsage(stream).iterator().next());
+
+    Assert.assertEquals(1, getProgramDatasetUsage(program).size());
+    Assert.assertEquals(dataset, getProgramDatasetUsage(program).iterator().next());
+    Assert.assertEquals(1, getAppDatasetUsage(app).size());
+    Assert.assertEquals(dataset, getAppDatasetUsage(app).iterator().next());
+    Assert.assertEquals(1, getDatasetProgramUsage(dataset).size());
+    Assert.assertEquals(program, getDatasetProgramUsage(dataset).iterator().next());
+
+    deleteApp(app, 200);
+
+    Assert.assertEquals(0, getAppStreamUsage(app).size());
+    Assert.assertEquals(0, getProgramStreamUsage(program).size());
+    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
   }
 
   @Test

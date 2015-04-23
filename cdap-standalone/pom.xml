@@ -114,6 +114,11 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-ui</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -143,11 +148,6 @@
         <etl.realtime.plugin.name>etlRealtime</etl.realtime.plugin.name>
       </properties>
       <dependencies>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-web-app</artifactId>
-          <version>${project.version}</version>
-        </dependency>
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-ui</artifactId>
@@ -276,28 +276,23 @@
                     <!-- Copy cdap-ui -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/server</directory>
-                      <targetPath>web-app/alpha/server</targetPath>
+                      <targetPath>ui/alpha/server</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/dist</directory>
-                      <targetPath>web-app/alpha/dist</targetPath>
+                      <targetPath>ui/alpha/dist</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
-                      <targetPath>web-app/alpha/node_modules</targetPath>
+                      <targetPath>ui/alpha/node_modules</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/</directory>
-                      <targetPath>web-app/alpha/</targetPath>
+                      <targetPath>ui/alpha/</targetPath>
                       <includes>
                         <include>server.js</include>
                         <include>package.json</include>
                       </includes>
-                    </resource>
-                    <!-- Copy web-app -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-web-app/target/local</directory>
-                      <targetPath>web-app/local</targetPath>
                     </resource>
                     <!-- Copy api javadocs -->
                     <resource>

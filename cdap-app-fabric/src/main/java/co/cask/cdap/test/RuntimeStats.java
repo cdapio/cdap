@@ -79,8 +79,22 @@ public final class RuntimeStats {
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
+  public static RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
+                                                        String handlerId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    return getMetrics(MetricsContexts.forServiceHandler(id, handlerId),
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+  }
+
+
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
     return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
+  }
+
+  public static RuntimeMetrics getServiceHandlerMetrics(String applicationId, String serviceId, String handlerId) {
+    return getServiceHandlerMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId, handlerId);
   }
 
   @Deprecated

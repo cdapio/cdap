@@ -25,10 +25,9 @@ import com.google.inject.assistedinject.Assisted;
  */
 public interface StreamWriterFactory {
   /**
-   * @param namespaceId the namespaceId for which to return a {@link StreamWriter}
    * @param programId the programId that will be using the {@link StreamWriter}
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("namespaceId") String namespaceId, @Assisted("programId") Id.Program programId);
+  StreamWriter create(@Assisted("programId") Id.Program programId);
 }
 

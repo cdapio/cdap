@@ -176,6 +176,7 @@ public interface DatasetFramework {
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations.
+   *
    * @param <T> dataset admin type
    * @param datasetInstanceId dataset instance name
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
@@ -189,6 +190,24 @@ public interface DatasetFramework {
 
   /**
    * Gets dataset to be used to perform data operations.
+   *
+   * @param <T> dataset type to be returned
+   * @param datasetInstanceId dataset instance id
+   * @param arguments runtime arguments for the dataset instance
+   * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
+   * @param owner owner of the dataset
+   * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
+   */
+  @Nullable
+  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                   @Nullable ClassLoader classLoader, @Nullable Id owner)
+    throws DatasetManagementException, IOException;
+
+  /**
+   * Gets dataset to be used to perform data operations.
+   *
    * @param <T> dataset type to be returned
    * @param datasetInstanceId dataset instance id
    * @param arguments runtime arguments for the dataset instance

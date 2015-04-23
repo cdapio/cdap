@@ -20,6 +20,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
 import com.google.common.base.Throwables;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Provides access to MapReduceContext for mapreduce job tasks.
@@ -65,8 +67,8 @@ public final class MapReduceContextProvider {
    */
   public synchronized BasicMapReduceContext get() {
     if (context == null) {
-      CConfiguration conf = contextConfig.getConf();
-      context = getBuilder(conf)
+      CConfiguration cConf = contextConfig.getConf();
+      context = getBuilder(cConf)
         .build(type,
                contextConfig.getRunId(),
                taskContext.getTaskAttemptID().getTaskID().toString(),
@@ -78,7 +80,8 @@ public final class MapReduceContextProvider {
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet(),
-               contextConfig.getAdapterName()
+               contextConfig.getAdapterSpec(),
+               createPluginInstantiator(cConf)
         );
     }
     return context;
@@ -125,6 +128,14 @@ public final class MapReduceContextProvider {
     }
   }
 
+  @Nullable
+  private PluginInstantiator createPluginInstantiator(CConfiguration cConf) {
+    if (contextConfig.getAdapterSpec() == null) {
+      return null;
+    }
+    return new PluginInstantiator(cConf, contextConfig.getAdapterSpec().getTemplate(),
+                                  getProgramClassLoader(taskContext.getConfiguration()));
+  }
 
   /**
    * Returns the {@link ClassLoader} for the MapReduce program. The ClassLoader for MapReduce job is always

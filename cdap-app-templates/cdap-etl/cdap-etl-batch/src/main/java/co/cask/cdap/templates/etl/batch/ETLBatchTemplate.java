@@ -37,7 +37,6 @@ import co.cask.cdap.templates.etl.common.ETLTemplate;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
-import co.cask.cdap.templates.etl.transforms.StructuredRecordToCubeFactTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -69,7 +68,6 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
                                         ProjectionTransform.class,
                                         DBSource.class,
                                         DBSink.class,
-                                        StructuredRecordToCubeFactTransform.class,
                                         CubeSink.class));
   }
 

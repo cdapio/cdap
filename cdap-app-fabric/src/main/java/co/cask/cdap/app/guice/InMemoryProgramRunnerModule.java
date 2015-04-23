@@ -32,7 +32,7 @@ import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.service.ServiceComponentProgramRunner;
+import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
@@ -110,8 +110,8 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER_COMPONENT).to(WorkerProgramRunner.class);
 
     // Service support in standalone
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(ServiceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE_COMPONENT).to(ServiceComponentProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InMemoryServiceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE_COMPONENT).to(ServiceProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.

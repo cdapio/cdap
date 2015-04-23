@@ -16,9 +16,12 @@
 
 package co.cask.cdap.api.templates.plugins;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Contains plugin information.
  */
+@Beta
 public final class PluginInfo implements Comparable<PluginInfo> {
 
   private final String fileName;
@@ -65,8 +68,9 @@ public final class PluginInfo implements Comparable<PluginInfo> {
   @Override
   public String toString() {
     return "PluginInfo{" +
-      "name='" + name + '\'' +
-      ", version='" + version + '\'' +
+      "fileName='" + fileName + '\'' +
+      ", name='" + name + '\'' +
+      ", version=" + version +
       '}';
   }
 

@@ -30,7 +30,8 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.templates.AdapterSpecification;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
@@ -72,13 +73,16 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  RunId runId, String taskId,
                                  Arguments runtimeArguments,
                                  MapReduceSpecification spec,
-                                 long logicalStartTime, String workflowBatch, String adapterName,
+                                 long logicalStartTime, String workflowBatch,
                                  DiscoveryServiceClient discoveryServiceClient,
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
-                                 DatasetFramework dsFramework) {
+                                 DatasetFramework dsFramework,
+                                 @Nullable AdapterSpecification adapterSpec,
+                                 @Nullable PluginInstantiator pluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
-          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService, dsFramework, adapterName);
+          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+          dsFramework, adapterSpec, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
@@ -103,7 +107,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
         }
       });
     this.txContext = new TransactionContext(txClient);
-    this.dynamicDatasetContext = new DynamicDatasetContext(Id.Namespace.from(getNamespaceId()),
+    this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
+                                                           getProgram().getId(),
                                                            txContext, dsFramework,
                                                            program.getClassLoader(), null,
                                                            runtimeArguments.asMap()) {

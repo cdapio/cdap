@@ -35,7 +35,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -75,6 +77,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
+  protected static TransactionExecutorFactory txExecutorFactory;
 
   @BeforeClass
   public static void setup() {
@@ -82,8 +85,10 @@ public abstract class AbstractDatasetFrameworkTest {
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules());
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule());
 
+    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {
       @Override
       public DatasetDefinitionRegistry create() {

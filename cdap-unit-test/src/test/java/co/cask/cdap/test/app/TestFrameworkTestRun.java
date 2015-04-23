@@ -432,6 +432,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(2, serviceMetrics.getProcessed());
     Assert.assertEquals(1, serviceMetrics.getException());
 
+    // in the AppWithServices the handlerName is same as the serviceName - "ServerService" handler
+    RuntimeMetrics handlerMetrics = RuntimeStats.getServiceHandlerMetrics(AppWithServices.APP_NAME,
+                                                                          AppWithServices.SERVICE_NAME,
+                                                                          AppWithServices.SERVICE_NAME);
+    handlerMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(3, handlerMetrics.getInput());
+    Assert.assertEquals(2, handlerMetrics.getProcessed());
+    Assert.assertEquals(1, handlerMetrics.getException());
+
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
     // TestMetricsCollectionService
 
@@ -441,6 +450,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                         AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
     ServiceManager datasetWorkerServiceManager = applicationManager
       .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
+    WorkerManager datasetWorker = applicationManager.startWorker(AppWithServices.DATASET_UPDATE_WORKER, args);
     datasetWorkerServiceManager.waitForStatus(true);
 
     ServiceManager noopManager = applicationManager.startService("NoOpService");
@@ -450,6 +460,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
+    handlerMetrics = RuntimeStats.getServiceHandlerMetrics(AppWithServices.APP_NAME,
+                                                                          "NoOpService",
+                                                                          "NoOpHandler");
+    handlerMetrics.waitForinput(1, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(1, handlerMetrics.getInput());
+    Assert.assertEquals(1, handlerMetrics.getProcessed());
+    Assert.assertEquals(0, handlerMetrics.getException());
+
     // Test that a service can discover another service
     String path = String.format("discover/%s/%s",
                                 AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
@@ -458,6 +476,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
+    datasetWorker.stop();
     datasetWorkerServiceManager.stop();
     datasetWorkerServiceManager.waitForStatus(false);
     LOG.info("DatasetUpdateService Stopped");

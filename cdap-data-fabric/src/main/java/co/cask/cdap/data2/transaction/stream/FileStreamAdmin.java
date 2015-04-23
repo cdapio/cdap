@@ -26,6 +26,7 @@ import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -77,6 +78,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
   private final UsageRegistry usageRegistry;
+  private final StreamMetaStore streamMetaStore;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -85,7 +87,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
-                         UsageRegistry usageRegistry) {
+                         UsageRegistry usageRegistry,
+                         StreamMetaStore streamMetaStore) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -93,6 +96,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
     this.usageRegistry = usageRegistry;
+    this.streamMetaStore = streamMetaStore;
   }
 
   @SuppressWarnings("unused")
@@ -302,6 +306,7 @@ public class FileStreamAdmin implements StreamAdmin {
         writeConfig(config);
         createStreamFeeds(config);
         alterExploreStream(streamId, true);
+        streamMetaStore.addStream(streamId);
         return config;
       }
     });
@@ -393,7 +398,8 @@ public class FileStreamAdmin implements StreamAdmin {
           }
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
           configLocation.delete();
-        } catch (IOException e) {
+          streamMetaStore.removeStream(streamId);
+        } catch (Exception e) {
           throw Throwables.propagate(e);
         }
       }
