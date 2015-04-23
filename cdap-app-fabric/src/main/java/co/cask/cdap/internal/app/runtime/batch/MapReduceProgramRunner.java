@@ -174,7 +174,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterSpec.getName(), twillRunId);
+        String adapterName = adapterSpec == null ? null : adapterSpec.getName();
+        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
       }
 
       @Override
