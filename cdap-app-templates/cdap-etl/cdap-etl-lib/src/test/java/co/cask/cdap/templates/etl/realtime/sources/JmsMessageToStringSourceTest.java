@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -155,7 +156,6 @@ public class JmsMessageToStringSourceTest {
         }
       }
     }
-
   }
 
   @Test
@@ -215,18 +215,19 @@ public class JmsMessageToStringSourceTest {
     SourceState sourceState = new SourceState();
     source.poll(emitter, sourceState);
 
-    for (String val : emitter.getCurrentValues()) {
-      Assert.assertEquals(originalMessage, val);
+    for (StructuredRecord val : emitter.getCurrentValues()) {
+      String message = val.get(JmsSource.MESSAGE);
+      Assert.assertEquals(originalMessage, message);
 
-      System.out.println("Getting JMS Message in emitter with value: " + val);
+      System.out.println("Getting JMS Message in emitter with value: " + val.get(JmsSource.MESSAGE));
     }
   }
 
   /**
    * Helper class to emit JMS message to next stage
    */
-  private static class MockEmitter implements Emitter<String> {
-    private List<String> currentValues = Lists.newLinkedList();
+  private static class MockEmitter implements Emitter<StructuredRecord> {
+    private List<StructuredRecord> currentValues = Lists.newLinkedList();
 
     /**
      * Emit objects to the next stage.
@@ -234,11 +235,11 @@ public class JmsMessageToStringSourceTest {
      * @param value data object.
      */
     @Override
-    public void emit(String value) {
+    public void emit(StructuredRecord value) {
       currentValues.add(value);
     }
 
-    List<String> getCurrentValues() {
+    List<StructuredRecord> getCurrentValues() {
       return currentValues;
     }
   }

@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -47,7 +49,7 @@ import javax.jms.TextMessage;
  * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
-public class JmsSource extends RealtimeSource<String> {
+public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
@@ -55,6 +57,8 @@ public class JmsSource extends RealtimeSource<String> {
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
   private static final String CDAP_JMS_SOURCE_NAME = JmsSource.class.getSimpleName();
   private static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
+
+  public static final String MESSAGE = "message";
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
@@ -64,6 +68,8 @@ public class JmsSource extends RealtimeSource<String> {
   private transient MessageConsumer consumer;
 
   private int messagesToReceive = 50;
+
+  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Configure the JMS Source.
@@ -111,6 +117,9 @@ public class JmsSource extends RealtimeSource<String> {
 
     // Bootstrap the JMS consumer
     initializeJMSConnection(envVars, destinationName);
+
+    Schema.Field msgField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("JMS Message", msgField));
   }
 
   /**
@@ -118,10 +127,12 @@ public class JmsSource extends RealtimeSource<String> {
    */
   private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName) {
     if (jmsProvider == null) {
+      LOG.trace("JMS provider is not set when trying to initialize JMS connection.");
       if (destinationName == null) {
         throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
                                           "Please set the right JMSProvider");
       } else {
+        LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
         jmsProvider = new JndiBasedJmsProvider(envVars, destinationName);
       }
     }
@@ -155,7 +166,7 @@ public class JmsSource extends RealtimeSource<String> {
 
   @Nullable
   @Override
-  public SourceState poll(Emitter<String> writer, SourceState currentState) {
+  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
     // Try to get message from Queue
     Message message = null;
 
@@ -188,12 +199,18 @@ public class JmsSource extends RealtimeSource<String> {
           continue;
         }
 
-        writer.emit(text);
+        writer.emit(stringMessageToStructuredRecord(text, recordBuilder));
         count++;
       }
     } while (message != null && count < messagesToReceive);
 
     return new SourceState(currentState.getState());
+  }
+
+  // Helper method to encode JMS String message to StructuredRecord.
+  private static StructuredRecord stringMessageToStructuredRecord(String text, StructuredRecord.Builder recordBuilder) {
+    recordBuilder.set(MESSAGE, text);
+    return recordBuilder.build();
   }
 
   @Override
