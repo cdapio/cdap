@@ -34,6 +34,9 @@
                 <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
                   <strong> {{program.name}} </strong>
                 </a>
+                <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
               </td>
               <td ng-bind="program.status"></td>
               <td ng-bind="program.description"></td>
