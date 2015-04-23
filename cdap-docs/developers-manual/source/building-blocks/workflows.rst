@@ -274,11 +274,11 @@ otherwise, the other path will be taken. The diagram for this code would be:
    :width: 8in
    :align: center
 
-For this 3.0 release, CDAP only supports predicate conditions based on counters from your
-MapReduce programs. Because of this, condition nodes are currently only useful when they
-follow MapReduce nodes that make use of one or more counters. In a later version, we will
-expose many more kinds of conditions, for other components, to allow other possible
-execution paths and structures.
+For this 3.0 release, CDAP only supports predicate conditions based on counters from
+previous MapReduce programs. Because of this, condition nodes are currently only useful
+when they follow MapReduce nodes; they can then make use of counters emitted by the
+MapReduce program to take the decision. In a later version, we will add more information
+to the ``WorkflowContext`` which will allow for more complex decisions.
 
 Example of Using a Workflow
 ===========================
