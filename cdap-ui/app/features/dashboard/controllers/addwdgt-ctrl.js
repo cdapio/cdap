@@ -32,6 +32,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     { name: 'Area Spline Stacked',   type: 'c3-area-spline-stacked'},
     { name: 'Area Step',             type: 'c3-area-step'},
     { name: 'Step',                  type: 'c3-step'},
+    { name: 'Table',                 type: 'table' }
   ];
 
   $scope.$watch('model.metric.name', function (newVal) {

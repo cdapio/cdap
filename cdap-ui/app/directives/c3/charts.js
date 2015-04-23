@@ -73,13 +73,7 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     data.type = $scope.type;
 
     // Mainly needed for pie chart values to be shown upon tooltip, but also useful for other types.
-    var myTooltip = {
-      format: {
-        value: function (value, ratio, id) {
-          return d3.format(',')(value);
-        }
-      }
-    }
+    var myTooltip = { format: { value: d3.format(',') } };
 
     var chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
     chartConfig.size = $scope.options.size;
