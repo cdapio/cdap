@@ -33,10 +33,12 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -47,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -96,14 +99,23 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.discoveryServiceClient = discoveryServiceClient;
 
     this.programMetrics = metricsCollector;
-    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), program.getId(), dsFramework,
-                                                  program.getClassLoader(), programMetrics);
+    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
+                                                  program.getClassLoader(), getOwners(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
     this.adapterSpec = adapterSpec;
     this.pluginInstantiator = pluginInstantiator;
+  }
+
+  public List<Id> getOwners() {
+    ImmutableList.Builder<Id> result = ImmutableList.builder();
+    result.add(program.getId());
+    if (adapterSpec != null) {
+      result.add(Id.Adapter.from(program.getId().getNamespace(), adapterSpec.getName()));
+    }
+    return result.build();
   }
 
   public abstract Metrics getMetrics();

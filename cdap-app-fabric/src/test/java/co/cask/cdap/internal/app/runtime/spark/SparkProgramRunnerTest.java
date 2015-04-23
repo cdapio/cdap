@@ -109,8 +109,9 @@ public class SparkProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, null, dsFramework,
-                                                  SparkProgramRunnerTest.class.getClassLoader(), null);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  SparkProgramRunnerTest.class.getClassLoader(),
+                                                  null, null);
 
     txService.startAndWait();
   }

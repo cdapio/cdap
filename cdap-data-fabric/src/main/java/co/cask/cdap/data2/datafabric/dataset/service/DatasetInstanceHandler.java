@@ -35,6 +35,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -108,10 +109,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/datasets/{name}")
-  public void getInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+  public void getInfo(HttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
                       @PathParam("name") String name,
-                      @Nullable @QueryParam("ownerType") String ownerType,
-                      @Nullable @QueryParam("ownerId") String ownerId) {
+                      @QueryParam("owner") List<String> owners) {
 
     Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
     DatasetSpecification spec = instanceManager.get(datasetId);
@@ -128,7 +129,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       }
       // typeMeta is guaranteed to be non-null now.
       DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
-      if (ownerType != null && ownerId != null) {
+      for (String owner : owners) {
+        String[] parts = owner.split("::", 2);
+        Preconditions.checkArgument(parts.length == 2);
+        String ownerType = parts[0];
+        String ownerId = parts[1];
         try {
           if (ownerType.equals(Id.getType(Id.Program.class))) {
             usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
