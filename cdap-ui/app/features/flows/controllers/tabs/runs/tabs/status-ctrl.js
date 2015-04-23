@@ -10,14 +10,7 @@ angular.module(PKG.name + '.feature.flows')
         $scope.runs.selected = match[0];
       }
     }
-    var metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
-                          '&context=ns.' +
-                          $state.params.namespace +
-                          '.app.' + $state.params.appId +
-                          '.flow.' + $state.params.programId +
-                          '.run.' + $scope.runs.selected.runid +
-                          '.flowlet.',
-        metricStreamPath = '/metrics/query?metric=system.collect.events' +
+    var metricStreamPath = '/metrics/query?metric=system.collect.events' +
                            '&context=namespace.' +
                            $state.params.namespace +
                            '.stream.';
@@ -32,17 +25,28 @@ angular.module(PKG.name + '.feature.flows')
         pollMetrics();
       });
 
-    // This controller is NOT shared between the accordions.
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
-    }, function(res) {
-      var startMs = res.start * 1000;
-        $scope.startTime = new Date(startMs);
-        $scope.status = res.status;
-        $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
-      });
+    if ($scope.runs.length) {
+      var metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
+                            '&context=ns.' +
+                            $state.params.namespace +
+                            '.app.' + $state.params.appId +
+                            '.flow.' + $state.params.programId +
+                            '.run.' + $scope.runs.selected.runid +
+                            '.flowlet.';
+      dataSrc.poll({
+        _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
+      }, function(res) {
+        var startMs = res.start * 1000;
+          $scope.startTime = new Date(startMs);
+          $scope.status = res.status;
+          $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
+        });
+    }
 
     function pollMetrics() {
+      if (!$scope.runs.length) {
+        return;
+      }
       var nodes = $scope.data.nodes;
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
