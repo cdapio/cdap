@@ -194,10 +194,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(
     Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
     @Nullable ClassLoader classLoader,
-    @Nullable Id owner) throws DatasetManagementException, IOException {
+    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
 
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .getInstance(datasetInstanceId.getId(), owner);
+      .getInstance(datasetInstanceId.getId(), owners);
     if (instanceInfo == null) {
       return null;
     }

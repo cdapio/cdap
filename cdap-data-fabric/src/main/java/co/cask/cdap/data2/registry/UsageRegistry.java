@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -57,7 +58,74 @@ public class UsageRegistry {
   }
 
   /**
+   * Registers usage of a stream by multiple ids.
+   *
+   * @param users the users of the stream
+   * @param streamId the stream
+   */
+  public void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
+      @Override
+      public Void apply(UsageDatasetIterable input) throws Exception {
+        for (Id user : users) {
+          // TODO: CDAP-2251: remove redundancy
+          if (user instanceof Id.Program) {
+            register((Id.Program) user, streamId);
+          } else if (user instanceof Id.Adapter) {
+            register((Id.Adapter) user, streamId);
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Register usage of a stream by an id.
+   *
+   * @param user the user of the stream
+   * @param streamId the stream
+   */
+  public void register(Id user, Id.Stream streamId) {
+    registerAll(Collections.singleton(user), streamId);
+  }
+
+  /**
+   * Registers usage of a dataset by multiple ids.
+   *
+   * @param users the users of the dataset
+   * @param datasetId the dataset
+   */
+  public void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
+      @Override
+      public Void apply(UsageDatasetIterable input) throws Exception {
+        for (Id user : users) {
+          // TODO: CDAP-2251: remove redundancy
+          if (user instanceof Id.Program) {
+            register((Id.Program) user, datasetId);
+          } else if (user instanceof Id.Adapter) {
+            register((Id.Adapter) user, datasetId);
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Registers usage of a dataset by multiple ids.
+   *
+   * @param user the user of the dataset
+   * @param datasetId the dataset
+   */
+  public void register(Id user, Id.DatasetInstance datasetId) {
+    registerAll(Collections.singleton(user), datasetId);
+  }
+
+  /**
    * Registers usage of a dataset by a program.
+   *
    * @param programId program
    * @param datasetInstanceId dataset
    */
@@ -73,6 +141,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a dataset by an adapter.
+   *
    * @param adapterId adapter
    * @param datasetInstanceId dataset
    */
@@ -88,6 +157,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a stream by a program.
+   *
    * @param programId program
    * @param streamId stream
    */
@@ -103,6 +173,7 @@ public class UsageRegistry {
 
   /**
    * Registers usage of a stream by an adapter.
+   *
    * @param adapterId adapter
    * @param streamId stream
    */
@@ -118,6 +189,7 @@ public class UsageRegistry {
 
   /**
    * Unregisters all usage information of an application.
+   *
    * @param applicationId application
    */
   public void unregister(final Id.Application applicationId) {
@@ -132,6 +204,7 @@ public class UsageRegistry {
 
   /**
    * Unregisters all usage information of an adapter.
+   *
    * @param adapterId application
    */
   public void unregister(final Id.Adapter adapterId) {
@@ -233,7 +306,6 @@ public class UsageRegistry {
       }
     });
   }
-
 
   /**
    * For passing {@link UsageDataset} to {@link Transactional#of}.

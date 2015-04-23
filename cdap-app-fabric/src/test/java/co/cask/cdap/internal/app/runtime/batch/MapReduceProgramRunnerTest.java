@@ -124,8 +124,9 @@ public class MapReduceProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, null, dsFramework,
-                                                  MapReduceProgramRunnerTest.class.getClassLoader(), null);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  MapReduceProgramRunnerTest.class.getClassLoader(),
+                                                  null, null);
 
     txService.startAndWait();
 

@@ -20,14 +20,17 @@ import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.proto.Id;
 import com.google.inject.assistedinject.Assisted;
 
+import java.util.List;
+
 /**
  * Factory to create {@link StreamWriter} objects
  */
 public interface StreamWriterFactory {
   /**
-   * @param programId the programId that will be using the {@link StreamWriter}
+   * @param namespace the namespace that the {@link StreamWriter} belongs to
+   * @param owners the owners of the {@link StreamWriter}
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("programId") Id.Program programId);
+  StreamWriter create(@Assisted("namespace") Id.Namespace namespace, @Assisted("owners") List<Id> owners);
 }
 
