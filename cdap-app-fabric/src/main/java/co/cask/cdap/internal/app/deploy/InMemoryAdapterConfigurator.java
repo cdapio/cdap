@@ -30,7 +30,7 @@ import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
@@ -130,7 +130,7 @@ public final class InMemoryAdapterConfigurator implements Configurator {
             configType = Object.class;
           }
           template.configureAdapter(adapterName, GSON.fromJson(adapterConfig.getConfig(), configType), configurer);
-          AdapterSpecification spec = configurer.createSpecification();
+          AdapterDefinition spec = configurer.createSpecification();
           result.set(new DefaultConfigResponse(0, CharStreams.newReaderSupplier(GSON.toJson(spec))));
         } finally {
           Closeables.closeQuietly(pluginInstantiator);

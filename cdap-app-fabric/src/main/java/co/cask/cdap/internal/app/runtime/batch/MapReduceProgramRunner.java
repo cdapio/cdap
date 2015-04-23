@@ -43,7 +43,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -137,7 +137,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
-    AdapterSpecification adapterSpec = getAdapterSpecification(arguments);
+    AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
 
     MapReduce mapReduce;
     try {
@@ -226,15 +226,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   @Nullable
-  private AdapterSpecification getAdapterSpecification(Arguments arguments) {
+  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
     if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
       return null;
     }
-    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterSpecification.class);
+    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
   }
 
   @Nullable
-  private PluginInstantiator createPluginInstantiator(@Nullable AdapterSpecification adapterSpec,
+  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
                                                       ClassLoader programClassLoader) {
     if (adapterSpec == null) {
       return null;

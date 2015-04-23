@@ -19,24 +19,24 @@ package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.reflect.TypeToken;
 
 /**
  * Adds a configured adapter to the store.
  */
-public class AdapterRegistrationStage extends AbstractStage<AdapterSpecification> {
+public class AdapterRegistrationStage extends AbstractStage<AdapterDefinition> {
   private final Store store;
   private final Id.Namespace namespace;
 
   public AdapterRegistrationStage(Id.Namespace namespace, Store store) {
-    super(TypeToken.of(AdapterSpecification.class));
+    super(TypeToken.of(AdapterDefinition.class));
     this.store = store;
     this.namespace = namespace;
   }
 
   @Override
-  public void process(AdapterSpecification input) throws Exception {
+  public void process(AdapterDefinition input) throws Exception {
     store.addAdapter(namespace, input);
     emit(input);
   }

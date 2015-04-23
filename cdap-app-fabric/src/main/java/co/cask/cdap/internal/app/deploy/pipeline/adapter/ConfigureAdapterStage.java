@@ -25,7 +25,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -68,7 +68,7 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
 
   /**
    * Creates a {@link InMemoryConfigurator} to run through
-   * the process of generation of {@link AdapterSpecification}
+   * the process of generation of {@link AdapterDefinition}
    *
    * @param deploymentInfo Location of the input and output location
    */
@@ -95,7 +95,7 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
     }
     Reader reader = configSupplier.getInput();
     try {
-      emit(GSON.fromJson(reader, AdapterSpecification.class));
+      emit(GSON.fromJson(reader, AdapterDefinition.class));
     } finally {
       Closeables.closeQuietly(reader);
     }

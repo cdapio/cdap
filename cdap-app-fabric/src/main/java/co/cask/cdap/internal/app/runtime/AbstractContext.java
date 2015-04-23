@@ -33,8 +33,8 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
-import co.cask.cdap.templates.AdapterSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -68,7 +68,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
 
-  private final AdapterSpecification adapterSpec;
+  private final AdapterDefinition adapterSpec;
   private final PluginInstantiator pluginInstantiator;
 
   /**
@@ -87,7 +87,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsCollector metricsCollector,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                            @Nullable AdapterSpecification adapterSpec,
+                            @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program);
     this.program = program;
@@ -109,7 +109,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public abstract Metrics getMetrics();
 
   @Nullable
-  public AdapterSpecification getAdapterSpec() {
+  public AdapterDefinition getAdapterSpec() {
     return adapterSpec;
   }
 

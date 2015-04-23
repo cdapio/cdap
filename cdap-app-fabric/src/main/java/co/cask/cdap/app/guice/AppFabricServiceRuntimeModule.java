@@ -77,7 +77,7 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -277,9 +277,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterSpecification>> () { },
+          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>> () { },
                      LocalAdapterManager.class)
-          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterSpecification>>() { },
+          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() { },
                          Names.named("adapters")))
       );
 

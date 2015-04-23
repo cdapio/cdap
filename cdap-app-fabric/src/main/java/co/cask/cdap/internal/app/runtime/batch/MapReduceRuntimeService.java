@@ -49,7 +49,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
@@ -866,7 +866,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * @return the {@link Location} for the archive file or {@code null} if there is no plugin files need to be localized
    */
   @Nullable
-  private Location createPluginArchive(@Nullable AdapterSpecification adapterSpec,
+  private Location createPluginArchive(@Nullable AdapterDefinition adapterSpec,
                                        Id.Program programId) throws IOException {
     if (adapterSpec == null) {
       return null;

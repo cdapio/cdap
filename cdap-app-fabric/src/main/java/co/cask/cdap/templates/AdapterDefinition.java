@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 /**
  * Specification of an adapter.
  */
-public final class AdapterSpecification {
+public final class AdapterDefinition {
 
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
                                                                                ProgramType.WORKER);
@@ -57,15 +57,15 @@ public final class AdapterSpecification {
   // but the platform itself never interprets it but just passes it along.
   private final JsonElement config;
 
-  private AdapterSpecification(String name, String description, Id.Program program,
-                               ScheduleSpecification scheduleSpec, int instances,
-                               Map<String, StreamSpecification> streams,
-                               Map<String, DatasetCreationSpec> datasets,
-                               Map<String, String> datasetModules,
-                               Map<String, String> runtimeArgs,
-                               Map<String, AdapterPlugin> plugins,
-                               Resources resources,
-                               JsonElement config) {
+  private AdapterDefinition(String name, String description, Id.Program program,
+                            ScheduleSpecification scheduleSpec, int instances,
+                            Map<String, StreamSpecification> streams,
+                            Map<String, DatasetCreationSpec> datasets,
+                            Map<String, String> datasetModules,
+                            Map<String, String> runtimeArgs,
+                            Map<String, AdapterPlugin> plugins,
+                            Resources resources,
+                            JsonElement config) {
     this.name = name;
     this.description = description;
     this.program = program;
@@ -227,8 +227,8 @@ public final class AdapterSpecification {
       return this;
     }
 
-    public AdapterSpecification build() {
-      return new AdapterSpecification(name, description, program, schedule, instances,
+    public AdapterDefinition build() {
+      return new AdapterDefinition(name, description, program, schedule, instances,
                                       streams, datasets, datasetModules, runtimeArgs, plugins, resources, config);
     }
   }
@@ -242,7 +242,7 @@ public final class AdapterSpecification {
       return false;
     }
 
-    AdapterSpecification that = (AdapterSpecification) o;
+    AdapterDefinition that = (AdapterDefinition) o;
 
     return Objects.equal(name, that.name) &&
       Objects.equal(description, that.description) &&

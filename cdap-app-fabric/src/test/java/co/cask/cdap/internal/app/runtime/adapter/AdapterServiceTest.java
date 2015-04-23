@@ -37,7 +37,7 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -107,7 +107,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
     // Create an adapter to deploy template application.
     adapterService.createAdapter(NAMESPACE, adapterName, adapterConfig);
-    AdapterSpecification adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
+    AdapterDefinition adapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(adapterSpec);
 
     // We should not be able to delete the application since we have created an adapter.
@@ -233,14 +233,14 @@ public class AdapterServiceTest extends AppFabricTestBase {
       // expected
     }
 
-    AdapterSpecification actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
+    AdapterDefinition actualAdapterSpec = adapterService.getAdapter(NAMESPACE, adapterName);
     Assert.assertNotNull(actualAdapterSpec);
     assertDummyConfigEquals(adapterConfig, actualAdapterSpec);
 
     // list all adapters
-    Collection<AdapterSpecification> adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
+    Collection<AdapterDefinition> adapters = adapterService.getAdapters(NAMESPACE, DummyBatchTemplate.NAME);
     Assert.assertEquals(1, adapters.size());
-    AdapterSpecification actual = adapters.iterator().next();
+    AdapterDefinition actual = adapters.iterator().next();
     assertDummyConfigEquals(adapterConfig, actual);
 
     // adapter should be stopped
@@ -291,7 +291,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
     Assert.assertTrue(datasetExists(Id.DatasetInstance.from(NAMESPACE, tableName)));
   }
 
-  private void assertDummyConfigEquals(AdapterConfig expected, AdapterSpecification actual) {
+  private void assertDummyConfigEquals(AdapterConfig expected, AdapterDefinition actual) {
     Assert.assertEquals(expected.getDescription(), actual.getDescription());
     Assert.assertEquals(expected.getTemplate(), actual.getTemplate());
     Assert.assertEquals(expected.getConfig(), actual.getConfig());

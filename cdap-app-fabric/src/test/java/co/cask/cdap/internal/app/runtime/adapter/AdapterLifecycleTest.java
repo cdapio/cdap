@@ -25,7 +25,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -51,7 +51,7 @@ import java.util.Map;
 public class AdapterLifecycleTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
-    new TypeToken<List<AdapterSpecification>>() { }.getType();
+    new TypeToken<List<AdapterDefinition>>() { }.getType();
   private static LocationFactory locationFactory;
   private static File adapterDir;
   private static AdapterService adapterService;
@@ -105,13 +105,13 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
 
     response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    List<AdapterDefinition> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(1, list.size());
     checkIsExpected(adapterConfig, list.get(0));
 
     response = getAdapter(namespaceId, adapterName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    AdapterSpecification receivedAdapterConfig = readResponse(response, AdapterSpecification.class);
+    AdapterDefinition receivedAdapterConfig = readResponse(response, AdapterDefinition.class);
     checkIsExpected(adapterConfig, receivedAdapterConfig);
 
     List<JsonObject> deployedApps = getAppList(namespaceId);
@@ -172,7 +172,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     Assert.assertTrue(deployedApps.isEmpty());
   }
 
-  private void checkIsExpected(AdapterConfig config, AdapterSpecification spec) {
+  private void checkIsExpected(AdapterConfig config, AdapterDefinition spec) {
     Assert.assertEquals(config.getDescription(), spec.getDescription());
     Assert.assertEquals(config.getTemplate(), spec.getTemplate());
     Assert.assertEquals(config.getConfig(), spec.getConfig());
@@ -246,7 +246,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     // test get all endpoint
     HttpResponse response = listAdapters(namespaceId);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    List<AdapterSpecification> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
+    List<AdapterDefinition> list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertEquals(2, list.size());
 
     // test get all for a template

@@ -26,7 +26,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -71,7 +71,7 @@ public abstract class AbstractMapReduceContextBuilder {
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName,
-                                     @Nullable AdapterSpecification adapterSpec,
+                                     @Nullable AdapterDefinition adapterSpec,
                                      @Nullable PluginInstantiator pluginInstantiator) {
     Injector injector = prepare();
 

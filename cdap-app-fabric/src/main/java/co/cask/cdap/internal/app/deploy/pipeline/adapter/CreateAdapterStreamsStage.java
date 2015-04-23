@@ -21,29 +21,29 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.StreamCreator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterSpecification;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic creation of any new streams specified by the
  * application. Additionally, it will enable exploration of those streams if exploration is enabled.
  */
-public class CreateAdapterStreamsStage extends AbstractStage<AdapterSpecification> {
+public class CreateAdapterStreamsStage extends AbstractStage<AdapterDefinition> {
   private final StreamCreator streamCreator;
 
   public CreateAdapterStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                                    boolean enableExplore) {
-    super(TypeToken.of(AdapterSpecification.class));
+    super(TypeToken.of(AdapterDefinition.class));
     this.streamCreator = new StreamCreator(namespace, streamAdmin, exploreFacade, enableExplore);
   }
 
   /**
    * Create any streams in the given specification.
    *
-   * @param input An instance of {@link AdapterSpecification}
+   * @param input An instance of {@link AdapterDefinition}
    */
   @Override
-  public void process(AdapterSpecification input) throws Exception {
+  public void process(AdapterDefinition input) throws Exception {
     streamCreator.createStreams(input.getStreams().keySet());
 
     // Emit the input to next stage.
