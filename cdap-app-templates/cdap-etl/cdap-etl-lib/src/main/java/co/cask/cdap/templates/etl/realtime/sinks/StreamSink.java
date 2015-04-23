@@ -62,6 +62,9 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     this.streamConfig = streamConfig;
   }
 
+  /**
+   * Config class for StreamSink.
+   */
   public static class StreamConfig extends PluginConfig {
 
     @Name(Properties.Stream.NAME)

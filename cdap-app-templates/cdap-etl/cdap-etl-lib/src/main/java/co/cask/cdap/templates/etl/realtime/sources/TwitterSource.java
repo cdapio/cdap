@@ -79,6 +79,9 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     this.twitterConfig = twitterConfig;
   }
 
+  /**
+   * Config class for TwitterSource.
+   */
   public static class TwitterConfig extends PluginConfig {
 
     @Name(CONSUMER_KEY)
