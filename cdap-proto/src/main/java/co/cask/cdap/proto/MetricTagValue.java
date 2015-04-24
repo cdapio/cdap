@@ -14,21 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.cube;
+package co.cask.cdap.proto;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 
 import javax.annotation.Nullable;
 
 /**
  * Represents tag and its value associated with {@link CubeFact}.
  */
-@Beta
-public final class TagValue {
+public final class MetricTagValue {
   private final String name;
   private final String value;
 
-  public TagValue(String name, @Nullable String value) {
+  public MetricTagValue(String name, @Nullable String value) {
     this.name = name;
     this.value = value;
   }
@@ -52,7 +51,7 @@ public final class TagValue {
       return false;
     }
 
-    TagValue tagValue = (TagValue) o;
+    MetricTagValue tagValue = (MetricTagValue) o;
 
     boolean result = value == null ? tagValue.value == null : value.equals(tagValue.value);
     return result && name.equals(tagValue.name);

@@ -115,7 +115,7 @@ public class FactCodec {
     for (TagValue tagValue : tagValues) {
       if (tagValue.getValue() != null) {
         // encoded value is unique within values of the tag name
-        offset = writeEncoded(tagValue.getTagName(), tagValue.getValue(), rowKey, offset);
+        offset = writeEncoded(tagValue.getName(), tagValue.getValue(), rowKey, offset);
       } else {
         // todo: this is only applicable for constructing scan, throw smth if constructing key for writing data
         // writing "ANY" as a value
@@ -254,7 +254,7 @@ public class FactCodec {
     // aggregation group is defined by list of tag names
     StringBuilder sb = new StringBuilder();
     for (TagValue tagValue : tagValues) {
-      sb.append(tagValue.getTagName()).append(".");
+      sb.append(tagValue.getName()).append(".");
     }
 
     return writeEncoded(TYPE_TAGS_GROUP, sb.toString(), rowKey, offset);

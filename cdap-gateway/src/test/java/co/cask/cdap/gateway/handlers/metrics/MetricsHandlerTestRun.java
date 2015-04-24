@@ -533,7 +533,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
 
   /**
-   * Helper class to construct json for QueryRequest for batch queries
+   * Helper class to construct json for MetricQueryRequest for batch queries
    */
   private class QueryRequestFormat {
     Map<String, String> tags;
