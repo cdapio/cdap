@@ -8,7 +8,7 @@ angular.module(PKG.name + '.feature.etlapps')
 
     ETLAppsApiFactory.prototype.fetchSources = function(etlType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.' + etlType + '/sources'
+        _cdapPath: '/templates/' + etlType + '/extensions/source'
       })
         .then(function(res) {
           this.scope.etlSources = res;
@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.etlapps')
 
     ETLAppsApiFactory.prototype.fetchSinks = function(etlType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.'+ etlType + '/sinks'
+        _cdapPath: '/templates/'+ etlType + '/extensions/sink'
       })
         .then(function(res) {
           this.scope.etlSinks = res;
@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.etlapps')
 
     ETLAppsApiFactory.prototype.fetchTransforms = function(etlType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.' + etlType + '/transforms'
+        _cdapPath: '/templates/' + etlType + '/extensions/transform'
       })
         .then(function(res) {
           this.scope.etlTransforms = res;
@@ -47,12 +47,13 @@ angular.module(PKG.name + '.feature.etlapps')
     ETLAppsApiFactory.prototype.fetchSourceProperties = function(etlSource) {
       if (!etlSource) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.' + this.scope.metadata.type + '/sources/' + etlSource
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/source/plugins/' + etlSource
       })
         .then(function(res) {
-          this.scope.source.name = res.name;
+          var source = res[0];
+          this.scope.source.name = source.name;
           var obj = {};
-          angular.forEach(res.properties, function(property) {
+          angular.forEach(source.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.source.properties = obj;
@@ -64,12 +65,13 @@ angular.module(PKG.name + '.feature.etlapps')
     ETLAppsApiFactory.prototype.fetchSinkProperties = function(etlSink){
       if (!etlSink) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.' + this.scope.metadata.type + '/sinks/' + etlSink
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/sink/plugins/' + etlSink
       })
         .then(function(res) {
-          this.scope.sink.name = res.name;
+          var sink = res[0];
+          this.scope.sink.name = sink.name;
           var obj = {};
-          angular.forEach(res.properties, function(property) {
+          angular.forEach(sink.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.sink.properties = obj;
@@ -81,11 +83,12 @@ angular.module(PKG.name + '.feature.etlapps')
     ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform, index) {
       if(!etlTransform) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/etl.' + this.scope.metadata.type + '/transforms/' + etlTransform
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transforms/plugins/' + etlTransform
       })
         .then(function(res) {
+          var transform = res[0];
           var obj = {};
-          angular.forEach(res.properties, function(property) {
+          angular.forEach(transform.properties, function(property) {
             obj[property.name] = '';
           });
           index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
@@ -106,6 +109,7 @@ angular.module(PKG.name + '.feature.etlapps')
           delete this.scope.etlDrafts[this.scope.metadata.name];
           mySettings.set('etldrafts', this.scope.etlDrafts)
             .then(function() {
+              this.scope.isSaved = true;
               $timeout(function() {
                 $state.go('^.list', $state.params, {reload: true});
               });
