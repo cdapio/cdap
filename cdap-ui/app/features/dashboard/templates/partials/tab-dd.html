@@ -2,19 +2,8 @@
 
   <li role="presentation">
     <a role="menuitem" tabindex="-1" ui-sref="dashboard.user.addwdgt">
-      <span class="fa fa-fw fa-dashboard"></span>
+      <span class="fa fa-fw fa-dashboard pull-right"></span>
       Add widget
-    </a>
-  </li>
-
-  <li role="presentation">
-    <a role="menuitem"
-        href=""
-        tabindex="-1"
-        ng-class="{'btn-success': liveDashboard}"
-        ng-click="makeItLive()">
-      <span class="fa fa-fw fa-heartbeat"></span>
-      Make it live!
     </a>
   </li>
 
@@ -25,7 +14,7 @@
       ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeIndex].title)"
       cask-promptable="dashboards[dashboards.activeIndex].rename($value)"
     >
-      <span class="fa fa-fw fa-pencil"></span>
+      <span class="fa fa-fw fa-pencil pull-right"></span>
       Rename
     </a>
   </li>
@@ -34,7 +23,7 @@
     <a role="menuitem" tabindex="-1" href=""
       ng-click="dashboards.length>1 && reorderDashboard(-1)"
     >
-      <span class="fa fa-fw fa-arrow-left"></span>
+      <span class="fa fa-fw fa-arrow-left pull-right"></span>
       Move Left
     </a>
   </li>
@@ -43,7 +32,7 @@
     <a role="menuitem" tabindex="-1" href=""
       ng-click="dashboards.length>1 && reorderDashboard()"
     >
-      <span class="fa fa-fw fa-arrow-right"></span>
+      <span class="fa fa-fw fa-arrow-right pull-right"></span>
       Move Right
     </a>
   </li>
@@ -56,7 +45,7 @@
       cask-confirmable="removeDashboard()"
       data-confirmable-content="Really delete the dashboard?"
     >
-      <span class="fa fa-fw fa-trash"></span>
+      <span class="fa fa-fw fa-trash pull-right"></span>
       Delete
     </a>
   </li>

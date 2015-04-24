@@ -138,7 +138,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     this.metricStore = metricStore;
   }
 
-  // Deprecate search with context param
+  // todo supporting 2.8 format - context param should be removed after deprecation (CDAP-1998)
   @POST
   @Path("/search")
   public void search(HttpRequest request, HttpResponder responder,
@@ -212,7 +212,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       tagsQuerying(request, responder, tags, metrics, groupBy);
     } else {
       // context querying support for 2.8 compatibility.
-      contextQuerying(request, responder, context, metrics.get(0), groupBy.size() > 0 ? groupBy.get(0) : null);
+      contextQuerying(request, responder, context, metrics, groupBy.size() > 0 ? groupBy.get(0) : null);
     }
   }
 
@@ -270,11 +270,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   private void contextQuerying(HttpRequest request, HttpResponder responder,
-                               String context, String metric, String groupBy) {
+                               String context, List<String> metrics, String groupBy) {
     try {
       List<String> groupByTags = parseGroupBy(groupBy);
       MetricQueryResult queryResult = executeQuery(request, parseTagValuesAsMap(context),
-                                                   groupByTags, ImmutableList.of(metric));
+                                                   groupByTags, metrics);
       responder.sendJson(HttpResponseStatus.OK, queryResult);
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
@@ -374,8 +374,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
   private MetricQueryResult executeQuery(QueryRequest queryRequest) {
     try {
-
-      if (queryRequest.getMetrics() == null || queryRequest.getMetrics().size() == 0) {
+      if (queryRequest.getMetrics().size() == 0) {
         throw new IllegalArgumentException("Missing metrics parameter in the query");
       }
 
