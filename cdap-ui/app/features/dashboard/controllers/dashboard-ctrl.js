@@ -93,5 +93,9 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     $scope.currentBoard.changeColumn(n);
   };
 
+  $scope.toggleDragDrop = function() {
+    $scope.currentBoard.toggleDragDrop();
+  };
+
 
 });

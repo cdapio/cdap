@@ -38,6 +38,30 @@ body.state-dashboard {
               }
             }
           }
+
+          .dropdown-header {
+            background-color: @cdap-header;
+            color: white;
+          }
+
+          .list-inline {
+            background-color: @cdap-header;
+            margin-left: 0;
+            padding-left: 0;
+            padding-right: 0;
+
+            li {
+              color: white;
+              cursor: pointer;
+              width: 30%;
+              padding: 2px 0;
+
+              &:hover {
+                background-color: white;
+                color: @cdap-header;
+              }
+            }
+          }
         }
       }
     }
@@ -111,6 +135,9 @@ body.state-dashboard {
     }
   }
 
+  .last-item {
+    margin-bottom: 50px;
+  }
 
 
   ul.dropdown-menu {

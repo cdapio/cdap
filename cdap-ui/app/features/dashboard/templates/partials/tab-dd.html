@@ -8,19 +8,28 @@
   </li>
 
   <li role="presentation">
-    <a role="menuitem" tabindex="-1" ng-click="changeColumn(2)">
-      2 Columns
+    <a href="" role="menuitem" tabindex="-1" ng-click="toggleDragDrop()">
+      <span class="fa fa-fw fa-check" ng-show="currentBoard.draggable"></span>
+      Drag & Drop
     </a>
   </li>
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" class="dropdown-header text-center">Columns</li>
+
   <li role="presentation">
-    <a role="menuitem" tabindex="-1" ng-click="changeColumn(3)">
-      3 Columns
-    </a>
-  </li>
-  <li role="presentation">
-    <a role="menuitem" tabindex="-1" ng-click="changeColumn(4)">
-      4 Columns
-    </a>
+    <ul class="list-inline text-center">
+      <li ng-click="changeColumn(2)">
+        2
+      </li>
+      <li ng-click="changeColumn(3)">
+        3
+      </li>
+      <li ng-click="changeColumn(4)">
+        4
+      </li>
+    </ul>
   </li>
 
   <li role="presentation" class="divider"></li>
