@@ -313,9 +313,7 @@ public class AdapterClient {
     String queryString = Joiner.on("&").join(queryParams.entries());
     AdapterDetail adapterDetail = get(adapterName);
     Id.Program program = adapterDetail.getProgram();
-    if (program.getType().equals(ProgramType.WORKFLOW)) {
-      // TODO: use the corresponding mapreduce Id.Program instead
-    }
+    // TODO: currently doesn't work for workflows since getting workflow logs is not implemented yet
 
     Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/logs?%s",
