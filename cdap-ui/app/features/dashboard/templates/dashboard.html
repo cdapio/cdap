@@ -13,12 +13,6 @@
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="dashboard.standard.cdap" role="tab" tooltip="CDAP" data-toggle="tab">CDAP</a>
   </li>
-  <li role="presentation" ui-sref-active="active" ng-if="isEnterprise">
-    <a ui-sref="dashboard.standard.system" tooltip="System" role="tab" data-toggle="tab">System</a>
-  </li>
-  <li role="presentation" ui-sref-active="active" ng-if="isEnterprise">
-    <a ui-sref="dashboard.standard.apps" tooltip="Apps" role="tab" data-toggle="tab">Apps</a>
-  </li>
   <li role="presentation"
       ui-sref-active="active"
       ng-repeat="dashboard in dashboards | orderBy:$index">

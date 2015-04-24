@@ -11,8 +11,8 @@ angular.module(PKG.name+'.feature.dashboard')
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
       ['Application Fabric API Calls', 'component.appfabric', ['system.request.received','system.response.successful'], 'c3-pie'],
-      ['Dataset Service', 'component.dataset.service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter'],
-      ['Explore Service', 'component.explore.service', ['system.request.received','system.response.successful'], 'c3-pie'],
+      ['Dataset Service', 'component.dataset~service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter'],
+      ['Explore Service', 'component.explore~service', ['system.request.received','system.response.successful'], 'c3-pie'],
       ['Transaction Commit', '', ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-line'],
       ['Error and Warnings', '', ['system.services.log.error', 'system.services.log.warn'], 'c3-line'],
       ['Process', '', ['system.process.events.processed'], 'c3-line'],
@@ -22,23 +22,6 @@ angular.module(PKG.name+'.feature.dashboard')
 
     $scope.currentBoard = opshelper.createBoardFromPanels(panels);
   })
-
-/* ------------------------------------------------------ */
-
-  .controller('OpsSystemCtrl',
-  function ($scope, opshelper) {
-    // Same format as above
-    var panels = [
-      ['AppFabric - Containers', '', ['system.resources.used.containers'], 'c3-line'],
-      ['Processors - Cores',     '', ['system.resources.used.vcores'],     'c3-line'],
-      ['Memory',                 '', ['system.resources.used.memory'],     'c3-line'],
-      ['DataFabric',             '', ['system.resources.used.storage'],    'c3-line']
-    ];
-
-    $scope.currentBoard = opshelper.createBoardFromPanels(panels);
-  })
-
-/* ------------------------------------------------------ */
 
   .controller('OpsAppsCtrl',
   function ($scope, $state, myHelpers, MyDataSource) {
