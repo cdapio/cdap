@@ -13,8 +13,10 @@ CDAP Users’ Manual
 .. toctree::
    :maxdepth: 1
    
-    ETL Applications in CDAP <etl/index>
+    ETL Adaptors <etl/index>
+    
     ETL Plugins <etl/plugins>
+    
     Creating An ETL Application <etl/creating>
     Operating An ETL Application <etl/operations>
     
@@ -22,16 +24,16 @@ CDAP Users’ Manual
 This section of the documentation includes articles that cover advanced topics on CDAP that
 will be of interest to developers who want a deeper dive into CDAP:
 
-.. |best-practices| replace:: **Best Practices:**
-.. _best-practices: etl/index.html
+.. |adaptors| replace:: **Best Practices:**
+.. _adaptors: etl/index.html
 
-- |best-practices|_ Suggestions when developing a CDAP application.
+- |adaptors|_ An extension to CDAP for creating ETL pipelines.
 
 
 .. |etl-plugins| replace:: **ETL Plugins:**
 .. _etl-plugins: etl/plugins.html
 
-- |etl-plugins|_ Adapters connect a data source to a data sink.
+- |etl-plugins|_ Data sources, data sinks, and transformations used in CDAP Adaptors.
 
 
 .. |etl| replace:: **Creating Custom ETL Applications:**
