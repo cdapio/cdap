@@ -40,11 +40,29 @@ The Flow contains three flowlets:
    :language: java
    :lines: 25-
 
-The Flowlet (*source*) that generates random numbers every 1 millisecond:
+The *source* Flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
+arguments:
+
+- whether to emit events or not
+- to sleep for an additional delay after each event
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/RandomSource.java
    :language: java
-   :lines: 28-
+   :lines: 29-
+
+The *splitter* Flowlet emits four numbers four every number that it receives.
+
+.. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
+   :language: java
+   :lines: 25-
+
+Note that this flowlet associates a hash value named *n* with every number that it emits. That allows the *counter*
+flowlet to use a hash partitioning strategy when consuming the numbers it receives. This ensures that there are no
+transaction conflicts if the flowlet is scaled to multiple instances:
+
+.. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
+   :language: java
+   :lines: 27-
 
 Building and Starting
 =================================
