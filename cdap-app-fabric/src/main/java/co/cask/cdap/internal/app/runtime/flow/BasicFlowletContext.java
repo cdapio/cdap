@@ -26,6 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -54,8 +55,9 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final Metrics userMetrics;
   private final LoadingCache<String, MetricsCollector> queueMetrics;
+  private final LoadingCache<ImmutablePair<String, String>, MetricsCollector> producerMetrics;
 
-  BasicFlowletContext(Program program, String flowletId,
+  BasicFlowletContext(Program program, final String flowletId,
                       int instanceId, RunId runId,
                       int instanceCount, Set<String> datasets,
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
@@ -80,6 +82,18 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
         @Override
         public MetricsCollector load(String key) throws Exception {
           return getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+        }
+      });
+
+    this.producerMetrics = CacheBuilder.newBuilder()
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .build(new CacheLoader<ImmutablePair<String, String>, MetricsCollector>() {
+        @Override
+        public MetricsCollector load(ImmutablePair<String, String> key) throws Exception {
+          return getProgramMetrics()
+            .childCollector(Constants.Metrics.Tag.QUEUE_PRODUCER, key.getFirst())
+            .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond())
+            .childCollector(Constants.Metrics.Tag.QUEUE_CONSUMER, BasicFlowletContext.this.flowletId);
         }
       });
 
@@ -135,6 +149,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public MetricsCollector getQueueMetrics(String flowletQueueName) {
     return queueMetrics.getUnchecked(flowletQueueName);
+  }
+
+  public MetricsCollector getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
+    return producerMetrics.getUnchecked(producerAndQueue);
   }
 
   public long getGroupId() {

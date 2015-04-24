@@ -464,6 +464,9 @@ public final class Constants {
       public static final String SCOPE = "scp";
 
       public static final String ADAPTER = "adp";
+
+      public static final String QUEUE_PRODUCER = "qpr";
+      public static final String QUEUE_CONSUMER = "qco";
     }
 
     /**
