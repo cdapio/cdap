@@ -63,7 +63,7 @@ function download_file() {
   echo "Downloading using curl $file_name from $source_dir"
   curl $source_dir/$file_name --output $target --silent
 
-  if [ "$OSTYPE" == "darwin"* ]; then
+  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
     local new_md5_hash=`md5 -q $target`
   else
     local new_md5_hash=`md5sum $target | awk '{print $1}'`
