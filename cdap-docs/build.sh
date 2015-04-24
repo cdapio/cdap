@@ -126,12 +126,12 @@ function build_docs_outer_level() {
   version
   
   # Copies placeholder file and renames it
-  copy_source admin-manual        "Administration Manual"
-  copy_source developers-manual   "Developers’ Manual"
-  copy_source integrations        "Integrations"
   copy_source introduction        "Introduction"
-  copy_source reference-manual    "Reference Manual"
+  copy_source developers-manual   "Developers’ Manual"
+  copy_source admin-manual        "Administration Manual"
+  copy_source integrations        "Integrations"
   copy_source examples-manual     "Examples, Guides, and Tutorials"
+  copy_source reference-manual    "Reference Manual"
 
   # Build outer-level docs
   cd ${SCRIPT_PATH}
