@@ -105,6 +105,38 @@ Aggregator.prototype.stopPollingAll = function() {
 }
 
 /**
+ * Pushes the adapter configuration for templates and plugins to the 
+ * FE. These configurations are UI specific and hences need to be supported
+ * here. 
+ */
+Aggregator.prototype.pushConfiguration = function(resource) {
+  var templateid = resource.templateid;
+  var pluginid = resource.pluginid;
+  var config = {};
+  var statusCode = 404;
+  try {
+    // Check if the configuration is present within the plugin for a template
+    config = require('../templates/' + templateid + '/' + pluginid + '.json');
+    statusCode = 200;
+  } catch(e1) {
+   try {
+     // Some times there might a plugin that is common across multiple templates
+     // in which case, this is stored within the common directory. So, if the 
+     // template specific plugin check fails, then attempt to get it from common.
+     config = require('../templates/common/' + pluginid + '.json');  
+     statusCode = 200;
+   } catch (e2) { 
+     log.debug("Unable to find template %s, plugin %s", templateid, pluginid);
+   }
+  }
+  this.connection.write(JSON.stringify({
+    resource: resource,
+    statusCode: statusCode,
+    response: config
+  }));
+}
+
+/**
  * Removes the resource id from the websocket connection local resource pool.
  */
 function removeFromObj(obj, key) {
@@ -184,6 +216,10 @@ function onSocketData (message) {
     var r = message.resource;
 
     switch(message.action) {
+      case 'template-config':
+        log.debug('Adapter config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
+        this.pushConfiguration(r);
+        break;
       case 'poll-start':
         log.debug ('Poll start (' + r.method + ',' + r.id + ',' + r.url + ')');
         this.startPolling(r);

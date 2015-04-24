@@ -9,7 +9,7 @@
   </button>
 </div>
 
-<div class="flow-components" ng-controller="FlowsRunsDetailStatusControler">
+<div class="flow-components" ng-controller="FlowsRunDetailController">
   <div class="row run-status">
     <div class="col-xs-6">
       <table class="table table-curved table-status">
@@ -22,9 +22,12 @@
         </thead>
         <tbody>
           <tr>
-            <td ng-bind="status"></td>
-            <td ng-bind="startTime | date:'medium'"></td>
-            <td ng-bind="duration*1000 | amDurationFormat"></td>
+            <td ng-if="status" ng-bind="status"></td>
+            <td ng-if="!status"> Not Started</td>
+            <td ng-if="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
+            <td ng-if="!startTime"> &mdash; </td>
+            <td ng-if="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
+            <td ng-if="!duration"> &mdash; </td>
           </tr>
         </tbody>
       </table>
@@ -33,4 +36,4 @@
 </div>
 
 <br/>
-<div ng-include="activeTab.template"></div>
+<div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>
