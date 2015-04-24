@@ -86,6 +86,14 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
       this.headersField = headersField;
       this.dataField = dataField;
     }
+
+    public String getHeadersField() {
+      return headersField == null ? "headers" : headersField;
+    }
+
+    public String getDataField() {
+      return dataField == null ? "data" : dataField;
+    }
   }
 
   @Override
@@ -101,8 +109,8 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     int numRecordsWritten = 0;
     for (StructuredRecord structuredRecord : structuredRecords) {
       Schema schema = structuredRecord.getSchema();
-      Object data = structuredRecord.get(streamConfig.dataField);
-      Object headers = structuredRecord.get(streamConfig.headersField);
+      Object data = structuredRecord.get(streamConfig.getDataField());
+      Object headers = structuredRecord.get(streamConfig.getHeadersField());
       if (data == null) {
         LOG.debug("Found null data. Skipping record.");
         continue;
@@ -115,7 +123,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
         continue;
       }
 
-      Schema.Field dataSchemaField = schema.getField(streamConfig.dataField);
+      Schema.Field dataSchemaField = schema.getField(streamConfig.getDataField());
       switch (dataSchemaField.getSchema().getType()) {
         case BYTES:
           numRecordsWritten += writeBytes(dataWriter, data, headers);
@@ -132,7 +140,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   }
 
   private boolean isHeadersSchemaPresentAndSupported(Schema recordSchema) {
-    Schema.Field headersSchemaField = recordSchema.getField(streamConfig.headersField);
+    Schema.Field headersSchemaField = recordSchema.getField(streamConfig.getHeadersField());
     if (headersSchemaField != null) {
       Map.Entry<Schema, Schema> mapSchema = headersSchemaField.getSchema().getMapSchema();
       return mapSchema.getKey().getType().equals(Schema.Type.STRING) &&

@@ -53,12 +53,16 @@ public interface TestManager {
    * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.
    *
    * @param namespace The namespace to deploy to
-   * @param templateClz The template class
    * @param templateId The id of the template. Must match the name set in
    *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
+   * @param templateClz The template class
+   * @param exportPackages The list of packages that should be visible to template plugins. For example,
+   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
+   *                       you will want to include 'com.company.api' in the list of export pacakges.
    */
   void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                      Class<? extends ApplicationTemplate> templateClz) throws IOException;
+                      Class<? extends ApplicationTemplate> templateClz,
+                      String... exportPackages) throws IOException;
 
   /**
    * Adds a plugin usable by the given template. Only supported in unit tests.

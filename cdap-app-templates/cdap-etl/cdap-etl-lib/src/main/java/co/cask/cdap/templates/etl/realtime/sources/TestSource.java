@@ -16,13 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import com.google.common.base.Charsets;
@@ -37,27 +38,25 @@ import javax.annotation.Nullable;
 /**
  * Realtime TestSource that emits {@link StructuredRecord} objects as needed for testing.
  */
+@Plugin(type = "source")
+@Name("Test")
+@Description("Realtime Source for tests")
 public class TestSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
   private static final String COUNT = "count";
+  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types" +
+    " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
+    "'data' of type String with value 'Hello'";
   public static final String PROPERTY_TYPE = "type";
   public static final String STREAM_TYPE = "stream";
   public static final String TABLE_TYPE = "table";
 
-  private String type;
+  private Config config;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setDescription("Source that can generate test data for Real-time Stream and Table Sinks");
-    configurer.addProperty(new Property(PROPERTY_TYPE, "The type of data to be generated. Currently, only two types" +
-      " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
-      "'data' of type String with value 'Hello'", false));
-  }
-
-  @Override
-  public void initialize(RealtimeContext context) throws Exception {
-    super.initialize(context);
-    type = context.getPluginProperties().getProperties().get("type");
+  public static class Config extends PluginConfig {
+    @Name(PROPERTY_TYPE)
+    @Description(TYPE_DESCRIPTION)
+    private String type;
   }
 
   @Nullable
@@ -81,11 +80,11 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-    if (type == null) {
+    if (config.type == null) {
       writeDefaultRecords(writer);
-    } else if (STREAM_TYPE.equals(type)) {
+    } else if (STREAM_TYPE.equals(config.type)) {
       writeRecordsForStreamConsumption(writer);
-    } else if (TABLE_TYPE.equals(type)) {
+    } else if (TABLE_TYPE.equals(config.type)) {
       writeRecordsForTableConsumption(writer);
     }
     return currentState;

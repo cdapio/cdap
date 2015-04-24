@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
@@ -45,6 +46,7 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -74,6 +76,15 @@ public class ETLStreamConversionTest extends TestBase {
     Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("num", Schema.of(Schema.Type.INT)),
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
+
+  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
+  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlBatch");
+
+  @BeforeClass
+  public static void setupTemplate() throws IOException {
+    addTemplatePlugin(TEMPLATE_ID, StreamBatchSource.class, "stream-batch-source-1.0.0.jar");
+    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class);
+  }
 
   // TODO: Remove ignore once end-to-end testing is figured out with plugins
   @Ignore

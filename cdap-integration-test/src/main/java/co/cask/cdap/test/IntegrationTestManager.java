@@ -100,7 +100,8 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                             Class<? extends ApplicationTemplate> templateClz) throws IOException {
+                             Class<? extends ApplicationTemplate> templateClz,
+                             String... exportPackages) throws IOException {
     throw new UnsupportedOperationException();
   }
 

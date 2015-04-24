@@ -132,8 +132,16 @@ public class UnitTestManager implements TestManager {
 
   @Override
   public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                             Class<? extends ApplicationTemplate> templateClz) throws IOException {
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, templateClz);
+                             Class<? extends ApplicationTemplate> templateClz,
+                             String... exportPackages) throws IOException {
+    Manifest manifest = new Manifest();
+    StringBuilder packagesStr = new StringBuilder().append(templateClz.getPackage().getName());
+    for (String exportPackage : exportPackages) {
+      packagesStr.append(",");
+      packagesStr.append(exportPackage);
+    }
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, packagesStr.toString());
+    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, templateClz, manifest);
     File destination =  new File(String.format("%s/%s", pluginsDir.getAbsolutePath(), adapterJar.getName()));
     Files.copy(Locations.newInputSupplier(adapterJar), destination);
     appFabricClient.deployTemplate(namespace, templateId);

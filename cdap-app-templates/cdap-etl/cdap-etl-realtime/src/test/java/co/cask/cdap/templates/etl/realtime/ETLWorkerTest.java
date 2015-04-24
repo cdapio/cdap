@@ -17,36 +17,33 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
+import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
-import co.cask.cdap.templates.etl.realtime.sinks.RealtimeTableSink;
 import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.templates.etl.realtime.sources.TwitterSource;
+import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.WorkerManager;
-import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -57,38 +54,38 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLRealtimeTemplate}.
  */
 public class ETLWorkerTest extends TestBase {
-  private static ApplicationManager templateManager;
+  private static final Gson GSON = new Gson();
+  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
+  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlRealtime");
 
   @BeforeClass
-  public static void setupTests() {
-    templateManager = deployApplication(ETLRealtimeTemplate.class);
+  public static void setupTests() throws IOException {
+    addTemplatePlugin(TEMPLATE_ID, TwitterSource.class, "twitter-source-1.0.0.jar");
+    addTemplatePlugin(TEMPLATE_ID, StreamSink.class, "stream-sink-1.0.0.jar");
+    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
+      EndPointStage.class.getPackage().getName(),
+      ETLStage.class.getPackage().getName(),
+      RealtimeSource.class.getPackage().getName());
   }
 
-  // TODO: Remove ignore once end-to-end testing is figured out with plugins
-  @Ignore
   @Test
   @Category(SlowTests.class)
   public void testStreamSink() throws Exception {
-    StreamManager streamManager = getStreamManager(Constants.DEFAULT_NAMESPACE_ID, "testStream");
-    streamManager.createStream();
-
-    ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
-
     long startTime = System.currentTimeMillis();
-    ETLStage source = new ETLStage(TestSource.class.getSimpleName(),
-                                   ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.STREAM_TYPE));
-    ETLStage sink = new ETLStage(StreamSink.class.getSimpleName(),
-                                 ImmutableMap.of(Properties.Stream.NAME, "testStream"));
-    ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
-    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
-    Map<String, String> workerArgs = Maps.newHashMap(adapterConfigurer.getArguments());
-    WorkerManager workerManager = templateManager.startWorker(ETLWorker.class.getSimpleName(), workerArgs);
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.STREAM_TYPE));
+    ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testStream"));
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+
+    AdapterConfig adapterConfig = new AdapterConfig("test adapter", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testToStream");
+    AdapterManager adapterManager = deployAdapter(adapterId, adapterConfig);
+
+    adapterManager.start();
     // Let the worker run for 5 seconds
     TimeUnit.SECONDS.sleep(5);
-    workerManager.stop();
-    templateManager.stopAll();
+    adapterManager.stop();
 
+    StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
     List<StreamEvent> streamEvents = streamManager.getEvents(startTime, System.currentTimeMillis(), Integer.MAX_VALUE);
     // verify that some events were sent to the stream
     Assert.assertTrue(streamEvents.size() > 0);
@@ -108,7 +105,7 @@ public class ETLWorkerTest extends TestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
-    ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
+    /*ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
     ETLStage source = new ETLStage(TestSource.class.getSimpleName(),
                                    ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
     ETLStage sink = new ETLStage(RealtimeTableSink.class.getSimpleName(),
@@ -136,16 +133,6 @@ public class ETLWorkerTest extends TestBase {
     Assert.assertEquals("Bob", row.getString("name"));
     Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
     Assert.assertEquals(false, row.getBoolean("graduated"));
-    Assert.assertNotNull(row.getLong("time"));
-  }
-
-  private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
-    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
-      configurer.getDatasetInstances().entrySet()) {
-      String typeName = entry.getValue().getKey();
-      DatasetProperties properties = entry.getValue().getValue();
-      String instanceName = entry.getKey();
-      addDatasetInstance(typeName, instanceName, properties);
-    }
+    Assert.assertNotNull(row.getLong("time"));*/
   }
 }
