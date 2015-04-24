@@ -68,6 +68,15 @@ public final class Properties {
   }
 
   /**
+   * Properties for Tables
+   */
+  public static class Table {
+    public static final String PROPERTY_SCHEMA = co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA;
+    public static final String PROPERTY_SCHEMA_ROW_FIELD =
+      co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA_ROW_FIELD;
+  }
+
+  /**
    * Common properties for BatchWritable source and sinks
    */
   public static class BatchWritable {

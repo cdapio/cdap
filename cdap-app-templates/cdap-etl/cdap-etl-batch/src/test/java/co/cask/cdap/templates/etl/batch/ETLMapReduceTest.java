@@ -139,7 +139,8 @@ public class ETLMapReduceTest extends TestBase {
         Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
         Table.PROPERTY_SCHEMA, schema.toString()));
     ETLStage sink = new ETLStage(TableSink.class.getSimpleName(),
-      ImmutableMap.of("name", "outputTable", Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+      ImmutableMap.of(Properties.BatchWritable.NAME, "outputTable", Properties.Table.PROPERTY_SCHEMA_ROW_FIELD,
+                      "rowkey"));
     ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
 
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();

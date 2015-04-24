@@ -223,8 +223,8 @@ public class BatchETLDBAdapterTest extends TestBase {
 
     ETLStage sink = new ETLStage(TableSink.class.getSimpleName(), ImmutableMap.of(
       "name", "outputTable",
-      Table.PROPERTY_SCHEMA, schema.toString(),
-      Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
     ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
