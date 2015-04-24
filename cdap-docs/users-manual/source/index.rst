@@ -14,7 +14,7 @@ CDAP Users’ Manual
    :maxdepth: 1
    
     ETL Applications in CDAP <etl/index>
-    ETL Application Components <etl/components>
+    ETL Plugins <etl/plugins>
     Creating An ETL Application <etl/creating>
     Operating An ETL Application <etl/operations>
     
@@ -28,12 +28,10 @@ will be of interest to developers who want a deeper dive into CDAP:
 - |best-practices|_ Suggestions when developing a CDAP application.
 
 
-.. |adapters| replace:: **Adapters:**
-.. _adapters: etl/components.html
+.. |etl-plugins| replace:: **ETL Plugins:**
+.. _etl-plugins: etl/plugins.html
 
-- |adapters|_ Adapters connect a data source to a data sink.
-  CDAP currently provides a stream conversion Adapter that regularly reads data from a Stream and
-  writes it to a ``TimePartitionedFileSet``, allowing it to be queried through Hive and Impala.
+- |etl-plugins|_ Adapters connect a data source to a data sink.
 
 
 .. |etl| replace:: **Creating Custom ETL Applications:**
