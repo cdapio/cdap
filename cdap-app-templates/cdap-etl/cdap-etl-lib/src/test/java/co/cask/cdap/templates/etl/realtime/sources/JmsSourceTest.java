@@ -51,8 +51,8 @@ import javax.naming.Context;
 /**
  * Unit test for JMS ETL realtime source
  */
-public class JmsMessageToStringSourceTest {
-  private static final Logger LOG = LoggerFactory.getLogger(JmsMessageToStringSourceTest.class);
+public class JmsSourceTest {
+  private static final Logger LOG = LoggerFactory.getLogger(JmsSourceTest.class);
 
   private final int sessionAckMode = Session.AUTO_ACKNOWLEDGE;
 
