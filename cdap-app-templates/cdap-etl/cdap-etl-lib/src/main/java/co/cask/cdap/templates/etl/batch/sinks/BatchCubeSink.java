@@ -16,22 +16,27 @@
 
 package co.cask.cdap.templates.etl.batch.sinks;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
 
 /**
  * A {@link co.cask.cdap.templates.etl.api.batch.BatchSink} that writes data to a {@link Cube} dataset.
  * <p/>
  * This {@link BatchCubeSink} takes {@link StructuredRecord} in, maps it to a {@link CubeFact} using mapping
- * configuration provided with {@link #MAPPING_CONFIG_PROPERTY} property, and writes it to a {@link Cube} dataset
- * identified by {@link #NAME} property.
+ * configuration provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a
+ * {@link Cube} dataset identified by {@link #NAME} property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -41,22 +46,45 @@ import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
  * mapping configuration is required, as per {@link StructuredRecordToCubeFact} documentation.
  */
 // todo: add unit-test once CDAP-2156 is resolved
+@Plugin(type = "sink")
+@Name("BatchCubeSink")
+@Description("CDAP Cube Dataset Batch Sink")
 public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], CubeFact> {
-  public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
+  private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
+    "one will be created.";
+  private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
+    "details for more information";
+  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping configuration.";
+
+  /**
+   * Config class for BatchCube
+   */
+  public static class BatchCubeConfig extends PluginConfig {
+    @Description(NAME_PROPERTY_DESC)
+    String name;
+
+    @Name(Properties.Cube.PROPERTY_RESOLUTIONS)
+    @Description(PROPERTY_RESOLUTIONS_DESC)
+    String resProp;
+
+    @Name(Properties.Cube.MAPPING_CONFIG_PROPERTY)
+    @Description(MAPPING_CONFIG_PROPERTY_DESC)
+    String configAsString;
+
+    public BatchCubeConfig(String name, String resProp, String configAsString) {
+      this.name = name;
+      this.resProp = resProp;
+      this.configAsString = configAsString;
+    }
+  }
+
+  private final BatchCubeConfig batchCubeConfig;
+
+  public BatchCubeSink(BatchCubeConfig realtimeCubeConfig) {
+    this.batchCubeConfig = realtimeCubeConfig;
+  }
 
   private StructuredRecordToCubeFact transform;
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("BatchCubeSink");
-    configurer.setDescription("CDAP Cube Dataset Batch Sink");
-    configurer.addProperty(new Property(NAME, "Name of the Cube dataset. If the Cube does not already exist," +
-      " one will be created.", true));
-    configurer.addProperty(new Property(Cube.PROPERTY_RESOLUTIONS,
-                                        "Aggregation resolutions. See Cube dataset " +
-                                          "configuration details for more information", true));
-    configurer.addProperties(StructuredRecordToCubeFact.getProperties());
-  }
 
   @Override
   public void initialize(ETLStage stageConfig) throws Exception {
