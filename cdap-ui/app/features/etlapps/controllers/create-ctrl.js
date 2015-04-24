@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.ETLSourcesTabOpen = true;
     $scope.ETLTransformsTabOpen = true;
     $scope.ETLSinksTabOpen = true;
-
+    $scope.isSaved = false;
     // Loading flag to indicate source & sinks have
     // not been loaded yet (after/before choosing an etl template)
     $scope.loadingEtlSourceProps = false;
@@ -45,11 +45,11 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.etlTypes = [
       {
         name: 'Etl Batch',
-        type: 'etlbatch'
+        type: 'etlBatch'
       },
       {
         name: 'ETL Real Time',
-        type: 'realtime'
+        type: 'etlRealtime'
       }
     ];
 
@@ -57,7 +57,7 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.metadata = {
         name: '',
         description: '',
-        type: 'etlbatch'
+        type: 'etlRealtime'
     };
 
     var defaultSource = {
@@ -76,16 +76,6 @@ angular.module(PKG.name + '.feature.etlapps')
       name: 'Add a Transforms',
       placeHolderTransform: true,
       properties: {}
-    },
-    {
-      name: 'Add a Transforms',
-      placeHolderTransform: true,
-      properties: {}
-    },
-    {
-      name: 'Add a Transforms',
-      placeHolderTransform: true,
-      properties: {}
     }];
 
     // Source, Sink and Transform Models
@@ -95,7 +85,7 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(etlType) {
-      if (!etlType) return;
+      if (!etlType.length) return;
       $scope.onETLTypeSelected = true;
       apiFactory.fetchSources(etlType);
       apiFactory.fetchSinks(etlType);
@@ -229,6 +219,7 @@ angular.module(PKG.name + '.feature.etlapps')
           transforms.push($scope.transforms[i]);
         }
       }
+
       var data = {
         template: $scope.metadata.type,
         config: {
@@ -237,6 +228,12 @@ angular.module(PKG.name + '.feature.etlapps')
           transforms: transforms
         }
       };
+      if ($scope.metadata.type === 'etlRealtime') {
+        data.config.instances = 1;
+      } else if ($scope.metadata.type === 'etlBatch') {
+        data.config.schedule = '* * * * *';
+      }
+
       apiFactory.save(data);
     }
 
@@ -287,6 +284,7 @@ angular.module(PKG.name + '.feature.etlapps')
 
       mySettings.set('etldrafts', $scope.etlDrafts)
       .then(function(res) {
+        $scope.isSaved = true;
         $alert({
           type: 'success',
           content: 'The ETL Template ' + $scope.metadata.name + ' has been saved as draft!'
@@ -308,7 +306,7 @@ angular.module(PKG.name + '.feature.etlapps')
     }
 
     $scope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
-      if (fromState.name === 'adapters.create') {
+      if (fromState.name === 'adapters.create' && !$scope.isSaved) {
         if(!confirm("Are you sure you want to leave this page?")) {
           event.preventDefault();
         }
