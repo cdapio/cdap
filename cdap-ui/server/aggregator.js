@@ -125,7 +125,9 @@ Aggregator.prototype.pushConfiguration = function(resource) {
      // template specific plugin check fails, then attempt to get it from common.
      config = require('../templates/common/' + pluginid + '.json');  
      statusCode = 200;
-   } catch (e2) { }
+   } catch (e2) { 
+     log.debug("Unable to find template %s, plugin %s", templateid, pluginid);
+   }
   }
   this.connection.write(JSON.stringify({
     resource: resource,
