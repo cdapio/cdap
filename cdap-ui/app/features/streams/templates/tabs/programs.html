@@ -1,1 +1,41 @@
-<h2> Streams -> Programs </h2>
+<div class="container" ng-controller="StreamsDetailProgramsController">
+  <div class="row">
+    <div class="table-responsive">
+      <table class="table table-curved">
+        <thead>
+          <tr>
+            <th>Programs</th>
+            <th>Type</th>
+            <th>Application</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="program in programs">
+            <td>
+              <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}
+              </a>
+              <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}
+              </a>
+              <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}
+              </a>
+              <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}
+              </a>
+
+            </td>
+            <td>{{ ::program.type }}</td>
+            <td>
+              <a ui-sref="apps.detail.overview({ appId: program.application.applicationId })">
+                {{ ::program.application.applicationId }}
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
