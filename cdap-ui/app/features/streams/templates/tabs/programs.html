@@ -1,10 +1,14 @@
 <div class="container" ng-controller="StreamsDetailProgramsController">
+  <div class="row" ng-if="programs.length > 0">
+    <h2><span>Programs</span></h2>
+  </div>
+
   <div class="row">
     <div class="table-responsive" ng-if="programs.length > 0">
       <table class="table table-curved" cask-sortable>
         <thead>
           <tr ng-class="{'sort-enabled': programs.length > 0}">
-            <th data-predicate="id">Programs</th>
+            <th data-predicate="id">Name</th>
             <th data-predicate="type">Type</th>
             <th data-predicate="application.applicationId">Application</th>
           </tr>
