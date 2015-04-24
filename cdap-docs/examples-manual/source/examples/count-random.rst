@@ -13,11 +13,11 @@ A Cask Data Application Platform (CDAP) Example demonstrating the ``@Tick`` feat
 Overview
 ====================
 
-This application does not have a Stream, instead it uses a Tick annotation in the ``source`` flowlet to generate data:
+This application does not have a Stream, instead it uses a Tick annotation in the ``source`` Flowlet to generate data:
 
-- The ``generate`` method of the  ``source`` flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
-- The ``source`` flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet ``splitter``.
-- The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage.
+- The ``generate`` method of the  ``source`` Flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
+- The ``source`` Flowlet generates a random integer in the range {1..10000} and emits it to the next Flowlet ``splitter``.
+- The ``splitter`` Flowlet splits the number into digits, and emits these digits to the next stage.
 - The ``counter`` increments the count of the received number in the KeyValueTable.
 
 Let's look at some of these components, and then run the Application and see the results.
@@ -34,7 +34,7 @@ of the Application are tied together by the class ``CountRandom``:
    :language: java
    :lines: 24-
 
-The Flow contains three flowlets:
+The Flow contains three Flowlets:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
    :language: java
@@ -43,22 +43,22 @@ The Flow contains three flowlets:
 The *source* Flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
 arguments:
 
-- whether to emit events or not
-- to sleep for an additional delay after each event
+- whether to emit events or not; and
+- whether to sleep for an additional delay after each event.
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/RandomSource.java
    :language: java
    :lines: 29-
 
-The *splitter* Flowlet emits four numbers four every number that it receives.
+The *splitter* Flowlet emits four numbers for every number that it receives.
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
    :language: java
    :lines: 25-
 
-Note that this flowlet associates a hash value named *n* with every number that it emits. That allows the *counter*
-flowlet to use a hash partitioning strategy when consuming the numbers it receives. This ensures that there are no
-transaction conflicts if the flowlet is scaled to multiple instances:
+Note that this Flowlet associates a hash value named *n* with every number that it emits. That allows the *counter*
+Flowlet to use a hash partitioning strategy when consuming the numbers it receives. This ensures that there are no
+transaction conflicts if the Flowlet is scaled to multiple instances:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
    :language: java
@@ -104,8 +104,8 @@ Once the application is deployed:
     * - On Windows:
       - ``> bin\cdap-cli.bat start flow CountRandom.CountRandom``    
 
-Once you start the flow, the *source* flowlet will continuously generate data. You can see this by observing the counters
-for each flowlet in the flow visualization. Even though you are not injecting any data into the flow, the counters increase steadily.
+Once you start the flow, the *source* Flowlet will continuously generate data. You can see this by observing the counters
+for each Flowlet in the flow visualization. Even though you are not injecting any data into the flow, the counters increase steadily.
 
 Stopping the Application
 -------------------------------
