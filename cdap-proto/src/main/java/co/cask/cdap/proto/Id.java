@@ -435,7 +435,7 @@ public abstract class Id {
 
     public static Adapter fromStrings(String[] strings, int position) {
       Preconditions.checkArgument(position == 1);
-      String[] tokens = strings[position - 1].split(":");
+      String[] tokens = strings[position].split(":");
       Preconditions.checkArgument(tokens.length == 2);
 
       String[] nextTokens = strings[position - 1].split(":");

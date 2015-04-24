@@ -23,9 +23,9 @@ import com.google.common.base.Throwables;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An Utility class for ETL
+ * Utility class for ETL
  */
-public class ETLUtils {
+public final class ETLUtils {
 
   /**
    * Parses a duration String to its long value.
@@ -61,5 +61,9 @@ public class ETLUtils {
         return TimeUnit.DAYS.toMillis(parsedValue);
     }
     throw new IllegalArgumentException(String.format("Time unit not supported: %s", lastChar));
+  }
+
+  private ETLUtils() {
+    throw new AssertionError("Suppress default constructor for non-instantiability");
   }
 }
