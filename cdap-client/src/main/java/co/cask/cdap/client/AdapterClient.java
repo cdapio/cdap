@@ -104,7 +104,7 @@ public class AdapterClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new AdapterNotFoundException(adapter);
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<AdapterDetail>() { }, GSON).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, AdapterDetail.class, GSON).getResponseObject();
   }
 
   /**

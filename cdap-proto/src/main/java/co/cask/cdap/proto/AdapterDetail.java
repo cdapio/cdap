@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.internal.Objects;
 import com.google.gson.JsonElement;
 
 /**
@@ -62,5 +63,37 @@ public class AdapterDetail {
 
   public ScheduleSpecification getSchedule() {
     return schedule;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, description, template, program, config, schedule);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final AdapterDetail other = (AdapterDetail) obj;
+    return Objects.equal(this.name, other.name) && Objects.equal(this.description, other.description) &&
+      Objects.equal(this.template, other.template) && Objects.equal(this.program, other.program) &&
+      Objects.equal(this.config, other.config) && Objects.equal(this.schedule, other.schedule);
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("AdapterDetail{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", template='").append(template).append('\'');
+    sb.append(", program=").append(program);
+    sb.append(", config=").append(config);
+    sb.append(", schedule=").append(schedule);
+    sb.append('}');
+    return sb.toString();
   }
 }

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.internal.Objects;
+
 /**
  * Represents an adapter returned for /adapters/{adapter-id}.
  */
@@ -50,5 +52,34 @@ public class ProgramId {
 
   public String getId() {
     return id;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(namespace, application, type, id);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final ProgramId other = (ProgramId) obj;
+    return Objects.equal(this.namespace, other.namespace) && Objects.equal(this.application, other.application) &&
+      Objects.equal(this.type, other.type) && Objects.equal(this.id, other.id);
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("ProgramId{");
+    sb.append("namespace='").append(namespace).append('\'');
+    sb.append(", application='").append(application).append('\'');
+    sb.append(", type=").append(type);
+    sb.append(", id='").append(id).append('\'');
+    sb.append('}');
+    return sb.toString();
   }
 }

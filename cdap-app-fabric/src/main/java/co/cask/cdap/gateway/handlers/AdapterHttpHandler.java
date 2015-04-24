@@ -142,8 +142,10 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("adapter-id") String adapterName) {
     try {
-      AdapterDefinition adapterSpec = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
-      responder.sendJson(HttpResponseStatus.OK, adapterSpec);
+      AdapterDefinition def = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+      AdapterDetail detail = new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
+                                               def.getProgram(), def.getConfig(), def.getScheduleSpecification());
+      responder.sendJson(HttpResponseStatus.OK, detail);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }
