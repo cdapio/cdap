@@ -76,8 +76,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private transient Session session;
   private transient MessageConsumer consumer;
 
-  private int messagesToReceive = 50;
-
+  private int messagesToReceive;
   private StructuredRecord.Builder recordBuilder;
 
   /**
@@ -99,9 +98,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
 
     Integer configMessagesToReceive = config.messagesToReceive;
-    if (configMessagesToReceive != null) {
-      messagesToReceive = configMessagesToReceive.intValue();
-    }
+    messagesToReceive = configMessagesToReceive.intValue();
 
     // Try get the destination name
     String destinationName = config.destinationName;
@@ -284,19 +281,25 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    * Config class for {@link JmsSource}.
    */
   public static class JmsConfig extends PluginConfig {
+    private static final Integer DEFAULT_MESSAGE_RECEIVE = 50;
+
     @Name(JMS_DESTINATION_NAME)
     @Description("Name of the destination to get messages")
     private final String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
-    @Description("Max number messages should be retrieved per poll.")
+    @Description("Max number messages should be retrieved per poll. The default value is 50.")
     @Nullable
     private final Integer messagesToReceive;
 
     public JmsConfig(String destinationName, Integer messagesToReceive) {
       this.destinationName = destinationName;
-      this.messagesToReceive = messagesToReceive;
+      if (messagesToReceive == null) {
+        this.messagesToReceive = DEFAULT_MESSAGE_RECEIVE;
+      } else {
+        this.messagesToReceive = messagesToReceive;
+      }
+
     }
   }
-
 }
