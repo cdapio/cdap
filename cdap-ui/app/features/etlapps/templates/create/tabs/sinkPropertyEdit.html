@@ -1,32 +1,29 @@
-<br/>
+<div class="container">
+  <div class="row" ng-init="isSaved=false">
+    <div class="col-xs-12">
+      <h3>Editing {{sink.name}} Properties</h3>
+      <div class="text-success" ng-if="isSaved">
+        Saved!
+      </div>
 
-<h3>Editing {{sink.name}} Properties</h3>
-<div class="row">
-  <div class="col-xs-6" ng-init="isSaved=false">
-    <div class="text-success" ng-if="isSaved">
-      Saved!
-    </div>
-
-    <form class="form-horizontal">
-      <div ng-repeat="(name, value) in sink.properties track by $index">
-        <div class="form-group">
-          <label class="control-label col-sm-2">{{ name | caskCapitalizeFilter}}</label>
-          <div class="col-sm-10">
-            <input type="text"
-                    class="form-control"
-                    ng-model="sink.properties[name]"
-                    ng-change="$parent.isSaved=false"
-                    />
+      <form class="form-horizontal">
+        <div ng-repeat="(name, value) in sink.properties track by $index">
+          <div class="form-group">
+            <label class="col-xs-12">{{ name | caskCapitalizeFilter}}</label>
+            <div class="col-xs-12">
+              <input type="text"
+                      class="form-control"
+                      ng-model="sink.properties[name]"
+                      ng-change="$parent.isSaved=false"
+                      />
+            </div>
           </div>
         </div>
+      </form>
+      <div class="btn-group pull-right">
+        <button type="button" class="btn btn-success" ng-click="isSaved = true;">Save</button>
+        <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
       </div>
-    </form>
-    <div class="btn-group pull-right">
-      <button type="button" class="btn btn-success" ng-click="isSaved = true;">Save</button>
-      <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
     </div>
-  </div>
-  <div class="col-xs-6">
-
   </div>
 </div>

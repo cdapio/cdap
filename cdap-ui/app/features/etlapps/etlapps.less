@@ -140,6 +140,35 @@ body.theme-cdap.state-adapters-create {
 }
 
 body.theme-cdap.state-adapters-list {
+
+  .label.etlappcontainer {
+    position: relative;
+    left: 5px;
+    float: right;
+    font-size: 13px;
+    background-color: @cdap-darkblue;
+
+    &.green {
+      background-color: @brand-success;
+      top: 0;
+      right: 0;
+      &:after {
+        border-bottom: 5px solid @brand-success;
+      }
+    }
+
+    &:after {
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      content: '';
+      border-bottom: 5px solid @cdap-darkblue;
+      transform: rotate(-61deg);
+      top: 18px;
+      right: 0px;
+      position: absolute;
+    }
+  }
+
   a {
     text-decoration: none;
   }
@@ -157,33 +186,6 @@ body.theme-cdap.state-adapters-list {
     [class*="col-"] {
       padding-left: 5px;
       padding-right: 5px;
-    }
-    .label.etlappcontainer {
-      position: absolute;
-      top: 0;
-      right: 0px;
-      font-size: 13px;
-      background-color: @cdap-darkblue;
-
-      &.green {
-        background-color: @brand-success;
-        top: 0;
-        right: 0;
-        &:after {
-          border-bottom: 5px solid @brand-success;
-        }
-      }
-
-      &:after {
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        content: '';
-        border-bottom: 5px solid @cdap-darkblue;
-        transform: rotate(-61deg);
-        top: 18px;
-        right: 0px;
-        position: absolute;
-      }
     }
     .well.well-md {
       box-shadow: none;
