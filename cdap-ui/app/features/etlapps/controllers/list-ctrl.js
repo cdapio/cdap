@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.etlapps')
     var dataSrc = new MyDataSource($scope);
     $scope.etlapps  = [];
     dataSrc.request({
-      _cdapNsPath: '/adapters?template=etlbatch'
+      _cdapNsPath: '/adapters'
     })
       .then(function(res) {
         if (!res.length) {
