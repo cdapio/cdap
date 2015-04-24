@@ -17,7 +17,6 @@
 package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import com.google.common.base.Objects;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,26 +59,34 @@ public final class ScheduleSpecification {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hashCode(schedule, program, properties);
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ScheduleSpecification that = (ScheduleSpecification) o;
+
+    if (program != null ? !program.equals(that.program) : that.program != null) return false;
+    if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
+    if (schedule != null ? !schedule.equals(that.schedule) : that.schedule != null) return false;
+
+    return true;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final ScheduleSpecification other = (ScheduleSpecification) obj;
-    return Objects.equal(this.schedule, other.schedule) && Objects.equal(this.program, other.program) &&
-      Objects.equal(this.properties, other.properties);
+  public int hashCode() {
+    int result = schedule != null ? schedule.hashCode() : 0;
+    result = 31 * result + (program != null ? program.hashCode() : 0);
+    result = 31 * result + (properties != null ? properties.hashCode() : 0);
+    return result;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("schedule", schedule).add("program", program)
-      .add("properties", properties).toString();
+    final StringBuilder sb = new StringBuilder("ScheduleSpecification{");
+    sb.append("schedule=").append(schedule);
+    sb.append(", program=").append(program);
+    sb.append(", properties=").append(properties);
+    sb.append('}');
+    return sb.toString();
   }
 }
