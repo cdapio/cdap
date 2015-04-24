@@ -10,14 +10,17 @@ angular.module(PKG.name+'.feature.dashboard')
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
-      ['Application Fabric API Calls', 'component.appfabric', ['system.request.received','system.response.successful'], 'c3-pie'],
+      ['Router requests', '', ['system.request.received','system.response.client-error', 'system.response.successful'], 'c3-scatter'],
       ['Dataset Service', 'component.dataset~service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter'],
-      ['Explore Service', 'component.explore~service', ['system.request.received','system.response.successful'], 'c3-pie'],
-      ['Transaction Commit', '', ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-line'],
-      ['Error and Warnings', '', ['system.services.log.error', 'system.services.log.warn'], 'c3-line'],
-      ['Process', '', ['system.process.events.processed'], 'c3-line'],
-      ['Store',   '', ['system.dataset.store.bytes'],      'c3-line'],
-      ['Query',   '', ['system.requests.count'],           'c3-line']
+      ['Transaction Commit', '', ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline'],
+      ['Transaction Latency', '', ['system.commit.latency', 'system.start.short.latency'], 'c3-area-spline'],
+      ['System Error and Warnings', '', ['system.services.log.error', 'system.services.log.warn'], 'c3-area-step'],
+      ['Explore Service', 'component.explore~service', ['system.request.received','system.response.successful'], 'c3-area-spline'],
+      ['Events Processed', 'namespace.*', ['system.process.events.processed'], 'c3-line'],
+      ['Bytes Store',   'namespace.*', ['system.dataset.store.bytes'],      'c3-line'],
+      ['Dataset Read/Writes',     'namespace.*', ['system.dataset.store.writes' ,'system.dataset.store.reads'], 'c3-area-spline'],
+      ['Containers Used', 'namespace.*', ['system.resources.used.containers', 'system.process.instance'], 'c3-area-step']
+    
     ];
 
     $scope.currentBoard = opshelper.createBoardFromPanels(panels);
