@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -49,6 +50,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link MetricStore}.
@@ -264,18 +266,37 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
-    return cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+  public Map<String, String> findNextAvailableTags(MetricSearchQuery query) throws Exception {
+    Collection<TagValue> tags = cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+    Map<String, String> result = Maps.newHashMap();
+    for (TagValue tagValue : tags) {
+      result.put(tagValue.getName(), tagValue.getValue());
+    }
+    return result;
   }
 
   private CubeExploreQuery buildCubeSearchQuery(MetricSearchQuery query) {
     return new CubeExploreQuery(query.getStartTs(), query.getEndTs(), query.getResolution(),
-                                query.getLimit(), query.getTagValues());
+                                query.getLimit(), toTagValues(query.getTagValues()));
   }
 
   @Override
   public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
     return cube.get().findMeasureNames(buildCubeSearchQuery(query));
+  }
+
+  private List<TagValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {
+    return Lists.transform(input, new Function<co.cask.cdap.api.metrics.TagValue, TagValue>() {
+      @Nullable
+      @Override
+      public TagValue apply(co.cask.cdap.api.metrics.TagValue input) {
+        if (input == null) {
+          // SHOULD NEVER happen
+          throw new NullPointerException();
+        }
+        return new TagValue(input.getName(), input.getValue());
+      }
+    });
   }
 
   private MeasureType toMeasureType(MetricType type) {

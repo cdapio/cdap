@@ -87,7 +87,7 @@ public class TestAppWithCube extends TestBase {
         searchTag(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100, new ArrayList<TagValue>()));
       Assert.assertEquals(1, tags.size());
       TagValue tv = tags.iterator().next();
-      Assert.assertEquals("user", tv.getTagName());
+      Assert.assertEquals("user", tv.getName());
       Assert.assertEquals("alex", tv.getValue());
 
       tags = searchTag(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
@@ -95,10 +95,10 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals(2, tags.size());
       Iterator<TagValue> iterator = tags.iterator();
       tv = iterator.next();
-      Assert.assertEquals("action", tv.getTagName());
+      Assert.assertEquals("action", tv.getName());
       Assert.assertEquals("back", tv.getValue());
       tv = iterator.next();
-      Assert.assertEquals("action", tv.getTagName());
+      Assert.assertEquals("action", tv.getName());
       Assert.assertEquals("click", tv.getValue());
 
       // search for measures

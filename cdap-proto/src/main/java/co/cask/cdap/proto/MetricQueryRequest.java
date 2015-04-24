@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 /**
  * Metrics Query Request format
  */
-public class QueryRequest {
+public class MetricQueryRequest {
   /**
    * Format for metrics query in batched queries
    */
@@ -35,7 +35,7 @@ public class QueryRequest {
   List<String> groupBy;
   TimeRange timeRange;
 
-  public QueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy) {
+  public MetricQueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy) {
     this.tags = tags;
     this.metrics = metrics;
     this.groupBy = groupBy;

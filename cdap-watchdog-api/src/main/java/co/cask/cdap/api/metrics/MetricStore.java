@@ -16,9 +16,8 @@
 
 package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
-
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Stores and provides access to metrics data.
@@ -70,7 +69,7 @@ public interface MetricStore {
    * @param query specifies where to search
    * @return collection of tag value pairs in no particular order
    */
-  Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception;
+  Map<String, String> findNextAvailableTags(MetricSearchQuery query) throws Exception;
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of measures available

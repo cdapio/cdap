@@ -203,7 +203,7 @@ public class DefaultCube implements Cube {
     // todo: the passed query should have map instead
     LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
     for (TagValue tagValue : query.getTagValues()) {
-      slice.put(tagValue.getTagName(), tagValue.getValue());
+      slice.put(tagValue.getName(), tagValue.getValue());
     }
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
@@ -227,7 +227,7 @@ public class DefaultCube implements Cube {
     // todo: the passed query should have map instead
     LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
     for (TagValue tagValue : query.getTagValues()) {
-      slice.put(tagValue.getTagName(), tagValue.getValue());
+      slice.put(tagValue.getName(), tagValue.getValue());
     }
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
@@ -273,7 +273,7 @@ public class DefaultCube implements Cube {
       for (String tagName : query.getGroupByTags()) {
         // todo: use Map<String, String> instead of List<TagValue> into a String, String, everywhere
         for (TagValue tagValue : next.getTagValues()) {
-          if (tagName.equals(tagValue.getTagName())) {
+          if (tagName.equals(tagValue.getName())) {
             if (tagValue.getValue() == null) {
               // Currently, we do NOT return null as grouped by value.
               // Depending on whether tag is required or not the records with null value in it may or may not be in
@@ -366,7 +366,7 @@ public class DefaultCube implements Cube {
   private static final class TagValueComparator implements Comparator<TagValue> {
     @Override
     public int compare(TagValue t1, TagValue t2) {
-      int cmp = t1.getTagName().compareTo(t2.getTagName());
+      int cmp = t1.getName().compareTo(t2.getName());
       if (cmp != 0) {
         return cmp;
       }

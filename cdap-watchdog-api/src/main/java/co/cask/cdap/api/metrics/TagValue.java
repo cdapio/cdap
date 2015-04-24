@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.cube;
+package co.cask.cdap.api.metrics;
 
 import co.cask.cdap.api.annotation.Beta;
 
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value associated with {@link CubeFact}.
+ * Represents tag and its value associated with {@link MetricValues}.
  */
 @Beta
 public final class TagValue {
