@@ -120,8 +120,8 @@ public class ETLWorkerTest extends TestBase {
     ETLStage source = new ETLStage(TestSource.class.getSimpleName(),
                                    ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
     ETLStage sink = new ETLStage(RealtimeTableSink.class.getSimpleName(),
-                                 ImmutableMap.of("name", "table1",
-                                                 Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
+                                 ImmutableMap.of(Properties.BatchWritable.NAME, "table1",
+                                                 Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
     ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
     appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
