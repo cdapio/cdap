@@ -62,10 +62,23 @@ import java.util.jar.Manifest;
  */
 public class PluginClassLoader extends DirectoryClassLoader {
 
+  private final Set<String> exportPackages;
+
+  /**
+   * Creates a ClassLoader for the given plugin
+   *
+   * @param unpackedDir directory where the plugin jar get expanded to
+   * @param pluginLibDir the plugin lib directory
+   * @param templateClassLoader the program ClassLoader for the app template
+   * @return A ClassLoader for the given plugin
+   */
   public static PluginClassLoader create(File unpackedDir, File pluginLibDir, ClassLoader templateClassLoader) {
     return new PluginClassLoader(unpackedDir, createParent(pluginLibDir, templateClassLoader));
   }
 
+  /**
+   * Creates the parent ClassLoader for the plugin ClassLoader. See javadoc of this class for details.
+   */
   private static ClassLoader createParent(File pluginLibDir, ClassLoader templateClassLoader) {
 
     // Find the ProgramClassLoader from the template ClassLoader
@@ -93,5 +106,14 @@ public class PluginClassLoader extends DirectoryClassLoader {
 
   private PluginClassLoader(File directory, ClassLoader parent) {
     super(directory, parent, "lib");
+    this.exportPackages = ManifestFields.getExportPackages(getManifest());
+  }
+
+  /**
+   * Creates a new {@link ClassLoader} that only exposes classes in packages declared by "Export-Package"
+   * in the manifest.
+   */
+  public ClassLoader getExportPackagesClassLoader() {
+    return new PackageFilterClassLoader(this, Predicates.in(exportPackages));
   }
 }

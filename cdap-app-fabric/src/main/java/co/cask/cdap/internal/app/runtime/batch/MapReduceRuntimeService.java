@@ -196,46 +196,62 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
     }, "startUp()");
 
-    setOutputClassesIfNeeded(job);
-    setMapOutputClassesIfNeeded(job);
-
-    // Prefer our job jar in the classpath
-    // Set both old and new keys
-    mapredConf.setBoolean("mapreduce.user.classpath.first", true);
-    mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
-    mapredConf.setBoolean(Job.MAPREDUCE_JOB_CLASSLOADER, true);
-
-    // Make CDAP classes (which is in the job.jar created below) to have higher precedence
-    // It is needed to override the ApplicationClassLoader to use our implementation
-    String yarnAppClassPath = mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                             Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-    mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "job.jar/lib/*," + yarnAppClassPath);
-
-    // set resources for the job
-    Resources mapperResources = context.getMapperResources();
-    Resources reducerResources = context.getReducerResources();
-
-    // this will determine how much memory and virtual cores the yarn container will run with
-    if (mapperResources != null) {
-      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
-    }
-    if (reducerResources != null) {
-      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
-      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
-    }
-
-    // replace user's Mapper & Reducer's with our wrappers in job config
-    MapperWrapper.wrap(job);
-    ReducerWrapper.wrap(job);
-
-    // packaging job jar which includes cdap classes with dependencies
-    Location jobJar = buildJobJar(context);
+    // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
+    // ClassLoader from here and use it for setting up the job
+    Location pluginArchive = createPluginArchive(context.getAdapterSpecification(), context.getProgram().getId());
     try {
+      if (pluginArchive != null) {
+        job.addCacheArchive(pluginArchive.toURI());
+      }
+
+      // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
+      // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
+      // It can only be constructed here because we need to have all adapter plugins information
+      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
+                                             context.getPluginInstantiator());
+      ClassLoaders.setContextClassLoader(classLoader);
+      job.getConfiguration().setClassLoader(classLoader);
+
+      setOutputClassesIfNeeded(job);
+      setMapOutputClassesIfNeeded(job);
+
+      // Prefer our job jar in the classpath
+      // Set both old and new keys
+      mapredConf.setBoolean("mapreduce.user.classpath.first", true);
+      mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+      mapredConf.setBoolean(Job.MAPREDUCE_JOB_CLASSLOADER, true);
+
+      // Make CDAP classes (which is in the job.jar created below) to have higher precedence
+      // It is needed to override the ApplicationClassLoader to use our implementation
+      String yarnAppClassPath = mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                               Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+      mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "job.jar/lib/*," + yarnAppClassPath);
+
+      // set resources for the job
+      Resources mapperResources = context.getMapperResources();
+      Resources reducerResources = context.getReducerResources();
+
+      // this will determine how much memory and virtual cores the yarn container will run with
+      if (mapperResources != null) {
+        mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
+        // Also set the Xmx to be smaller than the container memory.
+        mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
+        setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
+      }
+      if (reducerResources != null) {
+        mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
+        // Also set the Xmx to be smaller than the container memory.
+        mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
+        setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
+      }
+
+      // replace user's Mapper & Reducer's with our wrappers in job config
+      MapperWrapper.wrap(job);
+      ReducerWrapper.wrap(job);
+
+      // packaging job jar which includes cdap classes with dependencies
+      Location jobJar = buildJobJar(context);
+
       try {
         Location programJarCopy = copyProgramJar();
         try {
@@ -244,11 +260,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // The ApplicationLoader will create ProgramClassLoader from it
           job.addCacheFile(programJarCopy.toURI());
 
-          Location pluginArchive = createPluginArchive(context.getAdapterSpecification(), context.getProgram().getId());
-          try {
-            if (pluginArchive != null) {
-              job.addCacheArchive(pluginArchive.toURI());
-            }
 
             MapReduceContextConfig contextConfig = new MapReduceContextConfig(job.getConfiguration());
             // We start long-running tx to be used by mapreduce job tasks.
@@ -274,12 +285,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
               Transactions.invalidateQuietly(txClient, tx);
               throw Throwables.propagate(t);
             }
-          } catch (Throwable t) {
-            if (pluginArchive != null) {
-              Locations.deleteQuietly(pluginArchive);
-            }
-            throw Throwables.propagate(t);
-          }
         } catch (Throwable t) {
           Locations.deleteQuietly(programJarCopy);
           throw Throwables.propagate(t);
@@ -289,6 +294,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         throw Throwables.propagate(t);
       }
     } catch (Throwable t) {
+      if (pluginArchive != null) {
+        Locations.deleteQuietly(pluginArchive);
+      }
+
       LOG.error("Exception when submitting MapReduce Job: {}", context, t);
       throw Throwables.propagate(t);
     }

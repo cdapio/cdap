@@ -81,7 +81,7 @@ public final class MapReduceContextProvider {
                contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet(),
                contextConfig.getAdapterSpec(),
-               createPluginInstantiator(cConf)
+               getPluginInstantiator(cConf)
         );
     }
     return context;
@@ -129,12 +129,16 @@ public final class MapReduceContextProvider {
   }
 
   @Nullable
-  private PluginInstantiator createPluginInstantiator(CConfiguration cConf) {
+  private PluginInstantiator getPluginInstantiator(CConfiguration cConf) {
     if (contextConfig.getAdapterSpec() == null) {
       return null;
     }
-    return new PluginInstantiator(cConf, contextConfig.getAdapterSpec().getTemplate(),
-                                  getProgramClassLoader(taskContext.getConfiguration()));
+
+    ClassLoader classLoader = cConf.getClassLoader();
+    if (!(classLoader instanceof MapReduceClassLoader)) {
+      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
+    }
+    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
   }
 
   /**
@@ -145,7 +149,7 @@ public final class MapReduceContextProvider {
   static ClassLoader getProgramClassLoader(Configuration hConf) {
     ClassLoader classLoader = hConf.getClassLoader();
     if (!(classLoader instanceof MapReduceClassLoader)) {
-      throw new IllegalArgumentException("ClassLoader is not an ApplicationClassLoader");
+      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
     }
     return ((MapReduceClassLoader) classLoader).getProgramClassLoader();
   }
