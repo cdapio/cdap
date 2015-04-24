@@ -64,6 +64,8 @@ API Changes
 Known Issues
 ------------
 
+- CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x. It has not been tested on later versions.
+
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
 
 

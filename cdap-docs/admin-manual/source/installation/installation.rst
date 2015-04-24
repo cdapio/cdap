@@ -145,25 +145,25 @@ Hadoop/HBase Environment
 
 For a distributed enterprise, you must install these Hadoop components:
 
-+---------------+-------------------+---------------------------------------------+
-| Component     | Distribution      | Required Version                            |
-+===============+===================+=============================================+
-| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha or later                        |
-+               +-------------------+---------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x or later or (HDP) 2.0 or later  |
-+---------------+-------------------+---------------------------------------------+
-| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha or later                        |
-+               +-------------------+---------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x or later or (HDP) 2.0 or later  |
-+---------------+-------------------+---------------------------------------------+
-| **HBase**     |                   | 0.94.2+, 0.96.0+, 0.98.0+                   |
-+---------------+-------------------+---------------------------------------------+
-| **Zookeeper** |                   | Version 3.4.3 or later                      |
-+---------------+-------------------+---------------------------------------------+
-| **Hive**      |                   | Version 12.0 or later                       |
-+               +-------------------+---------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.3.x or later or (HDP) 2.0 or later  |
-+---------------+-------------------+---------------------------------------------+
++---------------+-------------------+--------------------------------------------------+
+| Component     | Distribution      | Required Version                                 |
++===============+===================+==================================================+
+| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha or later                             |
++               +-------------------+--------------------------------------------------+
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.x or (HDP) 2.0 or later  |
++---------------+-------------------+--------------------------------------------------+
+| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha or later                             |
++               +-------------------+--------------------------------------------------+
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.x or (HDP) 2.0 or later  |
++---------------+-------------------+--------------------------------------------------+
+| **HBase**     |                   | 0.94.2+, 0.96.0+, 0.98.0+                        |
++---------------+-------------------+--------------------------------------------------+
+| **Zookeeper** |                   | Version 3.4.3 or later                           |
++---------------+-------------------+--------------------------------------------------+
+| **Hive**      |                   | Version 12.0 or later                            |
++               +-------------------+--------------------------------------------------+
+|               | CDH or HDP        | (CDH) 4.3.x through 5.3.x or (HDP) 2.0 or later  |
++---------------+-------------------+--------------------------------------------------+
 
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.
@@ -479,7 +479,7 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 or higher and HDP 2.0 or higher.
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 through CDH 5.3.x, and HDP 2.0 or higher.
 
 .. _install-ulimit:
 
