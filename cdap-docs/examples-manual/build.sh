@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
   
-# Build script for guide docs
+# Build script for Examples Manual docs
 #
 # Copies the original README from the mounted GitHub repo in the local filesystem
 # running it through sed to modify all image links to be relative to the build/_includes directory.
@@ -24,68 +24,103 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 TUTORIAL_WISE="tutorial-wise"
+REPO="cdap-guides"
 
 function guide_rewrite_sed() {
-  echo "Re-writing using sed $1 $2"
+  echo "Re-writing using sed ${1} ${2}"
   # Re-writes the links in the RST file to point to a local copy of any image links.
-  local includes_dir=$1
-  local guide=$2
-  local project_version=$PROJECT_SHORT_VERSION
+  local includes_dir=${1}
+  local guide=${2}
+  local project_version=${PROJECT_SHORT_VERSION}
+  local file_name="README.rst"
+  local temp_file_name="TEMP_README.rst"
+
+  local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
   
-  local source1="https://raw.githubusercontent.com/cdap-guides"
-  if [ "x$GIT_BRANCH_TYPE" == "xdevelop" ] || [ "x$GIT_BRANCH_TYPE" == "xfeature" ] ; then
-    local source2="develop/README.rst"
+  local source1="https://raw.githubusercontent.com/${REPO}"
+  
+  set_branch "cdap-guides" ${guide}
+
+  mkdir -p ${includes_dir}/${guide}
+  curl --silent ${source1}/$guide/${BRANCH}/${file_name} --output ${includes_dir}/${guide}/${temp_file_name}
+  sed -e "s|image:: docs/images|image:: ${redirect}/${guide}/docs/images|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${temp_file_name} > ${includes_dir}/${guide}/${file_name}
+}
+
+function set_branch() {
+  local repo=${1}
+  local guide=${2}
+  local project_version=${PROJECT_SHORT_VERSION}
+  local develop="develop"
+  
+  if [ "x${GIT_BRANCH_TYPE}" == "x${develop}" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
+    local branch=${develop}
   else
-    local source2="release/cdap-$project_version-compatible/README.rst"
+    local branch="release/cdap-${project_version}-compatible"
   fi
 
-  local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
-  
-  mkdir $includes_dir/$guide
-  curl --silent $source1/$guide/$source2 --output $includes_dir/$guide/README_SOURCE.rst  
-  sed -e "s|image:: docs/images|image:: $redirect/$guide/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $includes_dir/$guide/README_SOURCE.rst > $includes_dir/$guide/README.rst
+  exists=`git ls-remote https://github.com/${repo}/${guide}.git | grep -sw "${branch}"`
+  if [ ! -n "${exists}" ]; then
+    echo "branch ${branch} does not exist; setting to ${develop}!"
+    branch=${develop}
+  fi
+  BRANCH=${branch}
+}
+
+function download_guide_image_file() {
+  local includes_dir=${1}
+  local guide=${2}
+  local image=${3}
+  local md5_hash=${4}
+  local docs_images="docs/images"
+  local guide_source=https://raw.githubusercontent.com/cdap-guides
+  set_branch "cdap-guides" ${guide}
+  local guide_release=${BRANCH}/${docs_images}
+  download_file ${includes_dir}/${guide}/${docs_images} ${guide_source}/${guide}/${guide_release} ${image} ${md5_hash}  
 }
 
 function download_file() {
   # Downloads a file to the includes directory, and checks that it hasn't changed.
   # Uses md5 hashes to monitor if any files have changed.
-  local includes_dir=$1
-  local source_dir=$2
-  local file_name=$3
-  local md5_hash=$4
-  local target=$includes_dir/$file_name
+  local includes_dir=${1}
+  local source_dir=${2}
+  local file_name=${3}
+  local md5_hash=${4}
+  local target=${includes_dir}/${file_name}
   
-  if [ ! -d "$includes_dir" ]; then
-    mkdir $includes_dir
-    echo "Creating Includes Directory: $includes_dir"
+  if [ ! -d "${includes_dir}" ]; then
+    mkdir -p ${includes_dir}
+    echo "Creating Includes Directory: ${includes_dir}"
   fi
 
-  echo "Downloading using curl $file_name from $source_dir"
-  curl $source_dir/$file_name --output $target --silent
-  local new_md5_hash=`md5 -q $target`
-  if [ "x$md5_hash" != "x$new_md5_hash" ]; then
-    echo -e "$WARNING MD5 Hash for $file_name has changed! Compare files and update hash!"  
-    echo "Old md5_hash: $md5_hash New md5_hash: $new_md5_hash"
+  echo "Downloading using curl ${file_name}"
+#   echo "Downloading using curl from ${source_dir}/${file_name}"
+#   echo "  to $target"
+  curl ${source_dir}/${file_name} --output ${target} --silent
+  
+  local new_md5_hash
+  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
+    new_md5_hash=`md5 -q ${target}`
+  else
+    new_md5_hash=`md5sum ${target} | awk '{print $1}'`
+  fi
+  
+  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
+    echo -e "$WARNING MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
+    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"
   fi
 }
 
 function download_includes() {
-  echo "Downloading source files includes from GitHub..."
+  echo_red_bold "Downloading source files includes from GitHub..."
   version
-  local includes=$1/$TUTORIAL_WISE
-  local project_version=$PROJECT_SHORT_VERSION
+  local includes=$1/${TUTORIAL_WISE}
+  local project_version=${PROJECT_SHORT_VERSION}
 
-  local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
-  if [ "x$GIT_BRANCH_TYPE" == "xdevelop" ] || [ "x$GIT_BRANCH_TYPE" == "xfeature" ] ; then
-    local source2="develop"
-  else
-    local source2="release/cdap-$project_version-compatible"
-  fi
-
-  local project_source="$source1/$source2/Wise"
-  local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
-  local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
-  local project_img=$project_source/docs/img
+  set_branch "caskdata" "cdap-apps"
+  local project_source=https://raw.githubusercontent.com/caskdata/cdap-apps/${BRANCH}/Wise
+  local project_main=${project_source}/src/main/java/co/cask/cdap/apps/wise
+  local project_test=${project_source}/src/test/java/co/cask/cdap/apps/wise
+  local project_img=${project_source}/docs/img
   
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
   download_file $includes $project_main BounceCountsMapReduce.java f2f8d36e4049ba69b40282057accf38a
@@ -95,17 +130,30 @@ function download_includes() {
   download_file $includes $project_test WiseAppTest.java           7256c18cb80f59b4a9abcb5da320b337
   download_file $includes $project_main WiseFlow.java              2deba0633a0dcca14ef426929f543872
   download_file $includes $project_main WiseWorkflow.java          8fe51eed165e85d95c4f5e25953e3489
-  download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
+  download_file $includes $project_main WiseService.java           ed54e1e9952e4a880a9fc4216fdf7b4e
 
-  echo "Downloading image files from GitHub..."
+  echo_red_bold "Downloading image files from GitHub..."
   download_file $includes $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
   download_file $includes $project_img wise_explore_page.png         5136132e4e3232a216c12e2fe9d1b0c4
   download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
   download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
 
-  echo "Re-writes all the image links..."
-# version
+  echo_red_bold "Downloading Guide image files from GitHub..."
+  download_guide_image_file $1 cdap-bi-guide             app-design.png           e950be372236d429cdfa029fb0ab8c29
+  download_guide_image_file $1 cdap-bi-guide             edit-csv-input-file.png  171683816c803dc16263483aeb95f946
+  download_guide_image_file $1 cdap-bi-guide             preview-data.png         cb5f61b742a9b12ebf28570807c15455
+  download_guide_image_file $1 cdap-cube-guide           app-design.png           0
+  download_guide_image_file $1 cdap-flow-guide           app-design.png           b6165a0f41ee365c34bafaeabc559ea6
+  download_guide_image_file $1 cdap-flume-guide          app-design.png           cbbcce3eb5d129a0224fcff0d0fcdb12
+  download_guide_image_file $1 cdap-kafka-ingest-guide   app-design.png           236ac98a8383b05b3b09b8e87299b261
+  download_guide_image_file $1 cdap-mapreduce-guide      app-design.png           1e775d088d57333eaf901bce62cd2797
+  download_guide_image_file $1 cdap-spark-guide          app-design.png           e343948ce9f0362b8eeb3dc3b10a7689
+  download_guide_image_file $1 cdap-timeseries-guide     app-design.png           e2137c6bc5a9974d1bde7cfe68aff5aa
+  download_guide_image_file $1 cdap-twitter-ingest-guide app-design.png           29de92e79a241f2659d29553b861e547
+
+  echo_red_bold "Downloading Guides READMEs from GitHub...and rewriting using sed"
   guide_rewrite_sed $1 cdap-bi-guide 
+  guide_rewrite_sed $1 cdap-cube-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
   guide_rewrite_sed $1 cdap-kafka-ingest-guide
@@ -115,4 +163,4 @@ function download_includes() {
   guide_rewrite_sed $1 cdap-twitter-ingest-guide
 }
 
-run_command $1
+run_command ${1}
