@@ -10,7 +10,11 @@ angular.module(PKG.name+'.feature.dashboard')
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
-      ['Collect', '', ['system.collect.events'],           'c3-line'],
+      ['Application Fabric API Calls', 'component.appfabric', ['system.request.received','system.response.successful'], 'c3-pie'],
+      ['Dataset Service', 'component.dataset.service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter'],
+      ['Explore Service', 'component.explore.service', ['system.request.received','system.response.successful'], 'c3-pie'],
+      ['Transaction Commit', '', ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-line'],
+      ['Error and Warnings', '', ['system.services.log.error', 'system.services.log.warn'], 'c3-line'],
       ['Process', '', ['system.process.events.processed'], 'c3-line'],
       ['Store',   '', ['system.dataset.store.bytes'],      'c3-line'],
       ['Query',   '', ['system.requests.count'],           'c3-line']
