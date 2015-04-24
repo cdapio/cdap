@@ -17,7 +17,10 @@ angular.module(PKG.name + '.feature.flows')
         requestObj.body = $scope.runtimeArgs;
       }
 
-      dataSrc.request(requestObj);
+      dataSrc.request(requestObj)
+        .then(function() {
+          $state.go($state.current, $state.params, {reload: true});
+        });
     };
 
     $scope.stop = function() {
@@ -25,7 +28,10 @@ angular.module(PKG.name + '.feature.flows')
       dataSrc.request({
         _cdapNsPath: path + '/stop',
         method: 'POST'
-      });
+      })
+        .then(function() {
+          $state.go($state.current, $state.params, {reload: true});
+        });
     };
 
     dataSrc.poll({

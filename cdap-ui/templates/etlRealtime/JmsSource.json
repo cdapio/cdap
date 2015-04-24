@@ -1,0 +1,34 @@
+{
+  'id': 'JmsSource',
+  'groups' : {
+    'position': [ 'group1' ],
+    'group1': {
+       'display' : 'JMS Configuration',
+       'position' : [ 'jms.destination.name', 'jms.messages.receive' ],
+       'fields' : {
+          'jms.destination.name' : {
+             'widget-type': 'textbox',
+             'widget-label': 'JMS Destination Name',
+             'widget-description' : 'Specify the destination name for JMS',
+             'widget-info' : 'E.g. host:2181,host2:2181,host3:2181',
+             'widget-properties': {
+               'width': 'medium'
+             },
+          },
+
+          'jms.messages.receive' : {
+             'widget-type': 'number',
+             'widget-label': 'Number of message to receive at once from JMS',
+             'widget-description': 'Specific the number of messages to be received from JMS',
+             'widget-info': '',
+             'widget-properties': {
+               'width': 'extra-small',
+               'default': 1
+             }
+             'max': 999,
+             'min': 1
+          }
+       }
+    }
+  }
+}
