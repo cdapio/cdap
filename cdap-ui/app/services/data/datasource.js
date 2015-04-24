@@ -167,6 +167,33 @@ angular.module(PKG.name+'.services')
     };
 
     /**
+     * Fetch a template configuration on-demand. Send the action 
+     * 'template-config' to the node backend. 
+     */
+    DataSource.prototype.config = function (resource, cb) {
+      var deferred = $q.defer();
+   
+      var id = generateUUID();
+      resource.id = id;
+      this.bindings.push({
+        resource: resource,
+        id: id,
+        callback: function (result) {
+          cb && cb.apply(this, arguments);
+          deferred.resolve(result);
+        },
+        errorCallback: function(err) {
+          deferred.reject(err);
+        }
+      });
+      mySocket.send({
+        action: 'template-config',
+        resource: resource
+      })
+      return deferred.promise;
+    }
+
+    /**
      * Fetch a resource on-demand. Send the action 'request' to
      * the node backend.
      */
