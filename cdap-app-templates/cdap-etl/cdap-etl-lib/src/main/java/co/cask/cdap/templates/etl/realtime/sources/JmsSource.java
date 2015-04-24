@@ -15,8 +15,12 @@
  */
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -49,16 +53,21 @@ import javax.jms.TextMessage;
  * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
+@Plugin(type = "source")
+@Name("JMS")
+@Description("JMS Realtime Source")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
+  public static final String JAVA_NAMING_PREFIX = "java.naming";
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
+  public static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
-  private static final String CDAP_JMS_SOURCE_NAME = JmsSource.class.getSimpleName();
-  private static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
 
   public static final String MESSAGE = "message";
+
+  private final JmsConfig config;
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
@@ -72,18 +81,12 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private StructuredRecord.Builder recordBuilder;
 
   /**
-   * Configure the JMS Source.
+   * Default constructor
    *
-   * @param configurer {@link StageConfigurer}
+   * @param config The configuration needed for the JMS source.
    */
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(CDAP_JMS_SOURCE_NAME);
-    configurer.setDescription("CDAP JMS Realtime Source");
-    configurer.addProperty(new Property("jms.messages.receive", "Number messages should be retrieved " +
-      "for each poll", false));
-    configurer.addProperty(new Property("jms.destination.name", "Name of the destination to get messages " +
-      "from.", false));
+  public JmsSource(JmsConfig config) {
+    this.config = config;
   }
 
   /**
@@ -107,7 +110,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     Maps.filterEntries(runtimeArguments, new Predicate<Map.Entry<String, String>>() {
       @Override
       public boolean apply(@Nullable Map.Entry<String, String> input) {
-        if (input.getKey() != null && input.getKey().startsWith("java.naming.")) {
+        if (input.getKey() != null && input.getKey().startsWith(JAVA_NAMING_PREFIX)) {
           envVars.put(input.getKey(), input.getValue());
           return true;
         }
@@ -175,7 +178,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       try {
         message = consumer.receive(JMS_CONSUMER_TIMEOUT_MS);
       } catch (JMSException e) {
-        LOG.warn("Exception when trying to receive message from JMS consumer: {}", CDAP_JMS_SOURCE_NAME);
+        LOG.warn("Exception when trying to receive message from JMS consumer.");
       }
       if (message != null) {
         String text;
@@ -275,4 +278,24 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   public JmsProvider getJmsProvider() {
     return jmsProvider;
   }
+
+  /**
+   * Config class for {@link JmsSource}.
+   */
+  public static class JmsConfig extends PluginConfig {
+    @Name(JMS_DESTINATION_NAME)
+    @Description("Name of the destination to get messages")
+    private final String destinationName;
+
+    @Name(JMS_MESSAGES_TO_RECEIVE)
+    @Description("Max number messages should be retrieved per poll.")
+    @Nullable
+    private final Integer messagesToReceive;
+
+    public JmsConfig(String destinationName, Integer messagesToReceive) {
+      this.destinationName = destinationName;
+      this.messagesToReceive = messagesToReceive;
+    }
+  }
+
 }

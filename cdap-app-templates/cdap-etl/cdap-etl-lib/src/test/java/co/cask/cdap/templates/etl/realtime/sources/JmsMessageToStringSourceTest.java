@@ -63,29 +63,7 @@ public class JmsMessageToStringSourceTest {
 
   @Before
   public void beforeTest() {
-    jmsSource = new JmsSource();
-
-    jmsSource.configure(new StageConfigurer() {
-      @Override
-      public void setName(String name) {
-        // no-op
-      }
-
-      @Override
-      public void setDescription(String description) {
-        // no-op
-      }
-
-      @Override
-      public void addProperties(Collection<Property> properties) {
-        // no-op
-      }
-
-      @Override
-      public void addProperty(Property property) {
-        // no-op
-      }
-    });
+    jmsSource = null;
   }
 
   @After
@@ -98,6 +76,8 @@ public class JmsMessageToStringSourceTest {
 
   @Test
   public void testSimpleQueueMessages() throws Exception {
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
+
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
@@ -129,6 +109,8 @@ public class JmsMessageToStringSourceTest {
 
   @Test
   public void testSimpleTopicMessages() throws Exception {
+    initializeJmsSource("dynamicTopics/CDAP.TOPIC", 50);
+
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
@@ -160,6 +142,8 @@ public class JmsMessageToStringSourceTest {
 
   @Test
   public void testJndiBasedJmsProvider() throws Exception {
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
+
     // Create ActiveMQ ConnectionFactory for the JNDI based JmsProvider
     final Map<String, String> contextEnv = new HashMap<String, String>();
     contextEnv.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
@@ -221,6 +205,32 @@ public class JmsMessageToStringSourceTest {
 
       System.out.println("Getting JMS Message in emitter with value: " + val.get(JmsSource.MESSAGE));
     }
+  }
+
+  private void initializeJmsSource(String destination, int messageReceive) {
+    jmsSource = new JmsSource(new JmsSource.JmsConfig(destination, messageReceive));
+
+    jmsSource.configure(new StageConfigurer() {
+      @Override
+      public void setName(String name) {
+        // no-op
+      }
+
+      @Override
+      public void setDescription(String description) {
+        // no-op
+      }
+
+      @Override
+      public void addProperties(Collection<Property> properties) {
+        // no-op
+      }
+
+      @Override
+      public void addProperty(Property property) {
+        // no-op
+      }
+    });
   }
 
   /**
