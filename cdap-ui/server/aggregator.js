@@ -123,7 +123,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
      // Some times there might a plugin that is common across multiple templates
      // in which case, this is stored within the common directory. So, if the 
      // template specific plugin check fails, then attempt to get it from common.
-     config = require('../templates/' + common + '/' + pluginid + '.json');  
+     config = require('../templates/common/' + pluginid + '.json');  
      statusCode = 200;
    } catch (e2) { }
   }
