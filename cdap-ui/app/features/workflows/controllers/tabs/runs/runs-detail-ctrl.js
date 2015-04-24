@@ -21,7 +21,6 @@ angular.module(PKG.name + '.feature.workflows')
           $scope.startTime = new Date(startMs);
           $scope.status = res.status;
           $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
-          console.info($scope.startTime, $scope.status, $scope.duration);
       });
     }
 

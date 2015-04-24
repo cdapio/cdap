@@ -19,10 +19,10 @@ angular.module(PKG.name + '.feature.flows')
         _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
       }, function(res) {
         var startMs = res.start * 1000;
-          $scope.startTime = new Date(startMs);
-          $scope.status = res.status;
-          $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
-        });
+        $scope.startTime = new Date(startMs);
+        $scope.status = res.status;
+        $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
+      });
     }
     $scope.tabs = [{
       title: 'Status',
@@ -48,6 +48,5 @@ angular.module(PKG.name + '.feature.flows')
         $scope.activeFlowlet = node;
       }
       $scope.activeTab = tab;
-
     };
   });
