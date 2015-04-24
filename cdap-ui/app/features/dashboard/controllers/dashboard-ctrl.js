@@ -89,5 +89,13 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     }
   };
 
+  $scope.changeColumn = function (n) {
+    $scope.currentBoard.changeColumn(n);
+  };
+
+  $scope.toggleDragDrop = function() {
+    $scope.currentBoard.toggleDragDrop();
+  };
+
 
 });

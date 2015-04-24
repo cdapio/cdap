@@ -142,8 +142,13 @@ angular.module(PKG.name+'.feature.dashboard')
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
 
-    Widget.prototype.getClassName = function () {
-      return 'panel-default widget widget-' + this.type;
+    Widget.prototype.getClassName = function (last) {
+
+      var className = 'panel-default widget widget-' + this.type;
+      if (last) {
+        className = className + ' last-item';
+      }
+      return className;
     };
 
     return Widget;
