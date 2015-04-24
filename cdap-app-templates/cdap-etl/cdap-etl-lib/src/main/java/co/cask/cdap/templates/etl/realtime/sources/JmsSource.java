@@ -22,8 +22,6 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -67,7 +65,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   public static final String MESSAGE = "message";
 
-  private final JmsConfig config;
+  private final JmsPluginConfig config;
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
@@ -84,7 +82,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    *
    * @param config The configuration needed for the JMS source.
    */
-  public JmsSource(JmsConfig config) {
+  public JmsSource(JmsPluginConfig config) {
     this.config = config;
   }
 
@@ -280,7 +278,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   /**
    * Config class for {@link JmsSource}.
    */
-  public static class JmsConfig extends PluginConfig {
+  public static class JmsPluginConfig extends PluginConfig {
     private static final Integer DEFAULT_MESSAGE_RECEIVE = 50;
 
     @Name(JMS_DESTINATION_NAME)
@@ -292,7 +290,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private final Integer messagesToReceive;
 
-    public JmsConfig(String destinationName, Integer messagesToReceive) {
+    public JmsPluginConfig(String destinationName, Integer messagesToReceive) {
       this.destinationName = destinationName;
       if (messagesToReceive == null) {
         this.messagesToReceive = DEFAULT_MESSAGE_RECEIVE;

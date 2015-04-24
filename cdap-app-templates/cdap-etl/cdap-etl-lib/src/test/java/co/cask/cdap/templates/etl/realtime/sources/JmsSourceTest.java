@@ -18,8 +18,6 @@ package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
@@ -31,7 +29,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,7 +205,7 @@ public class JmsSourceTest {
   }
 
   private void initializeJmsSource(String destination, int messageReceive) {
-    jmsSource = new JmsSource(new JmsSource.JmsConfig(destination, messageReceive));
+    jmsSource = new JmsSource(new JmsSource.JmsPluginConfig(destination, messageReceive));
   }
 
   /**
