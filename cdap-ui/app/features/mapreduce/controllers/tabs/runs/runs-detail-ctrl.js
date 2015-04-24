@@ -35,9 +35,8 @@ angular.module(PKG.name + '.feature.mapreduce')
       }, function (res) {
 
         $scope.info = res;
-        // To Be used when progress is fixed in the backend
-        // $scope.mapProgress = Math.floor(res.mapProgress * 100);
-        // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+        $scope.mapProgress = Math.floor(res.mapProgress * 100);
+        $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
 
         $scope.mapperStats = getStats($scope.info.mapTasks);
         $scope.reducerStats = getStats($scope.info.reduceTasks);

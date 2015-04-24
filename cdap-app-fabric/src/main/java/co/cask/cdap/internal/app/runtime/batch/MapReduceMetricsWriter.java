@@ -95,7 +95,15 @@ public class MapReduceMetricsWriter {
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
     int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
+    Counters counters = jobConf.getCounters();
+    long mapInputRecords = getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS);
+    long mapOutputRecords = getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS);
+    long mapOutputBytes = getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES);
+
     mapperMetrics.gauge(MapReduceMetrics.METRIC_COMPLETION, (long) (mapProgress * 100));
+    mapperMetrics.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS, mapInputRecords);
+    mapperMetrics.gauge(MapReduceMetrics.METRIC_OUTPUT_RECORDS, mapOutputRecords);
+    mapperMetrics.gauge(MapReduceMetrics.METRIC_BYTES, mapOutputBytes);
     mapperMetrics.gauge(MapReduceMetrics.METRIC_USED_CONTAINERS, runningMappers);
     mapperMetrics.gauge(MapReduceMetrics.METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
@@ -104,8 +112,12 @@ public class MapReduceMetricsWriter {
 
     // reduce stats
     float reduceProgress = jobStatus.getReduceProgress();
+    long reduceInputRecords = getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS);
+    long reduceOutputRecords = getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
     reducerMetrics.gauge(MapReduceMetrics.METRIC_COMPLETION, (long) (reduceProgress * 100));
+    reducerMetrics.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS, reduceInputRecords);
+    reducerMetrics.gauge(MapReduceMetrics.METRIC_OUTPUT_RECORDS, reduceOutputRecords);
     reducerMetrics.gauge(MapReduceMetrics.METRIC_USED_CONTAINERS, runningReducers);
     reducerMetrics.gauge(MapReduceMetrics.METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
@@ -116,20 +128,20 @@ public class MapReduceMetricsWriter {
   private void reportMapTaskMetrics(TaskReport taskReport) {
     Counters counters = taskReport.getTaskCounters();
     MetricsCollector metricsCollector = mapTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
-    metricsCollector.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS,
+    metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS,
                            getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS));
-    metricsCollector.gauge(MapReduceMetrics.METRIC_OUTPUT_RECORDS,
+    metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS,
                            getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS));
-    metricsCollector.gauge(MapReduceMetrics.METRIC_BYTES, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES));
+    metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_BYTES, getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES));
     metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
   }
 
   private void reportReduceTaskMetrics(TaskReport taskReport) {
     Counters counters = taskReport.getTaskCounters();
     MetricsCollector metricsCollector = reduceTaskMetricsCollectors.getUnchecked(taskReport.getTaskId());
-    metricsCollector.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS,
+    metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS,
                            getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS));
-    metricsCollector.gauge(MapReduceMetrics.METRIC_OUTPUT_RECORDS,
+    metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS,
                            getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS));
     metricsCollector.gauge(MapReduceMetrics.METRIC_TASK_COMPLETION, (long) (taskReport.getProgress() * 100));
   }
