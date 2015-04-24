@@ -16,18 +16,24 @@
 
 package co.cask.cdap.templates.etl.batch.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * CDAP Key Value Table Dataset Batch Source.
  */
+@Plugin(type = "source")
+@Name("KVTableSource")
+@Description("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field and a 'value' field. " +
+  "Both fields are of type bytes.")
 public class KVTableSource extends BatchReadableSource<byte[], byte[], StructuredRecord> {
   private static final Schema SCHEMA = Schema.recordOf(
     "keyValue",
@@ -35,12 +41,24 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
     Schema.Field.of("value", Schema.of(Schema.Type.BYTES))
   );
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(getClass().getSimpleName());
-    configurer.setDescription("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field " +
-      "and a 'value' field. Both fields are of type bytes.");
-    configurer.addProperty(new Property(NAME, "Dataset Name", true));
+  private static final String NAME_DESC = "Dataset Name";
+
+  /**
+   * Config class for KVTableSource
+   */
+  public static class KVTableConfig extends PluginConfig {
+    @Description(NAME_DESC)
+    String name;
+
+    public KVTableConfig(String name) {
+      this.name = name;
+    }
+  }
+
+  private final KVTableConfig kvTableConfig;
+
+  public KVTableSource(KVTableConfig kvTableConfig) {
+    this.kvTableConfig = kvTableConfig;
   }
 
   @Override

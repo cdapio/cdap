@@ -71,7 +71,8 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of("name", "table1"));
+    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of(Properties.BatchWritable.NAME,
+                                                                                        "table1"));
     ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of(Properties.BatchWritable.NAME,
                                                                                     "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
