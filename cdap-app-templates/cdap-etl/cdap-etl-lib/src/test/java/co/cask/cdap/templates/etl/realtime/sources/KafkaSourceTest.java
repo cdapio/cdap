@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
@@ -43,7 +44,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -99,7 +99,7 @@ public class KafkaSourceTest {
 
   @Before
   public void beforeTest() {
-    kafkaSource = new KafkaSource();
+    kafkaSource = null;
   }
 
   @After
@@ -112,9 +112,8 @@ public class KafkaSourceTest {
   @Test
   public void testKafkaConsumerSimple() throws Exception {
     final String topic = "testKafkaConsumerSimple";
-    RealtimeContext sourceContext = new MockRealtimeContext(getRuntimeArgs(topic, PARTITIONS, false));
 
-    kafkaSource.initialize(sourceContext);
+    initializeKafkaSource(topic, PARTITIONS, false);
 
     // Publish 5 messages to Kafka, the source should consume them
     int msgCount = 5;
@@ -127,6 +126,22 @@ public class KafkaSourceTest {
     TimeUnit.SECONDS.sleep(2);
 
     verifyEmittedMessages(kafkaSource, msgCount);
+  }
+
+  private void initializeKafkaSource(String topic, int partitions, boolean preferZK)  throws Exception {
+    String zk = null;
+    String brokerList = null;
+    if (!supportBrokerList() || preferZK) {
+      zk = zkServer.getConnectionStr();
+    } else {
+      brokerList = "localhost:" + kafkaPort;
+    }
+
+    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions, topic, null);
+
+    kafkaSource = new KafkaSource(config);
+
+    kafkaSource.initialize(new MockRealtimeContext());
   }
 
   // Helper method to verify
@@ -167,25 +182,6 @@ public class KafkaSourceTest {
     return true;
   }
 
-  protected Map<String, String> getRuntimeArgs(String topic, int partitions, boolean preferZK, long startOffset) {
-    Map<String, String> args = getRuntimeArgs(topic, partitions, preferZK);
-    args.put("kafka.default.offset", Long.toString(startOffset));
-    return args;
-  }
-
-  private Map<String, String> getRuntimeArgs(String topic, int partitions, boolean preferZK) {
-    Map<String, String> args = Maps.newHashMap();
-
-    args.put("kafka.topic", topic);
-    if (!supportBrokerList() || preferZK) {
-      args.put("kafka.zookeeper", zkServer.getConnectionStr());
-    } else {
-      args.put("kafka.brokers", "localhost:" + kafkaPort);
-    }
-    args.put("kafka.partitions", Integer.toString(partitions));
-    return args;
-  }
-
   private static Properties generateKafkaConfig(String zkConnectStr, int port, File logDir) {
     // Note: the log size properties below have been set so that we can have log rollovers
     // and log deletions in a minute.
@@ -213,11 +209,11 @@ public class KafkaSourceTest {
   /**
    * Helper class to emit message to next stage
    */
-  private static class MockEmitter implements Emitter<ByteBuffer> {
-    private final List<ByteBuffer> entryList = Lists.newArrayList();
+  private static class MockEmitter implements Emitter<StructuredRecord> {
+    private final List<StructuredRecord> entryList = Lists.newArrayList();
 
     @Override
-    public void emit(ByteBuffer value) {
+    public void emit(StructuredRecord value) {
       entryList.add(value);
     }
 
