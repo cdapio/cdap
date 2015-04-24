@@ -16,7 +16,8 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       {
         id: p.id,
         title: p.title || 'Dashboard',
-        columns: []
+        columns: [],
+        numColumn: p.numColumn || 3
       }
     );
 
@@ -154,6 +155,33 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
         }).bind(this)
       );
     }
+  };
+
+  Dashboard.prototype.changeColumn = function(n) {
+    this.numColumn = n;
+
+    console.log('Columns', this.columns);
+
+    // need to sort
+
+    var array = [];
+    array = array.concat.apply(array, this.columns);
+    console.log('array', array);
+
+    var columns = [];
+    for (var i = 0; i < this.numColumn; i++) {
+      columns.push([]);
+    }
+
+    for (var i = 0; i < array.length; i++) {
+      columns[i % this.numColumn].push(array[i]);
+    }
+
+    this.columns = columns;
+
+    console.log('columns', columns);
+
+    this.persist();
   };
 
 

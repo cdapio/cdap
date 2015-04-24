@@ -7,7 +7,7 @@
 </div>
 
 <div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">
-  <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-6': colWidth.oneThird }"
+  <div ng-class="{'col-md-6': currentBoard.numColumn === 2, 'col-md-4': currentBoard.numColumn === 3, 'col-md-3': currentBoard.numColumn === 4 }"
        ng-repeat="column in currentBoard.columns"
        ng-model="column"
        as-sortable="dragdrop">
