@@ -16,21 +16,21 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.TransformStage;
 
 /**
- * Simple Identity Transform for testing.
+ * Simple Identity Transform.
  *
  * @param <T> any type
  */
+@Plugin(type = "transform")
+@Name("Identity")
+@Description("Transform that just passes data through without any modification")
 public class IdentityTransform<T> extends TransformStage<T, T> {
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("IdentityTransform");
-  }
 
   @Override
   public void transform(T input, Emitter<T> emitter) {

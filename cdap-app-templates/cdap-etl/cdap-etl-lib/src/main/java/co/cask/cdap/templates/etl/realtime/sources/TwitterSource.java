@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  * ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret.
  */
 @Plugin(type = "source")
-@Name("TwitterSource")
+@Name("Twitter")
 @Description("Twitter Realtime Source")
 public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TwitterSource.class);

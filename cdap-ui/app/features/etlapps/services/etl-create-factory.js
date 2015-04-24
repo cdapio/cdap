@@ -33,6 +33,17 @@ angular.module(PKG.name + '.feature.etlapps')
         }.bind(this));
     }
 
+    ETLAppsApiFactory.prototype.fetchUIConfigurations = function(templateId, pluginId) {
+      this.dataSrc.config({
+        templateid: templateId,
+        pluginid: pluginId
+      })
+       .then(function(res) {
+         console.log(res);
+         this.scope.templatePluginConfig = res;
+       }.bind(this));
+    }
+
     ETLAppsApiFactory.prototype.fetchSourceProperties = function(etlSource) {
       if (!etlSource) return;
       this.dataSrc.request({

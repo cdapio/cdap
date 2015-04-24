@@ -173,7 +173,6 @@
     <module>cdap-archetypes</module>
     <module>cdap-test</module>
     <module>cdap-integration-test</module>
-    <module>cdap-adapters</module>
     <module>cdap-ui</module>
   </modules>
 

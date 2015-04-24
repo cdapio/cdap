@@ -20,7 +20,9 @@ angular.module(PKG.name + '.feature.flows')
      if ($state.params.runid) {
        return;
      } else {
-       $scope.runs.selected = rRuns[0];
+       if (rRuns.length) {
+         $scope.runs.selected = rRuns[0];
+       }
      }
    })
 

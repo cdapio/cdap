@@ -1,0 +1,29 @@
+<ul class="dropdown-menu" role="menu">
+
+  <li role="presentation">
+    <a role="menuitem"
+       tabindex="-1"
+       href=""
+       ng-click="caskPrompt('Widget name', wdgt.title)"
+       cask-promptable="currentBoard.renameWidget(wdgt, $value)"
+       title="rename widget">
+      <span class="fa fa-fw fa-pencil pull-right"></span>
+      Edit
+    </a>
+  </li>
+
+  <li role="presentation">
+    <a role="menuitem"
+       tabindex="-1"
+       href=""
+       ng-click="caskConfirm()"
+       cask-confirmable="currentBoard.removeWidget(wdgt)"
+       data-confirmable-content="Really delete the widget?"
+       title="remove widget">
+      <span class="fa fa-fw fa-trash pull-right"></span>
+      Delete
+    </a>
+  </li>
+
+</ul>
+
