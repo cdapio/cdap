@@ -27,8 +27,8 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramId;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -312,12 +312,12 @@ public class AdapterClient {
 
     String queryString = Joiner.on("&").join(queryParams.entries());
     AdapterDetail adapterDetail = get(adapterName);
-    Id.Program program = adapterDetail.getProgram();
+    ProgramId program = adapterDetail.getProgram();
     // TODO: currently doesn't work for workflows since getting workflow logs is not implemented yet
 
     Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
     URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/logs?%s",
-                                                          program.getApplicationId(),
+                                                          program.getApplication(),
                                                           program.getType().getCategoryName(),
                                                           program.getId(), queryString));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),

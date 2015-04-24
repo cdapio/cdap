@@ -26,7 +26,7 @@ public class AdapterDetail {
   private final String name;
   private final String description;
   private final String template;
-  private final Id.Program program;
+  private final ProgramId program;
   private final JsonElement config;
   private final ScheduleSpecification schedule;
 
@@ -35,7 +35,7 @@ public class AdapterDetail {
     this.name = name;
     this.description = description;
     this.template = template;
-    this.program = program;
+    this.program = new ProgramId(program);
     this.config = config;
     this.schedule = schedule;
   }
@@ -52,7 +52,7 @@ public class AdapterDetail {
     return template;
   }
 
-  public Id.Program getProgram() {
+  public ProgramId getProgram() {
     return program;
   }
 
