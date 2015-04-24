@@ -1,17 +1,17 @@
 <div class="container" ng-controller="StreamsDetailProgramsController">
   <div class="row">
-    <div class="table-responsive">
-      <table class="table table-curved">
+    <div class="table-responsive" ng-if="programs.length > 0">
+      <table class="table table-curved" cask-sortable>
         <thead>
-          <tr>
-            <th>Programs</th>
-            <th>Type</th>
-            <th>Application</th>
+          <tr ng-class="{'sort-enabled': programs.length > 0}">
+            <th data-predicate="id">Programs</th>
+            <th data-predicate="type">Type</th>
+            <th data-predicate="application.applicationId">Application</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr ng-repeat="program in programs">
+          <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
             <td>
               <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
@@ -36,6 +36,10 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="well text-center" ng-if="programs.length === 0">
+      <h3>No program that is using this stream.</h3>
     </div>
   </div>
 </div>
