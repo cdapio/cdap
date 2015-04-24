@@ -168,11 +168,18 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     scheduler.schedule(programId, programType, schedule, properties);
     if (isLazyStart()) {
-      try {
-        scheduler.suspendSchedule(programId, programType, schedule.getName());
-      } catch (NotFoundException e) {
-        // Should not happen - we just created it. Could have been deleted just in between
-        LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
+      // TODO: CDAP-2281 figure out a better way to handle schedules in unit tests
+      String ignoreLazy = properties.get(Constants.Scheduler.IGNORE_LAZY_START);
+      boolean scheduleIgnoresLazy = ignoreLazy != null && Boolean.valueOf(ignoreLazy);
+      if (scheduleIgnoresLazy) {
+        lazyStart(scheduler);
+      } else {
+        try {
+          scheduler.suspendSchedule(programId, programType, schedule.getName());
+        } catch (NotFoundException e) {
+          // Should not happen - we just created it. Could have been deleted just in between
+          LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
+        }
       }
     }
   }
@@ -186,42 +193,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
                        Map<String, String> properties) throws SchedulerException {
-    Set<Schedule> timeSchedules = Sets.newHashSet();
-    Set<Schedule> streamSizeSchedules = Sets.newHashSet();
     for (Schedule schedule : schedules) {
-      if (schedule instanceof TimeSchedule) {
-        timeSchedules.add(schedule);
-      } else if (schedule instanceof StreamSizeSchedule) {
-        streamSizeSchedules.add(schedule);
-      } else {
-        throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
-      }
-    }
-    if (!timeSchedules.isEmpty()) {
-      timeScheduler.schedule(programId, programType, timeSchedules, properties);
-      if (isLazyStart()) {
-        for (Schedule schedule : timeSchedules) {
-          try {
-            timeScheduler.suspendSchedule(programId, programType, schedule.getName());
-          } catch (NotFoundException e) {
-            // Should not happen - we just created it. Could have been deleted just in between
-            LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
-          }
-        }
-      }
-    }
-    if (!streamSizeSchedules.isEmpty()) {
-      streamSizeScheduler.schedule(programId, programType, streamSizeSchedules, properties);
-      if (isLazyStart()) {
-        for (Schedule schedule : streamSizeSchedules) {
-          try {
-            streamSizeScheduler.suspendSchedule(programId, programType, schedule.getName());
-          } catch (NotFoundException e) {
-            // Should not happen - we just created it. Could have been deleted just in between
-            LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
-          }
-        }
-      }
+      schedule(programId, programType, schedule, properties);
     }
   }
 
