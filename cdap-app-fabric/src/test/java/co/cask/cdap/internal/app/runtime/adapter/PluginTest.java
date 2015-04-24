@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.PluginTestAppTemplate;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
@@ -27,17 +27,20 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.plugins.template.test.PluginTestAppTemplate;
+import co.cask.cdap.internal.app.plugins.template.test.api.PluginTestRunnable;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
+import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
@@ -61,15 +64,20 @@ import org.objectweb.asm.Type;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
@@ -82,6 +90,7 @@ public class PluginTest {
 
   private static final String TEMPLATE_NAME = "PluginTest";
   private static final Gson GSON = new Gson();
+  private static final String TEST_EMPTY_CLASS = "test.EmptyClass";
 
   private static CConfiguration cConf;
   private static File appTemplateJar;
@@ -99,9 +108,11 @@ public class PluginTest {
 
     DirUtils.mkdirs(new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
 
-    // Create the template jar
+    // Create the template jar, with the package of PluginTestRunnable exported
     File appTemplateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    appTemplateJar = createJar(PluginTestAppTemplate.class, new File(appTemplateDir, "PluginTest-1.0.jar"));
+    appTemplateJar = createJar(PluginTestAppTemplate.class, new File(appTemplateDir, "PluginTest-1.0.jar"),
+                               createManifest(ManifestFields.EXPORT_PACKAGE,
+                                              PluginTestRunnable.class.getPackage().getName()));
     appTemplateInfo = new ApplicationTemplateInfo(appTemplateJar, TEMPLATE_NAME, TEMPLATE_NAME,
                                                   ProgramType.WORKER, Files.hash(appTemplateJar, Hashing.md5()));
 
@@ -113,9 +124,8 @@ public class PluginTest {
 
     // Create a lib jar that is shared among all plugins for the template.
     File libDir = TMP_FOLDER.newFolder();
-    generateClass(EmptyClass.class, "test.EmptyClass", libDir);
-    createJar(new DirectoryClassLoader(libDir, null).loadClass("test.EmptyClass"),
-              new File(new File(templatePluginDir, "lib"), "common.jar"));
+    generateClass(EmptyClass.class, TEST_EMPTY_CLASS, libDir);
+    createJar(libDir, new File(new File(templatePluginDir, "lib"), "common.jar"));
   }
 
   @After
@@ -153,12 +163,12 @@ public class PluginTest {
     for (Map.Entry<PluginInfo, PluginClass> entry : pluginInfos.entries()) {
       Callable<String> plugin = instantiator.newInstance(entry.getKey(), entry.getValue(),
                                                          PluginProperties.builder()
-                                                          .add("class.name", "test.EmptyClass")
+                                                          .add("class.name", TEST_EMPTY_CLASS)
                                                           .add("timeout", "10")
                                                           .build()
       );
 
-      Assert.assertEquals("test.EmptyClass", plugin.call());
+      Assert.assertEquals(TEST_EMPTY_CLASS, plugin.call());
     }
   }
 
@@ -216,7 +226,7 @@ public class PluginTest {
   }
 
   @Test
-  public void testPluginSelector() throws IOException {
+  public void testPluginSelector() throws IOException, ClassNotFoundException {
     PluginRepository repository = new PluginRepository(cConf);
 
     // No plugin yet
@@ -224,7 +234,7 @@ public class PluginTest {
                                                                       "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNull(plugin);
 
-    // Create a plugin jar
+    // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     createJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-1.0.jar"), manifest);
 
@@ -247,6 +257,12 @@ public class PluginTest {
     Assert.assertEquals(new PluginVersion("2.0"), plugin.getKey().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
+    // Load the Plugin class and the common "EmptyClass" from the classLoader.
+    PluginInstantiator instantiator = new PluginInstantiator(cConf, TEMPLATE_NAME, templateClassLoader);
+    ClassLoader pluginClassLoader = instantiator.getPluginClassLoader(plugin.getKey());
+    Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
+    Class<?> emptyClass = pluginClassLoader.loadClass(TEST_EMPTY_CLASS);
+
     // Use a custom plugin selector to select with smallest version
     plugin = repository.findPlugin(TEMPLATE_NAME, "plugin", "TestPlugin2", new PluginSelector() {
       @Override
@@ -257,6 +273,23 @@ public class PluginTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new PluginVersion("1.0"), plugin.getKey().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
+
+    // Load the Plugin class and the "EmptyClass" again from the current plugin selected
+    // The plugin class should be different (from different ClassLoader)
+    // The empty class should be the same (from the plugin lib ClassLoader)
+    pluginClassLoader = instantiator.getPluginClassLoader(plugin.getKey());
+    Assert.assertNotSame(pluginClass, pluginClassLoader.loadClass(TestPlugin2.class.getName()));
+    Assert.assertSame(emptyClass, pluginClassLoader.loadClass(TEST_EMPTY_CLASS));
+
+    // From the pluginClassLoader, loading export classes from the template jar should be allowed
+    Class<?> cls = pluginClassLoader.loadClass(PluginTestRunnable.class.getName());
+    // The class should be loaded from the template classloader
+    Assert.assertSame(templateClassLoader.loadClass(PluginTestRunnable.class.getName()), cls);
+
+    // From the plugin classloader, all cdap api classes is loadable as well.
+    cls = pluginClassLoader.loadClass(Application.class.getName());
+    // The Application class should be the same as the one in the system classloader
+    Assert.assertSame(Application.class, cls);
   }
 
   private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
@@ -277,7 +310,35 @@ public class PluginTest {
     return destFile;
   }
 
-  private Manifest createManifest(Object...entries) {
+  private static File createJar(File sourceDir, File jarFile) throws IOException {
+    DirUtils.mkdirs(jarFile.getParentFile());
+
+    URI relativeURI = sourceDir.toURI();
+    JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile));
+    try {
+      Queue<File> queue = Lists.newLinkedList();
+      queue.add(sourceDir);
+      while (!queue.isEmpty()) {
+        File file = queue.poll();
+        String name = relativeURI.relativize(file.toURI()).getPath();
+        if (!name.isEmpty()) {
+          output.putNextEntry(new JarEntry(name));
+        }
+
+        if (file.isDirectory()) {
+          queue.addAll(DirUtils.listFiles(file));
+        } else {
+          Files.copy(file, output);
+        }
+      }
+    } finally {
+      output.close();
+    }
+
+    return jarFile;
+  }
+
+  private static Manifest createManifest(Object...entries) {
     Preconditions.checkArgument(entries.length % 2 == 0);
     Attributes attributes = new Attributes();
     for (int i = 0; i < entries.length; i += 2) {

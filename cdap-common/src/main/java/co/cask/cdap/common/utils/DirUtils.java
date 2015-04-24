@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.utils;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Queues;
@@ -50,7 +49,9 @@ public final class DirUtils {
    * @throws IOException
    */
   public static void deleteDirectoryContents(File directory) throws IOException {
-    Preconditions.checkArgument(directory.isDirectory(), "Not a directory: %s", directory);
+    if (!directory.isDirectory()) {
+      throw new IOException("Not a directory: " + directory);
+    }
     Deque<File> stack = Queues.newArrayDeque();
     stack.add(directory);
 

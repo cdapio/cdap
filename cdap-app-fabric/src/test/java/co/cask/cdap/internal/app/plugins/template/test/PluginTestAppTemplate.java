@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap;
+package co.cask.cdap.internal.app.plugins.template.test;
 
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;

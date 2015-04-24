@@ -61,20 +61,20 @@ public class PluginInstantiator implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
   private final LoadingCache<PluginInfo, ClassLoader> classLoaders;
-  private final ClassLoader templateClassLoader;
   private final File pluginDir;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
+  private final ClassLoader pluginParentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, String template, ClassLoader templateClassLoader) {
     this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR), template);
-    this.templateClassLoader = templateClassLoader;
     this.instantiatorFactory = new InstantiatorFactory(false);
 
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.classLoaders = CacheBuilder.newBuilder().build(new ClassLoaderCacheLoader());
+    this.pluginParentClassLoader = PluginClassLoader.createParent(new File(pluginDir, "lib"), templateClassLoader);
   }
 
   /**
@@ -92,6 +92,13 @@ public class PluginInstantiator implements Closeable {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
     }
+  }
+
+  /**
+   * Returns the common parent ClassLoader for all plugin ClassLoader created through this class.
+   */
+  public ClassLoader getPluginParentClassLoader() {
+    return pluginParentClassLoader;
   }
 
   /**
@@ -186,7 +193,12 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
-    DirUtils.deleteDirectoryContents(tmpDir);
+    try {
+      DirUtils.deleteDirectoryContents(tmpDir);
+    } catch (IOException e) {
+      // It's the cleanup step. Nothing much can be done if cleanup failed.
+      LOG.warn("Failed to delete directory {}", tmpDir);
+    }
   }
 
   /**
@@ -200,7 +212,7 @@ public class PluginInstantiator implements Closeable {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       BundleJarUtil.unpackProgramJar(Locations.toLocation(pluginJar), unpackedDir);
 
-      return PluginClassLoader.create(unpackedDir, new File(pluginJar.getParentFile(), "lib"), templateClassLoader);
+      return new PluginClassLoader(unpackedDir, pluginParentClassLoader);
     }
   }
 
