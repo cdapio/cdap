@@ -18,7 +18,6 @@ package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.api.EndPointStage;
@@ -78,7 +77,7 @@ public class ETLWorkerTest extends TestBase {
 
     AdapterConfig adapterConfig = new AdapterConfig("test adapter", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testToStream");
-    AdapterManager adapterManager = deployAdapter(adapterId, adapterConfig);
+    AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();
     // Let the worker run for 5 seconds

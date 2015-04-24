@@ -112,7 +112,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
+  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
     adapterClient.create(adapterId.getId(), config);
     return new RemoteAdapterManager(adapterId, adapterClient);
   }

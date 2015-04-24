@@ -384,8 +384,8 @@ public class ConfigurableTestBase {
    * @return An {@link AdapterManager} to manage the deployed adapter.
    * @throws Exception if there was an exception deploying the adapter.
    */
-  protected static AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig adapterConfig) throws Exception {
-    return getTestManager().deployAdapter(adapterId, adapterConfig);
+  protected static AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig adapterConfig) throws Exception {
+    return getTestManager().createAdapter(adapterId, adapterConfig);
   }
 
   /**
@@ -406,7 +406,8 @@ public class ConfigurableTestBase {
   }
 
   /**
-   * Adds a plugin usable by the given template.
+   * Adds a plugin usable by the given template. Plugins added will not be visible until a call to
+   * {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made.
    *
    * @param templateId The id of the template to add the plugin for
    * @param pluginClass The plugin class

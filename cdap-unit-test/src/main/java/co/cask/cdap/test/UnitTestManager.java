@@ -160,7 +160,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig config) {
+  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) {
     appFabricClient.createAdapter(adapterId, config);
     return new DefaultAdapterManager(appFabricClient, adapterId);
   }

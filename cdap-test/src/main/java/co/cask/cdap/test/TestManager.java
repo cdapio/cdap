@@ -65,7 +65,8 @@ public interface TestManager {
                       String... exportPackages) throws IOException;
 
   /**
-   * Adds a plugin usable by the given template. Only supported in unit tests.
+   * Adds a plugin usable by the given template. Only supported in unit tests. Plugins added will not be visible
+   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made.
    *
    * @param templateId The id of the template to add the plugin for
    * @param pluginClz The plugin class
@@ -82,7 +83,7 @@ public interface TestManager {
    * @return An {@link AdapterManager} to manage the deployed adapter.
    * @throws Exception if there was an exception deploying the adapter.
    */
-  AdapterManager deployAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception;
+  AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception;
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.

@@ -58,7 +58,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
     WorkflowTemplate.Config config = new WorkflowTemplate.Config("flip");
     Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workflowX");
     AdapterConfig adapterConfig = new AdapterConfig("description", WorkerTemplate.NAME, GSON.toJsonTree(config));
-    AdapterManager manager = deployAdapter(adapterId, adapterConfig);
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
     manager.start();
     // TODO: CDAP-2281 test schedules in a better way
@@ -82,7 +82,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
     WorkerTemplate.Config config = new WorkerTemplate.Config(tableName, "square", 5L);
     Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workerX");
     AdapterConfig adapterConfig = new AdapterConfig("description", WorkerTemplate.NAME, GSON.toJsonTree(config));
-    AdapterManager manager = deployAdapter(adapterId, adapterConfig);
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
     manager.start();
 

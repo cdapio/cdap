@@ -53,6 +53,9 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
 
   private Config config;
 
+  /**
+   * Config for the test source.
+   */
   public static class Config extends PluginConfig {
     @Name(PROPERTY_TYPE)
     @Description(TYPE_DESCRIPTION)

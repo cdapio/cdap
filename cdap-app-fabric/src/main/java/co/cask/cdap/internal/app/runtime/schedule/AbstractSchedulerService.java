@@ -33,14 +33,12 @@ import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract scheduler service common scheduling functionality. For each {@link Schedule} implementation, there is
@@ -170,8 +168,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     if (isLazyStart()) {
       // TODO: CDAP-2281 figure out a better way to handle schedules in unit tests
       String ignoreLazy = properties.get(Constants.Scheduler.IGNORE_LAZY_START);
-      boolean scheduleIgnoresLazy = ignoreLazy != null && Boolean.valueOf(ignoreLazy);
-      if (scheduleIgnoresLazy) {
+      boolean shouldNotSuspend = ignoreLazy != null && Boolean.valueOf(ignoreLazy);
+      if (shouldNotSuspend) {
+        // normally in lazy mode, the scheduler is started on calls to resume.
+        // If this schedule should be active right now instead of requiring a call to resume,
+        // we need to start the scheduler here.
         lazyStart(scheduler);
       } else {
         try {
