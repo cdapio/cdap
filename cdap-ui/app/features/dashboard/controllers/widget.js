@@ -22,9 +22,14 @@ angular.module(PKG.name+'.feature.dashboard')
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
     function contextToTags(context) {
       var parts, tags, i;
-      parts = context.split('.');
+      if (context.length) {
+        parts = context.split('.');
+      } else {
+        // For an empty context, we want no tags. Splitting it by '.' yields [""]
+        parts = [];
+      }
       if (parts.length % 2 != 0) {
-        throw "Metrics context has uneven number of parts: " + this.metric.context
+        throw "Metrics context has uneven number of parts: " + context
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
