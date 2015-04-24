@@ -16,8 +16,6 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.internal.Objects;
-
 /**
  * Represents an adapter returned for /adapters/{adapter-id}.
  */
@@ -55,21 +53,41 @@ public class ProgramId {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hashCode(namespace, application, type, id);
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ProgramId programId = (ProgramId) o;
+
+    if (application != null ? !application.equals(programId.application) :
+         programId.application != null) {
+      return false;
+    }
+    if (id != null ? !id.equals(programId.id) : programId.id != null) {
+      return false;
+    }
+    if (namespace != null
+         ? !namespace.equals(programId.namespace) : programId.namespace != null) {
+      return false;
+    }
+    if (type != programId.type) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final ProgramId other = (ProgramId) obj;
-    return Objects.equal(this.namespace, other.namespace) && Objects.equal(this.application, other.application) &&
-      Objects.equal(this.type, other.type) && Objects.equal(this.id, other.id);
+  public int hashCode() {
+    int result = namespace != null ? namespace.hashCode() : 0;
+    result = 31 * result + (application != null ? application.hashCode() : 0);
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    result = 31 * result + (id != null ? id.hashCode() : 0);
+    return result;
   }
 
   @Override

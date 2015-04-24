@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.internal.Objects;
 import com.google.gson.JsonElement;
 
 /**
@@ -66,22 +65,51 @@ public class AdapterDetail {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hashCode(name, description, template, program, config, schedule);
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AdapterDetail that = (AdapterDetail) o;
+
+    if (config != null ? !config.equals(that.config) : that.config != null) {
+      return false;
+    }
+    if (description != null
+         ? !description.equals(that.description) : that.description != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(that.name) : that.name != null) {
+      return false;
+    }
+    if (program != null
+          ? !program.equals(that.program) : that.program != null) {
+      return false;
+    }
+    if (schedule != null
+          ? !schedule.equals(that.schedule) : that.schedule != null) {
+      return false;
+    }
+    if (template != null
+          ? !template.equals(that.template) : that.template != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final AdapterDetail other = (AdapterDetail) obj;
-    return Objects.equal(this.name, other.name) && Objects.equal(this.description, other.description) &&
-      Objects.equal(this.template, other.template) && Objects.equal(this.program, other.program) &&
-      Objects.equal(this.config, other.config) && Objects.equal(this.schedule, other.schedule);
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (template != null ? template.hashCode() : 0);
+    result = 31 * result + (program != null ? program.hashCode() : 0);
+    result = 31 * result + (config != null ? config.hashCode() : 0);
+    result = 31 * result + (schedule != null ? schedule.hashCode() : 0);
+    return result;
   }
 
   @Override

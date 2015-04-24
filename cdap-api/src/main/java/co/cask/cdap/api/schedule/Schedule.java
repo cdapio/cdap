@@ -17,8 +17,6 @@
 package co.cask.cdap.api.schedule;
 
 
-import co.cask.cdap.internal.Objects;
-
 /**
  * Defines a cron-based schedule for running a program.
  */
@@ -68,21 +66,38 @@ public class Schedule {
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hashCode(name, description, cronEntry);
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Schedule schedule = (Schedule) o;
+
+    if (cronEntry != null
+          ? !cronEntry.equals(schedule.cronEntry)
+          : schedule.cronEntry != null) {
+      return false;
+    }
+    if (description != null ? !description.equals(schedule.description) :
+         schedule.description != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(schedule.name) : schedule.name != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final Schedule other = (Schedule) obj;
-    return Objects.equal(this.name, other.name) && Objects.equal(this.description, other.description) &&
-      Objects.equal(this.cronEntry, other.cronEntry);
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (cronEntry != null ? cronEntry.hashCode() : 0);
+    return result;
   }
 
   @Override
