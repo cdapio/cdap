@@ -1,7 +1,7 @@
 <div class="row">
   <div class="plugins">
     <div class="col-xs-4">
-      <div class="panel panel-default">
+      <div class="panel panel-default" ng-init="ETLSourcesTabOpen=true">
         <div class="panel-heading clearfix" ng-click="ETLSourcesTabOpen = !ETLSourcesTabOpen">
           <span class="pull-left"> Source</span>
           <i class="fa fa-fw pull-right"
@@ -26,7 +26,7 @@
 
     </div>
     <div class="col-xs-4">
-      <div class="panel panel-default">
+      <div class="panel panel-default" ng-init="ETLTransformsTabOpen=true">
         <div class="panel-heading clearfix" ng-click="ETLTransformsTabOpen =!ETLTransformsTabOpen">
           <span class="pull-left"> Transforms</span>
           <i class="fa fa-fw pull-right"
@@ -50,7 +50,7 @@
       </div>
     </div>
     <div class="col-xs-4">
-      <div class="panel panel-default">
+      <div class="panel panel-default" ng-init="ETLSinksTabOpen=true">
         <div class="panel-heading clearfix" ng-click="ETLSinksTabOpen = !ETLSinksTabOpen">
           <span class="pull-left"> Sinks</span>
           <i class="fa fa-fw pull-right"

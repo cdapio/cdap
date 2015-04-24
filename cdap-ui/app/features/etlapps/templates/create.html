@@ -1,6 +1,6 @@
 <div class="row">
 
-    <div class="panel panel-default">
+    <div class="panel panel-default" ng-init="ETLMetadataTabOpen=true">
       <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
         <span class="pull-left"> Metadata</span>
         <i class="fa fa-fw pull-right"
@@ -43,7 +43,7 @@
 
 <div class="row">
 
-    <div class="panel panel-default">
+    <div class="panel panel-default" ng-init="ETLConfigTabOpen=false">
       <div class="panel-heading clearfix" ng-click="ETLConfigTabOpen = !ETLConfigTabOpen">
         <span class="pull-left">Configurations</span>
         <i class="fa fa-fw pull-right"
