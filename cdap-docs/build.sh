@@ -26,15 +26,18 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
+# Optional Parameter (passed via Bamboo env variable or exported in shell)
+# BELL (set it to yes, if you want the bell commands to work in their script)
+
 source ./vars
 source _common/common-build.sh
 
-ARG_1="$1"
-ARG_2="$2"
-ARG_3="$3"
+ARG_1="${1}"
+ARG_2="${2}"
+ARG_3="${3}"
 
 function set_project_path() {
-  if [ "x$ARG_2" == "x" ]; then
+  if [ "x${ARG_2}" == "x" ]; then
     PROJECT_PATH="${SCRIPT_PATH}/../"
   else
     PROJECT_PATH="${SCRIPT_PATH}/../../${ARG_2}"
@@ -185,7 +188,9 @@ function build_all() {
   echo "Replacing GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
-  bell
+  if [ "${BELL}" == 'yes' ]; then
+    bell
+  fi
   exit 0
 }
 

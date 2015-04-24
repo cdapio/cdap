@@ -48,7 +48,7 @@ def get_sdk_version():
         p1 = subprocess.Popen(["grep" , "<version>", "../../../pom.xml" ], stdout=subprocess.PIPE)
         p2 = subprocess.Popen(["awk", "NR==1;START{print $1}"], stdin=p1.stdout, stdout=subprocess.PIPE)
         full_version_temp = p2.communicate()[0]
-#
+# Python 2.6 command end
 	full_version = full_version_temp.strip().replace("<version>", "").replace("</version>", "")
         version = full_version.replace("-SNAPSHOT", "")
         short_version = '%s.%s' % tuple(version.split('.')[0:2])

@@ -71,7 +71,7 @@ function download_file() {
 
   if [ "x$md5_hash" != "x$new_md5_hash" ]; then
     echo -e "$WARNING MD5 Hash for $file_name has changed! Compare files and update hash!"  
-    echo "Old md5_hash: $md5_hash New md5_hash: $new_md5_hash"
+    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"
   fi
 }
 
