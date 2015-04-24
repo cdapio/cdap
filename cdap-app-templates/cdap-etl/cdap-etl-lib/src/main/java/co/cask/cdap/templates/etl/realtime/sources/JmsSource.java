@@ -98,12 +98,13 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     super.initialize(context);
     Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
 
-    if (runtimeArguments.get(JMS_MESSAGES_TO_RECEIVE) != null) {
-      messagesToReceive = Integer.parseInt(runtimeArguments.get(JMS_MESSAGES_TO_RECEIVE));
+    Integer configMessagesToReceive = config.messagesToReceive;
+    if (configMessagesToReceive != null) {
+      messagesToReceive = configMessagesToReceive.intValue();
     }
 
     // Try get the destination name
-    String destinationName = runtimeArguments.get(JMS_DESTINATION_NAME);
+    String destinationName = config.destinationName;
 
     // Get environment vars - this would be prefixed with java.naming.*
     final Hashtable<String, String> envVars = new Hashtable<String, String>();
