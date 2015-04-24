@@ -22,9 +22,14 @@ angular.module(PKG.name+'.feature.dashboard')
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
     function contextToTags(context) {
       var parts, tags, i;
-      parts = context.split('.');
+      if (context.length) {
+        parts = context.split('.');
+      } else {
+        // For an empty context, we want no tags. Splitting it by '.' yields [""]
+        parts = [];
+      }
       if (parts.length % 2 != 0) {
-        throw "Metrics context has uneven number of parts: " + this.metric.context
+        throw "Metrics context has uneven number of parts: " + context
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
@@ -224,6 +229,7 @@ angular.module(PKG.name+'.feature.dashboard')
           var metricName = $scope.wdgt.metric.names[i];
 
           var metricAlias = $scope.wdgt.metricAlias[metricName];
+
           if (metricAlias !== undefined) {
             metricName = metricAlias;
           }
@@ -255,21 +261,6 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.$watch('wdgt.data', function (newVal) {
       var metricMap, arr, columns, hist;
       if(angular.isObject(newVal) && newVal.length) {
-        // columns will be in the format: [ [metric1Name, v1, v2, v3, v4], [metric2Name, v1, v2, v3, v4], ... xCoords ]
-        columns = [];
-        for (var i = 0; i < newVal.length; i++) {
-          metricMap = newVal[i];
-          var values = Object.keys(metricMap).map(function(key) {
-            return metricMap[key];
-          });
-          values.unshift($scope.wdgt.metric.names[i]);
-          columns.push(values);
-        }
-
-        // x coordinates are expected in the format: ['x', ts1, ts2, ts3...]
-        var xCoords = Object.keys(newVal[0]);
-        xCoords.unshift('x');
-        columns.push(xCoords);
 
         var metricNames = $scope.wdgt.metric.names.map(function(metricName) {
           var metricAlias = $scope.wdgt.metricAlias[metricName];
@@ -278,6 +269,24 @@ angular.module(PKG.name+'.feature.dashboard')
           }
           return metricName;
         });
+
+
+        // columns will be in the format: [ [metric1Name, v1, v2, v3, v4], [metric2Name, v1, v2, v3, v4], ... xCoords ]
+        columns = [];
+        for (var i = 0; i < newVal.length; i++) {
+          metricMap = newVal[i];
+          var values = Object.keys(metricMap).map(function(key) {
+            return metricMap[key];
+          });
+          values.unshift(metricNames[i]);
+          columns.push(values);
+        }
+
+        // x coordinates are expected in the format: ['x', ts1, ts2, ts3...]
+        var xCoords = Object.keys(newVal[0]);
+        xCoords.unshift('x');
+        columns.push(xCoords);
+
         // DO NOT change the format of this data without ensuring that whoever needs it is also changed!
         // Some examples: c3 charts, table widget.
         $scope.chartData = {columns: columns, metricNames: metricNames, xCoords: xCoords};
