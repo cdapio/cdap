@@ -44,11 +44,11 @@ angular.module(PKG.name + '.feature.etlapps')
     // Default ETL Templates
     $scope.etlTypes = [
       {
-        name: 'Etl Batch',
+        name: 'ETL Batch',
         type: 'etlBatch'
       },
       {
-        name: 'ETL Real Time',
+        name: 'ETL Realtime',
         type: 'etlRealtime'
       }
     ];
