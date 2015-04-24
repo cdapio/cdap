@@ -209,28 +209,6 @@ public class JmsSourceTest {
 
   private void initializeJmsSource(String destination, int messageReceive) {
     jmsSource = new JmsSource(new JmsSource.JmsConfig(destination, messageReceive));
-
-    jmsSource.configure(new StageConfigurer() {
-      @Override
-      public void setName(String name) {
-        // no-op
-      }
-
-      @Override
-      public void setDescription(String description) {
-        // no-op
-      }
-
-      @Override
-      public void addProperties(Collection<Property> properties) {
-        // no-op
-      }
-
-      @Override
-      public void addProperty(Property property) {
-        // no-op
-      }
-    });
   }
 
   /**
