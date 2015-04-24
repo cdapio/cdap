@@ -16,9 +16,13 @@
 
 package co.cask.cdap.templates.etl.realtime.sinks;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -26,6 +30,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
 import com.google.common.base.Preconditions;
 
@@ -36,8 +41,8 @@ import java.util.Map;
  * <p/>
  * This {@link RealtimeCubeSink} takes in {@link co.cask.cdap.api.data.format.StructuredRecord} in, maps it to a
  * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} using mapping configuration
- * provided with {@link #MAPPING_CONFIG_PROPERTY} property, and writes it to a {@link Cube} dataset identified by
- * {@link #NAME_PROPERTY} property.
+ * provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a {@link Cube}
+ * dataset identified by {@link Properties.Cube#NAME} property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -47,29 +52,49 @@ import java.util.Map;
  * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} the
  * mapping configuration is required, as per {@link StructuredRecordToCubeFact} documentation.
  */
-// todo: add unit-test once CDAP-2156 is resolved
+@Plugin(type = "sink")
+@Name("RealtimeCubeSink")
+@Description("CDAP Cube Dataset Realtime Sink")
 public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
-  public static final String NAME_PROPERTY = "name";
-  public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
+  private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
+    "one will be created.";
+  private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
+    "details for more information";
+  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping configuration.";
 
-  private String datasetName;
+  /**
+   * Config class for RealtimeCube
+   */
+  public static class RealtimeCubeConfig extends PluginConfig {
+    @Description(NAME_PROPERTY_DESC)
+    String name;
+
+    @Name(Properties.Cube.PROPERTY_RESOLUTIONS)
+    @Description(PROPERTY_RESOLUTIONS_DESC)
+    String resProp;
+
+    @Name(Properties.Cube.MAPPING_CONFIG_PROPERTY)
+    @Description(MAPPING_CONFIG_PROPERTY_DESC)
+    String configAsString;
+
+    public RealtimeCubeConfig(String name, String resProp, String configAsString) {
+      this.name = name;
+      this.resProp = resProp;
+      this.configAsString = configAsString;
+    }
+  }
+
+  private final RealtimeCubeConfig realtimeCubeConfig;
+
+  public RealtimeCubeSink(RealtimeCubeConfig realtimeCubeConfig) {
+    this.realtimeCubeConfig = realtimeCubeConfig;
+  }
+
   private StructuredRecordToCubeFact transform;
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("RealtimeCubeSink");
-    configurer.setDescription("CDAP Cube Dataset Realtime Sink");
-    configurer.addProperty(new Property(NAME_PROPERTY, "Name of the Cube dataset. If the Cube does not already exist," +
-      " one will be created.", true));
-    configurer.addProperty(new Property(Cube.PROPERTY_RESOLUTIONS,
-                                        "Aggregation resolutions. See Cube dataset " +
-                                          "configuration details for more information", true));
-    configurer.addProperties(StructuredRecordToCubeFact.getProperties());
-  }
-
-  @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    String datasetName = stageConfig.getProperties().get(NAME_PROPERTY);
+    String datasetName = realtimeCubeConfig.name;
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
     pipelineConfigurer.createDataset(datasetName, Cube.class.getName(), DatasetProperties.builder()
       .addAll(stageConfig.getProperties())
@@ -78,7 +103,7 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
 
   @Override
   public int write(Iterable<StructuredRecord> objects, DataWriter dataWriter) throws Exception {
-    Cube cube = dataWriter.getDataset(datasetName);
+    Cube cube = dataWriter.getDataset(realtimeCubeConfig.name);
     int count = 0;
     for (StructuredRecord record : objects) {
       cube.add(transform.transform(record));
@@ -91,7 +116,6 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
     Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
-    datasetName = runtimeArguments.get(NAME_PROPERTY);
     transform = new StructuredRecordToCubeFact(runtimeArguments);
   }
 }
