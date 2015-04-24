@@ -9,25 +9,28 @@
 
   <li role="presentation">
     <a href="" role="menuitem" tabindex="-1" ng-click="toggleDragDrop()">
-      <span class="fa fa-fw fa-check" ng-show="currentBoard.draggable"></span>
-      Drag & Drop
+      <span ng-if="currentBoard.draggable">Disable Drag & Drop</span>
+      <span ng-if="!currentBoard.draggable">Enable Drag & Drop</span>
     </a>
   </li>
 
   <li role="presentation" class="divider"></li>
 
-  <li role="presentation" class="dropdown-header text-center">Columns</li>
+  <li role="presentation" class="dropdown-header text-center">
+    <span class="fa fa-fw fa-columns"></span>
+    Columns
+  </li>
 
   <li role="presentation">
     <ul class="list-inline text-center">
       <li ng-click="changeColumn(2)">
-        2
+        Two
       </li>
       <li ng-click="changeColumn(3)">
-        3
+        Three
       </li>
       <li ng-click="changeColumn(4)">
-        4
+        Four
       </li>
     </ul>
   </li>
