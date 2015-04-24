@@ -16,12 +16,10 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value associated with {@link CubeFact}.
+ * Represents tag and its value associated with metrics data points.
  */
 public final class MetricTagValue {
   private final String name;
@@ -65,7 +63,7 @@ public final class MetricTagValue {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("TagValue");
+    sb.append("MetricTagValue");
     sb.append("{name='").append(name).append('\'');
     sb.append(", value='").append(value == null ? "null" : value).append('\'');
     sb.append('}');
