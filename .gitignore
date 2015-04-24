@@ -30,6 +30,7 @@ logs/
 .nux_dashboard
 
 # Singlenode and test data files.
+/plugins/
 /data/
 /data-fabric-tests/data/
 
