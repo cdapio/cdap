@@ -88,6 +88,15 @@ public final class Properties {
   }
 
   /**
+   * Properties for ProjectionTransform
+   */
+  public static class ProjectionTransform {
+    public static final String DROP = "drop";
+    public static final String RENAME = "rename";
+    public static final String CONVERT = "convert";
+  }
+
+  /**
    * Common properties for BatchWritable source and sinks
    */
   public static class BatchWritable {

@@ -16,13 +16,15 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.StageContext;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.common.KeyValueListParser;
@@ -38,14 +40,58 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Projection transform that allows dropping, renaming, and converting field types.
  */
+@Plugin(type = "transform")
+@Name("ProjectionTransform")
+@Description("Projection transform that lets you drop, rename, and cast fields to a different type.")
 public class ProjectionTransform extends TransformStage<StructuredRecord, StructuredRecord> {
-  private static final String DROP = "drop";
-  private static final String RENAME = "rename";
-  private static final String CONVERT = "convert";
+  private static final String DROP_DESC = "Comma separated list of fields to drop. For example: " +
+    "'field1,field2,field3'.";
+  private static final String RENAME_DESC = "List of fields to rename. This is a comma separated list of key-value " +
+    "pairs, where each pair is separated by a colon and specifies the input name and the output name. For " +
+    "example: 'datestr:date,timestamp:ts' specifies that the 'datestr' field should be renamed to 'date' and the " +
+    "'timestamp' field should be renamed to 'ts'.";
+  private static final String CONVERT_DESC = "List of fields to convert to a different type. This is a comma " +
+    "separated list of key-value pairs, where each pair is separated by a colon and specifies the field name and the" +
+    " desired type. For example: 'count:long,price:double' specifies that the 'count' field should be converted to a" +
+    " long and the 'price' field should be converted to a double. Only simple types are supported (boolean, int, " +
+    "long, float, double, bytes, string). Any simple type can be converted to bytes or a string. Otherwise, a type" +
+    " can only be converted to a larger type. For example, an int can be converted to a long, but a long cannot be" +
+    " converted to an int.";
+
+  /**
+   * Config class for ProjectionTransform
+   */
+  public static class ProjectionTransformConfig extends PluginConfig {
+    @Description(DROP_DESC)
+    @Nullable
+    String drop;
+
+    @Description(RENAME_DESC)
+    @Nullable
+    String rename;
+
+    @Description(CONVERT_DESC)
+    @Nullable
+    String convert;
+
+    public ProjectionTransformConfig(String drop, String rename, String convert) {
+      this.drop = drop;
+      this.rename = rename;
+      this.convert = convert;
+    }
+  }
+
+  private final ProjectionTransformConfig projectionTransformConfig;
+
+  public ProjectionTransform(ProjectionTransformConfig projectionTransformConfig) {
+    this.projectionTransformConfig = projectionTransformConfig;
+  }
+
   private static final Pattern fieldDelimiter = Pattern.compile("\\s*,\\s*");
   private Set<String> fieldsToDrop = Sets.newHashSet();
   private BiMap<String, String> fieldsToRename = HashBiMap.create();
@@ -53,48 +99,18 @@ public class ProjectionTransform extends TransformStage<StructuredRecord, Struct
   // cache input schema hash to output schema so we don't have to build it each time
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(getClass().getSimpleName());
-    configurer.setDescription("Projection transform that lets you drop, rename, and cast fields to a different type.");
-    configurer.addProperty(new Property(
-      DROP,
-      "Comma separated list of fields to drop. For example: 'field1,field2,field3'.",
-      false));
-    configurer.addProperty(new Property(
-      RENAME,
-      "List of fields to rename. This is a comma separated list of key-value pairs, where each " +
-        "pair is separated by a colon and specifies the input name and the output name. " +
-        "For example: 'datestr:date,timestamp:ts' specifies that the 'datestr' field should be renamed to " +
-        "'date' and the 'timestamp' field should be renamed to 'ts'.",
-      false));
-    configurer.addProperty(new Property(
-      CONVERT,
-      "List of fields to convert to a different type. This is a comma separated list of key-value pairs, where each " +
-        "pair is separated by a colon and specifies the field name and the desired type. " +
-        "For example: 'count:long,price:double' specifies that the 'count' field should be converted to a long " +
-        "and the 'price' field should be converted to a double. Only simple types are supported " +
-        "(boolean, int, long, float, double, bytes, string). Any simple type can be converted to bytes or a string. " +
-        "Otherwise, a type can only be converted to a larger type. For example, an int can be converted to a long, " +
-        "but a long cannot be converted to an int.",
-      false));
-  }
 
   @Override
   public void initialize(StageContext context) {
-    Map<String, String> properties = context.getPluginProperties().getProperties();
-
-    String dropStr = properties.get(DROP);
-    if (dropStr != null) {
-      for (String dropField : Splitter.on(fieldDelimiter).split(dropStr)) {
+    if (projectionTransformConfig.drop != null) {
+      for (String dropField : Splitter.on(fieldDelimiter).split(projectionTransformConfig.drop)) {
         fieldsToDrop.add(dropField);
       }
     }
 
     KeyValueListParser kvParser = new KeyValueListParser("\\s*,\\s*", ":");
-    String renameStr = properties.get(RENAME);
-    if (renameStr != null) {
-      for (KeyValue<String, String> keyVal : kvParser.parse(renameStr)) {
+    if (projectionTransformConfig.rename != null) {
+      for (KeyValue<String, String> keyVal : kvParser.parse(projectionTransformConfig.rename)) {
         String key = keyVal.getKey();
         String val = keyVal.getValue();
         try {
@@ -109,9 +125,8 @@ public class ProjectionTransform extends TransformStage<StructuredRecord, Struct
       }
     }
 
-    String convertStr = properties.get(CONVERT);
-    if (convertStr != null) {
-      for (KeyValue<String, String> keyVal : kvParser.parse(convertStr)) {
+    if (projectionTransformConfig.convert != null) {
+      for (KeyValue<String, String> keyVal : kvParser.parse(projectionTransformConfig.convert)) {
         String name = keyVal.getKey();
         String typeStr = keyVal.getValue();
         Schema.Type type = Schema.Type.valueOf(typeStr.toUpperCase());
