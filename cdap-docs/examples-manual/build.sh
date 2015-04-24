@@ -49,23 +49,23 @@ function guide_rewrite_sed() {
 function download_file() {
   # Downloads a file to the includes directory, and checks that it hasn't changed.
   # Uses md5 hashes to monitor if any files have changed.
-  local includes_dir=${1}
-  local source_dir=${2}
-  local file_name=${3}
-  local md5_hash=${4}
-  local target=${includes_dir}/${file_name}
+  local includes_dir=$1
+  local source_dir=$2
+  local file_name=$3
+  local md5_hash=$4
+  local target=$includes_dir/$file_name
   
-  if [ ! -d "${includes_dir}" ]; then
+  if [ ! -d "$includes_dir" ]; then
     mkdir $includes_dir
-    echo "Creating Includes Directory: ${includes_dir}"
+    echo "Creating Includes Directory: $includes_dir"
   fi
 
-  echo "Downloading using curl ${file_name} from ${source_dir}"
-  curl ${source_dir}/${file_name} --output ${target} --silent
-  local new_md5_hash=`md5 -q ${target}`
-  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
-    echo -e "$WARNING MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
-    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
+  echo "Downloading using curl $file_name from $source_dir"
+  curl $source_dir/$file_name --output $target --silent
+  local new_md5_hash=`md5 -q $target`
+  if [ "x$md5_hash" != "x$new_md5_hash" ]; then
+    echo -e "$WARNING MD5 Hash for $file_name has changed! Compare files and update hash!"  
+    echo "Old md5_hash: $md5_hash New md5_hash: $new_md5_hash"
   fi
 }
 
