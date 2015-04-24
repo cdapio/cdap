@@ -60,29 +60,31 @@ public final class ScheduleSpecification {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     ScheduleSpecification that = (ScheduleSpecification) o;
-
-    if (program != null ? !program.equals(that.program) : that.program != null) return false;
-    if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
-    if (schedule != null ? !schedule.equals(that.schedule) : that.schedule != null) return false;
-
-    return true;
+    if (program.equals(that.program) && properties.equals(that.properties) && schedule.equals(that.schedule)) {
+      return true;
+    }
+    return false;
   }
 
   @Override
   public int hashCode() {
-    int result = schedule != null ? schedule.hashCode() : 0;
-    result = 31 * result + (program != null ? program.hashCode() : 0);
-    result = 31 * result + (properties != null ? properties.hashCode() : 0);
+    int result = schedule.hashCode();
+    result = 31 * result + program.hashCode();
+    result = 31 * result + properties.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("ScheduleSpecification{");
+    StringBuilder sb = new StringBuilder("ScheduleSpecification{");
     sb.append("schedule=").append(schedule);
     sb.append(", program=").append(program);
     sb.append(", properties=").append(properties);
