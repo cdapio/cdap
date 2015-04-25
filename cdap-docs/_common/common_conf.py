@@ -279,8 +279,10 @@ html_theme_options = {
   "manual_icons": manual_icons_list,
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
-    { "development": 
-        [ ['3.0.0-SNAPSHOT', '3.0.0'], ], 
+    { "development": [
+        ['3.1.0-SNAPSHOT', '3.1.0'], 
+        ['3.0.0-SNAPSHOT', '3.0.0'], 
+        ], 
       "current": ['2.8.0', '2.8.0', '2015-03-23'], 
       "older": [ 
         ['2.7.1', '2.7.1', '2015-02-05'], 

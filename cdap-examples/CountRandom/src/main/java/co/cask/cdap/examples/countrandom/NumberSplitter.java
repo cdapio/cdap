@@ -27,10 +27,15 @@ public class NumberSplitter extends AbstractFlowlet {
 
   @ProcessInput
   public void process(Integer number)  {
-    output.emit(new Integer(number % 10000));
-    output.emit(new Integer(number % 1000));
-    output.emit(new Integer(number % 100));
-    output.emit(new Integer(number % 10));
+    emit(number % 10000);
+    emit(number % 1000);
+    emit(number % 100);
+    emit(number % 10);
+  }
+
+  private void emit(Integer i) {
+    // emit i with a hash key named "n" and value i
+    output.emit(i, "n", i);
   }
 }
 

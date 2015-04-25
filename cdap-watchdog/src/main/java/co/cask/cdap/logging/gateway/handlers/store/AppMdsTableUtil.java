@@ -14,19 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.conversion.app;
+package co.cask.cdap.logging.gateway.handlers.store;
 
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
+import com.google.inject.Inject;
 
 /**
- * Workflow that periodically reads data from a stream and writes it into a time partitioned fileset.
+ * Helper class for fetching dataset used by {@link AppMetadataStore}.
  */
-public class StreamConversionWorkflow extends AbstractWorkflow {
+public class AppMdsTableUtil extends MetaTableUtil {
+  public static final String APP_META_TABLE = "app.meta";
+
+  @Inject
+  public AppMdsTableUtil(DatasetFramework framework, CConfiguration conf) {
+    super(framework, conf);
+  }
 
   @Override
-  public void configure() {
-    setName("StreamConversionWorkflow");
-    setDescription("Periodically reads stream data and writes it into a FileSet");
-    addMapReduce("StreamConversionMapReduce");
+  public String getMetaTableName() {
+    return APP_META_TABLE;
   }
 }

@@ -67,8 +67,10 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
-    String sourcePluginId = sourceConfig.getName();
-    String sinkPluginId = sinkConfig.getName();
+    String sourcePluginId = String.format("%s%s%s", Constants.Source.PLUGINTYPE, Constants.ID_SEPARATOR,
+                                          sourceConfig.getName());
+    String sinkPluginId = String.format("%s%s%s", Constants.Sink.PLUGINTYPE, Constants.ID_SEPARATOR,
+                                        sinkConfig.getName());
 
     // Instantiate Source, Transforms, Sink stages.
     // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
