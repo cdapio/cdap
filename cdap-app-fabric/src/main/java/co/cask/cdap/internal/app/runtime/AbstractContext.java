@@ -41,7 +41,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -125,6 +124,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return adapterSpec;
   }
 
+  /**
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin supported.
+   */
+  @Nullable
+  public PluginInstantiator getPluginInstantiator() {
+    return pluginInstantiator;
+  }
+
   @Override
   public String toString() {
     return String.format("namespaceId=%s, applicationId=%s, program=%s, runid=%s",
@@ -192,14 +199,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * method to release additional resources.
    */
   public void close() {
-    try {
-      for (Closeable ds : datasets.values()) {
-        closeDataSet(ds);
-      }
-    } finally {
-      if (pluginInstantiator != null) {
-        Closeables.closeQuietly(pluginInstantiator);
-      }
+    for (Closeable ds : datasets.values()) {
+      closeDataSet(ds);
     }
   }
 

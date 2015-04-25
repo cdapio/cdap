@@ -86,12 +86,13 @@ public final class MapReduceContextConfig {
   }
 
   private void setArguments(Map<String, String> arguments) {
-    hConf.set(HCONF_ATTR_ARGS, new Gson().toJson(arguments));
+    hConf.set(HCONF_ATTR_ARGS, GSON.toJson(arguments));
   }
 
   public Arguments getArguments() {
-    Map<String, String> arguments = new Gson().fromJson(hConf.get(HCONF_ATTR_ARGS),
-                                                        new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> arguments = GSON.fromJson(hConf.get(HCONF_ATTR_ARGS),
+                                                  new TypeToken<Map<String, String>>() {
+                                                  }.getType());
     return new BasicArguments(arguments);
   }
 
@@ -165,9 +166,7 @@ public final class MapReduceContextConfig {
       splitClass = SimpleSplit.class;
     }
     hConf.set(HCONF_ATTR_INPUT_SPLIT_CLASS, splitClass.getName());
-
-    // todo: re-use Gson instance?
-    hConf.set(HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(splits));
+    hConf.set(HCONF_ATTR_INPUT_SPLITS, GSON.toJson(splits));
   }
 
   public List<Split> getInputSelection() {
@@ -182,7 +181,7 @@ public final class MapReduceContextConfig {
       @SuppressWarnings("unchecked")
       Class<? extends Split> splitClass =
         (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
-      return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
+      return GSON.fromJson(splitsJson, new ListSplitType(splitClass));
     } catch (ClassNotFoundException e) {
       //todo
       throw Throwables.propagate(e);

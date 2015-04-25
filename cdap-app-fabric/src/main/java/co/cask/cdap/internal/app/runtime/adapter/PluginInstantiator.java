@@ -186,7 +186,12 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
-    DirUtils.deleteDirectoryContents(tmpDir);
+    try {
+      DirUtils.deleteDirectoryContents(tmpDir);
+    } catch (IOException e) {
+      // It's the cleanup step. Nothing much can be done if cleanup failed.
+      LOG.warn("Failed to delete directory {}", tmpDir);
+    }
   }
 
   /**
