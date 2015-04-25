@@ -19,7 +19,7 @@
   "security.realm": "cdap",
   "data.tx.snapshot.local.dir": "data/tx.snapshot",
   "twill.java.reserved.memory.mb": "250",
-  "account.server.port": "8080",
+  "account.server.port": "9999",
   "security.auth.server.bind.port": "10009",
   "kafka.bind.port": "9092",
   "data.queue.config.update.interval": "5",
