@@ -304,7 +304,7 @@ function test_an_include_diff() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {

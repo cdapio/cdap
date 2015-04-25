@@ -17,10 +17,13 @@
 package co.cask.cdap.templates.etl.realtime.kafka;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
-
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
+import co.cask.cdap.templates.etl.realtime.sources.KafkaSource.KafkaPluginConfig;
+
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -86,22 +89,33 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   private BrokerService brokerService;
   private Cache<TopicPartition, SimpleConsumer> kafkaConsumers;
 
-  @Override
-  protected void configureKafka(KafkaConfigurer configurer) {
-    Map<String, String> runtimeArgs = getContext().getPluginProperties().getProperties();
-    if (runtimeArgs.containsKey(KafkaSource.KAFKA_ZOOKEEPER)) {
-      configurer.setZooKeeper(runtimeArgs.get(KafkaSource.KAFKA_ZOOKEEPER));
-    } else if (runtimeArgs.containsKey(KafkaSource.KAFKA_BROKERS)) {
-      configurer.setBrokers(runtimeArgs.get(KafkaSource.KAFKA_BROKERS));
-    }
-    setupTopicPartitions(configurer, runtimeArgs);
+  public Kafka08SimpleApiConsumer(KafkaSource kafkaSource) {
+    super(kafkaSource);
   }
 
-  private void setupTopicPartitions(KafkaConsumerConfigurer configurer, Map<String, String> runtimeArgs) {
-    int partitions = Integer.parseInt(runtimeArgs.get(KafkaSource.KAFKA_PARTITIONS));
+  @Override
+  protected void configureKafka(KafkaConfigurer configurer) {
+    KafkaPluginConfig pluginConfig = kafkaSource.getConfig();
+    Preconditions.checkNotNull(pluginConfig, "Could not have Kafka source plugin config to be null.");
+
+    String zk = pluginConfig.getZkConnect();
+    String brokers = pluginConfig.getKafkaBrokers();
+    Preconditions.checkState(zk != null || brokers != null);
+
+    if (zk != null) {
+      configurer.setZooKeeper(zk);
+    } else {
+      configurer.setBrokers(brokers);
+    }
+
+    setupTopicPartitions(configurer, pluginConfig);
+  }
+
+  private void setupTopicPartitions(KafkaConsumerConfigurer configurer, KafkaPluginConfig pluginConfig) {
+    int partitions = pluginConfig.getPartitions();
     int instanceId = getContext().getInstanceId();
     int instances = getContext().getInstanceCount();
-    String kafkaTopic = runtimeArgs.get(KafkaSource.KAFKA_TOPIC);
+    String kafkaTopic = pluginConfig.getTopic();
     for (int i = 0; i < partitions; i++) {
       if ((i % instances) == instanceId) {
         configurer.addTopicPartition(kafkaTopic, i);
@@ -180,6 +194,8 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
       brokerService.startAndWait();
     }
 
+    String argValue = getContext().getPluginProperties().getProperties().get(KafkaSource.KAFKA_DEFAULT_OFFSET);
+
     kafkaConsumers = CacheBuilder.newBuilder()
       .concurrencyLevel(1)
       .expireAfterAccess(60, TimeUnit.SECONDS)
@@ -224,8 +240,11 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   }
 
   @Override
-  protected void processMessage(ByteBuffer payload , Emitter<ByteBuffer> emitter) {
-    emitter.emit(payload);
+  protected void processMessage(ByteBuffer payload , Emitter<StructuredRecord> emitter) {
+    // TODO MODIFY BYTEBUFFER TO STRUCTURED RECORD
+    StructuredRecord structuredRecord = byteBufferToStructuredRecord(payload);
+
+    emitter.emit(structuredRecord);
   }
 
   @Override
@@ -257,9 +276,9 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
   @Override
   protected long getDefaultOffset(TopicPartition topicPartition) {
-    String argValue = getContext().getPluginProperties().getProperties().get(KafkaSource.KAFKA_DEFAULT_OFFSET);
+    Long argValue = kafkaSource.getConfig().getDefaultOffset();
     if (argValue != null) {
-      return Long.valueOf(argValue);
+      return argValue.longValue();
     } else {
       return kafka.api.OffsetRequest.EarliestTime();
     }
@@ -351,7 +370,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   @SuppressWarnings("unchecked")
   private <T> Class<T> loadBrokerServiceClass(ClassLoader classLoader) throws ClassNotFoundException {
     // TODO: Hacky way to construct ZKBrokerService from Twill as it's a protected class
-    // Need Twill update to resolve this hack
+    // TODO: Need Twill update to resolve this hack: https://github.com/apache/incubator-twill/pull/31
     return (Class<T>) classLoader.loadClass("org.apache.twill.internal.kafka.client.ZKBrokerService");
   }
 
