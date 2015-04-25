@@ -266,11 +266,11 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Map<String, String> findNextAvailableTags(MetricSearchQuery query) throws Exception {
+  public Collection<co.cask.cdap.api.metrics.TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
     Collection<TagValue> tags = cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
-    Map<String, String> result = Maps.newHashMap();
+    Collection<co.cask.cdap.api.metrics.TagValue> result = Lists.newArrayList();
     for (TagValue tagValue : tags) {
-      result.put(tagValue.getName(), tagValue.getValue());
+      result.add(new co.cask.cdap.api.metrics.TagValue(tagValue.getName(), tagValue.getValue()));
     }
     return result;
   }

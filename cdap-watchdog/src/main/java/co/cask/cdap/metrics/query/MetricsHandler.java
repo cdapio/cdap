@@ -508,7 +508,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       // limit is -1 , to include the entire search result.
       MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
                                                             toTagValues(humanToTagNames(parseTagValues(tags))));
-      Map<String, String> nextTags = metricStore.findNextAvailableTags(searchQuery);
+      Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
       responder.sendJson(HttpResponseStatus.OK, tagValuesToHuman(nextTags));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
@@ -548,15 +548,15 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
                                                           toTagValues(humanToTagNames(tagValues)));
-    Map<String, String> nextTags = metricStore.findNextAvailableTags(searchQuery);
+    Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
 
     contextPrefix = toCanonicalContext(tagValues);
     Collection<String> result = Lists.newArrayList();
-    for (Map.Entry<String, String> tag : nextTags.entrySet()) {
+    for (TagValue tag : nextTags) {
       // for now, if tag value is null, we use ANY_TAG_VALUE as returned for convenience: this allows to easy build UI
       // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
       String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
-      String name = tagNameToHuman(tag.getKey());
+      String name = tagNameToHuman(tag.getName());
       String tagValue = encodeTag(name) + TAG_DELIM + encodeTag(value);
       String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
       result.add(resultTag);
@@ -564,11 +564,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  private List<MetricTagValue> tagValuesToHuman(Map<String, String> tagValues) {
+  private List<MetricTagValue> tagValuesToHuman(Collection<TagValue> tagValues) {
     List<MetricTagValue> result = Lists.newArrayList();
-    for (Map.Entry<String, String> tagValue : tagValues.entrySet()) {
-      String human = tagNameToHuman.get(tagValue.getKey());
-      human = human != null ? human : tagValue.getKey();
+    for (TagValue tagValue : tagValues) {
+      String human = tagNameToHuman.get(tagValue.getName());
+      human = human != null ? human : tagValue.getName();
       String value = tagValue.getValue() == null ? ANY_TAG_VALUE : tagValue.getValue();
       result.add(new MetricTagValue(human, value));
     }
