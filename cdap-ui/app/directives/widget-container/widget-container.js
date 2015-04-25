@@ -31,6 +31,15 @@ angular.module(PKG.name + '.commons')
             angularElement.attr('placeholder', scope.myconfig[scope.name].info);
             element.append(angularElement);
             break;
+          case 'json-editor':
+            angularElement = angular.element('<textarea class="form-control" cask-json-edit="model"></textarea>');
+            angularElement.attr('placeholder', scope.myconfig[scope.name].info);
+            element.append(angularElement);
+            break;
+          case 'javascript-editor':
+            angularElement = angular.element('<div style="width: 400px;height: 300px;" ui-ace></div>');
+            element.append(angularElement);
+            break;
         }
         element.removeAttr('widget-container');
         $compile(element)(scope);
