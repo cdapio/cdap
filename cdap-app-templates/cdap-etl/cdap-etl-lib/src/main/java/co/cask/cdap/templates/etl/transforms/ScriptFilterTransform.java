@@ -16,8 +16,12 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Property;
 import co.cask.cdap.templates.etl.api.StageConfigurer;
@@ -36,34 +40,34 @@ import javax.script.ScriptException;
 /**
  * Filters records using custom javascript provided by the config.
  */
+@Plugin(type = "transform")
+@Name("ScriptFilter")
+@Description("A transform plugin that filters records using a custom javascript provided in the plugin's config.")
 public class ScriptFilterTransform extends TransformStage<StructuredRecord, StructuredRecord> {
-  private static final String SCRIPT = "script";
+  private static final String SCRIPT_DESCRIPTION = "Script that returns true if the input record should be filtered, " +
+    "and false if not. The script has access to the input record through a variable named 'input', " +
+    "which is a Json object representation of the record. " +
+    "For example, 'return input.count > 100' will filter out any records whose count field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
+
+  private final ScriptFilterConfig scriptFilterConfig;
+
   private ScriptEngine engine;
   private Invocable invocable;
   private Metrics metrics;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(getClass().getSimpleName());
-    configurer.addProperty(new Property(
-      SCRIPT,
-      "Script that returns true if the input record should be filtered, and false if not. " +
-        "The script has access to the input record through a variable named 'input', " +
-        "which is a Json object representation of the record. " +
-        "For example, 'return input.count > 100' will filter out any records whose count field is greater than 100.",
-      true
-    ));
+  public ScriptFilterTransform(ScriptFilterConfig scriptFilterConfig) {
+    this.scriptFilterConfig = scriptFilterConfig;
   }
 
   @Override
   public void initialize(StageContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
-    String scriptStr = context.getPluginProperties().getProperties().get(SCRIPT);
-    Preconditions.checkArgument(scriptStr != null && !scriptStr.isEmpty(), "Filter script must be specified.");
+    String scriptStr = scriptFilterConfig.script;
+    Preconditions.checkArgument(!scriptStr.isEmpty(), "Filter script must be specified.");
 
     String script = "function shouldFilter() { " + scriptStr + " }";
     try {
@@ -88,5 +92,13 @@ public class ScriptFilterTransform extends TransformStage<StructuredRecord, Stru
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);
     }
+  }
+
+  /**
+   * {@link PluginConfig} class for {@link ScriptFilterTransform}
+   */
+  public static class ScriptFilterConfig extends PluginConfig {
+    @Description(SCRIPT_DESCRIPTION)
+    String script;
   }
 }

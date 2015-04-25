@@ -204,13 +204,5 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     @Description(SCHEMA_DESCRIPTION)
     @Nullable
     private String schema = DEFAULT_SCHEMA.toString();
-
-    public StreamBatchConfig(String name, String duration, String delay, String format, String schema) {
-      this.name = name;
-      this.duration = duration;
-      this.delay = delay;
-      this.format = format;
-      this.schema = schema;
-    }
   }
 }
