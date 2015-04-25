@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
@@ -78,8 +78,8 @@ public class CubeDataset extends AbstractDataset implements Cube {
   }
 
   @Override
-  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) {
-    return cube.findNextAvailableTags(query);
+  public Collection<DimensionValue> findDimensionValues(CubeExploreQuery query) {
+    return cube.findDimensionValues(query);
   }
 
   @Override

@@ -21,8 +21,8 @@ import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
@@ -58,7 +58,7 @@ import javax.annotation.Nullable;
 public class DefaultCube implements Cube {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
 
-  private static final TagValueComparator TAG_VALUE_COMPARATOR = new TagValueComparator();
+  private static final DimensionValueComparator DIMENSION_VALUE_COMPARATOR = new DimensionValueComparator();
   // hard-limit on max records to scan
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
   private final Map<Integer, FactTable> resolutionToFactTable;
@@ -85,11 +85,11 @@ public class DefaultCube implements Cube {
     for (CubeFact fact : facts) {
       for (Aggregation agg : aggregations.values()) {
         if (agg.accept(fact)) {
-          List<TagValue> tagValues = Lists.newArrayList();
-          for (String tagName : agg.getTagNames()) {
-            tagValues.add(new TagValue(tagName, fact.getTags().get(tagName)));
+          List<DimensionValue> dimensionValues = Lists.newArrayList();
+          for (String dimensionName : agg.getDimensionNames()) {
+            dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionName)));
           }
-          toWrite.add(new Fact(fact.getTimestamp(), tagValues, fact.getMeasurements()));
+          toWrite.add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
         }
       }
     }
@@ -104,10 +104,12 @@ public class DefaultCube implements Cube {
     /*
       CubeQuery example: "dataset read ops for app per dataset". Or:
 
-      SELECT count('read.ops')                                     << measure name and type
-      FROM aggregation.resolution                                  << aggregation and resolution
-      GROUP BY dataset,                                            << groupByTags
-      WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
+      SELECT count('read.ops')                                           << measure name and type
+      FROM aggregation1.1min_resolution                                  << aggregation and resolution
+      GROUP BY dataset,                                                  << groupByDimensions
+      WHERE namespace='ns1' AND app='myApp' AND program='myFlow' AND     << dimensionValues
+            ts>=1423370200 AND ts{@literal<}1423398198                   << startTs and endTs
+      LIMIT 100                                                          << limit
 
       Execution:
 
@@ -115,8 +117,8 @@ public class DefaultCube implements Cube {
 
       Here, we need aggregation that has following dimensions: 'namespace', 'app', 'program', 'dataset'.
 
-      Ideally (to reduce the scan range), 'dataset' should be in the end, other tags as close to the beginning
-      as possible, and minimal number of other "unspecified" tags.
+      Ideally (to reduce the scan range), 'dataset' should be in the end, other dimensions as close to the beginning
+      as possible, and minimal number of other "unspecified" dimensions.
 
       Let's say we found aggregation: 'namespace', 'app', 'program', 'instance', 'dataset'
 
@@ -131,7 +133,7 @@ public class DefaultCube implements Cube {
       'measureName'='read.ops'
       'measureType'='COUNTER'
 
-      3) While scanning build a table: tag values -> time -> value. Use measureType as values aggregate
+      3) While scanning build a table: dimension values -> time -> value. Use measureType as values aggregate
          function if needed.
     */
 
@@ -152,19 +154,19 @@ public class DefaultCube implements Cube {
     } else {
       agg = findAggregation(query);
       if (agg == null) {
-        throw new IllegalArgumentException("There's no data aggregated for specified tags to satisfy the query: " +
-                                             query.toString());
+        throw new IllegalArgumentException("There's no data aggregated for specified dimensions " +
+                                             "to satisfy the query: " + query.toString());
       }
     }
 
     // 2) build a scan for a query
-    List<TagValue> tagValues = Lists.newArrayList();
-    for (String tagName : agg.getTagNames()) {
+    List<DimensionValue> dimensionValues = Lists.newArrayList();
+    for (String dimensionName : agg.getDimensionNames()) {
       // if not defined in query, will be set as null, which means "any"
-      tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
+      dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
     }
 
-    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
+    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), dimensionValues);
 
     // 3) execute scan query
     FactTable table = resolutionToFactTable.get(query.getResolution());
@@ -176,41 +178,42 @@ public class DefaultCube implements Cube {
   @Override
   public void delete(CubeDeleteQuery query) {
     //this may be very inefficient and its better to use TTL, this is to only support existing old functionality.
-    List<TagValue> tagValues = Lists.newArrayList();
-    // find all the aggregations that match the sliceByTags in the query and
-    // use the tag values of the aggregation to delete entries in all the fact-tables.
+    List<DimensionValue> dimensionValues = Lists.newArrayList();
+    // find all the aggregations that match the dimensionValues in the query and
+    // use the dimension values of the aggregation to delete entries in all the fact-tables.
     for (Aggregation agg : aggregations.values()) {
-      if (agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
-        tagValues.clear();
-        for (String tagName : agg.getTagNames()) {
-          tagValues.add(new TagValue(tagName, query.getSliceByTags().get(tagName)));
+      if (agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
+        dimensionValues.clear();
+        for (String dimensionName : agg.getDimensionNames()) {
+          dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
         }
         FactTable factTable = resolutionToFactTable.get(query.getResolution());
-        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), tagValues);
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), dimensionValues);
         factTable.delete(scan);
       }
     }
   }
 
-  public Collection<TagValue> findNextAvailableTags(CubeExploreQuery query) {
+  public Collection<DimensionValue> findDimensionValues(CubeExploreQuery query) {
     LOG.trace("Searching for next-level context, query: {}", query);
 
-    // In each aggregation that matches given tags, try to fill in value in a single null-valued given tag.
+    // In each aggregation that matches given dimensions, try to fill in value in a single null-valued given dimension.
     // NOTE: that we try to fill in first value that is non-null-valued in a stored record
-    //       (see FactTable#findSingleTagValue)
-    SortedSet<TagValue> result = Sets.newTreeSet(TAG_VALUE_COMPARATOR);
+    //       (see FactTable#findSingleDimensionValue)
+    SortedSet<DimensionValue> result = Sets.newTreeSet(DIMENSION_VALUE_COMPARATOR);
 
     // todo: the passed query should have map instead
     LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
-    for (TagValue tagValue : query.getTagValues()) {
-      slice.put(tagValue.getName(), tagValue.getValue());
+    for (DimensionValue dimensionValue : query.getDimensionValues()) {
+      slice.put(dimensionValue.getName(), dimensionValue.getValue());
     }
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
     for (Aggregation agg : aggregations.values()) {
-      if (agg.getTagNames().containsAll(slice.keySet())) {
-        result.addAll(table.findSingleTagValue(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
+      if (agg.getDimensionNames().containsAll(slice.keySet())) {
+        result.addAll(table.findSingleDimensionValue(agg.getDimensionNames(), slice,
+                                                     query.getStartTs(), query.getEndTs()));
       }
     }
 
@@ -221,20 +224,20 @@ public class DefaultCube implements Cube {
   public Collection<String> findMeasureNames(CubeExploreQuery query) {
     LOG.trace("Searching for metrics, query: {}", query);
 
-    // In each aggregation that matches given tags, try to find metric names
+    // In each aggregation that matches given dimensions, try to find metric names
     SortedSet<String> result = Sets.newTreeSet();
 
     // todo: the passed query should have map instead
     LinkedHashMap<String, String> slice = Maps.newLinkedHashMap();
-    for (TagValue tagValue : query.getTagValues()) {
-      slice.put(tagValue.getName(), tagValue.getValue());
+    for (DimensionValue dimensionValue : query.getDimensionValues()) {
+      slice.put(dimensionValue.getName(), dimensionValue.getValue());
     }
 
     FactTable table = resolutionToFactTable.get(query.getResolution());
 
     for (Aggregation agg : aggregations.values()) {
-      if (agg.getTagNames().containsAll(slice.keySet())) {
-        result.addAll(table.findMeasureNames(agg.getTagNames(), slice, query.getStartTs(), query.getEndTs()));
+      if (agg.getDimensionNames().containsAll(slice.keySet())) {
+        result.addAll(table.findMeasureNames(agg.getDimensionNames(), slice, query.getStartTs(), query.getEndTs()));
       }
     }
 
@@ -246,11 +249,11 @@ public class DefaultCube implements Cube {
     Aggregation currentBest = null;
 
     for (Aggregation agg : aggregations.values()) {
-      if (agg.getTagNames().containsAll(query.getGroupByTags()) &&
-        agg.getTagNames().containsAll(query.getSliceByTags().keySet())) {
+      if (agg.getDimensionNames().containsAll(query.getGroupByDimensions()) &&
+        agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
 
-        // todo: choose aggregation smarter than just by number of tags :)
-        if (currentBest == null || currentBest.getTagNames().size() > agg.getTagNames().size()) {
+        // todo: choose aggregation smarter than just by number of dimensions :)
+        if (currentBest == null || currentBest.getDimensionNames().size() > agg.getDimensionNames().size()) {
           currentBest = agg;
         }
       }
@@ -260,7 +263,7 @@ public class DefaultCube implements Cube {
   }
 
   private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
-    // {tag values, metric} -> {time -> value}s
+    // {dimension values, metric} -> {time -> value}s
     Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
 
     int count = 0;
@@ -269,22 +272,22 @@ public class DefaultCube implements Cube {
 
       boolean skip = false;
       // using tree map, as we are using it as a key for a map
-      Map<String, String> seriesTags = Maps.newTreeMap();
-      for (String tagName : query.getGroupByTags()) {
-        // todo: use Map<String, String> instead of List<TagValue> into a String, String, everywhere
-        for (TagValue tagValue : next.getTagValues()) {
-          if (tagName.equals(tagValue.getName())) {
-            if (tagValue.getValue() == null) {
+      Map<String, String> seriesDimensions = Maps.newTreeMap();
+      for (String dimensionName : query.getGroupByDimensions()) {
+        // todo: use Map<String, String> instead of List<DimensionValue> into a String, String, everywhere
+        for (DimensionValue dimensionValue : next.getDimensionValues()) {
+          if (dimensionName.equals(dimensionValue.getName())) {
+            if (dimensionValue.getValue() == null) {
               // Currently, we do NOT return null as grouped by value.
-              // Depending on whether tag is required or not the records with null value in it may or may not be in
-              // aggregation. At this moment, the choosing of the aggregation for query doesn't look at this, so
+              // Depending on whether dimension is required or not the records with null value in it may or may not be
+              // in aggregation. At this moment, the choosing of the aggregation for query doesn't look at this, so
               // potentially null may or may not be included in results, depending on the aggregation selected
               // querying. We don't want to produce inconsistent results varying due to different aggregations selected,
               // so don't return nulls in any of those cases.
               skip = true;
               continue;
             }
-            seriesTags.put(tagName, tagValue.getValue());
+            seriesDimensions.put(dimensionName, dimensionValue.getValue());
             break;
           }
         }
@@ -295,18 +298,18 @@ public class DefaultCube implements Cube {
       }
 
       for (TimeValue timeValue : next) {
-        Map<Long, Long> timeValues = result.get(seriesTags, next.getMeasureName());
+        Map<Long, Long> timeValues = result.get(seriesDimensions, next.getMeasureName());
         if (timeValues == null) {
-          result.put(seriesTags, next.getMeasureName(), Maps.<Long, Long>newHashMap());
+          result.put(seriesDimensions, next.getMeasureName(), Maps.<Long, Long>newHashMap());
         }
 
         if (MeasureType.COUNTER == query.getMeasureType()) {
-          Long value =  result.get(seriesTags, next.getMeasureName()).get(timeValue.getTimestamp());
+          Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
-          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), value);
+          result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (MeasureType.GAUGE == query.getMeasureType()) {
-          result.get(seriesTags, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
+          result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
           throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
@@ -324,7 +327,7 @@ public class DefaultCube implements Cube {
                                                         Map<Long, Long>> resultTable) {
 
     List<TimeSeries> result = Lists.newArrayList();
-    // iterating each groupValue tags
+    // iterating each groupValue dimensions
     for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
       // iterating each metrics
       for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().entrySet()) {
@@ -363,9 +366,9 @@ public class DefaultCube implements Cube {
     }
   }
 
-  private static final class TagValueComparator implements Comparator<TagValue> {
+  private static final class DimensionValueComparator implements Comparator<DimensionValue> {
     @Override
-    public int compare(TagValue t1, TagValue t2) {
+    public int compare(DimensionValue t1, DimensionValue t2) {
       int cmp = t1.getName().compareTo(t2.getName());
       if (cmp != 0) {
         return cmp;

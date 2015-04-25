@@ -66,7 +66,7 @@ public final class TagValue {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("TagValue");
+    sb.append("DimensionValue");
     sb.append("{name='").append(name).append('\'');
     sb.append(", value='").append(value == null ? "null" : value).append('\'');
     sb.append('}');

@@ -260,7 +260,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       i++;
     } while (i < parts.length);
   }
-  
+
   // can remove this test after context (query-param) based searching is removed
   @Test
   public void testSearchContext() throws Exception {

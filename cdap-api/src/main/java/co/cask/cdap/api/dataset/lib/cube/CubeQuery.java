@@ -32,11 +32,12 @@ import javax.annotation.Nullable;
  * </p>
  * Another way to think about the query is to map it to the following statement::
  * <pre>
- * SELECT count('read.ops')                                     << measure name and type
- * FROM aggregation1.1min_resolution                            << aggregation & resolution
- * GROUP BY dataset,                                            << groupByTags
- * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
- * LIMIT 100                                                    << limit
+ * SELECT count('read.ops')                                           << measure name and type
+ * FROM aggregation1.1min_resolution                                  << aggregation and resolution
+ * GROUP BY dataset,                                                  << groupByDimensions
+ * WHERE namespace='ns1' AND app='myApp' AND program='myFlow' AND     << dimensionValues
+ *       ts>=1423370200 AND ts{@literal<}1423398198                             << startTs and endTs
+ * LIMIT 100                                                          << limit
  *
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
@@ -52,8 +53,8 @@ public final class CubeQuery {
   private final int limit;
   private final Collection<String> measureNames;
   private final MeasureType measureType;
-  private final Map<String, String> sliceByTagValues;
-  private final List<String> groupByTags;
+  private final Map<String, String> dimensionValues;
+  private final List<String> groupByDimensions;
   private final Interpolator interpolator;
 
   // todo : CDAP-2199 use builder instead of having multiple constructors
@@ -64,11 +65,11 @@ public final class CubeQuery {
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    Collection<String> measureNames, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
 
     this(null, startTs, endTs, resolution, limit,
          measureNames, measureType,
-         sliceByTagValues, groupByTags, null);
+         dimensionValues, groupByDimensions, null);
   }
 
   /**
@@ -78,11 +79,11 @@ public final class CubeQuery {
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    Collection<String> measureNames, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this(null, startTs, endTs, resolution, limit,
          measureNames, measureType,
-         sliceByTagValues, groupByTags, interpolator);
+         dimensionValues, groupByDimensions, interpolator);
   }
 
   /**
@@ -95,14 +96,14 @@ public final class CubeQuery {
    * @param limit max number of returned data points
    * @param measureNames name of the measures to query for, empty collection means "all measures"
    * @param measureType type of the measure to query for (used for aggregating results during query)
-   * @param sliceByTagValues tag values to filter by
-   * @param groupByTags tags to group by
+   * @param dimensionValues dimension values to filter by
+   * @param groupByDimensions dimensions to group by
    * @param interpolator {@link Interpolator} to use
    */
   public CubeQuery(@Nullable String aggregation,
                    long startTs, long endTs, int resolution, int limit,
                    Collection<String> measureNames, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this.aggregation = aggregation;
     this.startTs = startTs;
@@ -111,8 +112,8 @@ public final class CubeQuery {
     this.limit = limit;
     this.measureNames = measureNames;
     this.measureType = measureType;
-    this.sliceByTagValues = Collections.unmodifiableMap(new HashMap<String, String>(sliceByTagValues));
-    this.groupByTags = Collections.unmodifiableList(new ArrayList<String>(groupByTags));
+    this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
+    this.groupByDimensions = Collections.unmodifiableList(new ArrayList<String>(groupByDimensions));
     this.interpolator = interpolator;
   }
 
@@ -123,10 +124,10 @@ public final class CubeQuery {
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
     this(startTs, endTs, resolution, limit,
          measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
-         sliceByTagValues, groupByTags, null);
+         dimensionValues, groupByDimensions, null);
   }
 
   /**
@@ -135,11 +136,11 @@ public final class CubeQuery {
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this(startTs, endTs, resolution, limit,
          measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
-         sliceByTagValues, groupByTags, interpolator);
+         dimensionValues, groupByDimensions, interpolator);
   }
 
   /**
@@ -149,10 +150,10 @@ public final class CubeQuery {
    */
   public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
     this(aggregation, startTs, endTs, resolution, limit,
          measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
-         sliceByTagValues, groupByTags, null);
+         dimensionValues, groupByDimensions, null);
   }
 
   /**
@@ -162,11 +163,11 @@ public final class CubeQuery {
    */
   public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit,
                    String measureName, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this(aggregation, startTs, endTs, resolution, limit,
          measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), measureType,
-         sliceByTagValues, groupByTags, interpolator);
+         dimensionValues, groupByDimensions, interpolator);
   }
 
 
@@ -175,9 +176,9 @@ public final class CubeQuery {
    * without measureName (query all measures)
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
     this(startTs, endTs, resolution, limit, ImmutableList.<String>of(), measureType,
-         sliceByTagValues, groupByTags, null);
+         dimensionValues, groupByDimensions, null);
   }
 
   /**
@@ -185,10 +186,10 @@ public final class CubeQuery {
    * without measureName (query all measures)
    */
   public CubeQuery(long startTs, long endTs, int resolution, int limit, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this(startTs, endTs, resolution, limit, ImmutableList.<String>of(), measureType,
-         sliceByTagValues, groupByTags, interpolator);
+         dimensionValues, groupByDimensions, interpolator);
   }
 
   /**
@@ -197,9 +198,9 @@ public final class CubeQuery {
    * without measureName (query all measures)
    */
   public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags) {
+                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
     this(aggregation, startTs, endTs, resolution, limit, ImmutableList.<String>of(), measureType,
-         sliceByTagValues, groupByTags, null);
+         dimensionValues, groupByDimensions, null);
   }
 
   /**
@@ -208,10 +209,10 @@ public final class CubeQuery {
    * without measureName (query all measurenames)
    */
   public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit, MeasureType measureType,
-                   Map<String, String> sliceByTagValues, List<String> groupByTags,
+                   Map<String, String> dimensionValues, List<String> groupByDimensions,
                    @Nullable Interpolator interpolator) {
     this(aggregation, startTs, endTs, resolution, limit, ImmutableList.<String>of(), measureType,
-         sliceByTagValues, groupByTags, interpolator);
+         dimensionValues, groupByDimensions, interpolator);
   }
 
   @Nullable
@@ -239,12 +240,12 @@ public final class CubeQuery {
     return measureType;
   }
 
-  public Map<String, String> getSliceByTags() {
-    return sliceByTagValues;
+  public Map<String, String> getDimensionValues() {
+    return dimensionValues;
   }
 
-  public List<String> getGroupByTags() {
-    return groupByTags;
+  public List<String> getGroupByDimensions() {
+    return groupByDimensions;
   }
 
   // todo: push down limit support to Cube
@@ -267,8 +268,8 @@ public final class CubeQuery {
     sb.append(", limit=").append(limit);
     sb.append(", measureNames=").append(measureNames);
     sb.append(", measureType=").append(measureType);
-    sb.append(", sliceByTagValues=").append(sliceByTagValues);
-    sb.append(", groupByTags=").append(groupByTags);
+    sb.append(", dimensionValues=").append(dimensionValues);
+    sb.append(", groupByDimensions=").append(groupByDimensions);
     sb.append(", interpolator=").append(interpolator);
     sb.append('}');
     return sb.toString();

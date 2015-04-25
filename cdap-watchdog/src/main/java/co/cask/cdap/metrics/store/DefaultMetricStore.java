@@ -21,9 +21,9 @@ import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
@@ -33,6 +33,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
@@ -208,7 +209,7 @@ public class DefaultMetricStore implements MetricStore {
       }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
-        .addTags(metricValue.getTags())
+        .addDimensionValues(metricValue.getTags())
         .addMeasurements(metrics);
       facts.add(fact);
     }
@@ -221,7 +222,7 @@ public class DefaultMetricStore implements MetricStore {
     List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
       result.add(new MetricTimeSeries(timeSeries.getMeasureName(),
-                                      timeSeries.getTagValues(),
+                                      timeSeries.getDimensionValues(),
                                       timeSeries.getTimeValues()));
     }
     return result;
@@ -266,11 +267,11 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<co.cask.cdap.api.metrics.TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
-    Collection<TagValue> tags = cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
-    Collection<co.cask.cdap.api.metrics.TagValue> result = Lists.newArrayList();
-    for (TagValue tagValue : tags) {
-      result.add(new co.cask.cdap.api.metrics.TagValue(tagValue.getName(), tagValue.getValue()));
+  public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
+    Collection<DimensionValue> tags = cube.get().findDimensionValues(buildCubeSearchQuery(query));
+    Collection<TagValue> result = Lists.newArrayList();
+    for (DimensionValue dimensionValue : tags) {
+      result.add(new TagValue(dimensionValue.getName(), dimensionValue.getValue()));
     }
     return result;
   }
@@ -285,16 +286,16 @@ public class DefaultMetricStore implements MetricStore {
     return cube.get().findMeasureNames(buildCubeSearchQuery(query));
   }
 
-  private List<TagValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {
-    return Lists.transform(input, new Function<co.cask.cdap.api.metrics.TagValue, TagValue>() {
+  private List<DimensionValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {
+    return Lists.transform(input, new Function<co.cask.cdap.api.metrics.TagValue, DimensionValue>() {
       @Nullable
       @Override
-      public TagValue apply(co.cask.cdap.api.metrics.TagValue input) {
+      public DimensionValue apply(co.cask.cdap.api.metrics.TagValue input) {
         if (input == null) {
           // SHOULD NEVER happen
           throw new NullPointerException();
         }
-        return new TagValue(input.getName(), input.getValue());
+        return new DimensionValue(input.getName(), input.getValue());
       }
     });
   }
