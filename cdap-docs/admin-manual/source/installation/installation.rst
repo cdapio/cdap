@@ -148,22 +148,30 @@ For a distributed enterprise, you must install these Hadoop components:
 +---------------+-------------------+--------------------------------------------------+
 | Component     | Distribution      | Required Version                                 |
 +===============+===================+==================================================+
-| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha or later                             |
+| **HDFS**      | Apache Hadoop DFS | 2.0.2-alpha through 2.5.0                        |
 +               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.x or (HDP) 2.0 or later  |
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
 +---------------+-------------------+--------------------------------------------------+
-| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha or later                             |
+| **YARN**      | Apache Hadoop DFS | 2.0.2-alpha through 2.5.0                        |
 +               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.x or (HDP) 2.0 or later  |
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
 +---------------+-------------------+--------------------------------------------------+
-| **HBase**     |                   | 0.94.2+, 0.96.0+, 0.98.0+                        |
-+---------------+-------------------+--------------------------------------------------+
-| **Zookeeper** |                   | Version 3.4.3 or later                           |
-+---------------+-------------------+--------------------------------------------------+
-| **Hive**      |                   | Version 0.12.0 or later                          |
+| **HBase**     | Apache Hadoop DFS | 0.94.2.x, 0.96.0.x, and 0.98.6                   |
 +               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.3.x through 5.3.x or (HDP) 2.0 or later  |
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
 +---------------+-------------------+--------------------------------------------------+
+| **Zookeeper** | Apache Hadoop DFS | Version 3.4.3 through 3.4.5                      |
++               +-------------------+--------------------------------------------------+
+|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
++---------------+-------------------+--------------------------------------------------+
+| **Hive**      |                   | Version 0.12.0 through 0.13.1                    |
++               +-------------------+--------------------------------------------------+
+|               | CDH or HDP        | (CDH) 4.3.x through 5.3.3 or (HDP) 2.0 or 2.1    |
++---------------+-------------------+--------------------------------------------------+
+
+**Note:** Components versions shown in this table are those that we have tested and are
+confident of their suitability and compatibility. Later versions of components may work,
+but have not necessarily have been either tested or confirmed compatible.
 
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.

@@ -64,7 +64,8 @@ API Changes
 Known Issues
 ------------
 
-- CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x. It has not been tested on later versions.
+- CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x. It has not been tested on 
+  more recent versions. See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
 
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
 
