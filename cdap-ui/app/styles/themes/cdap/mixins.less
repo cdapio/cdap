@@ -55,3 +55,59 @@
   .border-radius(10px);
   &:before { line-height: @line-height; }
 }
+
+.dropdown-defaults {
+  + .dropdown-menu {
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    .border-radius(8px);
+    > li {
+      &:first-child a { .border-radius(8px 0 0 0); }
+      &:last-child a {
+        .border-radius(0 0 8px 8px);
+        &:hover { .border-radius(0 0 8px 8px); }
+      }
+      &:only-child a { .border-radius(8px 0 8px 8px); }
+      > a {
+        padding: 10px;
+        cursor: pointer;
+      }
+      my-file-select {
+        > a {
+          cursor: pointer;
+          display: block;
+          padding: 10px;
+          &:hover, &:focus { text-decoration: none; }
+        }
+      }
+      span.fa { margin-top: 3px; }
+    }
+  }
+}
+
+.dropdown-blue() {
+  + .dropdown-menu {
+    > li {
+      > a {
+        background-color: @cdap-header;
+        color: white;
+        &:hover, &:focus {
+          background-color: white;
+          color: @cdap-header;
+        }
+      }
+      my-file-select {
+        > a {
+          background-color: @cdap-header;
+          color: white;
+          &:hover, &:focus {
+            background-color: white;
+            color: @cdap-header;
+          }
+        }
+      }
+    }
+  }
+}
