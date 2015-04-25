@@ -1,25 +1,39 @@
 <h3>{{source.name}} Properties</h3>
 <div class="row">
-  <div class="col-xs-6" ng-init="isSaved=false">
+  <div class="col-xs-12" ng-init="isSaved=false">
     <div class="text-success" ng-if="isSaved">
       Saved!
     </div>
-    <form class="form-horizontal" ng-controller="SourceEditController">
-      <div ng-if="somethingfetched" class="am-fade-and-slide-right">
-        <div ng-repeat="(name, value) in source.properties track by $index">
-          <div class="form-group">
-            <label class="control-label col-sm-5">{{ name | caskCapitalizeFilter}}</label>
-            <div class="col-sm-7">
-              <div
-                  widget-container
-                  data-name="name"
-                  data-myproperty="name"
-                  data-model="source.properties[name]"
-                  data-myconfig="something"
-                  >
+    <form class="form-horizontal" ng-controller="SourceEditController" source-property-edit-view>
+      <div ng-if="configfetched" class="am-fade-and-slide-right">
+        <div class="row">
+
+            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" ng-repeat="group in config.groups.position">
+
+              <div class="well well-lg widget-group-container">
+                <h3>{{config.groups[group].display}}</h3>
+
+                  <div ng-repeat="(field,value) in config.groups[group].fields">
+                    <div class="form-group">
+                      <label class="control-label col-sm-5">
+                        {{field}}
+                      </label>
+                      <div class="col-sm-7">
+                        <div data-name="field"
+                             class="my-widget-container"
+                             data-model="source.properties[field]"
+                             data-myconfig="config.groups[group].fields[field]"
+                             widget-container>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
               </div>
             </div>
-          </div>
+
+
         </div>
       </div>
     </form>
