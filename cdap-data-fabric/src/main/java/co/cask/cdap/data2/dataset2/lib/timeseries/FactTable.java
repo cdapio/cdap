@@ -16,9 +16,9 @@
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -82,7 +82,7 @@ public final class FactTable implements Closeable {
    * Creates an instance of {@link FactTable}.
    *
    * @param timeSeriesTable A table for storing facts information.
-   * @param entityTable The table for storing tag encoding mappings.
+   * @param entityTable The table for storing dimension encoding mappings.
    * @param resolution Resolution in seconds
    * @param rollTime Number of resolution for writing to a new row with a new timebase.
    *                 Meaning the differences between timebase of two consecutive rows divided by
@@ -107,7 +107,7 @@ public final class FactTable implements Closeable {
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Fact fact : facts) {
       for (Measurement measurement : fact.getMeasurements()) {
-        byte[] rowKey = codec.createRowKey(fact.getTagValues(), measurement.getName(), fact.getTimestamp());
+        byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
         byte[] column = codec.createColumn(fact.getTimestamp());
 
         if (MeasureType.COUNTER == measurement.getType()) {
@@ -137,8 +137,8 @@ public final class FactTable implements Closeable {
     // use null if no metrics or more than one metrics are provided in the scan
     String measureName = scan.getMeasureNames().size() == 1 ? scan.getMeasureNames().iterator().next() : null;
 
-    byte[] startRow = codec.createStartRowKey(scan.getTagValues(), measureName, scan.getStartTs(), false);
-    byte[] endRow = codec.createEndRowKey(scan.getTagValues(), measureName, scan.getEndTs(), false);
+    byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(), measureName, scan.getStartTs(), false);
+    byte[] endRow = codec.createEndRowKey(scan.getDimensionValues(), measureName, scan.getEndTs(), false);
     byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
@@ -200,56 +200,58 @@ public final class FactTable implements Closeable {
   }
 
   /**
-   * Searches for first non-null valued tags in records that contain given list of tags and match given tag values in
-   * given time range. Returned tag values are those that are not defined in given tag values.
-   * @param allTagNames list of all tag names to be present in the record
-   * @param tagSlice tag values to filter by, {@code null} means any non-null value.
+   * Searches for first non-null valued dimensions in records that contain given list of dimensions and match given
+   * dimension values in given time range. Returned dimension values are those that are not defined in given
+   * dimension values.
+   * @param allDimensionNames list of all dimension names to be present in the record
+   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null value.
    * @param startTs start of the time range, in seconds
    * @param endTs end of the time range, in seconds
-   * @return {@link Set} of {@link TagValue}s
+   * @return {@link Set} of {@link DimensionValue}s
    */
-  // todo: pass a limit on number of tagValues returned
+  // todo: pass a limit on number of dimensionValues returned
   // todo: kinda not cool API when we expect null values in a map...
-  public Set<TagValue> findSingleTagValue(List<String> allTagNames, Map<String, String> tagSlice,
-                                          long startTs, long endTs) {
+  public Set<DimensionValue> findSingleDimensionValue(List<String> allDimensionNames,
+                                                      Map<String, String> dimensionSlice,
+                                                      long startTs, long endTs) {
     // Algorithm, briefly:
-    // We scan in the records which have given allTagNames. We use tagSlice as a criteria for scan.
-    // If record from the scan has non-null values in the tags which are not specified in tagSlice, we use first of
-    // such tag as a value to return.
-    // When we find value to return, since we only fill a single tag, we are not interested in drilling down further
-    // and instead attempt to fast-forward (jump) to a record that has different value in that tag.
+    // We scan in the records which have given allDimensionNames. We use dimensionSlice as a criteria for scan.
+    // If record from the scan has non-null values in the dimensions which are not specified in dimensionSlice,
+    // we use first of such dimension as a value to return.
+    // When we find value to return, since we only fill a single dimension, we are not interested in drilling down
+    // further and instead attempt to fast-forward (jump) to a record that has different value in that dimension.
     // Thus we find all results.
 
-    List<TagValue> allTags = Lists.newArrayList();
-    List<TagValue> filledTags = Lists.newArrayList();
-    List<Integer> tagToFillIndexes = Lists.newArrayList();
-    for (int i = 0; i < allTagNames.size(); i++) {
-      String tagName = allTagNames.get(i);
-      if (!tagSlice.containsKey(tagName)) {
-        tagToFillIndexes.add(i);
-        allTags.add(new TagValue(tagName, null));
+    List<DimensionValue> allDimensions = Lists.newArrayList();
+    List<DimensionValue> filledDimension = Lists.newArrayList();
+    List<Integer> dimToFillIndexes = Lists.newArrayList();
+    for (int i = 0; i < allDimensionNames.size(); i++) {
+      String dimensionName = allDimensionNames.get(i);
+      if (!dimensionSlice.containsKey(dimensionName)) {
+        dimToFillIndexes.add(i);
+        allDimensions.add(new DimensionValue(dimensionName, null));
       } else {
-        TagValue tagValue = new TagValue(tagName, tagSlice.get(tagName));
-        filledTags.add(tagValue);
-        allTags.add(tagValue);
+        DimensionValue dimensionValue = new DimensionValue(dimensionName, dimensionSlice.get(dimensionName));
+        filledDimension.add(dimensionValue);
+        allDimensions.add(dimensionValue);
       }
     }
 
-    // If provided tags contain all values filled in, there's nothing to look for
-    if (tagToFillIndexes.isEmpty()) {
+    // If provided dimensions contain all values filled in, there's nothing to look for
+    if (dimToFillIndexes.isEmpty()) {
       return Collections.emptySet();
     }
 
-    Set<TagValue> result = Sets.newHashSet();
+    Set<DimensionValue> result = Sets.newHashSet();
     int scans = 0;
     int scannedRecords = 0;
 
     // build a scan
-    byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
-    byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
+    byte[] startRow = codec.createStartRowKey(allDimensions, null, startTs, false);
+    byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs,
-                                                                      ImmutableList.<String>of(), allTags), startRow);
+    FuzzyRowFilter fuzzyRowFilter =
+      createFuzzyRowFilter(new FactScan(startTs, endTs, ImmutableList.<String>of(), allDimensions), startRow);
     Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     scans++;
     try {
@@ -270,23 +272,24 @@ public final class FactTable implements Closeable {
           break;
         }
 
-        List<TagValue> tagValues = codec.getTagValues(rowResult.getRow());
-        // At this point, we know that the record is in right time range and its tags matches given.
-        // We try find first non-null valued tag in the record that was not in given tags: we use it to form
+        List<DimensionValue> dimensionValues = codec.getDimensionValues(rowResult.getRow());
+        // At this point, we know that the record is in right time range and its dimensions matches given.
+        // We try find first non-null valued dimension in the record that was not in given dimensions: we use it to form
         // next drill down suggestion
         int filledIndex = -1;
-        for (int index : tagToFillIndexes) {
-          // todo: it may be not efficient, if tagValues is not array-backed list: i.e. if access by index is not fast
-          TagValue tagValue = tagValues.get(index);
-          if (tagValue.getValue() != null) {
-            result.add(tagValue);
+        for (int index : dimToFillIndexes) {
+          // todo: it may be not efficient, if dimensionValues is not array-backed list: i.e. if access by index is
+          //       not fast
+          DimensionValue dimensionValue = dimensionValues.get(index);
+          if (dimensionValue.getValue() != null) {
+            result.add(dimensionValue);
             filledIndex = index;
             break;
           }
         }
 
-        // Ss soon as we find tag to fill, we are not interested into drilling down further (by contract, we fill
-        // single tag value). Thus, we try to jump to the record that has greater value in that tag.
+        // Ss soon as we find dimension to fill, we are not interested into drilling down further (by contract, we fill
+        // single dimension value). Thus, we try to jump to the record that has greater value in that dimension.
         // todo: fast-forwarding (jumping) should be done on server-side (CDAP-1421)
         if (filledIndex >= 0) {
           scanner.close();
@@ -305,33 +308,33 @@ public final class FactTable implements Closeable {
       }
     }
 
-    LOG.trace("search for tags completed, scans performed: {}, scanned records: {}", scans, scannedRecords);
+    LOG.trace("search for dimensions completed, scans performed: {}, scanned records: {}", scans, scannedRecords);
 
     return result;
   }
 
   /**
-   * Finds all measure names of the facts that match given {@link TagValue}s and time range.
-   * @param allTagNames list of all tag names to be present in the fact record
-   * @param tagSlice tag values to filter by, {@code null} means any non-null value.
+   * Finds all measure names of the facts that match given {@link DimensionValue}s and time range.
+   * @param allDimensionNames list of all dimension names to be present in the fact record
+   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null value.
    * @param startTs start timestamp, in sec
    * @param endTs end timestamp, in sec
    * @return {@link Set} of measure names
    */
   // todo: pass a limit on number of measures returned
-  public Set<String> findMeasureNames(List<String> allTagNames, Map<String, String> tagSlice,
+  public Set<String> findMeasureNames(List<String> allDimensionNames, Map<String, String> dimensionSlice,
                                       long startTs, long endTs) {
 
-    List<TagValue> allTags = Lists.newArrayList();
-    for (String tagName : allTagNames) {
-      allTags.add(new TagValue(tagName, tagSlice.get(tagName)));
+    List<DimensionValue> allDimensions = Lists.newArrayList();
+    for (String dimensionName : allDimensionNames) {
+      allDimensions.add(new DimensionValue(dimensionName, dimensionSlice.get(dimensionName)));
     }
 
-    byte[] startRow = codec.createStartRowKey(allTags, null, startTs, false);
-    byte[] endRow = codec.createEndRowKey(allTags, null, endTs, false);
+    byte[] startRow = codec.createStartRowKey(allDimensions, null, startTs, false);
+    byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
-    FuzzyRowFilter fuzzyRowFilter = createFuzzyRowFilter(new FactScan(startTs, endTs,
-                                                                      ImmutableList.<String>of(), allTags), startRow);
+    FuzzyRowFilter fuzzyRowFilter =
+      createFuzzyRowFilter(new FactScan(startTs, endTs, ImmutableList.<String>of(), allDimensions), startRow);
 
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
@@ -377,7 +380,7 @@ public final class FactTable implements Closeable {
     // if we are querying only one metric, we will use fixed metricName for filter,
     // if there are no metrics or more than one metrics to query we use `ANY` fuzzy filter.
     String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
-    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getTagValues(), measureName);
+    byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
   }
