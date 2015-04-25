@@ -1,54 +1,53 @@
 {
-  'id': 'TwitterSource',
-  'groups' : {
-    'position': [ 'group1', 'group2' ],
-    'group1': {
-       'display' : 'Twitter Account Info',
-       'position' : [ 'AccessToken', 'AccessTokenSecret' ],
-       'fields' : {
-          'AccessToken' : {
-             'widget-type': 'textbox',
-             'widget-label': 'Access Token'
-             'widget-description' : 'Twitter Access Token.',
-             'widget-info' : 'Here is where you can get it',
-             'widget-properties': {
-               'width': 'medium'
-             },
+  "id": "TwitterSource",
+  "groups" : {
+    "position": [ "group1", "group2" ],
+    "group1": {
+       "display" : "Twitter Account Info",
+       "position" : [ "AccessToken", "AccessTokenSecret" ],
+       "fields" : {
+          "AccessToken" : {
+             "widget-type": "textarea",
+             "widget-label": "Access Token",
+             "widget-description" : "Twitter Access Token.",
+             "widget-info" : "Here is where you can get it",
+             "widget-properties": {
+               "width": "medium"
+             }
           },
-          'AccessTokenSecret' : {
-             'widget-type': 'password',
-             'widget-label': 'Access Token Secret'
-             'widget-description' : 'Twitter Access Token Secret.',
-             'widget-info' : 'Here is where you can get it',
-             'widget-properties': {
-               'width': 'medium'
-             },
+          "AccessTokenSecret" : {
+             "widget-type": "password",
+             "widget-label": "Access Token Secret",
+             "widget-description" : "Twitter Access Token Secret.",
+             "widget-info" : "Here is where you can get it",
+             "widget-properties": {
+               "width": "medium"
+             }
           }
        }
     },
-
-    'group2' : {
-      'display' : 'Twitter Consumer Key & Tokens',
-      'position' : [ 'ConsumerKey', 'ConsumerSecret' ],
-      'fields' : {
-          'ConsumerKey' : {
-             'widget-type': 'textbox',
-             'widget-label': 'Consumer Key',
-             'widget-description' : 'Twitter Access Token.',
-             'widget-info' : 'Here is where you can get it',
-             'widget-properties': {
-               'width': 'medium'
-             },
+    "group2" : {
+      "display" : "Twitter Consumer Key & Tokens",
+      "position" : [ "ConsumerKey", "ConsumerSecret" ],
+      "fields" : {
+          "ConsumerKey" : {
+             "widget-type": "textbox",
+             "widget-label": "Consumer Key",
+             "widget-description" : "Twitter Access Token.",
+             "widget-info" : "Here is where you can get it",
+             "widget-properties": {
+               "width": "medium"
+             }
           },
-          'ConsumerSecret' : {
-             'widget-type': 'password',
-             'widget-label': 'Consumer Secret',
-             'widget-description' : 'Twitter Consumer Secret',
-             'widget-info' : 'Here is where you can get it',
-             'widget-properties': {
-               'width': 'medium'
-             },
-          },
+          "ConsumerSecret" : {
+             "widget-type": "password",
+             "widget-label": "Consumer Secret",
+             "widget-description" : "Twitter Consumer Secret",
+             "widget-info" : "Here is where you can get it",
+             "widget-properties": {
+               "width": "medium"
+             }
+          }
        }
     }
   }

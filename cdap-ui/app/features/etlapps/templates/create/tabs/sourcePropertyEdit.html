@@ -1,28 +1,31 @@
-<div class="container">
-  <div class="row" ng-init="isSaved=false">
-    <div class="col-xs-12">
-      <h3>Editing {{source.name}} Properties</h3>
-      <div class="text-success" ng-if="isSaved">
-        Saved!
-      </div>
-      <form class="form-horizontal">
+<h3>Editing {{source.name}} Properties</h3>
+<div class="row">
+  <div class="col-xs-6" ng-init="isSaved=false">
+    <div class="text-success" ng-if="isSaved">
+      Saved!
+    </div>
+    <form class="form-horizontal" ng-controller="SourceEditController">
+      <div ng-if="somethingfetched" class="am-fade-and-slide-right">
         <div ng-repeat="(name, value) in source.properties track by $index">
           <div class="form-group">
-            <label class="col-xs-12">{{ name | caskCapitalizeFilter}}</label>
-            <div class="col-sm-10">
-              <input type="text"
-                      class="form-control"
-                      ng-model="source.properties[name]"
-                      ng-change="$parent.isSaved=false"
-                      />
+            <label class="control-label col-sm-5">{{ name | caskCapitalizeFilter}}</label>
+            <div class="col-sm-7">
+              <div
+                  widget-container
+                  data-name="name"
+                  data-myproperty="name"
+                  data-model="source.properties[name]"
+                  data-myconfig="something"
+                  >
+              </div>
             </div>
           </div>
         </div>
-      </form>
-      <div class="btn-group pull-right">
-        <button type="button" class="btn btn-success" ng-click="isSaved=true">Save</button>
-        <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
       </div>
+    </form>
+    <div class="btn-group pull-right">
+      <button type="button" class="btn btn-success" ng-click="isSaved=true">Save</button>
+      <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
     </div>
   </div>
 </div>
