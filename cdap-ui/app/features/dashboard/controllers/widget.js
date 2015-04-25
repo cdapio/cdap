@@ -292,9 +292,16 @@ angular.module(PKG.name+'.feature.dashboard')
         xCoords.unshift('x');
         columns.push(xCoords);
 
+        streams = [];
+        columns.forEach(function(column) {
+          if (!column.length || column[0] == 'x') {
+            return;
+          }
+          streams.push(column[column.length - 1]);
+        });
         // DO NOT change the format of this data without ensuring that whoever needs it is also changed!
         // Some examples: c3 charts, table widget.
-        $scope.chartData = {columns: columns, metricNames: metricNames, xCoords: xCoords};
+        $scope.chartData = {columns: columns, streams: streams, metricNames: metricNames, xCoords: xCoords};
       }
     });
 
