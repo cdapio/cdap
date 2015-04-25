@@ -96,7 +96,7 @@ angular.module(PKG.name+'.feature.dashboard')
         widgets.push(createWidget(panel[0], panel[1], panel[2], panel[3]));
       });
       // Note: It doesn't seem like this matters (as long as its high enough)
-      var widgetsPerRow = 2;
+      var widgetsPerRow = 3;
       var columns = [];
       for (var i = 0; i < widgetsPerRow; i++) {
         columns.push([]);
