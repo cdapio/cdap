@@ -1,4 +1,4 @@
-<h3>{{source.name}} Properties</h3>
+<br />
 <div class="row">
   <div class="col-xs-12" ng-init="isSaved=false; plugin=source.name">
     <div class="text-success" ng-if="isSaved">
@@ -16,7 +16,7 @@
 
                   <div ng-repeat="(field,value) in config.groups[group].fields">
                     <div class="form-group">
-                      <label class="control-label col-sm-5">
+                      <label class="control-label col-sm-4">
                         {{field}}
                       </label>
                       <div class="col-sm-7">
