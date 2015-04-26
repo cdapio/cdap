@@ -1,11 +1,12 @@
 <h3>{{source.name}} Properties</h3>
 <div class="row">
-  <div class="col-xs-12" ng-init="isSaved=false">
+  <div class="col-xs-12" ng-init="isSaved=false; plugin=source.name">
     <div class="text-success" ng-if="isSaved">
       Saved!
     </div>
-    <form class="form-horizontal" ng-controller="SourceEditController" source-property-edit-view>
-      <div ng-if="configfetched" class="am-fade-and-slide-right">
+
+    <form class="form-horizontal" ng-controller="PluginEditController" source-property-edit-view>
+      <div ng-if="configfetched" class="am-slide-right">
         <div class="row">
 
             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" ng-repeat="group in config.groups.position">
@@ -38,7 +39,9 @@
       </div>
     </form>
     <div class="btn-group pull-right">
-      <button type="button" class="btn btn-success" ng-click="isSaved=true">Save</button>
+      <button type="button"
+              class="btn btn-success"
+              ng-click="isSaved=true">Save</button>
       <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
     </div>
   </div>
