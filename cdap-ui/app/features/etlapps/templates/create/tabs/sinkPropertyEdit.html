@@ -12,7 +12,10 @@
 
                   <div ng-repeat="(field,value) in config.groups[group].fields">
                     <div class="form-group">
-                      <label class="control-label col-sm-4">
+                      <label class="control-label col-sm-4" ng-if="config.groups[group].fields[field].label">
+                        {{config.groups[group].fields[field].label}}
+                      </label>
+                      <label class="control-label col-sm-4" ng-if="!config.groups[group].fields[field].label">
                         {{field}}
                       </label>
                       <div class="col-sm-7">
