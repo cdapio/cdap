@@ -4,7 +4,7 @@
     "position": [ "group1", "group2" ],
     "group1": {
        "display" : "Twitter Account Info",
-       "position" : [ "AccessToken", "Gender", "Schedule", "CubeConfiguration" ],
+       "position" : [ "AccessToken", "AccessTokenSecret" ],
        "fields" : {
           "AccessToken" : {
              "widget": "password",
@@ -27,7 +27,7 @@
     },
     "group2": {
       "display": "Another group",
-      "position": [],
+      "position": ["ConsumerKey", "ConsumerSecret"],
       "fields": {
         "ConsumerKey" : {
            "widget": "textbox",

@@ -14,7 +14,7 @@
               <li class="list-group-item clearfix"
                   ng-repeat="source in etlSources">
                 <span class="pull-left">{{source.name}}</span>
-                <span class="fa fa-plus-circle pull-right" ng-click="handleSourceDrop(source.name)"></span>
+                <span class="fa fa-plus-square pull-right" ng-click="handleSourceDrop(source.name)"></span>
               </li>
             </ul>
             <div class="well well-xs text-center" ng-if="etlSources.length === 0">
@@ -39,7 +39,7 @@
               <li class="list-group-item clearfix"
                   ng-repeat="transform in etlTransforms">
                 <span class="pull-left">{{transform.name}}</span>
-                <span class="fa fa-plus-circle pull-right" ng-click="handleTransformDrop(transform.name)"></span>
+                <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
               </li>
             </ul>
             <div class="well well-xs text-center" ng-if="etlTransforms.length === 0">
@@ -63,7 +63,7 @@
               <li class="list-group-item clearfix"
                   ng-repeat="sink in etlSinks">
                 <span class="pull-left">{{sink.name}}</span>
-                <span class="fa fa-plus-circle pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+                <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
               </li>
             </ul>
             <div class="well well-xs text-center" ng-if="etlSinks.length === 0">

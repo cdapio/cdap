@@ -3,12 +3,13 @@ angular.module(PKG.name + '.feature.etlapps')
     this.plugins = {};
 
     this.fetch = function(scope, templateid, pluginid) {
-      var dataSrc = new MyDataSource(scope);
-      var defer = $q.defer();
 
       if (this.plugins[templateid+pluginid]) {
         return $q.when(this.plugins[templateid+pluginid]);
       }
+      var dataSrc = new MyDataSource(scope);
+      var defer = $q.defer();
+
 
       dataSrc.config({
         templateid: templateid, //'etlRealtime',

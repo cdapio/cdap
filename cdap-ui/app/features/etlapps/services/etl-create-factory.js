@@ -107,18 +107,18 @@ angular.module(PKG.name + '.feature.etlapps')
       })
         .then(function(res) {
           delete this.scope.etlDrafts[this.scope.metadata.name];
-          mySettings.set('etldrafts', this.scope.etlDrafts)
-            .then(function() {
-              this.scope.isSaved = true;
-              $timeout(function() {
-                $state.go('^.list', $state.params, {reload: true});
-              });
-              $alert({
-                type: 'success',
-                content: 'ETL Template created successfully!'
-              });
-            })
-        }.bind(this));
+          return mySettings.set('etldrafts', this.scope.etlDrafts)
+        }.bind(this))
+        .then(function() {
+          this.scope.isSaved = true;
+          $timeout(function() {
+            $state.go('^.list', $state.params, {reload: true});
+          });
+          $alert({
+            type: 'success',
+            content: 'ETL Template created successfully!'
+          });
+        }.bind(this))
     }
     return ETLAppsApiFactory;
 
