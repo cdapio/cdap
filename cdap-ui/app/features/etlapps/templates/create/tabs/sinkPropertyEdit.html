@@ -1,11 +1,7 @@
 <br />
 <div class="row">
-  <div class="col-xs-12" ng-init="isSaved=false; plugin=sink.name">
-    <div class="text-success" ng-if="isSaved">
-      Saved!
-    </div>
-
-    <form class="form-horizontal" ng-controller="PluginEditController" source-property-edit-view>
+  <div class="col-xs-12" ng-init="plugin=sink.name">
+    <form class="form-horizontal" ng-controller="PluginEditController" plugin-property-edit-view>
       <div ng-if="configfetched" class="am-slide-right">
         <div class="row">
 
@@ -38,11 +34,5 @@
         </div>
       </div>
     </form>
-    <div class=" pull-right">
-      <button type="button"
-              class="btn btn-success"
-              ng-click="isSaved = true;">Save</button>
-      <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
-    </div>
   </div>
 </div>
