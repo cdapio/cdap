@@ -6,4 +6,12 @@ angular.module(PKG.name + '.feature.etlapps')
         $scope.configfetched = true;
         $scope.config = res;
       });
+  })
+  .controller('SinkEditController', function($scope, MyDataSource, PluginConfigFactory) {
+    $scope.configfetched = false;
+    PluginConfigFactory.fetch($scope, 'etlRealtime', 'StreamSink')
+      .then(function(res) {
+        $scope.configfetched = true;
+        $scope.config = res;
+      });
   });
