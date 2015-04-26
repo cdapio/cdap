@@ -85,9 +85,9 @@
             chart-legend="{ show: false, position: 'inset' }"
             ></c3-spline>
           <div class="health-metrics">
-            <span class="warn"> {{chartHistory[0].values.slice(-1)[0].y}} </span>
+            <span class="warn"> {{chartData.streams[1]}} </span>
             <p class="text-center">{{wdgt.title}}</p>
-            <span class="error"> {{chartHistory[1].values.slice(-1)[0].y}} </span>
+            <span class="error"> {{chartData.streams[0]}} </span>
           </div>
         </div>
     </div>

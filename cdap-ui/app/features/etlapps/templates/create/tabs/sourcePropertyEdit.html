@@ -1,28 +1,48 @@
-<div class="container">
-  <div class="row" ng-init="isSaved=false">
-    <div class="col-xs-12">
-      <h3>Editing {{source.name}} Properties</h3>
-      <div class="text-success" ng-if="isSaved">
-        Saved!
-      </div>
-      <form class="form-horizontal">
-        <div ng-repeat="(name, value) in source.properties track by $index">
-          <div class="form-group">
-            <label class="col-xs-12">{{ name | caskCapitalizeFilter}}</label>
-            <div class="col-sm-10">
-              <input type="text"
-                      class="form-control"
-                      ng-model="source.properties[name]"
-                      ng-change="$parent.isSaved=false"
-                      />
+<br />
+<div class="row">
+  <div class="col-xs-12" ng-init="isSaved=false; plugin=source.name">
+    <div class="text-success" ng-if="isSaved">
+      Saved!
+    </div>
+
+    <form class="form-horizontal" ng-controller="PluginEditController" source-property-edit-view>
+      <div ng-if="configfetched" class="am-slide-right">
+        <div class="row">
+
+            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" ng-repeat="group in config.groups.position">
+
+              <div class="well well-lg widget-group-container">
+                <h3>{{config.groups[group].display}}</h3>
+
+                  <div ng-repeat="(field,value) in config.groups[group].fields">
+                    <div class="form-group">
+                      <label class="control-label col-sm-4">
+                        {{field}}
+                      </label>
+                      <div class="col-sm-7">
+                        <div data-name="field"
+                             class="my-widget-container"
+                             data-model="source.properties[field]"
+                             data-myconfig="config.groups[group].fields[field]"
+                             widget-container>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+              </div>
             </div>
-          </div>
+
+
         </div>
-      </form>
-      <div class="btn-group pull-right">
-        <button type="button" class="btn btn-success" ng-click="isSaved=true">Save</button>
-        <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
       </div>
+    </form>
+    <div class="btn-group pull-right">
+      <button type="button"
+              class="btn btn-success"
+              ng-click="isSaved=true">Save</button>
+      <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
     </div>
   </div>
 </div>

@@ -21,19 +21,19 @@ import co.cask.cdap.api.annotation.Beta;
 import javax.annotation.Nullable;
 
 /**
- * Represents tag and its value associated with {@link CubeFact}.
+ * Represents dimension and its value associated with {@link CubeFact}.
  */
 @Beta
-public final class TagValue {
+public final class DimensionValue {
   private final String name;
   private final String value;
 
-  public TagValue(String name, @Nullable String value) {
+  public DimensionValue(String name, @Nullable String value) {
     this.name = name;
     this.value = value;
   }
 
-  public String getTagName() {
+  public String getName() {
     return name;
   }
 
@@ -52,10 +52,10 @@ public final class TagValue {
       return false;
     }
 
-    TagValue tagValue = (TagValue) o;
+    DimensionValue dimensionValue = (DimensionValue) o;
 
-    boolean result = value == null ? tagValue.value == null : value.equals(tagValue.value);
-    return result && name.equals(tagValue.name);
+    boolean result = value == null ? dimensionValue.value == null : value.equals(dimensionValue.value);
+    return result && name.equals(dimensionValue.name);
   }
 
   @Override
@@ -66,7 +66,7 @@ public final class TagValue {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("TagValue");
+    sb.append("DimensionValue");
     sb.append("{name='").append(name).append('\'');
     sb.append(", value='").append(value == null ? "null" : value).append('\'');
     sb.append('}');

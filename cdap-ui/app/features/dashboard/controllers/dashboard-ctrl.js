@@ -9,7 +9,22 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
   $scope.liveDashboard = null;
+
+  // Available refresh rates.
+  $scope.refreshIntervals = [
+    { name: '5 seconds',  value: 5 },
+    { name: '10 seconds', value: 10 },
+    { name: '30 seconds', value: 30 },
+    { name: '1 minute',   value: 60 },
+    { name: '5 minutes',  value: 300 },
+  ];
+
+  var now = Date.now();
+  $scope.timeOptions = { startMs : now - 60 * 1000,
+                         endMs   : now,
+                         refreshInterval: $scope.refreshIntervals[1] };
   $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
+
 
   $scope.currentBoard = rDashboardsModel.current();
   if (!$scope.currentBoard) {
@@ -78,16 +93,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     }
   };
 
-  $scope.makeItLive = function() {
-    $scope.liveDashboard = !$scope.liveDashboard;
+
+  function applyOnWidgets(rDashboardsModel, func) {
     var currentColumns = rDashboardsModel.current().columns,
         i, j;
     for (i=0; i<currentColumns.length; i++) {
       for (j=0; j<currentColumns[i].length; j++) {
-        currentColumns[i][j].isLive = $scope.liveDashboard;
+        func(currentColumns[i][j]);
       }
     }
-  };
+  }
 
   $scope.changeColumn = function (n) {
     $scope.currentBoard.changeColumn(n);
@@ -97,5 +112,32 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
     $scope.currentBoard.toggleDragDrop();
   };
 
+  $scope.activateTab = function(idx) {
+    $scope.currentTab = idx;
+  }
+  $scope.tabs = ['Time Range', 'Frequency'];
+  $scope.currentTab = 1;
 
+  // TODO: new widgets added won't have the properties set below
+  $scope.updateWithTimeRange = function() {
+    // TODO: need to restrict timeRange (too wide a time range causes issues with charting lib - too many points!)
+    applyOnWidgets(rDashboardsModel, function (widget) {
+      widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
+      widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);
+      widget.metric.resolution = 'auto';
+      widget.isLive = false;
+      widget.reconfigure();
+    });
+  }
+
+  $scope.updateWithFrequency = function() {
+    applyOnWidgets(rDashboardsModel, function (widget) {
+      widget.metric.startTime = $scope.timeOptions.durationMs;
+      widget.metric.endTime = 'now';
+      widget.metric.resolution = 'auto';
+      widget.isLive = true;
+      widget.interval = $scope.timeOptions.refreshInterval.value * 1000;
+      widget.reconfigure();
+    });
+  }
 });

@@ -1,6 +1,9 @@
 <div class="row">
-
-    <div class="panel panel-default">
+    <a ui-sref="adapters.list" class="btn btn-info">
+      <span class="fa fa-arrow-left"></span>
+      <span>All Adapters</span>
+    </a>
+    <div class="panel panel-default" ng-init="ETLMetadataTabOpen=true">
       <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
         <span class="pull-left"> Metadata</span>
         <i class="fa fa-fw pull-right"
@@ -43,7 +46,7 @@
 
 <div class="row">
 
-    <div class="panel panel-default">
+    <div class="panel panel-default" ng-init="ETLConfigTabOpen=false">
       <div class="panel-heading clearfix" ng-click="ETLConfigTabOpen = !ETLConfigTabOpen">
         <span class="pull-left">Configurations</span>
         <i class="fa fa-fw pull-right"
@@ -61,7 +64,8 @@
 <br/>
 <div class="row">
 
-  <tabset>
+  <tabset type="tabs slanted-tabs">
+
     <tab ng-repeat="tab in tabs" active="tab.active">
       <tab-heading>
         {{tab.title}}
@@ -70,7 +74,7 @@
            ng-click="closeTab($index)"
            disabled="disabled"
         >
-          <i class="fa fa-times"></i>
+          <i class="fa fa-times-circle"></i>
         </a>
       </tab-heading>
       <div ng-init="transform = tab.transform; tabIndex = $index;"

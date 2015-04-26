@@ -3,11 +3,11 @@
 <div class="row" program-heading>
   <div class="col-sm-6">
     <h2 class="programTitle">
-      <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+      <span ng-bind="$state.params.programId"></span>
     </h2>
     <small ng-if="isEnterprise" class="badge text-info">
       <span class="fa fa-exclamation-triangle"> </span>
-      <span> Spark programs are not supported in distrubuted yet.</span>
+      <span> Spark programs are not supported in distributed yet.</span>
     </small>
     <div class="type-block">
       <small> Type: Spark </small>

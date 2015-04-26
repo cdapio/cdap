@@ -43,10 +43,10 @@ import java.util.Set;
  * Cube dataset can be configured with aggregation resolutions and aggregations. E.g.
     <pre>
      dataset.cube.resolutions=1,60
-     dataset.cube.aggregation.userPages.tags=user,page
-     dataset.cube.aggregation.userPages.requiredTags=page
-     dataset.cube.aggregation.userActions.tags=user,action
-     dataset.cube.aggregation.userActions.requiredTags=action
+     dataset.cube.aggregation.userPages.dimensions=user,page
+     dataset.cube.aggregation.userPages.requiredDimensions=page
+     dataset.cube.aggregation.userActions.dimensions=user,action
+     dataset.cube.aggregation.userActions.requiredDimensions=action
     </pre>
  *
  * <ul>
@@ -64,15 +64,15 @@ import java.util.Set;
  *   </li>
  * </ul>
  *
- * Aggregation is defined with list of tags to aggregate by and a list of required tags
- * (dataset.cube.aggregation.[agg_name].tags and dataset.cube.aggregation.[agg_name].requiredTags properties
+ * Aggregation is defined with list of dimensions to aggregate by and a list of required dimensions
+ * (dataset.cube.aggregation.[agg_name].dimensions and dataset.cube.aggregation.[agg_name].requiredDimensions properties
  * respectively). The {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} measurement is aggregated within an aggregation
- * if it contains all required tags which non-null value.
+ * if it contains all required dimensions which non-null value.
  */
 public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset, DatasetAdmin> {
   public static final String PROPERTY_AGGREGATION_PREFIX = "dataset.cube.aggregation.";
-  public static final String PROPERTY_TAGS = "tags";
-  public static final String PROPERTY_REQUIRED_TAGS = "requiredTags";
+  public static final String PROPERTY_DIMENSIONS = "dimensions";
+  public static final String PROPERTY_REQUIRED_DIMENSIONS = "requiredDimensions";
   // 1 second is the only default resolution
   public static final int[] DEFAULT_RESOLUTIONS = new int[]{1};
 
@@ -141,12 +141,12 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   }
 
   private Map<String, Aggregation> getAggregations(Map<String, String> properties) {
-    // Example of configuring one aggregation with two tags: user and action and user being required:
-    //   dataset.cube.aggregation.1.tags=user,action
-    //   dataset.cube.aggregation.1.requiredTags=user
+    // Example of configuring one aggregation with two dimensions: user and action and user being required:
+    //   dataset.cube.aggregation.1.dimensions=user,action
+    //   dataset.cube.aggregation.1.requiredDimensions=user
 
-    Map<String, List<String>> aggTags = Maps.newHashMap();
-    Map<String, Set<String>> aggRequiredTags = Maps.newHashMap();
+    Map<String, List<String>> aggDimensions = Maps.newHashMap();
+    Map<String, Set<String>> aggRequiredDimensions = Maps.newHashMap();
     for (Map.Entry<String, String> prop : properties.entrySet()) {
       if (prop.getKey().startsWith(PROPERTY_AGGREGATION_PREFIX)) {
         String aggregationProp = prop.getKey().substring(PROPERTY_AGGREGATION_PREFIX.length());
@@ -154,11 +154,11 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
         if (nameAndProp.length != 2) {
           throw new IllegalArgumentException("Invalid property: " + prop.getKey());
         }
-        String[] tags = prop.getValue().split(",");
-        if (PROPERTY_TAGS.equals(nameAndProp[1])) {
-          aggTags.put(nameAndProp[0], Arrays.asList(tags));
-        } else if (PROPERTY_REQUIRED_TAGS.equals(nameAndProp[1])) {
-          aggRequiredTags.put(nameAndProp[0], new HashSet<String>(Arrays.asList(tags)));
+        String[] dimensions = prop.getValue().split(",");
+        if (PROPERTY_DIMENSIONS.equals(nameAndProp[1])) {
+          aggDimensions.put(nameAndProp[0], Arrays.asList(dimensions));
+        } else if (PROPERTY_REQUIRED_DIMENSIONS.equals(nameAndProp[1])) {
+          aggRequiredDimensions.put(nameAndProp[0], new HashSet<String>(Arrays.asList(dimensions)));
         } else {
           throw new IllegalArgumentException("Invalid property: " + prop.getKey());
         }
@@ -166,10 +166,11 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
     }
 
     Map<String, Aggregation> aggregations = Maps.newHashMap();
-    for (Map.Entry<String, List<String>> aggTagsEntry : aggTags.entrySet()) {
-      Set<String> requiredTags = aggRequiredTags.get(aggTagsEntry.getKey());
-      requiredTags = requiredTags == null ? Collections.<String>emptySet() : requiredTags;
-      aggregations.put(aggTagsEntry.getKey(), new DefaultAggregation(aggTagsEntry.getValue(), requiredTags));
+    for (Map.Entry<String, List<String>> aggDimensionsEntry : aggDimensions.entrySet()) {
+      Set<String> requiredDimensions = aggRequiredDimensions.get(aggDimensionsEntry.getKey());
+      requiredDimensions = requiredDimensions == null ? Collections.<String>emptySet() : requiredDimensions;
+      aggregations.put(aggDimensionsEntry.getKey(),
+                       new DefaultAggregation(aggDimensionsEntry.getValue(), requiredDimensions));
     }
     return aggregations;
   }

@@ -29,12 +29,13 @@ import javax.naming.NamingException;
  * This class is used to provide mock JMS ConnectionFactory for testing JMS realtime template source.
  */
 public class MockJmsProvider implements JmsProvider {
+  public static final String CONNECTION_URL = "vm://localhost?broker.persistent=false&broker.useJmx=false";
 
   private ConnectionFactory connectionFactory;
   private Destination destination;
 
   public MockJmsProvider(String destinationName) throws NamingException {
-    connectionFactory =  new ActiveMQConnectionFactory("vm://localhost?broker.persistent=false");
+    connectionFactory =  new ActiveMQConnectionFactory(CONNECTION_URL);
 
     // Set JNDI Context
     Context jndiContext = new InitialContext();

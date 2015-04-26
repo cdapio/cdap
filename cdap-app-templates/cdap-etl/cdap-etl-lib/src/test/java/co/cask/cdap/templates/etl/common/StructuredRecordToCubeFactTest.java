@@ -63,17 +63,17 @@ public class StructuredRecordToCubeFactTest {
     config.timestamp.value = "not_now";
     verifyInvalidConfigDetected(config);
 
-    // bad tags
+    // bad dims
     config = createValidConfig();
-    config.tags = null;
+    config.dimensions = null;
     verifyInvalidConfigDetected(config);
 
     config = createValidConfig();
-    config.tags[0].name = null;
+    config.dimensions[0].name = null;
     verifyInvalidConfigDetected(config);
 
     config = createValidConfig();
-    config.tags[0].sourceField = null;
+    config.dimensions[0].sourceField = null;
     verifyInvalidConfigDetected(config);
 
     // bad measurements
@@ -111,8 +111,8 @@ public class StructuredRecordToCubeFactTest {
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("tsField", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("tagField1", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("tagField3", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("dimField1", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("dimField3", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
       Schema.Field.of("boolField", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
       Schema.Field.of("intField", Schema.nullableOf(Schema.of(Schema.Type.INT))),
       Schema.Field.of("longField", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
@@ -125,8 +125,8 @@ public class StructuredRecordToCubeFactTest {
     long ts = System.currentTimeMillis();
     StructuredRecord record = StructuredRecord.builder(schema)
         .set("tsField", new SimpleDateFormat(DATE_FORMAT).format(new Date(ts)))
-        .set("tagField1", "tagVal1")
-        .set("tagField3", "tagVal3")
+        .set("dimField1", "dimVal1")
+        .set("dimField3", "dimVal3")
         .set("boolField", true)
         .set("intField", 5)
         .set("longField", 10L)
@@ -139,15 +139,15 @@ public class StructuredRecordToCubeFactTest {
     // note: ts is in seconds
     Assert.assertEquals(ts / 1000, transformed.getTimestamp());
 
-    Map<String, String> tags = transformed.getTags();
-    Assert.assertEquals(7, tags.size());
-    Assert.assertEquals("tagVal1", tags.get("tag1"));
-    Assert.assertEquals("value2", tags.get("tag2"));
-    Assert.assertEquals("tagVal3", tags.get("tag3"));
-    Assert.assertEquals("true", tags.get("boolTag"));
-    Assert.assertEquals("5", tags.get("intTag"));
-    Assert.assertTrue(Math.abs(3.14f - Float.valueOf(tags.get("floatTag"))) < 0.000001);
-    Assert.assertEquals(Bytes.toStringBinary(Bytes.toBytes("foo")), tags.get("bytesTag"));
+    Map<String, String> dims = transformed.getDimensionValues();
+    Assert.assertEquals(7, dims.size());
+    Assert.assertEquals("dimVal1", dims.get("dim1"));
+    Assert.assertEquals("value2", dims.get("dim2"));
+    Assert.assertEquals("dimVal3", dims.get("dim3"));
+    Assert.assertEquals("true", dims.get("boolTag"));
+    Assert.assertEquals("5", dims.get("intTag"));
+    Assert.assertTrue(Math.abs(3.14f - Float.valueOf(dims.get("floatTag"))) < 0.000001);
+    Assert.assertEquals(Bytes.toStringBinary(Bytes.toBytes("foo")), dims.get("bytesTag"));
 
     Collection<Measurement> expectedMeasurements = ImmutableList.of(
       new Measurement("metric1", MeasureType.COUNTER, 15),
@@ -170,7 +170,7 @@ public class StructuredRecordToCubeFactTest {
     long tsStart = System.currentTimeMillis();
     record = StructuredRecord.builder(schema)
       .set("tsField", new SimpleDateFormat(DATE_FORMAT).format(new Date(ts)))
-      .set("tagField1", "tagVal1")
+      .set("dimField1", "dimVal1")
       .set("boolField", true)
       .set("longField", 10L)
       .set("floatField", 3.14f)
@@ -185,14 +185,14 @@ public class StructuredRecordToCubeFactTest {
     Assert.assertTrue(tsStart / 1000 <= transformed.getTimestamp());
     Assert.assertTrue(1000 + tsEnd / 1000 >= transformed.getTimestamp());
 
-    tags = transformed.getTags();
-    Assert.assertEquals(6, tags.size());
-    Assert.assertEquals("tagVal1", tags.get("tag1"));
-    Assert.assertEquals("value2", tags.get("tag2"));
-    Assert.assertEquals("defaultTagVal3", tags.get("tag3"));
-    Assert.assertEquals("true", tags.get("boolTag"));
-    Assert.assertTrue(Math.abs(3.14f - Float.valueOf(tags.get("floatTag"))) < 0.000001);
-    Assert.assertEquals(Bytes.toStringBinary(Bytes.toBytes("foo")), tags.get("bytesTag"));
+    dims = transformed.getDimensionValues();
+    Assert.assertEquals(6, dims.size());
+    Assert.assertEquals("dimVal1", dims.get("dim1"));
+    Assert.assertEquals("value2", dims.get("dim2"));
+    Assert.assertEquals("defaultTagVal3", dims.get("dim3"));
+    Assert.assertEquals("true", dims.get("boolTag"));
+    Assert.assertTrue(Math.abs(3.14f - Float.valueOf(dims.get("floatTag"))) < 0.000001);
+    Assert.assertEquals(Bytes.toStringBinary(Bytes.toBytes("foo")), dims.get("bytesTag"));
 
     expectedMeasurements = ImmutableList.of(
       new Measurement("metric1", MeasureType.COUNTER, 15),
@@ -219,35 +219,35 @@ public class StructuredRecordToCubeFactTest {
     config.timestamp.sourceField = "tsField";
     config.timestamp.sourceFieldFormat = DATE_FORMAT;
 
-    config.tags = new StructuredRecordToCubeFact.ValueMapping[7];
-    config.tags[0] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[0].name = "tag1";
-    config.tags[0].sourceField = "tagField1";
+    config.dimensions = new StructuredRecordToCubeFact.ValueMapping[7];
+    config.dimensions[0] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[0].name = "dim1";
+    config.dimensions[0].sourceField = "dimField1";
 
-    config.tags[1] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[1].name = "tag2";
-    config.tags[1].value = "value2";
+    config.dimensions[1] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[1].name = "dim2";
+    config.dimensions[1].value = "value2";
 
-    config.tags[2] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[2].name = "tag3";
-    config.tags[2].sourceField = "tagField3";
-    config.tags[2].value = "defaultTagVal3";
+    config.dimensions[2] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[2].name = "dim3";
+    config.dimensions[2].sourceField = "dimField3";
+    config.dimensions[2].value = "defaultTagVal3";
 
-    config.tags[3] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[3].name = "boolTag";
-    config.tags[3].sourceField = "boolField";
+    config.dimensions[3] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[3].name = "boolTag";
+    config.dimensions[3].sourceField = "boolField";
 
-    config.tags[4] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[4].name = "intTag";
-    config.tags[4].sourceField = "intField";
+    config.dimensions[4] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[4].name = "intTag";
+    config.dimensions[4].sourceField = "intField";
 
-    config.tags[5] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[5].name = "floatTag";
-    config.tags[5].sourceField = "floatField";
+    config.dimensions[5] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[5].name = "floatTag";
+    config.dimensions[5].sourceField = "floatField";
 
-    config.tags[6] = new StructuredRecordToCubeFact.ValueMapping();
-    config.tags[6].name = "bytesTag";
-    config.tags[6].sourceField = "bytesField";
+    config.dimensions[6] = new StructuredRecordToCubeFact.ValueMapping();
+    config.dimensions[6].name = "bytesTag";
+    config.dimensions[6].sourceField = "bytesField";
 
     config.measurements = new StructuredRecordToCubeFact.ValueMapping[5];
     config.measurements[0] = new StructuredRecordToCubeFact.ValueMapping();

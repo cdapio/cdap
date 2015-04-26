@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
@@ -70,8 +70,8 @@ public class CubeDatasetTest extends AbstractCubeTest {
       // NOTE: at this moment we support only DefaultAggregation, so all other tests in AbstractCubeTest must be skipped
       DefaultAggregation defAgg = (DefaultAggregation) entry.getValue();
       String aggPropertyPrefix = CubeDatasetDefinition.PROPERTY_AGGREGATION_PREFIX + (entry.getKey());
-      builder.add(aggPropertyPrefix + ".tags", Joiner.on(",").join(defAgg.getTagNames()));
-      builder.add(aggPropertyPrefix + ".requiredTags", Joiner.on(",").join(defAgg.getRequiredTags()));
+      builder.add(aggPropertyPrefix + ".dimensions", Joiner.on(",").join(defAgg.getDimensionNames()));
+      builder.add(aggPropertyPrefix + ".requiredDimensions", Joiner.on(",").join(defAgg.getRequiredDimensions()));
     }
 
     return builder.build();
@@ -127,11 +127,11 @@ public class CubeDatasetTest extends AbstractCubeTest {
     }
 
     @Override
-    public Collection<TagValue> findNextAvailableTags(final CubeExploreQuery query) {
-      return txnl.executeUnchecked(new Callable<Collection<TagValue>>() {
+    public Collection<DimensionValue> findDimensionValues(final CubeExploreQuery query) {
+      return txnl.executeUnchecked(new Callable<Collection<DimensionValue>>() {
         @Override
-        public Collection<TagValue> call() {
-          return delegate.findNextAvailableTags(query);
+        public Collection<DimensionValue> call() {
+          return delegate.findDimensionValues(query);
         }
       });
     }

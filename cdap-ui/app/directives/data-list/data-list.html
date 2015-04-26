@@ -1,0 +1,34 @@
+<div class="container">
+  <div class="row">
+
+    <div class="table-responsive" ng-if="dataList.length > 0">
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': dataList.length > 0}">
+            <th data-predicate="name">Name</th>
+            <th  data-predicate="type">Type</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <a ng-if="data.type === 'Dataset'" ui-sref="datasets.detail.overview({ datasetId: data.name })">
+                {{ ::data.name }}
+              </a>
+              <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({ streamId: data.name })">
+                {{ ::data.name }}
+              </a>
+            </td>
+            <td>{{ ::data.type }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="well text-center" ng-if="dataList.length === 0">
+      <h3>No dataset or stream in this program.</h3>
+    </div>
+
+  </div>
+</div>
