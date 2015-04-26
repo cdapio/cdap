@@ -1,5 +1,8 @@
 <div class="row">
-
+    <a ui-sref="adapters.list" class="btn btn-info">
+      <span class="fa fa-arrow-left"></span>
+      <span>All Adapters</span>
+    </a>
     <div class="panel panel-default" ng-init="ETLMetadataTabOpen=true">
       <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
         <span class="pull-left"> Metadata</span>
@@ -61,7 +64,8 @@
 <br/>
 <div class="row">
 
-  <tabset>
+  <tabset type="tabs slanted-tabs">
+
     <tab ng-repeat="tab in tabs" active="tab.active">
       <tab-heading>
         {{tab.title}}
