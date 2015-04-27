@@ -192,6 +192,9 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
       }
     };
 
+    // Disable chatty logging from twitter4j.
+    System.setProperty("twitter4j.loggerFactory", "twitter4j.NullLoggerFactory");
+
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
         .setOAuthConsumerKey(twitterConfig.consumerKey)
