@@ -1,8 +1,79 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.internal.app.services;
 
-/**
- *
- */
-public class StandaloneAppFabricServer {
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.metrics.FlowMetrics;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.http.HttpHandler;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import org.apache.twill.discovery.DiscoveryService;
 
+import java.net.InetAddress;
+import java.util.Set;
+import javax.annotation.Nullable;
+
+/**
+ * App Fabric server in standalone mode.
+ */
+public class StandaloneAppFabricServer extends AppFabricServer {
+
+  private final MetricStore metricStore;
+
+  /**
+   * Construct the Standalone AppFabricServer with service factory and configuration coming from guice injection.
+   */
+  @Inject
+  public StandaloneAppFabricServer(CConfiguration configuration,
+                                   DiscoveryService discoveryService,
+                                   SchedulerService schedulerService,
+                                   NotificationService notificationService,
+                                   @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
+                                   @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+                                   @Nullable MetricsCollectionService metricsCollectionService,
+                                   ProgramRuntimeService programRuntimeService,
+                                   AdapterService adapterService,
+                                   ApplicationLifecycleService applicationLifecycleService,
+                                   StreamCoordinatorClient streamCoordinatorClient,
+                                   @Named("appfabric.services.names") Set<String> servicesNames,
+                                   @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+                                   NamespaceAdmin namespaceAdmin,
+                                   MetricStore metricStore) {
+    super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
+          metricsCollectionService, programRuntimeService, adapterService, applicationLifecycleService,
+          streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin);
+    this.metricStore = metricStore;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // before starting up, we need to delete the queue.pending metric for all queues of all flows. This is
+    // because queues are in-memory and lost upon Standalone restart. This must happen before app-fabric
+    // starts, that is, before any flows can get started.
+    FlowMetrics.deleteFlowPendingMetrics(metricStore, null, null, null);
+    super.startUp();
+  }
 }

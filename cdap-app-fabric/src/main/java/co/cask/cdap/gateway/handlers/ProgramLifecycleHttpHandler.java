@@ -19,13 +19,13 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.mapreduce.MRJobClient;
 import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
+import co.cask.cdap.app.metrics.FlowMetrics;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -65,7 +65,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -87,7 +86,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -972,7 +970,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        deleteFlowPendingMetrics(namespaceId, appId, flowId);
+        FlowMetrics.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1099,32 +1097,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       queueAdmin.dropAllInNamespace(namespaceId);
       // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
-      deleteFlowPendingMetrics(namespaceId, null, null);
+      FlowMetrics.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Error while deleting queues in namespace " + namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-  }
-
-  /**
-   * Delete the "system.queue.pending" metrics for a flow or for all flows in an app or a namespace.
-   *
-   * @param appId the application id; may only be null if the flowId is null
-   */
-  private void deleteFlowPendingMetrics(String namespace, @Nullable String appId, @Nullable String flowId)
-    throws Exception {
-    Preconditions.checkArgument(appId != null || flowId == null, "ApplicationId may only be null if FlowId is null");
-    Collection<String> names = Collections.singleton("system.queue.pending");
-    Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
-    if (appId != null) {
-      tags.put(Constants.Metrics.Tag.APP, appId);
-      if (flowId != null) {
-        tags.put(Constants.Metrics.Tag.FLOW, flowId);
-      }
-    }
-    metricStore.delete(new MetricDeleteQuery(0L, Long.MAX_VALUE, names, tags));
   }
 
   /**
