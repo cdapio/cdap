@@ -162,7 +162,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return inputDir.getAbsolutePath();
   }
 
-  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, String schedule, String prevOrNext) throws Exception {
+  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, String schedule,
+                                                     String prevOrNext) throws Exception {
     String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%s", program.getApplicationId(), program.getId(),
                                           prevOrNext);
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
