@@ -16,6 +16,9 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements a simple Workflow with one Workflow action to run the PurchaseHistoryBuilder 
@@ -28,5 +31,17 @@ public class PurchaseHistoryWorkflow extends AbstractWorkflow {
       setName("PurchaseHistoryWorkflow");
       setDescription("PurchaseHistoryWorkflow description");
       addMapReduce("PurchaseHistoryBuilder");
+      addAction(new DummyAction());
+  }
+
+  /**
+   * DummyAction
+   */
+  public static class DummyAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+    @Override
+    public void run() {
+      LOG.info("Ran Sample dummy action");
+    }
   }
 }
