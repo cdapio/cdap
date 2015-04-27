@@ -377,13 +377,13 @@ public class FlowTest {
     tags.put(Constants.Metrics.Tag.APP, "PendingMetricTestApp");
     tags.put(Constants.Metrics.Tag.FLOW, "TestPendingFlow");
     if (producer != null) {
-      tags.put(Constants.Metrics.Tag.QUEUE_PRODUCER, producer);
+      tags.put(Constants.Metrics.Tag.PRODUCER, producer);
     }
     if (queue != null) {
       tags.put(Constants.Metrics.Tag.FLOWLET_QUEUE, queue);
     }
     if (consumer != null) {
-      tags.put(Constants.Metrics.Tag.QUEUE_CONSUMER, consumer);
+      tags.put(Constants.Metrics.Tag.CONSUMER, consumer);
     }
     return tags;
   }

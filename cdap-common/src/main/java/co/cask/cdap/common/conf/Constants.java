@@ -465,8 +465,8 @@ public final class Constants {
 
       public static final String ADAPTER = "adp";
 
-      public static final String QUEUE_PRODUCER = "qpr";
-      public static final String QUEUE_CONSUMER = "qco";
+      public static final String PRODUCER = "pr";
+      public static final String CONSUMER = "co";
     }
 
     /**

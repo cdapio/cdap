@@ -92,9 +92,9 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
         @Override
         public MetricsCollector load(ImmutablePair<String, String> key) throws Exception {
           return getProgramMetrics()
-            .childCollector(ImmutableMap.of(Constants.Metrics.Tag.QUEUE_PRODUCER, key.getFirst(),
+            .childCollector(ImmutableMap.of(Constants.Metrics.Tag.PRODUCER, key.getFirst(),
                                             Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond(),
-                                            Constants.Metrics.Tag.QUEUE_CONSUMER, BasicFlowletContext.this.flowletId));
+                                            Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
 

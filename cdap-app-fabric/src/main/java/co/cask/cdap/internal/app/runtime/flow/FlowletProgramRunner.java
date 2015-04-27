@@ -455,14 +455,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
           final MetricsCollector metrics = flowletContext.getProgramMetrics()
             .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
           final MetricsCollector producerMetrics = metrics.childCollector(
-            Constants.Metrics.Tag.QUEUE_PRODUCER, flowletContext.getFlowletId());
+            Constants.Metrics.Tag.PRODUCER, flowletContext.getFlowletId());
           final Iterable<MetricsCollector> consumerMetrics =
             Iterables.transform(consumerFlowlets, new Function<String, MetricsCollector>() {
               @Nullable
               @Override
               public MetricsCollector apply(@Nullable String consumer) {
                 return producerMetrics.childCollector(
-                  Constants.Metrics.Tag.QUEUE_CONSUMER, consumer);
+                  Constants.Metrics.Tag.CONSUMER, consumer);
               }});
 
           // create a queue metrics emitter that emit to all of the above collectors

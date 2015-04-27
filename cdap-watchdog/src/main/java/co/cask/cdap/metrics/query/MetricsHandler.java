@@ -119,8 +119,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       .put(Constants.Metrics.Tag.FLOWLET, "flowlet")
       .put(Constants.Metrics.Tag.FLOWLET_QUEUE, "queue")
 
-      .put(Constants.Metrics.Tag.QUEUE_PRODUCER, "producer")
-      .put(Constants.Metrics.Tag.QUEUE_CONSUMER, "consumer")
+      .put(Constants.Metrics.Tag.PRODUCER, "producer")
+      .put(Constants.Metrics.Tag.CONSUMER, "consumer")
 
       .put(Constants.Metrics.Tag.MAPREDUCE, "mapreduce")
       .put(Constants.Metrics.Tag.MR_TASK_TYPE, "tasktype")
