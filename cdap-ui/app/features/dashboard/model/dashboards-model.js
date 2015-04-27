@@ -4,7 +4,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
-function (Widget, MyDataSource, mySettings, $q, myHelpers, $stateParams) {
+function (Widget, MyDataSource, mySettings, $q, myHelpers) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
