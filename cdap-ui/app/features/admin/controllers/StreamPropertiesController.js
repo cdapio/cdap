@@ -35,25 +35,38 @@ angular.module(PKG.name + '.feature.admin')
 
     $scope.save = function() {
 
-      var fields = JSON.parse(angular.toJson($scope.properties));
+      // Cleanup Properties from empty fields
+      var properties = [];
+      angular.forEach($scope.properties, function(p) {
+        if (p.name) {
+          properties.push({
+            name: p.name,
+            type: p.type
+          });
+        }
+      });
 
       var obj = {
         name: $scope.format
       };
 
-      // do not include schema on the request when schema field is empty
-      if (fields.length !== 0) {
+      // do not include properties on the request when schema field is empty
+      if (properties.length !== 0) {
         obj.schema = {
-          fields: fields
+          type: 'record',
+          name: $stateParams.streamid + 'Body',
+          fields: properties
         };
       }
 
       var settings = {};
-
+      // cleanup settings
       angular.forEach($scope.settings, function(v) {
-        settings[v.key] = v.value;
+        if (v.key) {
+          settings[v.key] = v.value;
+        }
       });
-
+      // do not include settings on request when there is no setting defined
       if (Object.keys(settings).length !== 0) {
         obj.settings = settings;
       }
@@ -85,10 +98,8 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     $scope.removeProperty = function(property) {
-      var match = filterFilter($scope.properties, property);
-      if (match.length) {
-        $scope.properties.splice($scope.properties.indexOf(match[0]), 1);
-      }
+      var index = $scope.properties.indexOf(property);
+      $scope.properties.splice(index, 1);
     };
 
     $scope.addSetting = function() {
@@ -99,10 +110,8 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     $scope.removeSetting = function(setting) {
-      var match = filterFilter($scope.settings, setting);
-      if (match.length) {
-        $scope.settings.splice($scope.settings.indexOf(match[0]), 1);
-      }
+      var index = $scope.settings.indexOf(setting);
+      $scope.settings.splice(index, 1);
     };
 
     $scope.closeModal = function() {
