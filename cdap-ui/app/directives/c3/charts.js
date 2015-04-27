@@ -15,10 +15,9 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpers, $filter) {
+ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
-  var caskWindowManager = caskWindowManager;
   var c3 = c3;
   var myHelpers = myHelpers;
   var $filter = $filter;
@@ -101,8 +100,6 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
                     }
     $scope.me = c3.generate(chartConfig);
   }
-
-  $scope.$on(caskWindowManager.event.resize, render);
 
 });
 
