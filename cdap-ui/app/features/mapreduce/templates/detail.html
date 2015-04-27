@@ -3,7 +3,7 @@
 <div class="row" program-heading>
   <div class="col-sm-6">
     <h2 class="programTitle">
-      <span ng-bind="$state.params.programId | caskCapitalizeFilter"></span>
+      <span ng-bind="$state.params.programId"></span>
     </h2>
     <div class="type-block">
       <small> Type: Mapreduce </small>
@@ -56,6 +56,9 @@
 <ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="mapreduce.detail.data" role="tab">Data</a>
   </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.history" role="tab">History</a>

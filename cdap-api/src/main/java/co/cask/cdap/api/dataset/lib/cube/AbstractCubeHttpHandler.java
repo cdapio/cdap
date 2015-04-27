@@ -67,15 +67,16 @@ public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler
   }
 
   /**
-   * Searches tags in a {@link Cube} as defined by {@link Cube#findNextAvailableTags(CubeExploreQuery)}.
+   * Searches dimension values in a {@link Cube} as defined by
+   * {@link Cube#findDimensionValues(CubeExploreQuery)}.
    */
-  @Path("searchTag")
+  @Path("searchDimensionValue")
   @POST
-  public void searchTag(HttpServiceRequest request, HttpServiceResponder responder) {
+  public void searchDimensionValue(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
       String body = Bytes.toString(request.getContent());
       CubeExploreQuery query = new Gson().fromJson(body, CubeExploreQuery.class);
-      Collection<TagValue> result = getCube().findNextAvailableTags(query);
+      Collection<DimensionValue> result = getCube().findDimensionValues(query);
       responder.sendJson(result);
     } catch (Throwable th) {
       LOG.error("Error while executing request", th);
@@ -101,7 +102,7 @@ public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler
   }
 
   /**
-   * Searches tags in a {@link Cube} as defined by {@link Cube#findNextAvailableTags(CubeExploreQuery)}.
+   * Queries data in a {@link Cube} as defined by {@link Cube#query(CubeQuery)}.
    */
   @Path("query")
   @POST

@@ -50,9 +50,9 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
 
   private static final String NAME_DESC = "The name of the stream to output to. Must be a valid stream name. " +
     "The stream will be created if it does not exist.";
-  private static final String DATA_FIELD_DESC = "Name of the field in the record that contains the data to be " +
+  private static final String BODY_FIELD_DESC = "Name of the field in the record that contains the data to be " +
     "written to the specified stream. The data could be in binary format as a byte array or a ByteBuffer. " +
-    "It can also be a String. If unspecified, the 'data' key is used.";
+    "It can also be a String. If unspecified, the 'body' key is used.";
   private static final String HEADERS_FIELD_DESC = "Name of the field in the record that contains headers. " +
     "Headers are presumed to be a map of string to string.";
 
@@ -67,41 +67,39 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
    */
   public static class StreamConfig extends PluginConfig {
 
-    @Name(Properties.Stream.NAME)
     @Description(NAME_DESC)
-    private String streamName;
+    private String name;
 
     @Name(Properties.Stream.HEADERS_FIELD)
     @Description(HEADERS_FIELD_DESC)
     @Nullable
     private String headersField = Properties.Stream.DEFAULT_HEADERS_FIELD;
 
-    @Name(Properties.Stream.DATA_FIELD)
-    @Description(DATA_FIELD_DESC)
+    @Name(Properties.Stream.BODY_FIELD)
+    @Description(BODY_FIELD_DESC)
     @Nullable
-    private String dataField = Properties.Stream.DEFAULT_DATA_FIELD;
+    private String bodyField = Properties.Stream.DEFAULT_BODY_FIELD;
 
-    public StreamConfig(String streamName, String headersField, String dataField) {
-      this.streamName = streamName;
+    public StreamConfig(String name, String headersField, String bodyField) {
+      this.name = name;
       this.headersField = headersField;
-      this.dataField = dataField;
+      this.bodyField = bodyField;
     }
 
     public String getHeadersField() {
-      return headersField == null ? "headers" : headersField;
+      return headersField == null ? Properties.Stream.DEFAULT_HEADERS_FIELD : headersField;
     }
 
-    public String getDataField() {
-      return dataField == null ? "data" : dataField;
+    public String getBodyField() {
+      return bodyField == null ? Properties.Stream.DEFAULT_BODY_FIELD : bodyField;
     }
   }
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    Map<String, String> properties = stageConfig.getProperties();
-    String streamName = properties.get(Properties.Stream.NAME);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(streamName), "Stream name should be non-null, non-empty.");
-    pipelineConfigurer.addStream(new Stream(streamName));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(streamConfig.name),
+                                "Stream name should be non-null, non-empty.");
+    pipelineConfigurer.addStream(new Stream(streamConfig.name));
   }
 
   @Override
@@ -109,7 +107,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     int numRecordsWritten = 0;
     for (StructuredRecord structuredRecord : structuredRecords) {
       Schema schema = structuredRecord.getSchema();
-      Object data = structuredRecord.get(streamConfig.getDataField());
+      Object data = structuredRecord.get(streamConfig.getBodyField());
       Object headers = structuredRecord.get(streamConfig.getHeadersField());
       if (data == null) {
         LOG.debug("Found null data. Skipping record.");
@@ -123,7 +121,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
         continue;
       }
 
-      Schema.Field dataSchemaField = schema.getField(streamConfig.getDataField());
+      Schema.Field dataSchemaField = schema.getField(streamConfig.getBodyField());
       switch (dataSchemaField.getSchema().getType()) {
         case BYTES:
           numRecordsWritten += writeBytes(dataWriter, data, headers);
@@ -161,18 +159,18 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     }
     if (headers != null && headers instanceof Map) {
       StreamEventData streamEventData = new StreamEventData((Map<String, String>) headers, buffer);
-      writer.write(streamConfig.streamName, streamEventData);
+      writer.write(streamConfig.name, streamEventData);
     } else {
-      writer.write(streamConfig.streamName, buffer);
+      writer.write(streamConfig.name, buffer);
     }
     return 1;
   }
 
   private int writeString(DataWriter writer, Object data, Object headers) throws IOException {
     if (headers != null && headers instanceof Map) {
-      writer.write(streamConfig.streamName, (String) data, (Map<String, String>) headers);
+      writer.write(streamConfig.name, (String) data, (Map<String, String>) headers);
     } else {
-      writer.write(streamConfig.streamName, (String) data);
+      writer.write(streamConfig.name, (String) data);
     }
     return 1;
   }

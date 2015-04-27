@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -101,10 +101,10 @@ public final class FactScanner implements Iterator<FactScanResult> {
           if (!measureNames.isEmpty() && !measureNames.contains(measureName)) {
             continue;
           }
-          // todo: codec.getTagValues(rowKey) needs to un-encode tag names which may result in read in entity table
-          //       (depending on the cache and its state). To avoid that, we can pass to scanner the list of tag names
-          //       as we *always* know it (it is given) at the time of scanning
-          List<TagValue> tagValues = codec.getTagValues(rowKey);
+          // todo: codec.getDimensionValues(rowKey) needs to un-encode dimension names which may result in read in
+          //       entity table (depending on the cache and its state). To avoid that, we can pass to scanner the
+          //       list of dimension names as we *always* know it (it is given) at the time of scanning
+          List<DimensionValue> dimensionValues = codec.getDimensionValues(rowKey);
 
           boolean exhausted = false;
           List<TimeValue> timeValues = Lists.newLinkedList();
@@ -130,7 +130,7 @@ public final class FactScanner implements Iterator<FactScanResult> {
           }
 
           // todo: can return empty list, if all data is < startTs or > endTs
-          return new FactScanResult(measureName, tagValues, timeValues);
+          return new FactScanResult(measureName, dimensionValues, timeValues);
         }
 
         scanner.close();

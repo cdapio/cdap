@@ -1,0 +1,36 @@
+{
+  "id": "TwitterSource",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Twitter Account Info",
+      "position" : ["data.field", "headers.field", "name"],
+      "fields": {
+        "data.field": {
+          "widget": "textbox",
+          "description": "Name of the field in the record that contains the data to be written to the specified stream. The data could be in binary format as a byte array or a ByteBuffer. It can also be a String. If unspecified, the 'data' key is used.",
+          "info" : "long text of info",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "headers.field": {
+          "widget": "textbox",
+          "description": "Name of the field in the record that contains headers. Headers are presumed to be a map of string to string.",
+          "info" : "long text of info",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "name": {
+          "widget": "textbox",
+          "description": "The name of the stream to output to. Must be a valid stream name. The stream will be created if it does not exist.",
+          "info" : "long text of info",
+          "properties": {
+            "width": "medium"
+          }
+        }
+      }
+    }
+  }
+}

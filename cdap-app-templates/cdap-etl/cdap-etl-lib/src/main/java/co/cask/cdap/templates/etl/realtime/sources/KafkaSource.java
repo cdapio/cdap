@@ -16,6 +16,12 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Property;
@@ -25,6 +31,8 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.kafka.Kafka08SimpleApiConsumer;
+import co.cask.cdap.templates.etl.realtime.kafka.KafkaConfigurer;
+import co.cask.cdap.templates.etl.realtime.kafka.KafkaConsumerConfigurer;
 import co.cask.cdap.templates.etl.realtime.kafka.KafkaSimpleApiConsumer;
 
 import com.google.common.base.Preconditions;
@@ -45,8 +53,13 @@ import javax.annotation.Nullable;
  *  This implementation have dependency on {@code Kafka} version 0.8.x.
  * </p>
  */
-public class KafkaSource extends RealtimeSource<ByteBuffer> {
+@Plugin(type = "source")
+@Name("Kafka")
+@Description("Kafka Realtime Source")
+public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
+
+  public static final String MESSAGE = "message";
 
   public static final String KAFKA_PARTITIONS = "kafka.partitions";
   public static final String KAFKA_TOPIC = "kafka.topic";
@@ -54,46 +67,35 @@ public class KafkaSource extends RealtimeSource<ByteBuffer> {
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
 
-  private static final String CDAP_KAFKA_SOURCE_NAME = "Kafka Realtime Source";
-
   private KafkaSimpleApiConsumer kafkaConsumer;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(getClass().getSimpleName());
-    configurer.setDescription(CDAP_KAFKA_SOURCE_NAME);
-    configurer.addProperty(new Property(KAFKA_ZOOKEEPER, "The connect string location of Kafka Zookeeper", false));
-    configurer.addProperty(new Property(KAFKA_BROKERS, "Comma separate list of Kafka brokers", false));
-    configurer.addProperty(new Property(KAFKA_PARTITIONS, "Number of partitions" , true));
-    configurer.addProperty(new Property(KAFKA_TOPIC, "Topic of the messages", true));
-    configurer.addProperty(new Property(KAFKA_DEFAULT_OFFSET, "The default offset for the partition", false));
-  }
+  private StructuredRecord.Builder recordBuilder;
 
-  @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    Map<String, String> properties = stageConfig.getProperties();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(KAFKA_PARTITIONS)),
-                                "Number of partitions for Kafka topic need to specified.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(KAFKA_TOPIC)),
-                                "The topic name of Kafka messages need to specified.");
-    String zk = properties.get(KAFKA_ZOOKEEPER);
-    String brokers = properties.get(KAFKA_BROKERS);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(zk)) || !Strings.isNullOrEmpty(brokers),
-                                "Either Zookeeper connect info or list of brokers need to exists.");
+  private KafkaPluginConfig config;
+
+  /**
+   * Default constructor. This will primarily will be used to test.
+   * @param config
+   */
+  public KafkaSource (KafkaPluginConfig config) {
+    this.config = config;
   }
 
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
 
-    kafkaConsumer = new Kafka08SimpleApiConsumer();
+    kafkaConsumer = new Kafka08SimpleApiConsumer(this);
     kafkaConsumer.initialize(context);
+
+    Schema.Field messageField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("Kafka Message", messageField));
   }
 
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public SourceState poll(Emitter<ByteBuffer> writer, SourceState currentState) {
+  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
     // Lets set the internal offset store
     kafkaConsumer.saveState(currentState);
 
@@ -101,5 +103,87 @@ public class KafkaSource extends RealtimeSource<ByteBuffer> {
 
     // Update current state
     return new SourceState(kafkaConsumer.getSavedState());
+  }
+
+  /**
+   * Convert {@code Apache Kafka} ByetBuffer from message into CDAP {@link StructuredRecord} instance.
+   * @param payload the ByteBuffer of the Kafka message.
+   * @return instance of {@link StructuredRecord} representing the message.
+   */
+  public StructuredRecord byteBufferToStructuredRecord(ByteBuffer payload) {
+    recordBuilder.set(MESSAGE, payload.array());
+    return recordBuilder.build();
+  }
+
+  /**
+   * Get the internal config instance.
+   *
+   * @return the internal {@link KafkaPluginConfig} for this Kafka realtime source.
+   */
+  @Nullable
+  public KafkaPluginConfig getConfig() {
+    return config;
+  }
+
+  /**
+   * Helper class to provide {@link PluginConfig} for {@link KafkaSource}.
+   */
+  public static class KafkaPluginConfig extends PluginConfig {
+
+    @Name(KAFKA_PARTITIONS)
+    @Description("Number of partitions. This is a required field.")
+    private final Integer partitions;
+
+    @Name(KAFKA_TOPIC)
+    @Description("Topic of the messages. This is a required field.")
+    private final String topic;
+
+    @Name(KAFKA_ZOOKEEPER)
+    @Description("The connect string location of Zookeeper. Either this one or the list of brokers is required.")
+    @Nullable
+    private final String zkConnect;
+
+    @Name(KAFKA_BROKERS)
+    @Description("Comma separated list of Kafka brokers. Either this one or Zookeeper connect info is required.")
+    @Nullable
+    private final String kafkaBrokers;
+
+    @Name(KAFKA_DEFAULT_OFFSET)
+    @Description("The default offset for the partition. Default value is kafka.api.OffsetRequest.EarliestTime.")
+    @Nullable
+    private final Long defaultOffset;
+
+    public KafkaPluginConfig(String zkConnect, String brokers, Integer partitions, String topic, Long defaultOffset) {
+      this.zkConnect = zkConnect;
+      this.kafkaBrokers = brokers;
+      this.partitions = partitions;
+      this.topic = topic;
+      this.defaultOffset = defaultOffset;
+    }
+
+    // Accessors
+
+    public Integer getPartitions() {
+      return partitions;
+    }
+
+    public String getTopic() {
+      return topic;
+    }
+
+    @Nullable
+    public String getZkConnect() {
+      return zkConnect;
+    }
+
+    @Nullable
+    public String getKafkaBrokers() {
+      return kafkaBrokers;
+    }
+
+    @Nullable
+    public Long getDefaultOffset() {
+      return defaultOffset;
+    }
   }
 }

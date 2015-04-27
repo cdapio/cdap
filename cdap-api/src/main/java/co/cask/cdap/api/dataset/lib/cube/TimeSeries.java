@@ -25,17 +25,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Represents a single time series defined by a measure name and set of tag values.
+ * Represents a single time series defined by a measure name and set of dimension values.
  */
 @Beta
 public final class TimeSeries {
   private final String measureName;
-  private final Map<String, String> tagValues;
+  private final Map<String, String> dimensionValues;
   private final List<TimeValue> timeValues;
 
-  public TimeSeries(String measureName, Map<String, String> tagValues, List<TimeValue> timeValues) {
+  public TimeSeries(String measureName, Map<String, String> dimensionValues, List<TimeValue> timeValues) {
     this.measureName = measureName;
-    this.tagValues = Collections.unmodifiableMap(new HashMap<String, String>(tagValues));
+    this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
     this.timeValues = Collections.unmodifiableList(timeValues);
   }
 
@@ -43,8 +43,8 @@ public final class TimeSeries {
     return measureName;
   }
 
-  public Map<String, String> getTagValues() {
-    return tagValues;
+  public Map<String, String> getDimensionValues() {
+    return dimensionValues;
   }
 
   public List<TimeValue> getTimeValues() {
@@ -63,13 +63,13 @@ public final class TimeSeries {
     TimeSeries that = (TimeSeries) o;
 
     return Objects.equal(measureName, that.measureName) &&
-      Objects.equal(tagValues, that.tagValues) &&
+      Objects.equal(dimensionValues, that.dimensionValues) &&
       Objects.equal(timeValues, that.timeValues);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(measureName, tagValues, timeValues);
+    return Objects.hashCode(measureName, dimensionValues, timeValues);
   }
 
   @Override
@@ -77,7 +77,7 @@ public final class TimeSeries {
     final StringBuilder sb = new StringBuilder();
     sb.append("TimeSeries");
     sb.append("{measureName='").append(measureName).append('\'');
-    sb.append(", tagValues=").append(tagValues);
+    sb.append(", dimensionValues=").append(dimensionValues);
     sb.append(", timeValues=").append(timeValues);
     sb.append('}');
     return sb.toString();

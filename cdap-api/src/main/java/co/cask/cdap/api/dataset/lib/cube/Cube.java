@@ -61,12 +61,12 @@ public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
   void delete(CubeDeleteQuery query);
 
   /**
-   * Queries data for next available tags after the given list of tags specified by
-   * {@link CubeExploreQuery}
+   * Finds dimension values, each of which is present in aggregated data selection defined with
+   * {@link CubeExploreQuery}.
    * @param query query to perform
-   * @return {@link Collection} of {@link TagValue} that are result of the query
+   * @return {@link Collection} of {@link DimensionValue} that are result of the query
    */
-  Collection<TagValue> findNextAvailableTags(CubeExploreQuery query);
+  Collection<DimensionValue> findDimensionValues(CubeExploreQuery query);
 
   /**
    * Queries data for available measureNames for the query specified by {@link CubeExploreQuery}

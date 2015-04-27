@@ -6,7 +6,11 @@
     </thead>
     <tbody>
     <tr ng-repeat="row in tableData">
-      <td ng-repeat="value in row track by $index">{{::value}}</td>
+      <td ng-repeat="value in row track by $index">
+        <div ng-if="$first">{{value * 1000 | amDateFormat:'M/D/YY h:mm:ss a'}}</div>
+        <div ng-if="!$first">{{value}}</div>
+
+      </td>
     </tr>
     </tbody>
   </table>

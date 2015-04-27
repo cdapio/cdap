@@ -84,7 +84,8 @@ angular.module(PKG.name+'.services')
           self = this;
 
       if(instances[id]) {
-        throw new Error('multiple DataSource for scope', id);
+        // Reuse the same instance if already created.
+        return instances[id];
       }
       instances[id] = self;
 
