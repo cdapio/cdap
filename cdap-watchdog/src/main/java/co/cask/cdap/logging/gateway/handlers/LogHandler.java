@@ -109,15 +109,23 @@ public class LogHandler extends AuthenticatedHttpHandler {
                          long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
                          @Nullable RunRecord runRecord) {
     try {
+
+      if (fromTimeSecsParam < -1 || toTimeSecsParam < 0) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
+          "'start' and 'stop' should be greater than zero. " +
+          "Instead, 'start' was " + fromTimeSecsParam + " and 'stop' was " + toTimeSecsParam);
+        return;
+      }
+
+      if (toTimeSecsParam <= fromTimeSecsParam) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
+          "'stop' should be greater than 'start'.");
+        return;
+      }
+
       Filter filter = FilterParser.parse(filterStr);
       long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeSecsParam, TimeUnit.SECONDS);
       long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeSecsParam, TimeUnit.SECONDS);
-
-      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
-          "greater than zero and 'stop' should be greater than 'start'.");
-        return;
-      }
 
       ReadRange readRange = new ReadRange(fromTimeMs, toTimeMs, LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord);
