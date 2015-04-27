@@ -83,7 +83,7 @@ public interface Scheduler {
    + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
    + be returned.
    *
-   * @param program program to fetch the next runtime.
+   * @param program program to fetch the previous runtime.
    * @param programType type of program.
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
