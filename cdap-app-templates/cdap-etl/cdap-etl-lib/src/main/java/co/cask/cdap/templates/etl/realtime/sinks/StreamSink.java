@@ -80,18 +80,14 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     @Nullable
     private String bodyField = Properties.Stream.DEFAULT_BODY_FIELD;
 
+    public StreamConfig() {
+      this(null, Properties.Stream.DEFAULT_HEADERS_FIELD, Properties.Stream.DEFAULT_BODY_FIELD);
+    }
+
     public StreamConfig(String name, String headersField, String bodyField) {
       this.name = name;
       this.headersField = headersField;
       this.bodyField = bodyField;
-    }
-
-    public String getHeadersField() {
-      return headersField == null ? Properties.Stream.DEFAULT_HEADERS_FIELD : headersField;
-    }
-
-    public String getBodyField() {
-      return bodyField == null ? Properties.Stream.DEFAULT_BODY_FIELD : bodyField;
     }
   }
 
@@ -107,8 +103,8 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     int numRecordsWritten = 0;
     for (StructuredRecord structuredRecord : structuredRecords) {
       Schema schema = structuredRecord.getSchema();
-      Object data = structuredRecord.get(streamConfig.getBodyField());
-      Object headers = structuredRecord.get(streamConfig.getHeadersField());
+      Object data = structuredRecord.get(streamConfig.bodyField);
+      Object headers = structuredRecord.get(streamConfig.headersField);
       if (data == null) {
         LOG.debug("Found null data. Skipping record.");
         continue;
@@ -121,7 +117,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
         continue;
       }
 
-      Schema.Field dataSchemaField = schema.getField(streamConfig.getBodyField());
+      Schema.Field dataSchemaField = schema.getField(streamConfig.bodyField);
       switch (dataSchemaField.getSchema().getType()) {
         case BYTES:
           numRecordsWritten += writeBytes(dataWriter, data, headers);
@@ -138,7 +134,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   }
 
   private boolean isHeadersSchemaPresentAndSupported(Schema recordSchema) {
-    Schema.Field headersSchemaField = recordSchema.getField(streamConfig.getHeadersField());
+    Schema.Field headersSchemaField = recordSchema.getField(streamConfig.headersField);
     if (headersSchemaField != null) {
       Map.Entry<Schema, Schema> mapSchema = headersSchemaField.getSchema().getMapSchema();
       return mapSchema.getKey().getType().equals(Schema.Type.STRING) &&

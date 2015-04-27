@@ -406,17 +406,29 @@ public class ConfigurableTestBase {
   }
 
   /**
-   * Adds a plugin usable by the given template. Plugins added will not be visible until a call to
-   * {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made.
+   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
+   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
+   * jar created will include all classes in the same package as the given plugin class, plus any dependencies of the
+   * that class and given additional classes.
+   * If another plugin in the same package as the given plugin requires a different set of dependent classes,
+   * you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include functionY in the list of classes when specifying functionX as the
+   * plugin class.
    *
    * @param templateId The id of the template to add the plugin for
-   * @param pluginClass The plugin class
    * @param jarName The name to use for the plugin jar
+   * @param pluginClz A plugin class to add to the jar. Any other class that shares the same package will be included
+   *                  in the jar.
+   * @param classes Additional plugin classes whose dependencies should be added to the jar.
    * @throws IOException
    */
-  protected static void addTemplatePlugin(Id.ApplicationTemplate templateId,
-                                          Class<?> pluginClass, String jarName) throws IOException {
-    getTestManager().addTemplatePlugin(templateId, pluginClass, jarName);
+  protected static void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
+                                           Class<?> pluginClz, Class<?>... classes) throws IOException {
+    getTestManager().addTemplatePlugins(templateId, jarName, pluginClz, classes);
   }
 
   /**

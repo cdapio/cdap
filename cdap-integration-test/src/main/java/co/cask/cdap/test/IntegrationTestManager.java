@@ -106,8 +106,8 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
-  public void addTemplatePlugin(Id.ApplicationTemplate templateId, Class<?> pluginClz,
-                                String jarName) throws IOException {
+  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
+                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
     throw new UnsupportedOperationException();
   }
 

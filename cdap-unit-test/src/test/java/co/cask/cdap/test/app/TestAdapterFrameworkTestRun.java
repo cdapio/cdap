@@ -48,7 +48,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testWorkflowAdapter() throws Exception {
     Id.ApplicationTemplate templateId = Id.ApplicationTemplate.from(WorkflowTemplate.NAME);
-    addTemplatePlugin(templateId, FlipPlugin.class, "flip-1.0.jar");
+    addTemplatePlugins(templateId, "flip-1.0.jar", FlipPlugin.class);
     deployTemplate(Constants.DEFAULT_NAMESPACE_ID, templateId, WorkflowTemplate.class);
 
     DataSetManager<KeyValueTable> inputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.INPUT);
@@ -75,7 +75,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testWorkerAdapter() throws Exception {
     Id.ApplicationTemplate templateId = Id.ApplicationTemplate.from(WorkerTemplate.NAME);
-    addTemplatePlugin(templateId, SquarePlugin.class, "square-1.0.jar");
+    addTemplatePlugins(templateId, "square-1.0.jar", SquarePlugin.class);
     deployTemplate(Constants.DEFAULT_NAMESPACE_ID, templateId, WorkerTemplate.class);
 
     String tableName = "kvoutput";

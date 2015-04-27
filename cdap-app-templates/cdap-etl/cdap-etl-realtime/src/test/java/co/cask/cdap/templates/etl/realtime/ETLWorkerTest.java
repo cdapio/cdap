@@ -25,9 +25,17 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.templates.etl.realtime.sinks.RealtimeCubeSink;
+import co.cask.cdap.templates.etl.realtime.sinks.RealtimeTableSink;
 import co.cask.cdap.templates.etl.realtime.sinks.StreamSink;
+import co.cask.cdap.templates.etl.realtime.sources.JmsSource;
+import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.realtime.sources.TwitterSource;
+import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
+import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
+import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
@@ -59,8 +67,12 @@ public class ETLWorkerTest extends TestBase {
 
   @BeforeClass
   public static void setupTests() throws IOException {
-    addTemplatePlugin(TEMPLATE_ID, TwitterSource.class, "twitter-source-1.0.0.jar");
-    addTemplatePlugin(TEMPLATE_ID, StreamSink.class, "stream-sink-1.0.0.jar");
+    addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
+      TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class);
+    addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
+      RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
+    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
+      ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
       EndPointStage.class.getPackage().getName(),
       ETLStage.class.getPackage().getName(),

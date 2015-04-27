@@ -24,10 +24,19 @@ import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.BatchCubeSink;
+import co.cask.cdap.templates.etl.batch.sinks.DBSink;
+import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
+import co.cask.cdap.templates.etl.batch.sources.DBSource;
+import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
+import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Properties;
+import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
+import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -82,7 +91,6 @@ public class ETLStreamConversionTest extends TestBase {
 
   @BeforeClass
   public static void setupTemplate() throws IOException {
-    addTemplatePlugin(TEMPLATE_ID, StreamBatchSource.class, "stream-batch-source-1.0.0.jar");
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class);
   }
 

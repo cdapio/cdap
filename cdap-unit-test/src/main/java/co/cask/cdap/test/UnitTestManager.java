@@ -35,6 +35,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -148,11 +149,11 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addTemplatePlugin(Id.ApplicationTemplate templateId, Class<?> pluginClz,
-                                String jarName) throws IOException {
+  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
+                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, pluginClz.getPackage().getName());
-    Location pluginJar = AppJarHelper.createDeploymentJar(locationFactory, pluginClz, manifest);
+    Location pluginJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClz, classes);
     File templateDir = new File(pluginsDir, templateId.getId());
     DirUtils.mkdirs(templateDir);
     File destination = new File(templateDir, jarName);

@@ -65,15 +65,25 @@ public interface TestManager {
                       String... exportPackages) throws IOException;
 
   /**
-   * Adds a plugin usable by the given template. Only supported in unit tests. Plugins added will not be visible
-   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made.
+   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
+   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
    * @param templateId The id of the template to add the plugin for
-   * @param pluginClz The plugin class
    * @param jarName The name to use for the plugin jar
+   * @param pluginClz A plugin class to add to the jar
+   * @param classes Additional plugin classes to add to the jar
    * @throws IOException
    */
-  void addTemplatePlugin(Id.ApplicationTemplate templateId, Class<?> pluginClz, String jarName) throws IOException;
+  void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName, Class<?> pluginClz,
+                          Class<?>... classes) throws IOException;
 
   /**
    * Creates an adapter.
