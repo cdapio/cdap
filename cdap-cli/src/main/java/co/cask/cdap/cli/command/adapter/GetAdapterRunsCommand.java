@@ -61,11 +61,11 @@ public class GetAdapterRunsCommand extends AbstractCommand {
     List<RunRecord> runs = adapterClient.getRuns(adapterName, adapterStatus, startTs, endTs, resultLimit);
 
     Table table = Table.builder()
-      .setHeader("run id", "status", "twill run id", "start", "stop")
+      .setHeader("run id", "status", "start", "stop")
       .setRows(runs, new RowMaker<RunRecord>() {
         @Override
         public List<?> makeRow(RunRecord object) {
-          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getTwillRunId(),
+          return Lists.newArrayList(object.getPid(), object.getStatus(),
                                     object.getStartTs(), object.getStopTs());
         }
       }).build();
