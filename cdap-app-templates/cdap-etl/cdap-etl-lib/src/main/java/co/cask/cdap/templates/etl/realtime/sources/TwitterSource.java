@@ -196,7 +196,6 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
       }
     };
 
-
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.setDebugEnabled(false)
         .setOAuthConsumerKey(twitterConfig.consumerKey)
