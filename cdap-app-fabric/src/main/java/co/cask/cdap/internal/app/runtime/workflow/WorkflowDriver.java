@@ -87,13 +87,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
+  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
+  private final LoggingContext loggingContext;
   private NettyHttpService httpService;
   private volatile Thread runningThread;
-  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
   private boolean suspended;
   private Lock lock;
   private Condition condition;
-  private final LoggingContext loggingContext;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory) {
@@ -210,20 +210,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token);
     try {
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
-      try {
-        // Run the action in new thread
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<?> future = executor.submit(new Runnable() {
-          @Override
-          public void run() {
-            action.run();
-          }
-        });
-        future.get();
-      } finally {
-        ClassLoaders.setContextClassLoader(oldClassLoader);
-      }
+      // Run the action in new thread
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      Future<?> future = executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+          action.run();
+        }
+      });
+      future.get();
     } catch (Throwable t) {
       LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
       Throwables.propagateIfPossible(t, Exception.class);
