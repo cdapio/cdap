@@ -17,7 +17,7 @@
 package co.cask.cdap.proto;
 
 /**
- * Represents an adapter returned for /adapters/{adapter-id}.
+ * Flat representation of {@link Id.Program}, for HTTP endpoints.
  */
 public class ProgramId {
   private final String namespace;

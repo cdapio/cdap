@@ -41,7 +41,7 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
   }
 
   /**
-   * 
+   *
    */
   public static class Config {
     private final int instances;

@@ -76,7 +76,7 @@ public class AdapterClient {
   /**
    * Lists all adapters.
    *
-   * @return list of {@link co.cask.cdap.api.templates.AdapterSpecification}.
+   * @return list of {@link AdapterDetail}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
@@ -90,7 +90,7 @@ public class AdapterClient {
   /**
    * Gets an adapter.
    *
-   * @return an {@link AdapterConfig}.
+   * @return an {@link AdapterDetail}.
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
