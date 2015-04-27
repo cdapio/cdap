@@ -40,6 +40,9 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
     configurer.addWorker(new TWorker());
   }
 
+  /**
+   * 
+   */
   public static class Config {
     private final int instances;
 
@@ -54,6 +57,9 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
     configurer.setInstances(config.instances);
   }
 
+  /**
+   *
+   */
   public static class TWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(TWorker.class);
     public static final String NAME = TWorker.class.getSimpleName();
