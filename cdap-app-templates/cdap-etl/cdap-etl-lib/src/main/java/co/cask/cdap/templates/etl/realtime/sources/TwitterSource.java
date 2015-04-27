@@ -146,6 +146,10 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+
+    // Disable chatty logging from twitter4j.
+    System.setProperty("twitter4j.loggerFactory", "twitter4j.NullLoggerFactory");
+
     Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
     Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
     Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));

@@ -244,7 +244,9 @@
                     <copy todir = "${stage.opt.dir}/alpha/node_modules">
                       <fileset dir = "node_modules"/>
                     </copy>
-
+                    <copy todir = "${stage.opt.dir}/alpha/templates">
+                      <fileset dir = "templates"/>
+                    </copy>
                     <copy todir = "${stage.opt.dir}/alpha/">
                       <fileset dir = "./">
                         <include name="package.json" />

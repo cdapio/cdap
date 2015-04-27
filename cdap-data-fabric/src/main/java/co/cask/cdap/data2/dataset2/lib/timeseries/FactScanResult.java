@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 
 import java.util.Iterator;
@@ -27,12 +27,12 @@ import java.util.List;
  */
 public final class FactScanResult implements Iterable<TimeValue> {
   private final String measureName;
-  private final List<TagValue> tagValues;
+  private final List<DimensionValue> dimensionValues;
   private final Iterable<TimeValue> timeValues;
 
-  public FactScanResult(String measureName, List<TagValue> tagValues, Iterable<TimeValue> timeValues) {
+  public FactScanResult(String measureName, List<DimensionValue> dimensionValues, Iterable<TimeValue> timeValues) {
     this.measureName = measureName;
-    this.tagValues = tagValues;
+    this.dimensionValues = dimensionValues;
     this.timeValues = timeValues;
   }
 
@@ -40,8 +40,8 @@ public final class FactScanResult implements Iterable<TimeValue> {
     return measureName;
   }
 
-  public List<TagValue> getTagValues() {
-    return tagValues;
+  public List<DimensionValue> getDimensionValues() {
+    return dimensionValues;
   }
 
   @Override

@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.streams')
           controller: 'CdapStreamDetailController',
           ncyBreadcrumb: {
             parent: 'data.list',
-            label: '{{$state.params.streamId | caskCapitalizeFilter}}'
+            label: '{{$state.params.streamId}}'
           }
         })
           .state('streams.detail.overview.tab', {
