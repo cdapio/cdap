@@ -182,24 +182,24 @@ final class TimeScheduler implements Scheduler {
   @Override
   public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
-    return getScheduledRuntime(program, programType, "previous");
+    return getScheduledRuntime(program, programType, true);
   }
 
   @Override
   public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
-    return getScheduledRuntime(program, programType, "next");
+    return getScheduledRuntime(program, programType, false);
   }
 
   private List<ScheduledRuntime> getScheduledRuntime(Id.Program program, SchedulableProgramType programType,
-                                                     String prevOrNext) throws SchedulerException {
+                                                     boolean previousRuntimeRequested) throws SchedulerException {
     checkInitialized();
 
     List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
         long time;
-        if (prevOrNext.equals("previous")) {
+        if (previousRuntimeRequested) {
           if (trigger.getPreviousFireTime() == null) {
             // previous fire time can be null for the triggers which are not yet fired
             continue;
