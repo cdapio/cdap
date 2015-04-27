@@ -32,7 +32,7 @@ public final class KafkaConfig {
   }
 
   /**
-   * Returns the ZooKeeper connection string as set through {@link KafkaConsumerConfigurer#setZooKeeper(String)}
+   * Returns the ZooKeeper connection string
    * or {@code null}.
    */
   @Nullable
@@ -41,7 +41,7 @@ public final class KafkaConfig {
   }
 
   /**
-   * Returns brokers information as set through {@link KafkaConsumerConfigurer#setBrokers(String)} or {@code null}.
+   * Returns brokers information
    */
   @Nullable
   public String getBrokers() {

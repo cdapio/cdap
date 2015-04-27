@@ -25,48 +25,48 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Time-based measurement with associated tags (dimensions) to be stored in {@link Cube}.
+ * Time-based measurement with associated dimensionValues (dimensions) to be stored in {@link Cube}.
  * <p/>
  * See also {@link Cube#add(CubeFact)}.
  */
 @Beta
 public class CubeFact {
   private final long timestamp;
-  private final Map<String, String> tags;
+  private final Map<String, String> dimensionValues;
   private final Collection<Measurement> measurements;
 
   /**
-   * Creates an instance of {@link CubeFact} with no tags and no measurements.
+   * Creates an instance of {@link CubeFact} with no dimensionValues and no measurements.
    * <p/>
-   * After creation, you can add tags e.g. via {@link #addTag(String, String)}
+   * After creation, you can add dimensionValues e.g. via {@link #addDimensionValue(String, String)}
    * and add measurements e.g. via {@link #addMeasurement(String, MeasureType, long)}.
    *
    * @param timestamp timestamp (epoch in sec) of the measurements
    */
   public CubeFact(long timestamp) {
-    this.tags = new HashMap<String, String>();
+    this.dimensionValues = new HashMap<String, String>();
     this.measurements = new LinkedList<Measurement>();
     this.timestamp = timestamp;
   }
 
   /**
-   * Adds tag to this {@link CubeFact}.
-   * @param name name of the tag
-   * @param value value of the tag
+   * Adds dimension value to this {@link CubeFact}.
+   * @param name name of the dimension
+   * @param value value of the dimension
    * @return this {@link CubeFact}
    */
-  public CubeFact addTag(String name, String value) {
-    tags.put(name, value);
+  public CubeFact addDimensionValue(String name, String value) {
+    dimensionValues.put(name, value);
     return this;
   }
 
   /**
-   * Adds multiple tags to this {@link CubeFact}.
-   * @param tags tags to add
+   * Adds multiple dimensionValues to this {@link CubeFact}.
+   * @param dimensionValues dimensionValues to add
    * @return this {@link CubeFact}
    */
-  public CubeFact addTags(Map<String, String> tags) {
-    this.tags.putAll(tags);
+  public CubeFact addDimensionValues(Map<String, String> dimensionValues) {
+    this.dimensionValues.putAll(dimensionValues);
     return this;
   }
 
@@ -110,10 +110,10 @@ public class CubeFact {
   }
 
   /**
-   * @return tags of this {@link CubeFact}
+   * @return dimensionValues of this {@link CubeFact}
    */
-  public Map<String, String> getTags() {
-    return Collections.unmodifiableMap(tags);
+  public Map<String, String> getDimensionValues() {
+    return Collections.unmodifiableMap(dimensionValues);
   }
 
   /**

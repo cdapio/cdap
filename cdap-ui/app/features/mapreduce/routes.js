@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
-            skip: true
+            label: 'Runs'
           },
           resolve: {
             rRuns: function(MyDataSource, $stateParams, $q) {
@@ -54,15 +54,23 @@ angular.module(PKG.name + '.feature.mapreduce')
             templateUrl: '/assets/features/mapreduce/templates/tabs/runs/run-detail.html',
             controller: 'MapreduceRunsDetailController',
             ncyBreadcrumb: {
-              skip: true
+              label: '{{ $state.params.runid }}'
             }
           })
+        .state('mapreduce.detail.data', {
+          url: '/data',
+          templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
+          ncyBreadcrumb: {
+            parent: 'apps.detail.overview',
+            label: 'Data'
+          }
+        })
         .state('mapreduce.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}}'
+            label: 'History'
           }
         });
   });

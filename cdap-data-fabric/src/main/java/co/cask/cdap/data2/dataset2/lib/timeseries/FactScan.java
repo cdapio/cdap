@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
@@ -25,31 +25,33 @@ import java.util.List;
 /**
  * Defines a scan over facts in a {@link FactTable}.
  * <p/>
- * NOTE: it will only scan those facts that at the time of writing had all given tags (some could have null values).
+ * NOTE: it will only scan those facts that at the time of writing had all given dimensions (some could have
+ *       null values).
  */
 public final class FactScan {
-  private final List<TagValue> tagValues;
+  private final List<DimensionValue> dimensionValues;
   private final Collection<String> measureNames;
   private final long startTs;
   private final long endTs;
 
-  public FactScan(long startTs, long endTs, Collection<String> measureNames, List<TagValue> tagValues) {
+  public FactScan(long startTs, long endTs, Collection<String> measureNames, List<DimensionValue> dimensionValues) {
     this.endTs = endTs;
     this.startTs = startTs;
     this.measureNames = measureNames;
-    this.tagValues = ImmutableList.copyOf(tagValues);
+    this.dimensionValues = ImmutableList.copyOf(dimensionValues);
   }
 
-  public FactScan(long startTs, long endTs, String measureName, List<TagValue> tagValues) {
-    this(startTs, endTs, measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), tagValues);
+  public FactScan(long startTs, long endTs, String measureName, List<DimensionValue> dimensionValues) {
+    this(startTs, endTs,
+         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), dimensionValues);
   }
 
-  public FactScan(long startTs, long endTs, List<TagValue> tagValues) {
-    this(startTs, endTs, ImmutableList.<String>of(), tagValues);
+  public FactScan(long startTs, long endTs, List<DimensionValue> dimensionValues) {
+    this(startTs, endTs, ImmutableList.<String>of(), dimensionValues);
   }
 
-  public List<TagValue> getTagValues() {
-    return tagValues;
+  public List<DimensionValue> getDimensionValues() {
+    return dimensionValues;
   }
 
   public Collection<String> getMeasureNames() {
