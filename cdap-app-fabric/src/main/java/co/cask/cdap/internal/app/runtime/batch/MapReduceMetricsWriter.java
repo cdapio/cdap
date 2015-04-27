@@ -73,12 +73,13 @@ public class MapReduceMetricsWriter {
   }
 
   public void reportStats() throws IOException, InterruptedException {
-    reportMapredStats();
-    reportSystemStats();
+    Counters jobCounters = jobConf.getCounters();
+    reportMapredStats(jobCounters);
+    reportSystemStats(jobCounters);
   }
 
   // job level stats from counters built in to mapreduce
-  private void reportMapredStats() throws IOException, InterruptedException {
+  private void reportMapredStats(Counters jobCounters) throws IOException, InterruptedException {
     JobStatus jobStatus = jobConf.getStatus();
     // map stats
     float mapProgress = jobStatus.getMapProgress();
@@ -95,10 +96,10 @@ public class MapReduceMetricsWriter {
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
     int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
-    Counters counters = jobConf.getCounters();
-    long mapInputRecords = getTaskCounter(counters, TaskCounter.MAP_INPUT_RECORDS);
-    long mapOutputRecords = getTaskCounter(counters, TaskCounter.MAP_OUTPUT_RECORDS);
-    long mapOutputBytes = getTaskCounter(counters, TaskCounter.MAP_OUTPUT_BYTES);
+
+    long mapInputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_INPUT_RECORDS);
+    long mapOutputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_RECORDS);
+    long mapOutputBytes = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_BYTES);
 
     mapperMetrics.gauge(MapReduceMetrics.METRIC_COMPLETION, (long) (mapProgress * 100));
     mapperMetrics.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS, mapInputRecords);
@@ -112,8 +113,8 @@ public class MapReduceMetricsWriter {
 
     // reduce stats
     float reduceProgress = jobStatus.getReduceProgress();
-    long reduceInputRecords = getTaskCounter(counters, TaskCounter.REDUCE_INPUT_RECORDS);
-    long reduceOutputRecords = getTaskCounter(counters, TaskCounter.REDUCE_OUTPUT_RECORDS);
+    long reduceInputRecords = getTaskCounter(jobCounters, TaskCounter.REDUCE_INPUT_RECORDS);
+    long reduceOutputRecords = getTaskCounter(jobCounters, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
     reducerMetrics.gauge(MapReduceMetrics.METRIC_COMPLETION, (long) (reduceProgress * 100));
     reducerMetrics.gauge(MapReduceMetrics.METRIC_INPUT_RECORDS, reduceInputRecords);
@@ -147,8 +148,7 @@ public class MapReduceMetricsWriter {
   }
 
   // report system stats coming from user metrics or dataset operations
-  private void reportSystemStats() throws IOException {
-    Counters jobCounters = jobConf.getCounters();
+  private void reportSystemStats(Counters jobCounters) throws IOException {
     for (String group : jobCounters.getGroupNames()) {
       if (group.startsWith("cdap.")) {
 

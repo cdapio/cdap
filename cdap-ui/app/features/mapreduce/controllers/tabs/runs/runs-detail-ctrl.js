@@ -43,16 +43,6 @@ angular.module(PKG.name + '.feature.mapreduce')
       });
     }
 
-    $scope.getCompletedPercentage = function(tasks) {
-      var aggregate = 0;
-      angular.forEach(tasks, function (task) {
-        if(task.state === 'SUCCEEDED') {
-          aggregate += task.progress;
-        }
-      });
-      return aggregate ? ((aggregate / (tasks.length)) * 100).toFixed(1) : 0;
-    };
-
     $scope.getFailedTasks = function (tasks) {
       var failed = 0;
       angular.forEach(tasks, function (task) {
