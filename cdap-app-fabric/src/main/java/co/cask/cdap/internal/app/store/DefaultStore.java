@@ -880,12 +880,12 @@ public class DefaultStore implements Store {
   @Override
   public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
                                       final String workflowRunId, final String workflowNodeId,
-                                      final long startTimeInSeconds, final String twillRunId) {
+                                      final long startTimeInSeconds, final String adapter, final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
-                                            startTimeInSeconds, twillRunId);
+                                            startTimeInSeconds, adapter, twillRunId);
         return null;
       }
     });

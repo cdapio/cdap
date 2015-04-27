@@ -554,7 +554,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public void recordWorkflowProgramStart(Id.Program program, String programRunId, String workflow,
                                          String workflowRunId, String workflowNodeId, long startTimeInSeconds,
-                                         String twillRunId) {
+                                         String adapter, String twillRunId) {
     // Get the run record of the Workflow which started this program
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
@@ -579,9 +579,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     // Update the parent Workflow run record by adding node id and program run id in the properties
     Map<String, String> properties = record.getProperties();
-    if (properties == null) {
-      properties = Maps.newHashMap();
-    }
     properties.put(workflowNodeId, programRunId);
 
     write(key, new RunRecord(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
@@ -597,7 +594,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(programRunId)
       .build();
 
-    write(key, new RunRecord(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, record.getAdapterName(),
-                             twillRunId, ImmutableMap.of("workflowrunid", workflowRunId)));
+    write(key, new RunRecord(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter, twillRunId,
+                             ImmutableMap.of("workflowrunid", workflowRunId)));
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
@@ -46,20 +47,18 @@ public final class RunRecord {
   @SerializedName("adapter")
   private final String adapterName;
 
-  @Nullable
   @SerializedName("properties")
   private final Map<String, String> properties;
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable String twillRunId,
-                   @Nullable Map<String, String> properties) {
+                   @Nullable String adapterName, @Nullable String twillRunId, Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
     this.adapterName = adapterName;
     this.twillRunId = twillRunId;
-    this.properties = properties;
+    this.properties = properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
@@ -103,7 +102,6 @@ public final class RunRecord {
     return twillRunId;
   }
 
-  @Nullable
   public Map<String, String> getProperties() {
     return properties;
   }

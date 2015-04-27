@@ -183,7 +183,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, twillRunId);
+                                        startTimeInSeconds, adapterName, twillRunId);
         }
       }
 
