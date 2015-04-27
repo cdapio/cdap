@@ -84,7 +84,8 @@ angular.module(PKG.name+'.services')
           self = this;
 
       if(instances[id]) {
-        throw new Error('multiple DataSource for scope', id);
+        // Reuse the same instance if already created.
+        return instances[id];
       }
       instances[id] = self;
 
@@ -165,6 +166,33 @@ angular.module(PKG.name+'.services')
         this.bindings.splice(this.bindings.indexOf(match[0]), 1);
       }
     };
+
+    /**
+     * Fetch a template configuration on-demand. Send the action 
+     * 'template-config' to the node backend. 
+     */
+    DataSource.prototype.config = function (resource, cb) {
+      var deferred = $q.defer();
+   
+      var id = generateUUID();
+      resource.id = id;
+      this.bindings.push({
+        resource: resource,
+        id: id,
+        callback: function (result) {
+          cb && cb.apply(this, arguments);
+          deferred.resolve(result);
+        },
+        errorCallback: function(err) {
+          deferred.reject(err);
+        }
+      });
+      mySocket.send({
+        action: 'template-config',
+        resource: resource
+      })
+      return deferred.promise;
+    }
 
     /**
      * Fetch a resource on-demand. Send the action 'request' to

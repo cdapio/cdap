@@ -33,8 +33,8 @@ public class AppWithCube extends AbstractApplication {
   public void configure() {
     DatasetProperties props = DatasetProperties.builder()
       .add("dataset.cube.resolutions", "1,60")
-      .add("dataset.cube.aggregation.agg1.tags", "user,action")
-      .add("dataset.cube.aggregation.agg1.requiredTags", "user,action").build();
+      .add("dataset.cube.aggregation.agg1.dimensions", "user,action")
+      .add("dataset.cube.aggregation.agg1.requiredDimensions", "user,action").build();
     createDataset(CUBE_NAME, Cube.class, props);
 
     addService(SERVICE_NAME, new CubeHandler());

@@ -260,6 +260,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getRuns(program, status, startTime, endTime, limit, adapter, null);
   }
 
+  // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
+  // Any changes made here will have to be made over there too.
+  // JIRA https://issues.cask.co/browse/CDAP-2172
   public RunRecord getRun(Id.Program program, final String runid) {
     // For querying running records
     MDSKey runningKey = new MDSKey.Builder()
@@ -574,8 +577,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
     }
-
-    deleteAll(key);
 
     // Update the parent Workflow run record by adding node id and program run id in the properties
     Map<String, String> properties = record.getProperties();

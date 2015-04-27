@@ -1,5 +1,6 @@
 /**
  * Dashboards' model
+ * The widgets are implemented in columns to make smoother drag and drop experience
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
@@ -16,7 +17,9 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       {
         id: p.id,
         title: p.title || 'Dashboard',
-        columns: []
+        columns: [],
+        numColumn: p.numColumn || 3,
+        draggable: true
       }
     );
 
@@ -154,6 +157,35 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
         }).bind(this)
       );
     }
+  };
+
+  Dashboard.prototype.changeColumn = function(n) {
+    this.numColumn = n;
+
+    // Flattening the array
+    var array = [];
+    array = array.concat.apply(array, this.columns);
+
+    // Create Columns
+    var columns = [];
+    for (var i = 0; i < this.numColumn; i++) {
+      columns.push([]);
+    }
+
+    // Fill the columns
+    for (var i = 0; i < array.length; i++) {
+      columns[i % this.numColumn].push(array[i]);
+    }
+
+    this.columns = columns;
+
+    this.persist();
+  };
+
+  Dashboard.prototype.toggleDragDrop = function() {
+    this.draggable = !this.draggable;
+
+    this.persist();
   };
 
 

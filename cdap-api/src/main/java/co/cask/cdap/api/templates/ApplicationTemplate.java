@@ -18,7 +18,6 @@ package co.cask.cdap.api.templates;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import javax.annotation.Nullable;
 
@@ -42,15 +41,5 @@ public abstract class ApplicationTemplate<T> implements Application {
    */
   public void configureAdapter(String name, @Nullable T configuration, AdapterConfigurer configurer) throws Exception {
     // no-op
-  }
-
-  /**
-   * Provide a Service Handler class that provides HTTP endpoints.
-   *
-   * @return {@link HttpServiceHandler} or null if no HTTP endpoint is supported.
-   */
-  @Nullable
-  public Class<? extends HttpServiceHandler> getServiceHandlerClass() {
-    return null;
   }
 }

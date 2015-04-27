@@ -28,6 +28,5 @@ public class PurchaseHistoryWorkflow extends AbstractWorkflow {
       setName("PurchaseHistoryWorkflow");
       setDescription("PurchaseHistoryWorkflow description");
       addMapReduce("PurchaseHistoryBuilder");
-      addMapReduce("PurchaseHistoryBuilder");
   }
 }

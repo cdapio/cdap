@@ -36,10 +36,13 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
+import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -84,9 +87,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
+  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
+  private final LoggingContext loggingContext;
   private NettyHttpService httpService;
   private volatile Thread runningThread;
-  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
   private boolean suspended;
   private Lock lock;
   private Condition condition;
@@ -105,10 +109,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          options);
     lock = new ReentrantLock();
     condition = lock.newCondition();
+    loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getName(),
+                                                options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
   }
 
   @Override
   protected void startUp() throws Exception {
+    LoggingContextAccessor.setLoggingContext(loggingContext);
     LOG.info("Starting Workflow {}", workflowSpec);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
@@ -201,14 +208,18 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     status.put(node.getNodeId(), node);
 
-    WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
+    final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
     try {
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
-      try {
-        action.run();
-      } finally {
-        ClassLoaders.setContextClassLoader(oldClassLoader);
-      }
+      // Run the action in new thread
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      Future<?> future = executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+          action.run();
+        }
+      });
+      future.get();
     } catch (Throwable t) {
       LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
       Throwables.propagateIfPossible(t, Exception.class);

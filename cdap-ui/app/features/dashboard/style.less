@@ -5,11 +5,75 @@ body.state-dashboard {
 
   main {
 
+    .row:first-child {
+      margin-bottom: 25px;
+    }
+
     aside {
       float: right;
       margin: 8px 0 0 12px;
     }
+    .cdap-subnav-end + ul.slanted-tabs {
+      li.active {
+        .dropdown-menu {
+          background-color: transparent;
+          border: 0;
+          margin: 0;
+          padding: 0;
+          > li {
+            &:first-child a { .border-radius(0 8px 0 0); }
+            &:last-child a { .border-radius(0 0 8px 8px ); }
+            &.divider {
+              margin: 0;
+            }
+            > a {
+              color: white;
+              padding: 10px;
+              background-color: @cdap-header;
+              &:focus { outline: none; }
+              &:hover {
+                background-color: white;
+                color: @cdap-header;
+                font-weight: 500;
+              }
+              > span {
+                margin-top: 1px;
+                margin-right: 0;
+              }
+            }
+          }
 
+          .dropdown-header {
+            background-color: @cdap-header;
+            color: white;
+          }
+
+          .list-inline {
+            background-color: @cdap-header;
+            margin-left: 0;
+            padding-left: 0;
+            padding-right: 0;
+
+            li {
+              color: white;
+              cursor: pointer;
+              width: 30%;
+              padding: 2px 0;
+
+              &:hover {
+                background-color: white;
+                color: @cdap-header;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .dropdown-menu.metric-timeselector {
+      left: 15px;
+      width: inherit;
+    }
     .nav-tabs {
       // A
       border-bottom: 0;
@@ -80,6 +144,9 @@ body.state-dashboard {
     }
   }
 
+  .last-item {
+    margin-bottom: 50px;
+  }
 
 
   ul.dropdown-menu {

@@ -47,10 +47,16 @@ public class ReadRange {
   }
 
   public static ReadRange createFromRange(LogOffset logOffset) {
+    if (logOffset == LogOffset.LATEST_OFFSET) {
+      return ReadRange.LATEST;
+    }
     return new ReadRange(logOffset.getTime(), Long.MAX_VALUE, logOffset.getKafkaOffset());
   }
 
   public static ReadRange createToRange(LogOffset logOffset) {
+    if (logOffset == LogOffset.LATEST_OFFSET) {
+      return ReadRange.LATEST;
+    }
     return new ReadRange(-1, logOffset.getTime(), logOffset.getKafkaOffset());
   }
 

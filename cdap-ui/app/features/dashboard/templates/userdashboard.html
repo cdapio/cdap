@@ -6,19 +6,78 @@
   <h3 class="text-center"> No widgets on this board! <a ui-sref="dashboard.user.addwdgt"> Add one! </a>  </h3>
 </div>
 
+<div class="row" ng-if="!currentBoard.isEmpty">
+  <div class="col-xs-2"
+       dropdown is-open="dropdown.isopen">
+    <button type="button"
+            class="btn btn-default btn-block dropdown-toggle"
+            dropdown-toggle>
+      {{ tabs[currentTab] }}
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu metric-timeselector" role="menu">
+      <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
+    </ul>
+  </div>
+
+  <div ng-show="currentTab == 0">
+    <div class="col-xs-3">
+      <my-timestamp-picker
+        data-label="From"
+        ng-model="timeOptions.startMs"
+      ></my-timestamp-picker>
+    </div>
+
+    <div class="col-xs-3">
+      <my-timestamp-picker
+        data-label="To"
+        ng-model="timeOptions.endMs"
+      ></my-timestamp-picker>
+    </div>
+    <button class="btn btn-success" ng-click="updateWithTimeRange()">Apply!</button>
+  </div>
+
+  <div ng-show="currentTab == 1">
+    <div class="col-xs-2">
+      <my-duration-picker
+        ng-model="timeOptions.durationMs">
+      </my-duration-picker>
+    </div>
+
+
+    <div class="col-xs-2">
+      <div class="input-group">
+      <span class="input-group-addon">
+        <span>Frequency</span>
+      </span>
+      <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+      ng-model="timeOptions.refreshInterval"
+      bs-options="t.name for t in refreshIntervals"
+      bs-select>
+        <strong ng-bind="timeOptions.refreshInterval.name"></strong>
+        <span class="caret"></span>
+      </button>
+      </div>
+    </div>
+    <button class="btn btn-success" ng-click="updateWithFrequency()">Apply!</button>
+    </div>
+  </div>
+</div>
+
 <div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">
-  <div ng-class="{ 'col-xs-12': colWidth.fullWidth, 'col-xs-12 col-md-6': colWidth.oneThird }"
+  <div ng-class="{'col-md-6': currentBoard.numColumn === 2, 'col-md-4': currentBoard.numColumn === 3, 'col-md-3': currentBoard.numColumn === 4 }"
        ng-repeat="column in currentBoard.columns"
        ng-model="column"
-       as-sortable="dragdrop">
+       as-sortable="dragdrop"
+       is-disabled="!currentBoard.draggable">
 
     <div class="panel"
-      ng-class="wdgt.getClassName()"
+      ng-class="wdgt.getClassName($last)"
       ng-repeat="wdgt in column"
       as-sortable-item>
 
       <div class="panel-heading"
-        ng-include="'/assets/features/dashboard/templates/partials/wdgt-head.html'"
+        ng-include="'/assets/features/dashboard/templates/partials/wdgt-head.html'" ng-controller="DropdownCtrl"
         as-sortable-item-handle></div>
 
       <div class="panel-body"

@@ -21,8 +21,8 @@
 {%- set hideglobaltoc = '' %}
 {%- set hideglobaltoc_key = 'hide-global-toc' %}
 {%- if meta is defined %}
-    {%- if hideglobaltoc_key in meta.viewkeys() %}
-      {%- set hideglobaltoc = meta.get(hideglobaltoc_key) %}
+    {%- if hideglobaltoc_key in meta %}
+      {%- set hideglobaltoc = meta[hideglobaltoc_key] %}
     {%- endif %}
 {%- endif %}
 {%- if not hideglobaltoc %}

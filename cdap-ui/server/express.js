@@ -165,7 +165,7 @@ function makeApp (authAddress, cdapConfig) {
   app.all('*', [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
-      // This cookie is always generated to provide unique id for the browser that 
+      // This cookie is always generated to provide unique id for the browser that
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.

@@ -1,0 +1,53 @@
+{
+  "id": "TwitterSource",
+  "groups" : {
+    "position": [ "group1", "group2" ],
+    "group1": {
+       "display" : "Twitter Account Info",
+       "position" : [ "AccessToken", "AccessTokenSecret" ],
+       "fields" : {
+          "AccessToken" : {
+             "widget": "password",
+             "description" : "XYZ",
+             "info" : "long text of info",
+             "properties": {
+               "width": "medium"
+             }
+          },
+          "AccessTokenSecret": {
+             "widget": "password",
+             "label": "Access Token Secret",
+             "description" : "Twitter Access Token Secret.",
+             "info" : "Here is where you can get it",
+             "properties": {
+               "width": "medium"
+             }
+          }
+        }
+    },
+    "group2": {
+      "display": "Another group",
+      "position": ["ConsumerKey", "ConsumerSecret"],
+      "fields": {
+        "ConsumerKey" : {
+           "widget": "textbox",
+           "label": "Consumer Key",
+           "description" : "Twitter Access Token.",
+           "info" : "Here is where you can get it",
+           "properties": {
+             "width": "medium"
+           }
+        },
+        "ConsumerSecret" : {
+           "widget": "password",
+           "label": "Consumer Secret",
+           "description" : "Twitter Consumer Secret",
+           "info" : "Here is where you can get it",
+           "properties": {
+             "width": "medium"
+           }
+        }
+      }
+    }
+  }
+}

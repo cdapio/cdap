@@ -17,6 +17,7 @@ package co.cask.cdap.examples.countrandom;
 
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 
 import java.util.Random;
@@ -29,9 +30,29 @@ public class RandomSource extends AbstractFlowlet {
   private OutputEmitter<Integer> randomOutput;
 
   private final Random random = new Random();
+  private long delay = 0;
+  private boolean emit = true;
+
+  @Override
+  public void initialize(FlowletContext context) throws Exception {
+    super.initialize(context);
+    String delayStr = context.getRuntimeArguments().get("delay");
+    if (delayStr != null) {
+      delay = Long.parseLong(delayStr);
+    }
+    String emitStr = context.getRuntimeArguments().get("emit");
+    if (emitStr != null) {
+      emit = Boolean.parseBoolean(emitStr);
+    }
+  }
 
   @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
   public void generate() throws InterruptedException {
-    randomOutput.emit(random.nextInt(10000));
+    if (emit) {
+      randomOutput.emit(random.nextInt(10000));
+    }
+    if (delay > 0) {
+      TimeUnit.MILLISECONDS.sleep(delay);
+    }
   }
 }
