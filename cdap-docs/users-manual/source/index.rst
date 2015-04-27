@@ -3,48 +3,50 @@
     :description: Users' Manual
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-
 .. _users-index:
 
 ==================================================
 CDAP Users’ Manual
 ==================================================
 
-.. toctree::
-   :maxdepth: 1
-   
-    ETL Adaptors <etl/index>
-    
-    ETL Plugins <etl/plugins>
-    
-    Creating An ETL Application <etl/creating>
-    Operating An ETL Application <etl/operations>
-    
+This CDAP Users’ Manual is for people who are using CDAP, and want to take advantage of its
+abilities out-of-the-box to perform ETL (Extraction, Transformation and Loading) of data.
 
-This section of the documentation includes articles that cover advanced topics on CDAP that
-will be of interest to developers who want a deeper dive into CDAP:
+This is done by creating and operating an ETL Adapter. 
 
-.. |adaptors| replace:: **Best Practices:**
-.. _adaptors: etl/index.html
+ETL Adaptors are created from either of the two ETL Application Templates shipped with CDAP:
 
-- |adaptors|_ An extension to CDAP for creating ETL pipelines.
+- ETL Batch
+- ETL Realtime
+
+Application Templates are built from Plugins. Application Templates are used to build CDAP
+Adaptors, of which one type is an ETL Adaptor.
+
+(If you are interested in writing your own Adaptor, Application Template, Plugin, or
+extending the existing ETL framework, please see these Developers’ Manual sections. [link])
+
+
+.. |overview| replace:: **ETL Overview:**
+.. _overview: etl/index.html
+
+- |overview|_ An introduction to ETL and using CDAP out-of-the-box for ETL.
 
 
 .. |etl-plugins| replace:: **ETL Plugins:**
 .. _etl-plugins: etl/plugins.html
 
-- |etl-plugins|_ Data sources, data sinks, and transformations used in CDAP Adaptors.
+- |etl-plugins|_ Data sources, data sinks, and transformations; included with CDAP,
+  available for use in ETL Adaptors.
 
 
-.. |etl| replace:: **Creating Custom ETL Applications:**
-.. _etl: etl/creating.html
+.. |etl-creating| replace:: **Creating An ETL Adaptor:**
+.. _etl-creating: etl/creating.html
 
-- |etl|_ Covers creating custom ETL Applications and Components, including custom
-  Sources, Sinks, Transformations, and Plugins, that connect data sources to data sinks.
+- |etl-creating|_ Covers creating an ETL Adaptor using the Plugins included with CDAP.
 
 
-.. |application-logback| replace:: **Application Logback:**
-.. _application-logback: etl/operations.html
+.. |etl-operations| replace:: **Operating An ETL Adaptor:**
+.. _etl-operations: etl/operations.html
 
-- |application-logback|_ Adding a custom logback to a CDAP application.
+- |etl-operations|_ Covers using an ETL Adaptor created using the Plugins included with CDAP.
 

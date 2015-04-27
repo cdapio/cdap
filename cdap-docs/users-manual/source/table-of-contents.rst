@@ -10,3 +10,7 @@ CDAP Users’ Manual Table of Contents
    :maxdepth: 3
 
     Introduction <index>
+    ETL Overview <etl/index>
+    ETL Plugins <etl/plugins>
+    Creating An ETL Adaptor <etl/creating>
+    Operating An ETL Adaptor <etl/operations>
