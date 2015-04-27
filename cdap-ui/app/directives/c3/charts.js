@@ -22,8 +22,14 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
   var myHelpers = myHelpers;
   var $filter = $filter;
 
+  $scope.$on('$destroy', function() {
+      if ($scope.chart) {
+        $scope.chart = $scope.chart.destroy();
+      }
+  });
+
   $scope.initC3 = function (elem, type, attr, forcedOpts) {
-    if($scope.me) {
+    if($scope.chart) {
       return;
     }
 
@@ -58,9 +64,9 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
           // Save the data for when it gets resized.
           $scope.options.data = myData;
 
-          render()
+          render();
           // WARN: using load() API has funny animation (when inserting new data points to the right)
-//            $scope.me.load(myData);  // Alternative to render()
+//            $scope.chart.load(myData);  // Alternative to render()
         }
       });
     }
@@ -78,7 +84,7 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
     chartConfig.size = $scope.options.size;
 
     var xTick = {};
-    xTick.count = $scope.options.xtickcount
+    xTick.count = $scope.options.xtickcount;
     if ($scope.options.formatAsTimestamp) {
       var timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
@@ -94,11 +100,9 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
     if($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
-    chartConfig.zoom = { enabled: true};
-    chartConfig.transition = {
-                        duration: 1000
-                    }
-    $scope.me = c3.generate(chartConfig);
+    chartConfig.zoom = { enabled: true };
+    chartConfig.transition = { duration: 1000 };
+    $scope.chart = c3.generate(chartConfig);
   }
 
 });
