@@ -445,7 +445,7 @@ public class AdapterService extends AbstractIdleService {
   public RunRecord getRun(Id.Namespace namespace, String adapterName, String runId) throws NotFoundException {
     Id.Program program = getProgramId(namespace, adapterName);
     RunRecord runRecord = store.getRun(program, runId);
-    if (adapterName.equals(runRecord.getAdapterName())) {
+    if (runRecord != null && adapterName.equals(runRecord.getAdapterName())) {
       return runRecord;
     }
     return null;
