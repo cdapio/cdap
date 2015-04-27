@@ -261,7 +261,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     } while (i < parts.length);
   }
 
-
   // can remove this test after context (query-param) based searching is removed
   @Test
   public void testSearchContext() throws Exception {
@@ -500,10 +499,26 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     );
 
     batchTest(ImmutableMap.of("testQuery3", query3, "testQuery4", query4), expected);
+  }
 
-
+  @Test
+  public void testInvalidRequest() throws Exception {
     // test invalid request - query without any query Params and body content
     HttpResponse response = doPost("/v3/metrics/query", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    // batch query with empty metrics list
+    QueryRequestFormat invalidQuery = new QueryRequestFormat(
+      ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "flow", "WordCounter", "flowlet", "splitter"),
+      ImmutableList.<String>of(), ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+
+    response = doPost("/v3/metrics/query", GSON.toJson(ImmutableMap.of("invalid", invalidQuery)));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    // test invalid request - query without any metric Params
+    response = doPost("/v3/metrics/query?context=namespace.default", null);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    response = doPost("/v3/metrics/query?tag=namespace.default", null);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
@@ -517,7 +532,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
 
   /**
-   * Helper class to construct json for QueryRequest for batch queries
+   * Helper class to construct json for MetricQueryRequest for batch queries
    */
   private class QueryRequestFormat {
     Map<String, String> tags;

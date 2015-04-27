@@ -68,6 +68,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
+  private final ApplicationLifecycleService applicationLifecycleService;
   private final AdapterService adapterService;
   private final NotificationService notificationService;
   private final Set<String> servicesNames;
@@ -90,6 +91,7 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         ApplicationLifecycleService applicationLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -106,6 +108,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.namespaceAdmin = namespaceAdmin;
+    this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
   }
 
@@ -124,6 +127,7 @@ public class AppFabricServer extends AbstractIdleService {
 
     notificationService.start();
     schedulerService.start();
+    applicationLifecycleService.start();
     adapterService.start();
     programRuntimeService.start();
     streamCoordinatorClient.start();
@@ -209,6 +213,7 @@ public class AppFabricServer extends AbstractIdleService {
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
+    applicationLifecycleService.stopAndWait();
     adapterService.stopAndWait();
     notificationService.stopAndWait();
   }

@@ -5,13 +5,63 @@
 body.state-dashboard {
 
   .widget {
+    background-color: transparent;
+    border: 0;
     .panel-heading {
-      padding: 15px;
-      .btn-group {
-        top: -5px;
-        right: -5px;
+      padding: 10px;
+      position: relative;
+      text-align: center;
+      .border-radius(8px 8px 0 0);
+      .dropdown {
+        color: white;
+        font-size: 16px;
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        &.open {
+          .dropdown-toggle {
+            background-color: @cdap-header;
+            color: white;
+            .border-radius(8px 8px 0 0);
+          }
+        }
+        .dropdown-toggle {
+          cursor: pointer;
+          padding: 0 5px 5px;
+          span { vertical-align: bottom; }
+        }
+        .dropdown-menu {
+          background-color: transparent;
+          border: 0;
+          margin: 0;
+          padding: 0;
+          top: 25px !important;
+          left: 1px !important;
+          > li {
+            &:first-child a { .border-radius(0 8px 0 0); }
+            &:last-child a { .border-radius(0 0 8px 8px ); }
+            > a {
+              color: white;
+              padding: 10px;
+              background-color: @cdap-header;
+              &:focus { outline: none; }
+              &:hover {
+                background-color: white;
+                color: @cdap-header;
+                font-weight: 500;
+              }
+              > span {
+                margin-top: 1px;
+                margin-right: 0;
+              }
+            }
+          }
+
+        }
       }
       > span {
+        font-size: 16px;
+        font-weight: 400;
         max-width: 60%;
         display: inline-block;
         text-overflow: ellipsis;
@@ -20,7 +70,9 @@ body.state-dashboard {
       }
     }
     .panel-body {
+      background-color: white;
       overflow-x: scroll;
+      .border-radius(0 0 8px 8px);
     }
     .panel-footer dl {
       margin: 0;
@@ -29,9 +81,7 @@ body.state-dashboard {
         float: left;
         clear: left;
         min-width: 70px;
-        &:after {
-          content: ':\00a0';
-        }
+        &:after { content: ':\00a0'; }
       }
       dd {
         overflow: hidden;

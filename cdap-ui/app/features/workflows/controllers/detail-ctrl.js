@@ -43,14 +43,7 @@ angular.module(PKG.name + '.feature.workflows')
           $state.go('workflows.detail.runs', {}, {reload: true});
         });
     };
-    $scope.stop = function() {
-      $scope.status = 'STOPPING';
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      });
-    };
-
+    
     $scope.openPreferences = function() {
       myProgramPreferencesService.show('workflows');
     };

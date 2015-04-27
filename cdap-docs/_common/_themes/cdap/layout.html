@@ -120,8 +120,8 @@
     {%- set hidetoc = '' %}
     {%- set hidetoc_key = 'hide-toc' %}
     {%- if meta is defined %}
-        {%- if hidetoc_key in meta.viewkeys() %}
-            {%- set hidetoc = meta.get(hidetoc_key) %}
+        {%- if hidetoc_key in meta %}
+            {%- set hidetoc = meta[hidetoc_key] %}
         {%- endif %}
     {%- endif %}
     {%- if hidetoc %}
@@ -135,8 +135,8 @@
     {%- set hidenav = '' %}
     {%- set hidenav_key = 'hide-nav' %}
     {%- if meta is defined %}
-        {%- if hidenav_key in meta.viewkeys() %}
-            {%- set hidenav = meta.get(hidenav_key) %}
+        {%- if hidenav_key in meta %}
+            {%- set hidenav = meta[hidenav_key] %}
         {%- endif %}
     {%- endif %}
     {%- if hidenav %}

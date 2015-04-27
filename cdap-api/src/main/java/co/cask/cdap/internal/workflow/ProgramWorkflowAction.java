@@ -67,8 +67,8 @@ public final class ProgramWorkflowAction implements WorkflowAction {
     Preconditions.checkNotNull(programName, "No Program name provided.");
 
     programRunner = context.getProgramRunner(programName);
-    programType = context.getRuntimeArguments().containsKey(PROGRAM_TYPE) ? 
-                              SchedulableProgramType.valueOf(context.getRuntimeArguments().get(PROGRAM_TYPE)) : null;
+    programType = context.getSpecification().getProperties().containsKey(PROGRAM_TYPE) ?
+      SchedulableProgramType.valueOf(context.getSpecification().getProperties().get(PROGRAM_TYPE)) : null;
 
     LOG.info("Initialized for {} Program {} in workflow action",
              programType != null ? programType.name() : null, programName);

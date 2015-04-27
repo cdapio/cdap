@@ -287,6 +287,10 @@
                       <targetPath>ui/alpha/node_modules</targetPath>
                     </resource>
                     <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/templates</directory>
+                      <targetPath>ui/alpha/templates</targetPath>
+                    </resource>
+                    <resource>
                       <directory>${project.parent.basedir}/cdap-ui/</directory>
                       <targetPath>ui/alpha/</targetPath>
                       <includes>

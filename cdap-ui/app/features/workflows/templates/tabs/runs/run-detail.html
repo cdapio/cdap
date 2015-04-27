@@ -8,7 +8,7 @@
   </button>
 </div>
 
-<div class="workflow-components">
+<div class="workflow-components" ng-controller="WorkflowsRunsDetailController">
   <div class="row run-status">
     <div class="col-sm-6">
       <table class="table table-curved table-status">
@@ -18,11 +18,12 @@
           <th> Duration </th>
         </thead>
         <tbody>
-          <td ng-bind="status"> </td>
-          <td ng-show="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
-          <td ng-show="!startTime"> &mdash; </td>
-          <td ng-show="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
-          <td ng-show="!duration"> &mdash; </td>
+          <td ng-if="status" ng-bind="status"></td>
+          <td ng-if="!status"> Not Started</td>
+          <td ng-if="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
+          <td ng-if="!startTime"> &mdash; </td>
+          <td ng-if="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
+          <td ng-if="!duration"> &mdash; </td>
         </tbody>
       </table>
     </div>
@@ -30,4 +31,3 @@
 </div>
 
 <div ng-include="activeTab.template"></div>
-

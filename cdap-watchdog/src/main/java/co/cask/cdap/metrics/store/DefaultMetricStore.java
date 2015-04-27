@@ -21,9 +21,9 @@ import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
@@ -33,12 +33,14 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -49,6 +51,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link MetricStore}.
@@ -211,7 +214,7 @@ public class DefaultMetricStore implements MetricStore {
       }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
-        .addTags(metricValue.getTags())
+        .addDimensionValues(metricValue.getTags())
         .addMeasurements(metrics);
       facts.add(fact);
     }
@@ -224,7 +227,7 @@ public class DefaultMetricStore implements MetricStore {
     List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
       result.add(new MetricTimeSeries(timeSeries.getMeasureName(),
-                                      timeSeries.getTagValues(),
+                                      timeSeries.getDimensionValues(),
                                       timeSeries.getTimeValues()));
     }
     return result;
@@ -270,17 +273,36 @@ public class DefaultMetricStore implements MetricStore {
 
   @Override
   public Collection<TagValue> findNextAvailableTags(MetricSearchQuery query) throws Exception {
-    return cube.get().findNextAvailableTags(buildCubeSearchQuery(query));
+    Collection<DimensionValue> tags = cube.get().findDimensionValues(buildCubeSearchQuery(query));
+    Collection<TagValue> result = Lists.newArrayList();
+    for (DimensionValue dimensionValue : tags) {
+      result.add(new TagValue(dimensionValue.getName(), dimensionValue.getValue()));
+    }
+    return result;
   }
 
   private CubeExploreQuery buildCubeSearchQuery(MetricSearchQuery query) {
     return new CubeExploreQuery(query.getStartTs(), query.getEndTs(), query.getResolution(),
-                                query.getLimit(), query.getTagValues());
+                                query.getLimit(), toTagValues(query.getTagValues()));
   }
 
   @Override
   public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
     return cube.get().findMeasureNames(buildCubeSearchQuery(query));
+  }
+
+  private List<DimensionValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {
+    return Lists.transform(input, new Function<co.cask.cdap.api.metrics.TagValue, DimensionValue>() {
+      @Nullable
+      @Override
+      public DimensionValue apply(co.cask.cdap.api.metrics.TagValue input) {
+        if (input == null) {
+          // SHOULD NEVER happen
+          throw new NullPointerException();
+        }
+        return new DimensionValue(input.getName(), input.getValue());
+      }
+    });
   }
 
   private MeasureType toMeasureType(MetricType type) {

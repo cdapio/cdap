@@ -28,28 +28,32 @@ body.state-overview {
         }
       }
       .col-xs-12.col-lg-8 {
-        position: relative;
-        text-align: center;
         @media (min-width: @screen-lg-min) { text-align: right; }
-        .row > div {
-          text-align: center;
-          p.text-left { padding-left: 5px; }
+        .col-xs-12 > p {
+          @media (min-width: @screen-lg-min) { padding-left: 86px; }
         }
-        .health-metric {
-          color: white;
-          height: 16px;
-          width: 38px;
-          position: absolute;
-          bottom: 2px;
-          z-index: 10;
-          line-height: 16px;
-          vertical-align: middle;
+        .health-widget {
+          display: inline-block;
+          margin-right: 28px;
+        }
+        .health-metrics {
+          position: relative;
           font-weight: 700;
-          .border-radius(4px);
-          &.warn { background-color: @brand-warning; }
-          &.error {
-            background-color: @brand-danger;
-            right: 16px;
+          span {
+            color: white;
+            height: 16px;
+            width: 38px;
+            position: absolute;
+            bottom: 2px;
+            z-index: 10;
+            line-height: 16px;
+            text-align: center;
+            vertical-align: middle;
+            .border-radius(4px);
+            &:first-child { left: 0; }
+            &:last-child { right: 0; }
+            &.warn { background-color: @brand-warning; }
+            &.error { background-color: @brand-danger; }
           }
         }
         svg {
@@ -94,7 +98,12 @@ body.state-overview {
         color: @cdap-bluegray;
         padding: 10px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
-        h2 { font-size: 24px; padding-left: 30px; }
+        h2 {
+          font-size: 24px;
+          padding-left: 30px;
+          position: relative;
+          top: 5px;
+        }
         svg {
           + canvas {
             background-color: #E8E9EE;
@@ -115,6 +124,7 @@ body.state-overview {
             .box-shadow(inset 0 0 10px rgba(223, 224, 229, 0.5));
           }
         }
+        .c3-tooltip-container { text-align: left; }
       }
       &.data-apps {
         h3 { font-weight: 600; }
