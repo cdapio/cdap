@@ -18,8 +18,34 @@ angular.module(PKG.name + '.feature.admin')
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
-          $scope.properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
+          // $scope.properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
+          var properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
+          $scope.properties = [];
+          angular.forEach(properties, function(p) {
+            if (angular.isArray(p.type)) {
+              $scope.properties.push({
+                name: p.name,
+                type: p.type[0],
+                nullable: true
+              });
+            } else if (angular.isObject(p.type)) {
+              $scope.properties.push({
+                name: p.name,
+                type: p.type.items,
+                nullable: false
+              })
+            } else {
+              $scope.properties.push({
+                name: p.name,
+                type: p.type,
+                nullable: false
+              });
 
+            }
+          });
+
+
+          // formatting settings
           var settings = myHelpers.objectQuery(res, 'format', 'settings');
           $scope.settings = [];
           angular.forEach(settings, function(v, k) {
@@ -41,7 +67,7 @@ angular.module(PKG.name + '.feature.admin')
         if (p.name) {
           properties.push({
             name: p.name,
-            type: p.type
+            type: p.nullable ? [p.type, 'null'] : p.type
           });
         }
       });

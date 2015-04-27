@@ -74,21 +74,38 @@
 
                 <div class="row">
                   <div class="col-sm-10" ng-show="properties.length > 0">
+                    <div class="row">
+                      <div class="col-sm-1 col-sm-offset-9">
+                        nullable?
+                      </div>
+                    </div>
                     <div ng-repeat="property in properties" class="h4-margin">
                       <div class="row">
                         <div class="col-sm-4">
                           <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
                         </div>
-                        <div class="col-sm-6">
-                          <input type="text" class="form-control" ng-model="property.type" placeholder="type"/>
+                        <div class="col-sm-5">
+                          <!-- <input type="text" class="form-control" ng-model="property.type" placeholder="type"/> -->
+                          <select ng-model="property.type" class="form-control">
+                            <option value="boolean">boolean</option>
+                            <option value="bytes">bytes</option>
+                            <option value="double">double</option>
+                            <option value="float">float</option>
+                            <option value="int">int</option>
+                            <option value="long">long</option>
+                            <option value="string">string</option>
+                          </select>
 
+                        </div>
+                        <div class="col-sm-1">
+                          <input type="checkbox" ng-model="property.nullable">
                         </div>
                         <div class="col-sm-1">
                           <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
                             <span class="fa fa-fw fa-trash"> </span>
                           </a>
                         </div>
-                        <div class="col-sm-1" ng-if="$index == 0">
+                        <div class="col-sm-1" ng-if="$last">
                           <a class="btn btn-info btn-transparent" ng-click="addProperties()">
                             <span class="fa fa-fw fa-plus"></span>
                           </a>
@@ -130,7 +147,7 @@
                         <span class="fa fa-fw fa-trash"> </span>
                       </a>
                     </div>
-                    <div class="col-sm-1" ng-if="$index == 0">
+                    <div class="col-sm-1" ng-if="$last">
                       <a class="btn btn-info btn-transparent" ng-click="addSetting()">
                         <span class="fa fa-fw fa-plus"></span>
                       </a>
