@@ -33,6 +33,7 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -91,9 +92,9 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
         @Override
         public MetricsCollector load(ImmutablePair<String, String> key) throws Exception {
           return getProgramMetrics()
-            .childCollector(Constants.Metrics.Tag.QUEUE_PRODUCER, key.getFirst())
-            .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond())
-            .childCollector(Constants.Metrics.Tag.QUEUE_CONSUMER, BasicFlowletContext.this.flowletId);
+            .childCollector(ImmutableMap.of(Constants.Metrics.Tag.QUEUE_PRODUCER, key.getFirst(),
+                                            Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond(),
+                                            Constants.Metrics.Tag.QUEUE_CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
 
