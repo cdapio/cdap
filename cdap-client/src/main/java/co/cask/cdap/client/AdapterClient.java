@@ -347,7 +347,7 @@ public class AdapterClient {
                                  @Nullable Integer resultLimit)
     throws IOException, UnauthorizedException, AdapterNotFoundException {
 
-    String query = "?status" + status + "&startTs=" + startTs + "&endTs=" + endTs +
+    String query = "?status" + status + "&start=" + startTs + "&end=" + endTs +
       (resultLimit == null ? "" : "&resultLimit=" + resultLimit);
 
     Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -32,6 +33,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -54,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class AdapterClientTest extends ClientTestBase {
 
+  private static final Gson GSON = new Gson();
   private AdapterClient adapterClient;
 
   @BeforeClass
@@ -80,8 +83,9 @@ public class AdapterClientTest extends ClientTestBase {
     List<AdapterDetail> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
-    String adapterName = "someAdapter";
-    AdapterConfig adapterConfig = new AdapterConfig("description", TemplateApp.NAME, null);
+    DummyWorkerTemplate.Config config = new DummyWorkerTemplate.Config(2);
+    String adapterName = "realtimeAdapter";
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyWorkerTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
     adapterClient.create(adapterName, adapterConfig);
@@ -125,7 +129,7 @@ public class AdapterClientTest extends ClientTestBase {
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, TemplateApp.class);
+    setupAdapter(adapterDir, DummyWorkerTemplate.class);
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {
