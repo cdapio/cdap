@@ -140,6 +140,15 @@ gulp.task('js:lib', function() {
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
+gulp.task('js:aceworkers', function() {
+  gulp.src([
+    './bower_components/ace-builds/src-min-noconflict/ace.js',
+    './bower_components/ace-builds/src-min-noconflict/mode-javascript.js',
+    './bower_components/ace-builds/src-min-noconflict/worker-javascript.js'
+  ])
+    .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
+});
+
 gulp.task('js:$modal', function() {
   gulp.src([
     './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -309,9 +318,9 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('lib', ['js:$modal', 'js:lib', 'css:lib']);
+gulp.task('lib', ['js:$modal', 'js:lib', 'js:aceworkers', 'css:lib']);
 gulp.task('app', ['js:app', 'css:app']);
-gulp.task('js', ['js:$modal', 'js:lib', 'js:app']);
+gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
