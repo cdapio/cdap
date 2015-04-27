@@ -23,7 +23,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Defines a query to perform exploration of the {@link Cube} data, e.g. to find tag name and values and measure names.
+ * Defines a query to perform exploration of the {@link Cube} data, e.g. to find dimension name and values and
+ * measure names.
  */
 @Beta
 public class CubeExploreQuery {
@@ -31,21 +32,21 @@ public class CubeExploreQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final List<TagValue> tagValues;
+  private final List<DimensionValue> dimensionValues;
 
   /**
    * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to explore in.
    * @param startTs start time of the data selection, inclusive, in seconds since epoch
    * @param endTs end time of the data selection, exclusive, in seconds since epoch
    * @param resolution resolution of the aggregations explore
-   * @param tagValues tag name, tag value pairs that define the data selection
+   * @param dimensionValues dimension name, dimension value pairs that define the data selection
    */
-  public CubeExploreQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {
+  public CubeExploreQuery(long startTs, long endTs, int resolution, int limit, List<DimensionValue> dimensionValues) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.tagValues = Collections.unmodifiableList(new ArrayList<TagValue>(tagValues));
+    this.dimensionValues = Collections.unmodifiableList(new ArrayList<DimensionValue>(dimensionValues));
   }
 
   public long getStartTs() {
@@ -64,8 +65,8 @@ public class CubeExploreQuery {
     return limit;
   }
 
-  public List<TagValue> getTagValues() {
-    return tagValues;
+  public List<DimensionValue> getDimensionValues() {
+    return dimensionValues;
   }
 
   @Override
@@ -76,7 +77,7 @@ public class CubeExploreQuery {
     sb.append(", endTs=").append(endTs);
     sb.append(", resolution=").append(resolution);
     sb.append(", limit=").append(limit);
-    sb.append(", tagValues=").append(tagValues);
+    sb.append(", dimensionValues=").append(dimensionValues);
     sb.append('}');
     return sb.toString();
   }

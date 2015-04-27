@@ -1,6 +1,7 @@
 /*global require, module */
 
 var request = require('request'),
+    fs = require('fs'),
     log4js = require('log4js');
 
 var log = log4js.getLogger('default');
@@ -116,14 +117,16 @@ Aggregator.prototype.pushConfiguration = function(resource) {
   var statusCode = 404;
   try {
     // Check if the configuration is present within the plugin for a template
-    config = require('../templates/' + templateid + '/' + pluginid + '.json');
+    var file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
+    config = JSON.parse(fs.readFileSync(file, 'utf8'));
     statusCode = 200;
   } catch(e1) {
    try {
      // Some times there might a plugin that is common across multiple templates
      // in which case, this is stored within the common directory. So, if the 
      // template specific plugin check fails, then attempt to get it from common.
-     config = require('../templates/common/' + pluginid + '.json');  
+     var file = __dirname + '/../templates/common/' + pluginid + '.json';
+     config = JSON.parse(fs.readFileSync(file, 'utf8'));
      statusCode = 200;
    } catch (e2) { 
      log.debug("Unable to find template %s, plugin %s", templateid, pluginid);

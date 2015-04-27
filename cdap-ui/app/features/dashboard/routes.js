@@ -28,55 +28,44 @@ angular.module(PKG.name+'.feature.dashboard')
         abstract: true,
         template: '<ui-view/>'
       })
-        .state('dashboard.standard.cdap', {
-          url: '/cdap',
-          templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-          controller: 'OpsCdapCtrl'
-        })
 
-        .state('dashboard.standard.system', {
-          url: '/system',
-          templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-          controller: 'OpsSystemCtrl'
-        })
+      .state('dashboard.standard.cdap', {
+        url: '/cdap',
+        templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
+        controller: 'OpsCdapCtrl'
+      })
 
-        .state('dashboard.standard.apps', {
-          url: '/apps',
-          templateUrl: '/assets/features/operations/tab/apps.html',
-          controller: 'OpsAppsCtrl'
-        })
-
-        .state('dashboard.user', {
-          url: '/user/:tab',
-          templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
-          controller: 'DashboardCtrl',
-          resolve: {
-            tab: function($stateParams) {
-              return $stateParams.tab;
-            }
+      .state('dashboard.user', {
+        url: '/user/:tab',
+        templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
+        controller: 'DashboardCtrl',
+        resolve: {
+          tab: function($stateParams) {
+            return $stateParams.tab;
           }
-        })
+        }
+      })
 
-        .state('dashboard.user.addwdgt', {
-          url: '/widget/add',
-          onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
-            var scope = $rootScope.$new();
-            scope.currentDashboard = rDashboardsModel.current();
-            $bootstrapModal.open({
-              templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
-              size: 'md',
-              backdrop: true,
-              keyboard: true,
-              scope: scope,
-              controller: 'DashboardAddWdgtCtrl'
-            }).result.finally(function() {
-              $state.go('dashboard.user', {tab: tab}, { reload: true });
-            });
-          },
-          onExit: function($modalStack) {
-            $modalStack.dismissAll();
-          }
-        })
+      .state('dashboard.user.addwdgt', {
+        url: '/widget/add',
+        onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
+          var scope = $rootScope.$new();
+          scope.currentDashboard = rDashboardsModel.current();
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
+            size: 'md',
+            backdrop: true,
+            keyboard: true,
+            scope: scope,
+            controller: 'DashboardAddWdgtCtrl'
+          }).result.finally(function() {
+            $state.go('dashboard.user', {tab: tab}, { reload: true });
+          });
+        },
+        onExit: function($modalStack) {
+          $modalStack.dismissAll();
+        }
+      })
 
       ;
 

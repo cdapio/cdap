@@ -17,10 +17,13 @@
 package co.cask.cdap.templates.etl.realtime.kafka;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 
+import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
+import co.cask.cdap.templates.etl.realtime.sources.KafkaSource.KafkaPluginConfig;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -58,6 +61,8 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
 
   protected static final int SO_TIMEOUT = 5 * 1000;           // 5 seconds.
 
+  protected final KafkaSource kafkaSource;
+
   private final Function<KafkaConsumerInfo<OFFSET>, OFFSET> consumerToOffset =
     new Function<KafkaConsumerInfo<OFFSET>, OFFSET>() {
       @Override
@@ -73,6 +78,10 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   private Map<String, byte[]> offsetStore;
 
   private RealtimeContext sourceContext;
+
+  protected KafkaSimpleApiConsumer(KafkaSource kafkaSource) {
+    this.kafkaSource = kafkaSource;
+  }
 
   /**
    * <p>
@@ -114,7 +123,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    *
    * @return instance of {@link RealtimeContext}
    */
-  public RealtimeContext getContext() {
+  RealtimeContext getContext() {
     return sourceContext;
   }
 
@@ -146,7 +155,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    *
    * @param emitter instance of {@link Emitter} to emit the messages.
    */
-  public void pollMessages(Emitter<ByteBuffer> emitter) {
+  public void pollMessages(Emitter<StructuredRecord> emitter) {
     boolean infosUpdated = false;
     // Poll for messages from Kafka
     for (KafkaConsumerInfo<OFFSET> info : consumerInfos.values()) {
@@ -172,7 +181,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   /**
    * Configure Kafka consumer. This method will be called during the initialize phase
    *
-   * @param configurer    for configuring consuming from Kafka
+   * @param configurer for configuring consuming from Kafka
    */
   protected abstract void configureKafka(KafkaConfigurer configurer);
 
@@ -215,7 +224,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param message The message fetched from Kafka.
    * @param emitter The emitter to push the message
    */
-  protected void processMessage(KafkaMessage<OFFSET> message, Emitter<ByteBuffer> emitter) {
+  protected void processMessage(KafkaMessage<OFFSET> message, Emitter<StructuredRecord> emitter) {
     // Should only receive messages from partitions that it can process
     int partition = message.getTopicPartition().getPartition();
     Preconditions.checkArgument((partition % getContext().getInstanceCount()) == getContext().getInstanceId(),
@@ -231,7 +240,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param payload Payload decoded from the message
    * @param emitter The emitter to push the message
    */
-  protected void processMessage(KEY key, PAYLOAD payload, Emitter<ByteBuffer> emitter) {
+  protected void processMessage(KEY key, PAYLOAD payload, Emitter<StructuredRecord> emitter) {
     processMessage(payload, emitter);
   }
 
@@ -241,7 +250,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param payload Payload decoded from the message
    * @param emitter The emitter to push the message
    */
-  protected abstract void processMessage(PAYLOAD payload, Emitter<ByteBuffer> emitter);
+  protected abstract void processMessage(PAYLOAD payload, Emitter<StructuredRecord> emitter);
 
   /**
    * Returns the default value of offset to start with when encounter a new broker for a given topic partition.
@@ -293,6 +302,10 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
 
   protected Map<String, byte[]> getOffsetStore() {
     return offsetStore;
+  }
+
+  protected StructuredRecord byteBufferToStructuredRecord(ByteBuffer payload) {
+    return kafkaSource.byteBufferToStructuredRecord(payload);
   }
 
   /**
