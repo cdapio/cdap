@@ -20,7 +20,6 @@ angular.module(PKG.name+'.feature.dashboard')
       ['Bytes Store',   'namespace.*', ['system.dataset.store.bytes'],      'c3-line'],
       ['Dataset Read/Writes',     'namespace.*', ['system.dataset.store.writes' ,'system.dataset.store.reads'], 'c3-area-spline'],
       ['Containers Used', 'namespace.*', ['system.resources.used.containers', 'system.process.instance'], 'c3-area-step']
-    
     ];
 
     $scope.currentBoard = opshelper.createBoardFromPanels(panels);
