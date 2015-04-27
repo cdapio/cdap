@@ -105,16 +105,20 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
   }
 
   $scope.changeColumn = function (n) {
-    $scope.currentBoard.changeColumn(n);
+    rDashboardsModel.current().changeColumn(n);
   };
 
   $scope.toggleDragDrop = function() {
-    $scope.currentBoard.toggleDragDrop();
+    rDashboardsModel.current().toggleDragDrop();
+  };
+
+  $scope.currentColumn = function() {
+    return rDashboardsModel.current().numColumn;
   };
 
   $scope.activateTab = function(idx) {
     $scope.currentTab = idx;
-  }
+  };
   $scope.tabs = ['Time Range', 'Frequency'];
   $scope.currentTab = 1;
 
@@ -128,7 +132,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
       widget.isLive = false;
       widget.reconfigure();
     });
-  }
+  };
 
   $scope.updateWithFrequency = function() {
     applyOnWidgets(rDashboardsModel, function (widget) {
@@ -139,5 +143,5 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
       widget.interval = $scope.timeOptions.refreshInterval.value * 1000;
       widget.reconfigure();
     });
-  }
+  };
 });

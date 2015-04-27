@@ -4,7 +4,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
-function (Widget, MyDataSource, mySettings, $q, myHelpers) {
+function (Widget, MyDataSource, mySettings, $q, myHelpers, $stateParams) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -34,6 +34,7 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       // default is a single empty column
       this.columns.push([]);
     }
+
     this.checkForEmptyDashboard();
   }
 
@@ -160,23 +161,21 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
   };
 
   Dashboard.prototype.changeColumn = function(n) {
-    this.numColumn = n;
-
     // Flattening the array
     var array = [];
     array = array.concat.apply(array, this.columns);
 
     // Create Columns
     var columns = [];
-    for (var i = 0; i < this.numColumn; i++) {
+    for (var i = 0; i < n; i++) {
       columns.push([]);
     }
 
     // Fill the columns
     for (var i = 0; i < array.length; i++) {
-      columns[i % this.numColumn].push(array[i]);
+      columns[i % n].push(array[i]);
     }
-
+    this.numColumn = n;
     this.columns = columns;
 
     this.persist();
