@@ -5,8 +5,10 @@
 .. _users-etl-creating:
 
 =======================
-Creating An ETL Adaptor
+Creating An ETL Adapter
 =======================
+
+.. highlight:: console
 
 Introduction
 ============
@@ -33,8 +35,6 @@ Using the ETL Batch Template
 
 For the ETL Realtime Template, it requires a ``schedule`` property with a cron entry
 specifying the frequency of the Batch job run, such as every day or every hour.
-
-.. highlight:: console
 
 ::
 
@@ -89,8 +89,6 @@ while in Distributed CDAP mode, it will create different YARN containers.
 The ``instances`` property value needs to be greater than 0. Note that the ``instance``
 property replaces the ``schedule`` property of the ETL Batch Template.
 
-.. highlight:: console
-
 ::
 
   {
@@ -134,21 +132,19 @@ property replaces the ``schedule`` property of the ETL Batch Template.
   }
 
 
-Example ETL Adaptors
+Example ETL Adapters
 ====================
 
-Example Batch Adaptor
+Example Batch Adapter
 ---------------------
 
 In this example, we look at creating an Adapter of type ETL Batch that reads from a
 CDAP Stream and writes to a CDAP Table and that runs every 30 mins. This will launch a
 MapReduce program that runs every 30 minutes and reads data from the Stream *myStream* and
 writes to a Table *myTable*. A Table Sink needs a row key field to be specified and can use the
-timestamp of a Stream event for that.
+timestamp of a Stream event for that. (It's explained below how to find out which properties
+a plugin such as a Sink requires.)
 
-[John: how do you find out that it’s "schema.row.field" : "ts"?] 
-
-.. highlight:: console
 
 ::
 
@@ -174,8 +170,8 @@ timestamp of a Stream event for that.
              }
   }
 
-Example Realtime Adaptor
----------------------
+Example Realtime Adapter
+------------------------
 
 In this example, we look at creating an Adapter of type ETL Realtime that receives data from
 Twitter, performs processing on the data, and then writes it to a CDAP Stream *twitterStream*.
@@ -184,7 +180,9 @@ In this case, we will use a *ProjectionTransform* (a type of Transform) to renam
 from "message" to "tweet". Stream Sink needs a data field property that it will use as the
 content for the data to be written. The instances property is set to 1 and thus it will
 launch a thread or a yarn container (depending on the runtime). The number of instances
-of a Realtime Adapter cannot be changed during runtime.
+of a Realtime Adapter cannot be changed during runtime. 
+
+(It's explained below how to find out which properties a plugin requires.)
  
 
 .. highlight:: console
@@ -214,79 +212,211 @@ of a Realtime Adapter cannot be changed during runtime.
                               }
                             ],
                "sink":{
-                        "name":"Table",
+                        "name":"Stream",
                         "properties":{
-                                       "name":"myTable",
-                                       "schema.row.field":"ts"
+                                       "name":"twitterStream",
+                                       "body.field":"tweet"
                                      }
                       }
              }
   }
 
-Configuring ETL Adaptors and Plugins
+Configuring ETL Adapters and Plugins
 ====================================
+
+.. highlight:: console
 
 In order to configure an ETL Adapter, you’ll need information about the different ETL
 plugins you are using: which sources, transforms, and sinks are available, and what
 properties need to be specified for each of them.
 
-This information can be retrieved from the platform using the CDAP ETL Adaptor HTTP
+This information can be retrieved from the platform using the CDAP ETL Adapter HTTP
 RESTful API. You can access this with the CDAP CLI (Command Line Interface), ``curl``
 calls on a command line, or [through the CDAP UI].
 
 In each of the following endpoints, ``<template-id>`` refers to either ``etlBatch`` or
 ``etlRealtime``. For example, if you fetch the information on sources for the
 ``etlRealtime`` template, it will provide information about all the realtime sources that
-are available in the platform. 
+are available in the platform.
+
+If you have added your own Application Templates [link] or Plugins [link], then in the endpoints
+described below, you can substitute your Template IDs and Types as appropriate. 
+
+These endpoints are specific to ETL Application Templates and their Plugins. Endpoints
+that are applicable to all plugins [link] (including the ones you might have created) are
+documented in the CDAP Reference Manual, HTTP RESTful API [link].
+
+Retrieving Available Plugin Types
+---------------------------------
+
+To retrieve the available Plugin types (extensions) for an Application Template, use::
+
+  GET <base-url>/templates/<template-id>
+  
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<template-id>``
+     - Template ID, one of either ``etlBatch`` or ``etlRealtime``
+
+
+Retrieving Available Plugins
+----------------------------
+
+To retrieve the available Plugins of a given type (extension) for an Application Template, use::
+
+  GET <base-url>/templates/<template-id>/extensions/<type>
+  
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<template-id>``
+     - Template ID, one of either ``etlBatch`` or ``etlRealtime``
+   * - ``<type>``
+     - Plugin type, one of either ``source``, ``transform``, or ``sink``
+
+
+Retrieving Plugin Details
+-------------------------
+
+To retrieve the Plugin details for an Application Template, use::
+
+  GET <base-url>/templates/<template-id>/extensions/<type>/plugins/<plugin-id>
+  
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<template-id>``
+     - Template ID, one of either ``etlBatch`` or ``etlRealtime``
+   * - ``<type>``
+     - Plugin type, one of either ``source``, ``transform``, or ``sink``
+   * - ``<plugin-id>``
+     - Plugin ID (name), as obtained from a previous call to retrieve the available plugins
+
+
+Examples
+--------
+
+::
+
+  # Batch
+
+  # Retrieving the available types of plugins of the ETL Batch Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlBatch'
+
+  {"extensions":["sink","source","transform"],"name":"etlBatch","description":
+  "Batch Extract-Transform-Load (ETL) Adapter","programType":"Workflow"}
+
+  # Retrieving the available sink plugins of the ETL Batch Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlBatch/extensions/sink'
+
+  [{"template":{"name":"etlBatch","description":"Batch Extract-Transform-Load (ETL)
+  Adapter","programType":"Workflow"},"source":{"fileName":"cdap-etl-lib-3.0.0-SNAPSHOT.jar",
+  "name":"cdap-etl-lib","version":{"version":"3.0.0-SNAPSHOT","major":3,"minor":0,"fix":0,"
+  suffix":"SNAPSHOT"}},"type":"sink","name":"Stream","description":"Batch sink that outputs
+  to the specified CDAP Stream"}]
+
+  # Retrieving the information on the "Stream" sink plugin of the ETL Batch Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlBatch/extensions/sink/plugins/Stream'
+
+  [{"className":"co.cask.cdap.templates.etl.realtime.sinks.StreamSink","properties":{"name":
+  {"name":"name","description":"The name of the stream to output to. Must be a valid stream
+  name. The stream will be created if it does not
+  exist.","type":"string","required":true},"headers.field":{"name":"headers.field","
+  description":"Name of the field in the record that contains headers. Headers are presumed
+  to be a map of string to
+  string.","type":"string","required":false},"body.field":{"name":"body.field","description"
+  :"Name of the field in the record that contains the data to be written to the specified
+  stream. The data could be in binary format as a byte array or a ByteBuffer. It can also be
+  a String. If unspecified, the 'body' key is
+  used.","type":"string","required":false}},"template":{"name":"etlBatch","description":"
+  Batch Extract-Transform-Load (ETL)
+  Adapter","programType":"Workflow"},"source":{"fileName":"cdap-etl-lib-3.0.0-SNAPSHOT.jar",
+  "name":"cdap-etl-lib","version":{"version":"3.0.0-SNAPSHOT","major":3,"minor":0,"fix":0,"
+  suffix":"SNAPSHOT"}},"type":"sink","name":"Stream","description":"Real-time sink that
+  outputs to the specified CDAP Stream"}]
+
+
+  # Realtime
+
+  # Retrieving the available types of plugins of the ETL Realtime Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlRealtime'
+
+  {"extensions":["sink","source","transform"],"name":"etlRealtime","description":"Realtime
+  Extract-Transform-Load (ETL) Adapter","programType":"Worker"}
+
+  # Retrieving the available sink plugins of the ETL Realtime Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlRealtime/extensions/sink'
+
+  [{"template":{"name":"etlRealtime","description":"Realtime Extract-Transform-Load (ETL)
+  Adapter","programType":"Worker"},"source":{"fileName":"cdap-etl-lib-3.0.0-SNAPSHOT.jar","
+  name":"cdap-etl-lib","version":{"version":"3.0.0-SNAPSHOT","major":3,"minor":0,"fix":0,"
+  suffix":"SNAPSHOT"}},"type":"sink","name":"Stream","description":"Real-time sink that
+  outputs to the specified CDAP Stream"}]
+
+  # Retrieving the information on the "Stream" sink plugin of the ETL Realtime Application Template
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/templates/etlRealtime/extensions/sink/plugins/Stream'
+
+  [{"className":"co.cask.cdap.templates.etl.realtime.sinks.StreamSink","properties":{"name":
+  {"name":"name","description":"The name of the stream to output to. Must be a valid stream
+  name. The stream will be created if it does not
+  exist.","type":"string","required":true},"headers.field":{"name":"headers.field","
+  description":"Name of the field in the record that contains headers. Headers are presumed
+  to be a map of string to
+  string.","type":"string","required":false},"body.field":{"name":"body.field","description"
+  :"Name of the field in the record that contains the data to be written to the specified
+  stream. The data could be in binary format as a byte array or a ByteBuffer. It can also be
+  a String. If unspecified, the 'body' key is
+  used.","type":"string","required":false}},"template":{"name":"etlRealtime","description":"
+  Realtime Extract-Transform-Load (ETL)
+  Adapter","programType":"Worker"},"source":{"fileName":"cdap-etl-lib-3.0.0-SNAPSHOT.jar","
+  name":"cdap-etl-lib","version":{"version":"3.0.0-SNAPSHOT","major":3,"minor":0,"fix":0,"
+  suffix":"SNAPSHOT"}},"type":"sink","name":"Stream","description":"Realtime sink that
+  outputs to the specified CDAP Stream"}]
+
+
+Creating and Deploying an Adapter
+=================================
+
+Follow these steps to create and deploy and Adapter:
+
+1. Using the API described above, determine which Application Template you would like to
+use, which Plugins from it you will use, and the required properties.
+
+#. Complete a JSON file following the format given above to describe your Adapter.
+
+#. Deploy the Adapter to a running instance of CDAP using::
+
+  PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-name> -d "@/path/to/configfile"
+
+  where:
+  
+  .. list-table::
+     :widths: 20 80
+     :header-rows: 1
+
+     * - Parameter
+       - Description
+     * - ``<namespace-id>``
+       - Namespace ID
+     * - ``<adapter-name>``
+       - Name of the Adapter
 
 
 
-/v3/templates/{template-id}/extensions/{type}/plugins
-
-template-id : etlBatch or etlRealtime
-type : source, transform, sink (or other plugins that you might have added [link])
-
-Example and Sample response : ?
-/v3/templates/{template-id}/extensions/{type}/plugins/{plugin-id}
-
-
-template-id : etlBatch or etlRealtime
-type : source, transform, sink (or other plugins that you might have added [link])
-plugin-id : name of the plugin
-
-
-Examples and Sample responses : ?
-
-These endpoints are specific to ETL Plugins. For endpoints that are applicable to all
-plugins [link] (including the ones you might have created) are documented here [link].
 
 
 
 
-
-
-
-Old Notes
-=========
-(please disregard for now)
-
-With UI
-=======
-- Start with an App-Template
-  - ETL-Batch
-  - ETL-Realtime
-- Set Source
-- Set Sink
-- Set Transformation(s), if any
-
-With CLI
-========
-??
-
-With RESTful API
-================
-??
-
-- With Java?
-- With Java Client?
-- With Other Clients: Javascript, Python, Ruby?
