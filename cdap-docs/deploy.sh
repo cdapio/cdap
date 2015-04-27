@@ -122,7 +122,7 @@ REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${REMOTE_DIR}"
 
 SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 RSYNC_OPTS='-aPh'
-RSYNC_SSH_OPTS='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+RSYNC_SSH_OPTS="ssh ${SSH_OPTS}"
 RSYNC_PATH='sudo rsync'
 
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
