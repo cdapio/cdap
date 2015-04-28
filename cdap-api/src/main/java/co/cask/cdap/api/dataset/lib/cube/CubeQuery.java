@@ -197,7 +197,7 @@ public final class CubeQuery {
        * @param measurements map of measurement name, agg function to include
        * @return builder for configuring {@link CubeQuery}
        */
-      public Measurement measurement(Map<String, AggregationFunction> measurements) {
+      public Measurement measurements(Map<String, AggregationFunction> measurements) {
         Builder.this.measurements.putAll(measurements);
         return new Measurement();
       }
@@ -225,7 +225,7 @@ public final class CubeQuery {
        * @param measurements map of measurement name, agg function to include
        * @return builder for configuring {@link CubeQuery}
        */
-      public Measurement measurement(Map<String, AggregationFunction> measurements) {
+      public Measurement measurements(Map<String, AggregationFunction> measurements) {
         Builder.this.measurements.putAll(measurements);
         return new Measurement();
       }
