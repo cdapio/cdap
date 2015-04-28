@@ -120,8 +120,9 @@ DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
 REMOTE_STG_DIR="${REMOTE_STG_BASE}/${REMOTE_DIR}"
 REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${REMOTE_DIR}"
 
+SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 RSYNC_OPTS='-aPh'
-SSH_OPTS='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+RSYNC_SSH_OPTS="ssh ${SSH_OPTS}"
 RSYNC_PATH='sudo rsync'
 
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
@@ -154,8 +155,8 @@ function make_remote_dir () {
   local _user=${1}
   local _host=${2}
   local _rdir=${3} # remote directory
-  decho "ssh ${_user}@${_host} \"sudo mkdir -p ${_rdir}\""
-  ssh ${_user}@${_host} "sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
+  decho "ssh ${SSH_OPTS} ${_user}@${_host} \"sudo mkdir -p ${_rdir}\""
+  ssh ${SSH_OPTS} ${_user}@${_host} "sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
   decho ""
 }
 
@@ -172,8 +173,8 @@ function sync_local_dir_to_remote_dir () {
     _rdir=${_rdir}/${_version}
   fi
   decho ""
-  decho "rsync ${RSYNC_OPTS} -e \"${SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_rdir}\"" 
-  rsync ${RSYNC_OPTS} -e "${SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_rdir}" || die "could not rsync ${_local_dir} to ${_rdir} on ${_host}" 
+  decho "rsync ${RSYNC_OPTS} -e \"${RSYNC_SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_rdir}\"" 
+  rsync ${RSYNC_OPTS} -e "${RSYNC_SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_rdir}" || die "could not rsync ${_local_dir} to ${_rdir} on ${_host}" 
 }
 
 # main deploy function

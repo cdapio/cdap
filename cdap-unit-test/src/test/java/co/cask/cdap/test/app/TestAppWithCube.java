@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -91,8 +93,15 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals("user", tv.getName());
       Assert.assertEquals("alex", tv.getValue());
 
-      tags = searchDimensionValue(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
-                                                            ImmutableList.of(new DimensionValue("user", "alex"))));
+      tags = searchDimensionValue(url,
+                                  CubeExploreQuery.builder()
+                                    .from()
+                                      .resolution(1, TimeUnit.SECONDS)
+                                    .where()
+                                      .dimension("user", "alex")
+                                      .timeRange(tsInSec - 60, tsInSec + 60)
+                                    .limit(100)
+                                    .build());
       Assert.assertEquals(2, tags.size());
       Iterator<DimensionValue> iterator = tags.iterator();
       tv = iterator.next();
@@ -114,8 +123,17 @@ public class TestAppWithCube extends TestBase {
 
       // 1-sec resolution
       Collection<TimeSeries> data =
-        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", MeasureType.COUNTER,
-                                 ImmutableMap.of("action", "click"), new ArrayList<String>()));
+        query(url,
+              CubeQuery.builder()
+                .select()
+                  .measurement("count", AggregationFunction.SUM)
+                .from(null)
+                  .resolution(1, TimeUnit.SECONDS)
+                .where()
+                  .dimension("action", "click")
+                  .timeRange(tsInSec - 60, tsInSec + 60)
+                .limit(100)
+                .build());
       Assert.assertEquals(1, data.size());
       TimeSeries series = data.iterator().next();
       List<TimeValue> timeValues = series.getTimeValues();
@@ -128,9 +146,9 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals(1, timeValue.getValue());
 
       // 60-sec resolution
-      data = query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 60, 100, "count",
-                                      MeasureType.COUNTER,
-                                      ImmutableMap.of("action", "click"), new ArrayList<String>()));
+      data = query(url, new CubeQuery(null, tsInSec - 60, tsInSec + 60, 60, 100,
+                                      ImmutableMap.of("count", AggregationFunction.SUM),
+                                      ImmutableMap.of("action", "click"), new ArrayList<String>(), null));
       Assert.assertEquals(1, data.size());
       series = data.iterator().next();
       timeValues = series.getTimeValues();

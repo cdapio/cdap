@@ -16,13 +16,14 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -32,7 +33,7 @@ import javax.annotation.Nullable;
  * </p>
  * Though limited currently in functionality, you can map {@link MetricDataQuery} to the following statement:
  * <pre>
- * SELECT count('read.ops')                                     << metric name and type
+ * SELECT count('read.ops')                                     << metric name and aggregation function
  * FROM Cube
  * GROUP BY dataset,                                            << groupByTags
  * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
@@ -44,67 +45,56 @@ public final class MetricDataQuery {
   private final long endTs;
   private final int resolution;
   private final int limit;
-  private final Collection<String> metricNames;
-  // todo: should be aggregation function? e.g. also support min/max, etc.
-  private final MetricType metricType;
+  private final Map<String, AggregationFunction> metrics;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
 
   private final Interpolator interpolator;
 
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         String metricName, MetricType metricType,
+                         String metricName, AggregationFunction func,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, -1, ImmutableList.of(metricName), metricType, sliceByTagValues, groupByTags, null);
+    this(startTs, endTs, resolution, -1, ImmutableMap.of(metricName, func), sliceByTagValues, groupByTags, null);
   }
 
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         Collection<String> metricNames, MetricType metricType,
+                         Map<String, AggregationFunction> metrics,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, -1, metricNames, metricType, sliceByTagValues, groupByTags, null);
+    this(startTs, endTs, resolution, -1, metrics, sliceByTagValues, groupByTags, null);
   }
 
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
-                         Collection<String> metricNames, MetricType metricType,
+                         Map<String, AggregationFunction> metrics,
                          Map<String, String> sliceByTagValues, List<String> groupByTags,
                          @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.metricNames = metricNames;
-    this.metricType = metricType;
+    this.metrics = metrics;
     this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
     this.groupByTags = ImmutableList.copyOf(groupByTags);
     this.interpolator = interpolator;
   }
 
-  public MetricDataQuery(long startTs, long endTs, int resolution, MetricType metricType,
-                         Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, -1, ImmutableList.<String>of(), metricType, sliceByTagValues, groupByTags, null);
-  }
-
-  public MetricDataQuery(MetricDataQuery query, String metricName) {
+  public MetricDataQuery(MetricDataQuery query, String metricName, AggregationFunction func) {
     this(query.startTs, query.endTs, query.resolution, query.limit,
-         ImmutableList.of(metricName), query.metricType,
+         ImmutableMap.of(metricName, func),
          query.sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricNames, query.metricType,
+    this(query.startTs, query.endTs, query.resolution, query.limit, query.metrics,
          sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, Map<String, String> sliceByTagValues) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricNames, query.metricType,
+    this(query.startTs, query.endTs, query.resolution, query.limit, query.metrics,
          sliceByTagValues, query.groupByTags, query.getInterpolator());
   }
 
   public MetricDataQuery(MetricDataQuery query, List<String> groupByTags) {
-    this(query.startTs, query.endTs, query.resolution, query.limit,
-         query.metricNames, query.metricType,
+    this(query.startTs, query.endTs, query.resolution, query.limit, query.metrics,
          query.sliceByTagValues, groupByTags, query.getInterpolator());
   }
 
@@ -120,12 +110,8 @@ public final class MetricDataQuery {
     return resolution;
   }
 
-  public Collection<String> getMetricNames() {
-    return metricNames;
-  }
-
-  public MetricType getMetricType() {
-    return metricType;
+  public Map<String, AggregationFunction> getMetrics() {
+    return metrics;
   }
 
   public Map<String, String> getSliceByTags() {
@@ -151,8 +137,7 @@ public final class MetricDataQuery {
       .add("startTs", startTs)
       .add("endTs", endTs)
       .add("resolution", resolution)
-      .add("metricNames", metricNames)
-      .add("metricType", metricType)
+      .add("metrics", metrics)
       .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
       .add("groupByTags", Joiner.on(",").join(groupByTags)).toString();
   }

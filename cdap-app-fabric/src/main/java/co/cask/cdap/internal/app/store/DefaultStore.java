@@ -44,7 +44,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterStatus;
+import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -872,6 +872,20 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteAllAdapters(id);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
+                                      final String workflowRunId, final String workflowNodeId,
+                                      final long startTimeInSeconds, final String adapter, final String twillRunId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
+                                            startTimeInSeconds, adapter, twillRunId);
         return null;
       }
     });

@@ -59,7 +59,7 @@ public final class ScheduleSpecification {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -68,17 +68,28 @@ public final class ScheduleSpecification {
     }
 
     ScheduleSpecification that = (ScheduleSpecification) o;
-    if (program.equals(that.program) && properties.equals(that.properties) && schedule.equals(that.schedule)) {
-      return true;
+
+    if (program != null
+          ? !program.equals(that.program) : that.program != null) {
+      return false;
     }
-    return false;
+    if (properties != null
+          ? !properties.equals(that.properties) : that.properties != null) {
+      return false;
+    }
+    if (schedule != null
+          ? !schedule.equals(that.schedule) : that.schedule != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    int result = schedule.hashCode();
-    result = 31 * result + program.hashCode();
-    result = 31 * result + properties.hashCode();
+    int result = schedule != null ? schedule.hashCode() : 0;
+    result = 31 * result + (program != null ? program.hashCode() : 0);
+    result = 31 * result + (properties != null ? properties.hashCode() : 0);
     return result;
   }
 

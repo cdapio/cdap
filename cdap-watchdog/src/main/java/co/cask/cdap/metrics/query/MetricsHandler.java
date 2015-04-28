@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
@@ -23,7 +24,6 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
@@ -388,10 +388,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
                                                   timeRange.getResolutionInSeconds(),
-                                                  timeRange.getCount(), queryRequest.getMetrics(),
-                                                  // todo: figure out MetricType
-                                                  MetricType.COUNTER, tagsSliceBy,
-                                                  transformGroupByTags(queryRequest.getGroupBy()),
+                                                  timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
+                                                  tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
                                                   timeRange.getInterpolate());
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
@@ -407,6 +405,15 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
+    Map<String, AggregationFunction> result = Maps.newHashMap();
+    for (String metric : metrics) {
+      // todo: figure out metric type
+      result.put(metric, AggregationFunction.SUM);
+    }
+    return result;
   }
 
   private Map<String, String> transformTagMap(Map<String, String> tags) {

@@ -1,0 +1,39 @@
+
+<div class="btn-group nested-tabs pull-right">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
+
+<div class="flow-components" ng-controller="AdapterRunDetailController">
+  <div class="row run-status">
+    <div class="col-xs-6">
+      <table class="table table-curved table-status">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Started</th>
+            <th>Running</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td ng-if="status" ng-bind="status"></td>
+            <td ng-if="!status"> Not Started</td>
+            <td ng-if="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
+            <td ng-if="!startTime"> &mdash; </td>
+            <td ng-if="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
+            <td ng-if="!duration"> &mdash; </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<br/>
+<div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>

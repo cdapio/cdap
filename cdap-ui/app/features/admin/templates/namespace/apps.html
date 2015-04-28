@@ -23,13 +23,13 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
+                        <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" />
                         <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
                             <strong> {{ ::app.name }} </strong>
                         </a>
                     </td>
                     <td>{{ ::app.version }}</td>
                     <td>
-                        <img class="type-icon" src="assets/img/ico_cdap_gray.png" alt="" />
                         <span> {{ ::app.type }} </span>
                     </td>
                     <td>{{ ::app.description }}</td>
