@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data.stream.service;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.proto.Id;
@@ -123,7 +123,7 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
     MetricDataQuery metricDataQuery = new MetricDataQuery(
       0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
       Integer.MAX_VALUE, "system.collect.bytes",
-      MetricType.COUNTER,
+      AggregationFunction.SUM,
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
                       Constants.Metrics.Tag.STREAM, streamId.getId()),
       ImmutableList.<String>of()

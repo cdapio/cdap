@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
@@ -23,7 +24,6 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
@@ -404,11 +404,11 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Map<String, MetricType> toMetrics(List<String> metrics) {
-    Map<String, MetricType> result = Maps.newHashMap();
+  private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
+    Map<String, AggregationFunction> result = Maps.newHashMap();
     for (String metric : metrics) {
       // todo: figure out metric type
-      result.put(metric, MetricType.COUNTER);
+      result.put(metric, AggregationFunction.SUM);
     }
     return result;
   }

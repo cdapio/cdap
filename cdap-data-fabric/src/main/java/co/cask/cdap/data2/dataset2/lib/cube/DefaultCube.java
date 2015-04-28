@@ -16,13 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.lib.cube;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
@@ -304,17 +304,27 @@ public class DefaultCube implements Cube {
           result.put(seriesDimensions, next.getMeasureName(), Maps.<Long, Long>newHashMap());
         }
 
-        MeasureType type = query.getMeasurements().get(next.getMeasureName());
-        if (MeasureType.COUNTER == type) {
+        AggregationFunction function = query.getMeasurements().get(next.getMeasureName());
+        if (AggregationFunction.SUM == function) {
           Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
-        } else if (MeasureType.GAUGE == type) {
+        } else if (AggregationFunction.MAX == function) {
+          Long value = result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
+          value = value == null ? 0 : value;
+          value = value > timeValue.getValue() ? value : timeValue.getValue();
+          result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
+        } else if (AggregationFunction.MIN == function) {
+          Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
+          value = value == null ? 0 : value;
+          value = value < timeValue.getValue() ? value : timeValue.getValue();
+          result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
+        } else if (AggregationFunction.LATEST == function) {
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
-          throw new RuntimeException("Unknown MeasureType: " + type);
+          throw new RuntimeException("Unknown MeasureType: " + function);
         }
       }
       if (++count >= MAX_RECORDS_TO_SCAN) {

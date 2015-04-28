@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.cube;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
@@ -273,7 +274,7 @@ public abstract class AbstractCubeTest {
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
 
     CubeQuery query = new CubeQuery(aggregation, startTs, endTs, resolution, Integer.MAX_VALUE,
-                                    measureName, MeasureType.COUNTER, dimValues, groupByDims, interpolator);
+                                    measureName, AggregationFunction.SUM, dimValues, groupByDims, interpolator);
 
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
