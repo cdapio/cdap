@@ -1,7 +1,7 @@
-angular.module(PKG.name + '.feature.etlapps')
-  .controller('EtlAppsListController', function($scope, MyDataSource, mySettings, $state, $alert) {
+angular.module(PKG.name + '.feature.adapters')
+  .controller('AdapterListController', function($scope, MyDataSource, mySettings, $state, $alert, $timeout) {
     var dataSrc = new MyDataSource($scope);
-    $scope.etlapps  = [];
+    $scope.adapters  = [];
     dataSrc.request({
       _cdapNsPath: '/adapters'
     })
@@ -9,19 +9,19 @@ angular.module(PKG.name + '.feature.etlapps')
         if (!res.length) {
           return;
         }
-        $scope.etlapps = $scope.etlapps.concat(res);
-        angular.forEach($scope.etlapps, function(app) {
+        $scope.adapters = $scope.adapters.concat(res);
+        angular.forEach($scope.adapters, function(app) {
           if (!app.isdraft)  {
             pollStatus(app);
           }
           app.template = (app.instances? 'etlRealtime': 'etlBatch');
         });
       });
-    mySettings.get('etldrafts')
+    mySettings.get('adapterDrafts')
       .then(function(res) {
         if (Object.keys(res).length) {
           angular.forEach(res, function(value, key) {
-            $scope.etlapps.push({
+            $scope.adapters.push({
               isdraft: true,
               name: key,
               template: value.config.metadata.type,
@@ -58,14 +58,16 @@ angular.module(PKG.name + '.feature.etlapps')
             type: 'success',
             content: 'Adapter ' + appName + ' deleted successfully.'
           });
-          $state.go($state.current, $state.params, {reload: true});
+          $state.$timeout(function() {
+            $state.go($state.current, $state.params, {reload: true});
+          });
         }, function(err){
           console.info("Adapter Delete Failed", err);
         });
     };
 
     $scope.doAction = function(action, appName) {
-      var app = $scope.etlapps.filter(function(app) {
+      var app = $scope.adapters.filter(function(app) {
         return app.name === appName;
       });
 

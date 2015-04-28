@@ -180,10 +180,7 @@ body.theme-cdap.state-adapters-list {
     }
   }
 
-  a {
-    text-decoration: none;
-  }
-  [etl-apps-list] {
+  [adapters-list] {
     [etl-add-app] {
       cursor: pointer;
       .well.well-lg {
@@ -209,8 +206,11 @@ body.theme-cdap.state-adapters-list {
           border: 0;
         }
       }
-      >div.content-panel {
+      a.content-panel {
         min-height: 107px;
+        display: block;
+        text-decoration: none;
+        color: black;
       }
 
       h3 {

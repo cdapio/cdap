@@ -1,20 +1,20 @@
-angular.module(PKG.name + '.feature.etlapps')
-  .controller('ETLAppsCreateController', function($scope, $q, $alert, $state, ETLAppsApiFactory, mySettings, $filter, $rootScope) {
-    var apiFactory = new ETLAppsApiFactory($scope);
+angular.module(PKG.name + '.feature.adapters')
+  .controller('AdapterCreateController', function($scope, $q, $alert, $state, AdapterApiFactory, mySettings, $filter, $rootScope) {
+    var apiFactory = new AdapterApiFactory($scope);
 
     // Loading flag to indicate source & sinks have
     // not been loaded yet (after/before choosing an etl template)
-    $scope.loadingEtlSourceProps = false;
-    $scope.loadingEtlSinkProps = false;
-    $scope.onETLTypeSelected = false;
+    // $scope.loadingEtlSourceProps = false;
+    // $scope.loadingEtlSinkProps = false;
+    $scope.onAdapterTypeSelected = false;
 
     // List of ETL Sources, Sinks & Transforms
     // for a particular etl template type fetched from backend.
-    $scope.etlSources = [];
-    $scope.etlSinks = [];
-    $scope.etlTransforms = [];
-    $scope.selectedEtlDraft = undefined;
-    $scope.etlDraftList = [];
+    $scope.defaulSources = [];
+    $scope.defaulSinks = [];
+    $scope.defaulTransforms = [];
+    $scope.selectedAdapterDraft = undefined;
+    $scope.adaptersDraftList = [];
 
     $scope.onDraftChange = function(item, model) {
       var filterFilter = $filter('filter'),
@@ -23,11 +23,11 @@ angular.module(PKG.name + '.feature.etlapps')
       if (!item) {
         return; //un-necessary.
       }
-      if ($scope.etlDrafts[item]) {
-        $scope.metadata = $scope.etlDrafts[item].config.metadata;
-        $scope.source = $scope.etlDrafts[item].config.source;
-        $scope.sink = $scope.etlDrafts[item].config.sink;
-        $scope.transforms = $scope.etlDrafts[item].config.transforms;
+      if ($scope.adapterDrafts[item]) {
+        $scope.metadata = $scope.adapterDrafts[item].config.metadata;
+        $scope.source = $scope.adapterDrafts[item].config.source;
+        $scope.sink = $scope.adapterDrafts[item].config.sink;
+        $scope.transforms = $scope.adapterDrafts[item].config.transforms;
       } else {
         $scope.metadata.name = item;
         $scope.metadata.type = $scope.metadata.type;
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.etlapps')
     };
 
     // Default ETL Templates
-    $scope.etlTypes = [
+    $scope.adapterTypes = [
       {
         name: 'ETL Batch',
         type: 'etlBatch'
@@ -80,12 +80,12 @@ angular.module(PKG.name + '.feature.etlapps')
     $scope.transforms = defaultTransforms;
     $scope.activePanel = 0;
 
-    $scope.$watch('metadata.type',function(etlType) {
-      if (!etlType.length) return;
-      $scope.onETLTypeSelected = true;
-      apiFactory.fetchSources(etlType);
-      apiFactory.fetchSinks(etlType);
-      apiFactory.fetchTransforms(etlType);
+    $scope.$watch('metadata.type',function(adapterType) {
+      if (!adapterType.length) return;
+      $scope.onAdapterTypeSelected = true;
+      apiFactory.fetchSources(adapterType);
+      apiFactory.fetchSinks(adapterType);
+      apiFactory.fetchTransforms(adapterType);
     });
 
     $scope.handleSourceDrop = function(sourceName) {
@@ -144,7 +144,7 @@ angular.module(PKG.name + '.feature.etlapps')
           title: $scope.source.name,
           type: 'source',
           active: true,
-          partial: '/assets/features/etlapps/templates/create/tabs/sourcePropertyEdit.html'
+          partial: '/assets/features/adapters/templates/create/tabs/sourcePropertyEdit.html'
         })
       }
     };
@@ -163,7 +163,7 @@ angular.module(PKG.name + '.feature.etlapps')
           title: $scope.sink.name,
           type: 'sink',
           active: true,
-          partial: '/assets/features/etlapps/templates/create/tabs/sinkPropertyEdit.html'
+          partial: '/assets/features/adapters/templates/create/tabs/sinkPropertyEdit.html'
         })) -1;
       }
     };
@@ -186,7 +186,7 @@ angular.module(PKG.name + '.feature.etlapps')
           transform: transform,
           active: true,
           type: 'transform',
-          partial: '/assets/features/etlapps/templates/create/tabs/transformPropertyEdit.html'
+          partial: '/assets/features/adapters/templates/create/tabs/transformPropertyEdit.html'
         })) -1;
       }
     };
@@ -244,10 +244,10 @@ angular.module(PKG.name + '.feature.etlapps')
 
     $scope.getDrafts = function() {
       var defer = $q.defer();
-      return mySettings.get('etldrafts')
+      return mySettings.get('adapterDrafts')
         .then(function(res) {
-          $scope.etlDrafts = res || {};
-          $scope.etlDraftList = Object.keys($scope.etlDrafts);
+          $scope.adapterDrafts = res || {};
+          $scope.adaptersDraftList = Object.keys($scope.adapterDrafts);
           defer.resolve();
         });
       return defer.promise;
@@ -255,7 +255,7 @@ angular.module(PKG.name + '.feature.etlapps')
     if ($state.params.data) {
       $scope.getDrafts()
         .then(function() {
-          $scope.selectedEtlDraft = $state.params.data;
+          $scope.selectedAdapterDraft = $state.params.data;
           $scope.onDraftChange($state.params.data);
         });
     };
@@ -269,7 +269,7 @@ angular.module(PKG.name + '.feature.etlapps')
         });
         return;
       }
-      $scope.etlDrafts[$scope.metadata.name] = {
+      $scope.adapterDrafts[$scope.metadata.name] = {
         config: {
           metadata: $scope.metadata,
           source: $scope.source,
@@ -278,12 +278,12 @@ angular.module(PKG.name + '.feature.etlapps')
         }
       };
 
-      mySettings.set('etldrafts', $scope.etlDrafts)
+      mySettings.set('adapterDrafts', $scope.adapterDrafts)
       .then(function(res) {
         $scope.isSaved = true;
         $alert({
           type: 'success',
-          content: 'The ETL Template ' + $scope.metadata.name + ' has been saved as draft!'
+          content: 'The Adapter Template ' + $scope.metadata.name + ' has been saved as draft!'
         });
         $state.go('^.list');
       });
@@ -293,7 +293,7 @@ angular.module(PKG.name + '.feature.etlapps')
       {
         title: 'Default',
         isCloseable: false,
-        partial: '/assets/features/etlapps/templates/create/tabs/default.html'
+        partial: '/assets/features/adapters/templates/create/tabs/default.html'
       }
     ];
 
