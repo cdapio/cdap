@@ -23,9 +23,12 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBOutputFormat;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 
@@ -38,6 +41,7 @@ import java.sql.PreparedStatement;
  * {@inheritDoc}
  */
 public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<K, V> {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLDBOutputFormat.class);
 
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
@@ -63,8 +67,11 @@ public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<
     ClassLoader classLoader = conf.getClassLoader();
     Connection connection;
     try {
-      Class.forName(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY), true, classLoader);
+      Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
       String url = conf.get(DBConfiguration.URL_PROPERTY);
+
+      LOG.debug("Registering JDBC driver via shim - " + JDBCDriverShim.class.getName());
+      DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
       if (conf.get(DBConfiguration.USERNAME_PROPERTY) == null) {
         connection = DriverManager.getConnection(url);
       } else {
