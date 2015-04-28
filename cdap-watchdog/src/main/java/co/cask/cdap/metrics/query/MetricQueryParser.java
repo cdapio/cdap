@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.metrics.query;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import com.google.common.base.Splitter;
@@ -574,7 +574,7 @@ final class MetricQueryParser {
     }
 
     public MetricDataQuery build() {
-      Map<String, MetricType> metrics = ImmutableMap.of(scope + "." + metricName, MetricType.COUNTER);
+      Map<String, AggregationFunction> metrics = ImmutableMap.of(scope + "." + metricName, AggregationFunction.SUM);
       return new MetricDataQuery(startTs, endTs, resolution, limit, metrics,
                                  sliceByTagValues, new ArrayList<String>(), interpolator);
     }

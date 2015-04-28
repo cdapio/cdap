@@ -16,11 +16,11 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
@@ -72,7 +72,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   private static long getTotalCounterByPrefix(Map<String, String> context, String metricNameSuffix) throws Exception {
     // todo: allow group by metric name when querying Cube instead
     String metricName = findMetricName(context, 0, 0, Integer.MAX_VALUE, metricNameSuffix);
-    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 context, new ArrayList<String>());
 
     try {

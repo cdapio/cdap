@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
@@ -114,7 +115,7 @@ public class TestAppWithCube extends TestBase {
 
       // 1-sec resolution
       Collection<TimeSeries> data =
-        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", MeasureType.COUNTER,
+        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", AggregationFunction.SUM,
                                  ImmutableMap.of("action", "click"), new ArrayList<String>()));
       Assert.assertEquals(1, data.size());
       TimeSeries series = data.iterator().next();
@@ -129,7 +130,7 @@ public class TestAppWithCube extends TestBase {
 
       // 60-sec resolution
       data = query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 60, 100, "count",
-                                      MeasureType.COUNTER,
+                                      AggregationFunction.SUM,
                                       ImmutableMap.of("action", "click"), new ArrayList<String>()));
       Assert.assertEquals(1, data.size());
       series = data.iterator().next();
