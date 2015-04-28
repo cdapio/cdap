@@ -399,7 +399,7 @@ use, which Plugins from it you will use, and the required properties.
 
 #. Deploy the Adapter to a running instance of CDAP using::
 
-  PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-name> -d "@/path/to/configfile"
+    PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-name> -d "@/path/to/configfile"
 
   where:
   
