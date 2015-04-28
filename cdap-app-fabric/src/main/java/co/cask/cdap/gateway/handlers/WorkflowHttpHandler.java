@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -75,10 +76,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              NamespacedLocationFactory namespacedLocationFactory,
                              MRJobClient mrJobClient, MapReduceMetricsInfo mapReduceMetricsInfo,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
-                             AdapterService adapterService) {
+                             AdapterService adapterService, MetricStore metricStore) {
     super(authenticator, store, configuration, runtimeService, lifecycleService,
           queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient,
-          mapReduceMetricsInfo, resolver, adapterService);
+          mapReduceMetricsInfo, resolver, adapterService, metricStore);
     this.workflowClient = workflowClient;
   }
 

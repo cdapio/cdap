@@ -116,6 +116,11 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for flows only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW)));
+    // queue
+    aggs.put("flow.queue", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
+                       Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE)));
     // mapreduce
     aggs.put("mapreduce", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,

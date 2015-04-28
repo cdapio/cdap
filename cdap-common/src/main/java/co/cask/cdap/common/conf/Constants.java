@@ -470,6 +470,9 @@ public final class Constants {
       public static final String SCOPE = "scp";
 
       public static final String ADAPTER = "adp";
+
+      public static final String PRODUCER = "pr";
+      public static final String CONSUMER = "co";
     }
 
     /**

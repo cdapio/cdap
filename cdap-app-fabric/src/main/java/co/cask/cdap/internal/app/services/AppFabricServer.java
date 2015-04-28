@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
 /**
  * AppFabric Server.
  */
-public final class AppFabricServer extends AbstractIdleService {
+public class AppFabricServer extends AbstractIdleService {
 
   public static final String HANDLERS_BINDING = "appfabric.http.handler";
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
