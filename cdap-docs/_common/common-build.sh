@@ -270,15 +270,14 @@ function test_includes () {
 }
 
 function test_an_include() {
-  # Tests a relative_file_path and checks that it hasn't changed.
+  # Tests a file and checks that it hasn't changed.
   # Uses md5 hashes to monitor if any files have changed.
-  local new_md5_hash
   local md5_hash=${1}
-  local relative_file_path=${2}
+  local target=${2}
+  local new_md5_hash
   
-  local includes_dir=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
-  local target=${includes_dir}/${relative_file_path}
-
+  local file_name=`basename ${target}`
+  
   if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
     new_md5_hash=`md5 -q ${target}`
   else
@@ -286,27 +285,11 @@ function test_an_include() {
   fi
   
   if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
-    echo -e "${WARNING} MD5 Hash for ${relative_file_path} has changed! Compare files and update hash!"  
+    echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
+    echo -e "file: ${target}"  
     echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
   else
-    echo "MD5 Hash for ${relative_file_path} matches"  
-  fi
-}
-
-function test_an_include_diff() {
-  BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
-  SOURCE_INCLUDES_DIR=${SCRIPT_PATH}/${SOURCE}/${INCLUDES}
-  EXAMPLE=${1}
-  if [ "x${TEST_INCLUDES}" == "x${TEST_INCLUDES_LOCAL}" -o "x${TEST_INCLUDES}" == "x${TEST_INCLUDES_REMOTE}" ]; then
-    if diff -q ${BUILD_INCLUDES_DIR}/${1} ${SOURCE_INCLUDES_DIR}/${1} 2>/dev/null; then
-      echo "Tested ${1}; matches checked-in include file."
-    else
-      echo -e "${WARNING} Tested ${1}; does not match checked-in include file. Copying to source directory."
-      cp -f ${BUILD_INCLUDES_DIR}/${1} ${SOURCE_INCLUDES_DIR}/${1}
-    fi
-  else
-    echo -e "${WARNING} Not testing includes: using checked-in version..."
-    cp -f ${SOURCE_INCLUDES_DIR}/${1} ${BUILD_INCLUDES_DIR}/${1}
+    echo "MD5 Hash for ${file_name} matches"  
   fi
 }
 
@@ -335,8 +318,20 @@ function version() {
   PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
-  GIT_BRANCH_TYPE="${branch[0]}"
+  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   GIT_BRANCH="${branch[1]}"
+  if [ "x${GIT_BRANCH}" == "xdevelop" -o  "x${GIT_BRANCH}" == "xmaster" ]; then
+    GIT_BRANCH_TYPE=${GIT_BRANCH}
+  elif [ "x${GIT_BRANCH:0:7}" == "xrelease" ]; then
+    GIT_BRANCH_TYPE="release"
+  else
+    local parent_branch=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
+    if [ "x${parent_branch}" == "xdevelop" ]; then
+      GIT_BRANCH_TYPE="develop-feature"
+    else
+      GIT_BRANCH_TYPE="release-feature"
+    fi
+  fi
   cd $current_directory
 }
 
@@ -347,8 +342,8 @@ function display_version() {
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
-  echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
+  echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
   echo ""
 }
 

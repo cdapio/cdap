@@ -33,7 +33,7 @@ function guide_rewrite_sed() {
   local project_version=${PROJECT_SHORT_VERSION}
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  if [ "x${GIT_BRANCH_TYPE}" == "xdevelop" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop/README.rst"
   else
     local source2="release/cdap-${project_version}-compatible/README.rst"
@@ -62,17 +62,7 @@ function download_file() {
 
   echo "Downloading using curl ${file_name} from ${source_dir}"
   curl ${source_dir}/${file_name} --output ${target} --silent
-
-  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
-    local new_md5_hash=`md5 -q ${target}`
-  else
-    local new_md5_hash=`md5sum ${target} | awk '{print $1}'`
-  fi
-
-  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
-    echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
-    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"
-  fi
+  test_an_include ${md5_hash} ${target}
 }
 
 function download_includes() {
@@ -82,7 +72,7 @@ function download_includes() {
   local project_version=${PROJECT_SHORT_VERSION}
 
   local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
-  if [ "x${GIT_BRANCH_TYPE}" == "xdevelop" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop"
   else
     local source2="release/cdap-${project_version}-compatible"
