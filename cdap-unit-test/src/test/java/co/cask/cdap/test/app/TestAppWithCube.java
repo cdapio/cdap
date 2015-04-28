@@ -115,8 +115,9 @@ public class TestAppWithCube extends TestBase {
 
       // 1-sec resolution
       Collection<TimeSeries> data =
-        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", AggregationFunction.SUM,
-                                 ImmutableMap.of("action", "click"), new ArrayList<String>()));
+        query(url, new CubeQuery(null, tsInSec - 60, tsInSec + 60, 1, 100,
+                                 ImmutableMap.of("count", AggregationFunction.SUM),
+                                 ImmutableMap.of("action", "click"), new ArrayList<String>(), null));
       Assert.assertEquals(1, data.size());
       TimeSeries series = data.iterator().next();
       List<TimeValue> timeValues = series.getTimeValues();
@@ -129,9 +130,9 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals(1, timeValue.getValue());
 
       // 60-sec resolution
-      data = query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 60, 100, "count",
-                                      AggregationFunction.SUM,
-                                      ImmutableMap.of("action", "click"), new ArrayList<String>()));
+      data = query(url, new CubeQuery(null, tsInSec - 60, tsInSec + 60, 60, 100,
+                                      ImmutableMap.of("count", AggregationFunction.SUM),
+                                      ImmutableMap.of("action", "click"), new ArrayList<String>(), null));
       Assert.assertEquals(1, data.size());
       series = data.iterator().next();
       timeValues = series.getTimeValues();

@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -273,8 +274,18 @@ public abstract class AbstractCubeTest {
                                 String measureName, Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
 
-    CubeQuery query = new CubeQuery(aggregation, startTs, endTs, resolution, Integer.MAX_VALUE,
-                                    measureName, AggregationFunction.SUM, dimValues, groupByDims, interpolator);
+    CubeQuery query = CubeQuery.builder()
+      .select()
+        .measurement(measureName, AggregationFunction.SUM)
+      .from(aggregation).resolution(resolution, TimeUnit.SECONDS)
+      .where()
+        .dimensions(dimValues)
+        .timeRange(startTs, endTs)
+      .groupBy()
+        .dimensions(groupByDims)
+      .limit(Integer.MAX_VALUE)
+      .interpolator(interpolator)
+      .build();
 
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());

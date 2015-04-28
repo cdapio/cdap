@@ -17,13 +17,13 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -55,29 +55,6 @@ public final class CubeQuery {
   private final List<String> groupByDimensions;
   private final Interpolator interpolator;
 
-  // todo : CDAP-2199 use builder instead of having multiple constructors
-  /**
-   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, Map, Map, List, Interpolator)},
-   * with {@code aggregation=null} and {@code interpolator=null}.
-   */
-  public CubeQuery(long startTs, long endTs, int resolution, int limit, Map<String, AggregationFunction> measurements,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
-
-    this(null, startTs, endTs, resolution, limit, measurements,
-         dimensionValues, groupByDimensions, null);
-  }
-
-  /**
-   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, Map, Map, List, Interpolator)},
-   * with {@code aggregation=null}.
-   */
-  public CubeQuery(long startTs, long endTs, int resolution, int limit, Map<String, AggregationFunction> measurements,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions,
-                   @Nullable Interpolator interpolator) {
-    this(null, startTs, endTs, resolution, limit, measurements,
-         dimensionValues, groupByDimensions, interpolator);
-  }
-
   /**
    * Creates {@link CubeQuery} with given parameters.
    * @param aggregation (optional) aggregation name to query in; if {@code null}, the aggregation will be auto-selected
@@ -105,57 +82,6 @@ public final class CubeQuery {
     this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
     this.groupByDimensions = Collections.unmodifiableList(new ArrayList<String>(groupByDimensions));
     this.interpolator = interpolator;
-  }
-
-
-  /**
-   * Same as {@link CubeQuery#CubeQuery(long, long, int, int, Map, Map, List)},
-   * with single measureName.
-   */
-  public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   String measureName, AggregationFunction measureType,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
-    this(startTs, endTs, resolution, limit,
-         ImmutableMap.of(measureName, measureType),
-         dimensionValues, groupByDimensions, null);
-  }
-
-  /**
-   * Same as {@link CubeQuery#CubeQuery(long, long, int, int, Map, Map, List, Interpolator)},
-   * with single measureName.
-   */
-  public CubeQuery(long startTs, long endTs, int resolution, int limit,
-                   String measureName, AggregationFunction measureType,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions,
-                   @Nullable Interpolator interpolator) {
-    this(startTs, endTs, resolution, limit,
-         ImmutableMap.of(measureName, measureType),
-         dimensionValues, groupByDimensions, interpolator);
-  }
-
-  /**
-   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, Map, Map, List, Interpolator)},
-   * with single measureName.
-   */
-  public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit,
-                   String measureName, AggregationFunction measureType,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions) {
-    this(aggregation, startTs, endTs, resolution, limit,
-         ImmutableMap.of(measureName, measureType),
-         dimensionValues, groupByDimensions, null);
-  }
-
-  /**
-   * Same as {@link CubeQuery#CubeQuery(String, long, long, int, int, Map, Map, List, Interpolator)},
-   * with single measureName.
-   */
-  public CubeQuery(String aggregation, long startTs, long endTs, int resolution, int limit,
-                   String measureName, AggregationFunction measureType,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions,
-                   @Nullable Interpolator interpolator) {
-    this(aggregation, startTs, endTs, resolution, limit,
-         ImmutableMap.of(measureName, measureType),
-         dimensionValues, groupByDimensions, interpolator);
   }
 
   @Nullable
@@ -212,4 +138,260 @@ public final class CubeQuery {
     sb.append('}');
     return sb.toString();
   }
+
+  /**
+   * @return {@link Builder} to build {@link CubeQuery}.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builds {@link CubeQuery}.
+   */
+  public static final class Builder {
+    private String aggregation;
+    private long startTs;
+    private long endTs;
+    private int resolution;
+    private int limit;
+    private Map<String, AggregationFunction> measurements = new HashMap<String, AggregationFunction>();
+    private Map<String, String> dimensionValues = new HashMap<String, String>();
+    private List<String> groupByDimensions = new ArrayList<String>();
+    private Interpolator interpolator;
+
+    /**
+     * @return builder for configuring {@link CubeQuery}
+     */
+    public Select select() {
+      return new Select();
+    }
+
+    /**
+     * @return instance of {@link CubeQuery}
+     */
+    private CubeQuery build() {
+      return new CubeQuery(aggregation, startTs, endTs, resolution, limit,
+                           measurements, dimensionValues, groupByDimensions, interpolator);
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Select {
+      private Select() {}
+
+      /**
+       * Adds measurement to be included in selection of {@link CubeQuery}.
+       * @param name name of the measurement
+       * @param aggFunc function to be used if aggregation of measurement value is needed
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Measurement measurement(String name, AggregationFunction aggFunc) {
+        Builder.this.measurements.put(name, aggFunc);
+        return new Measurement();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Measurement {
+      private Measurement() {}
+
+      /**
+       * Adds measurement to be included in selection of {@link CubeQuery}.
+       * @param name name of the measurement
+       * @param aggFunc function to be used if aggregation of measurement value is needed
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Measurement measurement(String name, AggregationFunction aggFunc) {
+        Builder.this.measurements.put(name, aggFunc);
+        return this;
+      }
+
+      /**
+       * Defines aggregation view to query from.
+       * @param aggregation name of the aggregation view; if {@code null}, aggregation will be auto-selected based
+       *                    on other parameters of the query
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public From from(@Nullable String aggregation) {
+        Builder.this.aggregation = aggregation;
+        return new From();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class From {
+      private From() {}
+
+      /**
+       * Sets resolution for {@link CubeQuery}.
+       * @param amount amount of units
+       * @param timeUnit unit type
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Where resolution(long amount, TimeUnit timeUnit) {
+        Builder.this.resolution = (int) timeUnit.convert(amount, TimeUnit.SECONDS);
+        return new Where();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Where {
+      private Where() {}
+
+      /**
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Dimension where() {
+        return new Dimension();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Dimension {
+      private Dimension() {}
+
+      /**
+       * Adds dimension value to filter by.
+       * @param name name of dimension
+       * @param value value of dimension
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Dimension dimension(String name, String value) {
+        Builder.this.dimensionValues.put(name, value);
+        return this;
+      }
+
+      /**
+       * Adds dimension values to filter by.
+       * @param dimValues dimension name, dimension value pairs to filter by
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Dimension dimensions(Map<String, String> dimValues) {
+        Builder.this.dimensionValues.putAll(dimValues);
+        return this;
+      }
+
+      /**
+       * Defines time range for {@link CubeQuery}.
+       * @param startTsInSec start time inclusive (epoch in seconds)
+       * @param endTsInSec end time exclusive (epoch in seconds)
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public GroupBy timeRange(long startTsInSec, long endTsInSec) {
+        Builder.this.startTs = startTsInSec;
+        Builder.this.endTs = endTsInSec;
+        return new GroupBy();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class GroupBy {
+      private GroupBy() {}
+
+      /**
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public GroupByDimension groupBy() {
+        return new GroupByDimension();
+      }
+
+      /**
+       * Sets a limit on returned data points per time series
+       * @param limit limit value
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Limit limit(int limit) {
+        Builder.this.limit = limit;
+        return new Limit();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class GroupByDimension {
+      private GroupByDimension() {}
+
+      /**
+       * Adds dimension to use for grouping results into time series.
+       * @param name name of the dimension
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public GroupByDimension dimension(String name) {
+        Builder.this.groupByDimensions.add(name);
+        return this;
+      }
+
+      /**
+       * Adds dimensions to use for grouping results into time series.
+       * @param names names of the dimensions
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public GroupByDimension dimensions(List<String> names) {
+        Builder.this.groupByDimensions.addAll(names);
+        return this;
+      }
+
+      /**
+       * Sets a limit on returned data points per time series
+       * @param limit limit value
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Limit limit(int limit) {
+        Builder.this.limit = limit;
+        return new Limit();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Limit {
+      private Limit() {}
+
+      /**
+       * Sets {@link Interpolator} to use for {@link CubeQuery}.
+       * @param interpolator interpolator to use
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Build interpolator(Interpolator interpolator) {
+        Builder.this.interpolator = interpolator;
+        return new Build();
+      }
+
+      /**
+       * @return {@link CubeQuery}
+       */
+      public CubeQuery build() {
+        return Builder.this.build();
+      }
+    }
+
+    /**
+     * Builder for configuring {@link CubeQuery}.
+     */
+    public final class Build {
+      private Build() {}
+
+      /**
+       * @return {@link CubeQuery}
+       */
+      public CubeQuery build() {
+        return Builder.this.build();
+      }
+    }
+  }
+
 }
