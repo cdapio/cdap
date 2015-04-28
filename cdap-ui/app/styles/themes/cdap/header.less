@@ -221,9 +221,13 @@ body {
               a.dropdown-toggle {
                 margin: 7px;
                 padding: 10px;
+                overflow: auto;
                 .border-radius(4px);
                 span {
-                  &:first-child { color: @cdap-darkness; }
+                  &:first-child {
+                    color: @cdap-darkness;
+                    float: left;
+                  }
                   &:last-child {
                     color: lightgray;
                     float: right;
