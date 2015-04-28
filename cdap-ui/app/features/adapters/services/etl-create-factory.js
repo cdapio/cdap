@@ -53,13 +53,12 @@ angular.module(PKG.name + '.feature.adapters')
           var s = res[0];
           this.scope.source.name = s.name;
           var obj = {};
-          angular.forEach(source.properties, function(property) {
+          angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
           });
+          debugger;
           this.scope.source.properties = obj;
-          // this.scope.loadingEtlSourceProps = false;
         }.bind(this));
-      // this.scope.loadingEtlSourceProps = source || false;
     }
 
     AdapterApiFactory.prototype.fetchSinkProperties = function(sink){
@@ -71,19 +70,17 @@ angular.module(PKG.name + '.feature.adapters')
           var s = res[0];
           this.scope.sink.name = s.name;
           var obj = {};
-          angular.forEach(sink.properties, function(property) {
+          angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.sink.properties = obj;
-          // this.scope.loadingEtlSinkProps = false;
         }.bind(this));
-      // this.scope.loadingEtlSinkProps = sink || false;
     }
 
     AdapterApiFactory.prototype.fetchTransformProperties = function(transform, index) {
       if(!transform) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transforms/plugins/' + transform
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transform/plugins/' + transform
       })
         .then(function(res) {
           var t = res[0];

@@ -15,10 +15,15 @@ angular.module(PKG.name + '.feature.adapters')
         templateid: templateid, //'etlRealtime',
         pluginid: pluginid //'TwitterSource'
       })
-        .then(function(res) {
-          this.plugins[templateid+pluginid] = res;
-          defer.resolve(this.plugins[templateid+pluginid]);
-        }.bind(this));
+        .then(
+          function success(res) {
+            this.plugins[templateid+pluginid] = res;
+            defer.resolve(this.plugins[templateid+pluginid]);
+          }.bind(this),
+          function error(err) {
+            defer.reject(err);
+          }
+        );
       return defer.promise;
     };
 
