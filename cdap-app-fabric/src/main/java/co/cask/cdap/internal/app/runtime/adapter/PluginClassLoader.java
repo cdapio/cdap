@@ -44,29 +44,24 @@ import java.util.jar.Manifest;
  *             Template CL (expanded app bundle jar)
  *                  ^
  *                  |
- *          Template Filter CL (Export-Package classes only)
+ *       CombineCL of (Program Filter CL, Template Filter CL (Export-Package classes only))
  *                  ^
  *                  |
  *           Plugin Lib CL (Common library for plugin)
  * }</pre>
  *
  * <p/>
- * Then, the parent of the PluginClassLoader is formed by a {@link CombineClassLoader} of
- * {@code (Program Filter CL, Plugin Lib ClassLoader) }. It is a combine class loader because we
- * want the cdap-api classes not affected by the "Template Filter ClassLoader" (which usually would have cdap-api
- * classes filtered out).
- *
- * <p/>
  * The Plugin ClassLoader is then a URLClassLoader created by expanding the plugin bundle jar, with the parent
- * ClassLoader as the one described above.
+ * ClassLoader as the Plugin Lib ClassLoader.
  */
 public class PluginClassLoader extends DirectoryClassLoader {
 
-  public static PluginClassLoader create(File unpackedDir, File pluginLibDir, ClassLoader templateClassLoader) {
-    return new PluginClassLoader(unpackedDir, createParent(pluginLibDir, templateClassLoader));
-  }
+  private final Set<String> exportPackages;
 
-  private static ClassLoader createParent(File pluginLibDir, ClassLoader templateClassLoader) {
+  /**
+   * Creates the parent ClassLoader for the plugin ClassLoader. See javadoc of this class for details.
+   */
+  static ClassLoader createParent(File pluginLibDir, ClassLoader templateClassLoader) {
 
     // Find the ProgramClassLoader from the template ClassLoader
     ClassLoader programClassLoader = templateClassLoader;
@@ -82,16 +77,26 @@ public class PluginClassLoader extends DirectoryClassLoader {
     ClassLoader filteredTemplateClassLoader = new PackageFilterClassLoader(templateClassLoader,
                                                                            Predicates.in(exportPackages));
 
+    // The lib Classloader needs to be able to see all cdap api classes as well.
+    // In this way, parent ClassLoader of the plugin ClassLoader will load class from the parent of the
+    // template program class loader (which is a filtered CDAP classloader),
+    // followed by template export-packages, then by a plugin lib jars.
+    ClassLoader libParentClassLoader = new CombineClassLoader(programClassLoader.getParent(),
+                                                              ImmutableList.of(filteredTemplateClassLoader));
     // Includes all jars in the plugins/template/lib directory
-    ClassLoader pluginLibClassLoader = new DirectoryClassLoader(pluginLibDir, filteredTemplateClassLoader);
-
-    // The parent ClassLoader of the plugin ClassLoader will load class from the parent of the
-    // template program class loader (which is a filtered CDAP classloader), followed by a the
-    // plugin lib ClassLoader.
-    return new CombineClassLoader(null, ImmutableList.of(programClassLoader.getParent(), pluginLibClassLoader));
+    return new DirectoryClassLoader(pluginLibDir, libParentClassLoader);
   }
 
-  private PluginClassLoader(File directory, ClassLoader parent) {
+  PluginClassLoader(File directory, ClassLoader parent) {
     super(directory, parent, "lib");
+    this.exportPackages = ManifestFields.getExportPackages(getManifest());
+  }
+
+  /**
+   * Creates a new {@link ClassLoader} that only exposes classes in packages declared by "Export-Package"
+   * in the manifest.
+   */
+  public ClassLoader getExportPackagesClassLoader() {
+    return new PackageFilterClassLoader(this, Predicates.in(exportPackages));
   }
 }

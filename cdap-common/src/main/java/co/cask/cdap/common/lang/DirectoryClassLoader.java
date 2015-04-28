@@ -16,19 +16,26 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ClassLoader} that takes a directory of classes and jars as its class path.
@@ -45,12 +52,8 @@ import java.util.Set;
 public class DirectoryClassLoader extends URLClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(DirectoryClassLoader.class);
-  private static final FilenameFilter JAR_FILE_FILTER = new FilenameFilter() {
-    @Override
-    public boolean accept(File dir, String name) {
-      return name.endsWith(".jar");
-    }
-  };
+
+  private final Manifest manifest;
 
   public DirectoryClassLoader(File dir, ClassLoader parent, String...libDirs) {
     this(dir, parent, ImmutableSet.copyOf(libDirs));
@@ -58,6 +61,29 @@ public class DirectoryClassLoader extends URLClassLoader {
 
   public DirectoryClassLoader(File dir, ClassLoader parent, Iterable<String> libDirs) {
     super(getClassPathURLs(dir, ImmutableSet.copyOf(libDirs)), parent);
+
+    // Try to load the Manifest from the unpacked directory
+    Manifest manifest = null;
+    try {
+      InputStream input = new FileInputStream(new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)));
+      try {
+        manifest = new Manifest(input);
+      } finally {
+        Closeables.closeQuietly(input);
+      }
+    } catch (IOException e) {
+      // Ignore, since it's possible that there is no MANIFEST
+      LOG.trace("No Manifest file under {}", dir, e);
+    }
+    this.manifest = manifest;
+  }
+
+  /**
+   * Returns the {@link Manifest} in the program jar or {@code null} if there is no manifest available.
+   */
+  @Nullable
+  public Manifest getManifest() {
+    return manifest;
   }
 
   private static URL[] getClassPathURLs(File dir, Set<String> libDirs) {
@@ -77,12 +103,7 @@ public class DirectoryClassLoader extends URLClassLoader {
   }
 
   private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    File[] files = dir.listFiles(JAR_FILE_FILTER);
-    if (files == null) {
-      return;
-    }
-
-    for (File file : files) {
+    for (File file : DirUtils.listFiles(dir, "jar")) {
       result.add(file.toURI().toURL());
     }
   }

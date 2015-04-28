@@ -70,7 +70,6 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
     return new FileSetDataset(datasetContext, cConf, spec, namespacedLocationFactory,
-                              arguments == null ? Collections.<String, String>emptyMap() : arguments,
-                              classLoader);
+                              arguments == null ? Collections.<String, String>emptyMap() : arguments);
   }
 }
