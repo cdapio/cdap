@@ -2,71 +2,71 @@
 Cask Data Application Platform - CDAP
 =====================================
 
-**Standalone and Distributed CDAP**
+Standalone and Distributed CDAP
+===============================
 
-Building CDAP Maven
-===================
+**Building CDAP with Maven**
 
-- Clean all modules::
+- Clean all modules
     mvn clean
 
-- Run all tests, fail at the end::
+- Run all tests, fail at the end
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae
     
-- Build all modules::
+- Build all modules
     mvn package
 
-- Run checkstyle, skipping tests::
+- Run checkstyle, skipping tests
     mvn package -DskipTests
 
-- Build a particular module::
+- Build a particular module
     mvn package -pl [module] -am
 
-- Run selected test::
+- Run selected test
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test
 
-- Run App-Template tests::
+- Run App-Template tests
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -U -fae -am -amd -P templates -pl cdap-app-templates
 
 See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html>`__ for more details
 
-- Build all examples::
+- Build all examples
     MAVEN_OPTS="-Xmx512m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
 
-- Build Standalone distribution ZIP::
+- Build Standalone distribution ZIP
     MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     
-- Build the limited set of Javadocs used in distribution ZIP::
+- Build the limited set of Javadocs used in distribution ZIP
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
 
-- Build the complete set of Javadocs, for all modules::
+- Build the complete set of Javadocs, for all modules
     MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=1024m -DskipTests
     
-- Build distributions (rpm, deb, tgz)::
+- Build distributions (rpm, deb, tgz)
     mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
 
-- Build Cloudera Manager parcel::
+- Build Cloudera Manager parcel
     mvn package -DskipTests -P dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
-- Show dependency tree::
+- Show dependency tree
     mvn package dependency:tree -DskipTests
 
-- Show dependency tree for a particular module::
+- Show dependency tree for a particular module
     mvn package dependency:tree -DskipTests -pl [module] -am
 
-- Show test output to stdout::
+- Show test output to stdout
     mvn -Dsurefire.redirectTestOutputToFile=false ...
 
-- Generates findbugs report::
+- Generates findbugs report
     mvn process-test-classes -P findbugs,examples
 
-- Offline mode::
+- Offline mode
     mvn -o ....
 
-- Change version::
+- Change version
     mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples
     
-- Running from IDE (Intellij and Eclipse)::
+- Running from IDE (Intellij and Eclipse)
     cd cdap-ui
     bower install && npm install && gulp build (whenever there is change in UI packages)
     Then, run standalone from IDE.
