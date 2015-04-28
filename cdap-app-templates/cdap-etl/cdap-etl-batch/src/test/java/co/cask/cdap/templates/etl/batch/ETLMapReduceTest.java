@@ -32,6 +32,7 @@ import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
+import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -70,8 +71,10 @@ public class ETLMapReduceTest extends TestBase {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
 
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of("name", "table1"));
-    ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of("name", "table2"));
+    ETLStage source = new ETLStage(KVTableSource.class.getSimpleName(), ImmutableMap.of(Properties.BatchWritable.NAME,
+                                                                                        "table1"));
+    ETLStage sink = new ETLStage(KVTableSink.class.getSimpleName(), ImmutableMap.of(Properties.BatchWritable.NAME,
+                                                                                    "table2"));
     ETLStage transform = new ETLStage("IdentityTransform", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
     ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
@@ -133,11 +136,12 @@ public class ETLMapReduceTest extends TestBase {
 
     ETLStage source = new ETLStage(TableSource.class.getSimpleName(),
       ImmutableMap.of(
-        "name", "inputTable",
-        Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
-        Table.PROPERTY_SCHEMA, schema.toString()));
+        Properties.BatchWritable.NAME, "inputTable",
+        Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
+        Properties.Table.PROPERTY_SCHEMA, schema.toString()));
     ETLStage sink = new ETLStage(TableSink.class.getSimpleName(),
-      ImmutableMap.of("name", "outputTable", Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+      ImmutableMap.of(Properties.BatchWritable.NAME, "outputTable", Properties.Table.PROPERTY_SCHEMA_ROW_FIELD,
+                      "rowkey"));
     ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
 
     MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();

@@ -100,9 +100,9 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     Map<String, String> sinkArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(runtimeArguments.get(tpfsAvroSinkConfig.name), sinkArgs);
-    context.setOutput(runtimeArguments.get(tpfsAvroSinkConfig.name), sink);
-    Schema avroSchema = new Schema.Parser().parse(runtimeArguments.get(tpfsAvroSinkConfig.schema));
+    TimePartitionedFileSet sink = context.getDataset(tpfsAvroSinkConfig.name, sinkArgs);
+    context.setOutput(tpfsAvroSinkConfig.name, sink);
+    Schema avroSchema = new Schema.Parser().parse(tpfsAvroSinkConfig.schema);
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
   }
