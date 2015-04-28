@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.realtime.sinks;
+package $package;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;

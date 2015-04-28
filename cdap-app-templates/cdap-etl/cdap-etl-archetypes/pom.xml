@@ -32,6 +32,7 @@
   <modules>
     <module>cdap-etl-realtime-source-archetype</module>
     <module>cdap-etl-realtime-sink-archetype</module>
+    <module>cdap-etl-transform-archetype</module>
   </modules>
 
   <build>
