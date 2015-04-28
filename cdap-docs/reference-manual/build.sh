@@ -32,4 +32,4 @@ function build_extras() {
   copy_license_pdfs
 }
 
-run_command $1
+run_command ${1}
