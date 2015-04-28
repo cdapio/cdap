@@ -1,37 +1,62 @@
-<div class="container">
-  <div class="row" ng-init="isSaved=false">
-    <div class="col-xs-12">
-      <div class="text-success" ng-if="isSaved">
-        Saved!
-      </div>
-      <form class="form-horizontal">
-        <div ng-repeat="(name, value) in transform.properties track by $index">
-          <div class="form-group">
-            <label class="control-label col-sm-2">{{ name | caskCapitalizeFilter}}</label>
-            <div class="col-sm-10">
-              <input type="text"
-                      class="form-control"
-                      ng-model="transform.properties[name]"
-                      ng-change="$parent.isSaved=false"
-                      />
+<br />
+<div class="row">
+  <div class="col-xs-12" ng-init="plugin=transform">
+    <form class="form-horizontal"
+          ng-controller="PluginEditController"
+          plugin-property-edit-view>
+      <div ng-if="noconfig">
+        <div class="well well-lg widget-group-container">
+          <div ng-repeat="(name, value) in transform.properties track by $index">
+            <div class="form-group">
+              <label class="control-label col-sm-2">{{ name | caskCapitalizeFilter}}</label>
+              <div class="col-sm-7">
+                <input type="text"
+                        class="form-control"
+                        ng-model="transform.properties[name]"/>
+              </div>
             </div>
           </div>
         </div>
-      </form>
-      <div class="btn-group pull-right">
-        <button type="button" class="btn btn-success" ng-click="isSaved = true;">Save</button>
-        <button type="button" class="btn btn-default" ng-click="closeTab(tabIndex)">Close</button>
       </div>
-    </div>
-  </div>
-</div>
+      <div ng-if="configfetched" class="am-slide-right">
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12"
+               ng-repeat="group in config.groups.position">
 
-<h3>Editing {{transform.name}} Properties</h3>
-<div class="row">
-  <div class="col-xs-6" >
+            <div class="well well-lg widget-group-container">
+              <h3>{{config.groups[group].display}}</h3>
 
-  </div>
-  <div class="col-xs-6">
+              <div ng-repeat="(field,value) in
+                   config.groups[group].fields">
+                <div class="form-group">
+                  <label class="control-label col-sm-4"
+                         ng-if="config.groups[group].fields[field].label">
+                    {{config.groups[group].fields[field].label}}
+                  </label>
+                  <label class="control-label col-sm-4"
+                         ng-if="!config.groups[group].fields[field].label">
+                    {{field}}
+                  </label>
+                  <div class="col-sm-7">
+                    <div data-name="field"
+                         class="my-widget-container"
+                         data-model="transform.properties[field]"
+                         data-myconfig="config.groups[group].fields[field]"
+                         widget-container>
 
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div ng-if="!noproperty">
+        <div class="well well-lg">
+          No Properties for this Plugin.
+        </div>
+      </div>
+    </form>
   </div>
 </div>
