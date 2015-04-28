@@ -29,9 +29,6 @@ import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.common.Properties;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -49,7 +46,7 @@ import javax.annotation.Nullable;
  * A {@link BatchSink} to write Avro record to {@link TimePartitionedFileSet}
  */
 @Plugin(type = "sink")
-@Name("TPFSAvroSink")
+@Name("TPFSAvro")
 @Description("AVRO Sink with Time Partitioned File Dataset")
 public class TimePartitionedFileSetDatasetAvroSink extends
   BatchSink<GenericRecord, AvroKey<GenericRecord>, NullWritable> {
@@ -57,8 +54,8 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   private static final String SCHEMA_DESC = "The schema of the record";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
     "have to be written";
-  private static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Should " +
-    "be provided if you want the pipeline to create the fileset.";
+  private static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
+    "name of the dataset";
 
   /**
    * Config for TimePartitionedFileSetDatasetAvroSink
@@ -74,12 +71,6 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     @Description(BASE_PATH_DESC)
     @Nullable
     private String basePath;
-
-    public TPFSAvroSinkConfig(String name, String basePath, String schema) {
-      this.name = name;
-      this.basePath = basePath;
-      this.schema = schema;
-    }
   }
 
   private final TPFSAvroSinkConfig tpfsAvroSinkConfig;
@@ -90,21 +81,18 @@ public class TimePartitionedFileSetDatasetAvroSink extends
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    // if the base path is provided then we should try to create the fileset here
-    if (!Strings.isNullOrEmpty(tpfsAvroSinkConfig.basePath)) {
-      String tpfsName = tpfsAvroSinkConfig.name;
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(tpfsName), "TimePartitionedFileSet name must be given.");
-      pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
-        .setBasePath(tpfsAvroSinkConfig.basePath)
-        .setInputFormat(AvroKeyInputFormat.class)
-        .setOutputFormat(AvroKeyOutputFormat.class)
-        .setEnableExploreOnCreate(true)
-        .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-        .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-        .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-        .setTableProperty("avro.schema.literal", (tpfsAvroSinkConfig.schema))
-        .build());
-    }
+    String tpfsName = tpfsAvroSinkConfig.name;
+    String basePath = tpfsAvroSinkConfig.basePath == null ? tpfsName : tpfsAvroSinkConfig.basePath;
+    pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
+      .setBasePath(basePath)
+      .setInputFormat(AvroKeyInputFormat.class)
+      .setOutputFormat(AvroKeyOutputFormat.class)
+      .setEnableExploreOnCreate(true)
+      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+      .setTableProperty("avro.schema.literal", (tpfsAvroSinkConfig.schema))
+      .build());
   }
 
   @Override
@@ -120,8 +108,8 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   }
 
   @Override
-  public void transform(GenericRecord input, Emitter<KeyValue<AvroKey<GenericRecord>,
-    NullWritable>> emitter) throws Exception {
+  public void transform(GenericRecord input,
+                        Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<AvroKey<GenericRecord>, NullWritable>(
       new AvroKey<GenericRecord>(input), NullWritable.get()));
   }
