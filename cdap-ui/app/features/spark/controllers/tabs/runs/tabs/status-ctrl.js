@@ -74,23 +74,23 @@ angular.module(PKG.name + '.feature.spark')
         '&tag=app:' + $state.params.appId +
         '&tag=spark:' + $state.params.programId +
         '&tag=run:' + runId +
-        '&metric=' + $state.params.appId;
+        '&metric=system.driver';
 
 
       var metricPaths = {};
-      metricPaths[metricsBasePath + '.BlockManager.memory.remainingMem_MB?aggregate=true'] = 'blockRemainingMemory';
-      metricPaths[metricsBasePath + '.BlockManager.memory.maxMem_MB?aggregate=true'] = 'blockMaxMemory';
-      metricPaths[metricsBasePath + '.BlockManager.memory.memUsed_MB?aggregate=true'] = 'blockUsedMemory';
-      metricPaths[metricsBasePath + '.BlockManager.disk.diskSpaceUsed_MB?aggregate=true'] = 'blockDiskSpaceUsed';
-      metricPaths[metricsBasePath + '.DAGScheduler.job.activeJobs?aggregate=true'] = 'schedulerActiveJobs';
-      metricPaths[metricsBasePath + '.DAGScheduler.job.allJobs?aggregate=true'] = 'schedulerAllJobs';
-      metricPaths[metricsBasePath + '.DAGScheduler.stage.failedStages?aggregate=true'] = 'schedulerFailedStages';
-      metricPaths[metricsBasePath + '.DAGScheduler.stage.runningStages?aggregate=true'] = 'schedulerRunningStages';
-      metricPaths[metricsBasePath + '.DAGScheduler.stage.waitingStages?aggregate=true'] = 'schedulerWaitingStages';
+      metricPaths[metricsBasePath + '.BlockManager.memory.remainingMem_MB&aggregate=true'] = 'blockRemainingMemory';
+      metricPaths[metricsBasePath + '.BlockManager.memory.maxMem_MB&aggregate=true'] = 'blockMaxMemory';
+      metricPaths[metricsBasePath + '.BlockManager.memory.memUsed_MB&aggregate=true'] = 'blockUsedMemory';
+      metricPaths[metricsBasePath + '.BlockManager.disk.diskSpaceUsed_MB&aggregate=true'] = 'blockDiskSpaceUsed';
+      metricPaths[metricsBasePath + '.DAGScheduler.job.activeJobs&aggregate=true'] = 'schedulerActiveJobs';
+      metricPaths[metricsBasePath + '.DAGScheduler.job.allJobs&aggregate=true'] = 'schedulerAllJobs';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.failedStages&aggregate=true'] = 'schedulerFailedStages';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.runningStages&aggregate=true'] = 'schedulerRunningStages';
+      metricPaths[metricsBasePath + '.DAGScheduler.stage.waitingStages&aggregate=true'] = 'schedulerWaitingStages';
 
-      angular.forEach(metricPaths, function (path, name) {
+      angular.forEach(metricPaths, function (name, path) {
         dataSrc.poll({
-          _cdapPath: name,
+          _cdapPath: path,
           method: 'POST'
         }, function(res) {
           $scope.data[name] = myHelpers.objectQuery(res, 'series', 0, 'data', 0, 'value') || 0;
