@@ -52,6 +52,7 @@ public class Source extends RealtimeSource<StructuredRecord> {
     @Name("param")
     @Description("Source Param")
     private String param;
+    // Note:  only primitives (included boxed types) and string are the types that are supported
 
   }
 
