@@ -51,15 +51,15 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
     addTemplatePlugins(templateId, "flip-1.0.jar", FlipPlugin.class);
     deployTemplate(Constants.DEFAULT_NAMESPACE_ID, templateId, WorkflowTemplate.class);
 
-    DataSetManager<KeyValueTable> inputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.INPUT);
-    inputManager.get().write(Bytes.toBytes(1L), Bytes.toBytes(10L));
-    inputManager.flush();
-
     WorkflowTemplate.Config config = new WorkflowTemplate.Config("flip");
     Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workflowX");
     AdapterConfig adapterConfig = new AdapterConfig("description", WorkerTemplate.NAME, GSON.toJsonTree(config));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
+    DataSetManager<KeyValueTable> inputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.INPUT);
+    inputManager.get().write(Bytes.toBytes(1L), Bytes.toBytes(10L));
+    inputManager.flush();
+    
     manager.start();
     // TODO: CDAP-2281 test schedules in a better way
     // perhaps we get a special schedule that lets you trigger jobs on command

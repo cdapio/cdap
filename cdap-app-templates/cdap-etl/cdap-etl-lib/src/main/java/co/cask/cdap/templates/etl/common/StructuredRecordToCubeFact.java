@@ -173,7 +173,7 @@ public class StructuredRecordToCubeFact {
       return fact;
     }
   }
-
+m
   private static final class TimestampResolver {
     private String srcField;
     private DateFormat dateFormat;
