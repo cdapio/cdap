@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.etlapps')
+angular.module(PKG.name + '.feature.adapters')
   .service('PluginConfigFactory', function(MyDataSource, $q) {
     this.plugins = {};
 

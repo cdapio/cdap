@@ -1,39 +1,39 @@
-angular.module(PKG.name + '.feature.etlapps')
-  .factory('ETLAppsApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings) {
+angular.module(PKG.name + '.feature.adapters')
+  .factory('AdapterApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings) {
     var filterFilter = $filter('filter');
-    function ETLAppsApiFactory(scope) {
+    function AdapterApiFactory(scope) {
       this.scope = scope;
       this.dataSrc = new MyDataSource(scope);
     }
 
-    ETLAppsApiFactory.prototype.fetchSources = function(etlType) {
+    AdapterApiFactory.prototype.fetchSources = function(adapterType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/' + etlType + '/extensions/source'
+        _cdapPath: '/templates/' + adapterType + '/extensions/source'
       })
         .then(function(res) {
-          this.scope.etlSources = res;
+          this.scope.defaultSources = res;
         }.bind(this));
     }
 
-    ETLAppsApiFactory.prototype.fetchSinks = function(etlType) {
+    AdapterApiFactory.prototype.fetchSinks = function(adapterType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/'+ etlType + '/extensions/sink'
+        _cdapPath: '/templates/'+ adapterType + '/extensions/sink'
       })
         .then(function(res) {
-          this.scope.etlSinks = res;
+          this.scope.defaultSinks = res;
         }.bind(this));
     }
 
-    ETLAppsApiFactory.prototype.fetchTransforms = function(etlType) {
+    AdapterApiFactory.prototype.fetchTransforms = function(adapterType) {
       this.dataSrc.request({
-        _cdapPath: '/templates/' + etlType + '/extensions/transform'
+        _cdapPath: '/templates/' + adapterType + '/extensions/transform'
       })
         .then(function(res) {
-          this.scope.etlTransforms = res;
+          this.scope.defaultTransforms = res;
         }.bind(this));
     }
 
-    ETLAppsApiFactory.prototype.fetchUIConfigurations = function(templateId, pluginId) {
+    AdapterApiFactory.prototype.fetchUIConfigurations = function(templateId, pluginId) {
       this.dataSrc.config({
         templateid: templateId,
         pluginid: pluginId
@@ -44,51 +44,51 @@ angular.module(PKG.name + '.feature.etlapps')
        }.bind(this));
     }
 
-    ETLAppsApiFactory.prototype.fetchSourceProperties = function(etlSource) {
-      if (!etlSource) return;
+    AdapterApiFactory.prototype.fetchSourceProperties = function(source) {
+      if (!source) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/source/plugins/' + etlSource
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/source/plugins/' + source
       })
         .then(function(res) {
-          var source = res[0];
-          this.scope.source.name = source.name;
+          var s = res[0];
+          this.scope.source.name = s.name;
           var obj = {};
           angular.forEach(source.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.source.properties = obj;
-          this.scope.loadingEtlSourceProps = false;
+          // this.scope.loadingEtlSourceProps = false;
         }.bind(this));
-      this.scope.loadingEtlSourceProps = etlSource || false;
+      // this.scope.loadingEtlSourceProps = source || false;
     }
 
-    ETLAppsApiFactory.prototype.fetchSinkProperties = function(etlSink){
-      if (!etlSink) return;
+    AdapterApiFactory.prototype.fetchSinkProperties = function(sink){
+      if (!sink) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/sink/plugins/' + etlSink
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/sink/plugins/' + sink
       })
         .then(function(res) {
-          var sink = res[0];
-          this.scope.sink.name = sink.name;
+          var s = res[0];
+          this.scope.sink.name = s.name;
           var obj = {};
           angular.forEach(sink.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.sink.properties = obj;
-          this.scope.loadingEtlSinkProps = false;
+          // this.scope.loadingEtlSinkProps = false;
         }.bind(this));
-      this.scope.loadingEtlSinkProps = etlSink || false;
+      // this.scope.loadingEtlSinkProps = sink || false;
     }
 
-    ETLAppsApiFactory.prototype.fetchTransformProperties = function(etlTransform, index) {
-      if(!etlTransform) return;
+    AdapterApiFactory.prototype.fetchTransformProperties = function(transform, index) {
+      if(!transform) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transforms/plugins/' + etlTransform
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transforms/plugins/' + transform
       })
         .then(function(res) {
-          var transform = res[0];
+          var t = res[0];
           var obj = {};
-          angular.forEach(transform.properties, function(property) {
+          angular.forEach(t.properties, function(property) {
             obj[property.name] = '';
           });
           index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
@@ -96,7 +96,7 @@ angular.module(PKG.name + '.feature.etlapps')
         }.bind(this));
     }
 
-    ETLAppsApiFactory.prototype.save = function (data) {
+    AdapterApiFactory.prototype.save = function (data) {
       this.dataSrc.request({
         method: 'PUT',
         _cdapPath: '/namespaces/'
@@ -106,8 +106,8 @@ angular.module(PKG.name + '.feature.etlapps')
         body: data
       })
         .then(function(res) {
-          delete this.scope.etlDrafts[this.scope.metadata.name];
-          return mySettings.set('etldrafts', this.scope.etlDrafts)
+          delete this.scope.adapterDrafts[this.scope.metadata.name];
+          return mySettings.set('adapterdrafts', this.scope.adapterDrafts)
         }.bind(this))
         .then(function() {
           this.scope.isSaved = true;
@@ -116,10 +116,10 @@ angular.module(PKG.name + '.feature.etlapps')
           });
           $alert({
             type: 'success',
-            content: 'ETL Template created successfully!'
+            content: 'Adapter Template created successfully!'
           });
         }.bind(this))
     }
-    return ETLAppsApiFactory;
+    return AdapterApiFactory;
 
   });
