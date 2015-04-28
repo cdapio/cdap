@@ -1,7 +1,21 @@
 @import '../../styles/variables.less';
 
 @font-size: 18px;
+body.theme-cdap.state-adapters {
+  tab-heading > a {
+    i.fa-times {
+      color: #9d9d9d;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+  }
+}
+
 body.theme-cdap.state-adapters-create {
+
+  .tab-pane .panel-default {
+    // .panel-heading > span.pull-left { line-height: 32px; }
+  }
 
   .as-sortable-drag {
     &.template {
@@ -14,15 +28,8 @@ body.theme-cdap.state-adapters-create {
       }
     }
   }
-  [etl-canvas-template] {
-    &[class*="col-"] {
-      padding-right: 0;
-    }
-  }
 
   .etlflowcontainer {
-    width: 100%;
-    padding: 0 10px;
     h4 {
       margin-top: 0;
       font-weight: bold;
@@ -30,9 +37,7 @@ body.theme-cdap.state-adapters-create {
     .fa-pencil,.fa-times {
       font-size: 12px;
       vertical-align: middle;
-      &:hover {
-        cursor: pointer;
-      }
+      &:hover { cursor: pointer; }
     }
     .wrapper {
       border-radius: 4px;
@@ -43,9 +48,7 @@ body.theme-cdap.state-adapters-create {
       background: #D3D3D3;
       color: white;
 
-      &.transform-wrapper {
-        height: auto;
-      }
+      &.transform-wrapper { height: auto; }
 
       .default { display: none;}
       .template,.default {
@@ -75,9 +78,7 @@ body.theme-cdap.state-adapters-create {
           border: 0;
           padding: 0;
           .default {
-            > div {
-              transform: none;
-            }
+            > div { transform: none; }
           }
           > div {
             border: 2px dashed white;
@@ -88,10 +89,7 @@ body.theme-cdap.state-adapters-create {
             -webkit-transform: none;
             transform: none;
             word-wrap: break-word;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
+            &:last-child { margin-bottom: 0; }
           }
         }
       }
@@ -110,43 +108,39 @@ body.theme-cdap.state-adapters-create {
 
         .list-group {
           margin-bottom: 0;
+          height: 150px;
+          overflow: scroll;
 
           .list-group-item {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
-
-            &:last-child {
-              border: 0;
-            }
+            &:last-child { border: 0; }
           }
         }
       }
     }
   }
 
+  .col-xs-12.text-right {
+    > .btn.btn-default { margin-bottom: 20px; }
+  }
+
   .panel.panel-default {
-    .panel-heading {
-      cursor: pointer;
-    }
+    .panel-heading { cursor: pointer; }
   }
 
   [plugin-property-edit-view] {
     .widget-group-container {
       &.well {
         padding: 10px;
-
-        h3 {
-          margin: 0 0 10px 0;
-        }
+        h3 { margin: 0 0 10px 0; }
       }
     }
   }
 
   #ETLsourceTab, #ETLsinkTab, #ETLtransformsTab {
-    .panel-heading {
-      cursor: pointer;
-    }
+    .panel-heading { cursor: pointer; }
   }
 }
 
@@ -163,9 +157,7 @@ body.theme-cdap.state-adapters-list {
       background-color: @brand-success;
       top: 0;
       right: 0;
-      &:after {
-        border-bottom: 5px solid @brand-success;
-      }
+      &:after { border-bottom: 5px solid @brand-success; }
     }
 
     &:after {
@@ -186,9 +178,7 @@ body.theme-cdap.state-adapters-list {
       .well.well-lg {
         border: 2px dashed;
         margin-bottom: 0;
-        h1 {
-          margin-bottom: 13px;
-        }
+        h1 { margin-bottom: 13px; }
       }
     }
     [class*="col-"] {
@@ -202,9 +192,7 @@ body.theme-cdap.state-adapters-list {
       padding: 10px;
 
       .action-panel {
-        button {
-          border: 0;
-        }
+        button { border: 0; }
       }
       a.content-panel {
         min-height: 107px;
@@ -212,26 +200,12 @@ body.theme-cdap.state-adapters-list {
         text-decoration: none;
         color: black;
       }
-
-      h3 {
-        margin: 10px 0;
-      }
-
-      p {
-        margin: 0;
-      }
+      h3 { margin: 10px 0; }
+      p { margin: 0; }
     }
-    .running {
-      color: green;
-    }
-    .stopped {
-      color: darkgrey;
-    }
-    .killed {
-      color: red;
-    }
-    .description {
-      color: #777777;
-    }
+    .running { color: green; }
+    .stopped { color: darkgrey; }
+    .killed { color: red; }
+    .description { color: #777777; }
   }
 }
