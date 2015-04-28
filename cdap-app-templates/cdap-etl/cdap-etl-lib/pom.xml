@@ -180,6 +180,11 @@
       <artifactId>kafka_2.10</artifactId>
     </dependency>
     <!-- End for Kafka Source -->
+
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

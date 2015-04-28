@@ -43,6 +43,7 @@
     <twitter4j.version>4.0.1</twitter4j.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
+    <joda.version>1.6.2</joda.version>
   </properties>
 
   <dependencyManagement>
@@ -180,6 +181,11 @@
         <artifactId>avro-mapred</artifactId>
         <classifier>hadoop2</classifier>
         <version>${etl.avro.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>${joda.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
