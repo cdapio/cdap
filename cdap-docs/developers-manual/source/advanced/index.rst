@@ -33,11 +33,11 @@ will be of interest to developers who want a deeper dive into CDAP:
   writes it to a ``TimePartitionedFileSet``, allowing it to be queried through Hive and Impala.
 
 
-.. |etl| replace:: **Creating Custom ETL Applications:**
-.. _etl: etl.html
+.. |atap| replace:: **Creating Application Templates, Adapters, and Plugins:**
+.. _atap: atap.html
 
-- |etl|_ Covers creating custom ETL Applications and Components, including custom
-  Sources, Sinks, Transformations, and Plugins, that connect data sources to data sinks.
+- |atap|_ Covers creating custom Application Templates, Adapters, and Plugins: custom
+  Sources, Sinks, and Transformations.
 
 
 .. |application-logback| replace:: **Application Logback:**

@@ -9,22 +9,44 @@
 CDAP Users’ Manual
 ==================================================
 
-This CDAP Users’ Manual is for people who are using CDAP, and want to take advantage of its
-abilities out-of-the-box to perform ETL (Extraction, Transformation and Loading) of data.
+Introduction
+============
+The motivation behind the CDAP Users’ Manual is that the users of CDAP should be able
+to build solutions to their common big data problems without writing a single line of code.
 
-This is done by creating and operating an ETL Adapter. 
+Through the use of *Application Templates* and *Adapters*, a CDAP User can use CDAP's
+out-of-the-box capabilities to perform common tasks such as the ETL (Extraction,
+Transformation and Loading) of data.
 
-ETL Adapters are created from either of the two ETL Application Templates shipped with CDAP:
 
-- ETL Batch
-- ETL Realtime
+What are Application Template and Adapters?
+-------------------------------------------
 
-Application Templates are built from Plugins. Application Templates are used to build CDAP
-Adapters, of which one type is an ETL Adapter.
+An *Application Template* is an extension to a CDAP Application. A Template has a
+configuration class and a program which can use this configuration and be started. The
+configuration class represents the customization that is provided for each solution that a
+user creates. 
 
-(If you are interested in writing your own Adapter, Application Template, Plugin, or
-extending the existing ETL framework, please see these Developers’ Manual sections. [link])
+For example, the configuration might be a set of properties that is used by the program.
+Each solution created results in a unique configuration and is referred to as an
+*Adapter*. When a user starts an Adapter, a new run of the program specified inside the
+Application Template is started.
 
+
+What are Plugins?
+-----------------
+Each Adapter run may need to load an external class, depending upon the configuration
+that is used to create the Adapter. These classes are packaged in JARs known as *Plugin*
+JARs. There are specific Plugins associated with each Application Template. 
+
+
+ETL
+===
+ETL is **Extract**, **Transformation** and **Loading** of data, and is a common first-step in any data
+application. CDAP endeavors to make performing ETL possible out-of-box without writing
+code; instead, you just configure an ETL Adapter and then operate it.
+
+These sections describe how to do this:
 
 .. |overview| replace:: **ETL Overview:**
 .. _overview: etl/index.html
@@ -49,4 +71,5 @@ extending the existing ETL framework, please see these Developers’ Manual sect
 .. _etl-operations: etl/operations.html
 
 - |etl-operations|_ Covers using an ETL Adapter created using the Plugins included with CDAP.
+
 
