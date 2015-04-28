@@ -37,16 +37,20 @@
       </button>
 
       <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
-        <li>
-          <a href="#" ng-click="openRuntime()">
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openRuntime()">
             <span class="fa fa-wrench pull-right"></span>
-            Runtime Arguments
+            <span> Runtime Arguments </span>
           </a>
         </li>
-        <li>
-          <a href="#" ng-click="openPreferences()">
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openPreferences()">
             <span class="fa fa-cog pull-right"></span>
-            Preferences
+            <span> Preferences </span>
           </a>
         </li>
       </ul>

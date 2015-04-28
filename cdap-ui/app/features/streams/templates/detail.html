@@ -12,22 +12,27 @@
 
     <div class="btn-group h3" dropdown>
       <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
-        Action <span class="caret"></span>
+        Actions <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
-        <li>
+        <li role="presentation">
           <a href="" ng-click="sendEvents()">
             Send Events
           </a>
         </li>
-        <li>
-          <a ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $state.params.namespace, streamid: $state.params.streamId})">Edit Properties</a>
+        <li role="presentation">
+          <a role="menuitem"
+             ui-sref="admin.namespace.detail.data.streamproperties({nsadmin: $state.params.namespace, streamid: $state.params.streamId})">
+             Edit Properties
+          </a>
         </li>
-        <li>
-          <a href="" ng-click="caskConfirm()"
-            cask-confirmable="truncate()"
-            data-confirmable-content="Are you sure you want to truncate this stream?">
-            Truncate
+        <li role="presentation">
+          <a role="menuitem"
+             href=""
+             ng-click="caskConfirm()"
+             cask-confirmable="truncate()"
+             data-confirmable-content="Are you sure you want to truncate this stream?">
+             Truncate
           </a>
         </li>
       </ul>
