@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.etlapps')
+angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterRunsController', function($scope, $filter, $state, rRuns) {
   var fFilter = $filter('filter');
   $scope.runs = rRuns;
@@ -29,10 +29,10 @@ angular.module(PKG.name + '.feature.etlapps')
    $scope.tabs = [
    {
      title: 'Status',
-     template: '/assets/features/etlapps/templates/tabs/runs/tabs/status.html'
+     template: '/assets/features/adapters/templates/tabs/runs/tabs/status.html'
    }, {
      title: 'Log',
-     template: '/assets/features/etlapps/templates/tabs/runs/tabs/log.html'
+     template: '/assets/features/adapters/templates/tabs/runs/tabs/log.html'
    }];
 
    $scope.activeTab = $scope.tabs[0];

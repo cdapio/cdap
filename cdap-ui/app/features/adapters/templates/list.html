@@ -5,7 +5,7 @@
 </div>
 
 <br/>
-<div class="row" etl-apps-list>
+<div class="row" adapters-list>
   <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6 text-center"
         ng-click="$state.go('^.create')"
         etl-add-app>
@@ -17,9 +17,9 @@
       <br/>
     </div>
   </div>
-  <div ng-model="etlapps">
+  <div ng-model="adapters">
     <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
-         ng-repeat="app in etlapps">
+         ng-repeat="app in adapters">
       <div>
         <div class="label etlappcontainer" ng-if="app.isdraft">
           Draft
@@ -28,7 +28,8 @@
           Published
         </div>
         <div class="well well-md">
-          <a ui-sref="adapters.detail.runs({adapterId: app.name})" class="content-panel">
+
+          <a ng-if="!app.isdraft" ui-sref="adapters.detail.runs({adapterId: app.name})" class="content-panel">
 
             <h3 tooltip="{{::app.name}}">
               <i class="fa fa-heartbeat"></i>
@@ -37,17 +38,27 @@
 
             <small>
               Type: {{::app.template}}
-              <a ng-if="app.isdraft"
-                  class="fa fa-pencil text-primary"
-                  href
-                  ng-click="$state.go('^.create', {data: app.name})">
-              </a>
             </small>
 
             <p class="description" tooltip="{{::app.description}}">
               {{::app.description | myEllipsis: 50}}
             </p>
           </a>
+          <a href ng-if="app.isdraft" ng-click="$state.go('^.create', {data: app.name})"
+              class="content-panel">
+              <h3 tooltip="{{::app.name}}">
+                <i class="fa fa-heartbeat"></i>
+                <span>{{::app.name | myEllipsis:6}}</span>
+              </h3>
+
+              <small>
+                Type: {{::app.template}}
+              </small>
+              <p class="description" tooltip="{{::app.description}}">
+                {{::app.description | myEllipsis: 50}}
+              </p>
+          </a>
+
           <div class="clearfix action-panel">
             <div class="pull-left">
               <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
