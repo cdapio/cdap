@@ -67,9 +67,8 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   }
 
   private static long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
-    MetricDataQuery query = getTotalCounterQuery(context);
-
-    query = new MetricDataQuery(query, metricName);
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
+                                                context, new ArrayList<String>());
 
     try {
       Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
@@ -89,9 +88,4 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       throw Throwables.propagate(e);
     }
   }
-
-  private static MetricDataQuery getTotalCounterQuery(Map<String, String> context) {
-    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, MetricType.COUNTER, context, new ArrayList<String>());
-  }
-
 }

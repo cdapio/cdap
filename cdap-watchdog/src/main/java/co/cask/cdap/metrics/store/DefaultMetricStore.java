@@ -229,8 +229,8 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricNames(),
-                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
+    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), toMeasures(q.getMetrics()),
+                         q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
   @Override
@@ -298,6 +298,14 @@ public class DefaultMetricStore implements MetricStore {
         return new DimensionValue(input.getName(), input.getValue());
       }
     });
+  }
+
+  private Map<String, MeasureType> toMeasures(Map<String, MetricType> metrics) {
+    Map<String, MeasureType> result = Maps.newHashMap();
+    for (Map.Entry<String, MetricType> entry : metrics.entrySet()) {
+      result.put(entry.getKey(), toMeasureType(entry.getValue()));
+    }
+    return result;
   }
 
   private MeasureType toMeasureType(MetricType type) {

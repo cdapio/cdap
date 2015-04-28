@@ -385,10 +385,8 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
 
       MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
                                                   timeRange.getResolutionInSeconds(),
-                                                  timeRange.getCount(), queryRequest.getMetrics(),
-                                                  // todo: figure out MetricType
-                                                  MetricType.COUNTER, tagsSliceBy,
-                                                  transformGroupByTags(queryRequest.getGroupBy()),
+                                                  timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
+                                                  tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
                                                   timeRange.getInterpolate());
       Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
@@ -404,6 +402,15 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private Map<String, MetricType> toMetrics(List<String> metrics) {
+    Map<String, MetricType> result = Maps.newHashMap();
+    for (String metric : metrics) {
+      // todo: figure out metric type
+      result.put(metric, MetricType.COUNTER);
+    }
+    return result;
   }
 
   private Map<String, String> transformTagMap(Map<String, String> tags) {
