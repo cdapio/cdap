@@ -80,12 +80,15 @@ body.theme-cdap.state-admin {
     }
     h2:first-child { margin-top: 0; }
     .panel-default { margin-top: 18px; }
-    td > span {
+    // All list templates using circular status icons will rely on this selector
+    td > span[class^="status-"] {
       display: inline-block;
       width: 10px;
       height: 10px;
       margin-right: 5px;
       .border-radius(25px);
+    }
+    td > span {
       &.status-green { background-color: @brand-success; }
       &.status-grey { background-color: @cdap-gray; }
     }

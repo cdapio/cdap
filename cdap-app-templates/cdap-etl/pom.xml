@@ -36,6 +36,7 @@
     <module>cdap-etl-lib</module>
     <module>cdap-etl-realtime</module>
     <module>cdap-etl-test</module>
+    <module>cdap-etl-archetypes</module>
   </modules>
 
   <properties>
@@ -47,12 +48,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
       <!-- Hadoop Dependencies -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -161,13 +156,6 @@
             <artifactId>servlet-api</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-unit-test</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
       </dependency>
 
       <dependency>

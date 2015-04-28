@@ -24,11 +24,9 @@ import java.util.Map;
 public interface InputFormatProvider {
 
   /**
-   * @return the class of the input format to use.
-   * @param <T> This should be the InputFormat class. The type parameter is used here to avoid adding a dependency
-   *           on Hadoop.
+   * @return the class name of the input format to use.
    */
-  <T> Class<? extends T> getInputFormatClass();
+  String getInputFormatClassName();
 
   /**
    * @return the configuration properties that the input format expects to find in the Hadoop configuration.

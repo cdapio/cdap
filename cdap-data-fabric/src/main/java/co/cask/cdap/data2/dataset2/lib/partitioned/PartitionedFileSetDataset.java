@@ -288,8 +288,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public <T> Class<? extends T> getInputFormatClass() {
-    return files.getInputFormatClass();
+  public String getInputFormatClassName() {
+    return files.getInputFormatClassName();
   }
 
   @Override
@@ -309,11 +309,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public <T> Class<? extends T> getOutputFormatClass() {
-    // we verify that the output partition key is configured in getOutputFormatConfiguration()
-    // todo use a wrapper that adds the new partition when the job is committed - that means we must serialize the
-    //      cconf into the hadoop conf to be able to instantiate this dataset in the output committer
-    return files.getOutputFormatClass();
+  public String getOutputFormatClassName() {
+    return files.getOutputFormatClassName();
   }
 
   @Override

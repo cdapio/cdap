@@ -42,6 +42,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,7 @@ import java.util.Map;
 public class DefaultStreamManager implements StreamManager {
   private static final Gson GSON = StreamEventTypeAdapter.register(
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())).create();
+  private static final Type STREAM_EVENT_LIST_TYPE = new TypeToken<List<StreamEvent>>() { }.getType();
 
   private final Id.Stream streamId;
   private final StreamHandler streamHandler;
@@ -168,6 +170,6 @@ public class DefaultStreamManager implements StreamManager {
       throw new IOException("Failed to read from stream. Status = " + responder.getStatus());
     }
 
-    return responder.decodeResponseContent(new TypeToken<List<StreamEvent>>() { }, GSON);
+    return responder.decodeResponseContent(STREAM_EVENT_LIST_TYPE, GSON);
   }
 }

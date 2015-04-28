@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.internal.app.plugins.template.test.api.PluginTestRunnable;
+
 /**
- * A empty class for the purpose of {@link PluginTest} only.
+ * A empty class for the purpose of {@link PluginTest} only. Have it implements a template API class
+ * for verifying classloading.
  */
-public final class EmptyClass {
+public final class EmptyClass extends PluginTestRunnable {
 }

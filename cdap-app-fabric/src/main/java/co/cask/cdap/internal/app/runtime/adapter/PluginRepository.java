@@ -209,7 +209,7 @@ public class PluginRepository {
           }
         }
       } finally {
-        pluginInstantiator.close();
+        Closeables.closeQuietly(pluginInstantiator);
       }
     } finally {
       templateClassLoader.close();
@@ -329,7 +329,12 @@ public class PluginRepository {
               }
 
               try {
-                classIterator = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
+                // Only inspect classes in the top level jar file for Plugins.
+                // The jar manifest may have packages in Export-Package that are loadable from the bundled jar files,
+                // which is for classloading purpose. Those classes won't be inspected for plugin classes.
+                if (packageResource.getProtocol().equals("file")) {
+                  classIterator = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
+                }
               } catch (URISyntaxException e) {
                 // Cannot happen
                 throw Throwables.propagate(e);

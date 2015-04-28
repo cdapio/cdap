@@ -62,8 +62,16 @@ class SparkMetricsReporter extends ScheduledReporter {
       for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
         // for some cases the gauge value is Integer so a typical casting fails. Hence, first cast to Number and then
         // get the value as a long
+        String metricName = entry.getKey();
+        // NOTE : Stripping uniqueId from the metricName , as we already have runId in context.
+        // Currently Spark metric-names are of the format "local-124433533.x.y.z" , we remove local-124433533 and
+        // convert this to x.y.z
+        String[] metricNameParts = metricName.split("\\.", 2);
+        if (metricNameParts.length == 2) {
+          metricName = metricNameParts[1];
+        }
         SparkProgramWrapper.getBasicSparkContext().getProgramMetrics().gauge(
-          entry.getKey(), ((Number) entry.getValue().getValue()).longValue());
+          metricName, ((Number) entry.getValue().getValue()).longValue());
       }
     }
   }
