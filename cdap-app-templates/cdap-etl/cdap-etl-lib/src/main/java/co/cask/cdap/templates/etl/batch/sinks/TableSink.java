@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RecordPutTransformer;
@@ -80,9 +81,14 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
+  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(stageConfig, pipelineConfigurer);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField), "Row field must be given as a property.");
+  }
+
+  @Override
   public void initialize(ETLStage stageConfig) throws Exception {
     super.initialize(stageConfig);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField), "Row field must be given as a property.");
     recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
   }
 
