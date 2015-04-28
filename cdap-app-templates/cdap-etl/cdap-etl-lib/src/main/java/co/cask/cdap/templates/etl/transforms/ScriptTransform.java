@@ -30,8 +30,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import sun.org.mozilla.javascript.internal.NativeArray;
-import sun.org.mozilla.javascript.internal.NativeObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -104,7 +102,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
     try {
       engine.eval("var input = " + GSON.toJson(input) + "; ");
-      NativeObject scriptOutput = (NativeObject) invocable.invokeFunction("transform");
+      Map scriptOutput = (Map) invocable.invokeFunction("transform");
       StructuredRecord output = decodeRecord(scriptOutput, schema == null ? input.getSchema() : schema);
       emitter.emit(output);
     } catch (Exception e) {
@@ -128,7 +126,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
       case ENUM:
         break;
       case ARRAY:
-        return decodeArray((NativeArray) object, schema.getComponentSchema());
+        return decodeArray((List) object, schema.getComponentSchema());
       case MAP:
         Schema keySchema = schema.getMapSchema().getKey();
         Schema valSchema = schema.getMapSchema().getValue();
@@ -136,7 +134,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
         //noinspection unchecked
         return decodeMap((Map<Object, Object>) object, keySchema, valSchema);
       case RECORD:
-        return decodeRecord((NativeObject) object, schema);
+        return decodeRecord((Map) object, schema);
       case UNION:
         return decodeUnion(object, schema.getUnionSchemas());
     }
@@ -144,7 +142,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
     throw new RuntimeException("Unable decode object with schema " + schema);
   }
 
-  private StructuredRecord decodeRecord(NativeObject nativeObject, Schema schema) {
+  private StructuredRecord decodeRecord(Map nativeObject, Schema schema) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     for (Schema.Field field : schema.getFields()) {
       String fieldName = field.getName();
@@ -168,7 +166,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
       case FLOAT:
         return ((Double) object).floatValue();
       case BYTES:
-        NativeArray byteArr = (NativeArray) object;
+        List byteArr = (List) object;
         byte[] output = new byte[byteArr.size()];
         for (int i = 0; i < output.length; i++) {
           // everything is a double
@@ -195,7 +193,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
     return output;
   }
 
-  private List<Object> decodeArray(NativeArray nativeArray, Schema componentSchema) {
+  private List<Object> decodeArray(List nativeArray, Schema componentSchema) {
     List<Object> arr = Lists.newArrayListWithCapacity(nativeArray.size());
     for(Object arrObj : nativeArray) {
       arr.add(decode(arrObj, componentSchema));
