@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.etlapps')
+angular.module(PKG.name + '.feature.adapters')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('adapters', {
@@ -14,8 +14,8 @@ angular.module(PKG.name + '.feature.etlapps')
 
         .state('adapters.list', {
           url: '',
-          templateUrl: '/assets/features/etlapps/templates/list.html',
-          controller: 'EtlAppsListController'
+          templateUrl: '/assets/features/adapters/templates/list.html',
+          controller: 'AdapterListController'
         })
 
         .state('adapters.create', {
@@ -23,8 +23,8 @@ angular.module(PKG.name + '.feature.etlapps')
           params: {
             data: null
           },
-          templateUrl: '/assets/features/etlapps/templates/create.html',
-          controller: 'ETLAppsCreateController'
+          templateUrl: '/assets/features/adapters/templates/create.html',
+          controller: 'AdapterCreateController'
         })
 
         .state('adapters.detail', {
@@ -56,12 +56,12 @@ angular.module(PKG.name + '.feature.etlapps')
             label: 'Adapters',
             skip: true
           },
-          templateUrl: '/assets/features/etlapps/templates/detail.html',
+          templateUrl: '/assets/features/adapters/templates/detail.html',
           controller: 'AdpaterDetailController'
         })
           .state('adapters.detail.runs',{
             url: '/runs',
-            templateUrl: '/assets/features/etlapps/templates/tabs/runs.html',
+            templateUrl: '/assets/features/adapters/templates/tabs/runs.html',
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
               label: 'Runs'
@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.etlapps')
           })
             .state('adapters.detail.runs.run', {
               url: '/:runid',
-              templateUrl: '/assets/features/etlapps/templates/tabs/runs/run-detail.html',
+              templateUrl: '/assets/features/adapters/templates/tabs/runs/run-detail.html',
               ncyBreadcrumb: {
                 label: '{{$state.params.runid}}'
               }
@@ -81,7 +81,7 @@ angular.module(PKG.name + '.feature.etlapps')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'development'
           },
-          templateUrl: '/assets/features/etlapps/templates/tabs/history.html',
+          templateUrl: '/assets/features/adapters/templates/tabs/history.html',
           controller: 'AdapterRunsController',
           ncyBreadcrumb: {
             label: 'History'

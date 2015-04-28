@@ -1,1 +1,1 @@
-angular.module(PKG.name + '.feature.etlapps', []);
+angular.module(PKG.name + '.feature.adapters', []);
