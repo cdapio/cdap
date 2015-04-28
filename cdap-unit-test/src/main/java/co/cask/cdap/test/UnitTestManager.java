@@ -22,17 +22,26 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
+import co.cask.cdap.test.internal.DefaultAdapterManager;
 import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -41,10 +50,12 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +63,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.jar.Manifest;
 
 /**
  *
@@ -65,12 +77,19 @@ public class UnitTestManager implements TestManager {
   private final ApplicationManagerFactory appManagerFactory;
   private final NamespaceAdmin namespaceAdmin;
   private final StreamManagerFactory streamManagerFactory;
+  private final LocationFactory locationFactory;
+  private final File pluginsDir;
 
   @Inject
-  public UnitTestManager(AppFabricClient appFabricClient, DatasetFramework datasetFramework,
-                         TransactionSystemClient txSystemClient, DiscoveryServiceClient discoveryClient,
-                         ApplicationManagerFactory appManagerFactory, NamespaceAdmin namespaceAdmin,
-                         StreamManagerFactory streamManagerFactory) {
+  public UnitTestManager(AppFabricClient appFabricClient,
+                         DatasetFramework datasetFramework,
+                         TransactionSystemClient txSystemClient,
+                         DiscoveryServiceClient discoveryClient,
+                         ApplicationManagerFactory appManagerFactory,
+                         NamespaceAdmin namespaceAdmin,
+                         StreamManagerFactory streamManagerFactory,
+                         LocationFactory locationFactory,
+                         CConfiguration cConf) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
@@ -78,6 +97,9 @@ public class UnitTestManager implements TestManager {
     this.appManagerFactory = appManagerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.streamManagerFactory = streamManagerFactory;
+    this.locationFactory = locationFactory;
+    // this should have been set to a temp dir during injector setup
+    this.pluginsDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
   }
 
   /**
@@ -107,6 +129,41 @@ public class UnitTestManager implements TestManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
+                             Class<? extends ApplicationTemplate> templateClz,
+                             String... exportPackages) throws IOException {
+    Manifest manifest = new Manifest();
+    StringBuilder packagesStr = new StringBuilder().append(templateClz.getPackage().getName());
+    for (String exportPackage : exportPackages) {
+      packagesStr.append(",");
+      packagesStr.append(exportPackage);
+    }
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, packagesStr.toString());
+    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, templateClz, manifest);
+    File destination =  new File(String.format("%s/%s", pluginsDir.getAbsolutePath(), adapterJar.getName()));
+    Files.copy(Locations.newInputSupplier(adapterJar), destination);
+    appFabricClient.deployTemplate(namespace, templateId);
+  }
+
+  @Override
+  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
+                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, pluginClz.getPackage().getName());
+    Location pluginJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClz, classes);
+    File templateDir = new File(pluginsDir, templateId.getId());
+    DirUtils.mkdirs(templateDir);
+    File destination = new File(templateDir, jarName);
+    Files.copy(Locations.newInputSupplier(pluginJar), destination);
+  }
+
+  @Override
+  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) {
+    appFabricClient.createAdapter(adapterId, config);
+    return new DefaultAdapterManager(appFabricClient, adapterId);
   }
 
   @Override

@@ -79,6 +79,16 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     @Description(BODY_FIELD_DESC)
     @Nullable
     private String bodyField = Properties.Stream.DEFAULT_BODY_FIELD;
+
+    public StreamConfig() {
+      this(null, Properties.Stream.DEFAULT_HEADERS_FIELD, Properties.Stream.DEFAULT_BODY_FIELD);
+    }
+
+    public StreamConfig(String name, String headersField, String bodyField) {
+      this.name = name;
+      this.headersField = headersField;
+      this.bodyField = bodyField;
+    }
   }
 
   @Override
