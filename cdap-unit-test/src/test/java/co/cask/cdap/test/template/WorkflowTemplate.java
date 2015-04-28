@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  * Application Template that uses a worker to write some data to a dataset for testing purposes.
  */
 public class WorkflowTemplate extends ApplicationTemplate<WorkflowTemplate.Config> {
-  public static final String NAME = "workertemplate";
+  public static final String NAME = "workflowtemplate";
   public static final String INPUT = "workflow.in";
   public static final String OUTPUT = "workflow.out";
 

@@ -53,7 +53,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
 
     WorkflowTemplate.Config config = new WorkflowTemplate.Config("flip");
     Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workflowX");
-    AdapterConfig adapterConfig = new AdapterConfig("description", WorkerTemplate.NAME, GSON.toJsonTree(config));
+    AdapterConfig adapterConfig = new AdapterConfig("description", WorkflowTemplate.NAME, GSON.toJsonTree(config));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
     DataSetManager<KeyValueTable> inputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.INPUT);
