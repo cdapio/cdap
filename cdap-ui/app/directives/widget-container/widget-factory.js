@@ -21,7 +21,9 @@ angular.module(PKG.name + '.commons')
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
-          'cask-json-edit': 'model'
+          'cask-json-edit': 'model',
+          'class': 'form-control',
+          placeholder: 'myconfig.description'
         }
       },
       'javascript-editor': {
