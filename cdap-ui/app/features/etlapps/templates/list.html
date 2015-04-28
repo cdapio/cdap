@@ -29,30 +29,49 @@
           Published
         </div>
         <div class="well well-md">
-            <div>
-              <h3 tooltip="{{::app.name}}" as-sortable-item-handle>
-                <i class="fa fa-heartbeat"></i>
-                {{::app.name | myEllipsis:6}}
-              </h3>
-              <small>
-                Type: {{::app.template}}
-                <a ng-if="app.isdraft"
-                    class="fa fa-pencil text-primary"
-                    href
-                    ng-click="$state.go('^.create', {data: app.name})">
-                </a>
-              </small>
-            </div>
-          <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}">
-            <i class="fa fa-circle"></i>
-            <span> {{::app.status}} </span>
+          <div class="content-panel">
+
+            <h3 tooltip="{{::app.name}}" as-sortable-item-handle>
+              <i class="fa fa-heartbeat"></i>
+              <span>{{::app.name | myEllipsis:6}}</span>
+            </h3>
+
+            <small>
+              Type: {{::app.template}}
+              <a ng-if="app.isdraft"
+                  class="fa fa-pencil text-primary"
+                  href
+                  ng-click="$state.go('^.create', {data: app.name})">
+              </a>
+            </small>
+
+            <p class="description" tooltip="{{::app.description}}">
+              {{::app.description | myEllipsis: 50}}
+            </p>
           </div>
-          <p class="description" tooltip="{{::app.description}}">
-            {{::app.description | myEllipsis: 50}}
-          </p>
+          <div class="clearfix action-panel">
+            <div class="pull-left">
+              <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
+                <span class="fa fa-play"></span>
+              </button>
+              <button class="text-danger" ng-if="app.status === 'STARTED'" ng-click="doAction('stop', app.name)" ng-disabled="app.isdraft">
+                <span class="fa fa-stop"></span>
+              </button>
+              <button ng-if="app.status === 'STARTING' || app.status === 'STOPPING'" class="text-default" >
+                <span class="fa fa-refresh fa-spin"></span>
+              </button>
+              <button class="text-danger" ng-click="deleteAdapter(app.name)" ng-if="!app.isdraft">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
 
+
+            <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}" class="pull-right">
+              <i class="fa fa-circle"></i>
+              <span> {{app.status}} </span>
+            </div>
+          </div>
         </div>
-
       </div>
     </div>
   </div>
