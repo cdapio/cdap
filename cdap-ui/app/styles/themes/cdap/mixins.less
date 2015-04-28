@@ -72,20 +72,12 @@
       &:only-child {
         a { .border-radius(8px 0 8px 8px); }
         &:hover {
-          a, my-file-select > a { .border-radius(8px 0 8px 8px); }
+          a { .border-radius(8px 0 8px 8px); }
         }
       }
       > a {
         padding: 10px;
         cursor: pointer;
-      }
-      my-file-select {
-        > a {
-          cursor: pointer;
-          display: block;
-          padding: 10px;
-          &:hover, &:focus { text-decoration: none; }
-        }
       }
       span.fa {
         margin-top: 3px;
@@ -105,16 +97,6 @@
         &:hover, &:focus {
           background-color: white;
           color: @cdap-header;
-        }
-      }
-      my-file-select {
-        > a {
-          background-color: @cdap-header;
-          color: white;
-          &:hover, &:focus {
-            background-color: white;
-            color: @cdap-header;
-          }
         }
       }
     }
