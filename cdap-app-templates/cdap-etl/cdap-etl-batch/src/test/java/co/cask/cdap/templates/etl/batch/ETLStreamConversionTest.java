@@ -63,6 +63,8 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLBatchTemplate} for Stream conversion from stream to avro format for writing to
  * {@link TimePartitionedFileSet}
  */
+// TODO: re-enable after mapred classloading fix
+@Ignore
 public class ETLStreamConversionTest extends TestBase {
   private static final Gson GSON = new Gson();
 
