@@ -18,4 +18,4 @@
 
 source ../_common/common-build.sh
 
-run_command $1
+run_command ${1}
