@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.adapters')
             type: 'success',
             content: 'Adapter ' + appName + ' deleted successfully.'
           });
-          $state.$timeout(function() {
+          $timeout(function() {
             $state.go($state.current, $state.params, {reload: true});
           });
         }, function(err){
