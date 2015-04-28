@@ -16,24 +16,40 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Objects;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import com.google.gson.JsonElement;
 
+import javax.annotation.Nullable;
+
 /**
- * Adapter details that come back from get calls.
- * TODO: finalize what should be present here
+ * Represents an adapter returned for /adapters/{adapter-id}.
  */
-public final class AdapterDetail {
+public class AdapterDetail {
   private final String name;
   private final String description;
   private final String template;
+  private final ProgramId program;
   private final JsonElement config;
 
-  public AdapterDetail(String name, String description, String template, JsonElement config) {
+  /**
+   * For batch adapters.
+   */
+  private final ScheduleSpecification schedule;
+
+  /**
+   * For realtime adapters.
+   */
+  private final Integer instances;
+
+  public AdapterDetail(String name, String description, String template, Id.Program program,
+                       JsonElement config, ScheduleSpecification schedule, Integer instances) {
     this.name = name;
     this.description = description;
     this.template = template;
+    this.instances = instances;
+    this.program = new ProgramId(program);
     this.config = config;
+    this.schedule = schedule;
   }
 
   public String getName() {
@@ -48,12 +64,26 @@ public final class AdapterDetail {
     return template;
   }
 
+  public ProgramId getProgram() {
+    return program;
+  }
+
   public JsonElement getConfig() {
     return config;
   }
 
+  @Nullable
+  public ScheduleSpecification getSchedule() {
+    return schedule;
+  }
+
+  @Nullable
+  public Integer getInstances() {
+    return instances;
+  }
+
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -63,24 +93,59 @@ public final class AdapterDetail {
 
     AdapterDetail that = (AdapterDetail) o;
 
-    return Objects.equal(name, that.name) &&
-      Objects.equal(description, that.description) &&
-      Objects.equal(template, that.template) &&
-      Objects.equal(config, that.config);
+    if (config != null ? !config.equals(that.config) : that.config != null) {
+      return false;
+    }
+    if (description != null
+         ? !description.equals(that.description) : that.description != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(that.name) : that.name != null) {
+      return false;
+    }
+    if (program != null
+          ? !program.equals(that.program) : that.program != null) {
+      return false;
+    }
+    if (schedule != null
+          ? !schedule.equals(that.schedule) : that.schedule != null) {
+      return false;
+    }
+    if (template != null
+      ? !template.equals(that.template) : that.template != null) {
+      return false;
+    }
+    if (instances != null
+      ? !instances.equals(that.instances) : that.instances != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, description, template, config);
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (template != null ? template.hashCode() : 0);
+    result = 31 * result + (program != null ? program.hashCode() : 0);
+    result = 31 * result + (config != null ? config.hashCode() : 0);
+    result = 31 * result + (schedule != null ? schedule.hashCode() : 0);
+    result = 31 * result + (instances != null ? instances.hashCode() : 0);
+    return result;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("description", description)
-      .add("template", template)
-      .add("config", config)
-      .toString();
+    final StringBuilder sb = new StringBuilder("AdapterDetail{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", template='").append(template).append('\'');
+    sb.append(", program=").append(program);
+    sb.append(", config=").append(config);
+    sb.append(", schedule=").append(schedule);
+    sb.append(", instances=").append(instances);
+    sb.append('}');
+    return sb.toString();
   }
 }

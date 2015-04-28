@@ -50,6 +50,7 @@ import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -172,12 +173,12 @@ public class AdapterService extends AbstractIdleService {
    */
   public void deployTemplate(Id.Namespace namespace, String templateName)
     throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
+    // make sure we're up to date on template info
+    registerTemplates();
     ApplicationTemplateInfo templateInfo = appTemplateInfos.get().get(templateName);
     if (templateInfo == null) {
       throw new NotFoundException(Id.ApplicationTemplate.from(templateName));
     }
-    // make sure we're up to date on template info
-    registerTemplates();
     deployTemplate(namespace, templateInfo);
   }
 
@@ -472,7 +473,9 @@ public class AdapterService extends AbstractIdleService {
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(
                          ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
-                         ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec)
+                         ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec),
+                         // hack for scheduler weirdness in unit tests, remove once CDAP-2281 is done
+                         Constants.Scheduler.IGNORE_LAZY_START, String.valueOf(true)
                        ));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);

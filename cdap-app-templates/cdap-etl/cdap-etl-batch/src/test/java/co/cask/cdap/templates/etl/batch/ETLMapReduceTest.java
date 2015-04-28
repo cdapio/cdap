@@ -39,7 +39,9 @@ import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -54,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 public class ETLMapReduceTest extends TestBase {
   private static ApplicationManager templateManager;
 
-  @BeforeClass
-  public static void setupTests() {
+  @Before
+  public void setupTest() {
     // simulate template deployment
     templateManager = deployApplication(ETLBatchTemplate.class);
   }

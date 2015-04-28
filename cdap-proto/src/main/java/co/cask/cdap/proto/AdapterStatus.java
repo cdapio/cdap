@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.proto;
 
 /**
  * Possible status of an Adapter
