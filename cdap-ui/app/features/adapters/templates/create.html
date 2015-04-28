@@ -3,25 +3,25 @@
       <span class="fa fa-list-ul"></span>
       <span>All Adapters</span>
     </a>
-    <div class="panel panel-default" ng-init="ETLMetadataTabOpen=true">
-      <div class="panel-heading clearfix" ng-click="ETLMetadataTabOpen = !ETLMetadataTabOpen">
+    <div class="panel panel-default" ng-init="metadataTabOpen=true">
+      <div class="panel-heading clearfix" ng-click="metadataTabOpen = !metadataTabOpen">
         <span class="pull-left"> Metadata</span>
         <i class="fa fa-fw pull-right"
-          ng-class="{'fa-chevron-down': ETLMetadataTabOpen, 'fa-chevron-right': !ETLMetadataTabOpen}"></i>
+          ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></i>
       </div>
-      <div class="panel-body" ng-if="ETLMetadataTabOpen">
+      <div class="panel-body" ng-if="metadataTabOpen">
         <div class="col-lg-4 col-md-4 col-xs-12">
-          <label for="etlAdapaterType" class="control-label"> Choose an ETL Template</label>
+          <label for="adapaterType" class="control-label"> Choose an Adapter Template</label>
           <select
-            id="etlAdapaterType"
-            name="etlAdaptertype"
+            id="adapaterType"
+            name="adaptertype"
             class="form-control"
             ng-model="metadata.type"
-            ng-options="etltype.type as etltype.name for etltype in etlTypes" required></select>
+            ng-options="adapter.type as adapter.name for adapter in adapterTypes" required></select>
         </div>
         <div class="col-lg-4 col-md-4 col-xs-12">
-          <label for="etlAdapaterName" class="control-label">Name</label>
-          <ui-select ng-model="selectedEtlDraft"
+          <label class="control-label">Name</label>
+          <ui-select ng-model="selectedAdapterDraft"
              on-select="onDraftChange($item, $model)"
              theme="bootstrap"
              ng-disabled="disabled"
@@ -29,9 +29,9 @@
              tagging tagging-label="(custom 'new' label)"
              reset-search-input="false"
              title="Create New or Select draft">
-            <ui-select-match placeholder="Create New or Select draft" > {{selectedEtlDraft}}</ui-select-match>
-            <ui-select-choices repeat="etl in etlDraftList| filter: $select.search">
-              <div ng-bind-html="etl | highlight: $select.search"></div>
+            <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
+            <ui-select-choices repeat="adapter in adapterDraftList| filter: $select.search">
+              <div ng-bind-html="adapter | highlight: $select.search"></div>
             </ui-select-choices>
           </ui-select>
         </div>
@@ -41,18 +41,18 @@
     </div>
 </div>
 
-<div ng-if="onETLTypeSelected">
+<div ng-if="onAdapterTypeSelected">
 
 <!-- Hiding just for the demo.-->
 <div class="row" style="display:none">
 
-    <div class="panel panel-default" ng-init="ETLConfigTabOpen=false">
-      <div class="panel-heading clearfix" ng-click="ETLConfigTabOpen = !ETLConfigTabOpen">
+    <div class="panel panel-default" ng-init="configTabOpen=false">
+      <div class="panel-heading clearfix" ng-click="configTabOpen = !configTabOpen">
         <span class="pull-left">Configurations</span>
         <i class="fa fa-fw pull-right"
-          ng-class="{'fa-chevron-down': ETLConfigTabOpen, 'fa-chevron-right': !ETLConfigTabOpen}"></i>
+          ng-class="{'fa-chevron-down': configTabOpen, 'fa-chevron-right': !configTabOpen}"></i>
       </div>
-      <div class="panel-body" ng-if="ETLConfigTabOpen">
+      <div class="panel-body" ng-if="configTabOpen">
         <div class="well well-sm text-center">
           Properties TBD
         </div>
@@ -84,8 +84,8 @@
 
 </div>
 
-<div ng-if="!onETLTypeSelected">
+<div ng-if="!onAdapterTypeSelected">
   <div class="well well-lg text-center">
-    <h2> Please select a type of ETL you want to create to configure it!</h2>
+    <h2> Please select a type of Adapter you want to create to configure it!</h2>
   </div>
 </div>
