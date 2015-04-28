@@ -138,6 +138,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
+    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
+    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
     
     MapReduce mapReduce;
     try {
@@ -175,7 +178,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
         String adapterName = adapterSpec == null ? null : adapterSpec.getName();
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+        if (workflowName == null) {
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+        } else {
+          // Program started by Workflow
+          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
+                                        startTimeInSeconds, adapterName, twillRunId);
+        }
       }
 
       @Override

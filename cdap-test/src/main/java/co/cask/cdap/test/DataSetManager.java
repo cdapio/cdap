@@ -43,7 +43,8 @@ package co.cask.cdap.test;
 public interface DataSetManager<T> {
   /**
    * @return dataset instance.
-   * NOTE: the returned instance of dataset will see only changes made before it was acquired.
+   * NOTE: the returned instance of dataset will see only changes made before the manager was acquired, or before
+   * the latest call to {@link #flush()}.
    */
   T get();
 

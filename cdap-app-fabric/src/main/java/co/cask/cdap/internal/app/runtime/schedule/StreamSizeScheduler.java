@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -279,6 +279,12 @@ public class StreamSizeScheduler implements Scheduler {
     for (Schedule s : schedules) {
       schedule(program, programType, s, properties);
     }
+  }
+
+  @Override
+  public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException {
+    return ImmutableList.of();
   }
 
   @Override
@@ -856,7 +862,7 @@ public class StreamSizeScheduler implements Scheduler {
       MetricDataQuery metricDataQuery = new MetricDataQuery(
         0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
         Integer.MAX_VALUE, "system.collect.bytes",
-        MetricType.COUNTER,
+        AggregationFunction.SUM,
         ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
                         Constants.Metrics.Tag.STREAM, streamId.getId()),
         ImmutableList.<String>of()

@@ -229,7 +229,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), toMeasures(q.getMetrics()),
+    return new CubeQuery(null, q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetrics(),
                          q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
@@ -298,25 +298,5 @@ public class DefaultMetricStore implements MetricStore {
         return new DimensionValue(input.getName(), input.getValue());
       }
     });
-  }
-
-  private Map<String, MeasureType> toMeasures(Map<String, MetricType> metrics) {
-    Map<String, MeasureType> result = Maps.newHashMap();
-    for (Map.Entry<String, MetricType> entry : metrics.entrySet()) {
-      result.put(entry.getKey(), toMeasureType(entry.getValue()));
-    }
-    return result;
-  }
-
-  private MeasureType toMeasureType(MetricType type) {
-    switch (type) {
-      case COUNTER:
-        return MeasureType.COUNTER;
-      case GAUGE:
-        return MeasureType.GAUGE;
-      default:
-        // should never happen
-        throw new IllegalArgumentException("Unknown MetricType: " + type);
-    }
   }
 }

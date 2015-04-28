@@ -30,11 +30,14 @@ import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -550,5 +553,49 @@ public class AppMetadataStore extends MetadataStoreDataset {
       builder.add(name);
     }
     return builder.build();
+  }
+
+  public void recordWorkflowProgramStart(Id.Program program, String programRunId, String workflow,
+                                         String workflowRunId, String workflowNodeId, long startTimeInSeconds,
+                                         String adapter, String twillRunId) {
+    // Get the run record of the Workflow which started this program
+    MDSKey key = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(ProgramType.WORKFLOW.name())
+      .add(workflow)
+      .add(workflowRunId)
+      .build();
+
+    RunRecord record = get(key, RunRecord.class);
+    if (record == null) {
+      String msg = String.format("No meta found for associated Workflow %s run record %s, while recording run for the" +
+                                   " namespace %s app %s type %s program %s runid %s", workflow, workflowRunId,
+                                 program.getNamespaceId(), program.getApplicationId(), program.getType().name(),
+                                 program.getId(), programRunId);
+      LOG.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+
+    // Update the parent Workflow run record by adding node id and program run id in the properties
+    Map<String, String> properties = record.getProperties();
+    properties.put(workflowNodeId, programRunId);
+
+    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
+                             record.getAdapterName(), record.getTwillRunId(), properties));
+
+    // Record the program start
+    key = new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(program.getNamespaceId())
+      .add(program.getApplicationId())
+      .add(program.getType().name())
+      .add(program.getId())
+      .add(programRunId)
+      .build();
+
+    write(key, new RunRecord(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter, twillRunId,
+                             ImmutableMap.of("workflowrunid", workflowRunId)));
   }
 }

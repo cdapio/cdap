@@ -16,11 +16,11 @@
 
 package co.cask.cdap.app.mapreduce;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -162,7 +162,7 @@ public class MapReduceMetricsInfo {
   private long getAggregates(Map<String, String> tags, String metric) throws Exception {
     MetricDataQuery metricDataQuery =
       new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, prependSystem(metric),
-                          MetricType.COUNTER, tags, ImmutableList.<String>of());
+                          AggregationFunction.SUM, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     if (query.isEmpty()) {
       return 0;
@@ -177,7 +177,7 @@ public class MapReduceMetricsInfo {
   private Map<String, Long> queryGroupedAggregates(Map<String, String> tags, String metric) throws Exception {
     MetricDataQuery metricDataQuery =
       new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
-                          ImmutableMap.of(prependSystem(metric), MetricType.GAUGE),
+                          ImmutableMap.of(prependSystem(metric), AggregationFunction.LATEST),
                           tags, ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
 

@@ -16,10 +16,10 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -66,10 +66,10 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     return getTotalCounter(context, metricName);
   }
 
-  private static long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
-    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
-                                                context, new ArrayList<String>());
 
+  private static long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                context, new ArrayList<String>());
     try {
       Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
       if (result.isEmpty()) {

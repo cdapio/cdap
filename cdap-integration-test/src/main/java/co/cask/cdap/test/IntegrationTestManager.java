@@ -21,7 +21,9 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -29,8 +31,10 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -40,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -55,6 +60,7 @@ public class IntegrationTestManager implements TestManager {
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
+  private final AdapterClient adapterClient;
 
   public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
@@ -63,6 +69,7 @@ public class IntegrationTestManager implements TestManager {
     this.applicationClient = new ApplicationClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
+    this.adapterClient = new AdapterClient(clientConfig);
   }
 
   @Override
@@ -89,6 +96,25 @@ public class IntegrationTestManager implements TestManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
+                             Class<? extends ApplicationTemplate> templateClz,
+                             String... exportPackages) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
+                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
+    adapterClient.create(adapterId.getId(), config);
+    return new RemoteAdapterManager(adapterId, adapterClient);
   }
 
   @Override

@@ -18,6 +18,7 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
@@ -25,6 +26,7 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -53,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +67,9 @@ public class AppFabricClient {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+  private static final Type SCHEDULES_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
@@ -71,19 +77,27 @@ public class AppFabricClient {
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceAdmin namespaceAdmin;
+  private final AdapterHttpHandler adapterHttpHandler;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
-                         NamespaceAdmin namespaceAdmin, WorkflowHttpHandler workflowHttpHandler) {
+                         NamespaceAdmin namespaceAdmin,
+                         WorkflowHttpHandler workflowHttpHandler,
+                         AdapterHttpHandler adapterHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceAdmin = namespaceAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
+    this.adapterHttpHandler = adapterHttpHandler;
+  }
+
+  private String getNamespacePath(String namespaceId) {
+    return String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, namespaceId);
   }
 
   public void reset() throws Exception {
@@ -95,8 +109,8 @@ public class AppFabricClient {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
 
       responder = new MockResponder();
-      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
-                                       String.format("/v3/unrecoverable/namespaces/%s/datasets", namespace.getId()));
+      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, String.format(
+        "%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, namespace.getId()));
       namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
       verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
                      String.format("could not delete datasets in namespace '%s'", namespace.getId()));
@@ -114,8 +128,8 @@ public class AppFabricClient {
                            String flowId, ProgramType type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/start",
-                               namespaceId, appId, type.getCategoryName(), flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/start",
+                               getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
     if (argString != null) {
@@ -128,8 +142,8 @@ public class AppFabricClient {
 
   public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/stop",
-                               namespaceId, appId, type.getCategoryName(), flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/stop",
+                               getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               type.getCategoryName(), flowId, "stop");
@@ -138,17 +152,17 @@ public class AppFabricClient {
 
   public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/%s/%s/status", namespaceId, appId, type, flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
-    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
     return json.get("status");
   }
 
   public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/worker/%s/instances", namespaceId, appId, workerId);
+    String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
@@ -159,17 +173,17 @@ public class AppFabricClient {
 
   public Instances getWorkerInstances(String namespaceId, String appId, String workerId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/worker/%s/instances", namespaceId, appId, workerId);
+    String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.getWorkerInstances(request, responder, namespaceId, appId, workerId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get worker instances failed");
-    return responder.decodeResponseContent(new TypeToken<Instances>() { });
+    return responder.decodeResponseContent(Instances.class);
   }
 
   public void setServiceInstances(String namespaceId, String applicationId, String serviceName, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
-                               namespaceId, applicationId, serviceName);
+    String uri = String.format("%s/apps/%s/services/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
@@ -180,55 +194,55 @@ public class AppFabricClient {
 
   public ServiceInstances getServiceInstances(String namespaceId, String applicationId, String serviceName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/services/%s/instances",
-                               namespaceId, applicationId, serviceName);
+    String uri = String.format("%s/apps/%s/services/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get service instances failed");
-    return responder.decodeResponseContent(new TypeToken<ServiceInstances>() { });
+    return responder.decodeResponseContent(ServiceInstances.class);
   }
 
   public void setFlowletInstances(String namespaceId, String applicationId,
                                   String flowId, String flowletName, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
-                               namespaceId, applicationId, flowId, flowletName, instances);
+    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
+                               getNamespacePath(namespaceId), applicationId, flowId, flowletName, instances);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     programLifecycleHttpHandler.setFlowletInstances(request, responder, namespaceId,
-                                                    applicationId, flowId, flowletName);
+      applicationId, flowId, flowletName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
   public List<ScheduleSpecification> getSchedules(String namespaceId, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/workflows/%s/schedules", namespaceId, appId, wflowId);
+    String uri = String.format("%s/apps/%s/workflows/%s/schedules",
+                               getNamespacePath(namespaceId), appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     workflowHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
 
-    List<ScheduleSpecification> schedules = responder.decodeResponseContent(
-      new TypeToken<List<ScheduleSpecification>>() { }, GSON);
+    List<ScheduleSpecification> schedules = responder.decodeResponseContent(SCHEDULES_TYPE, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
   }
 
   public List<RunRecord> getHistory(String namespaceId, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/workflows/%s/runs?status=completed",
-                               namespaceId, appId, wflowId);
+    String uri = String.format("%s/apps/%s/workflows/%s/runs?status=completed",
+                               getNamespacePath(namespaceId), appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
                                                "workflows", wflowId, null, null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
-    return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
+    return responder.decodeResponseContent(RUN_RECORDS_TYPE);
   }
 
   public void suspend(String namespaceId, String appId, String scheduleName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/schedules/%s/suspend", namespaceId, appId, scheduleName);
+    String uri = String.format("%s/apps/%s/schedules/%s/suspend", getNamespacePath(namespaceId), appId, scheduleName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               "schedules", scheduleName, "suspend");
@@ -237,7 +251,7 @@ public class AppFabricClient {
 
   public void resume(String namespaceId, String appId, String schedName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/schedules/%s/resume", namespaceId, appId, schedName);
+    String uri = String.format("%s/apps/%s/schedules/%s/resume", getNamespacePath(namespaceId), appId, schedName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
                                               "schedules", schedName, "resume");
@@ -246,7 +260,7 @@ public class AppFabricClient {
 
   public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v3/namespaces/%s/apps/%s/schedules/%s/status", namespaceId, appId, schedId);
+    String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
     verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
@@ -254,7 +268,7 @@ public class AppFabricClient {
     if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
       return "NOT_FOUND";
     } else {
-      Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+      Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
       return json.get("status");
     }
   }
@@ -303,4 +317,54 @@ public class AppFabricClient {
     return deployedJar;
   }
 
+  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
+      String.format("%s/templates/%s", getNamespacePath(namespace.getId()), templateId.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.deployTemplate(request, responder, namespace.getId(), templateId.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to deploy template.");
+  }
+
+  public void createAdapter(Id.Adapter id, AdapterConfig config) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
+      String.format("%s/adapters/%s", getNamespacePath(id.getNamespaceId()), id.getId()));
+    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(config).getBytes(Charsets.UTF_8)));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.createAdapter(request, responder, id.getNamespaceId(), id.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to create adapter.");
+  }
+
+  public void startAdapter(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+      String.format("%s/adapters/%s/start", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "start");
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to start adapter.");
+  }
+
+  public void stopAdapter(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+      String.format("%s/adapters/%s/stop", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "stop");
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to stop adapter.");
+  }
+
+  public List<RunRecord> getAdapterRuns(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/adapters/%s/runs", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.getAdapterRuns(request, responder, id.getNamespaceId(), id.getId(), null, null, null, 100);
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get runs for adapter.");
+    return responder.decodeResponseContent(RUN_RECORDS_TYPE);
+  }
+
+  public RunRecord getAdapterRun(Id.Adapter adapterId, String runId) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/adapters/%s/runs/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId(), runId));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.getAdapterRun(request, responder, adapterId.getNamespaceId(), adapterId.getId(), runId);
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get run for adapter.");
+    return responder.decodeResponseContent(RunRecord.class);
+  }
 }
