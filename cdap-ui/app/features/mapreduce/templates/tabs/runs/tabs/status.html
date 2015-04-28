@@ -1,11 +1,11 @@
 <div class="mapreduce-components">
 
   <h3>Mappers</h3>
-  <p>{{ getCompletedPercentage(info.mapTasks) }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
+  <p>{{ mapProgress }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ getCompletedPercentage(info.mapTasks) }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ mapProgress }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">
@@ -44,11 +44,11 @@
   </div>
 
   <h3>Reducers</h3>
-  <p>{{ getCompletedPercentage(info.reduceTasks) }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
+  <p>{{ reduceProgress }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ getCompletedPercentage(info.reduceTasks) }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ reduceProgress }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">

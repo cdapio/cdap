@@ -95,17 +95,25 @@ public class MapReduceMetricsInfoTest {
     gauge(reduceTypeContext, MapReduceMetrics.METRIC_COMPLETION, measureTime, 52L);
 
     gauge(mapTask1Context, MapReduceMetrics.METRIC_TASK_COMPLETION, measureTime, 100L);
-    gauge(mapTask1Context, MapReduceMetrics.METRIC_INPUT_RECORDS, measureTime, 32L);
-    gauge(mapTask1Context, MapReduceMetrics.METRIC_OUTPUT_RECORDS, measureTime, 320L);
+    gauge(mapTask1Context, MapReduceMetrics.METRIC_TASK_INPUT_RECORDS, measureTime, 32L);
+    gauge(mapTask1Context, MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS, measureTime, 320L);
 
     gauge(mapTask2Context, MapReduceMetrics.METRIC_TASK_COMPLETION, measureTime, 12L);
-    gauge(mapTask2Context, MapReduceMetrics.METRIC_INPUT_RECORDS, measureTime, 6L);
-    gauge(mapTask2Context, MapReduceMetrics.METRIC_OUTPUT_RECORDS, measureTime, 60L);
+    gauge(mapTask2Context, MapReduceMetrics.METRIC_TASK_INPUT_RECORDS, measureTime, 6L);
+    gauge(mapTask2Context, MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS, measureTime, 60L);
 
+    // gauge job-level counters for mappers
+    gauge(mapTypeContext, MapReduceMetrics.METRIC_INPUT_RECORDS, measureTime, 38L);
+    gauge(mapTypeContext, MapReduceMetrics.METRIC_OUTPUT_RECORDS, measureTime, 380L);
 
     gauge(reduceTaskContext, MapReduceMetrics.METRIC_TASK_COMPLETION, measureTime, 76L);
-    gauge(reduceTaskContext, MapReduceMetrics.METRIC_INPUT_RECORDS, measureTime, 320L);
-    gauge(reduceTaskContext, MapReduceMetrics.METRIC_OUTPUT_RECORDS, measureTime, 1L);
+    gauge(reduceTaskContext, MapReduceMetrics.METRIC_TASK_INPUT_RECORDS, measureTime, 320L);
+    gauge(reduceTaskContext, MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS, measureTime, 1L);
+
+    // gauge job-level counters for reducers
+    gauge(reduceTypeContext, MapReduceMetrics.METRIC_INPUT_RECORDS, measureTime, 320L);
+    gauge(reduceTypeContext, MapReduceMetrics.METRIC_OUTPUT_RECORDS, measureTime, 1L);
+
 
 
     MapReduceMetricsInfo mapReduceMetricsInfo = injector.getInstance(MapReduceMetricsInfo.class);
