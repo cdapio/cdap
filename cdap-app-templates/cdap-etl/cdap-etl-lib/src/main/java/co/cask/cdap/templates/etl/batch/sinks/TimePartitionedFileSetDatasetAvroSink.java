@@ -19,6 +19,7 @@ package co.cask.cdap.templates.etl.batch.sinks;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -29,6 +30,7 @@ import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -49,13 +51,14 @@ import javax.annotation.Nullable;
 @Name("TPFSAvro")
 @Description("AVRO Sink with Time Partitioned File Dataset")
 public class TimePartitionedFileSetDatasetAvroSink extends
-  BatchSink<GenericRecord, AvroKey<GenericRecord>, NullWritable> {
+  BatchSink<StructuredRecord, AvroKey<GenericRecord>, NullWritable> {
 
   private static final String SCHEMA_DESC = "The schema of the record";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
     "have to be written";
   private static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset";
+  private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
 
   /**
    * Config for TimePartitionedFileSetDatasetAvroSink
@@ -97,20 +100,19 @@ public class TimePartitionedFileSetDatasetAvroSink extends
 
   @Override
   public void prepareJob(BatchSinkContext context) {
-    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
     Map<String, String> sinkArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(runtimeArguments.get(tpfsAvroSinkConfig.name), sinkArgs);
-    context.setOutput(runtimeArguments.get(tpfsAvroSinkConfig.name), sink);
-    Schema avroSchema = new Schema.Parser().parse(runtimeArguments.get(tpfsAvroSinkConfig.schema));
+    TimePartitionedFileSet sink = context.getDataset(tpfsAvroSinkConfig.name, sinkArgs);
+    context.setOutput(tpfsAvroSinkConfig.name, sink);
+    Schema avroSchema = new Schema.Parser().parse(tpfsAvroSinkConfig.schema);
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
   }
 
   @Override
-  public void transform(GenericRecord input,
+  public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<AvroKey<GenericRecord>, NullWritable>(
-      new AvroKey<GenericRecord>(input), NullWritable.get()));
+      new AvroKey<GenericRecord>(recordTransformer.transform(input)), NullWritable.get()));
   }
 }
