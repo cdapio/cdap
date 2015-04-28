@@ -138,11 +138,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
-    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
-    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
-    
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -171,7 +167,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                                           program.getJarLocation(), locationFactory,
                                                                           streamAdmin, txSystemClient, usageRegistry);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(program, runId, adapterSpec,
-                                                                       twillRunId, pluginInstantiator),
+                                                                       pluginInstantiator, arguments),
                                           Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
@@ -210,8 +206,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
    * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
-                                                        final AdapterDefinition adapterSpec, final String twillRunId,
-                                                        final PluginInstantiator pluginInstantiator) {
+                                                        final AdapterDefinition adapterSpec,
+                                                        final PluginInstantiator pluginInstantiator,
+                                                        Arguments arguments) {
+
+    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
+    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
+    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
+
     return new ServiceListenerAdapter() {
       @Override
       public void starting() {
