@@ -26,6 +26,7 @@
 source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
+CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
 
 function download_readme_file_and_test() {
   # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
@@ -59,15 +60,17 @@ function download_includes() {
   version
   local project_version=${PROJECT_SHORT_VERSION}
 
+# For clients, current release branch is 1.2.0
+  local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
+  local ingest_branch="release/cdap-${project_version}-compatible"
   if [ "x${GIT_BRANCH_TYPE}" == "xdevelop" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
-    local branch="develop"
-  else
-    local branch="release/cdap-${project_version}-compatible"
+    clients_branch="develop"
+    ingest_branch="develop"
   fi
 
 # cdap-clients
 # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
-  local clients_url="${github_url}/cdap-clients/${branch}"
+  local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
   download_readme_file_and_test ${includes_dir} ${clients_url} bf10a586e605be8191b3b554c425c3aa cdap-authentication-clients/java
   download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
@@ -76,7 +79,7 @@ function download_includes() {
   
 # cdap-ingest
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
-  local ingest_url="${github_url}/cdap-ingest/${branch}"
+  local ingest_url="${github_url}/cdap-ingest/${ingest_branch}"
 
   download_readme_file_and_test ${includes_dir} ${ingest_url} c9b6db1741afa823c362237488c2d8f0 cdap-flume
   download_readme_file_and_test ${includes_dir} ${ingest_url} f300df291b910f0bd416a5ea160fdbe1 cdap-stream-clients/java

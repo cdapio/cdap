@@ -26,7 +26,7 @@ import com.google.common.collect.Iterables;
 * Handles formatting of log event to send
 */
 public final class FormattedLogEvent {
-  private static final char SEPARATOR = '-';
+  private static final char SEPARATOR = '.';
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String log;

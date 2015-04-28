@@ -104,6 +104,7 @@ public abstract class MetricsSuiteTestBase {
   private static DatasetService datasetService;
 
   protected static MetricStore metricStore;
+  protected static LogReader logReader;
 
   private static Injector injector;
 
@@ -229,6 +230,8 @@ public abstract class MetricsSuiteTestBase {
 
     metrics = injector.getInstance(MetricsQueryService.class);
     metrics.startAndWait();
+
+    logReader = injector.getInstance(LogReader.class);
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

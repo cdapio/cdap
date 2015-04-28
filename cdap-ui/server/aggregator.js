@@ -1,18 +1,19 @@
 /*global require, module */
 
 var request = require('request'),
+    fs = require('fs'),
     log4js = require('log4js');
 
 var log = log4js.getLogger('default');
 
 /**
  * Default Poll Interval used by the backend.
- * We set the default poll interval to high, so 
+ * We set the default poll interval to high, so
  * if any of the frontend needs faster than this
  * time, then would have to pass in the 'interval'
  * in their request.
  */
-var POLL_INTERVAL = 10*1000; 
+var POLL_INTERVAL = 10*1000;
 
 /**
  * Aggregator
@@ -105,9 +106,9 @@ Aggregator.prototype.stopPollingAll = function() {
 }
 
 /**
- * Pushes the adapter configuration for templates and plugins to the 
+ * Pushes the adapter configuration for templates and plugins to the
  * FE. These configurations are UI specific and hences need to be supported
- * here. 
+ * here.
  */
 Aggregator.prototype.pushConfiguration = function(resource) {
   var templateid = resource.templateid;
@@ -116,16 +117,18 @@ Aggregator.prototype.pushConfiguration = function(resource) {
   var statusCode = 404;
   try {
     // Check if the configuration is present within the plugin for a template
-    config = require('../templates/' + templateid + '/' + pluginid + '.json');
+    var file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
+    config = JSON.parse(fs.readFileSync(file, 'utf8'));
     statusCode = 200;
   } catch(e1) {
    try {
      // Some times there might a plugin that is common across multiple templates
-     // in which case, this is stored within the common directory. So, if the 
+     // in which case, this is stored within the common directory. So, if the
      // template specific plugin check fails, then attempt to get it from common.
-     config = require('../templates/common/' + pluginid + '.json');  
+     var file = __dirname + '/../templates/common/' + pluginid + '.json';
+     config = JSON.parse(fs.readFileSync(file, 'utf8'));
      statusCode = 200;
-   } catch (e2) { 
+   } catch (e2) {
      log.debug("Unable to find template %s, plugin %s", templateid, pluginid);
    }
   }
@@ -183,10 +186,10 @@ function emitResponse (resource, error, response, body) {
   resource.timerId = undefined;
   resource.stop = undefined;
   resource.startTs = undefined;
-  
-  if(error) { 
+
+  if(error) {
     log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ',' 
+    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ','
        + resource.url + ') body : (' + error.toString() + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
@@ -196,7 +199,7 @@ function emitResponse (resource, error, response, body) {
 
   } else {
     log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' 
+    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ','
        + resource.url + ') body : (' + JSON.stringify(body) + ')');
     this.connection.write(JSON.stringify({
       resource: resource,

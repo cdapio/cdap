@@ -197,16 +197,37 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   }
 
   /**
+   * Returns the previous runtime when the scheduled program ran.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/previousruntime")
+  public void getPreviousScheduledRunTime(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+    getScheduledRuntime(responder, namespaceId, appId, workflowId, true);
+  }
+
+  /**
    * Returns next scheduled runtime of a workflow.
    */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
-  public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
+  public void getNextScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+    getScheduledRuntime(responder, namespaceId, appId, workflowId, false);
+  }
+
+  private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appId, String workflowId,
+                                   boolean previousRuntimeRequested) {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
-      List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
+      List<ScheduledRuntime> runtimes;
+      if (previousRuntimeRequested) {
+        runtimes = scheduler.previousScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
+      } else {
+        runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
+      }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);

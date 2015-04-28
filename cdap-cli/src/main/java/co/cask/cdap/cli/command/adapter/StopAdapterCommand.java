@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.adapter;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
@@ -29,14 +29,14 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 
 /**
- * Deletes an adapter.
+ * Stops an adapter.
  */
-public class DeleteAdapterCommand extends AbstractAuthCommand {
+public class StopAdapterCommand extends AbstractAuthCommand {
 
   private final AdapterClient adapterClient;
 
   @Inject
-  public DeleteAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
+  public StopAdapterCommand(AdapterClient adapterClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.adapterClient = adapterClient;
   }
@@ -45,17 +45,17 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
 
-    adapterClient.delete(adapterName);
-    output.printf("Successfully deleted adapter named '%s'\n", adapterName);
+    adapterClient.stop(adapterName);
+    output.printf("Successfully stopped adapter '%s'\n", adapterName);
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete adapter <%s>", ArgumentName.ADAPTER);
+    return String.format("stop adapter <%s>", ArgumentName.ADAPTER);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Stops %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
   }
 }

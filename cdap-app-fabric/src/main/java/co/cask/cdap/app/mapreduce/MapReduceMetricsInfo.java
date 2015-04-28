@@ -16,11 +16,11 @@
 
 package co.cask.cdap.app.mapreduce;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -39,7 +39,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.mapreduce.TaskCounter;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -164,9 +163,13 @@ public class MapReduceMetricsInfo {
 
   private void getAggregates(Map<String, String> tags, Map<String, String> metricsToCounters,
                              Map<String, Long> result) throws Exception {
+    Map<String, AggregationFunction> metrics = Maps.newHashMap();
+    // all map-reduce metrics are gauges
+    for (String metric : metricsToCounters.keySet()) {
+      metrics.put(metric, AggregationFunction.LATEST);
+    }
     MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metricsToCounters.keySet(),
-                          MetricType.COUNTER, tags, ImmutableList.<String>of());
+      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metrics, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     // initialize elements to zero
     for (String counterName : metricsToCounters.values()) {
@@ -182,9 +185,14 @@ public class MapReduceMetricsInfo {
   // queries MetricStore for one metric across all tasks of a certain TaskType, using GroupBy InstanceId
   private void queryGroupedAggregates(Map<String, String> tags, Table<String, String, Long> allTaskMetrics,
                                                    Map<String, String> metricsToCounters) throws Exception {
-    MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metricsToCounters.keySet(),
-                          MetricType.GAUGE, tags, ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
+    Map<String, AggregationFunction> metrics = Maps.newHashMap();
+    // all map-reduce metrics are gauges
+    for (String metric : metricsToCounters.keySet()) {
+      metrics.put(metric, AggregationFunction.LATEST);
+    }
+
+    MetricDataQuery metricDataQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metrics,
+                                                          tags, ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
 
     for (MetricTimeSeries metricTimeSeries : query) {

@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.metrics;
 
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
-
 import java.util.Collection;
 
 /**

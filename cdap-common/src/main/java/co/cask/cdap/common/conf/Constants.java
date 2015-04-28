@@ -145,6 +145,11 @@ public final class Constants {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
     public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
+    // TODO: CDAP-2281 remove once unit tests have a better way to handle schedules
+    // lazy start is set in some unit tests so that schedules are suspended right away when created.
+    // including this key with a true value as a schedule property will ignore the suspend behavior and schedules
+    // will be created normally.
+    public static final String IGNORE_LAZY_START = "scheduler.ignore.lazy.start";
   }
 
   /**

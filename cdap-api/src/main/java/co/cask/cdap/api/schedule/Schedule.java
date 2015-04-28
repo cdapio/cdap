@@ -66,7 +66,7 @@ public class Schedule {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -76,18 +76,27 @@ public class Schedule {
 
     Schedule schedule = (Schedule) o;
 
-    if (cronEntry.equals(schedule.cronEntry) && description.equals(schedule.description)
-      && name.equals(schedule.name)) {
-      return true;
+    if (cronEntry != null
+          ? !cronEntry.equals(schedule.cronEntry)
+          : schedule.cronEntry != null) {
+      return false;
     }
-    return false;
+    if (description != null ? !description.equals(schedule.description) :
+         schedule.description != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(schedule.name) : schedule.name != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + description.hashCode();
-    result = 31 * result + cronEntry.hashCode();
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (cronEntry != null ? cronEntry.hashCode() : 0);
     return result;
   }
 

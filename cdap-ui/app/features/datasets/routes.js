@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.datasets')
           controller: 'CdapDatasetsDetailController',
           ncyBreadcrumb: {
             parent: 'data.list',
-            label: '{{$state.params.datasetId | caskCapitalizeFilter}}'
+            label: '{{$state.params.datasetId}}'
           }
         })
           .state('datasets.detail.overview.tab', {

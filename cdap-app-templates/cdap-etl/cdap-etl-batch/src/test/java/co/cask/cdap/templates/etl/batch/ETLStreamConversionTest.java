@@ -21,12 +21,22 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.templates.etl.batch.sinks.BatchCubeSink;
+import co.cask.cdap.templates.etl.batch.sinks.DBSink;
+import co.cask.cdap.templates.etl.batch.sinks.KVTableSink;
 import co.cask.cdap.templates.etl.batch.sinks.TimePartitionedFileSetDatasetAvroSink;
+import co.cask.cdap.templates.etl.batch.sources.DBSource;
+import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
+import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
 import co.cask.cdap.templates.etl.common.Properties;
+import co.cask.cdap.templates.etl.transforms.IdentityTransform;
+import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
+import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -45,6 +55,7 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -74,6 +85,14 @@ public class ETLStreamConversionTest extends TestBase {
     Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("num", Schema.of(Schema.Type.INT)),
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
+
+  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
+  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlBatch");
+
+  @BeforeClass
+  public static void setupTemplate() throws IOException {
+    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class);
+  }
 
   // TODO: Remove ignore once end-to-end testing is figured out with plugins
   @Ignore
@@ -128,9 +147,11 @@ public class ETLStreamConversionTest extends TestBase {
       .put("format.setting.delimiter", "|")
       .build());
     ETLStage structuredRecordToGeneric = new ETLStage(StructuredRecordToGenericRecordTransform.class.getSimpleName(),
-      ImmutableMap.<String, String>of());
+                                                      ImmutableMap.<String, String>of());
     ETLStage sink = new ETLStage(TimePartitionedFileSetDatasetAvroSink.class.getSimpleName(),
-                                 ImmutableMap.of("schema", EVENT_SCHEMA.toString(), "name", fileSetName));
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 EVENT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
     List<ETLStage> transformList = Lists.newArrayList();
     transformList.add(structuredRecordToGeneric);
     return new ETLBatchConfig("0 0 1 1 *", source, sink, transformList);
