@@ -1,8 +1,11 @@
 <div class="row">
+  <div class="col-xs-12 text-right">
     <a ui-sref="adapters.list" class="btn btn-default">
       <span class="fa fa-list-ul"></span>
       <span>All Adapters</span>
     </a>
+  </div>
+  <div class="col-xs-12">
     <div class="panel panel-default" ng-init="metadataTabOpen=true">
       <div class="panel-heading clearfix" ng-click="metadataTabOpen = !metadataTabOpen">
         <span class="pull-left"> Metadata</span>
@@ -10,78 +13,80 @@
           ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></i>
       </div>
       <div class="panel-body" ng-if="metadataTabOpen">
-        <div class="col-lg-4 col-md-4 col-xs-12">
-          <label for="adapaterType" class="control-label"> Choose an Adapter Template</label>
-          <select
-            id="adapaterType"
-            name="adaptertype"
-            class="form-control"
-            ng-model="metadata.type"
-            ng-options="adapter.type as adapter.name for adapter in adapterTypes" required></select>
-        </div>
-        <div class="col-lg-4 col-md-4 col-xs-12">
-          <label class="control-label">Name</label>
-          <ui-select ng-model="selectedAdapterDraft"
-             on-select="onDraftChange($item, $model)"
-             theme="bootstrap"
-             ng-disabled="disabled"
-             tagging-tokens="ENTER|TAB"
-             tagging tagging-label="(custom 'new' label)"
-             reset-search-input="false"
-             title="Create New or Select draft">
-            <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
-            <ui-select-choices repeat="adapter in adapterDraftList| filter: $select.search">
-              <div ng-bind-html="adapter | highlight: $select.search"></div>
-            </ui-select-choices>
-          </ui-select>
-        </div>
-        <div class="col-lg-4">
+        <div class="row">
+          <div class="col-lg-4 col-md-4 col-xs-12">
+            <label for="adapaterType" class="control-label"> Choose an Adapter Template</label>
+            <select
+              id="adapaterType"
+              name="adaptertype"
+              class="form-control"
+              ng-model="metadata.type"
+              ng-options="adapter.type as adapter.name for adapter in adapterTypes" required></select>
+          </div>
+          <div class="col-lg-4 col-md-4 col-xs-12">
+            <label class="control-label">Name</label>
+            <ui-select ng-model="selectedAdapterDraft"
+               on-select="onDraftChange($item, $model)"
+               theme="bootstrap"
+               ng-disabled="disabled"
+               tagging-tokens="ENTER|TAB"
+               tagging tagging-label="(custom 'new' label)"
+               reset-search-input="false"
+               title="Create New or Select draft">
+              <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
+              <ui-select-choices repeat="adapter in adapterDraftList| filter: $select.search">
+                <div ng-bind-html="adapter | highlight: $select.search"></div>
+              </ui-select-choices>
+            </ui-select>
+          </div>
+          <div class="col-lg-4">
+          </div>
         </div>
       </div>
     </div>
+  </div>
 </div>
 
 <div ng-if="onAdapterTypeSelected">
 
-<!-- Hiding just for the demo.-->
-<div class="row" style="display:none">
-
-    <div class="panel panel-default" ng-init="configTabOpen=false">
-      <div class="panel-heading clearfix" ng-click="configTabOpen = !configTabOpen">
-        <span class="pull-left">Configurations</span>
-        <i class="fa fa-fw pull-right"
-          ng-class="{'fa-chevron-down': configTabOpen, 'fa-chevron-right': !configTabOpen}"></i>
-      </div>
-      <div class="panel-body" ng-if="configTabOpen">
-        <div class="well well-sm text-center">
-          Properties TBD
+  <!-- Hiding just for the demo.-->
+  <div class="row" style="display:none">
+      <div class="panel panel-default" ng-init="configTabOpen=false">
+        <div class="panel-heading clearfix" ng-click="configTabOpen = !configTabOpen">
+          <span class="pull-left">Configurations</span>
+          <i class="fa fa-fw pull-right"
+            ng-class="{'fa-chevron-down': configTabOpen, 'fa-chevron-right': !configTabOpen}"></i>
+        </div>
+        <div class="panel-body" ng-if="configTabOpen">
+          <div class="well well-sm text-center">
+            Properties TBD
+          </div>
         </div>
       </div>
-    </div>
+  </div>
 
-</div>
+</div> <!-- END NG-IF -->
 
 <div class="row">
+  <div class="col-xs-12">
+    <tabset type="tabs slanted-tabs">
 
-  <tabset type="tabs slanted-tabs">
-
-    <tab ng-repeat="tab in tabs" active="tab.active">
-      <tab-heading>
-        {{tab.title}}
-        <a href=""
-           ng-if="tab.isCloseable !== false"
-           ng-click="closeTab($index)"
-           disabled="disabled"
-        >
-          <i class="fa fa-times-circle"></i>
-        </a>
-      </tab-heading>
-      <div ng-init="transform = tab.transform; tabIndex = $index;"
-            ng-include="tab.partial"></div>
-    </tab>
-  </tabset>
-</div>
-
+      <tab ng-repeat="tab in tabs" active="tab.active">
+        <tab-heading>
+          {{tab.title}}
+          <a href=""
+             ng-if="tab.isCloseable !== false"
+             ng-click="closeTab($index)"
+             disabled="disabled"
+          >
+            <i class="fa fa-times"></i>
+          </a>
+        </tab-heading>
+        <div ng-init="transform = tab.transform; tabIndex = $index;"
+              ng-include="tab.partial"></div>
+      </tab>
+    </tabset>
+  </div>
 </div>
 
 <div ng-if="!onAdapterTypeSelected">
