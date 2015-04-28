@@ -56,7 +56,6 @@ angular.module(PKG.name + '.feature.adapters')
           angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
           });
-          debugger;
           this.scope.source.properties = obj;
         }.bind(this));
     }
