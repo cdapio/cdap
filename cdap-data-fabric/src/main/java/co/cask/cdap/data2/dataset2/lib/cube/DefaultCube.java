@@ -166,7 +166,8 @@ public class DefaultCube implements Cube {
       dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
     }
 
-    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), dimensionValues);
+    FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(),
+                                 query.getMeasurements().keySet(), dimensionValues);
 
     // 3) execute scan query
     FactTable table = resolutionToFactTable.get(query.getResolution());
@@ -303,16 +304,17 @@ public class DefaultCube implements Cube {
           result.put(seriesDimensions, next.getMeasureName(), Maps.<Long, Long>newHashMap());
         }
 
-        if (MeasureType.COUNTER == query.getMeasureType()) {
+        MeasureType type = query.getMeasurements().get(next.getMeasureName());
+        if (MeasureType.COUNTER == type) {
           Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
-        } else if (MeasureType.GAUGE == query.getMeasureType()) {
+        } else if (MeasureType.GAUGE == type) {
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
-          throw new RuntimeException("Unknown MeasureType: " + query.getMeasureType());
+          throw new RuntimeException("Unknown MeasureType: " + type);
         }
       }
       if (++count >= MAX_RECORDS_TO_SCAN) {
