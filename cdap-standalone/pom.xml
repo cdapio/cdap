@@ -362,8 +362,11 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
+                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
                       </includes>
+                      <excludes>
+                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
+                      </excludes>
                     </resource>
                   </resources>
                 </configuration>
@@ -380,8 +383,11 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
+                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
                       </includes>
+                      <excludes>
+                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
+                      </excludes>
                     </resource>
                   </resources>
                 </configuration>

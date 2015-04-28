@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -26,9 +27,13 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
+import co.cask.cdap.proto.AdapterStatus;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -51,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class AdapterClientTest extends ClientTestBase {
 
+  private static final Gson GSON = new Gson();
   private AdapterClient adapterClient;
 
   @BeforeClass
@@ -77,21 +83,34 @@ public class AdapterClientTest extends ClientTestBase {
     List<AdapterDetail> initialList = adapterClient.list();
     Assert.assertEquals(0, initialList.size());
 
-    String adapterName = "someAdapter";
-    AdapterConfig adapterConfig = new AdapterConfig("description", TemplateApp.NAME, null);
+    DummyWorkerTemplate.Config config = new DummyWorkerTemplate.Config(2);
+    String adapterName = "realtimeAdapter";
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyWorkerTemplate.NAME, GSON.toJsonTree(config));
 
     // Create Adapter
-    adapterClient.create("someAdapter", adapterConfig);
+    adapterClient.create(adapterName, adapterConfig);
 
     // Check that the created adapter is present
-    adapterClient.waitForExists("someAdapter", 30, TimeUnit.SECONDS);
-    Assert.assertTrue(adapterClient.exists("someAdapter"));
-    AdapterDetail someAdapter = adapterClient.get("someAdapter");
+    adapterClient.waitForExists(adapterName, 30, TimeUnit.SECONDS);
+    Assert.assertTrue(adapterClient.exists(adapterName));
+    AdapterDetail someAdapter = adapterClient.get(adapterName);
     Assert.assertNotNull(someAdapter);
 
     // list all adapters
     List<AdapterDetail> list = adapterClient.list();
     Assert.assertArrayEquals(new AdapterDetail[] {someAdapter}, list.toArray());
+
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
+    adapterClient.start(adapterName);
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STARTED, 30, TimeUnit.SECONDS);
+    adapterClient.stop(adapterName);
+    adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
+
+    List<RunRecord> runs = adapterClient.getRuns(adapterName, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 10);
+    Assert.assertEquals(1, runs.size());
+
+    String logs = adapterClient.getLogs(adapterName);
+    Assert.assertNotNull(logs);
 
     // Delete Adapter
     adapterClient.delete(adapterName);
@@ -110,7 +129,7 @@ public class AdapterClientTest extends ClientTestBase {
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, TemplateApp.class);
+    setupAdapter(adapterDir, DummyWorkerTemplate.class);
   }
 
   private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {
