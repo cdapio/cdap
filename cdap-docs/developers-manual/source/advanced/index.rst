@@ -25,14 +25,6 @@ will be of interest to developers who want a deeper dive into CDAP:
 - |best-practices|_ Suggestions when developing a CDAP application.
 
 
-.. |adapters| replace:: **Adapters:**
-.. _adapters: adapters.html
-
-- |adapters|_ Adapters connect a data source to a data sink.
-  CDAP currently provides a stream conversion Adapter that regularly reads data from a Stream and
-  writes it to a ``TimePartitionedFileSet``, allowing it to be queried through Hive and Impala.
-
-
 .. |atap| replace:: **Creating Application Templates:**
 .. _atap: atap.html
 
@@ -44,3 +36,13 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. _application-logback: application-logback.html
 
 - |application-logback|_ Adding a custom logback to a CDAP application.
+
+
+.. |adapters| replace:: **Adapters:**
+.. _adapters: adapters.html
+
+- |adapters|_ Adapters connect a data source to a data sink.
+  CDAP currently provides a stream conversion Adapter that regularly reads data from a Stream and
+  writes it to a ``TimePartitionedFileSet``, allowing it to be queried through Hive and Impala.
+
+
