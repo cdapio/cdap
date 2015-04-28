@@ -312,13 +312,11 @@ public class DefaultCube implements Cube {
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.MAX == function) {
           Long value = result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
-          value = value == null ? 0 : value;
-          value = value > timeValue.getValue() ? value : timeValue.getValue();
+          value = value != null && value > timeValue.getValue() ? value : timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.MIN == function) {
           Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
-          value = value == null ? 0 : value;
-          value = value < timeValue.getValue() ? value : timeValue.getValue();
+          value = value != null && value < timeValue.getValue() ? value : timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.LATEST == function) {
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
