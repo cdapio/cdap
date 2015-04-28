@@ -53,10 +53,6 @@ public class Source extends RealtimeSource<StructuredRecord> {
     @Description("Source Param")
     private String param;
 
-
-    public SourceConfig(String param) {
-      this.param = param;
-    }
   }
 
   
