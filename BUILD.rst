@@ -2,10 +2,10 @@
 Cask Data Application Platform - CDAP
 =====================================
 
-**Standalone and Distributed CDAP**
+Standalone and Distributed CDAP
+===============================
 
-Building CDAP Maven
-===================
+**Building CDAP with Maven**
 
 - Clean all modules::
 
@@ -88,8 +88,11 @@ Building CDAP Maven
 - Running from IDE (Intellij and Eclipse)::
 
     cd cdap-ui
-    bower install && npm install && gulp build (whenever there is change in UI packages)
-    Then, run standalone from IDE.
+    bower install && npm install && gulp build
+    
+  (Whenever there is a change in the UI packages)
+    
+  Then, run standalone from IDE.
     
 
 License and Trademarks
