@@ -55,6 +55,9 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
   private Schema schema;
   private final Config config;
 
+  /**
+   * Configuration for the script transform.
+   */
   public static class Config extends PluginConfig {
     @Description("Javascript defining how to transform one record into another. The script must implement a function " +
       "called 'transform', which must return a Json object that represents the transformed input. " +
@@ -195,7 +198,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
 
   private List<Object> decodeArray(List nativeArray, Schema componentSchema) {
     List<Object> arr = Lists.newArrayListWithCapacity(nativeArray.size());
-    for(Object arrObj : nativeArray) {
+    for (Object arrObj : nativeArray) {
       arr.add(decode(arrObj, componentSchema));
     }
     return arr;
