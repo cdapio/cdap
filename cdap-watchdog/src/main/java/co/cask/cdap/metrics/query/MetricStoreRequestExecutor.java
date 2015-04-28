@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import com.google.common.base.Function;
@@ -60,7 +61,7 @@ public class MetricStoreRequestExecutor {
       TimeSeriesResponse.Builder builder = TimeSeriesResponse.builder(query.getStartTs(),
                                                                       query.getEndTs());
       // Special metrics handle that requires computation from multiple time series.
-      if (query.getMetricNames().contains("system.process.busyness")) {
+      if (query.getMetrics().containsKey("system.process.busyness")) {
         computeProcessBusyness(query, builder);
       } else {
         PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(queryTimeSeries(query));
@@ -81,7 +82,7 @@ public class MetricStoreRequestExecutor {
 
     } else {
       // Special metrics handle that requires computation from multiple aggregates results.
-      if (query.getMetricNames().contains("system.process.events.pending")) {
+      if (query.getMetrics().containsKey("system.process.events.pending")) {
         resultObj = computeFlowletPending(query);
       } else {
         resultObj = getAggregates(query);
@@ -93,10 +94,12 @@ public class MetricStoreRequestExecutor {
 
   private void computeProcessBusyness(MetricDataQuery query, TimeSeriesResponse.Builder builder) throws Exception {
     PeekingIterator<TimeValue> tuplesReadItor =
-      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.tuples.read")));
+      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.tuples.read",
+                                                                    MetricType.COUNTER)));
 
     PeekingIterator<TimeValue> eventsProcessedItor =
-      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.events.processed")));
+      Iterators.peekingIterator(queryTimeSeries(new MetricDataQuery(query, "system.process.events.processed",
+                                                                    MetricType.COUNTER)));
 
     long resultTimeStamp = query.getStartTs();
 
@@ -125,7 +128,7 @@ public class MetricStoreRequestExecutor {
 
     // trick: get all queues and streams it was processing from using group by
     MetricDataQuery groupByQueueName =
-      new MetricDataQuery(new MetricDataQuery(query, "system.process.events.processed"),
+      new MetricDataQuery(new MetricDataQuery(query, "system.process.events.processed", MetricType.COUNTER),
                     ImmutableList.of(Constants.Metrics.Tag.FLOWLET_QUEUE));
     Map<String, Long> processedPerQueue = getTotalsWithSingleGroupByTag(groupByQueueName);
 
@@ -143,7 +146,8 @@ public class MetricStoreRequestExecutor {
         sliceByTags.remove(Constants.Metrics.Tag.FLOWLET);
         // we want to narrow down to specific queue we know our flowlet was consuming from
         sliceByTags.put(Constants.Metrics.Tag.FLOWLET_QUEUE, queueName.getSimpleName());
-        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags), "system.process.events.out"));
+        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags),
+                                                "system.process.events.out", MetricType.COUNTER));
 
       } else if (queueName.isStream()) {
         Map<String, String> sliceByTags = Maps.newHashMap();
@@ -152,7 +156,8 @@ public class MetricStoreRequestExecutor {
         // note: namespace + stream uniquely define the stream
         // we know that flow can consume from stream of the same namespace only at this point
         sliceByTags.put(Constants.Metrics.Tag.NAMESPACE, query.getSliceByTags().get(Constants.Metrics.Tag.NAMESPACE));
-        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags), "system.collect.events"));
+        written = getTotals(new MetricDataQuery(new MetricDataQuery(query, sliceByTags),
+                                                "system.collect.events", MetricType.COUNTER));
       } else {
         LOG.warn("Unknown queue type: " + name);
         continue;
