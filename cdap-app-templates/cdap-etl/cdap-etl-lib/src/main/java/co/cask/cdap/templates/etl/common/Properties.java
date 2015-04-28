@@ -67,6 +67,8 @@ public final class Properties {
   public static class KeyValueTable {
     public static final String KEY_FIELD = "key.field";
     public static final String VALUE_FIELD = "value.field";
+    public static final String DEFAULT_KEY_FIELD = "key";
+    public static final String DEFAULT_VALUE_FIELD = "value";
   }
 
   /**

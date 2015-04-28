@@ -36,15 +36,13 @@ import javax.annotation.Nullable;
  * CDAP Table Dataset Batch Sink.
  */
 @Plugin(type = "sink")
-@Name("KVTableSink")
+@Name("KVTable")
 @Description("CDAP Key Value Table Dataset Batch Sink")
 public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byte[]> {
 
   private static final String NAME_DESC = "Dataset Name";
-  private static final String KEY_FIELD_DESC = "The name of the field to use as the key. Its type must be bytes. " +
-    "Defaults to 'key'.";
-  private static final String VALUE_FIELD_DESC = "The name of the field to use as the value. Its type must be bytes. " +
-    "Defaults to 'value'.";
+  private static final String KEY_FIELD_DESC = "The name of the field to use as the key. Defaults to 'key'.";
+  private static final String VALUE_FIELD_DESC = "The name of the field to use as the value. Defaults to 'value'.";
 
   /**
    * Config class for KVTableSink
@@ -62,6 +60,10 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
     @Description(VALUE_FIELD_DESC)
     @Nullable
     private String valueField;
+
+    public KVTableConfig() {
+      this(null, Properties.KeyValueTable.DEFAULT_KEY_FIELD, Properties.KeyValueTable.DEFAULT_VALUE_FIELD);
+    }
 
     public KVTableConfig(String name, String keyField, String valueField) {
       this.name = name;

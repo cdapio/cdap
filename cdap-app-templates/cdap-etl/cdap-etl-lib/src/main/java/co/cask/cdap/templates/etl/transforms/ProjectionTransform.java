@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * Projection transform that allows dropping, renaming, and converting field types.
  */
 @Plugin(type = "transform")
-@Name("ProjectionTransform")
+@Name("Projection")
 @Description("Projection transform that lets you drop, rename, and cast fields to a different type.")
 public class ProjectionTransform extends TransformStage<StructuredRecord, StructuredRecord> {
   private static final String DROP_DESC = "Comma separated list of fields to drop. For example: " +

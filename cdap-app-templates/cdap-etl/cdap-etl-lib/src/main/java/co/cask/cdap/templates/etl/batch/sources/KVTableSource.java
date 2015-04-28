@@ -31,7 +31,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
  * CDAP Key Value Table Dataset Batch Source.
  */
 @Plugin(type = "source")
-@Name("KVTableSource")
+@Name("KVTable")
 @Description("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field and a 'value' field. " +
   "Both fields are of type bytes.")
 public class KVTableSource extends BatchReadableSource<byte[], byte[], StructuredRecord> {

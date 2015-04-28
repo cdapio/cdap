@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  * CDAP Table Dataset Batch Source.
  */
 @Plugin(type = "source")
-@Name("TableSource")
+@Name("Table")
 @Description("CDAP Table Dataset Batch Source")
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
   private RowRecordTransformer rowRecordTransformer;

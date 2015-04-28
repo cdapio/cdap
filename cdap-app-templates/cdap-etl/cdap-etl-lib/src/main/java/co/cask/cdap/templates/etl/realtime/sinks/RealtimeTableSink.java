@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  * Real-time sink for Table
  */
 @Plugin(type = "sink")
-@Name("RealtimeTableSink")
+@Name("RealtimeTable")
 @Description("Real Time Sink for CDAP Table dataset")
 public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
 

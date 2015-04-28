@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  * CDAP Table Dataset Batch Sink.
  */
 @Plugin(type = "sink")
-@Name("TableSink")
+@Name("Table")
 @Description("CDAP Table Dataset Batch Sink")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
   private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +

@@ -47,7 +47,7 @@ import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
  */
 // todo: add unit-test once CDAP-2156 is resolved
 @Plugin(type = "sink")
-@Name("BatchCubeSink")
+@Name("BatchCube")
 @Description("CDAP Cube Dataset Batch Sink")
 public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], CubeFact> {
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +

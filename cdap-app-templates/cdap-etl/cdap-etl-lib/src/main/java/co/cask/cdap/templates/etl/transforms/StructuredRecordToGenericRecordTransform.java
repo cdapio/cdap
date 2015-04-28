@@ -33,7 +33,7 @@ import java.util.Map;
  * Transform {@link StructuredRecord} to {@link GenericRecord}
  */
 @Plugin(type = "transform")
-@Name("StructuredRecordToGenericRecordTransform")
+@Name("StructuredRecordToGenericRecord")
 @Description("Transforms a StructuredRecord to Avro format")
 public class StructuredRecordToGenericRecordTransform extends TransformStage<StructuredRecord, GenericRecord> {
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();

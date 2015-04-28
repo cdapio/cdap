@@ -53,7 +53,7 @@ import java.util.Map;
  * mapping configuration is required, as per {@link StructuredRecordToCubeFact} documentation.
  */
 @Plugin(type = "sink")
-@Name("RealtimeCubeSink")
+@Name("RealtimeCube")
 @Description("CDAP Cube Dataset Realtime Sink")
 public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
