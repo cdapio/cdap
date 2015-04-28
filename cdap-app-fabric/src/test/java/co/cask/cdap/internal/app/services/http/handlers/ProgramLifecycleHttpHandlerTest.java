@@ -89,7 +89,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type LIST_OF_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
+  private static final Type LIST_OF_RUN_RECORD = new TypeToken<List<RunRecord>>() { }.getType();
 
   private static final String WORDCOUNT_APP_NAME = "WordCountApp";
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
@@ -1008,14 +1008,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     int trials = 0;
     while (trials++ < 5) {
       HttpResponse response = doGet(url);
-      List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                       LIST_OF_MAP_STRING_STRING_TYPE);
-      if (result.size() >= size) {
-        // For each one, we have 4 fields.
-        for (Map<String, String> m : result) {
-          int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
-          Assert.assertEquals(expectedFieldSize, m.size());
-          assertRunRecord(String.format("%s/%s", url.substring(0, url.indexOf("?")), m.get("runid")),
+      List<RunRecord> result = GSON.fromJson(EntityUtils.toString(response.getEntity()), LIST_OF_RUN_RECORD);
+      if (result != null && result.size() >= size) {
+        for (RunRecord m : result) {
+          assertRunRecord(String.format("%s/%s", url.substring(0, url.indexOf("?")), m.getPid()),
                           GSON.fromJson(GSON.toJson(m), RunRecord.class));
         }
         break;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,6 @@
   License for the specific language governing permissions and limitations under
   the License.
   -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -26,16 +25,40 @@
     <version>3.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-etl-api</artifactId>
-  <name>CDAP ETL App Template API</name>
-  <packaging>jar</packaging>
+  <artifactId>cdap-etl-archetypes</artifactId>
+  <packaging>pom</packaging>
+  <name>CDAP Application Archetypes</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
+  <modules>
+    <module>cdap-etl-realtime-source-archetype</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.10</version>
+          <executions>
+            <execution>
+              <id>rat-check</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>**/resources/**/*.txt</exclude>
+                  <exclude>**/README.md</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 
 </project>

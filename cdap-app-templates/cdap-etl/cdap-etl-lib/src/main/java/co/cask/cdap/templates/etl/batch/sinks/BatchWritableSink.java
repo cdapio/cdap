@@ -42,8 +42,8 @@ public class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_O
   public void configure(StageConfigurer configurer) {
     configurer.setName("BatchWritableSink");
     configurer.setDescription("Sink for CDAP Datasets that are batch writable." +
-                                " The name and type of dataset are required properties." +
-                                " Any properties required by the desired dataset type must also be provided.");
+      " The name and type of dataset are required properties." +
+      " Any properties required by the desired dataset type must also be provided.");
     configurer.addProperty(new Property(NAME, "Name of the dataset. If the dataset does not already exist," +
       " one will be created.", true));
     configurer.addProperty(new Property(TYPE, "The type of batch writable dataset to use.", true));

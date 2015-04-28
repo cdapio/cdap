@@ -60,16 +60,18 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
   protected final WorkflowToken token;
   private final Arguments userArguments;
   private final Arguments systemArguments;
+  private final String nodeId;
 
   public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
                                        ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                                       WorkflowToken token) {
+                                       WorkflowToken token, String nodeId) {
     this.userArguments = workflowProgramOptions.getUserArguments();
     this.workflowProgram = workflowProgram;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowSpec = workflowSpec;
     this.systemArguments = workflowProgramOptions.getArguments();
     this.token = token;
+    this.nodeId = nodeId;
   }
 
   @Override
@@ -90,7 +92,14 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     systemArgumentsMap.putAll(systemArguments.asMap());
     // Generate the new RunId here for the program running under Workflow
     systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, RunIds.generate().getId());
+
+    // Add Workflow specific system arguments to be passed to the underlying program
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowSpec.getName());
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID,
+                           systemArguments.getOption(ProgramOptionConstants.RUN_ID));
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
+
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
       new BasicArguments(ImmutableMap.copyOf(systemArgumentsMap)),
@@ -109,7 +118,6 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
       }
     };
   }
-
 
   /**
    * Adds a listener to the {@link ProgramController} and blocks for completion.
