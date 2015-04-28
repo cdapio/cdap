@@ -10,22 +10,6 @@ angular.module(PKG.name + '.feature.apps')
       });
     $scope.onFileSelected = myAppUploader.upload;
 
-
-    $scope.deleteApp = function(app) {
-      data.request({
-        _cdapNsPath: '/apps/' + app,
-        method: 'DELETE'
-      }, function(res) {
-        $alert({
-          type: 'success',
-          title: app,
-          content: 'App deleted successfully'
-        });
-        // FIXME: Have to avoid $timeout here. Un-necessary.
-        $timeout($state.reload);
-      });
-    };
-
     $scope.closeModal = function() {
       $modalInstance.close();
 

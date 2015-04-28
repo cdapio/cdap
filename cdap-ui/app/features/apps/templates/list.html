@@ -4,9 +4,9 @@
     <h2> All Applications </h2>
   </div>
   <div class="col-xs-6 h2 text-right">
-    <div class="btn-group" dropdown="">
+    <div class="btn-group" dropdown>
       <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
-        Action <span class="caret"></span>
+        Actions <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
@@ -14,15 +14,6 @@
             data-button-label="Add App"
             data-button-icon="fa-plus"
             data-dropdown="true"> </my-file-select>
-        </li>
-        <li role="presentation">
-          <a ng-click="caskConfirm()"
-             cask-confirmable="deleteApp(app.id)"
-             data-confirmable-content="Are you sure you want to delete this app?"
-             role="menuitem"
-            > Delete
-            <span class="fa fa-trash-o pull-right"></span>
-          </a>
         </li>
       </ul>
     </div>
