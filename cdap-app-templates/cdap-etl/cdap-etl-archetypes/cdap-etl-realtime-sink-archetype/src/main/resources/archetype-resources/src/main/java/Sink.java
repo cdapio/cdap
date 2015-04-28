@@ -46,7 +46,7 @@ public class Sink extends RealtimeSink<StructuredRecord> {
    */
   public static class SinkConfig extends PluginConfig {
 
-    @Description(NAME_DESC)
+    @Description("Sink name")
     private String name;
 
   }
