@@ -17,7 +17,7 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 /**
- * Function to be used when aggregating multiple
+ * Function to be used when aggregating multiple data points.
  */
 public enum AggregationFunction {
   SUM,
