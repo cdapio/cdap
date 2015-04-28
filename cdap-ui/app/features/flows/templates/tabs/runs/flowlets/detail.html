@@ -16,8 +16,8 @@
       <tr>
         <td><strong>Instances:</strong></td>
         <td class="text-center">{{ provisionedInstances }}</td>
-        <td><input class="form-control" type="number" ng-model="instance"></td>
-        <td><button class="btn btn-primary btn-sm" ng-click="setIntance()" ng-disabled="instance < 1">Set</button></td>
+        <td><input class="form-control" type="number" min="1" ng-model="instance"></td>
+        <td><button class="btn btn-primary btn-sm" ng-click="setInstance()" ng-disabled="instance === provisionedInstances">Set</button></td>
       </tr>
     </table>
   </div>
