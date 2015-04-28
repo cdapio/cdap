@@ -34,7 +34,6 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 
