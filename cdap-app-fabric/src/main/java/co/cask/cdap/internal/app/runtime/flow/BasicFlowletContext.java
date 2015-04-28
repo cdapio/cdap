@@ -77,6 +77,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.flowletSpec = flowletSpec;
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  flowletId, runId.getId(), instanceId));
+    // TODO - does this have to cache the metric collectors? Metrics framework itself has a cache [CDAP-2334]
     this.queueMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, MetricsCollector>() {

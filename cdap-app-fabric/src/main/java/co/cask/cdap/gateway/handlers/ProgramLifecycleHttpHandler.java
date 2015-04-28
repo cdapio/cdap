@@ -25,7 +25,6 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.mapreduce.MRJobClient;
 import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
-import co.cask.cdap.app.metrics.FlowMetrics;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -44,6 +43,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -970,7 +970,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        FlowMetrics.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
+        FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1097,7 +1097,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
       queueAdmin.dropAllInNamespace(namespaceId);
       // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
-      FlowMetrics.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
+      FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Error while deleting queues in namespace " + namespaceId, e);

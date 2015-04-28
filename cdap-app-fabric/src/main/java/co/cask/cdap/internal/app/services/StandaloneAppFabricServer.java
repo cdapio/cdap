@@ -18,13 +18,13 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.metrics.FlowMetrics;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.http.HttpHandler;
@@ -73,7 +73,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
     // before starting up, we need to delete the queue.pending metric for all queues of all flows. This is
     // because queues are in-memory and lost upon Standalone restart. This must happen before app-fabric
     // starts, that is, before any flows can get started.
-    FlowMetrics.deleteFlowPendingMetrics(metricStore, null, null, null);
+    FlowUtils.deleteFlowPendingMetrics(metricStore, null, null, null);
     super.startUp();
   }
 }

@@ -458,9 +458,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
             Constants.Metrics.Tag.PRODUCER, flowletContext.getFlowletId());
           final Iterable<MetricsCollector> consumerMetrics =
             Iterables.transform(consumerFlowlets, new Function<String, MetricsCollector>() {
-              @Nullable
               @Override
-              public MetricsCollector apply(@Nullable String consumer) {
+              public MetricsCollector apply(String consumer) {
                 return producerMetrics.childCollector(
                   Constants.Metrics.Tag.CONSUMER, consumer);
               }});
