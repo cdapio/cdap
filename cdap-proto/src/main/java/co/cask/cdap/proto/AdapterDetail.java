@@ -19,6 +19,8 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import com.google.gson.JsonElement;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents an adapter returned for /adapters/{adapter-id}.
  */
@@ -28,13 +30,23 @@ public class AdapterDetail {
   private final String template;
   private final ProgramId program;
   private final JsonElement config;
+
+  /**
+   * For batch adapters.
+   */
   private final ScheduleSpecification schedule;
 
+  /**
+   * For realtime adapters.
+   */
+  private final Integer instances;
+
   public AdapterDetail(String name, String description, String template, Id.Program program,
-                       JsonElement config, ScheduleSpecification schedule) {
+                       JsonElement config, ScheduleSpecification schedule, Integer instances) {
     this.name = name;
     this.description = description;
     this.template = template;
+    this.instances = instances;
     this.program = new ProgramId(program);
     this.config = config;
     this.schedule = schedule;
@@ -60,8 +72,14 @@ public class AdapterDetail {
     return config;
   }
 
+  @Nullable
   public ScheduleSpecification getSchedule() {
     return schedule;
+  }
+
+  @Nullable
+  public Integer getInstances() {
+    return instances;
   }
 
   @Override
@@ -94,7 +112,11 @@ public class AdapterDetail {
       return false;
     }
     if (template != null
-          ? !template.equals(that.template) : that.template != null) {
+      ? !template.equals(that.template) : that.template != null) {
+      return false;
+    }
+    if (instances != null
+      ? !instances.equals(that.instances) : that.instances != null) {
       return false;
     }
 
@@ -109,6 +131,7 @@ public class AdapterDetail {
     result = 31 * result + (program != null ? program.hashCode() : 0);
     result = 31 * result + (config != null ? config.hashCode() : 0);
     result = 31 * result + (schedule != null ? schedule.hashCode() : 0);
+    result = 31 * result + (instances != null ? instances.hashCode() : 0);
     return result;
   }
 
@@ -121,6 +144,7 @@ public class AdapterDetail {
     sb.append(", program=").append(program);
     sb.append(", config=").append(config);
     sb.append(", schedule=").append(schedule);
+    sb.append(", instances=").append(instances);
     sb.append('}');
     return sb.toString();
   }

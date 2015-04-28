@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -51,13 +52,20 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
     List<AdapterDetail> list = adapterClient.list();
 
     Table table = Table.builder()
-      .setHeader("name", "description", "template", "config", "schedule")
+      .setHeader("name", "description", "template", "config", "properties")
       .setRows(list, new RowMaker<AdapterDetail>() {
         @Override
         public List<?> makeRow(AdapterDetail object) {
+          List<String> properties = Lists.newArrayList();
+          if (object.getSchedule() != null) {
+            properties.add("schedule=" + GSON.toJson(object.getSchedule()));
+          }
+          if (object.getInstances() != null) {
+            properties.add("instances=" + object.getInstances());
+          }
           return Lists.newArrayList(object.getName(), object.getDescription(), object.getTemplate(),
                                     object.getConfig().toString(),
-                                    GSON.toJson(object.getSchedule()));
+                                    Joiner.on("\n").join(properties));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

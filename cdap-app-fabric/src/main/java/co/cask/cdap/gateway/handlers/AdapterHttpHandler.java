@@ -128,7 +128,8 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     List<AdapterDetail> adapterDetails = Lists.newArrayList();
     for (AdapterDefinition def : adapterDefinitions) {
       adapterDetails.add(new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
-                                           def.getProgram(), def.getConfig(), def.getScheduleSpecification()));
+                                           def.getProgram(), def.getConfig(), def.getScheduleSpecification(),
+                                           def.getInstances()));
     }
     responder.sendJson(HttpResponseStatus.OK, adapterDetails);
   }
@@ -144,7 +145,8 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       AdapterDefinition def = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
       AdapterDetail detail = new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
-                                               def.getProgram(), def.getConfig(), def.getScheduleSpecification());
+                                               def.getProgram(), def.getConfig(), def.getScheduleSpecification(),
+                                               def.getInstances());
       responder.sendJson(HttpResponseStatus.OK, detail);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
