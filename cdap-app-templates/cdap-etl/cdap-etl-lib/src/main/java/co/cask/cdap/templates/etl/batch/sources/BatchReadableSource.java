@@ -19,60 +19,46 @@ package co.cask.cdap.templates.etl.batch.sources;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
 
 /**
- * Source for CDAP BatchReadable Datasets. Users must provide dataset name and type plus any properties
- * that type may need. Should be used only by advanced users.
+ * An abstract source for CDAP BatchReadable Datasets. Extending classes must provide implementation for
+ * {@link BatchReadableSource#getType(ETLStage)} which should return the type of dataset used by the source
  *
  * @param <KEY_IN> the type of input key from the Batch job
  * @param <VAL_IN> the type of input value from the Batch job
  * @param <OUT> the type of output for the
  */
-public class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
-  protected static final String NAME = "name";
-  private static final String TYPE = "type";
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(getClass().getSimpleName());
-    configurer.setDescription(
-      "CDAP BatchReadable Batch Source for advanced users. The dataset name and type must be given as properties, " +
-        "along with any type specific properties that the dataset may need. If the dataset does not already exist, " +
-        "it will be created by the pipeline.");
-    configurer.addProperty(new Property(NAME, "Dataset Name", true));
-    configurer.addProperty(new Property(TYPE, "Dataset Type", true));
-  }
+public abstract class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    String name = stageConfig.getProperties().get(NAME);
+    String name = stageConfig.getProperties().get(Properties.BatchReadableWritable.NAME);
     Preconditions.checkArgument(name != null && !name.isEmpty(), "Dataset name must be given.");
     String type = getType(stageConfig);
     Preconditions.checkArgument(type != null && !type.isEmpty(), "Dataset type must be given.");
 
     Map<String, String> properties = Maps.newHashMap(stageConfig.getProperties());
-    properties.remove(NAME);
-    properties.remove(TYPE);
+    properties.remove(Properties.BatchReadableWritable.NAME);
+    properties.remove(Properties.BatchReadableWritable.TYPE);
     pipelineConfigurer.createDataset(name, type, DatasetProperties.builder().addAll(properties).build());
   }
 
-  // a separate method so that subclasses can override
-  protected String getType(ETLStage stageConfig) {
-    return stageConfig.getProperties().get(TYPE);
-  }
+  /**
+   * An abstract method which the subclass should override to provide their types dataset types
+   */
+  protected abstract String getType(ETLStage stageConfig);
 
   @Override
   public void prepareJob(BatchSourceContext context) {
     PluginProperties pluginProperties = context.getPluginProperties();
-    context.setInput(pluginProperties.getProperties().get(NAME));
+    context.setInput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
   }
 }
