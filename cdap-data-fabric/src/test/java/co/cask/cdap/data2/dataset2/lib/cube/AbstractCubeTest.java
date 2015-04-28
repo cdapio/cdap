@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -65,19 +66,19 @@ public abstract class AbstractCubeTest {
     writeInc(cube, "metric1",  3,  3,  "1",  "2",  "1");
     writeInc(cube, "metric1",  3,  5,  "1",  "2",  "3");
     writeInc(cube, "metric1",  3,  7,  "2",  "1",  "1");
-    writeInc(cube, "metric1",  4,  4,  "1", null,  "2");
-    writeInc(cube, "metric1",  5,  5, null, null,  "1");
-    writeInc(cube, "metric1",  6,  6,  "1", null, null);
+    writeInc(cube, "metric1", 4, 4, "1", null, "2");
+    writeInc(cube, "metric1", 5, 5, null, null, "1");
+    writeInc(cube, "metric1", 6, 6, "1", null, null);
     writeInc(cube, "metric1",  7,  3,  "1",  "1", null);
     // writing using BatchWritable APIs
     writeIncViaBatchWritable(cube, "metric1", 8, 2, null, "1", null);
     writeIncViaBatchWritable(cube, "metric1", 9, 1, null, null, null);
     // writing in batch
     cube.add(ImmutableList.of(
-      getFact("metric1", 10,  2,  "1",  "1",  "1",  "1"),
-      getFact("metric1", 11,  3,  "1",  "1",  "1", null),
-      getFact("metric1", 12,  4,  "2",  "1",  "1",  "1"),
-      getFact("metric1", 13,  5, null, null, null,  "1")
+      getFact("metric1", 10, 2, "1", "1", "1", "1"),
+      getFact("metric1", 11, 3, "1", "1", "1", null),
+      getFact("metric1", 12, 4, "2", "1", "1", "1"),
+      getFact("metric1", 13, 5, null, null, null, "1")
     ));
 
     writeInc(cube, "metric2", 1, 1, "1", "1", "1");
@@ -300,8 +301,18 @@ public abstract class AbstractCubeTest {
                                 Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
 
-    CubeQuery query = new CubeQuery(aggregation, startTs, endTs, resolution, Integer.MAX_VALUE,
-                                    measureName, aggFunction, dimValues, groupByDims, interpolator);
+    CubeQuery query = CubeQuery.builder()
+      .select()
+        .measurement(measureName, aggFunction)
+      .from(aggregation).resolution(resolution, TimeUnit.SECONDS)
+      .where()
+        .dimensions(dimValues)
+        .timeRange(startTs, endTs)
+      .groupBy()
+        .dimensions(groupByDims)
+      .limit(Integer.MAX_VALUE)
+      .interpolator(interpolator)
+      .build();
 
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
