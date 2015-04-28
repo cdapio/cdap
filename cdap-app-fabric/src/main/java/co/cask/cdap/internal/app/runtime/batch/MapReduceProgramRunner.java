@@ -47,6 +47,7 @@ import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -137,8 +138,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -147,25 +147,75 @@ public class MapReduceProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
-    final DynamicMapReduceContext context =
-      new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
-                                  logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                  txSystemClient, datasetFramework, adapterSpec,
-                                  createPluginInstantiator(adapterSpec, program.getClassLoader()));
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
+    try {
+      final DynamicMapReduceContext context =
+        new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
+                                    logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+                                    txSystemClient, datasetFramework, adapterSpec, pluginInstantiator);
 
 
-    Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
-                      new PropertyFieldSetter(context.getSpecification().getProperties()),
-                      new MetricsFieldSetter(context.getMetrics()),
-                      new DataSetFieldSetter(context));
+      Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
+                        new PropertyFieldSetter(context.getSpecification().getProperties()),
+                        new MetricsFieldSetter(context.getMetrics()),
+                        new DataSetFieldSetter(context));
 
-    // note: this sets logging context on the thread level
-    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+      // note: this sets logging context on the thread level
+      LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-    final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
-                                                                        program.getJarLocation(), locationFactory,
-                                                                        streamAdmin, txSystemClient, usageRegistry);
-    mapReduceRuntimeService.addListener(new ServiceListenerAdapter() {
+      final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
+                                                                          program.getJarLocation(), locationFactory,
+                                                                          streamAdmin, txSystemClient, usageRegistry);
+      mapReduceRuntimeService.addListener(createRuntimeServiceListener(program, runId, adapterSpec,
+                                                                       pluginInstantiator, arguments),
+                                          Threads.SAME_THREAD_EXECUTOR);
+
+      final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
+
+      LOG.info("Starting MapReduce Job: {}", context.toString());
+      // if security is not enabled, start the job as the user we're using to access hdfs with.
+      // if this is not done, the mapred job will be launched as the user that runs the program
+      // runner, which is probably the yarn user. This may cause permissions issues if the program
+      // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
+      // be running the job, but the data directory will be owned by cdap.
+      if (!UserGroupInformation.isSecurityEnabled()) {
+        String runAs = cConf.get(Constants.CFG_HDFS_USER);
+        try {
+          UserGroupInformation.createRemoteUser(runAs)
+            .doAs(new PrivilegedExceptionAction<ListenableFuture<Service.State>>() {
+              @Override
+              public ListenableFuture<Service.State> run() throws Exception {
+                return mapReduceRuntimeService.start();
+              }
+            });
+        } catch (Exception e) {
+          LOG.error("Exception running mapreduce job as user {}.", runAs, e);
+          throw Throwables.propagate(e);
+        }
+      } else {
+        mapReduceRuntimeService.start();
+      }
+      return controller;
+    } catch (Exception e) {
+      Closeables.closeQuietly(pluginInstantiator);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
+   */
+  private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
+                                                        final AdapterDefinition adapterSpec,
+                                                        final PluginInstantiator pluginInstantiator,
+                                                        Arguments arguments) {
+
+    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
+    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
+    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
+
+    return new ServiceListenerAdapter() {
       @Override
       public void starting() {
         //Get start time from RunId
@@ -175,11 +225,18 @@ public class MapReduceProgramRunner implements ProgramRunner {
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
         String adapterName = adapterSpec == null ? null : adapterSpec.getName();
-        store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+        if (workflowName == null) {
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+        } else {
+          // Program started by Workflow
+          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
+                                        startTimeInSeconds, adapterName, twillRunId);
+        }
       }
 
       @Override
       public void terminated(Service.State from) {
+        Closeables.closeQuietly(pluginInstantiator);
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -193,37 +250,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
+        Closeables.closeQuietly(pluginInstantiator);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
-
-    LOG.info("Starting MapReduce Job: {}", context.toString());
-    // if security is not enabled, start the job as the user we're using to access hdfs with.
-    // if this is not done, the mapred job will be launched as the user that runs the program
-    // runner, which is probably the yarn user. This may cause permissions issues if the program
-    // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
-    // be running the job, but the data directory will be owned by cdap.
-    if (!UserGroupInformation.isSecurityEnabled()) {
-      String runAs = cConf.get(Constants.CFG_HDFS_USER);
-      try {
-        UserGroupInformation.createRemoteUser(runAs)
-          .doAs(new PrivilegedExceptionAction<ListenableFuture<Service.State>>() {
-            @Override
-            public ListenableFuture<Service.State> run() throws Exception {
-              return mapReduceRuntimeService.start();
-            }
-          });
-      } catch (Exception e) {
-        LOG.error("Exception running mapreduce job as user {}.", runAs, e);
-        throw Throwables.propagate(e);
-      }
-    } else {
-      mapReduceRuntimeService.start();
-    }
-    return controller;
+    };
   }
 
   @Nullable

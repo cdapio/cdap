@@ -16,48 +16,26 @@
 
 package co.cask.cdap.templates.etl.transforms;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.TransformStage;
-import com.google.common.collect.Maps;
-import org.apache.avro.Schema;
+import co.cask.cdap.templates.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
-
-import java.util.Map;
 
 /**
  * Transform {@link StructuredRecord} to {@link GenericRecord}
  */
+@Plugin(type = "transform")
+@Name("StructuredRecordToGenericRecord")
+@Description("Transforms a StructuredRecord into an Avro GenericRecord")
 public class StructuredRecordToGenericRecordTransform extends TransformStage<StructuredRecord, GenericRecord> {
-  private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName(StructuredRecordToGenericRecordTransform.class.getSimpleName());
-    configurer.setDescription("Transforms a StructuredRecord to Avro format");
-  }
+  private final StructuredToAvroTransformer transformer = new StructuredToAvroTransformer();
 
   @Override
   public void transform(StructuredRecord structuredRecord, Emitter<GenericRecord> emitter) throws Exception {
-    co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
-
-    int hashCode = structuredRecordSchema.hashCode();
-    Schema avroSchema;
-
-    if (schemaCache.containsKey(hashCode)) {
-      avroSchema = schemaCache.get(hashCode);
-    } else {
-      avroSchema = new Schema.Parser().parse(structuredRecordSchema.toString());
-      schemaCache.put(hashCode, avroSchema);
-    }
-
-    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(avroSchema);
-    for (Schema.Field field : avroSchema.getFields()) {
-      String fieldName = field.name();
-      recordBuilder.set(fieldName, structuredRecord.get(fieldName));
-    }
-    emitter.emit(recordBuilder.build());
+    emitter.emit(transformer.transform(structuredRecord));
   }
 }

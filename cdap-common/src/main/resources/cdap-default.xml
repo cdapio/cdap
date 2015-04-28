@@ -646,6 +646,15 @@
         a server connection when retrieving job status and history.</description>
     </property>
 
+    <property>
+        <name>mapreduce.include.custom.format.classes</name>
+        <value>true</value>
+        <description>
+            Indicates to include custom input / output format classes in the job.jar or not. If set to true,
+            custom format classes will be added to the job.jar and available as part of the MR system classpath.
+        </description>
+    </property>
+
     <!-- scheduler related changes -->
     <property>
         <name>scheduler.max.thread.pool.size</name>

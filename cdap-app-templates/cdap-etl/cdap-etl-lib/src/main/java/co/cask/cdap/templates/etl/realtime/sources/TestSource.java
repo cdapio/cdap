@@ -16,13 +16,14 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import com.google.common.base.Charsets;
@@ -37,27 +38,23 @@ import javax.annotation.Nullable;
 /**
  * Realtime TestSource that emits {@link StructuredRecord} objects as needed for testing.
  */
+@Plugin(type = "source")
+@Name("Test")
+@Description("Source that can generate test data for Real-time Stream and Table Sinks.")
 public class TestSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
   private static final String COUNT = "count";
+  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types" +
+    " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
+    "'data' of type String with value 'Hello'";
   public static final String PROPERTY_TYPE = "type";
   public static final String STREAM_TYPE = "stream";
   public static final String TABLE_TYPE = "table";
 
-  private String type;
+  private final TestConfig config;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setDescription("Source that can generate test data for Real-time Stream and Table Sinks");
-    configurer.addProperty(new Property(PROPERTY_TYPE, "The type of data to be generated. Currently, only two types" +
-      " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
-      "'data' of type String with value 'Hello'", false));
-  }
-
-  @Override
-  public void initialize(RealtimeContext context) throws Exception {
-    super.initialize(context);
-    type = context.getPluginProperties().getProperties().get("type");
+  public TestSource(TestConfig config) {
+    this.config = config;
   }
 
   @Nullable
@@ -81,45 +78,45 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-    if (type == null) {
+    if (config.type == null) {
       writeDefaultRecords(writer);
-    } else if (STREAM_TYPE.equals(type)) {
+    } else if (STREAM_TYPE.equals(config.type)) {
       writeRecordsForStreamConsumption(writer);
-    } else if (TABLE_TYPE.equals(type)) {
+    } else if (TABLE_TYPE.equals(config.type)) {
       writeRecordsForTableConsumption(writer);
     }
     return currentState;
   }
 
   private void writeDefaultRecords(Emitter<StructuredRecord> writer) {
-    Schema.Field dataField = Schema.Field.of("data", Schema.of(Schema.Type.STRING));
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("defaultRecord", dataField));
-    recordBuilder.set("data", "Hello");
+    Schema.Field bodyField = Schema.Field.of("body", Schema.of(Schema.Type.STRING));
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("defaultRecord", bodyField));
+    recordBuilder.set("body", "Hello");
     writer.emit(recordBuilder.build());
   }
 
   private void writeRecordsForStreamConsumption(Emitter<StructuredRecord> writer) {
-    Schema.Field dataField = Schema.Field.of("data", Schema.of(Schema.Type.STRING));
+    Schema.Field bodyField = Schema.Field.of("body", Schema.of(Schema.Type.STRING));
     Schema.Field headersField = Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                         Schema.of(Schema.Type.STRING)));
     // emit only string
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("StringRecord", dataField));
-    recordBuilder.set("data", "Hello");
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("StringRecord", bodyField));
+    recordBuilder.set("body", "Hello");
     writer.emit(recordBuilder.build());
     // emit string + headers
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("StringHeadersRecord", dataField, headersField));
-    recordBuilder.set("data", "Hello");
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("StringHeadersRecord", bodyField, headersField));
+    recordBuilder.set("body", "Hello");
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
     writer.emit(recordBuilder.build());
     // byte array + headers
-    dataField = Schema.Field.of("data", Schema.of(Schema.Type.BYTES));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteArrayHeadersRecord", dataField, headersField));
-    recordBuilder.set("data", "Hello".getBytes(Charsets.UTF_8));
+    bodyField = Schema.Field.of("body", Schema.of(Schema.Type.BYTES));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteArrayHeadersRecord", bodyField, headersField));
+    recordBuilder.set("body", "Hello".getBytes(Charsets.UTF_8));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
     writer.emit(recordBuilder.build());
     // ByteBuffer + headers
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersRecord", dataField, headersField));
-    recordBuilder.set("data", ByteBuffer.wrap("Hello".getBytes(Charsets.UTF_8)));
+    recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersRecord", bodyField, headersField));
+    recordBuilder.set("body", ByteBuffer.wrap("Hello".getBytes(Charsets.UTF_8)));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
     writer.emit(recordBuilder.build());
   }
@@ -141,5 +138,14 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
       .set("binary", "Bob".getBytes(Charsets.UTF_8))
       .set("time", System.currentTimeMillis());
     writer.emit(recordBuilder.build());
+  }
+
+  /**
+   * {@link PluginConfig} class for {@link TestSource}
+   */
+  public static class TestConfig extends PluginConfig {
+    @Description(TYPE_DESCRIPTION)
+    @Nullable
+    String type;
   }
 }

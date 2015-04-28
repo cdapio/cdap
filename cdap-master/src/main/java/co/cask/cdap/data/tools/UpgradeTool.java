@@ -284,6 +284,11 @@ public class UpgradeTool {
       }
 
       @Override
+      public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+        return ImmutableList.of();
+      }
+
+      @Override
       public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }

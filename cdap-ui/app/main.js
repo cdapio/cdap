@@ -13,7 +13,7 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.etlapps',
+      PKG.name+'.feature.adapters',
       PKG.name+'.feature.explore'
     ]).name,
 
@@ -63,7 +63,8 @@ angular
 
       'ncy-angular-breadcrumb',
       'angularMoment',
-      'ui.select'
+      'ui.select',
+      'ui.ace'
 
     ]).name,
 
@@ -130,11 +131,11 @@ angular
         });
       }
 
-      // The user doesn't need to know that the backend node 
+      // The user doesn't need to know that the backend node
       // is unable to connect to CDAP. Error messages add no
-      // more value than the pop showing that the FE is waiting 
-      // for system to come back up. Most of the issues are with 
-      // connect, other than that pass everything else to user. 
+      // more value than the pop showing that the FE is waiting
+      // for system to come back up. Most of the issues are with
+      // connect, other than that pass everything else to user.
       if(data.warning && data.error.syscall !== 'connect') {
         myAlert({
           content: data.warning,

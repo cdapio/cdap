@@ -34,8 +34,9 @@ import com.google.common.base.Preconditions;
 final class SparkProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
   SparkProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                             Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token) {
-    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token);
+                             Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
+                             String nodeId) {
+    super(workflowProgram, workflowProgramOptions, programRunnerFactory, workflowSpec, token, nodeId);
   }
 
   /**

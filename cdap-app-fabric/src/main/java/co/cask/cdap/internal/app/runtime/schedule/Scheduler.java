@@ -78,6 +78,21 @@ public interface Scheduler {
     throws SchedulerException;
 
   /**
+   * Get the previous run time for the program. A program may contain one or more schedules
+   * the method returns the previous runtimes for all the schedules. This method only takes
+   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + be returned.
+   *
+   * @param program program to fetch the previous runtime.
+   * @param programType type of program.
+   * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
+   *         or if the program is not found
+   * @throws SchedulerException on unforeseen error.
+   */
+  public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+    throws SchedulerException;
+
+  /**
    * Get the next scheduled run time of the program. A program may contain one or more schedules
    * the method returns the next scheduled runtimes for all the schedules. This method only takes
    + into account {@link Schedule}s based on time. For schedules based on data, an empty list will

@@ -33,8 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
 
@@ -58,7 +56,6 @@ public final class FileSetDataset implements FileSet {
   private final List<Location> inputLocations;
   private final Location outputLocation;
 
-  private final ClassLoader classLoader;
   private final String inputFormatClassName;
   private final String outputFormatClassName;
 
@@ -69,13 +66,11 @@ public final class FileSetDataset implements FileSet {
    * @param spec the dataset specification
    * @param namespacedLocationFactory a factory for namespaced {@link Location}
    * @param runtimeArguments the runtime arguments
-   * @param classLoader the class loader to instantiate the input and output format class
    */
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
                         NamespacedLocationFactory namespacedLocationFactory,
-                        @Nonnull Map<String, String> runtimeArguments,
-                        @Nullable ClassLoader classLoader) throws IOException {
+                        @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
@@ -87,7 +82,6 @@ public final class FileSetDataset implements FileSet {
     this.baseLocation = namespaceHomeLocation.append(dataDir).append(basePath);
     this.properties = spec.getProperties();
     this.runtimeArguments = runtimeArguments;
-    this.classLoader = classLoader;
     this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
     this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
     this.outputLocation = determineOutputLocation();
@@ -134,27 +128,6 @@ public final class FileSetDataset implements FileSet {
     }
   }
 
-  private <T> Class<? extends T> getFormat(String className, Class<?> baseClass, ClassLoader classLoader) {
-    if (className == null) {
-      return null;
-    }
-    try {
-      Class<?> actualClass = classLoader == null
-        ? Class.forName(className)
-        : classLoader.loadClass(className);
-
-      if (baseClass.isAssignableFrom(actualClass)) {
-        @SuppressWarnings("unchecked")
-        Class<? extends T> returnClass = (Class<? extends T>) actualClass;
-        return returnClass;
-      } else {
-        throw new DataSetException("Class '" + className + "' does not extend " + baseClass.getName());
-      }
-    } catch (ClassNotFoundException e) {
-      throw new DataSetException(baseClass.getName() + " class '" + className + "' not found. ", e);
-    }
-  }
-
   @Override
   public Location getBaseLocation() {
     return baseLocation;
@@ -181,9 +154,8 @@ public final class FileSetDataset implements FileSet {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> Class<? extends T> getInputFormatClass() {
-    return (Class<? extends T>) getFormat(inputFormatClassName, InputFormat.class, classLoader);
+  public String getInputFormatClassName() {
+    return inputFormatClassName;
   }
 
   @Override
@@ -207,9 +179,8 @@ public final class FileSetDataset implements FileSet {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> Class<? extends T> getOutputFormatClass() {
-    return (Class<? extends T>) getFormat(outputFormatClassName, OutputFormat.class, classLoader);
+  public String getOutputFormatClassName() {
+    return outputFormatClassName;
   }
 
   @Override

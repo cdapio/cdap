@@ -52,13 +52,13 @@ import javax.annotation.Nullable;
       sourceFieldFormat: "HH:mm:ss"
     }
 
-    tags: [
+    dimensions: [
       {
-        name: "tag1",
+        name: "dim1",
         sourceField: "field1"
       },
       {
-        name: "tag2",
+        name: "dim2",
         value: "staticValue"
       }
     ],
@@ -83,7 +83,7 @@ import javax.annotation.Nullable;
   }
 </pre>
  *
- * In general, the value for a timestamp, tag or measurement fields can be retrieved from {@link StructuredRecord}
+ * In general, the value for a timestamp, dimension or measurement fields can be retrieved from {@link StructuredRecord}
  * field using 'srcField' property or set to a fixed value using 'value' property. If both are specified, then the one
  * in 'value' is used as the default when 'srcField' is not present in {@link StructuredRecord}.
  *
@@ -134,17 +134,17 @@ public class StructuredRecordToCubeFact {
 
   private static final class CubeFactBuilder {
     private final TimestampResolver timestampResolver;
-    private final Collection<TagValueResolver> tagResolvers;
+    private final Collection<DimensionValueResolver> dimensionResolvers;
     private final Collection<MeasurementResolver> measurementResolvers;
 
     public CubeFactBuilder(MappingConfig config) {
       this.timestampResolver = new TimestampResolver(config.timestamp);
-      if (config.tags == null) {
-        throw new IllegalArgumentException("Missing required 'tags' configuration: " + config);
+      if (config.dimensions == null) {
+        throw new IllegalArgumentException("Missing required 'dimensions' configuration: " + config);
       }
-      this.tagResolvers = Lists.newArrayList();
-      for (ValueMapping mapping : config.tags) {
-        tagResolvers.add(new TagValueResolver(mapping));
+      this.dimensionResolvers = Lists.newArrayList();
+      for (ValueMapping mapping : config.dimensions) {
+        dimensionResolvers.add(new DimensionValueResolver(mapping));
       }
       if (config.measurements == null) {
         throw new IllegalArgumentException("Missing required 'measurements' configuration: " + config);
@@ -158,10 +158,10 @@ public class StructuredRecordToCubeFact {
     public CubeFact build(StructuredRecord record) {
       // we divide by 1000 to get seconds - which is expected by Cube
       CubeFact fact = new CubeFact(timestampResolver.getTimestamp(record) / 1000);
-      for (TagValueResolver resolver : tagResolvers) {
+      for (DimensionValueResolver resolver : dimensionResolvers) {
         String value = resolver.getValue(record);
         if (value != null) {
-          fact.addTag(resolver.getName(), value);
+          fact.addDimensionValue(resolver.getName(), value);
         }
       }
       for (MeasurementResolver resolver : measurementResolvers) {
@@ -214,14 +214,14 @@ public class StructuredRecordToCubeFact {
     }
   }
 
-  private static class TagValueResolver {
+  private static class DimensionValueResolver {
     protected String name;
     protected String srcField;
     protected String value;
 
-    public TagValueResolver(ValueMapping valueMapping) {
+    public DimensionValueResolver(ValueMapping valueMapping) {
       if (valueMapping.name == null) {
-        throw new IllegalArgumentException("Required 'name' of a tag is missing in CubeFact mapping config: " +
+        throw new IllegalArgumentException("Required 'name' of a dimension is missing in CubeFact mapping config: " +
                                              valueMapping);
       }
       this.name = valueMapping.name;
@@ -229,7 +229,7 @@ public class StructuredRecordToCubeFact {
       if (valueMapping.sourceField != null) {
         this.srcField = valueMapping.sourceField;
       } else if (valueMapping.value == null) {
-        throw new IllegalArgumentException("Either 'value' or 'sourceField' must be specified for tag: " +
+        throw new IllegalArgumentException("Either 'value' or 'sourceField' must be specified for dimension: " +
                                              valueMapping);
       }
       this.value = valueMapping.value;
@@ -249,20 +249,20 @@ public class StructuredRecordToCubeFact {
         Schema recordSchema = record.getSchema();
         Schema.Field field = recordSchema.getField(srcField);
         Schema.Type type = validateAndGetType(field);
-        String tagValue;
+        String dimValue;
         switch (type) {
           case BYTES:
             if (val instanceof ByteBuffer) {
-              tagValue = Bytes.toString((ByteBuffer) val);
+              dimValue = Bytes.toString((ByteBuffer) val);
             } else {
-              tagValue = Bytes.toStringBinary((byte[]) val);
+              dimValue = Bytes.toStringBinary((byte[]) val);
             }
             break;
           default:
-            tagValue = val.toString();
+            dimValue = val.toString();
         }
 
-        return tagValue;
+        return dimValue;
       }
       // value is default if srcField is missing
       if (value != null) {
@@ -346,7 +346,7 @@ public class StructuredRecordToCubeFact {
   @SuppressWarnings("unused")
   static final class MappingConfig {
     ValueMapping timestamp;
-    ValueMapping[] tags;
+    ValueMapping[] dimensions;
     ValueMapping[] measurements;
 
     @Override
@@ -354,7 +354,7 @@ public class StructuredRecordToCubeFact {
       final StringBuilder sb = new StringBuilder();
       sb.append("MappingConfig");
       sb.append("{timestamp=").append(timestamp);
-      sb.append(", tags=").append(tags == null ? "null" : Arrays.asList(tags).toString());
+      sb.append(", dimensions=").append(dimensions == null ? "null" : Arrays.asList(dimensions).toString());
       sb.append(", measurements=").append(measurements == null ? "null" : Arrays.asList(measurements).toString());
       sb.append('}');
       return sb.toString();
