@@ -244,7 +244,7 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ ${CHECK_INCLUDES} == ${TRUE} ]; then
+  if [ "x${CHECK_INCLUDES}" == "x${TRUE}" ]; then
     echo "Downloading and checking includes."
     # Build includes
     BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
