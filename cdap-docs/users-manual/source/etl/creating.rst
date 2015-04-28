@@ -387,17 +387,18 @@ Examples
   outputs to the specified CDAP Stream"}]
 
 
-Creating and Deploying an Adapter
+Creating an Adapter
 =================================
 
-Follow these steps to create and deploy and Adapter:
+Follow these steps to create an Adapter:
 
 1. Using the API described above, determine which Application Template you would like to
-use, which Plugins from it you will use, and the required properties.
+   use, which Plugins from it you will use, and the required properties.
 
-#. Complete a JSON file following the format given above to describe your Adapter.
+#. Complete a configuration JSON file ("configfile") following the format given above to 
+   describe your Adapter.
 
-#. Deploy the Adapter to a running instance of CDAP using::
+#. Create the Adapter on a running instance of CDAP by using the JSON *configfile*::
 
     PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-name> -d "@/path/to/configfile"
 

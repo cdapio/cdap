@@ -11,7 +11,7 @@ Creating Application Templates
 Overview
 ========
 This section is intended for people writing custom Application Templates, Plugins and
-custom ETL Plugins. Users of these should refer to the Users’ Manual.
+custom ETL Plugins. Users of these should refer to the Users’ Manual. [link]
 
 
 
@@ -31,8 +31,8 @@ Transformations
 ---------------
 
 
-Creating Custom App-Templates
-=============================
+Creating Custom Application Templates
+=====================================
 
 ETL API
 -------
@@ -44,8 +44,8 @@ JSON format
 ...........
 
 
-Using Custom App-Templates
-==========================
+Using Custom Application Templates
+==================================
 
 Java
 ----
@@ -67,9 +67,6 @@ Creating Plugins
 
 Overview
 --------
-- Written in Java
-- Accessing existing Servers and Sinks
-
 Plugins are classes that are not included in an Application Template, but can be made
 available for their use during the creation and runtime of Adapters. Plugin classes are
 packaged as OSGI JARs and they are made available to the CDAP platform [link that talks
@@ -116,10 +113,11 @@ Adding a Plugin through a File
 ------------------------------
 
 If you want to add a plugin class (most likely present in a third-party JAR) through a
-file, you create a file with the same name as the plugin JAR. For example, if the JAR
-is named ``xyz-driver-v0.4.jar``, you create a JSON file with the same name,
-``xyz-driver-v0.4.json``. The content of the file is a JSON array, and each entry represents a Plugin
-that you want to expose to the CDAP platform for that Application Template.
+file, you create a file with the same name as the plugin JAR. For example, if the JAR is
+named ``xyz-driver-v0.4.jar``, you create a JSON file with the same name,
+``xyz-driver-v0.4.json``. The content of the file is a JSON array, and each entry
+represents a Plugin that you want to expose to the CDAP platform for that Application
+Template.
 
 For example, if you want to expose a class ``org.xyz.driver.MDriver``, which is of plugin
 type *Driver* and name *SimpleDriver*, the JSON file *(xyz-driver-v0.4.json)* should look
@@ -175,7 +173,194 @@ Example::
     }
   }
 
-TBD: How to create an OSGi bundle? 
+How to create an OSGi bundle 
+-----------------------------
+TBD
+
+Accessing existing Servers and Sinks
+------------------------------------
+TBD
+
+
+Creating Custom ETL Plugins
+===========================
+
+Overview
+--------
+
+CDAP ships with two built-in templates: **ETL Batch** and **ETL Realtime**. It also ships
+with a set of source, transform and sink **Plugins** that can be used to build ETL
+Adapters by just specifying the properties for each of plugin used in the ETL Adapter. A
+Source emits data of a certain type. A Transform receives it, transforms it, and emits it
+to the next stage. The next stage can be an additional Transform. (There can be zero or
+more Transforms in an ETL Adapter.) The last stage of the ETL Adapter is a Sink which
+receives data of a certain type and persists it. 
+
+But there might be circumstances where the provided set of plugins for ETL templates is
+not enough. ETL Templates expose a simple, intuitive and domain-specific API that you can
+use to build your own source, transform or sink. Once you build your own plugin, you can
+include the plugin in your CDAP installation [link to the plugin directory structure
+above].
+
+Data Interchange Format: Structured Records
+-------------------------------------------
+
+All the ETL plugins (source, transform, sink) either emit or expect to receive StructuredRecords
+[link to Javadoc]. A StructuredRecord has a schema and supports these field types: [TBD].
+
+If you are building a single ETL plugin (either source, sink, or transform) and you want
+to use it with the ETL plugins provided out-of-the-box, then your plugin must
+be able to work with a StructuredRecord. If you are developing source, sink,
+transform plugins on your own, you are free to adopt any data type for the plugins to
+receive, emit, etc. But validation of the data types (whether a specific plugin can
+receive data from the previous plugin in the ETL Adapter configuration that the user is
+trying to create) will be performed during the creation phase of ETL Adapters.
+
+Plugins
+-------
+
+- Transformations
+- Batch Sources
+- Batch Sinks
+- Realtime Sources
+- Realtime Sinks
+
+Transformations
+...............
+In ETL Templates, transformations are purely functional. They operate on only one data
+object at a time. You can implement a transform plugin by extending the TransformStage
+class. The only method that you need to implement is:
+
+- ``transform()``: The transform method is the logic that will be applied on each incoming
+  data object. An emitter can be used to pass the results to the subsequent stages (which
+  could be either another TransformStage or a Sink).
+
+Optional methods to override:
+
+- ``initialize()``: Used to perform any initialization step that might be required during the
+  runtime of the TransformStage. It is guaranteed that this method will be invoked before
+  the transform method.
+
+- ``destroy()`` : Used to perform any cleanup that might be required at the end of the
+  runtime of the TransformStage.
+
+Example::
+
+  @Plugin(type = "transform")
+  @Name("Identity")
+  @Description("Transformation Example that makes copies")
+  public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+    private final Config config;
+
+    public static final class Config extends PluginConfig {
+    
+      @Name(“count”)
+      @Description(“Field that indicates number of copies to make”)
+      private String fieldName; 
+    } 
+  
+    @Overide
+    public void initialize(StageContext context) {
+      super.initialize(context);
+    }
+  
+    @Override
+    public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
+      Integer copies = input.get(config.fieldName);
+      for (int i = 0; i < copies; i++) {
+        emitter.emit(input);
+      }
+      getContext().getMetrics().count(“copies”, copies);
+    }
+
+    @Override
+    public void destroy() {
+    
+    }
+  }
+
+
+The above is an example of a *DuplicateTransform* that emits copies of the incoming record
+based on the value in the record. The fieldname that corresponds to the copies is received
+as part of the Plugin configuration. The initialize and destroy methods are invoked at the
+beginning and at the end of the runtime of the transform. The transform method is invoked
+for each incoming input object.
+
+Note that Plugins can emit their own metrics using the ``StageContext``'s ``getMetrics``
+method. Logging through SLF4J is also supported. 
+
+Transform Plugins can be used in both ETL Realtime and ETL Batch templates. A Transform
+plugin needs to be copied into the ETL Realtime and ETL Batch dirs [link] to be used in
+whichever of those templates you are adding it to.
+
+
+Batch Sources
+.............
+In order to implement a Batch Source (to be used in the ETL Batch template), you can
+extend the BatchSource class. You need to define the types of the KEY and VALUE that the
+Batch Source will receive and also the type of object that the Batch Source will emit to
+the subsequent stage (which could be either a TransformStage or a BatchSink). After
+defining the types, only one method is required to be implemented:
+
+- ``prepareJob()``: Used to configure the Hadoop Job configuration (for example, set the ``InputFormatClass``)
+
+Optional methods to override:
+
+- configurePipeline() : Used to create any Streams or Datasets that might act as the source for the Batch Source
+
+- initialize() : Initialize the Batch Source runtime. Guaranteed to be executed before any call to the [plugin’s?] transform method.
+- transform() : This method will be called for every input key-value pair generated by the Batch Job. By default, the value is emitted to the subsequent stage.
+destroy() : ??
+
+Example:
+
+@Plugin(type = “source”)
+@Name(“MyBatchSource”)
+@Description(“Demo Source”)
+public class MyBatchSource extends BatchSource<LongWritable, String, String> {
+
+  @Override
+  public void prepareJob(BatchSourceContext context) {
+    Job job = context.getHadoopJob();
+    job.setInputFormatClass(...);
+    // Other Hadoop job configuration related to Input
+  }
+}
+
+
+
+Batch Sinks
+...........
+
+In order to implement a Batch Sink (to be used in ETL Batch template), you can extend the BatchSink class. Similar to BatchSource, you need to define the types of the KEY and VALUE that the BatchSink will write in the Batch job and also the type of object that it will accept from the previous stage (which could be either a TransformStage or a BatchSource). After defining the types, only one method is required to be implemented:
+
+prepareJob() : Used to configure the Hadoop Job configuration (for ex, set OutputFormatClass etc)
+
+Methods that can be overridden:
+
+configurePipeline(): Used to create any datasets that might act as the sink for the BatchSink
+initialize() : Initialize the Batch Sink runtime. Guaranteed to be executed before any call to the plugin’s transform method.
+transform() : This method will be called for every object that is emitted from the previous stage. The logic inside the method will transform the object to the key-value pair expected by the Batch Job. By default, the incoming object is set as the Key and the Value is set to null.
+destroy() : ??
+
+Example:
+
+@Plugin(type = “sink”)
+@Name(“MyBatchSink”)
+@Description(“Demo Sink”)
+public class MyBatchSource extends BatchSink<String, String, NullWritable> {
+
+  @Override
+  public void prepareJob(BatchSourceContext context) {
+    Job job = context.getHadoopJob();
+    job.setOutputFormatClass(...);
+    // OtherHadoop job configuration related to Output
+  }
+}
+
+
+
+
 
 
 
