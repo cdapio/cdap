@@ -19,9 +19,7 @@ package co.cask.cdap.spark.metrics;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -30,7 +28,6 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -47,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
-  public static final String METRICS_KEY = ".BlockManager.memory.remainingMem_MB";
+  public static final String METRICS_KEY = "system.driver.BlockManager.memory.remainingMem_MB";
 
   @Test
   public void testSparkMetrics() throws Exception {
@@ -66,15 +63,13 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       Constants.Metrics.Tag.APP, applicationId,
       Constants.Metrics.Tag.SPARK, sparkId);
 
-    return getTotalCounterByPrefix(context, metricName);
+    return getTotalCounter(context, metricName);
   }
 
-  private static long getTotalCounterByPrefix(Map<String, String> context, String metricNameSuffix) throws Exception {
-    // todo: allow group by metric name when querying Cube instead
-    String metricName = findMetricName(context, 0, 0, Integer.MAX_VALUE, metricNameSuffix);
+
+  private static long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 context, new ArrayList<String>());
-
     try {
       Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
       if (result.isEmpty()) {
@@ -93,28 +88,4 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       throw Throwables.propagate(e);
     }
   }
-
-  private static String findMetricName(Map<String, String> context, long startTs, long endTs,
-                                       int resolution, String metricNameSuffix) throws Exception {
-
-    List<TagValue> tagValues = Lists.newArrayList();
-    // note: we know the order is good
-    for (Map.Entry<String, String> tagValue : context.entrySet()) {
-      tagValues.add(new TagValue(tagValue.getKey(), tagValue.getValue()));
-    }
-
-    Collection<String> metricNames =
-      RuntimeStats.metricStore.findMetricNames(
-        new MetricSearchQuery(startTs, endTs, Integer.MAX_VALUE, tagValues));
-
-    String metricName = null;
-    for (String name : metricNames) {
-      if (name.endsWith(metricNameSuffix)) {
-        metricName = name;
-        break;
-      }
-    }
-    return metricName;
-  }
-
 }
