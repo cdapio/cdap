@@ -16,12 +16,12 @@
 
 package co.cask.cdap.spark.metrics;
 
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -70,12 +70,10 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   }
 
   private static long getTotalCounterByPrefix(Map<String, String> context, String metricNameSuffix) throws Exception {
-    MetricDataQuery query = getTotalCounterQuery(context);
-
     // todo: allow group by metric name when querying Cube instead
-    String metricName = findMetricName(context, query.getStartTs(), query.getEndTs(),
-                                       query.getResolution(), metricNameSuffix);
-    query = new MetricDataQuery(query, metricName);
+    String metricName = findMetricName(context, 0, 0, Integer.MAX_VALUE, metricNameSuffix);
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                context, new ArrayList<String>());
 
     try {
       Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
@@ -117,10 +115,6 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       }
     }
     return metricName;
-  }
-
-  private static MetricDataQuery getTotalCounterQuery(Map<String, String> context) {
-    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, MetricType.COUNTER, context, new ArrayList<String>());
   }
 
 }

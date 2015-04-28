@@ -562,8 +562,8 @@ public class MetricQueryParserTest {
   }
 
   private void assertMetricName(String expected, MetricDataQuery query) {
-    Assert.assertEquals(1, query.getMetricNames().size());
-    Assert.assertEquals(expected, query.getMetricNames().iterator().next());
+    Assert.assertEquals(1, query.getMetrics().size());
+    Assert.assertEquals(expected, query.getMetrics().keySet().iterator().next());
   }
 
   private static void verifyTags(Map<String, String> sliceByTags, String... context) {

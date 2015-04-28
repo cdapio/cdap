@@ -170,7 +170,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
   //TODO: Improve this once we have logic moved from ProgramLifecycleHttpHandler for stopping a program
   public void stopProgram(Id.Program programId, RunId runId) throws ExecutionException, InterruptedException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, runId);
-    runtimeInfo.getController().stop().get();
+    if (runtimeInfo != null) {
+      runtimeInfo.getController().stop().get();
+    }
   }
 
   /**

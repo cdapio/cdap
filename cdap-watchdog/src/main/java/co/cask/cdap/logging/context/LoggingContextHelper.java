@@ -48,11 +48,11 @@ public final class LoggingContextHelper {
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
     ImmutableMap.<String, String>builder()
       .put(FlowletLoggingContext.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
+      .put(WorkflowLoggingContext.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
       .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
       .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
       .put(UserServiceLoggingContext.TAG_USERSERVICE_ID, Constants.Metrics.Tag.HANDLER)
       .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
- // TODO Add Workflow logging context
     .build();
 
   private LoggingContextHelper() {}
@@ -95,6 +95,10 @@ public final class LoggingContextHelper {
                                        tags.get(FlowletLoggingContext.TAG_FLOWLET_ID),
                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
                                        tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
+    } else if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
+      return new WorkflowLoggingContext(namespaceId, applicationId,
+                                         tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
+                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
@@ -151,6 +155,8 @@ public final class LoggingContextHelper {
     switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
+      case WORKFLOW:
+        return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
       case MAPREDUCE:
         return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
       case SPARK:
@@ -211,6 +217,8 @@ public final class LoggingContextHelper {
     final String tagName;
     if (loggingContext instanceof FlowletLoggingContext) {
       tagName = FlowletLoggingContext.TAG_FLOW_ID;
+    } else if (loggingContext instanceof WorkflowLoggingContext) {
+      tagName = WorkflowLoggingContext.TAG_WORKFLOW_ID;
     } else if (loggingContext instanceof MapReduceLoggingContext) {
       tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;
     } else if (loggingContext instanceof SparkLoggingContext) {

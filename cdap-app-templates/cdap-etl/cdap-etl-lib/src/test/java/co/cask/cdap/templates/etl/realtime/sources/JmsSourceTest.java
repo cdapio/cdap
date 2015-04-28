@@ -16,9 +16,8 @@
 
 package co.cask.cdap.templates.etl.realtime.sources;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
@@ -30,7 +29,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +48,8 @@ import javax.naming.Context;
 /**
  * Unit test for JMS ETL realtime source
  */
-public class JmsMessageToStringSourceTest {
-  private static final Logger LOG = LoggerFactory.getLogger(JmsMessageToStringSourceTest.class);
+public class JmsSourceTest {
+  private static final Logger LOG = LoggerFactory.getLogger(JmsSourceTest.class);
 
   private final int sessionAckMode = Session.AUTO_ACKNOWLEDGE;
 
@@ -62,29 +60,7 @@ public class JmsMessageToStringSourceTest {
 
   @Before
   public void beforeTest() {
-    jmsSource = new JmsSource();
-
-    jmsSource.configure(new StageConfigurer() {
-      @Override
-      public void setName(String name) {
-        // no-op
-      }
-
-      @Override
-      public void setDescription(String description) {
-        // no-op
-      }
-
-      @Override
-      public void addProperties(Collection<Property> properties) {
-        // no-op
-      }
-
-      @Override
-      public void addProperty(Property property) {
-        // no-op
-      }
-    });
+    jmsSource = null;
   }
 
   @After
@@ -97,6 +73,8 @@ public class JmsMessageToStringSourceTest {
 
   @Test
   public void testSimpleQueueMessages() throws Exception {
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
+
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
@@ -128,6 +106,8 @@ public class JmsMessageToStringSourceTest {
 
   @Test
   public void testSimpleTopicMessages() throws Exception {
+    initializeJmsSource("dynamicTopics/CDAP.TOPIC", 50);
+
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
@@ -155,11 +135,12 @@ public class JmsMessageToStringSourceTest {
         }
       }
     }
-
   }
 
   @Test
   public void testJndiBasedJmsProvider() throws Exception {
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
+
     // Create ActiveMQ ConnectionFactory for the JNDI based JmsProvider
     final Map<String, String> contextEnv = new HashMap<String, String>();
     contextEnv.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
@@ -215,18 +196,23 @@ public class JmsMessageToStringSourceTest {
     SourceState sourceState = new SourceState();
     source.poll(emitter, sourceState);
 
-    for (String val : emitter.getCurrentValues()) {
-      Assert.assertEquals(originalMessage, val);
+    for (StructuredRecord val : emitter.getCurrentValues()) {
+      String message = val.get(JmsSource.MESSAGE);
+      Assert.assertEquals(originalMessage, message);
 
-      System.out.println("Getting JMS Message in emitter with value: " + val);
+      System.out.println("Getting JMS Message in emitter with value: " + val.get(JmsSource.MESSAGE));
     }
+  }
+
+  private void initializeJmsSource(String destination, int messageReceive) {
+    jmsSource = new JmsSource(new JmsSource.JmsPluginConfig(destination, messageReceive));
   }
 
   /**
    * Helper class to emit JMS message to next stage
    */
-  private static class MockEmitter implements Emitter<String> {
-    private List<String> currentValues = Lists.newLinkedList();
+  private static class MockEmitter implements Emitter<StructuredRecord> {
+    private List<StructuredRecord> currentValues = Lists.newLinkedList();
 
     /**
      * Emit objects to the next stage.
@@ -234,11 +220,11 @@ public class JmsMessageToStringSourceTest {
      * @param value data object.
      */
     @Override
-    public void emit(String value) {
+    public void emit(StructuredRecord value) {
       currentValues.add(value);
     }
 
-    List<String> getCurrentValues() {
+    List<StructuredRecord> getCurrentValues() {
       return currentValues;
     }
   }

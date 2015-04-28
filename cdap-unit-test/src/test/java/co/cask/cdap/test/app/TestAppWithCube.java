@@ -16,11 +16,12 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.test.ApplicationManager;
@@ -69,42 +70,43 @@ public class TestAppWithCube extends TestBase {
 
       // add couple facts
       add(url, ImmutableList.of(new CubeFact(tsInSec)
-                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addDimensionValue("user", "alex").addDimensionValue("action", "click")
                                   .addMeasurement("count", MeasureType.COUNTER, 1)));
 
       add(url, ImmutableList.of(new CubeFact(tsInSec)
-                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addDimensionValue("user", "alex").addDimensionValue("action", "click")
                                   .addMeasurement("count", MeasureType.COUNTER, 1),
                                 new CubeFact(tsInSec + 1)
-                                  .addTag("user", "alex").addTag("action", "back")
+                                  .addDimensionValue("user", "alex").addDimensionValue("action", "back")
                                   .addMeasurement("count", MeasureType.COUNTER, 1),
                                 new CubeFact(tsInSec + 2)
-                                  .addTag("user", "alex").addTag("action", "click")
+                                  .addDimensionValue("user", "alex").addDimensionValue("action", "click")
                                   .addMeasurement("count", MeasureType.COUNTER, 1)));
 
       // search for tags
-      Collection<TagValue> tags =
-        searchTag(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100, new ArrayList<TagValue>()));
+      Collection<DimensionValue> tags =
+        searchDimensionValue(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
+                                                       new ArrayList<DimensionValue>()));
       Assert.assertEquals(1, tags.size());
-      TagValue tv = tags.iterator().next();
-      Assert.assertEquals("user", tv.getTagName());
+      DimensionValue tv = tags.iterator().next();
+      Assert.assertEquals("user", tv.getName());
       Assert.assertEquals("alex", tv.getValue());
 
-      tags = searchTag(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
-                                                 ImmutableList.of(new TagValue("user", "alex"))));
+      tags = searchDimensionValue(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
+                                                            ImmutableList.of(new DimensionValue("user", "alex"))));
       Assert.assertEquals(2, tags.size());
-      Iterator<TagValue> iterator = tags.iterator();
+      Iterator<DimensionValue> iterator = tags.iterator();
       tv = iterator.next();
-      Assert.assertEquals("action", tv.getTagName());
+      Assert.assertEquals("action", tv.getName());
       Assert.assertEquals("back", tv.getValue());
       tv = iterator.next();
-      Assert.assertEquals("action", tv.getTagName());
+      Assert.assertEquals("action", tv.getName());
       Assert.assertEquals("click", tv.getValue());
 
       // search for measures
       Collection<String> measures =
         searchMeasure(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
-                                                ImmutableList.of(new TagValue("user", "alex"))));
+                                                ImmutableList.of(new DimensionValue("user", "alex"))));
       Assert.assertEquals(1, measures.size());
       String measure = measures.iterator().next();
       Assert.assertEquals("count", measure);
@@ -113,7 +115,7 @@ public class TestAppWithCube extends TestBase {
 
       // 1-sec resolution
       Collection<TimeSeries> data =
-        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", MeasureType.COUNTER,
+        query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 1, 100, "count", AggregationFunction.SUM,
                                  ImmutableMap.of("action", "click"), new ArrayList<String>()));
       Assert.assertEquals(1, data.size());
       TimeSeries series = data.iterator().next();
@@ -128,7 +130,7 @@ public class TestAppWithCube extends TestBase {
 
       // 60-sec resolution
       data = query(url, new CubeQuery(tsInSec - 60, tsInSec + 60, 60, 100, "count",
-                                      MeasureType.COUNTER,
+                                      AggregationFunction.SUM,
                                       ImmutableMap.of("action", "click"), new ArrayList<String>()));
       Assert.assertEquals(1, data.size());
       series = data.iterator().next();
@@ -151,12 +153,12 @@ public class TestAppWithCube extends TestBase {
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private Collection<TagValue> searchTag(URL serviceUrl, CubeExploreQuery query) throws IOException {
-    URL url = new URL(serviceUrl, "searchTag");
+  private Collection<DimensionValue> searchDimensionValue(URL serviceUrl, CubeExploreQuery query) throws IOException {
+    URL url = new URL(serviceUrl, "searchDimensionValue");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(query)).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<Collection<TagValue>>() { }.getType());
+    return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<Collection<DimensionValue>>() { }.getType());
   }
 
   private Collection<String> searchMeasure(URL serviceUrl, CubeExploreQuery query) throws IOException {

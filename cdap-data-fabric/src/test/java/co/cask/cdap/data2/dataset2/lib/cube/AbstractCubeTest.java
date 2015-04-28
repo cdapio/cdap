@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.cube;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
@@ -47,14 +48,14 @@ public abstract class AbstractCubeTest {
 
   @Test
   public void testBasics() throws Exception {
-    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("tag1", "tag2", "tag3"),
-                                              ImmutableList.of("tag1", "tag2"));
-    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("tag1", "tag2"),
-                                              ImmutableList.of("tag1"));
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                              ImmutableList.of("dim1", "dim2"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim2"),
+                                              ImmutableList.of("dim1"));
 
     int resolution = 1;
     Cube cube = getCube("myCube", new int[] {resolution},
-                        ImmutableMap.<String, Aggregation>of("agg1", agg1, "agg2", agg2));
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2));
 
     // write some data
     // NOTE: we mostly use different ts, as we are interested in checking incs not at persist, but rather at query time
@@ -84,68 +85,90 @@ public abstract class AbstractCubeTest {
     // todo: do some write instead of increments - test those as well
 
     // now let's query!
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), ImmutableList.of("tag2"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), ImmutableList.of("dim2"),
                      ImmutableList.of(
-                       new TimeSeries("metric1", tagValues("tag2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
-                       new TimeSeries("metric1", tagValues("tag2", "2"), timeValues(3, 8))));
+                       new TimeSeries("metric1", dimensionValues("dim2", "1"), timeValues(1, 2, 7, 3, 10, 2, 11, 3)),
+                       new TimeSeries("metric1", dimensionValues("dim2", "2"), timeValues(3, 8))));
 
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 2, 10, 2, 11, 3))));
 
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", new HashMap<String, String>(), ImmutableList.of("tag1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     new HashMap<String, String>(), ImmutableList.of("dim1"),
                      ImmutableList.of(
-                       new TimeSeries("metric1", tagValues("tag1", "1"),
+                       new TimeSeries("metric1", dimensionValues("dim1", "1"),
                                       timeValues(1, 2, 3, 8, 4, 4, 6, 6, 7, 3, 10, 2, 11, 3)),
-                       new TimeSeries("metric1", tagValues("tag1", "2"),
+                       new TimeSeries("metric1", dimensionValues("dim1", "2"),
                                       timeValues(3, 7, 12, 4))));
 
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag3", "3"), new ArrayList<String>(),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim3", "3"), new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(3, 5))));
 
 
     // test querying specific aggregations
-    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), new ArrayList<String>(),
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
                      ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
                                                      timeValues(1, 2, 3, 8, 7, 3, 10, 2, 11, 3))));
-    verifyCountQuery(cube, "agg2", 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1"), new ArrayList<String>(),
+    verifyCountQuery(cube, "agg2", 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
                      ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
                                                      timeValues(1, 2, 3, 8, 4, 4, 6, 6, 7, 3, 10, 2, 11, 3))));
 
+    // query with different agg functions
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.MAX,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(1, 2, 3, 5, 7, 3, 10, 2, 11, 3))));
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.MIN,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(1, 2, 3, 3, 7, 3, 10, 2, 11, 3))));
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(1, 2, 3, 5, 7, 3, 10, 2, 11, 3))));
 
-    // delete cube data for "metric1" for tag->1,tag2->1,tag3->1 for timestamp 1 - 8 and
+
+    // delete cube data for "metric1" for dim->1,dim2->1,dim3->1 for timestamp 1 - 8 and
     // check data for other timestamp is available
 
     CubeDeleteQuery query = new CubeDeleteQuery(0, 8, resolution,
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                                                 "metric1");
     cube.delete(query);
 
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      ImmutableList.<String>of(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(10, 2, 11, 3))));
 
-    // delete cube data for "metric1" for tag1->1 and tag2->1  and check by scanning tag1->1 and tag2->1 is empty,
+    // delete cube data for "metric1" for dim1->1 and dim2->1  and check by scanning dim1->1 and dim2->1 is empty,
 
-    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("tag1", "1", "tag2", "1"),
+    query = new CubeDeleteQuery(0, 15, resolution, ImmutableMap.of("dim1", "1", "dim2", "1"),
                                 "metric1");
     cube.delete(query);
 
-    verifyCountQuery(cube, 0, 15, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1"),
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1"),
                      ImmutableList.<String>of(), ImmutableList.<TimeSeries>of());
 
   }
 
   @Test
   public void testInterpolate() throws Exception {
-    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("tag1", "tag2", "tag3"),
-                                              ImmutableList.of("tag1", "tag2", "tag3"));
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                              ImmutableList.of("dim1", "dim2", "dim3"));
     int resolution = 1;
     Cube cube = getCube("myInterpolatedCube", new int[] {resolution},
-                        ImmutableMap.<String, Aggregation>of("agg1", agg1));
+                        ImmutableMap.of("agg1", agg1));
     // test step interpolation
     long startTs = 1;
     long endTs = 10;
@@ -156,15 +179,15 @@ public abstract class AbstractCubeTest {
       expectedTimeValues.add(new TimeValue(i, 5));
     }
     expectedTimeValues.add(new TimeValue(endTs, 3));
-    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
-                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
                      new Interpolators.Step());
 
     CubeDeleteQuery query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                                                 "metric1");
     cube.delete(query);
     //test small-slope linear interpolation
@@ -172,8 +195,8 @@ public abstract class AbstractCubeTest {
     endTs = 5;
     writeInc(cube, "metric1",  startTs,  5,  "1",  "1",  "1");
     writeInc(cube, "metric1",  endTs,  3,  "1",  "1",  "1");
-    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
-                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 5, 2, 5, 3, 4,
@@ -181,15 +204,15 @@ public abstract class AbstractCubeTest {
                      new Interpolators.Linear());
 
     query = new CubeDeleteQuery(startTs, endTs, resolution,
-                                ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+                                ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                                 "metric1");
     cube.delete(query);
 
     //test big-slope linear interpolation
     writeInc(cube, "metric1",  startTs,  100,  "1",  "1",  "1");
     writeInc(cube, "metric1",  endTs,  500,  "1",  "1",  "1");
-    verifyCountQuery(cube, startTs, endTs, resolution, "metric1",
-                     ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, startTs, endTs, resolution, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 100, 2, 200, 3, 300,
@@ -208,7 +231,8 @@ public abstract class AbstractCubeTest {
       expectedTimeValues.add(new TimeValue(i, 0));
     }
     expectedTimeValues.add(new TimeValue(limit + 1, 50));
-    verifyCountQuery(cube, 0, 21, resolution, "metric1", ImmutableMap.of("tag1", "1", "tag2", "1", "tag3", "1"),
+    verifyCountQuery(cube, 0, 21, resolution, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
                      new ArrayList<String>(),
                      ImmutableList.of(
                        new TimeSeries("metric1", new HashMap<String, String>(), expectedTimeValues)),
@@ -217,61 +241,67 @@ public abstract class AbstractCubeTest {
   }
 
 
-  private void writeInc(Cube cube, String measureName, long ts, long value, String... tags) throws Exception {
-    cube.add(getFact(measureName, ts, value, tags));
+  private void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
+    cube.add(getFact(measureName, ts, value, dims));
   }
 
   private void writeIncViaBatchWritable(Cube cube, String measureName, long ts,
-                                        long value, String... tags) throws Exception {
+                                        long value, String... dims) throws Exception {
     // null for key: it is ignored
-    cube.write(null, getFact(measureName, ts, value, tags));
+    cube.write(null, getFact(measureName, ts, value, dims));
   }
 
-  private CubeFact getFact(String measureName, long ts, long value, String... tags) {
-    return new CubeFact(ts).addTags(tagValuesByValues(tags)).addMeasurement(measureName, MeasureType.COUNTER, value);
+  private CubeFact getFact(String measureName, long ts, long value, String... dims) {
+    return new CubeFact(ts)
+      .addDimensionValues(dimValuesByValues(dims))
+      .addMeasurement(measureName, MeasureType.COUNTER, value);
   }
 
-  private Map<String, String> tagValuesByValues(String... tags) {
-    Map<String, String> tagValues = Maps.newHashMap();
-    for (int i = 0; i < tags.length; i++) {
-      if (tags[i] != null) {
-        // +1 to start with "tag1"
-        tagValues.put("tag" + (i + 1), tags[i]);
+  private Map<String, String> dimValuesByValues(String... dims) {
+    Map<String, String> dimValues = Maps.newHashMap();
+    for (int i = 0; i < dims.length; i++) {
+      if (dims[i] != null) {
+        // +1 to start with "dim1"
+        dimValues.put("dim" + (i + 1), dims[i]);
       }
     }
-    return tagValues;
+    return dimValues;
   }
 
   private void verifyCountQuery(Cube cube, String aggregation, long startTs, long endTs, int resolution,
-                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
+                                String measureName, AggregationFunction aggFunction,
+                                Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected) throws Exception {
 
-    verifyCountQuery(cube, aggregation, startTs, endTs, resolution,
-                     measureName, sliceByTagValues, groupByTags, expected, null);
-  }
-
-  private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution, String measureName,
-                                Map<String, String> sliceByTagValues, List<String> groupByTags,
-                                Collection<TimeSeries> expected) throws Exception {
-
-    verifyCountQuery(cube, null, startTs, endTs, resolution,
-                     measureName, sliceByTagValues, groupByTags, expected, null);
+    verifyCountQuery(cube, aggregation, startTs, endTs, resolution, measureName, aggFunction,
+                     dimValues, groupByDims, expected, null);
   }
 
   private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution,
-                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
+                                String measureName, AggregationFunction aggFunction,
+                                Map<String, String> dimValues, List<String> groupByDims,
+                                Collection<TimeSeries> expected) throws Exception {
+
+    verifyCountQuery(cube, null, startTs, endTs, resolution, measureName, aggFunction,
+                     dimValues, groupByDims, expected, null);
+  }
+
+  private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution,
+                                String measureName, AggregationFunction aggFunction,
+                                Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
 
-    verifyCountQuery(cube, null, startTs, endTs, resolution,
-                     measureName, sliceByTagValues, groupByTags, expected, interpolator);
+    verifyCountQuery(cube, null, startTs, endTs, resolution, measureName, aggFunction,
+                     dimValues, groupByDims, expected, interpolator);
   }
 
   private void verifyCountQuery(Cube cube, String aggregation, long startTs, long endTs, int resolution,
-                                String measureName, Map<String, String> sliceByTagValues, List<String> groupByTags,
+                                String measureName, AggregationFunction aggFunction,
+                                Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected, Interpolator interpolator) throws Exception {
 
     CubeQuery query = new CubeQuery(aggregation, startTs, endTs, resolution, Integer.MAX_VALUE,
-                                    measureName, MeasureType.COUNTER, sliceByTagValues, groupByTags, interpolator);
+                                    measureName, aggFunction, dimValues, groupByDims, interpolator);
 
     Collection<TimeSeries> result = cube.query(query);
     Assert.assertEquals(expected.size(), result.size());
@@ -286,11 +316,11 @@ public abstract class AbstractCubeTest {
     return timeValues;
   }
 
-  private Map<String, String> tagValues(String... tags) {
-    Map<String, String> tagValues = Maps.newTreeMap();
-    for (int i = 0; i < tags.length; i += 2) {
-      tagValues.put(tags[i], tags[i + 1]);
+  private Map<String, String> dimensionValues(String... dims) {
+    Map<String, String> dimValues = Maps.newTreeMap();
+    for (int i = 0; i < dims.length; i += 2) {
+      dimValues.put(dims[i], dims[i + 1]);
     }
-    return tagValues;
+    return dimValues;
   }
 }

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsContexts;
@@ -31,7 +31,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
@@ -202,7 +201,7 @@ public final class RuntimeStats {
   }
 
   private static MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
-    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, MetricType.COUNTER,
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                          context, new ArrayList<String>());
   }
 }

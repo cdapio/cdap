@@ -261,7 +261,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     } while (i < parts.length);
   }
 
-
   // can remove this test after context (query-param) based searching is removed
   @Test
   public void testSearchContext() throws Exception {
@@ -533,7 +532,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
 
   /**
-   * Helper class to construct json for QueryRequest for batch queries
+   * Helper class to construct json for MetricQueryRequest for batch queries
    */
   private class QueryRequestFormat {
     Map<String, String> tags;

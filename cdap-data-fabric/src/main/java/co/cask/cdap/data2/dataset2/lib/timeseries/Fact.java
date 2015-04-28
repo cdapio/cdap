@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
+import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TagValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
@@ -25,28 +25,28 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents measure in time with tags assigned to it
+ * Represents measure in time with dimension values assigned to it
  */
 public final class Fact {
   /** in seconds */
   private final long timestamp;
-  private final List<TagValue> tagValues;
+  private final List<DimensionValue> dimensionValues;
   private final Collection<Measurement> measurements;
 
-  public Fact(long timestamp, List<TagValue> tagValues, Collection<Measurement> measurements) {
+  public Fact(long timestamp, List<DimensionValue> dimensionValues, Collection<Measurement> measurements) {
     this.timestamp = timestamp;
-    this.tagValues = ImmutableList.copyOf(tagValues);
+    this.dimensionValues = ImmutableList.copyOf(dimensionValues);
     this.measurements = measurements;
   }
 
-  public Fact(long timestamp, List<TagValue> tagValues, Measurement measurement) {
+  public Fact(long timestamp, List<DimensionValue> dimensionValues, Measurement measurement) {
     this.timestamp = timestamp;
-    this.tagValues = ImmutableList.copyOf(tagValues);
+    this.dimensionValues = ImmutableList.copyOf(dimensionValues);
     this.measurements = ImmutableList.of(measurement);
   }
 
-  public List<TagValue> getTagValues() {
-    return Collections.unmodifiableList(tagValues);
+  public List<DimensionValue> getDimensionValues() {
+    return Collections.unmodifiableList(dimensionValues);
   }
 
   public Collection<Measurement> getMeasurements() {

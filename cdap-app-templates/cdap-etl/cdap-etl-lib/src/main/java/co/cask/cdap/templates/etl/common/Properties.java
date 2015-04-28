@@ -44,8 +44,8 @@ public final class Properties {
     public static final String FORMAT = "format";
     public static final String DELAY = "delay";
     public static final String DURATION = "duration";
-    public static final String DATA_FIELD = "data.field";
-    public static final String DEFAULT_DATA_FIELD = "data";
+    public static final String BODY_FIELD = "body.field";
+    public static final String DEFAULT_BODY_FIELD = "body";
     public static final String HEADERS_FIELD = "headers.field";
     public static final String DEFAULT_HEADERS_FIELD = "headers";
   }
