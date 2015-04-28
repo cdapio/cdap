@@ -14,15 +14,15 @@ abilities out-of-the-box to perform ETL (Extraction, Transformation and Loading)
 
 This is done by creating and operating an ETL Adapter. 
 
-ETL Adaptors are created from either of the two ETL Application Templates shipped with CDAP:
+ETL Adapters are created from either of the two ETL Application Templates shipped with CDAP:
 
 - ETL Batch
 - ETL Realtime
 
 Application Templates are built from Plugins. Application Templates are used to build CDAP
-Adaptors, of which one type is an ETL Adaptor.
+Adapters, of which one type is an ETL Adapter.
 
-(If you are interested in writing your own Adaptor, Application Template, Plugin, or
+(If you are interested in writing your own Adapter, Application Template, Plugin, or
 extending the existing ETL framework, please see these Developers’ Manual sections. [link])
 
 
@@ -36,17 +36,17 @@ extending the existing ETL framework, please see these Developers’ Manual sect
 .. _etl-plugins: etl/plugins.html
 
 - |etl-plugins|_ Data sources, data sinks, and transformations; included with CDAP,
-  available for use in ETL Adaptors.
+  available for use in ETL Adapters.
 
 
-.. |etl-creating| replace:: **Creating An ETL Adaptor:**
+.. |etl-creating| replace:: **Creating An ETL Adapter:**
 .. _etl-creating: etl/creating.html
 
-- |etl-creating|_ Covers creating an ETL Adaptor using the Plugins included with CDAP.
+- |etl-creating|_ Covers creating an ETL Adapter using the Plugins included with CDAP.
 
 
-.. |etl-operations| replace:: **Operating An ETL Adaptor:**
+.. |etl-operations| replace:: **Operating An ETL Adapter:**
 .. _etl-operations: etl/operations.html
 
-- |etl-operations|_ Covers using an ETL Adaptor created using the Plugins included with CDAP.
+- |etl-operations|_ Covers using an ETL Adapter created using the Plugins included with CDAP.
 

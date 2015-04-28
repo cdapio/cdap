@@ -5,38 +5,75 @@
 .. _users-etl-components:
 
 ==========================
-ETL Application Components
+ETL Plugins
 ==========================
 
 Introduction
 ============
 
-Sources
-=======
+Shipped with CDAP in the ETL Batch and ETL Realtime, the plugins listed below are 
+available for creating ETL Adapters.
 
 Batch
+=======
+
+Source
 -----
- 
-StreamSource
-............
-PartitionFileSource
-...................
 
-TableSource
-...........
+Stream
+......
 
-DBInputSource (MySQLBatchSource?)
-.................................
+Sets a CDAP Stream as the source of the Batch Adapter. 
+Users provide the stream name and the 
+duration of Stream data to read. 
 
-DatasetSource
+Properties expected: 
+
+- ``name``: Name of the Stream
+- ``duration``: Size of the time window to read with each run of pipeline
+
+Optional properties:
+
+- ``delay``: Delay for reading stream events
+- ``format``: Format of the stream
+- ``schema``: Schema for the body of stream events
+
+Table
+.....
+
+KVTable
+.......
+
+Database
+........
+
+BatchReadable
 .............
 
-KafkaSource  0.7/0.8
-....................
+Sink
+----
+
+Table
+.....
+
+KVTable (Key Value Table)
+.........................
+
+Database
+........
+
+TimePartitionedFileSetAvro
+..........................
+
+BatchWritable
+.............
 
 
 Realtime
---------
+========
+
+Source
+-----
 
 Kafka 0.7/0.8
 .............
@@ -47,56 +84,30 @@ Java Message Service (JMS)
 Twitter (Twitter4J library)
 ...........................
 
-Database (stream new records)
-.............................
+Sink
+----
 
-
-Sinks
-=====
-Batch
------
-PartitionFileSink
-.................
-
-TableSink
-.........
-
-DBSink
+Stream
 ......
 
-Realtime
---------
-StreamSink
-..........
-
-TableSink
-.........
-
-KeyValueTableSink (KVTableSink)
-...............................
+Table
+.....
 
 CubeSink
 ........
 
-Sink as Source for additional Applications/pipelines   
--------------------------------------------------------
 
 Transformations
 ===============
 
 Filters
 -------
-- in UI as "IdentityTransform"
 - Filter based on a criteria [tbd]
+- in CAP UI as "IdentityTransform"
 
 Projection
 ----------
-- in UI as "ProjectionTransform"
 - Dropping Columns
-- Renaming Columns
+- Renaming Columns (``rename``)
 - Converting Columns
-
-Custom Transforms
------------------
-- Uses Javascript?
-- Link to Dev Manual?
+- in CDAP UI as "ProjectionTransform"

@@ -13,7 +13,7 @@ What is ETL?
 ============
 ETL is **Extract**, **Transformation** and **Loading** of data, and is a common first-step
 in any data application. CDAP endeavors to make performing ETL possible out-of-box without
-writing code; instead, you just configure an ETL Adaptor and then operate it.
+writing code; instead, you just configure an ETL Adapter and then operate it.
 
 Typically, ETL is operated as a pipeline. Data comes from a Data Source, is (possibly) sent
 through a series of one or more Transformations, and then is persisted by a Data Sink.
@@ -26,21 +26,21 @@ This diagram outlines these steps:
    :align: center
 
 
-What’s an ETL Adaptor?
+What’s an ETL Adapter?
 ----------------------
 
-An ETL Adaptor is a CDAP Application that is used to create such an ETL pipeline. Only 
-one such pipeline can be created in each ETL Adaptor.
+An ETL Adapter is a CDAP Application that is used to create such an ETL pipeline. Only 
+one such pipeline can be created in each ETL Adapter.
 
-ETL Adaptors are created from either of the two ETL Application Templates shipped with CDAP:
+ETL Adapters are created from either of the two ETL Application Templates shipped with CDAP:
 
 - ETL Batch
 - ETL Realtime
 
 Application Templates are built from CDAP Plugins. Application Templates are used to build CDAP
-Adaptors, of which one type is an ETL Adaptor.
+Adapters, of which one type is an ETL Adapter.
 
-(If you are interested in writing your own Adaptor, Application Template, Plugin, or
+(If you are interested in writing your own Adapter, Application Template, Plugin, or
 extending the existing ETL framework, please see these Developers’ Manual sections. [link])
 
 
