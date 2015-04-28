@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.slf4j.Logger;
@@ -79,12 +80,14 @@ public class MRJobClient {
     }
 
     JobStatus thisJob = findJobForRunId(jobs, runId);
-    Counters counters = jobClient.getJob(thisJob.getJobID()).getCounters();
+
+    RunningJob runningJob = jobClient.getJob(thisJob.getJobID());
+    Counters counters = runningJob.getCounters();
 
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());
     TaskReport[] reduceTaskReports = jobClient.getReduceTaskReports(thisJob.getJobID());
 
-    return new MRJobInfo(thisJob.getMapProgress(), thisJob.getReduceProgress(),
+    return new MRJobInfo(runningJob.mapProgress(), runningJob.reduceProgress(),
                          groupToMap(counters.getGroup(TaskCounter.class.getName())),
                          toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports), true);
   }
