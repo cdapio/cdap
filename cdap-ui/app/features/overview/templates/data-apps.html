@@ -26,15 +26,15 @@
       </div>
 
       <ul class="list-group" >
-        <li class="list-group-item" ng-repeat="data in dataList | orderBy:'name' | limitTo: 5 track by $index ">
-          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})">
+        <li class="list-group-item" ng-repeat="data in dataList | orderBy:MyOrderings.dataOrdering | limitTo: 5 track by $index ">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
               <span> Stream </span>
             </div>
           </a>
-          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})">
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
@@ -98,8 +98,8 @@
       </div>
 
       <ul class="list-group">
-        <li class="list-group-item" ng-repeat="app in apps | orderBy:'name' | limitTo:5">
-          <a ui-sref="apps.detail.overview({appId: app.id})">
+        <li class="list-group-item" ng-repeat="app in apps | orderBy:MyOrderings.appOrdering | limitTo:5">
+          <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
