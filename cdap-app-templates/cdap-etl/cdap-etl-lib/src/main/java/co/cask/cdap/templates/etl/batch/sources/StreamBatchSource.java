@@ -98,6 +98,18 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+    pipelineConfigurer.addStream(new Stream(streamBatchConfig.name));
+  }
+
+  @Override
+  public void prepareJob(BatchSourceContext context) {
+    long duration = ETLUtils.parseDuration(streamBatchConfig.duration);
+    long delay = Strings.isNullOrEmpty(streamBatchConfig.delay) ? 0 : ETLUtils.parseDuration(streamBatchConfig.delay);
+    long endTime = context.getLogicalStartTime() - delay;
+    long startTime = endTime - duration;
+
+    LOG.info("Setting input to Stream : {}", streamBatchConfig.name);
+
     if (!Strings.isNullOrEmpty(streamBatchConfig.format)) {
       // try to parse the schema if there is one
       Schema schema;
@@ -119,17 +131,6 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     } else {
       this.formatSpec = null;
     }
-    pipelineConfigurer.addStream(new Stream(streamBatchConfig.name));
-  }
-
-  @Override
-  public void prepareJob(BatchSourceContext context) {
-    long duration = ETLUtils.parseDuration(streamBatchConfig.duration);
-    long delay = Strings.isNullOrEmpty(streamBatchConfig.delay) ? 0 : ETLUtils.parseDuration(streamBatchConfig.delay);
-    long endTime = context.getLogicalStartTime() - delay;
-    long startTime = endTime - duration;
-
-    LOG.info("Setting input to Stream : {}", streamBatchConfig.name);
 
     StreamBatchReadable stream;
     if (formatSpec == null) {
@@ -143,7 +144,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   @Override
   public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     // if not format spec was given, the value is a StreamEvent
-    if (formatSpec == null) {
+    if (streamBatchConfig.format == null) {
       StreamEvent event = (StreamEvent) input.getValue();
       Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
       StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
