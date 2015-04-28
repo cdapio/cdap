@@ -191,6 +191,16 @@ public final class CubeQuery {
         Builder.this.measurements.put(name, aggFunc);
         return new Measurement();
       }
+
+      /**
+       * Adds measurements to be included in selection of {@link CubeQuery}.
+       * @param measurements map of measurement name, agg function to include
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public Measurement measurement(Map<String, AggregationFunction> measurements) {
+        Builder.this.measurements.putAll(measurements);
+        return new Measurement();
+      }
     }
 
     /**
@@ -211,13 +221,31 @@ public final class CubeQuery {
       }
 
       /**
-       * Defines aggregation view to query from.
-       * @param aggregation name of the aggregation view; if {@code null}, aggregation will be auto-selected based
-       *                    on other parameters of the query
+       * Adds measurements to be included in selection of {@link CubeQuery}.
+       * @param measurements map of measurement name, agg function to include
        * @return builder for configuring {@link CubeQuery}
        */
-      public From from(@Nullable String aggregation) {
+      public Measurement measurement(Map<String, AggregationFunction> measurements) {
+        Builder.this.measurements.putAll(measurements);
+        return new Measurement();
+      }
+
+      /**
+       * Defines aggregation view to query from.
+       * @param aggregation name of the aggregation view
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public From from(String aggregation) {
         Builder.this.aggregation = aggregation;
+        return new From();
+      }
+
+      /**
+       * Sets aggregation view to query from to be auto-selected based on other parameters of the query.
+       * @return builder for configuring {@link CubeQuery}
+       */
+      public From from() {
+        Builder.this.aggregation = null;
         return new From();
       }
     }

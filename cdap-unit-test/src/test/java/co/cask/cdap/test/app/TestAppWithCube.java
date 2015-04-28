@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -92,8 +93,15 @@ public class TestAppWithCube extends TestBase {
       Assert.assertEquals("user", tv.getName());
       Assert.assertEquals("alex", tv.getValue());
 
-      tags = searchDimensionValue(url, new CubeExploreQuery(tsInSec - 60, tsInSec + 60, 1, 100,
-                                                            ImmutableList.of(new DimensionValue("user", "alex"))));
+      tags = searchDimensionValue(url,
+                                  CubeExploreQuery.builder()
+                                    .from()
+                                      .resolution(1, TimeUnit.SECONDS)
+                                    .where()
+                                      .dimension("user", "alex")
+                                      .timeRange(tsInSec - 60, tsInSec + 60)
+                                    .limit(100)
+                                    .build());
       Assert.assertEquals(2, tags.size());
       Iterator<DimensionValue> iterator = tags.iterator();
       tv = iterator.next();
@@ -115,9 +123,17 @@ public class TestAppWithCube extends TestBase {
 
       // 1-sec resolution
       Collection<TimeSeries> data =
-        query(url, new CubeQuery(null, tsInSec - 60, tsInSec + 60, 1, 100,
-                                 ImmutableMap.of("count", AggregationFunction.SUM),
-                                 ImmutableMap.of("action", "click"), new ArrayList<String>(), null));
+        query(url,
+              CubeQuery.builder()
+                .select()
+                  .measurement("count", AggregationFunction.SUM)
+                .from(null)
+                  .resolution(1, TimeUnit.SECONDS)
+                .where()
+                  .dimension("action", "click")
+                  .timeRange(tsInSec - 60, tsInSec + 60)
+                .limit(100)
+                .build());
       Assert.assertEquals(1, data.size());
       TimeSeries series = data.iterator().next();
       List<TimeValue> timeValues = series.getTimeValues();

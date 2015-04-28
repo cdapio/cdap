@@ -22,6 +22,9 @@
 ### Run selected test
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn -Dtest=TestClass,TestMore*Class,TestClassMethod#methodName -DfailIfNoTests=false test
 
+### Run App-Template tests
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -U -fae -am -amd -P templates -pl cdap-app-templates
+
 See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html) for more details
 
 ### Build all examples

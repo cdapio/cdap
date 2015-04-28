@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.cube;
+package co.cask.cdap.test.template.plugin;
+
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import com.google.common.base.Function;
+
+import javax.annotation.Nullable;
 
 /**
- * Function to be used when aggregating multiple data points.
+ * Template plugin for tests
  */
-public enum AggregationFunction {
-  SUM,
-  LATEST,
-  MIN,
-  MAX
+@Plugin(type = "function")
+@Name("flip")
+public class FlipPlugin implements Function<Long, Long> {
+
+  @Nullable
+  @Override
+  public Long apply(Long input) {
+    return 0 - input;
+  }
+
 }

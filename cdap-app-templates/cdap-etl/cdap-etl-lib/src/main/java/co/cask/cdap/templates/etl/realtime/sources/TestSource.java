@@ -43,10 +43,10 @@ import javax.annotation.Nullable;
 @Description("Source that can generate test data for Real-time Stream and Table Sinks.")
 public class TestSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
-  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types- " +
-    "'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
-    "'body' of type String with value 'Hello'.  ";
   private static final String COUNT = "count";
+  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types" +
+    " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
+    "'data' of type String with value 'Hello'";
   public static final String PROPERTY_TYPE = "type";
   public static final String STREAM_TYPE = "stream";
   public static final String TABLE_TYPE = "table";
