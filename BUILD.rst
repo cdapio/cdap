@@ -72,7 +72,7 @@ See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     
     bower install && npm install && gulp build
     
-    (whenever there is change in UI packages)
+    (Whenever there is a change in the UI packages)
     
     Then, run standalone from IDE.
     
