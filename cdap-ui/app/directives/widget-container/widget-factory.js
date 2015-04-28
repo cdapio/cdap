@@ -31,6 +31,12 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model'
         }
+      },
+      'schema-editor': {
+        element: '<my-schema-editor></my-schema-editor>',
+        attributes: {
+          'ng-model': 'model'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
