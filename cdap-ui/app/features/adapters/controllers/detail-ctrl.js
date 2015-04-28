@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.etlapps')
+angular.module(PKG.name + '.feature.adapters')
   .controller('AdpaterDetailController', function($scope, rRuns, $state, MyDataSource) {
     var dataSrc = new MyDataSource($scope);
     var path = '/adapters/' + $state.params.adapterId;
