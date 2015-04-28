@@ -106,7 +106,7 @@ For quick guide to getting your system setup to contribute to CDAP, take a look 
 
 Bug Reports & Feature Requests
 ------------------------------
-Bugs and suggestions should be made by filing an Issue at https://issues.cask.co/browse/cdap.
+Bugs and suggestions should be made by `filing an Issue <https://issues.cask.co/browse/cdap>`__.
 
 Pull Requests
 -------------
