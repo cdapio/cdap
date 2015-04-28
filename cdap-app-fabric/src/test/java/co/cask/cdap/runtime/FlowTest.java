@@ -19,12 +19,12 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.ArgumentCheckApp;
 import co.cask.cdap.InvalidFlowOutputApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -360,7 +360,7 @@ public class FlowTest {
   private static long getPending(Map<String, String> tags) throws Exception {
     MetricDataQuery metricDataQuery =
       new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, "system.queue.pending",
-                          MetricType.COUNTER, tags, ImmutableList.<String>of());
+                          AggregationFunction.SUM, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
     if (query.isEmpty()) {
       return 0;
