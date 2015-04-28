@@ -34,7 +34,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -83,7 +82,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                       @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+                                             ProgramType.valueOfCategoryName(programType), adapterId);
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null);
   }
 
@@ -99,7 +98,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                            @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     RunRecord runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
@@ -110,15 +109,23 @@ public class LogHandler extends AuthenticatedHttpHandler {
                          long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
                          @Nullable RunRecord runRecord) {
     try {
+
+      if (fromTimeSecsParam < -1 || toTimeSecsParam < 0) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
+          "'start' and 'stop' should be greater than zero. " +
+          "Instead, 'start' was " + fromTimeSecsParam + " and 'stop' was " + toTimeSecsParam);
+        return;
+      }
+
+      if (toTimeSecsParam <= fromTimeSecsParam) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
+          "'stop' should be greater than 'start'.");
+        return;
+      }
+
       Filter filter = FilterParser.parse(filterStr);
       long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeSecsParam, TimeUnit.SECONDS);
       long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeSecsParam, TimeUnit.SECONDS);
-
-      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
-          "greater than zero and 'stop' should be greater than 'start'.");
-        return;
-      }
 
       ReadRange readRange = new ReadRange(fromTimeMs, toTimeMs, LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord);
@@ -146,7 +153,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                             programId, getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                             programId, ProgramType.valueOfCategoryName(programType),
                                              adapterId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
   }
@@ -163,7 +170,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     RunRecord runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
@@ -226,7 +233,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                    @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             getProgramType(ProgramType.valueOfCategoryName(programType)), adapterId);
+                                             ProgramType.valueOfCategoryName(programType), adapterId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
   }
 
@@ -242,7 +249,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                         @QueryParam("adapterid") String adapterId) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
-                                                      getProgramType(ProgramType.valueOfCategoryName(programType)),
+                                                      ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
     RunRecord runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
@@ -348,27 +355,6 @@ public class LogHandler extends AuthenticatedHttpHandler {
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private ProgramType getProgramType(ProgramType programType) {
-    Preconditions.checkNotNull(programType, "ProgramType cannot be null");
-
-    switch (programType) {
-      case FLOW:
-        return ProgramType.FLOW;
-      case WORKFLOW:
-        return ProgramType.WORKFLOW;
-      case MAPREDUCE:
-        return ProgramType.MAPREDUCE;
-      case SPARK:
-        return ProgramType.SPARK;
-      case SERVICE:
-        return ProgramType.SERVICE;
-      case WORKER:
-        return ProgramType.WORKER;
-      default:
-        throw new IllegalArgumentException(String.format("Illegal program type %s", programType));
     }
   }
 }

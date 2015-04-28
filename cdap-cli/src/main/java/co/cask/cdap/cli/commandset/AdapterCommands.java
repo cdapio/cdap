@@ -18,8 +18,15 @@ package co.cask.cdap.cli.commandset;
 
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.DeleteAdapterCommand;
-import co.cask.cdap.cli.command.ListAdaptersCommand;
+import co.cask.cdap.cli.command.adapter.CreateAdapterCommand;
+import co.cask.cdap.cli.command.adapter.DeleteAdapterCommand;
+import co.cask.cdap.cli.command.adapter.DescribeAdapterCommand;
+import co.cask.cdap.cli.command.adapter.GetAdapterLogsCommand;
+import co.cask.cdap.cli.command.adapter.GetAdapterRunsCommand;
+import co.cask.cdap.cli.command.adapter.GetAdapterStatusCommand;
+import co.cask.cdap.cli.command.adapter.ListAdaptersCommand;
+import co.cask.cdap.cli.command.adapter.StartAdapterCommand;
+import co.cask.cdap.cli.command.adapter.StopAdapterCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -35,8 +42,15 @@ public class AdapterCommands extends CommandSet<Command> implements Categorized 
   public AdapterCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
-        .add(injector.getInstance(ListAdaptersCommand.class))
+        .add(injector.getInstance(CreateAdapterCommand.class))
         .add(injector.getInstance(DeleteAdapterCommand.class))
+        .add(injector.getInstance(DescribeAdapterCommand.class))
+        .add(injector.getInstance(GetAdapterLogsCommand.class))
+        .add(injector.getInstance(GetAdapterStatusCommand.class))
+        .add(injector.getInstance(GetAdapterRunsCommand.class))
+        .add(injector.getInstance(ListAdaptersCommand.class))
+        .add(injector.getInstance(StartAdapterCommand.class))
+        .add(injector.getInstance(StopAdapterCommand.class))
         .build());
   }
 

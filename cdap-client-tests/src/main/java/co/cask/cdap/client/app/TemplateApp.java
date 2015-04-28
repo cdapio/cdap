@@ -43,7 +43,7 @@ public class TemplateApp extends ApplicationTemplate<Map<String, String>> {
   @Override
   public void configureAdapter(String adapterName, Map<String, String> configuration,
                                AdapterConfigurer configurer) throws Exception {
-    configurer.setSchedule(Schedules.createTimeSchedule("schedule", "description", "0 0 1 1 *"));
+    configurer.setSchedule(Schedules.createTimeSchedule("schedule", "description", "0/1 * * * *"));
   }
 
   /**
