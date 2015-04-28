@@ -17,11 +17,10 @@
       <br/>
     </div>
   </div>
-  <div as-sortable="dragdrop"
-        ng-model="etlapps">
+  <div ng-model="etlapps">
     <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
          ng-repeat="app in etlapps">
-      <div as-sortable-item>
+      <div>
         <div class="label etlappcontainer" ng-if="app.isdraft">
           Draft
         </div>
@@ -29,9 +28,9 @@
           Published
         </div>
         <div class="well well-md">
-          <div class="content-panel">
+          <a ui-sref="adapters.detail.runs({adapterId: app.name})" class="content-panel">
 
-            <h3 tooltip="{{::app.name}}" as-sortable-item-handle>
+            <h3 tooltip="{{::app.name}}">
               <i class="fa fa-heartbeat"></i>
               <span>{{::app.name | myEllipsis:6}}</span>
             </h3>
@@ -48,7 +47,7 @@
             <p class="description" tooltip="{{::app.description}}">
               {{::app.description | myEllipsis: 50}}
             </p>
-          </div>
+          </a>
           <div class="clearfix action-panel">
             <div class="pull-left">
               <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
