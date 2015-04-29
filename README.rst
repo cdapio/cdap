@@ -55,7 +55,7 @@ To install and use CDAP and its included examples, there are a few simple prereq
 
 1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
 2. Node.js (from v0.8.16; required to run the CDAP UI)
-3. Apache Maven 3.1+ (required to build the example applications)
+3. Apache Maven 3.0+ (required to build the example applications; 3.1+ to build CDAP itself)
   
 Build
 -----
