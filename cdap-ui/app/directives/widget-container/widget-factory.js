@@ -32,6 +32,20 @@ angular.module(PKG.name + '.commons')
           'data-label': 'Date'
         }
       },
+      'csv': {
+        element: '<my-dsv></my-dsv>',
+        attributes: {
+          'ng-model': 'model',
+          'data-delimiter': ','
+        }
+      },
+      'dsv': {
+        element: '<my-dsv></my-dsv>',
+        attributes: {
+          'ng-model': 'model',
+          'data-delimiter': '{{ myconfig.delimiter }}'
+        }
+      },
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
