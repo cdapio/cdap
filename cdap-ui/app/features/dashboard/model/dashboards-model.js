@@ -11,6 +11,8 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
 
 
   function Dashboard (p) {
+    // maximum number of widgets per dashboard
+    this.WIDGET_LIMIT = 12;
     p = p || {};
     angular.extend(
       this,
@@ -108,6 +110,23 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
     this.persist();
   };
 
+  /**
+   * Returns true or false, depending on whether there is room for more widgets in this dashboard
+   */
+  Dashboard.prototype.canAddWidget = function () {
+    return this.numWidgets < this.WIDGET_LIMIT;
+  }
+
+  /**
+   * Returns the number of widgets in this dashboard
+   */
+  Dashboard.prototype.numWidgets = function () {
+    var sum = 0;
+    this.columns.forEach(function(column) {
+      sum += column.length;
+    });
+    return sum;
+  }
 
 
   /**

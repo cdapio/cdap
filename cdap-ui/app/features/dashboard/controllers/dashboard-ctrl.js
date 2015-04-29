@@ -5,6 +5,7 @@
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
 function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
+
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
@@ -63,6 +64,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
   };
 
+  $scope.addWidget = function () {
+    if (!$scope.currentBoard.canAddWidget()) {
+      $alert({
+        content: 'Can not add more than ' + $scope.currentBoard.WIDGET_LIMIT + ' widgets.',
+        type: 'warning'
+      });
+      return;
+    }
+    $state.go('dashboard.user.addwdgt', {tab: $state.params.tab}, {reload: false});
+  }
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {
