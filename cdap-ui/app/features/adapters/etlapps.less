@@ -4,17 +4,24 @@
 body.theme-cdap.state-adapters {
   tab-heading > a {
     i.fa-times {
-      color: #9d9d9d;
+      color: rgba(157, 157, 157, 0.6);
       font-size: 12px;
-      opacity: 0.8;
     }
   }
+  i.fa-exclamation-circle {
+    margin-left: 3px;
+    outline: none;
+  }
+  .fa-plus-square { color: @cdap-header; }
+  .control-label { color: @cdap-header; }
+  .text-success { color: @brand-success; }
+  .text-danger { color: @brand-danger; }
 }
 
 body.theme-cdap.state-adapters-create {
 
   .tab-pane .panel-default {
-    // .panel-heading > span.pull-left { line-height: 32px; }
+    .panel-heading > span.panel-title { line-height: 30px; }
   }
 
   .as-sortable-drag {
@@ -115,7 +122,7 @@ body.theme-cdap.state-adapters-create {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
-            &:last-child { border: 0; }
+            &:last-child { border: 1px solid transparent; }
           }
         }
       }
@@ -127,14 +134,22 @@ body.theme-cdap.state-adapters-create {
   }
 
   .panel.panel-default {
-    .panel-heading { cursor: pointer; }
+    .panel-heading {
+      cursor: pointer;
+      .btn { border: 0; }
+    }
   }
 
   [plugin-property-edit-view] {
     .widget-group-container {
       &.well {
         padding: 10px;
-        h3 { margin: 0 0 10px 0; }
+        h3 {
+          font-size: 16px;
+          font-weight: 500;
+          margin: 0 0 10px 0;
+        }
+        .control-label { font-weight: 400; }
       }
     }
   }
@@ -142,6 +157,8 @@ body.theme-cdap.state-adapters-create {
   #ETLsourceTab, #ETLsinkTab, #ETLtransformsTab {
     .panel-heading { cursor: pointer; }
   }
+
+  .tooltip.top { white-space: nowrap; }
 }
 
 body.theme-cdap.state-adapters-list {
@@ -151,7 +168,7 @@ body.theme-cdap.state-adapters-list {
     left: 5px;
     float: right;
     font-size: 13px;
-    background-color: @cdap-darkblue;
+    background-color: @cdap-bluegray;
 
     &.green {
       background-color: @brand-success;
@@ -164,7 +181,7 @@ body.theme-cdap.state-adapters-list {
       border-left: 5px solid transparent;
       border-right: 5px solid transparent;
       content: '';
-      border-bottom: 5px solid @cdap-darkblue;
+      border-bottom: 5px solid @cdap-header;
       transform: rotate(-61deg);
       top: 18px;
       right: 0px;
@@ -200,12 +217,15 @@ body.theme-cdap.state-adapters-list {
         text-decoration: none;
         color: black;
       }
-      h3 { margin: 10px 0; }
+      h3 {
+        margin: 10px 0;
+        .fa-heartbeat { color: @cdap-orange; }
+      }
       p { margin: 0; }
     }
-    .running { color: green; }
-    .stopped { color: darkgrey; }
-    .killed { color: red; }
-    .description { color: #777777; }
+    .running { color: @brand-success; }
+    .stopped { color: @cdap-darkness; }
+    .killed { color: @brand-danger; }
+    .description { color: @cdap-darkness; }
   }
 }
