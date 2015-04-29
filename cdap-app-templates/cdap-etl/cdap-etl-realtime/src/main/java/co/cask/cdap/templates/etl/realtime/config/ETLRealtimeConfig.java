@@ -27,9 +27,9 @@ import java.util.List;
  * ETL Realtime Adapter Configuration.
  */
 public final class ETLRealtimeConfig extends ETLConfig {
-  private final int instances;
+  private final Integer instances;
 
-  public ETLRealtimeConfig(int instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+  public ETLRealtimeConfig(Integer instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                            Resources resources) {
     super(source, sink, transforms, resources);
     this.instances = instances;
@@ -44,7 +44,7 @@ public final class ETLRealtimeConfig extends ETLConfig {
     this(1, source, sink, transforms);
   }
 
-  public int getInstances() {
+  public Integer getInstances() {
     return instances;
   }
 }
