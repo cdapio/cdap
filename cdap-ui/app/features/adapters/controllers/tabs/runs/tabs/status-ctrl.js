@@ -25,9 +25,8 @@ angular.module(PKG.name + '.feature.adapters')
 
         instance.connect({
           source:'sourceWrapper',
-          target:'transformWrapper0',
-          connector: ['StateMachine', {curviness: 20}],
-          anchors: ['TopCenter', 'TopCenter']
+          target:'transformsContainer',
+          anchors: ['Right', 'Left']
         });
 
         $timeout(function() {
@@ -40,7 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
           }
 
           instance.connect({
-            source: 'transformWrapper' + i,
+            source: 'transformWrapper'+i,
             target: 'sinkWrapper',
             anchors: ['Right', 'Left']
           })
@@ -50,7 +49,7 @@ angular.module(PKG.name + '.feature.adapters')
   jsPlumb.bind('ready', function() {});
   var instance = jsPlumb.getInstance({
     Endpoint: ["Dot", {radius: 2}],
-    Connector: ['StateMachine', {curviness: -20}],
+    Connector: ['Straight', {}],
     ConnectionOverlays: [
        [ "Arrow", {
            location: 1,

@@ -35,9 +35,7 @@ angular.module(PKG.name + '.feature.adapters')
     dataSrc.poll({
       _cdapNsPath: path + '/status'
     }, function(res) {
-      // Comment it out https://issues.cask.co/browse/CDAP-2346 when fixed.
-      // $scope.status = res.status;
-      $scope.status = res;
+      $scope.status = res.status;
     });
 
   });
