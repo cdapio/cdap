@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.templates.etl.common.kafka;
 
 import kafka.api.PartitionOffsetRequestInfo;
@@ -17,7 +33,8 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -70,12 +87,7 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
   public static boolean reportJobFailureUnableToGetOffsetFromKafka = false;
   public static boolean reportJobFailureDueToLeaderNotAvailable = false;
 
-  private static Logger log = null;
-
-  public EtlInputFormat() {
-    if (log == null)
-      log = Logger.getLogger(getClass());
-  }
+  private static Logger log = LoggerFactory.getLogger(EtlInputFormat.class);
 
   public static void setLogger(Logger log) {
     EtlInputFormat.log = log;
@@ -98,8 +110,10 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
   public List<TopicMetadata> getKafkaMetadata(JobContext context, List<String> metaRequestTopics) {
     CamusJob.startTiming("kafkaSetupTime");
     String brokerString = CamusJob.getKafkaBrokers(context);
-    if (brokerString.isEmpty())
+    if (brokerString.isEmpty()) {
       throw new InvalidParameterException("kafka.brokers must contain at least one node");
+    }
+
     List<String> brokers = Arrays.asList(brokerString.split("\\s*,\\s*"));
     Collections.shuffle(brokers);
     boolean fetchMetaDataSucceeded = false;
@@ -141,8 +155,9 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
   }
 
   private SimpleConsumer createBrokerConsumer(JobContext context, String broker) {
-    if (!broker.matches(".+:\\d+"))
+    if (!broker.matches(".+:\\d+")) {
       throw new InvalidParameterException("The kakfa broker " + broker + " must follow address:port pattern");
+    }
     String[] hostPort = broker.split(":");
     return createSimpleConsumer(context, hostPort[0], Integer.valueOf(hostPort[1]));
   }
@@ -369,8 +384,9 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
             new EtlKey(request.getTopic(), ((EtlRequest) request).getLeaderId(), request.getPartition(), 0,
                 request.getLastOffset());
 
-        if (oldKey != null)
+        if (oldKey != null) {
           newKey.setMessageSize(oldKey.getMessageSize());
+        }
 
         offsetKeys.put(request, newKey);
       }
@@ -389,11 +405,11 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
           log.error("The current offset was found to be more than the latest offset: " + request);
         }
 
-        boolean move_to_earliest_offset = context.getConfiguration().getBoolean(KAFKA_MOVE_TO_EARLIEST_OFFSET, false);
+        boolean moveToEarliestOffset = context.getConfiguration().getBoolean(KAFKA_MOVE_TO_EARLIEST_OFFSET, false);
         boolean offsetUnset = request.getOffset() == EtlRequest.DEFAULT_OFFSET;
-        log.info("move_to_earliest: " + move_to_earliest_offset + " offset_unset: " + offsetUnset);
+        log.info("move_to_earliest: " + moveToEarliestOffset + " offset_unset: " + offsetUnset);
         // When the offset is unset, it means it's a new topic/partition, we also need to consume the earliest offset
-        if (move_to_earliest_offset || offsetUnset) {
+        if (moveToEarliestOffset || offsetUnset) {
           log.error("Moving to the earliest offset available");
           request.setOffset(request.getEarliestOffset());
           offsetKeys.put(
@@ -415,7 +431,7 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
                 "The current offset is too close to the earliest offset, Camus might be falling behind: "
                     + request + "\n";
       }
-      log.info(request);
+      log.info("{}", request);
     }
 //    if(!Strings.isNullOrEmpty(camusRequestEmailMessage)) {
 //      EmailClient.sendEmail(camusRequestEmailMessage);
@@ -677,7 +693,7 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
 
   public static Class<MessageDecoder> getMessageDecoderClass(JobContext job) {
     return (Class<MessageDecoder>) job.getConfiguration().getClass(CAMUS_MESSAGE_DECODER_CLASS,
-        KafkaAvroMessageDecoder.class);
+        getMessageDecoderClass(job));
   }
 
   public static Class<MessageDecoder> getMessageDecoderClass(JobContext job, String topicName) {

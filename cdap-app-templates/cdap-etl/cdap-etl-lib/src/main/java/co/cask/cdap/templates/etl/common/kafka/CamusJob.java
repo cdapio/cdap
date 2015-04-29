@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.templates.etl.common.kafka;
 
 import org.apache.hadoop.mapreduce.JobContext;
@@ -74,7 +90,8 @@ public class CamusJob {
     if (brokers == null) {
       brokers = job.getConfiguration().get(KAFKA_HOST_URL);
       if (brokers != null) {
-        LOG.warn("The configuration properties " + KAFKA_HOST_URL + " and " + KAFKA_HOST_PORT + "are deprecated. Please switch to using " + KAFKA_BROKERS);
+        LOG.warn("The configuration properties " + KAFKA_HOST_URL + " and " + KAFKA_HOST_PORT +
+                   "are deprecated. Please switch to using " + KAFKA_BROKERS);
         return brokers + ":" + job.getConfiguration().getInt(KAFKA_HOST_PORT, 10251);
       }
     }
@@ -101,13 +118,4 @@ public class CamusJob {
   public static int getKafkaBufferSize(JobContext job) {
     return job.getConfiguration().getInt(KAFKA_FETCH_BUFFER_SIZE, 1024 * 1024);
   }
-
-  public static boolean getLog4jConfigure(JobContext job) {
-    return job.getConfiguration().getBoolean(LOG4J_CONFIGURATION, false);
-  }
-
-  public static String getReporterClass(JobContext job) {
-    return job.getConfiguration().get(CAMUS_REPORTER_CLASS, "com.linkedin.camus.etl.kafka.reporter.TimeReporter");
-  }
-
 }

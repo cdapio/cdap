@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.templates.etl.common.kafka;
 
 import kafka.api.PartitionOffsetRequestInfo;
@@ -210,17 +226,21 @@ public class EtlRequest implements CamusRequest {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
-    if (!(o instanceof EtlRequest))
+    }
+    if (!(o instanceof EtlRequest)) {
       return false;
+    }
 
     EtlRequest that = (EtlRequest) o;
 
-    if (partition != that.partition)
+    if (partition != that.partition) {
       return false;
-    if (!topic.equals(that.topic))
+    }
+    if (!topic.equals(that.topic)) {
       return false;
+    }
 
     return true;
   }
@@ -269,9 +289,9 @@ public class EtlRequest implements CamusRequest {
    */
   @Override
   public long getLastOffset() {
-    if (this.latestOffset == -1 && uri != null)
+    if (this.latestOffset == -1 && uri != null) {
       return getLastOffset(kafka.api.OffsetRequest.LatestTime());
-    else {
+    } else {
       return this.latestOffset;
     }
   }
@@ -321,12 +341,13 @@ public class EtlRequest implements CamusRequest {
     topic = UTF8.readString(in);
     leaderId = UTF8.readString(in);
     String str = UTF8.readString(in);
-    if (!str.isEmpty())
+    if (!str.isEmpty()) {
       try {
         uri = new URI(str);
       } catch (URISyntaxException e) {
         throw new RuntimeException(e);
       }
+    }
     partition = in.readInt();
     offset = in.readLong();
     latestOffset = in.readLong();
@@ -336,10 +357,11 @@ public class EtlRequest implements CamusRequest {
   public void write(DataOutput out) throws IOException {
     UTF8.writeString(out, topic);
     UTF8.writeString(out, leaderId);
-    if (uri != null)
+    if (uri != null) {
       UTF8.writeString(out, uri.toString());
-    else
+    } else {
       UTF8.writeString(out, "");
+    }
     out.writeInt(partition);
     out.writeLong(offset);
     out.writeLong(latestOffset);

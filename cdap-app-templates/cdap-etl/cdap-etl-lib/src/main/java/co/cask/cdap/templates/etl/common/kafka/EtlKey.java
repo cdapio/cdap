@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package co.cask.cdap.templates.etl.common.kafka;
 
 import org.apache.hadoop.io.LongWritable;
@@ -20,7 +36,7 @@ import java.util.Map;
 public class EtlKey implements WritableComparable<EtlKey>, IEtlKey {
   public static final Text SERVER = new Text("server");
   public static final Text SERVICE = new Text("service");
-  public static EtlKey DUMMY_KEY = new EtlKey();
+  public static final EtlKey DUMMY_KEY = new EtlKey();
 
   private String leaderId = "";
   private int partition = 0;
@@ -146,10 +162,11 @@ public class EtlKey implements WritableComparable<EtlKey>, IEtlKey {
   @Override
   public long getMessageSize() {
     Text key = new Text("message.size");
-    if (this.partitionMap.containsKey(key))
+    if (this.partitionMap.containsKey(key)) {
       return ((LongWritable) this.partitionMap.get(key)).get();
-    else
+    } else {
       return 1024; //default estimated size
+    }
   }
 
   public long getTotalMessageSize() {
