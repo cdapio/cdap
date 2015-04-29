@@ -23,40 +23,17 @@ body.state-dashboard {
             background-color: @cdap-header;
             color: white;
             .border-radius(8px 8px 0 0);
+            + .dropdown-menu {
+              .border-radius(0);
+              > li:first-child a { .border-radius(0 8px 0 0); }
+            }
           }
         }
         .dropdown-toggle {
-          cursor: pointer;
           padding: 0 5px 5px;
           span { vertical-align: bottom; }
-        }
-        .dropdown-menu {
-          background-color: transparent;
-          border: 0;
-          margin: 0;
-          padding: 0;
-          top: 25px !important;
-          left: 1px !important;
-          > li {
-            &:first-child a { .border-radius(0 8px 0 0); }
-            &:last-child a { .border-radius(0 0 8px 8px ); }
-            > a {
-              color: white;
-              padding: 10px;
-              background-color: @cdap-header;
-              &:focus { outline: none; }
-              &:hover {
-                background-color: white;
-                color: @cdap-header;
-                font-weight: 500;
-              }
-              > span {
-                margin-top: 1px;
-                margin-right: 0;
-              }
-            }
-          }
-
+          .dropdown-defaults();
+          .dropdown-blue();
         }
       }
       > span {

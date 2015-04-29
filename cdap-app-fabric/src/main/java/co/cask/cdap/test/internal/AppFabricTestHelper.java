@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Program;
@@ -87,6 +88,7 @@ public class AppFabricTestHelper {
       injector.getInstance(SchedulerService.class).startAndWait();
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
+      injector.getInstance(MetricsCollectionService.class).startAndWait();
     }
     return injector;
   }

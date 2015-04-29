@@ -27,7 +27,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.DBConfig;
 import co.cask.cdap.templates.etl.common.DBRecord;
 import co.cask.cdap.templates.etl.common.ETLDBOutputFormat;
@@ -74,7 +73,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");
@@ -113,8 +112,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
     setResultSetMetadata();
   }
 

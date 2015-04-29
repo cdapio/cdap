@@ -25,6 +25,10 @@ public final class MapReduceMetrics {
   public static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
   public static final String METRIC_BYTES = "process.bytes";
   public static final String METRIC_COMPLETION = "process.completion";
+  public static final String METRIC_TASK_INPUT_RECORDS = "process.entries.task.in";
+  public static final String METRIC_TASK_OUTPUT_RECORDS = "process.entries.task.out";
+  public static final String METRIC_TASK_BYTES = "process.task.bytes";
+
   public static final String METRIC_TASK_COMPLETION = "process.completion.task";
   public static final String METRIC_USED_CONTAINERS = "resources.used.containers";
   public static final String METRIC_USED_MEMORY = "resources.used.memory";

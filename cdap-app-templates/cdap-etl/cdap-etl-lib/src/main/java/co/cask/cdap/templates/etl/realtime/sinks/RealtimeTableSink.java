@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
@@ -34,6 +33,7 @@ import co.cask.cdap.templates.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -84,12 +84,13 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    Map<String, String> properties = tableConfig.getProperties().getProperties();
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.name), "Dataset name must be given.");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField),
                                 "Field to be used as rowkey must be given.");
     pipelineConfigurer.createDataset(tableConfig.name, Table.class.getName(), DatasetProperties.builder()
-      .addAll(stageConfig.getProperties())
+      .addAll(properties)
       .build());
   }
 

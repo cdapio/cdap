@@ -64,6 +64,10 @@ API Changes
 Known Issues
 ------------
 
+- CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
+  Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
+  See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
+
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
 
 

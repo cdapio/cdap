@@ -25,14 +25,16 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -84,8 +86,11 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  protected String getType(ETLStage stageConfig) {
-    return Table.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = Maps.newHashMap(tableConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
+    return properties;
   }
 
   @Override
@@ -94,15 +99,15 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    super.configurePipeline(stageConfig, pipelineConfigurer);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(tableConfig.schemaStr != null && !tableConfig.schemaStr.isEmpty(),
                                 "Schema must be specified.");
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
     Schema schema = Schema.parseJson(tableConfig.schemaStr);
     rowRecordTransformer = new RowRecordTransformer(schema, tableConfig.rowField);
   }
