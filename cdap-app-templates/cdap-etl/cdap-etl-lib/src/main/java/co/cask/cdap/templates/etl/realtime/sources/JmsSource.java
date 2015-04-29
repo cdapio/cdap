@@ -65,6 +65,9 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   public static final String MESSAGE = "message";
 
+  private static final Schema SCHEMA = Schema.recordOf("JMS Message",
+                                                       Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING)));
+
   private final JmsPluginConfig config;
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
@@ -75,7 +78,6 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private transient MessageConsumer consumer;
 
   private int messagesToReceive;
-  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Default constructor
@@ -116,9 +118,6 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
     // Bootstrap the JMS consumer
     initializeJMSConnection(envVars, destinationName);
-
-    Schema.Field msgField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("JMS Message", msgField));
   }
 
   /**
@@ -198,7 +197,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           continue;
         }
 
-        writer.emit(stringMessageToStructuredRecord(text, recordBuilder));
+        writer.emit(stringMessageToStructuredRecord(text));
         count++;
       }
     } while (message != null && count < messagesToReceive);
@@ -207,7 +206,8 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   }
 
   // Helper method to encode JMS String message to StructuredRecord.
-  private static StructuredRecord stringMessageToStructuredRecord(String text, StructuredRecord.Builder recordBuilder) {
+  private static StructuredRecord stringMessageToStructuredRecord(String text) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     recordBuilder.set(MESSAGE, text);
     return recordBuilder.build();
   }
