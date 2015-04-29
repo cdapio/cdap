@@ -29,6 +29,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 
@@ -95,7 +96,7 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = batchCubeConfig.getProperties().getProperties();
+    Map<String, String> properties = Maps.newHashMap(batchCubeConfig.getProperties().getProperties());
     properties.put(Properties.BatchReadableWritable.NAME, batchCubeConfig.name);
     properties.put(Properties.BatchReadableWritable.TYPE, Cube.class.getName());
     return properties;

@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.common.Properties;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = kvTableConfig.getProperties().getProperties();
+    Map<String, String> properties = Maps.newHashMap(kvTableConfig.getProperties().getProperties());
     properties.put(Properties.BatchReadableWritable.NAME, kvTableConfig.name);
     properties.put(Properties.BatchReadableWritable.TYPE, KeyValueTable.class.getName());
     return properties;
