@@ -23,13 +23,13 @@
 
   <li role="presentation">
     <ul class="list-inline text-center">
-      <li ng-click="changeColumn(2)">
+      <li ng-click="changeColumn(2)" ng-class="{'selected': currentColumn() === 2}">
         Two
       </li>
-      <li ng-click="changeColumn(3)">
+      <li ng-click="changeColumn(3)" ng-class="{'selected': currentColumn() === 3}">
         Three
       </li>
-      <li ng-click="changeColumn(4)">
+      <li ng-click="changeColumn(4)" ng-class="{'selected': currentColumn() === 4}">
         Four
       </li>
     </ul>
