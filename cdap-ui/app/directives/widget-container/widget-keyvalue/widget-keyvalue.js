@@ -9,8 +9,8 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
       controller: function($scope) {
 
-        var kvdelimiter = $scope.config['kv-delimiter'] || ':';
-        var delimiter = $scope.config.delimiter || ',';
+        $scope.kvdelimiter = $scope.config['kv-delimiter'] || ':';
+        $scope.delimiter = $scope.config.delimiter || ',';
 
         // initializing
         function initialize() {
@@ -20,10 +20,10 @@ angular.module(PKG.name + '.commons')
           if (!str) {
             return;
           }
-          var arr = str.split(delimiter);
+          var arr = str.split($scope.delimiter);
 
           angular.forEach(arr, function(a) {
-            var split = a.split(kvdelimiter);
+            var split = a.split($scope.kvdelimiter);
 
             $scope.properties.push({
               key: split[0],
@@ -40,12 +40,12 @@ angular.module(PKG.name + '.commons')
 
           angular.forEach($scope.properties, function(p) {
             if (p.key) {
-              str = str + p.key + kvdelimiter + p.value + delimiter;
+              str = str + p.key + $scope.kvdelimiter + p.value + $scope.delimiter;
             }
           });
 
           // remove last delimiter
-          if (str.length > 0 && str.charAt(str.length - 1) === delimiter ) {
+          if (str.length > 0 && str.charAt(str.length - 1) === $scope.delimiter ) {
             str = str.substring(0, str.length - 1);
           }
 
