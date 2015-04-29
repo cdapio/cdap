@@ -288,7 +288,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private Integer messagesToReceive;
 
-    private JmsPluginConfig() {
+    public JmsPluginConfig() {
       messagesToReceive = 50;
     }
 
