@@ -25,7 +25,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.common.Properties;
@@ -92,7 +91,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(streamConfig.name),
                                 "Stream name should be non-null, non-empty.");
     pipelineConfigurer.addStream(new Stream(streamConfig.name));

@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 
@@ -37,12 +36,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
   implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>> {
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

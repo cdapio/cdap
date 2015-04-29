@@ -18,8 +18,6 @@ package co.cask.cdap.templates.etl.api.realtime;
 
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * Realtime Sink.
@@ -29,12 +27,7 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
 public abstract class RealtimeSink<I> implements EndPointStage {
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

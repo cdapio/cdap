@@ -74,7 +74,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");

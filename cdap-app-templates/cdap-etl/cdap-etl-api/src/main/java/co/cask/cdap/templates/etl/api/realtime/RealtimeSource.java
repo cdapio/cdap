@@ -19,8 +19,6 @@ package co.cask.cdap.templates.etl.api.realtime;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import javax.annotation.Nullable;
 
@@ -32,12 +30,7 @@ import javax.annotation.Nullable;
 public abstract class RealtimeSource<T> implements EndPointStage {
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

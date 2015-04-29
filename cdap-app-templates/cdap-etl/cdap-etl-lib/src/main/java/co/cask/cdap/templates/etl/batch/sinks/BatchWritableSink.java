@@ -21,14 +21,16 @@ import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * An abstract Sink for CDAP Datasets that are batch writable, which means they can be used as output of a
  * mapreduce job. Extending subclasses must provide implementation for {@link BatchWritableSink} which should return the
- * type of Dataset used by the sink.
+ * properties used by the sink.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
@@ -37,21 +39,23 @@ import com.google.common.base.Preconditions;
 public abstract class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    String datasetName = stageConfig.getProperties().get(Properties.BatchReadableWritable.NAME);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    String datasetName = getProperties().get(Properties.BatchReadableWritable.NAME);
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
-    String datasetType = getDatasetType(stageConfig);
+    String datasetType = getProperties().get(Properties.BatchReadableWritable.TYPE);
     Preconditions.checkArgument(datasetType != null && !datasetType.isEmpty(), "Dataset type must be given.");
 
-    pipelineConfigurer.createDataset(datasetName, datasetType, DatasetProperties.builder()
-      .addAll(stageConfig.getProperties())
-      .build());
+    Map<String, String> properties = Maps.newHashMap(getProperties());
+    properties.remove(Properties.BatchReadableWritable.NAME);
+    properties.remove(Properties.BatchReadableWritable.TYPE);
+
+    pipelineConfigurer.createDataset(datasetName, datasetType, DatasetProperties.builder().addAll(properties).build());
   }
 
   /**
    * An abstract method which the subclass should override to provide their dataset types
    */
-  protected abstract String getDatasetType(ETLStage stageConfig);
+  protected abstract Map<String, String> getProperties();
 
   @Override
   public void prepareJob(BatchSinkContext context) {
