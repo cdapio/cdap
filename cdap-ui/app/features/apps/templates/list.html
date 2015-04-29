@@ -4,9 +4,19 @@
     <h2> All Applications </h2>
   </div>
   <div class="col-xs-6 h2 text-right">
-    <my-file-select on-file-select="onFileSelected($files)"
-      data-button-label="Add App"
-      data-button-icon="fa-plus"> </my-file-select>
+    <div class="btn-group" dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
+        Actions <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li role="presentation">
+          <my-file-select on-file-select="onFileSelected($files)"
+            data-button-label="Add App"
+            data-button-icon="fa-plus"
+            data-dropdown="true"> </my-file-select>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -17,7 +27,6 @@
         <th data-predicate="name" data-predicate-default="reverse"> Name </th>
         <th data-predicate="version"> Version </th>
         <th data-predicate="description"> Description </th>
-        <th> </th>
       </tr>
     </thead>
     <tbody>
@@ -29,15 +38,6 @@
         </td>
         <td>{{ ::app.version }}</td>
         <td> {{ ::app.description }} </td>
-        <td class="text-center">
-          <a ng-click="caskConfirm()"
-              class="btn btn-danger btn-xs"
-              cask-confirmable="deleteApp(app.id)"
-              data-confirmable-content="Are you sure you want to delete this app?"
-            >
-            <i class="fa fa-trash-o"></i>
-          </a>
-        </td>
       </tr>
     <tbody>
   </table>

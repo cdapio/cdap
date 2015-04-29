@@ -12,13 +12,22 @@
 
       <div class="btn-group h3" dropdown>
         <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
-          Action <span class="caret"></span>
+          Actions <span class="caret"></span>
         </button>
-        <ul class="dropdown-menu" role="menu">
-          <li>
-            <a ui-sref="admin.namespace.detail.apps.metadata.preference({ nsadmin: $state.params.namespace, appId: $state.params.appId })">
-              <span class="fa fa-fw fa-cog"></span>
-              Preferences
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata.preference({ nsadmin: $state.params.namespace, appId: $state.params.appId })"
+               role="menuitem">
+              <span class="fa fa-fw fa-cog pull-right"></span>
+              <span> Preferences </span>
+            </a>
+          </li>
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata({ nsadmin: $state.params.namespace, appId: $state.params.appId })"
+               role="menuitem"
+              >
+              <span> Manage </span>
+              <span class="fa fa-wrench pull-right"></span>
             </a>
           </li>
         </ul>

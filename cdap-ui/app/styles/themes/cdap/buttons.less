@@ -96,18 +96,19 @@ body.theme-cdap {
       color: white;
     }
   }
-  .btn-group > .btn-default.dropdown-toggle {
+
+  // Sets default border/margin/padding for state dropdown menus
+  .btn-default.dropdown-toggle {
     background-color: @cdap-header;
+    border: 0;
     color: white;
     .border-radius(4px);
-    + .dropdown-menu {
-      background-color: @cdap-header;
-      margin: 0;
-      padding: 0;
-      > li > a {
-        color: white;
-        &:hover, &:focus { color: @cdap-header; }
-      }
-    }
+    .dropdown-defaults();
+    .dropdown-blue();
+  }
+  // Sets navy blue-colored dropdown menu
+  .btn-success.dropdown-toggle {
+    border: 0;
+    .dropdown-defaults();
   }
 }
