@@ -7,15 +7,20 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers) {
+      controller: function($scope, myHelpers, $alert) {
         $scope.options = $scope.config['schema-types'];
-        var defaultType = $scope.config['schema-default-type'];
-        console.log('test', $scope.config['schema-default-type']);
+        var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+
         // Format model
         function initialize() {
           var obj = {};
+
           if ($scope.model) {
-            obj = JSON.parse($scope.model);
+            try {
+              obj = JSON.parse($scope.model);
+            } catch (e) {
+              $scope.error = "Invalid JSON string";
+            }
           }
 
           var schema = myHelpers.objectQuery(obj, 'schema', 'fields');
@@ -78,26 +83,8 @@ angular.module(PKG.name + '.commons')
           $scope.model = json;
         }
 
-
         // watch for changes
-        var propertiesListener = $scope.$watch('properties', function() {
-          formatSchema();
-        }, true);
-
-        var settingListener = $scope.$watch('settings', function() {
-          formatSchema();
-        }, true);
-
-        var formatListener = $scope.$watch('format', function() {
-          formatSchema();
-        });
-
-        // remove watchers
-        $scope.$on('$destroy', function() {
-          propertiesListener();
-          settingListener();
-          formatListener();
-        });
+        $scope.$watch('properties', formatSchema, true);
 
 
         $scope.addProperties = function() {
@@ -112,7 +99,6 @@ angular.module(PKG.name + '.commons')
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
         };
-
 
       }
     };
