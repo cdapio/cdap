@@ -1,1 +1,42 @@
-<h1>Adapters -> Runs -> Detail</h1>
+<div etl-canvas-template ng-controller="AdapterRunDetailStatusController">
+  <div class="etlflowcontainer" id="etlFlowContainer">
+    <div class="row">
+      <div class="col-xs-4">
+        <div class="wrapper" id="sourceWrapper">
+          <div class="template">
+            <div>
+              <span>{{source.name}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="wrapper transform-wrapper">
+          <div class="template transforms"
+               ng-model="transforms"
+               as-sortable="dragdrop"
+               is-disabled="isDraggable">
+            <div class="default">
+              <div>No Transforms added</div>
+            </div>
+            <div ng-repeat="transform in transforms" as-sortable-item id="transformWrapper{{$index}}">
+              <div as-sortable-item-handle>
+                <span>{{transform.name}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="wrapper" id="sinkWrapper">
+          <div class="template">
+            <div>
+              <span>{{sink.name}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
