@@ -9,7 +9,7 @@ Prerequisites
 =============
 
 - Java 6+ SDK
-- Maven
+- Maven 3.1+
 - Git
 
 

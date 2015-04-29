@@ -2,6 +2,13 @@
 Cask Data Application Platform - CDAP
 =====================================
 
+Prerequisites
+=============
+
+- Java 6+ SDK
+- Maven 3.1+
+- Git
+
 Standalone and Distributed CDAP
 ===============================
 

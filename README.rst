@@ -55,7 +55,7 @@ To install and use CDAP and its included examples, there are a few simple prereq
 
 1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
 2. Node.js (from v0.8.16; required to run the CDAP UI)
-3. Apache Maven 3.0+ (required to build the example applications)
+3. Apache Maven 3.1+ (required to build the example applications)
   
 Build
 -----
@@ -115,22 +115,21 @@ We have a simple pull-based development model with a consensus-building phase, s
 Apache's voting process. If you’d like to help make CDAP better by adding new features,
 enhancing existing features, or fixing bugs, here's how to do it:
 
-1. If you are planning a large change or contribution, discuss your plans on the ``cask-cdap-dev``
-   mailing list first.  This will help us understand your needs and best guide your solution in a
-   way that fits the project.
+1. If you are planning a large change or contribution, discuss your plans on the 
+   `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__ mailing list first.
+   This will help us understand your needs and best guide your solution in a way that fits the project.
 2. Fork CDAP into your own GitHub repository.
 3. Create a topic branch with an appropriate name.
 4. Work on the code to your heart's content.
 5. Once you’re satisfied, create a pull request from your GitHub repo (it’s helpful if you fill in
    all of the description fields).
-6. After we review and accept your request, we’ll commit your code to the cask/cdap
-   repository.
+6. After we review and accept your request, we’ll commit your code to the cask/cdap repository.
 
 Thanks for helping to improve CDAP!
 
 Filing Issues
 -------------
-Website for filing `Issues <http://issues.cask.co>`__.
+Website for filing `Issues <http://issues.cask.co/browse/cdap>`__.
 
 Mailing Lists
 -------------
