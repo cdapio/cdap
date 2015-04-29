@@ -19,6 +19,7 @@ package co.cask.cdap.cli;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
 import co.cask.cdap.cli.completer.element.AdapterIdCompleter;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
+import co.cask.cdap.cli.completer.element.AppTemplateIdCompleter;
 import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetTypeNameCompleter;
@@ -49,6 +50,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
   public DefaultCompleters(Injector injector) {
     this.completers = ImmutableMap.<String, Completer>builder()
         .put(ArgumentName.APP.getName(), injector.getInstance(AppIdCompleter.class))
+        .put(ArgumentName.APP_TEMPLATE.getName(), injector.getInstance(AppTemplateIdCompleter.class))
         .put(ArgumentName.ADAPTER.getName(), injector.getInstance(AdapterIdCompleter.class))
         .put(ArgumentName.DATASET_MODULE.getName(), injector.getInstance(DatasetModuleNameCompleter.class))
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
