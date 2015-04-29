@@ -34,7 +34,8 @@
       </div>
 
       <div class="col-xs-2">
-        <p> &mdash; </p>
+        <p ng-if="schedule.lastrun !== 'NA'"> {{ schedule.lastrun | amDateFormat:'MM/DD/YY h:mm:ss a'}} </p>
+        <p ng-if="schedule.lastrun === 'NA'">Not Available</p>
       </div>
 
       <div class="col-xs-2">
