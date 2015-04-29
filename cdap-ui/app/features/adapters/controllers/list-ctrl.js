@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.adapters')
       });
     mySettings.get('adapterDrafts')
       .then(function(res) {
-        if (Object.keys(res).length) {
+        if (res && Object.keys(res).length) {
           angular.forEach(res, function(value, key) {
             $scope.adapters.push({
               isdraft: true,
