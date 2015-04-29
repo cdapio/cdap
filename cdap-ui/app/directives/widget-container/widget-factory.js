@@ -33,10 +33,17 @@ angular.module(PKG.name + '.commons')
         }
       },
       'csv': {
-        element: '<textarea></textarea>',
+        element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'class': 'form-control'
+          'data-delimiter': ','
+        }
+      },
+      'dsv': {
+        element: '<my-dsv></my-dsv>',
+        attributes: {
+          'ng-model': 'model',
+          'data-delimiter': '{{ myconfig.delimiter }}'
         }
       },
       'json-editor': {
