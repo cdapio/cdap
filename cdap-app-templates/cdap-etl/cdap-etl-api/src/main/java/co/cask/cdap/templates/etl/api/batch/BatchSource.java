@@ -17,11 +17,11 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
@@ -51,14 +51,21 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    * Initialize the source. This is called once each time the Hadoop Job runs, before any
    * calls to {@link #transform(KeyValue, Emitter)} are made.
    *
-   * @param stageConfig the configuration for the stage.
+   * @param properties plugin properties
    */
-  public void initialize(ETLStage stageConfig) throws Exception {
+  public void initialize(PluginProperties properties) throws Exception {
     // no-op
   }
 
   @Override
   public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
     emitter.emit((OUT) input.getValue());
+  }
+
+  /**
+   * Destroy the source. This is called at the end of the Hadoop Job run.
+   */
+  public void destroy() {
+    // no-op
   }
 }

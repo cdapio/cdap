@@ -216,10 +216,24 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void stop() {
     running = false;
-    source.destroy();
-    for (TransformStage transform : transforms) {
-      transform.destroy();
+    try {
+      source.destroy();
+    } catch (Exception e) {
+      LOG.warn("Destroy of Source {} threw an Exception : ", source.getClass().getName(), e);
     }
-    sink.destroy();
+
+    for (TransformStage transform : transforms) {
+      try {
+        transform.destroy();
+      } catch (Exception e) {
+        LOG.warn("Destroy of Transform {} threw an Exception : ", transform.getClass().getName(), e);
+      }
+    }
+
+    try {
+      sink.destroy();
+    } catch (Exception e) {
+      LOG.warn("Destroy of Sink {} threw an Exception : ", sink.getClass().getName(), e);
+    }
   }
 }
