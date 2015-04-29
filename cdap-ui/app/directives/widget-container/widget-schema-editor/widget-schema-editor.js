@@ -7,7 +7,7 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, $alert) {
+      controller: function($scope, myHelpers) {
         $scope.options = $scope.config['schema-types'];
         var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
 
