@@ -29,7 +29,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
@@ -83,7 +82,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     String tpfsName = tpfsAvroSinkConfig.name;
     String basePath = tpfsAvroSinkConfig.basePath == null ? tpfsName : tpfsAvroSinkConfig.basePath;
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()

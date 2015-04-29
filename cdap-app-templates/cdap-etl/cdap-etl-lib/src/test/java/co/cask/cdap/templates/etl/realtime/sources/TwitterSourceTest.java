@@ -18,8 +18,6 @@ package co.cask.cdap.templates.etl.realtime.sources;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import com.google.common.collect.Maps;
@@ -27,7 +25,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -59,29 +56,6 @@ public class TwitterSourceTest {
     args.put("AccessTokenSecret", accessTokenSecret);
 
     TwitterSource source = new TwitterSource(twitterConfig);
-    source.configure(new StageConfigurer() {
-
-      @Override
-      public void setName(String name) {
-        // No-op
-      }
-
-      @Override
-      public void setDescription(String description) {
-        // No-op
-      }
-
-      @Override
-      public void addProperties(Collection<Property> properties) {
-        // No-op
-      }
-
-      @Override
-      public void addProperty(Property property) {
-        // No-op
-      }
-    });
-
     source.initialize(new MockRealtimeContext(args));
 
     MockEmitter emitter = new MockEmitter();

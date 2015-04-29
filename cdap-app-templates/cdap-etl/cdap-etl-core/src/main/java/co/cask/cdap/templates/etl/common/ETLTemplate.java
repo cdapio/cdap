@@ -55,10 +55,10 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
   private static final Logger LOG = LoggerFactory.getLogger(ETLTemplate.class);
   private static final Gson GSON = new Gson();
 
-  protected void configure(EndPointStage stage, ETLStage stageConfig, AdapterConfigurer configurer, String pluginPrefix)
+  protected void configure(EndPointStage stage, AdapterConfigurer configurer, String pluginPrefix)
     throws Exception {
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer, pluginPrefix);
-    stage.configurePipeline(stageConfig, pipelineConfigurer);
+    stage.configurePipeline(pipelineConfigurer);
   }
 
   @Override
@@ -114,8 +114,8 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     // Validate Source -> Transform -> Sink hookup
     validateStages(source, sink, transforms);
 
-    configure(source, sourceConfig, configurer, Constants.Source.PLUGINID);
-    configure(sink, sinkConfig, configurer, Constants.Sink.PLUGINID);
+    configure(source, configurer, Constants.Source.PLUGINID);
+    configure(sink, configurer, Constants.Sink.PLUGINID);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.Source.PLUGINID, sourcePluginId);

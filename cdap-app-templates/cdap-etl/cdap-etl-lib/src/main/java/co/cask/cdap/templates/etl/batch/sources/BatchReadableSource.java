@@ -21,7 +21,6 @@ import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -30,7 +29,7 @@ import java.util.Map;
 
 /**
  * An abstract source for CDAP BatchReadable Datasets. Extending classes must provide implementation for
- * {@link BatchReadableSource#getType(ETLStage)} which should return the type of dataset used by the source
+ * {@link BatchReadableSource#getProperties()} which should return the properties used by the source
  *
  * @param <KEY_IN> the type of input key from the Batch job
  * @param <VAL_IN> the type of input value from the Batch job
@@ -39,22 +38,22 @@ import java.util.Map;
 public abstract class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    String name = stageConfig.getProperties().get(Properties.BatchReadableWritable.NAME);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    String name = getProperties().get(Properties.BatchReadableWritable.NAME);
     Preconditions.checkArgument(name != null && !name.isEmpty(), "Dataset name must be given.");
-    String type = getType(stageConfig);
+    String type = getProperties().get(Properties.BatchReadableWritable.TYPE);
     Preconditions.checkArgument(type != null && !type.isEmpty(), "Dataset type must be given.");
 
-    Map<String, String> properties = Maps.newHashMap(stageConfig.getProperties());
+    Map<String, String> properties = Maps.newHashMap(getProperties());
     properties.remove(Properties.BatchReadableWritable.NAME);
     properties.remove(Properties.BatchReadableWritable.TYPE);
     pipelineConfigurer.createDataset(name, type, DatasetProperties.builder().addAll(properties).build());
   }
 
   /**
-   * An abstract method which the subclass should override to provide their types dataset types
+   * An abstract method which the subclass should override to provide their dataset types
    */
-  protected abstract String getType(ETLStage stageConfig);
+  protected abstract Map<String, String> getProperties();
 
   @Override
   public void prepareJob(BatchSourceContext context) {

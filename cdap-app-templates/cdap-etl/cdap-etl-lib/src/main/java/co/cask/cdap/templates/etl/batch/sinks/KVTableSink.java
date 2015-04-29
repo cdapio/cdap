@@ -25,11 +25,11 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -79,8 +79,11 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
   }
 
   @Override
-  protected String getDatasetType(ETLStage config) {
-    return KeyValueTable.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = kvTableConfig.getProperties().getProperties();
+    properties.put(Properties.BatchReadableWritable.NAME, kvTableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, KeyValueTable.class.getName());
+    return properties;
   }
 
   @Override

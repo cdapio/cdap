@@ -27,7 +27,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.DBConfig;
 import co.cask.cdap.templates.etl.common.DBRecord;
 import co.cask.cdap.templates.etl.common.ETLDBInputFormat;
@@ -64,7 +63,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!(dbSourceConfig.user == null && dbSourceConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");

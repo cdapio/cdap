@@ -33,6 +33,7 @@ import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -84,8 +85,11 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  protected String getType(ETLStage stageConfig) {
-    return Table.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = tableConfig.getProperties().getProperties();
+    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
+    return properties;
   }
 
   @Override
@@ -94,8 +98,8 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    super.configurePipeline(stageConfig, pipelineConfigurer);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(tableConfig.schemaStr != null && !tableConfig.schemaStr.isEmpty(),
                                 "Schema must be specified.");
   }

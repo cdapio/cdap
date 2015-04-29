@@ -27,15 +27,6 @@ public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
   private StageContext context;
 
   /**
-   * Configure the Transform stage. Used to provide information about the Transform.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  /**
    * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
    * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
    *

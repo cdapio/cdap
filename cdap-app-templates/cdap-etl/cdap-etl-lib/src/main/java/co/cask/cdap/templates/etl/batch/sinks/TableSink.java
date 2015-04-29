@@ -32,6 +32,7 @@ import co.cask.cdap.templates.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -81,8 +82,8 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    super.configurePipeline(stageConfig, pipelineConfigurer);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField), "Row field must be given as a property.");
   }
 
@@ -93,8 +94,11 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
-  protected String getDatasetType(ETLStage config) {
-    return Table.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = tableConfig.getProperties().getProperties();
+    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
+    return properties;
   }
 
   @Override
