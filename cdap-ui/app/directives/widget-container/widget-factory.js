@@ -18,6 +18,13 @@ angular.module(PKG.name + '.commons')
           placeholder: 'myconfig.description'
         }
       },
+      'datetime': {
+        element: '<my-timestamp-picker></my-timestamp-picker>',
+        attributes: {
+          'ng-model': 'model',
+          'data-label': 'Date'
+        }
+      },
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
