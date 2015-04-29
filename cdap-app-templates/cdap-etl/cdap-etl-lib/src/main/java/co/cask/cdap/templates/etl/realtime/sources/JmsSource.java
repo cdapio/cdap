@@ -279,25 +279,24 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    * Config class for {@link JmsSource}.
    */
   public static class JmsPluginConfig extends PluginConfig {
-    private static final Integer DEFAULT_MESSAGE_RECEIVE = 50;
-
     @Name(JMS_DESTINATION_NAME)
     @Description("Name of the destination to get messages")
-    private final String destinationName;
+    private String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
     @Description("Max number messages should be retrieved per poll. The default value is 50.")
     @Nullable
-    private final Integer messagesToReceive;
+    private Integer messagesToReceive;
+
+    private JmsPluginConfig() {
+      messagesToReceive = 50;
+    }
 
     public JmsPluginConfig(String destinationName, Integer messagesToReceive) {
       this.destinationName = destinationName;
-      if (messagesToReceive == null) {
-        this.messagesToReceive = DEFAULT_MESSAGE_RECEIVE;
-      } else {
+      if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
       }
-
     }
   }
 }
