@@ -32,10 +32,11 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model'
         }
       },
-      'schema-editor': {
+      'schema': {
         element: '<my-schema-editor></my-schema-editor>',
         attributes: {
-          'ng-model': 'model'
+          'ng-model': 'model',
+          'data-config': 'myconfig'
         }
       },
       'select': {
