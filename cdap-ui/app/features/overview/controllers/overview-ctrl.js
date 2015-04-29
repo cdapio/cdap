@@ -3,7 +3,8 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings) {
+  $scope.MyOrderings = MyOrderings;
 
   if(!$state.params.namespace) {
     // the controller for "ns" state should handle the case of
