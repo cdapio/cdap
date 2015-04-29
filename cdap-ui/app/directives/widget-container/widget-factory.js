@@ -67,6 +67,13 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
+      'keyvalue': {
+        element: '<my-key-value></my-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'select': {
         element: '<select></select>',
         attributes: {
