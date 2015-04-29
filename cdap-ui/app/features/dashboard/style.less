@@ -16,6 +16,7 @@ body.state-dashboard {
     div.form-inline {
       background-color: #d1d3da;
       padding: 10px 15px;
+      margin-top: -10px;
       div[dropdown] {
         display: inline-block;
         position: relative;
@@ -23,7 +24,8 @@ body.state-dashboard {
           .dropdown-toggle {
             .border-radius(4px 4px 0 0);
             + .dropdown-menu {
-              > li:first-child a { .border-radius(0 4px 0 0); }
+              min-width: 97px;
+              > li:first-child a { .border-radius(0); }
             }
           }
         }
@@ -113,7 +115,7 @@ body.state-dashboard {
     .nav-tabs {
       // A
       border-bottom: 0;
-      // margin-bottom: 10px;
+      margin-bottom: 10px;
       display: flex;
 
       > li {
@@ -146,7 +148,6 @@ body.state-dashboard {
 
   }
 
-
   [as-sortable],
   .as-sortable-item,
   .as-sortable-placeholder {
@@ -165,7 +166,6 @@ body.state-dashboard {
   .as-sortable-drag {
     opacity: .6;
   }
-
 
   .panel-heading {
     user-select: none;
@@ -188,8 +188,6 @@ body.state-dashboard {
   ul.dropdown-menu {
     z-index: 1200; // above modal
   }
-
-
 }
 
 // @red: red;
