@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -47,10 +46,8 @@ import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +72,7 @@ public class ETLKafkaBatchSourceTest  extends TestBase {
                    CamusWrapper.class.getPackage().getName());
 
     ETLStage source = new ETLStage("Kafka",
-                                   ImmutableMap.<String, String>of());
+                                   ImmutableMap.of("brokers", "10.150.26.255:9092"));
 
     Schema.Field topicField = Schema.Field.of("topic", Schema.of(Schema.Type.STRING));
     Schema.Field partitionField = Schema.Field.of("partition", Schema.of(Schema.Type.INT));
