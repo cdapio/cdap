@@ -25,10 +25,10 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
@@ -105,8 +105,8 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
     Schema schema = Schema.parseJson(tableConfig.schemaStr);
     rowRecordTransformer = new RowRecordTransformer(schema, tableConfig.rowField);
   }

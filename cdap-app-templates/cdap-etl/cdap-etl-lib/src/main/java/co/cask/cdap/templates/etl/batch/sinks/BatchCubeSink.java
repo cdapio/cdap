@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
@@ -87,9 +88,9 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
   private StructuredRecordToCubeFact transform;
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
-    transform = new StructuredRecordToCubeFact(stageConfig.getProperties());
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
+    transform = new StructuredRecordToCubeFact(properties.getProperties());
   }
 
   @Override

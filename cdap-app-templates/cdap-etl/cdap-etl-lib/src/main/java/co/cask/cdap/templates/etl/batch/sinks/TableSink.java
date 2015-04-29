@@ -24,9 +24,9 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
@@ -88,8 +88,8 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
     recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
   }
 

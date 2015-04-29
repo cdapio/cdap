@@ -114,6 +114,10 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Gson GSON = new Gson();
     private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
+    private BatchSource source;
+    private BatchSink sink;
+    private List<TransformStage> transforms;
+
     private TransformExecutor<KeyValue, KeyValue> transformExecutor;
     private Metrics mapperMetrics;
 
@@ -131,16 +135,17 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       List<Transform> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
+      transforms = Lists.newArrayListWithCapacity(stageList.size());
 
-      BatchSource source = context.newPluginInstance(sourceId);
-      source.initialize(etlConfig.getSource());
+      source = context.newPluginInstance(sourceId);
+      source.initialize(context.getPluginProperties(sourceId));
       pipeline.add(source);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, etlConfig.getSource().getName()));
 
       addTransforms(stageList, pipeline, stageMetrics, transformIds, context);
 
-      BatchSink sink = context.newPluginInstance(sinkId);
-      sink.initialize(etlConfig.getSink());
+      sink = context.newPluginInstance(sinkId);
+      sink.initialize(context.getPluginProperties(sinkId));
       pipeline.add(sink);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
 
@@ -160,6 +165,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         transform.initialize(transformContext);
 
         pipeline.add(transform);
+        transforms.add(transform);
         stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, stageConfig.getName()));
       }
     }
@@ -179,7 +185,25 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      // no-op
+      try {
+        source.destroy();
+      } catch (Exception e) {
+        LOG.warn("Destroy of Source {} threw an Exception : ", source.getClass().getName(), e);
+      }
+
+      for (TransformStage transform : transforms) {
+        try {
+          transform.destroy();
+        } catch (Exception e) {
+          LOG.warn("Destroy of Transform {} threw an Exception : ", transform.getClass().getName(), e);
+        }
+      }
+
+      try {
+        sink.destroy();
+      } catch (Exception e) {
+        LOG.warn("Destroy of Sink {} threw an Exception : ", sink.getClass().getName(), e);
+      }
     }
   }
 }
