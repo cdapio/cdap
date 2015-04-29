@@ -180,13 +180,22 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
       HashMap<LeaderInfo, ArrayList<TopicAndPartition>> offsetRequestInfo) {
     ArrayList<CamusRequest> finalRequests = new ArrayList<CamusRequest>();
     for (LeaderInfo leader : offsetRequestInfo.keySet()) {
+      Long latestTime = kafka.api.OffsetRequest.LatestTime();
+      Long earliestTime = kafka.api.OffsetRequest.EarliestTime();
+      if (CamusJob.duration != null) {
+        latestTime = System.currentTimeMillis();
+        earliestTime = latestTime - CamusJob.duration;
+        log.info("CamusJob had a duration which is not null! {}", CamusJob.duration);
+      }
+      log.info("Fetch Duration : LatestTime : {}; EarliestTime : {}", latestTime, earliestTime);
+
       SimpleConsumer consumer = createSimpleConsumer(context, leader.getUri().getHost(), leader.getUri().getPort());
       // Latest Offset
       PartitionOffsetRequestInfo partitionLatestOffsetRequestInfo =
-          new PartitionOffsetRequestInfo(kafka.api.OffsetRequest.LatestTime(), 1);
+          new PartitionOffsetRequestInfo(latestTime, 1);
       // Earliest Offset
       PartitionOffsetRequestInfo partitionEarliestOffsetRequestInfo =
-          new PartitionOffsetRequestInfo(kafka.api.OffsetRequest.EarliestTime(), 1);
+          new PartitionOffsetRequestInfo(earliestTime, 1);
       Map<TopicAndPartition, PartitionOffsetRequestInfo> latestOffsetInfo =
           new HashMap<TopicAndPartition, PartitionOffsetRequestInfo>();
       Map<TopicAndPartition, PartitionOffsetRequestInfo> earliestOffsetInfo =

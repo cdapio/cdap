@@ -63,6 +63,7 @@ public class CamusJob {
   public static final String CAMUS_REPORTER_CLASS = "etl.reporter.class";
   public static final String LOG4J_CONFIGURATION = "log4j.configuration";
   public static String kafkaBrokersList = "";
+  public static Long duration;
 
   private static HashMap<String, Long> timingMap = new HashMap<String, Long>();
 

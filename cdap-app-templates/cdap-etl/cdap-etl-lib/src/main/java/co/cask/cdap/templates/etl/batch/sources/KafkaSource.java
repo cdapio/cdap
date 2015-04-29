@@ -26,6 +26,7 @@ import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.templates.etl.common.ETLUtils;
 import co.cask.cdap.templates.etl.common.kafka.CamusJob;
 import co.cask.cdap.templates.etl.common.kafka.CamusWrapper;
 import co.cask.cdap.templates.etl.common.kafka.EtlInputFormat;
@@ -34,6 +35,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 /**
  *
@@ -53,6 +56,11 @@ public class KafkaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRec
   @Override
   public void prepareJob(BatchSourceContext context) {
     CamusJob.kafkaBrokersList = kafkaSourceConfig.getBrokers();
+    Long duration = null;
+    if (kafkaSourceConfig.getDuration() != null) {
+      duration = ETLUtils.parseDuration(kafkaSourceConfig.getDuration());
+    }
+    CamusJob.duration = duration;
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
     job.setInputFormatClass(EtlInputFormat.class);
@@ -65,11 +73,21 @@ public class KafkaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRec
     @Description("kafka brokers list")
     String brokers;
 
+    @Description("duration")
+    @Nullable
+    String duration;
+
     public String getBrokers() {
       return brokers;
     }
-    public KafkaSourceConfig(String brokers) {
+
+    public String getDuration() {
+      return duration;
+    }
+
+    public KafkaSourceConfig(String brokers, String duration) {
       this.brokers = brokers;
+      this.duration = duration;
     }
   }
 
