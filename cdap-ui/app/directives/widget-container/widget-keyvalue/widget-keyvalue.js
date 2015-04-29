@@ -12,8 +12,6 @@ angular.module(PKG.name + '.commons')
         var kvdelimiter = $scope.config['kv-delimiter'] || ':';
         var delimiter = $scope.config.delimiter || ',';
 
-        var initial = 'test:test,asdf:asdf';
-
         // initializing
         function initialize() {
           var str = $scope.model;

@@ -18,10 +18,8 @@
   </div>
 </div>
 
-
-<div class="text-center h4 well well-sm dark" ng-if="properties.length === 0">
-  <h4> No Setting </h4>
-  <a class="btn btn-default" ng-click="addProperty()">
+<div ng-if="properties.length === 0">
+  <a class="btn btn-info btn-transparent" ng-click="addProperty()">
     <span class="fa fa-fw fa-plus"></span>
     <span>Add Property</span>
   </a>
