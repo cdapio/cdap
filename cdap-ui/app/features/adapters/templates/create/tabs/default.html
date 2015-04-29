@@ -1,16 +1,16 @@
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
-    <span class="pull-left">{{metadata.name}}</span>
-    <div class="btn-group pull-right" role="group" aria-label="...">
-      <button type="button"
-              class="btn btn-default"
-              ng-click="doSave()">
-          Publish
-      </button>
+    <span class="pull-left panel-title">{{metadata.name}}</span>
+    <div class="pull-right" aria-label="...">
       <button type="button"
               class="btn btn-default"
               ng-click="saveAsDraft()">
         Draft
+      </button>
+      <button type="button"
+              class="btn btn-success"
+              ng-click="doSave()">
+          Publish
       </button>
     </div>
   </div>

@@ -3,7 +3,7 @@
     <div class="col-xs-4">
       <div class="panel panel-default" ng-init="sourcesTabOpen=true">
         <div class="panel-heading clearfix" ng-click="sourcesTabOpen = !sourcesTabOpen">
-          <span class="pull-left"> Source [{{defaultSources.length}}] </span>
+          <span class="pull-left"> Source ({{defaultSources.length}}) </span>
           <i class="fa fa-fw pull-right"
               ng-class="{'fa-chevron-down': sourcesTabOpen, 'fa-chevron-right': !sourcesTabOpen}"></i>
         </div>
@@ -29,7 +29,7 @@
     <div class="col-xs-4">
       <div class="panel panel-default" ng-init="transformsTabOpen=true">
         <div class="panel-heading clearfix" ng-click="transformsTabOpen =!transformsTabOpen">
-          <span class="pull-left"> Transforms [{{defaultTransforms.length}}] </span>
+          <span class="pull-left"> Transforms ({{defaultTransforms.length}}) </span>
           <i class="fa fa-fw pull-right"
               ng-class="{'fa-chevron-down': transformsTabOpen, 'fa-chevron-right': !transformsTabOpen}"></i>
         </div>
@@ -55,7 +55,7 @@
     <div class="col-xs-4">
       <div class="panel panel-default" ng-init="sinksTabOpen=true">
         <div class="panel-heading clearfix" ng-click="sinksTabOpen = !sinksTabOpen">
-          <span class="pull-left"> Sinks [{{defaultSinks.length}}] </span>
+          <span class="pull-left"> Sinks ({{defaultSinks.length}}) </span>
           <i class="fa fa-fw pull-right"
               ng-class="{'fa-chevron-down': sinksTabOpen, 'fa-chevron-right': !sinksTabOpen}"></i>
         </div>
