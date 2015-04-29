@@ -104,8 +104,8 @@ asking questions and assisting others on the mailing list.
 For quick guide to getting your system setup to contribute to CDAP, take a look at our
 `Contributor Quickstart Guide <DEVELOPERS.rst>`__.
 
-Bug Reports & Feature Requests
-------------------------------
+Filing Issues: Bug Reports & Feature Requests
+---------------------------------------------
 Bugs and suggestions should be made by `filing an Issue <https://issues.cask.co/browse/cdap>`__.
 
 Pull Requests
@@ -126,10 +126,6 @@ enhancing existing features, or fixing bugs, here's how to do it:
 6. After we review and accept your request, we’ll commit your code to the cask/cdap repository.
 
 Thanks for helping to improve CDAP!
-
-Filing Issues
--------------
-Website for filing `Issues <http://issues.cask.co/browse/cdap>`__.
 
 Mailing Lists
 -------------
