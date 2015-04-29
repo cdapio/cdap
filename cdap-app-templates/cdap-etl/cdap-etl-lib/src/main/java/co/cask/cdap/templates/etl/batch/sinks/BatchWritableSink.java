@@ -19,39 +19,26 @@ package co.cask.cdap.templates.etl.batch.sinks;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
 
 /**
- * Sink for CDAP Datasets that are batch writable, which means they can be used as output of a
- * mapreduce job. User is responsible for providing any necessary dataset properties.
+ * An abstract Sink for CDAP Datasets that are batch writable, which means they can be used as output of a
+ * mapreduce job. Extending subclasses must provide implementation for {@link BatchWritableSink} which should return the
+ * type of Dataset used by the sink.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
-  protected static final String NAME = "name";
-  protected static final String TYPE = "type";
-
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("BatchWritableSink");
-    configurer.setDescription("Sink for CDAP Datasets that are batch writable." +
-      " The name and type of dataset are required properties." +
-      " Any properties required by the desired dataset type must also be provided.");
-    configurer.addProperty(new Property(NAME, "Name of the dataset. If the dataset does not already exist," +
-      " one will be created.", true));
-    configurer.addProperty(new Property(TYPE, "The type of batch writable dataset to use.", true));
-  }
+public abstract class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
 
   @Override
   public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    String datasetName = stageConfig.getProperties().get(NAME);
+    String datasetName = stageConfig.getProperties().get(Properties.BatchReadableWritable.NAME);
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
     String datasetType = getDatasetType(stageConfig);
     Preconditions.checkArgument(datasetType != null && !datasetType.isEmpty(), "Dataset type must be given.");
@@ -61,14 +48,14 @@ public class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_O
       .build());
   }
 
-  // this is a separate method so that it can be overriden by classes that extend this one.
-  protected String getDatasetType(ETLStage stageConfig) {
-    return stageConfig.getProperties().get(TYPE);
-  }
+  /**
+   * An abstract method which the subclass should override to provide their dataset types
+   */
+  protected abstract String getDatasetType(ETLStage stageConfig);
 
   @Override
   public void prepareJob(BatchSinkContext context) {
     PluginProperties pluginProperties = context.getPluginProperties();
-    context.setOutput(pluginProperties.getProperties().get(NAME));
+    context.setOutput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
   }
 }
