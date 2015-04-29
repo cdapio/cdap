@@ -32,6 +32,13 @@ angular.module(PKG.name + '.commons')
           'data-label': 'Date'
         }
       },
+      'csv': {
+        element: '<textarea></textarea>',
+        attributes: {
+          'ng-model': 'model',
+          'class': 'form-control'
+        }
+      },
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
