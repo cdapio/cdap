@@ -3,7 +3,8 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
+
 
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
@@ -63,6 +64,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   };
 
+  $scope.addWidget = function () {
+    if (!$scope.currentBoard.canAddWidget()) {
+      $alert({
+        content: 'Can not add more than ' + $scope.currentBoard.WIDGET_LIMIT + ' widgets.',
+        type: 'warning'
+      });
+      return;
+    }
+    $state.go('dashboard.user.addwdgt', {tab: $state.params.tab}, {reload: false});
+  }
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {
@@ -120,7 +131,17 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG) {
 
   // TODO: new widgets added won't have the properties set below
   $scope.updateWithTimeRange = function() {
-    // TODO: need to restrict timeRange (too wide a time range causes issues with charting lib - too many points!)
+    var millisecondsPerDay = 1000*60*60*24;
+    var limitInDays = 30;
+    var timeRange = $scope.timeOptions.endMs - $scope.timeOptions.startMs;
+    if (timeRange >  limitInDays * millisecondsPerDay) {
+      // Note: alternative is to interpolate the many many points we get from the backend (mostly will be 0s?).
+      $alert({
+        content: 'Please choose a shorter time range. Current time range limit is ' + limitInDays + ' days.',
+        type: 'warning'
+      });
+      return;
+    }
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
       widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);

@@ -74,10 +74,10 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
           })
         );
       });
-      $scope.currentDashboard.addWidget(widgets);
+      $scope.currentBoard.addWidget(widgets);
     } else {
       $scope.model.color = classes[(generateHash($scope.model.metric.name) * 13) % classes.length];
-      $scope.currentDashboard.addWidget($scope.model);
+      $scope.currentBoard.addWidget($scope.model);
     }
     $scope.$close();
   };
