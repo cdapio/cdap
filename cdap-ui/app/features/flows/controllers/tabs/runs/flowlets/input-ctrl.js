@@ -31,9 +31,9 @@ angular.module(PKG.name + '.feature.flows')
             var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
-                              + '.run.' + runid
-                              + '.flowlet.' + input.name
-                              + '&metric=system.process.events.out&start=now-60s',
+                              + '.consumer.' + flowletid
+                              + '.producer.' + input.name
+                              + '&metric=system.queue.pending&start=now-60s&end=now',
                 streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.stream.' + input.name
                               + '&metric=system.collect.events&start=now-60s';
@@ -48,8 +48,9 @@ angular.module(PKG.name + '.feature.flows')
             // POLLING GRAPH
             dataSrc
               .poll({
-                _cdapPath: path + '&count=60',
-                method: 'POST'
+                _cdapPath: path,
+                method: 'POST',
+                interval: 1000
               }, function (res) {
 
                 if(res.series[0]) {
