@@ -65,9 +65,9 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
   };
 
   $scope.addWidget = function () {
-    if (!$scope.currentBoard.canAddWidget()) {
+    if (!rDashboardsModel.current().canAddWidget()) {
       $alert({
-        content: 'Can not add more than ' + $scope.currentBoard.WIDGET_LIMIT + ' widgets.',
+        content: 'Can not add more than ' + rDashboardsModel.current().WIDGET_LIMIT + ' widgets.',
         type: 'warning'
       });
       return;

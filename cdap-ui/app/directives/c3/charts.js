@@ -100,7 +100,7 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
     if($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
-    chartConfig.zoom = { enabled: true };
+    chartConfig.zoom = { enabled: false };
     chartConfig.transition = { duration: 1000 };
     $scope.chart = c3.generate(chartConfig);
   }

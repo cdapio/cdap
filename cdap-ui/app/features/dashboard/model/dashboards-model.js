@@ -115,7 +115,7 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
    * Returns true or false, depending on whether there is room for more widgets in this dashboard
    */
   Dashboard.prototype.canAddWidget = function () {
-    return this.numWidgets < this.WIDGET_LIMIT;
+    return this.numWidgets() < this.WIDGET_LIMIT;
   }
 
   /**
