@@ -171,6 +171,18 @@ function doPoll (resource) {
 }
 
 /**
+ * Helps avoid sending certain properties to the browser (meta attributes used only in the node server)
+ */
+function stripResource(key, value) {
+  // note that 'stop' is not the stop timestamp, but rather a stop flag/signal (unlike the startTs)
+  if (key==="timerId" || key==='startTs' || key==='stop') {
+    return undefined;
+  }
+  return value;
+}
+
+
+/**
  * @private emitResponse
  *
  * sends data back to the client through socket
@@ -183,10 +195,6 @@ function doPoll (resource) {
 function emitResponse (resource, error, response, body) {
   var timeDiff = Date.now()  - resource.startTs;
 
-  resource.timerId = undefined;
-  resource.stop = undefined;
-  resource.startTs = undefined;
-
   if(error) {
     log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
     log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ','
@@ -195,7 +203,7 @@ function emitResponse (resource, error, response, body) {
       resource: resource,
       error: error,
       warning: error.toString()
-    }));
+    }, stripResource));
 
   } else {
     log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
@@ -205,7 +213,7 @@ function emitResponse (resource, error, response, body) {
       resource: resource,
       statusCode: response.statusCode,
       response: body
-    }));
+    }, stripResource));
   }
 }
 
