@@ -87,17 +87,7 @@ public class CamusJob {
   }
 
   public static String getKafkaBrokers(JobContext job) {
-    return "10.150.26.255:9092";
-//    String brokers = job.getConfiguration().get(KAFKA_BROKERS);
-//    if (brokers == null) {
-//      brokers = job.getConfiguration().get(KAFKA_HOST_URL);
-//      if (brokers != null) {
-//        LOG.warn("The configuration properties " + KAFKA_HOST_URL + " and " + KAFKA_HOST_PORT +
-//                   "are deprecated. Please switch to using " + KAFKA_BROKERS);
-//        return brokers + ":" + job.getConfiguration().getInt(KAFKA_HOST_PORT, 10251);
-//      }
-//    }
-//    return brokers;
+    return kafkaBrokersList;
   }
 
   public static int getKafkaFetchRequestCorrelationId(JobContext job) {
