@@ -75,7 +75,7 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
   public static final String ETL_AUDIT_IGNORE_SERVICE_TOPIC_LIST = "etl.audit.ignore.service.topic.list";
 
   public static final String CAMUS_WORK_ALLOCATOR_CLASS = "camus.work.allocator.class";
-  public static final String CAMUS_WORK_ALLOCATOR_DEFAULT = "com.linkedin.camus.workallocater.BaseAllocator";
+  public static final String CAMUS_WORK_ALLOCATOR_DEFAULT = "co.cask.cdap.templates.etl.common.kafka.BaseAllocator";
 
   private static final int BACKOFF_UNIT_MILLISECONDS = 1000;
 
@@ -693,7 +693,7 @@ public class EtlInputFormat extends InputFormat<EtlKey, CamusWrapper> {
 
   public static Class<MessageDecoder> getMessageDecoderClass(JobContext job) {
     return (Class<MessageDecoder>) job.getConfiguration().getClass(CAMUS_MESSAGE_DECODER_CLASS,
-        getMessageDecoderClass(job));
+        SimpleMessageDecoder.class);
   }
 
   public static Class<MessageDecoder> getMessageDecoderClass(JobContext job, String topicName) {

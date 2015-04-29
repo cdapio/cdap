@@ -203,7 +203,7 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*,
-                  co.cask.cdap.templates.etl.common</Export-Package>
+                  co.cask.cdap.templates.etl.common,co.cask.cdap.templates.etl.common.kafka</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
@@ -221,7 +221,7 @@
               <instructions>
                 <!-- build bundle jar for realtime. excluding excluding batch-->
                 <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*,
-                  co.cask.cdap.templates.etl.common</Export-Package>
+                  co.cask.cdap.templates.etl.common,co.cask.cdap.templates.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

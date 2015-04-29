@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
@@ -29,6 +30,8 @@ import co.cask.cdap.templates.etl.common.kafka.EtlInputFormat;
 import co.cask.cdap.templates.etl.common.kafka.EtlKey;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -36,8 +39,8 @@ import org.apache.hadoop.mapreduce.Job;
 @Plugin(type = "source")
 @Name("Kafka")
 @Description("Batch Source for Kafka")
-public class KakfaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRecord> {
-
+public class KafkaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRecord> {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
   @Override
   public void prepareJob(BatchSourceContext context) {
     Job job = context.getHadoopJob();
@@ -47,6 +50,17 @@ public class KakfaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRec
 
   @Override
   public void transform(KeyValue<EtlKey, CamusWrapper> input, Emitter<StructuredRecord> emitter) throws Exception {
+    Schema.Field msgField = Schema.Field.of("msg", Schema.of(Schema.Type.BYTES));
+    Schema.Field topicField = Schema.Field.of("topic", Schema.of(Schema.Type.STRING));
+    Schema.Field partitionField = Schema.Field.of("partition", Schema.of(Schema.Type.INT));
+    Schema.Field offsetField = Schema.Field.of("offset", Schema.of(Schema.Type.LONG));
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf(
+      "kmsg", msgField, topicField, partitionField, offsetField));
 
+    recordBuilder.set("msg", input.getValue().getRecord());
+    recordBuilder.set("topic", input.getKey().getTopic());
+    recordBuilder.set("partition", input.getKey().getPartition());
+    recordBuilder.set("offset", input.getKey().getOffset());
+    emitter.emit(recordBuilder.build());
   }
 }
