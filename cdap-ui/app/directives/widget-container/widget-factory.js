@@ -1,6 +1,13 @@
 angular.module(PKG.name + '.commons')
   .service('WidgetFactory', function() {
     this.registry = {
+      'number': {
+        element: '<my-number-widget></my-number-widget>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'textbox': {
         element: '<input/>',
         attributes: {
