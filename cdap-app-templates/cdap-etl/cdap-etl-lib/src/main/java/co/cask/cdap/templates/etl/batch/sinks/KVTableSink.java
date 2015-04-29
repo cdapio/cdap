@@ -27,6 +27,7 @@ import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.common.Properties;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = kvTableConfig.getProperties().getProperties();
+    Map<String, String> properties = Maps.newHashMap(kvTableConfig.getProperties().getProperties());
     properties.put(Properties.BatchReadableWritable.NAME, kvTableConfig.name);
     properties.put(Properties.BatchReadableWritable.TYPE, KeyValueTable.class.getName());
     return properties;

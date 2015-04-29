@@ -32,6 +32,7 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -86,7 +87,7 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = tableConfig.getProperties().getProperties();
+    Map<String, String> properties = Maps.newHashMap(tableConfig.getProperties().getProperties());
     properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
     properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
     return properties;
