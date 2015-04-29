@@ -1,3 +1,23 @@
+<div class="labels">
+  <div class="col-xs-6">
+    <div class="col-xs-7 delimiter-label">
+      <strong>KV Delimiter</strong>
+    </div>
+    <div class="col-xs-5">
+      <input type="text" class="form-control" ng-model="kvdelimiter">
+    </div>
+  </div>
+
+  <div class="col-xs-6">
+    <div class="col-xs-5 col-xs-offset-1 delimiter-label">
+      <strong>Delimiter</strong>
+    </div>
+    <div class="col-xs-5">
+      <input type="text" class="form-control" ng-model="delimiter">
+    </div>
+  </div>
+</div>
+
 <div ng-repeat="property in properties" class="h4-margin clearfix">
   <div class="col-xs-4">
     <input type="text" class="form-control" ng-model="property.key" placeholder="key"/>
