@@ -11,6 +11,8 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
 
 
   function Dashboard (p) {
+    // maximum number of widgets per dashboard
+    this.WIDGET_LIMIT = 12;
     p = p || {};
     angular.extend(
       this,
@@ -34,6 +36,7 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       // default is a single empty column
       this.columns.push([]);
     }
+
     this.checkForEmptyDashboard();
   }
 
@@ -108,6 +111,23 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
     this.persist();
   };
 
+  /**
+   * Returns true or false, depending on whether there is room for more widgets in this dashboard
+   */
+  Dashboard.prototype.canAddWidget = function () {
+    return this.numWidgets() < this.WIDGET_LIMIT;
+  }
+
+  /**
+   * Returns the number of widgets in this dashboard
+   */
+  Dashboard.prototype.numWidgets = function () {
+    var sum = 0;
+    this.columns.forEach(function(column) {
+      sum += column.length;
+    });
+    return sum;
+  }
 
 
   /**
@@ -160,23 +180,21 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
   };
 
   Dashboard.prototype.changeColumn = function(n) {
-    this.numColumn = n;
-
     // Flattening the array
     var array = [];
     array = array.concat.apply(array, this.columns);
 
     // Create Columns
     var columns = [];
-    for (var i = 0; i < this.numColumn; i++) {
+    for (var i = 0; i < n; i++) {
       columns.push([]);
     }
 
     // Fill the columns
     for (var i = 0; i < array.length; i++) {
-      columns[i % this.numColumn].push(array[i]);
+      columns[i % n].push(array[i]);
     }
-
+    this.numColumn = n;
     this.columns = columns;
 
     this.persist();

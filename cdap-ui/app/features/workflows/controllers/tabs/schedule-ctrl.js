@@ -20,6 +20,20 @@ angular.module(PKG.name + '.feature.workflows')
           v.time.day = parse[2];
           v.time.month = parse[3];
           v.time.week = parse[4];
+
+          dataSrc.request({
+            _cdapNsPath: '/apps/' + $state.params.appId + '/workflows/'
+                          + $state.params.programId + '/previousruntime'
+          }).then(function (timeResult) {
+            if (timeResult[0]) {
+              v.lastrun = timeResult[0].time;
+            } else {
+              v.lastrun = 'NA';
+            }
+
+          });
+        } else {
+          v.lastrun = 'NA';
         }
         v.isOpen = false;
 

@@ -62,7 +62,7 @@ angular.module(PKG.name + '.commons')
           elem.find('input').attr('required', true);
           ngModel.$validators.metricAndContext = function (m, v) {
             var t = m || v;
-            if (!t || !t.names || !t.names.length || !t.context) {
+            if (!t || !t.names || !t.names.length) {
               return false;
             }
             for (var i = 0; i < t.names.length; i++) {
@@ -157,25 +157,29 @@ angular.module(PKG.name + '.commons')
             return;
           }
 
-          if(newVal.context && newVal.names) {
+          if(newVal.names) {
             var isAddAll = false;
             for (var i = 0; i < newVal.names.length; i++) {
               if (newVal.names[i].name === 'Add All') {
                 isAddAll = true;
               }
             }
+            var context = getBaseContext();
+            if (newVal.context) {
+              context += '.' + newVal.context;
+            }
             if (isAddAll) {
               ngModel.$setViewValue({
                 addAll: true,
                 allMetrics: scope.available.names.slice(1), // Remove 'Add All' option
-                context: getBaseContext() + '.' + newVal.context,
+                context: context,
                 names: newVal.getNames(),
                 name: newVal.getName()
               });
               return;
             } else {
               ngModel.$setViewValue({
-                context: getBaseContext() + '.' + newVal.context,
+                context: context,
                 names: newVal.getNames(),
                 name: newVal.getName()
               });

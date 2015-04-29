@@ -84,13 +84,13 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
   $scope.wdgts.push(new Widget({title: 'System', type: 'c3-line', isLive: true,
                   metric: {
                     context: 'namespace.*',
-                    names: ['system.log.error', 'system.log.warn'],
+                    names: ['system.services.log.error', 'system.services.log.warn'],
                     startTime: 'now-3600s',
                     endTime: 'now',
                     resolution: '1m'
                   },
-                  metricAlias: {'system.log.error': 'System Errors',
-                                'system.log.warn' : 'System Warnings'},
+                  metricAlias: {'system.services.log.error': 'System Errors',
+                                'system.services.log.warn' : 'System Warnings'},
                   interval: 60*1000,
                   aggregate: 5
   }));
