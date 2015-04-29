@@ -62,6 +62,7 @@ public class CamusJob {
   public static final String KAFKA_TIMEOUT_VALUE = "kafka.timeout.value";
   public static final String CAMUS_REPORTER_CLASS = "etl.reporter.class";
   public static final String LOG4J_CONFIGURATION = "log4j.configuration";
+  public static String kafkaBrokersList = "";
 
   private static HashMap<String, Long> timingMap = new HashMap<String, Long>();
 

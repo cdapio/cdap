@@ -22,9 +22,11 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.templates.etl.common.kafka.CamusJob;
 import co.cask.cdap.templates.etl.common.kafka.CamusWrapper;
 import co.cask.cdap.templates.etl.common.kafka.EtlInputFormat;
 import co.cask.cdap.templates.etl.common.kafka.EtlKey;
@@ -41,12 +43,36 @@ import org.slf4j.LoggerFactory;
 @Description("Batch Source for Kafka")
 public class KafkaSource extends BatchSource<EtlKey, CamusWrapper, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
+
+  private final KafkaSourceConfig kafkaSourceConfig;
+
+  public KafkaSource(KafkaSourceConfig kafkaSourceConfig) {
+    this.kafkaSourceConfig = kafkaSourceConfig;
+  }
+
   @Override
   public void prepareJob(BatchSourceContext context) {
+    CamusJob.kafkaBrokersList = kafkaSourceConfig.getBrokers();
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
     job.setInputFormatClass(EtlInputFormat.class);
   }
+
+  /**
+   * Config class for KVTableSource
+   */
+  public static class KafkaSourceConfig extends PluginConfig {
+    @Description("kafka brokers list")
+    String brokers;
+
+    public String getBrokers() {
+      return brokers;
+    }
+    public KafkaSourceConfig(String brokers) {
+      this.brokers = brokers;
+    }
+  }
+
 
   @Override
   public void transform(KeyValue<EtlKey, CamusWrapper> input, Emitter<StructuredRecord> emitter) throws Exception {
