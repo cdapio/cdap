@@ -59,6 +59,22 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model'
         }
+      },
+      'schema': {
+        element: '<my-schema-editor></my-schema-editor>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
+      'select': {
+        element: '<select></select>',
+        attributes: {
+          'ng-model': 'model',
+          'class': 'form-control',
+          'ng-options': 'item as item for item in myconfig.properties.values',
+          'ng-init': 'model = model.length ? model : myconfig.properties.default'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
