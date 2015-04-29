@@ -1,12 +1,9 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $modalInstance, $filter, $stateParams, myHelpers) {
+  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert) {
 
     var dataSrc = new MyDataSource($scope);
 
-    $scope.activePanel = 0;
-    var filterFilter = $filter('filter');
-
-    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamid;
+    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv'];
 
     $scope.reload = function () {
@@ -43,7 +40,6 @@ angular.module(PKG.name + '.feature.admin')
 
             }
           });
-
 
           // formatting settings
           var settings = myHelpers.objectQuery(res, 'format', 'settings');
@@ -110,7 +106,14 @@ angular.module(PKG.name + '.feature.admin')
           body: params
         })
         .then(function(res) {
-          $modalInstance.close(res);
+          $scope.reload();
+
+          $alert({
+            type: 'success',
+            title: 'Success',
+            content: 'Stream properties have been successfully saved!'
+          });
+
         }, function(err) {
           $scope.error = err;
         });
@@ -119,7 +122,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.addProperties = function() {
       $scope.properties.push({
         name: '',
-        type: ''
+        type: 'string'
       });
     };
 
@@ -138,11 +141,6 @@ angular.module(PKG.name + '.feature.admin')
     $scope.removeSetting = function(setting) {
       var index = $scope.settings.indexOf(setting);
       $scope.settings.splice(index, 1);
-    };
-
-    $scope.closeModal = function() {
-      $modalInstance.close();
-
     };
 
   });
