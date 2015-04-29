@@ -17,31 +17,12 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Transform Stage.
- *
- * @param <IN> Type of input object
- * @param <OUT> Type of output object
+ * Interface for stage that supports destroy call for resources cleanup.
  */
-public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT>, Destroyable {
-
-  private StageContext context;
+public interface Destroyable {
 
   /**
-   * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
-   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
-   *
-   * @param context {@link StageContext}
+   * Invoked for resources cleanup.
    */
-  public void initialize(StageContext context) {
-    this.context = context;
-  }
-
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected StageContext getContext() {
-    return context;
-  }
+  void destroy();
 }
