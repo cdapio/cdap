@@ -7,7 +7,9 @@ angular.module(PKG.name + '.feature.workflows')
                    '/runs/' + $scope.runs.selected.runid;
 
     $scope.logs = [];
-
+    if (!$scope.runs.length) {
+      return;
+    }
     dataSrc.poll({
       _cdapNsPath: basePath + '/logs/next?max=50'
     }, function(res) {
