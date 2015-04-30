@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -119,9 +120,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     JsonObject deployedApp = deployedApps.get(0);
     Assert.assertEquals(templateId, deployedApp.get("id").getAsString());
 
-    response = getAdapterStatus(namespaceId, adapterName);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String status = readResponse(response);
+    String status = getAdapterStatus(Id.Adapter.from(namespaceId, adapterName));
     Assert.assertEquals("STOPPED", status);
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
@@ -130,9 +129,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     response = startStopAdapter(namespaceId, adapterName, "start");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = getAdapterStatus(namespaceId, adapterName);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    status = readResponse(response);
+    status = getAdapterStatus(Id.Adapter.from(namespaceId, adapterName));
     Assert.assertEquals("STARTED", status);
 
     // Deleting App should fail
@@ -293,11 +290,6 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   private HttpResponse createAdapter(String namespaceId, String name, AdapterConfig config) throws Exception {
     return doPut(String.format("%s/namespaces/%s/adapters/%s",
                                Constants.Gateway.API_VERSION_3, namespaceId, name), GSON.toJson(config));
-  }
-
-  private HttpResponse getAdapterStatus(String namespaceId, String name) throws Exception {
-    return doGet(String.format("%s/namespaces/%s/adapters/%s/status",
-                               Constants.Gateway.API_VERSION_3, namespaceId, name));
   }
 
   private HttpResponse listAdapters(String namespaceId) throws Exception {

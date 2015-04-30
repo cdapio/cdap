@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myAceEditor', function($window) {
+  .directive('myAceEditor', function($window, myHelpers) {
     return {
       restrict: 'EA',
       scope: {
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
                 editor.renderer.emptyMessageNode = null;
             } else if (shouldShow && !node) {
                 node = editor.renderer.emptyMessageNode = document.createElement("div");
-                node.textContent = $scope.config.properties.default;
+                node.textContent = myHelpers.objectQuery($scope, 'config', 'properties', 'default');
                 node.className = "ace_invisible ace_emptyMessage";
                 node.style.padding = "0 5px";
                 editor.renderer.scroller.appendChild(node);

@@ -52,6 +52,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var s = res[0];
           this.scope.source.name = s.name;
+          this.scope.source._backendProperties = s.properties;
           var obj = {};
           angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
@@ -68,6 +69,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var s = res[0];
           this.scope.sink.name = s.name;
+          this.scope.sink._backendProperties = s.properties;
           var obj = {};
           angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
@@ -89,6 +91,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
           this.scope.transforms[index].properties = obj;
+          this.scope.transforms[index]._backendProperties = t.properties;
         }.bind(this));
     }
 
