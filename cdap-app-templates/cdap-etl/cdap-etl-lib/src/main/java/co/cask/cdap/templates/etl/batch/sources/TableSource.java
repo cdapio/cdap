@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
@@ -106,8 +105,8 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void initialize(PluginProperties properties) throws Exception {
-    super.initialize(properties);
+  public void initialize(BatchSourceContext context) throws Exception {
+    super.initialize(context);
     Schema schema = Schema.parseJson(tableConfig.schemaStr);
     rowRecordTransformer = new RowRecordTransformer(schema, tableConfig.rowField);
   }
