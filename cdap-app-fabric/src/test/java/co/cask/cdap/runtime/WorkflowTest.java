@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.runtime;
 
+import co.cask.cdap.AppWithAnonymousWorkflow;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.MissingSparkWorkflowApp;
 import co.cask.cdap.OneActionWorkflowApp;
@@ -161,6 +162,16 @@ public class WorkflowTest {
     } catch (Exception ex) {
       Assert.assertEquals(ex.getCause().getMessage(),
                           "Workflow 'NonExistentWorkflow' is not configured with the Application.");
+    }
+
+    // try deploying app containing anonymous workflow
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        AppWithAnonymousWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Workflow does not have name.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-");
     }
   }
 
