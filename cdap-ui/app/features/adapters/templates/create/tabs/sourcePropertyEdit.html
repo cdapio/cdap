@@ -6,13 +6,13 @@
           ng-controller="PluginEditController" plugin-property-edit-view>
       <div ng-if="noconfig">
         <div class="well well-lg widget-group-container">
-          <div ng-repeat="(name, value) in source.properties track by $index">
+          <div ng-repeat="(name, value) in plugin.properties track by $index">
             <div class="form-group">
               <label class="control-label col-sm-2">{{ name | caskCapitalizeFilter}}</label>
               <div class="col-sm-7">
                 <input type="text"
                         class="form-control"
-                        ng-model="source.properties[name]"/>
+                        ng-model="plugin.properties[name]"/>
               </div>
             </div>
           </div>
