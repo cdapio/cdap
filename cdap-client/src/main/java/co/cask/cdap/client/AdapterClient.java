@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -340,7 +341,10 @@ public class AdapterClient {
       throw new AdapterNotFoundException(adapter);
     }
 
-    return ObjectResponse.fromJsonBody(response, AdapterStatus.class).getResponseObject();
+    Map<String, String> statusMap = ObjectResponse.<Map<String, String>>fromJsonBody(
+      response, new TypeToken<Map<String, String>>() { }.getType()).getResponseObject();
+
+    return AdapterStatus.valueOf(statusMap.get("status"));
   }
 
   public List<RunRecord> getRuns(String adapterName, ProgramRunStatus status, long startTs, long endTs,
