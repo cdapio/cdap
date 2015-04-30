@@ -20,7 +20,9 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Shim for JDBC driver as a better alternative to mere Class.forName to load the JDBC Driver class.
@@ -73,5 +75,10 @@ public class JDBCDriverShim implements Driver {
   @Override
   public boolean jdbcCompliant() {
     return delegate.jdbcCompliant();
+  }
+
+  @Override
+  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    return delegate.getParentLogger();
   }
 }
