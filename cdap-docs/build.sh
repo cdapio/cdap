@@ -83,7 +83,6 @@ function run_command() {
     * )                 usage; exit 0;;
   esac
 }
-################################################## new
 
 function clean() {
   cd ${SCRIPT_PATH}
@@ -114,7 +113,7 @@ function build_docs_outer_level() {
   echo ""
   echo "========================================================"
   echo "Building outer-level docs..."
-  echo "========================================================"
+  echo "--------------------------------------------------------"
   echo ""
   clean
   version
@@ -144,7 +143,7 @@ function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
   echo "Copying lower-level docs..."
-  echo "========================================================"
+  echo "--------------------------------------------------------"
   echo ""
 
   for i in ${MANUALS}; do
@@ -167,17 +166,21 @@ function copy_docs_lower_level() {
 ################################################## current
 
 function build_all() {
-  echo "========================================================================="
+  echo ""
+  echo "========================================================"
   echo "Building GitHub Docs."
-  echo "========================================================================="
+  echo "--------------------------------------------------------"
+  echo ""
   run_command docs-github-part ${ARG_2} ${ARG_3}
   echo "Stashing GitHub Docs."
   cd ${SCRIPT_PATH}
   mkdir -p ${SCRIPT_PATH}/${BUILD_TEMP}
   mv ${SCRIPT_PATH}/${BUILD}/*.zip ${SCRIPT_PATH}/${BUILD_TEMP}
-  echo "========================================================================="
+  echo ""
+  echo "========================================================"
   echo "Building Web Docs."
-  echo "========================================================================="
+  echo "--------------------------------------------------------"
+  echo ""
   run_command docs-web-part ${ARG_2} ${ARG_3}
   echo "Replacing GitHub Docs."
   mv ${SCRIPT_PATH}/${BUILD_TEMP}/*.zip ${SCRIPT_PATH}/${BUILD}
@@ -210,13 +213,20 @@ function build_docs_web() {
 }
 
 function _build_docs() {
+  echo ""
+  echo "========================================================"
+  echo "Building \"${1}\"..."
+  echo "--------------------------------------------------------"
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
   display_version
-  bell "Building ${1} completed."
+  echo "========================================================"
+  bell "Building \"${1}\" completed."
+  echo "--------------------------------------------------------"
+  echo ""
 }
 
 function build_docs_inner_level() {
@@ -229,7 +239,7 @@ function build_specific_doc() {
   echo ""
   echo "========================================================"
   echo "Building ${1}, target ${2}..."
-  echo "========================================================"
+  echo "--------------------------------------------------------"
   echo ""
   cd $SCRIPT_PATH/${1}
   ./build.sh ${2} ${ARG_2} ${ARG_3}
