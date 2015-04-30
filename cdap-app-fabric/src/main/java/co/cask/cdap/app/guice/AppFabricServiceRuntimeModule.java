@@ -17,9 +17,9 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.mapreduce.MRJobClientWithMetricsFallback;
+import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
+import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -129,7 +129,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(MRJobInfoFetcher.class).to(MapReduceMetricsInfo.class);
+                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -176,7 +176,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(MRJobInfoFetcher.class).to(MapReduceMetricsInfo.class);
+                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -222,7 +222,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(MRJobInfoFetcher.class).to(MRJobClientWithMetricsFallback.class);
+                               bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);

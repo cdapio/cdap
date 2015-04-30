@@ -27,18 +27,18 @@ import java.io.IOException;
 
 
 /**
- * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and then {@link MapReduceMetricsInfo}
- * if necessary.
+ * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and
+ * then {@link LocalMRJobInfoFetcher} if necessary.
  */
-public class MRJobClientWithMetricsFallback implements MRJobInfoFetcher {
-  private static final Logger LOG = LoggerFactory.getLogger(MRJobClientWithMetricsFallback.class);
+public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedMRJobInfoFetcher.class);
   private final MRJobClient mrJobClient;
-  private final MapReduceMetricsInfo mapReduceMetricsInfo;
+  private final LocalMRJobInfoFetcher localMRJobInfoFetcher;
 
   @Inject
-  public MRJobClientWithMetricsFallback(MRJobClient mrJobClient, MapReduceMetricsInfo mapReduceMetricsInfo) {
+  public DistributedMRJobInfoFetcher(MRJobClient mrJobClient, LocalMRJobInfoFetcher localMRJobInfoFetcher) {
     this.mrJobClient = mrJobClient;
-    this.mapReduceMetricsInfo = mapReduceMetricsInfo;
+    this.localMRJobInfoFetcher = localMRJobInfoFetcher;
   }
 
   /**
@@ -52,12 +52,12 @@ public class MRJobClientWithMetricsFallback implements MRJobInfoFetcher {
       return mrJobClient.getMRJobInfo(runId);
     } catch (IOException ioe) {
       LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", runId, ioe);
-      return mapReduceMetricsInfo.getMRJobInfo(runId);
+      return localMRJobInfoFetcher.getMRJobInfo(runId);
     } catch (NotFoundException nfe) {
       // Even if we ran the MapReduce program, there is no guarantee that the JobClient will be able to find it.
       // For example, if the MapReduce program fails before it successfully submits the job.
       LOG.debug("Failed to find run history from JobClient for runId: {}. Falling back to Metrics system.", runId, nfe);
-      return mapReduceMetricsInfo.getMRJobInfo(runId);
+      return localMRJobInfoFetcher.getMRJobInfo(runId);
     }
   }
 }
