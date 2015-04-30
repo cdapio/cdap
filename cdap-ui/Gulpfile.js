@@ -128,7 +128,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-cookies/angular-cookies.min.js',
       './bower_components/c3/c3.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
-      './bower_components/angular-ui-ace/ui-ace.js'
+      './bower_components/angular-ui-ace/ui-ace.js',
+      './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js'
 
 
     ].concat([
