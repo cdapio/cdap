@@ -142,7 +142,7 @@ function build_docs_outer_level() {
 function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
-  echo "Copying lower-level documenation..."
+  echo "Copying lower-level documentation..."
   echo "--------------------------------------------------------"
   echo ""
 
