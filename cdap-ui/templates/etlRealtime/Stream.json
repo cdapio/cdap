@@ -4,9 +4,9 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "Stream Configuration",
-      "position" : ["data.field", "headers.field", "name"],
+      "position" : ["body.field", "headers.field", "name"],
       "fields": {
-        "data.field": {
+        "body.field": {
           "widget": "textbox",
           "label" : "Data Field Name",
           "properties": {
@@ -22,7 +22,8 @@
         },
         "name": {
           "widget": "textbox",
-          "label" : "Stream Name",
+          "label" : "Name",
+          "description" : "Name of the stream to which we write to. If the stream is present, then data will be written to it. If it's not present then one would be created.",
           "properties": {
             "width": "medium"
           }

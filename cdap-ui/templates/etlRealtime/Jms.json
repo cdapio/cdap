@@ -7,17 +7,19 @@
        "position" : [ "jms.destination.name", "jms.messages.receive" ],
        "fields" : {
           "jms.destination.name" : {
-             "type": "textbox",
-             "label": "Destination Name",
+             "widget": "textbox",
+             "label": "Destination Queue",
+             "description" : "Specifies the name of a JMS queue to retrieve the data from",
              "properties": {
                "width": "medium"
              }
           },
 
           "jms.messages.receive" : {
-             "type": "number",
-             "label": "Messages",
-             "description": "Specific the number of messages to be received from JMS",
+             "widget": "number",
+             "label": "Message Count",
+             "description" : "Number of messages to be retrieved from the JMS queue. Default is set to 50",
+             "info": "",
              "properties": {
                "width": "extra-small",
                "default": 1

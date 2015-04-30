@@ -9,6 +9,7 @@
           "kafka.zookeeper" : {
              "widget": "textbox",
              "label": "Zookeeper Qorum",
+             "description" : "Specify the zookeeper connection string. E.g. host:2181,host2:2181,host3:2181. Either we can specify zookeeper qorum or broker list.",
              "properties": {
                "width": "large"
              }
@@ -17,8 +18,7 @@
           "kafka.brokers" : {
              "widget": "csv",
              "label": "Kafka Brokers",
-             "info" : "Server names on which kafka server is running",
-             "description" : "Kafka is run as a cluster comprised of one or more servers each of which is called broker",
+             "description" : "Server names on which kafka server is running. Kafka is run as a cluster comprised of one or more servers each of which is called broker. Either we can specify zookeeper connection string or this configuration.",
              "properties": {
                "width": "medium"
              },
@@ -28,8 +28,7 @@
           "kafka.partitions" : {
              "widget": "number",
              "label": "Number of Partitions",
-             "info": "Specify the number of partitions",
-             "description": "Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
+             "description": "Specifies the number of parititions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
              "properties": {
                "width": "extra-small",
                "default": 1
@@ -41,8 +40,7 @@
           "kafka.topic" : {
              "widget": "textbox",
              "label": "Topic",
-             "info" : "Specify the topic you want to subscribe to",
-             "description" : "Kafka maintains feeds of messages in categories called topics",
+             "description" : "Topic you want to subscribe to. Kafka maintains feeds of messages in categories called topics",
              "properties": {
                "width": "medium"
              }
@@ -50,9 +48,8 @@
 
           "kafka.default.offset" : {
              "widget": "number",
-             "label": "Start offset",
-             "info": "",
-             "description": "Integer specifying the offset to start processing from within Kafka topic",
+             "label": "Start Offset",
+             "description": "Specifies the start offset for processing from the queue",
              "properties": {
                "width": "extra-small",
                "default": 1

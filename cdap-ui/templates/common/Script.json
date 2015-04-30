@@ -1,0 +1,22 @@
+{
+  "id": "Table",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "position" : ["script", "schema" ],
+       "fields" : {
+          "schema" : {
+             "widget": "schema",
+             "label": "Schema",
+             "schema-types" : [ "int", "boolean", "string" ],
+             "schema-default-type" : "string"
+          },
+
+          "script" : {
+             "widget": "javascript-editor",
+             "label" : "Script",
+          }
+       }
+    }
+  }
+}
