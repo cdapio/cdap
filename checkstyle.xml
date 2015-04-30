@@ -317,6 +317,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
         -->
     </module>
 
+    <module name="RedundantModifier">
+      <!-- Checks for redundant modifiers in:
+           - interface and annotation definitions,
+           - the final modifier on methods of final classes, and
+           - inner interface declarations that are declared as static.
+        -->
+    </module>
+
 
     <!--
 
