@@ -58,7 +58,7 @@ body.theme-cdap {
   // Common styles
   .btn {
     // Remove the gradient for the pressed/active state
-
+    &:focus { outline: none; }
     &:active,
     &.active {
       background-image: none;
@@ -90,7 +90,6 @@ body.theme-cdap {
     padding: 10px 30px;
     &:first-child { .border-radius(4px 0 0 4px); }
     &:last-child { .border-radius(0 4px 4px 0); }
-    &:focus { outline: 0; }
     &.active {
       background-color: #6a7387;
       color: white;
@@ -110,5 +109,14 @@ body.theme-cdap {
   .btn-success.dropdown-toggle {
     border: 0;
     .dropdown-defaults();
+  }
+
+  .txt-running {
+    color: @btn-success-bg;
+    font-weight: 700;
+  }
+  .txt-failed {
+    color: @btn-danger-bg;
+    font-weight: 700;
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
@@ -33,7 +34,7 @@ import co.cask.cdap.templates.etl.api.Transform;
  * @param <OUT> the type of output for the source
  */
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
-  implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT> {
+  implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -44,8 +45,9 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
    * @param context {@link BatchSourceContext}
+   * @throws Exception if there's an error during this method invocation
    */
-  public abstract void prepareJob(BatchSourceContext context);
+  public abstract void prepareJob(BatchSourceContext context) throws Exception;
 
   /**
    * Initialize the source. This is called once each time the Hadoop Job runs, before any
@@ -65,6 +67,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
   /**
    * Destroy the source. This is called at the end of the Hadoop Job run.
    */
+  @Override
   public void destroy() {
     // no-op
   }

@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'class': 'form-control',
           'ng-model': 'model',
-          placeholder: 'myconfig.description'
+          placeholder: '{{myconfig.properties.default || ""}}'
         }
       },
       'password': {
@@ -21,8 +21,7 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'class': 'form-control',
           'ng-model': 'model',
-          type: 'password',
-          placeholder: 'myconfig.description'
+          type: 'password'
         }
       },
       'datetime': {
@@ -51,17 +50,26 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'cask-json-edit': 'model',
           'class': 'form-control',
-          placeholder: 'myconfig.description'
+          placeholder: '{{myconfig.properties.default || ""}}'
         }
       },
       'javascript-editor': {
         element: '<div my-ace-editor></div>',
         attributes: {
-          'ng-model': 'model'
+          'ng-model': 'model',
+          'config': 'myconfig',
+          placeholder: '{{myconfig.properties.default || ""}}'
         }
       },
       'schema': {
         element: '<my-schema-editor></my-schema-editor>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
+      'keyvalue': {
+        element: '<my-key-value></my-key-value>',
         attributes: {
           'ng-model': 'model',
           'data-config': 'myconfig'

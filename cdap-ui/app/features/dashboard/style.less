@@ -13,6 +13,44 @@ body.state-dashboard {
       float: right;
       margin: 8px 0 0 12px;
     }
+    div.form-inline {
+      background-color: #d1d3da;
+      padding: 10px 15px;
+      margin-top: -10px;
+      div[dropdown] {
+        display: inline-block;
+        position: relative;
+        &.open {
+          .dropdown-toggle {
+            .border-radius(4px 4px 0 0);
+            + .dropdown-menu {
+              min-width: 97px;
+              > li:first-child a { .border-radius(0); }
+            }
+          }
+        }
+      }
+      @media (max-width: @screen-xs-max) {
+        .form-group:last-child {
+          margin-top: 20px;
+          text-align: center;
+        }
+      }
+      @media (max-width: @screen-sm-max) {
+        text-align: left;
+        .dropdown-menu { left: 0; }
+        .addon-label { display: inline-block; width: 70px; }
+      }
+      @media (min-width: @screen-md-min) {
+        text-align: right;
+        .btn.dropdown-toggle { margin: 0 10px; }
+        .dropdown-menu { left: 10px; }
+        .input-group {
+          .form-control { max-width: 100px; }
+          &:first-child { margin-right: 10px; }
+        }
+      }
+    }
     .cdap-subnav-end + ul.slanted-tabs {
       li.active {
         .dropdown-menu {
@@ -110,7 +148,6 @@ body.state-dashboard {
 
   }
 
-
   [as-sortable],
   .as-sortable-item,
   .as-sortable-placeholder {
@@ -129,7 +166,6 @@ body.state-dashboard {
   .as-sortable-drag {
     opacity: .6;
   }
-
 
   .panel-heading {
     user-select: none;
@@ -152,8 +188,6 @@ body.state-dashboard {
   ul.dropdown-menu {
     z-index: 1200; // above modal
   }
-
-
 }
 
 // @red: red;

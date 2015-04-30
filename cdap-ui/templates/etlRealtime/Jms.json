@@ -1,5 +1,5 @@
 {
-  "id": "JmsSource",
+  "id": "Jms",
   "groups" : {
     "position": [ "group1" ],
     "group1": {
@@ -7,19 +7,18 @@
        "position" : [ "jms.destination.name", "jms.messages.receive" ],
        "fields" : {
           "jms.destination.name" : {
-             "type": "textbox",
-             "label": "JMS Destination Name",
-             "description" : "Specify the destination name for JMS",
-             "info" : "E.g. host:2181,host2:2181,host3:2181",
+             "widget": "textbox",
+             "label": "Destination Queue",
+             "description" : "Specifies the name of a JMS queue to retrieve the data from",
              "properties": {
                "width": "medium"
              }
           },
 
           "jms.messages.receive" : {
-             "type": "number",
-             "label": "Number of message to receive at once from JMS",
-             "description": "Specific the number of messages to be received from JMS",
+             "widget": "number",
+             "label": "Message Count",
+             "description" : "Number of messages to be retrieved from the JMS queue. Default is set to 50",
              "info": "",
              "properties": {
                "width": "extra-small",

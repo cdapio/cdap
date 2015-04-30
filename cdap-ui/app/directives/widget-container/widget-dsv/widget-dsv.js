@@ -17,6 +17,10 @@ angular.module(PKG.name + '.commons')
           $scope.properties = [];
 
           if (!str) {
+            // initialize with empty value
+            $scope.properties.push({
+              value: ''
+            });
             return;
           }
           var arr = str.split(delimiter);
@@ -26,6 +30,7 @@ angular.module(PKG.name + '.commons')
               value: a
             });
           });
+
         }
 
         initialize();

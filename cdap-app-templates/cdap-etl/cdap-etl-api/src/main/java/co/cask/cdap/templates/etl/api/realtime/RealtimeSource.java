@@ -16,6 +16,7 @@
 
 package co.cask.cdap.templates.etl.api.realtime;
 
+import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
  *
  * @param <T> Type of object that the source emits
  */
-public abstract class RealtimeSource<T> implements EndPointStage {
+public abstract class RealtimeSource<T> implements EndPointStage, Destroyable {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -56,6 +57,7 @@ public abstract class RealtimeSource<T> implements EndPointStage {
   /**
    * Destroy the Source.
    */
+  @Override
   public void destroy() {
     // no-op
   }

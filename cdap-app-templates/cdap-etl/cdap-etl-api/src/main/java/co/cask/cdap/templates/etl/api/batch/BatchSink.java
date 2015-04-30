@@ -18,6 +18,7 @@ package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
@@ -33,7 +34,7 @@ import co.cask.cdap.templates.etl.api.Transform;
  * @param <VAL_OUT> the type of value the sink outputs
  */
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
-  implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>> {
+  implements EndPointStage, Transform<IN, KeyValue<KEY_OUT, VAL_OUT>>, Destroyable {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -44,8 +45,9 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
    * @param context {@link BatchSinkContext}
+   * @throws Exception if there's an error during this method invocation
    */
-  public abstract void prepareJob(BatchSinkContext context);
+  public abstract void prepareJob(BatchSinkContext context) throws Exception;
 
   /**
    * Initialize the sink. This is called once each time the Hadoop Job runs, before any
@@ -65,6 +67,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
   /**
    * Destroy the sink. This is called at the end of the Hadoop Job run.
    */
+  @Override
   public void destroy() {
     // no-op
   }

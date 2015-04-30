@@ -45,8 +45,6 @@ import java.util.concurrent.TimeUnit;
 public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
   private static final Gson GSON = new Gson();
 
-  // TODO: CDAP-2337 figure out why the plugin jar cannot be seen by mapper
-  @Ignore
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowAdapter() throws Exception {

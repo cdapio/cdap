@@ -22,7 +22,7 @@ package co.cask.cdap.templates.etl.api;
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
+public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT>, Destroyable {
 
   private StageContext context;
 
@@ -36,6 +36,7 @@ public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
     this.context = context;
   }
 
+  @Override
   public void destroy() {
     //no-op
   }

@@ -11,7 +11,12 @@
     </thead>
     <tbody>
       <tr ng-repeat="run in runs | orderBy:sortable.predicate:sortable.reverse">
-        <td> {{run.runid}} </td>
+        <td>
+          <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
+          <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
+          <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
+          <span ng-if="type === 'SERVICES'">{{run.runid}}</span>
+        </td>
         <td> {{ (run.start * 1000) | date: 'medium'}}</td>
         <td>
           <span ng-show="run.end">{{ (run.end * 1000) | date: 'medium'}}</span>
