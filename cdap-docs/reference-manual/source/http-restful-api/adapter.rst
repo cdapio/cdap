@@ -660,19 +660,23 @@ fit)::
 
 Retrieving Adapter logs
 -----------------------
-To retrieve the logs of an Adapter, submit an HTTP GET request::
+As an Adaptor is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
+the logs for an Adaptor are the logs of the underlying program. To retrieve these logs
+using a RESTful API, you need to know which underlying program the Adaptor uses
+and then use the CDAP :ref:`Logging API <http-restful-api-logging>` to retrieve its logs.
 
-  GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/logs
+To find the underlying programs, you can `list details of an Adapter <list-details-of-an-adapter>`
+and then use its ``program`` information to determine how to build your request::
 
-where
+    "program": {
+      "namespace": "default",
+      "application": "etlBatch",
+      "type": "Workflow",
+      "id": "ETLWorkflow"
+    },
 
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
+For example, using the previous ``streamAdapter``, you would be interested in the logs of the
+Workflow *ETLWorkflow* of the Application *etlBatch* of the namespace *default*. From this,
+you can formulate your request.
 
-   * - Parameter
-     - Description
-   * - ``<namespace-id>``
-     - Namespace ID
-   * - ``<adapter-id>``
-     - Name of the Adapter
+The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
