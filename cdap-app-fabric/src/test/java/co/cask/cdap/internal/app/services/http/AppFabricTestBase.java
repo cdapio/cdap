@@ -592,6 +592,16 @@ public abstract class AppFabricTestBase {
                                 program.getType().getCategoryName(),
                                 program.getId());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    return getStatus(response);
+  }
+
+  protected String getAdapterStatus(Id.Adapter adapter) throws Exception {
+    String path = String.format("adapters/%s/status", adapter.getId());
+    HttpResponse response = doGet(getVersionedAPIPath(path, adapter.getNamespaceId()));
+    return getStatus(response);
+  }
+
+  private String getStatus(HttpResponse response) throws Exception {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);

@@ -45,8 +45,9 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
    * @param context {@link BatchSourceContext}
+   * @throws Exception if there's an error during this method invocation
    */
-  public abstract void prepareJob(BatchSourceContext context);
+  public abstract void prepareJob(BatchSourceContext context) throws Exception;
 
   /**
    * Initialize the source. This is called once each time the Hadoop Job runs, before any

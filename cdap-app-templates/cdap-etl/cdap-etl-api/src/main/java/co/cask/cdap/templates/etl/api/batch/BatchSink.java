@@ -45,8 +45,9 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
    * @param context {@link BatchSinkContext}
+   * @throws Exception if there's an error during this method invocation
    */
-  public abstract void prepareJob(BatchSinkContext context);
+  public abstract void prepareJob(BatchSinkContext context) throws Exception;
 
   /**
    * Initialize the sink. This is called once each time the Hadoop Job runs, before any
