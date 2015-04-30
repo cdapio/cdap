@@ -69,7 +69,6 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
         }
         if (type === 'time.gauge') {
           $scope.me.update(newVal);
-          console.log('$scope me', $scope.me);
         }
         else if (newVal && newVal.length) {
           $scope.me.push(newVal);
