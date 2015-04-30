@@ -72,20 +72,21 @@
 <div class="row">
   <div class="col-xs-12">
     <tabset type="tabs slanted-tabs">
-
       <tab ng-repeat="tab in tabs" active="tab.active">
         <tab-heading>
-          {{tab.title}}
+          <span ng-if="tab.title.length > 10" tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}</span>
+          <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
           <a href=""
              ng-if="tab.isCloseable !== false"
              ng-click="closeTab($index)"
              disabled="disabled"
           >
-            <i class="fa fa-times"></i>
+            <i class="fa fa-times-circle"></i>
           </a>
         </tab-heading>
         <div ng-init="transform = tab.transform; tabIndex = $index;"
-              ng-include="tab.partial"></div>
+              ng-include="tab.partial">
+        </div>
       </tab>
     </tabset>
   </div>
