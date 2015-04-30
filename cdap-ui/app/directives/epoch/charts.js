@@ -64,7 +64,6 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
 
     if(attr.stream) { // presence of attribute determines "liveness"
       $scope.$watch('stream', function (newVal) {
-        console.log('$scope me', $scope.me);
         if(!$scope.me) {
           return;
         }
@@ -74,7 +73,6 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
         }
         else if (newVal && newVal.length) {
           $scope.me.push(newVal);
-          console.log('$scope me', $scope.me);
         }
       });
     }
