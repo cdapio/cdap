@@ -214,7 +214,7 @@
             <configuration>
               <classifier>realtime</classifier>
               <instructions>
-                <!-- build bundle jar for realtime. excluding excluding batch-->
+                <!-- build bundle jar for realtime. excluding batch-->
                 <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*,
                   co.cask.cdap.templates.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
