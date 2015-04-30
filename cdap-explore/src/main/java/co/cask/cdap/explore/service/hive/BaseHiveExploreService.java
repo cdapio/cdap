@@ -1205,7 +1205,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
                                               : schedulerQueueResolver.getDefaultQueue();
 
-    if (schedulerQueue != null) {
+    if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);
     }
 
