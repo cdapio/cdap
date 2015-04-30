@@ -4,7 +4,7 @@
   </div>
 
   <div ng-if="properties.length > 0">
-    <div class="clearfix field-labels">
+    <div class="row">
       <div class="col-xs-5">
         <strong>Name</strong>
       </div>
@@ -15,7 +15,7 @@
         <strong>Nullable</strong>
       </div>
     </div>
-    <div class="clearfix property-row" ng-repeat="property in properties">
+    <div class="row" ng-repeat="property in properties">
 
       <div class="col-xs-5">
         <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
