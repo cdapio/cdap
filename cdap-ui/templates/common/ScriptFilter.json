@@ -1,0 +1,15 @@
+{
+  "id": "Table",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "position" : ["script" ],
+       "fields" : {
+          "script" : {
+             "widget": "javascript-editor",
+             "label" : "Filter"
+          }
+       }
+    }
+  }
+}
