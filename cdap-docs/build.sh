@@ -21,7 +21,7 @@
 # _common directory holds common files and scripts.
 
 # Optional Parameter (passed via Bamboo env variable or exported in shell)
-# BELL (set it to either 'yes' or 'TRUE', if you want the bell function to make a sound when called)
+# BELL (set it to either 'yes' or 'true', if you want the bell function to make a sound when called)
 
 source ./vars
 source _common/common-build.sh
@@ -290,7 +290,7 @@ function print_version() {
 
 function bell() {
   # Pass a message as ${1}
-  if [ "x${BELL}" == 'xyes' -o "x${BELL}" == 'x${TRUE}' ]; then
+  if [[ "x${BELL}" == "xyes" || "x${BELL}" == "x${TRUE}" ]]; then
     echo -e "\a${1}"
   else
     echo -e "${1}"
@@ -299,7 +299,7 @@ function bell() {
 
 function test() {
   echo "Test..."
-  build_json
+  bell "A test message"
   echo "Test completed."
 }
 
