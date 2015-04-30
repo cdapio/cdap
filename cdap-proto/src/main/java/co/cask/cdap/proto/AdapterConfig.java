@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.base.Objects;
 import com.google.gson.JsonElement;
 
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Config of an adapter. This is the input for requests to add an adapter.
  */
+@Beta
 public final class AdapterConfig {
   private final String description;
   private final String template;
