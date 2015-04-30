@@ -28,7 +28,7 @@ CDAP HTTP RESTful API v3
     Metrics <metrics>
     Monitor <monitor>
     Transactions <transactions>
-    
+    Adapters <adapter>
 
 .. highlight:: console
 
@@ -54,3 +54,5 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
 - :doc:`Transactions: <transactions>` interacting with the Transaction Service
+- :doc:`Adapters: <adapter>` obtain the available Application Templates and
+  Plugins, and create, delete, and manage the lifecycle of Adapters.
