@@ -337,7 +337,7 @@ To create an Adapter, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
 
-with the path to the Adaptor configuration file [link] as the body of the request::
+with the path to the Adapter configuration file [link] as the body of the request::
 
   <config-path>
 
@@ -368,7 +368,7 @@ on Adapters. [link]
    * - HTTP Method
      - ``PUT <base-url>/namespaces/default/adapters/streamAdapter -d @config.json``
    * - Description
-     - Creates an Adaptor *streamAdapter* in the namespace *default* using the configuration
+     - Creates an Adapter *streamAdapter* in the namespace *default* using the configuration
        file ``config.json``
 
 Listing Existing Adapters
@@ -387,6 +387,67 @@ where
      - Description
    * - ``<namespace-id>``
      - Namespace ID
+
+This will return a JSON String map that lists all the current Adapters and all of their details.
+
+For example, if an adapter *streamAdapter* has been created as in the previous command, the
+command will return a list of adapters (pretty-printed and reformatted to fit)::
+
+  [
+    {
+      "name": "streamAdapter",
+      "description": "Batch ETL",
+      "template": "etlBatch",
+      "program": {
+        "namespace": "default",
+        "application": "etlBatch",
+        "type": "Workflow",
+        "id": "ETLWorkflow"
+      },
+      "config": {
+        "schedule": "* * * * *",
+        "source": {
+          "name": "Stream",
+          "properties": {
+              "name": "myStream",
+              "duration": "1m"
+          }
+        },
+        "sink": {
+          "name": "Table",
+          "properties": {
+              "name": "myTable",
+              "schema.row.field": "ts"
+          }
+        },
+        "transforms": [
+
+        ]
+      },
+      "schedule": {
+        "schedule": {
+          "cronExpression": "* * * * *",
+          "name": "streamAdapter.etl.batch.adapter.streamAdapter.schedule",
+          "description": "Schedule for streamAdapter Adapter"
+        },
+        "program": {
+          "programName": "ETLWorkflow",
+          "programType": "WORKFLOW"
+        },
+        "properties": {
+          "transformIds": "[]",
+          "name": "streamAdapter",
+          "sinkId": "sink:Table",
+          "config": "{\"schedule\":\"* * * * *\",\"source\":{\"name\":\"Stream\",
+          \"properties\":{\"duration\":\"1m\",\"name\":\"myStream\"}},\"sink\":{\"name\":
+          \"Table\",\"properties\":{\"name\":\"myTable\",\"schema.row.field\":\"ts\"}},
+          \"transforms\":[]}",
+          "sourceId": "source:Stream"
+        }
+      },
+      "instances": 1
+    }
+  ]
 
 List Details of an Adapter
 --------------------------
@@ -408,6 +469,64 @@ where
      - Name of the Adapter
 
 
+For example, if an adapter *streamAdapter* has been created as in a previous command, the
+command will return (pretty-printed and reformatted to fit)::
+
+  {
+    "name": "streamAdapter",
+    "description": "Batch ETL",
+    "template": "etlBatch",
+    "program": {
+      "namespace": "default",
+      "application": "etlBatch",
+      "type": "Workflow",
+      "id": "ETLWorkflow"
+    },
+    "config": {
+      "schedule": "* * * * *",
+      "source": {
+        "name": "Stream",
+        "properties": {
+            "name": "myStream",
+            "duration": "1m"
+        }
+      },
+      "sink": {
+        "name": "Table",
+        "properties": {
+            "name": "myTable",
+            "schema.row.field": "ts"
+        }
+      },
+      "transforms": [
+
+      ]
+    },
+    "schedule": {
+      "schedule": {
+        "cronExpression": "* * * * *",
+        "name": "streamAdapter.etl.batch.adapter.streamAdapter.schedule",
+        "description": "Schedule for streamAdapter Adapter"
+      },
+      "program": {
+        "programName": "ETLWorkflow",
+        "programType": "WORKFLOW"
+      },
+      "properties": {
+        "transformIds": "[]",
+        "name": "streamAdapter",
+        "sinkId": "sink:Table",
+        "config": "{\"schedule\":\"* * * * *\",\"source\":{\"name\":\"Stream\",
+        \"properties\":{\"duration\":\"1m\",\"name\":\"myStream\"}},\"sink\":{\"name\":
+        \"Table\",\"properties\":{\"name\":\"myTable\",\"schema.row.field\":\"ts\"}},
+        \"transforms\":[]}",
+        "sourceId": "source:Stream"
+      }
+    },
+    "instances": 1
+  }
+
+
 Status of an Adapter
 --------------------
 To retrieve the status of an Adapter, submit an HTTP GET request::
@@ -427,6 +546,10 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
+It will return the status of the Adaptor, one of ``STOPPED``, ``STARTING``, ``STARTED``.
+
+If there is an error (for instance, the Adaptor does not exist), a message and an
+appropriate status code (``404``) will be returned.
 
 Starting an Adapter
 -------------------
@@ -489,8 +612,8 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
-Getting Adapter runs
---------------------
+Retrieving Adapter Runs
+-----------------------
 To retrieve a list of runs of an Adapter, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/runs
@@ -508,8 +631,8 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
-Getting Adapter logs
---------------------
+Retrieving Adapter logs
+-----------------------
 To retrieve the logs of an Adapter, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/logs
