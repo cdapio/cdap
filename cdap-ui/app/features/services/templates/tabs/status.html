@@ -9,7 +9,7 @@
             <th>Instances</th>
           </thead>
           <tbody>
-            <td ng-bind="status"> </td>
+            <td ng-bind="status" ng-class="{'txt-failed': status === 'FAILED', 'txt-running': status === 'RUNNING'}"> </td>
             <td>
               <div class="row">
                 <div class="col-xs-6">
