@@ -158,7 +158,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     countDownLatch = new CountDownLatch(1);
 
     if (partitions.contains(0)) {
-      LOG.debug("Scheduling cleanup task");
+      LOG.info("Scheduling cleanup task");
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     }
   }
