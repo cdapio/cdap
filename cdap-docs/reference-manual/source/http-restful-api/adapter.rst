@@ -631,6 +631,33 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
+The command will return a list of runs for the Adaptor (pretty-printed and reformatted to
+fit)::
+
+  [
+    {
+      "runid": "f0697b83-ef7e-11e4-8f65-22d805694e6a",
+      "start": 1430428920,
+      "end": 1430428922,
+      "status": "FAILED",
+      "adapter": "streamAdapter",
+      "properties": {
+        "0": "f06eaba4-ef7e-11e4-9586-22d805694e6a"
+      }
+    },
+    {
+      "runid": "cc502641-ef7e-11e4-b47a-22d805694e6a",
+      "start": 1430428860,
+      "end": 1430428869,
+      "status": "COMPLETED",
+      "adapter": "streamAdapter",
+      "properties": {
+        "0": "cc5b49d2-ef7e-11e4-9c24-22d805694e6a"
+      }
+    }
+  ]
+
+
 Retrieving Adapter logs
 -----------------------
 To retrieve the logs of an Adapter, submit an HTTP GET request::
