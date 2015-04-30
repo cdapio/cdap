@@ -3,7 +3,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'EA',
       scope: {
-        model: '=runs'
+        model: '=runs',
+        type: '@'
       },
       templateUrl: 'program-history/program-history.html',
       controller: function ($scope) {
