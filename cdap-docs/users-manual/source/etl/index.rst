@@ -106,6 +106,22 @@ existing plugins or, if the user wishes, they can write their own source, transf
 sink plugins to add their own.
 
 
+Template and Plugin Details
+===========================
+Details of templates and the required properties for sources, transformations, and sinks
+can be explored using RESTful APIs.
+
+Note that Templates and Plugins are not namespaced, while Adapters are namespaced. If you
+are creating a custom Plugin to add to either the existing Templates or your own Template,
+its name needs to not collide with existing names.
+
+
+
+
+
+
+
+
 
 
 OLD MATERIAL
