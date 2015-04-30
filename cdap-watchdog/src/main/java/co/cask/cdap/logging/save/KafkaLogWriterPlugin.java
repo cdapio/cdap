@@ -158,7 +158,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     countDownLatch = new CountDownLatch(1);
 
     if (partitions.contains(0)) {
-      LOG.info("Scheduling cleanup task");
+      LOG.debug("Scheduling cleanup task");
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     }
   }
@@ -193,7 +193,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
           if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
             // if count down occurred return
-            LOG.info("Returning since callback is cancelled");
+            LOG.debug("Returning since callback is cancelled");
             return;
           }
 
