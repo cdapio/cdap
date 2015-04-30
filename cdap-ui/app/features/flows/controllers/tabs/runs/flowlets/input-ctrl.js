@@ -50,7 +50,7 @@ angular.module(PKG.name + '.feature.flows')
               _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
               method: 'POST'
             }).then(function(res) {
-              aggregate = res.series[0].data[0].value;
+              aggregate = res.series[0] ? res.series[0].data[0].value : 0;
             }).then(function() {
 
               dataSrc.request({
@@ -79,6 +79,26 @@ angular.module(PKG.name + '.feature.flows')
                     }
                   ];
 
+                } else {
+
+                  var val = [];
+
+                  for (var i = 60; i > 0; i--) {
+                    val.push({
+                      time: Math.floor((new Date()).getTime()/1000 - (i)),
+                      y: 0
+                    });
+                  }
+
+                  if (input.history) {
+                    input.stream = val.slice(-1);
+                  }
+
+                  input.history = [{
+                    label: 'output',
+                    values: val
+                  }];
+
                 }
               }).then(function() {
                 // start polling aggregate
@@ -88,85 +108,41 @@ angular.module(PKG.name + '.feature.flows')
                   method: 'POST',
                   interval: 1000
                 }, function(streamData) {
+                  var stream = {};
+
                   if (streamData.series[0]) {
-                    var stream = {
+                    stream = {
                       time: Math.floor((new Date()).getTime()/1000),
                       y: streamData.series[0].data[0].value
                     };
 
-                    var array = input.history[0].values;
-                    array.shift();
-                    array.push(stream);
+                  } else {
 
-                    input.history = [
-                      {
-                        label: 'output',
-                        values: array
-                      }
-                    ];
-
-                    input.stream = array.slice(-1);
-
-                    input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
+                    stream = {
+                      time: Math.floor((new Date()).getTime()/1000),
+                      y: 0
+                    };
                   }
+
+                  var array = input.history[0].values;
+                  array.shift();
+                  array.push(stream);
+
+                  input.history = [
+                    {
+                      label: 'output',
+                      values: array
+                    }
+                  ];
+
+                  input.stream = array.slice(-1);
+
+                  input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
+
                 });
               });
 
             });
-
-            // POLLING GRAPH
-            // dataSrc
-            //   .poll({
-            //     _cdapPath: path + '&start=now-60s&end=now',
-            //     method: 'POST',
-            //     interval: 1000
-            //   }, function (res) {
-
-            //     if(res.series[0]) {
-            //       var response = res.series[0].data;
-            //       var v = [];
-
-            //       angular.forEach(response, function(val) {
-            //         v.push({
-            //           time: val.time,
-            //           y: val.value
-            //         });
-            //       });
-
-            //       if (input.history) {
-            //         input.stream = v.slice(-1);
-            //       }
-
-            //       input.history = [
-            //         {
-            //           label: 'output',
-            //           values: v
-            //         }
-            //       ];
-
-            //       input.max = Math.max.apply(Math, v.map(function(o){return o.y;}));
-            //     } else {
-            //       var val = [];
-
-            //       for (var i = 60; i > 0; i--) {
-            //         val.push({
-            //           time: Math.floor((new Date()).getTime()/1000 - (i)),
-            //           y: 0
-            //         });
-            //       }
-
-            //       if (input.history) {
-            //         input.stream = val.slice(-1);
-            //       }
-
-            //       input.history = [{
-            //         label: 'output',
-            //         values: val
-            //       }];
-
-            //     }
-
-            //   });
 
             // POLLING ARRIVAL RATE
             dataSrc
