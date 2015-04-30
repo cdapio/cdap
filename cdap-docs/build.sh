@@ -182,12 +182,18 @@ function build_all() {
   echo "--------------------------------------------------------"
   echo ""
   run_command docs-web-part ${ARG_2} ${ARG_3}
+  echo ""
+  echo "========================================================"
   echo "Replacing GitHub Docs."
+  echo "--------------------------------------------------------"
+  echo ""
   mv ${SCRIPT_PATH}/${BUILD_TEMP}/*.zip ${SCRIPT_PATH}/${BUILD}
   rm -rf ${SCRIPT_PATH}/${BUILD_TEMP}
-  if [ "${BELL}" == 'yes' ]; then
-    bell
-  fi
+  echo ""
+  echo "========================================================"
+  bell "Completed \"build_all\""
+  echo "--------------------------------------------------------"
+  echo ""
   exit 0
 }
 
@@ -284,7 +290,11 @@ function print_version() {
 
 function bell() {
   # Pass a message as ${1}
-  echo -e "\a${1}"
+  if [ "x${BELL}" == 'xyes' -o "x${BELL}" == 'x${TRUE}' ]; then
+    echo -e "\a${1}"
+  else
+    echo -e "${1}"
+  fi
 }
 
 function test() {
