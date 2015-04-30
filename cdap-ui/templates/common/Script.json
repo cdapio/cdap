@@ -14,7 +14,7 @@
 
           "script" : {
              "widget": "javascript-editor",
-             "label" : "Script",
+             "label" : "Script"
           }
        }
     }
