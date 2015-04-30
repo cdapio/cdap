@@ -57,19 +57,19 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     var defaultSource = {
-      name: 'Add a Source',
+      name: 'Add a source',
       properties: {},
       placeHolderSource: true
     };
 
     var defaultSink = {
-      name: 'Add a Sink',
+      name: 'Add a sink',
       placeHolderSink: true,
       properties: {}
     };
 
     var defaultTransforms = [{
-      name: 'Add a Transforms',
+      name: 'Add a transform',
       placeHolderTransform: true,
       properties: {}
     }];
