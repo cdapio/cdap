@@ -1,0 +1,33 @@
+{
+  "id": "Stream",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Stream Configuration",
+      "position" : ["data.field", "headers.field", "name"],
+      "fields": {
+        "data.field": {
+          "widget": "textbox",
+          "label" : "Data Field Name",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "headers.field": {
+          "widget": "textbox",
+          "label" : "Header Field Name",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "name": {
+          "widget": "textbox",
+          "label" : "Stream Name",
+          "properties": {
+            "width": "medium"
+          }
+        }
+      }
+    }
+  }
+}
