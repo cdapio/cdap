@@ -54,11 +54,14 @@
     </thead>
     <tbody>
       <tr ng-repeat="input in inputs track by $index">
-        <td ng-bind="input.name"></td>
+        <td>
+          <a href="" ng-click="selectFlowlet(input.name)" ng-if="input.type === 'FLOWLET'">{{ input.name }}</a>
+          <a ui-sref="streams.detail.overview({ streamId: input.name })" ng-if="input.type === 'STREAM'">{{ input.name }}</a>
+        </td>
         <td>
           <strong ng-bind="input.total | myNumber: 1"></strong> events/s
         </td>
-        <td class="table-graph">
+        <td class="table-graph" ng-if="input.type === 'FLOWLET'">
           <epoch-line
             data-history="input.history"
             data-stream="input.stream"
@@ -66,8 +69,10 @@
             chart-axes="['left', 'bottom']"
             ></epoch-line>
         </td>
+        <td ng-if="input.type === 'STREAM'">Not Available</td>
         <td>
-          {{ input.max }}
+          <span ng-if="input.type === 'FLOWLET'">{{ input.max }}</span>
+          <span ng-if="input.type === 'STREAM'">Not Available</span>
         </td>
       </tr>
     </tbody>
