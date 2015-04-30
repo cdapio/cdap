@@ -31,13 +31,13 @@
                   <label class="control-label col-sm-4"
                          ng-if="config.groups[group].fields[field].label">
                     {{config.groups[group].fields[field].label}}
+                    <a href><i class="fa fa-exclamation-circle text-info" tooltip="{{config.groups[group].fields[field].info}}"></i></a>
                   </label>
-                  <a href><i class="fa fa-exclamation-circle text-info" tooltip="{{config.groups[group].fields[field].info}}"></i></a>
                   <label class="control-label col-sm-4"
                          ng-if="!config.groups[group].fields[field].label">
                     {{field}}
                   </label>
-                  <div class="col-sm-7">
+                  <div class="col-sm-8">
                     <div data-name="field"
                          class="my-widget-container"
                          data-model="source.properties[field]"
