@@ -30,6 +30,7 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
+import co.cask.cdap.templates.etl.common.Destroyables;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import com.google.common.base.Preconditions;
@@ -114,8 +115,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Gson GSON = new Gson();
     private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
-    private BatchSource source;
-    private BatchSink sink;
     private List<TransformStage> transforms;
 
     private TransformExecutor<KeyValue, KeyValue> transformExecutor;
@@ -137,14 +136,14 @@ public class ETLMapReduce extends AbstractMapReduce {
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
       transforms = Lists.newArrayListWithCapacity(stageList.size());
 
-      source = context.newPluginInstance(sourceId);
+      BatchSource source = context.newPluginInstance(sourceId);
       source.initialize(context.getPluginProperties(sourceId));
       pipeline.add(source);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, etlConfig.getSource().getName()));
 
       addTransforms(stageList, pipeline, stageMetrics, transformIds, context);
 
-      sink = context.newPluginInstance(sinkId);
+      BatchSink sink = context.newPluginInstance(sinkId);
       sink.initialize(context.getPluginProperties(sinkId));
       pipeline.add(sink);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
@@ -185,25 +184,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      try {
-        source.destroy();
-      } catch (Exception e) {
-        LOG.warn("Destroy of Source {} threw an Exception : ", source.getClass().getName(), e);
-      }
-
-      for (TransformStage transform : transforms) {
-        try {
-          transform.destroy();
-        } catch (Exception e) {
-          LOG.warn("Destroy of Transform {} threw an Exception : ", transform.getClass().getName(), e);
-        }
-      }
-
-      try {
-        sink.destroy();
-      } catch (Exception e) {
-        LOG.warn("Destroy of Sink {} threw an Exception : ", sink.getClass().getName(), e);
-      }
+      // Both BatchSource and BatchSink implements Transform, hence are inside the transformExecutor as well
+      Destroyables.destroyQuietly(transformExecutor);
     }
   }
 }

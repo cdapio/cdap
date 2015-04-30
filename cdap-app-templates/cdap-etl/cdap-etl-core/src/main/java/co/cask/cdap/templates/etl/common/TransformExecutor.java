@@ -16,9 +16,12 @@
 
 package co.cask.cdap.templates.etl.common;
 
+import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Transform;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -29,7 +32,10 @@ import java.util.List;
  * @param <IN> the type of input object to the first transform
  * @param <OUT> the type of object output by the last transform
  */
-public class TransformExecutor<IN, OUT> {
+public class TransformExecutor<IN, OUT> implements Destroyable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
+
   private final List<Transform> transforms;
   private final List<DefaultEmitter> emitters;
 
@@ -69,5 +75,14 @@ public class TransformExecutor<IN, OUT> {
     }
 
     return previousEmitter;
+  }
+
+  @Override
+  public void destroy() {
+    for (Transform transform : transforms) {
+      if (transform instanceof Destroyable) {
+        Destroyables.destroyQuietly((Destroyable) transform);
+      }
+    }
   }
 }
