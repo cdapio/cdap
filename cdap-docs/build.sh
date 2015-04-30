@@ -215,7 +215,7 @@ function build_docs_web() {
 function _build_docs() {
   echo ""
   echo "========================================================"
-  echo "Building \"${1}\"..."
+  echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
@@ -224,7 +224,7 @@ function _build_docs() {
   zip_extras ${4}
   display_version
   echo "========================================================"
-  bell "Building \"${1}\" completed."
+  bell "Building target \"${1}\" completed."
   echo "--------------------------------------------------------"
   echo ""
 }
