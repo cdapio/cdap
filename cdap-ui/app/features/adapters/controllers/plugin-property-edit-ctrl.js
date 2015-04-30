@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, MyDataSource, PluginConfigFactory) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory) {
     var propertiesFromBackend = Object.keys($scope.plugin.properties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
     $scope.groups = {
