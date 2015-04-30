@@ -44,7 +44,7 @@ function download_readme_file_and_test() {
 
   echo "Downloading using curl ${file_name} from ${source_url}"
   curl ${source_url}/${relative_path}/${file_name} --output ${includes_dir}/${target_file_name} --silent
-  test_an_include ${md5_hash} ${target_file_name}
+  test_an_include ${md5_hash} ${includes_dir}/${target_file_name}
 }
 
 function download_includes() {
@@ -58,12 +58,11 @@ function download_includes() {
   fi
 
   version
-  local project_version=${PROJECT_SHORT_VERSION}
 
 # For clients, current release branch is 1.2.0
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
-  local ingest_branch="release/cdap-${project_version}-compatible"
-  if [ "x${GIT_BRANCH_TYPE}" == "xdevelop" ] || [ "x${GIT_BRANCH_TYPE}" == "xfeature" ] ; then
+  local ingest_branch="release/cdap-${PROJECT_SHORT_VERSION}-compatible"
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
     ingest_branch="develop"
   fi

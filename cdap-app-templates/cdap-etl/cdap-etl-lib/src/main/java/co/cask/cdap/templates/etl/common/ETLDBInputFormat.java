@@ -20,22 +20,29 @@ import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 
 /**
  * Class that extends {@link DBInputFormat} to load the database driver class correctly.
  */
 public class ETLDBInputFormat extends DBInputFormat {
+  private static final Logger LOG = LoggerFactory.getLogger(ETLDBInputFormat.class);
+
   @Override
   public Connection getConnection() {
     Configuration conf = getConf();
     ClassLoader classLoader = conf.getClassLoader();
     if (this.connection == null) {
       try {
-        Class.forName(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY), true, classLoader);
+        LOG.debug("Registering JDBC driver via shim - " + JDBCDriverShim.class.getName());
+        Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
         String url = conf.get(DBConfiguration.URL_PROPERTY);
+        DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
         if (conf.get(DBConfiguration.USERNAME_PROPERTY) == null) {
           this.connection = DriverManager.getConnection(url);
         } else {

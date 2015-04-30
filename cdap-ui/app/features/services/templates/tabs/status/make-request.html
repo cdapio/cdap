@@ -7,12 +7,16 @@
             ng-submit="makeRequest()"
             novalidate>
 
-        <div class="modal-header">
-          <button type="button" class="close" ng-click="$hide()">&times;</button>
-          <h4 class="modal-title">
+
+        <div class="modal-header clearfix">
+          <h3 class="modal-title pull-left">
             <span ng-bind="programId"></span>
             <small> Type: Service </small>
-          </h4>
+          </h3>
+          <a class="btn pull-right" ng-click="$hide()">
+            <span class="fa fa-remove"></span>
+            <span class="sr-only"> Close </span>
+          </a>
         </div>
 
         <div class="modal-body" >

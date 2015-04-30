@@ -218,6 +218,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       var data = {
         template: $scope.metadata.type,
+        description: $scope.metadata.description,
         config: {
           source: $scope.source,
           sink: $scope.sink,

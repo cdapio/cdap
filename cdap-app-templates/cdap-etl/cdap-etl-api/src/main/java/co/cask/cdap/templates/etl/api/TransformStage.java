@@ -22,18 +22,9 @@ package co.cask.cdap.templates.etl.api;
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
+public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT>, Destroyable {
 
   private StageContext context;
-
-  /**
-   * Configure the Transform stage. Used to provide information about the Transform.
-   *
-   * @param configurer {@link StageConfigurer}
-   */
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
 
   /**
    * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
@@ -45,6 +36,7 @@ public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT> {
     this.context = context;
   }
 
+  @Override
   public void destroy() {
     //no-op
   }

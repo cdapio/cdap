@@ -24,12 +24,14 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.templates.etl.api.batch.BatchSink} that writes data to a {@link Cube} dataset.
@@ -87,14 +89,17 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
   private StructuredRecordToCubeFact transform;
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
-    transform = new StructuredRecordToCubeFact(stageConfig.getProperties());
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
+    transform = new StructuredRecordToCubeFact(properties.getProperties());
   }
 
   @Override
-  protected String getDatasetType(ETLStage config) {
-    return Cube.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = Maps.newHashMap(batchCubeConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, batchCubeConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Cube.class.getName());
+    return properties;
   }
 
   @Override

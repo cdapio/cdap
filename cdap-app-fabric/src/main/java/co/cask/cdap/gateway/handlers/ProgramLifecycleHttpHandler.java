@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -42,6 +43,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -116,6 +118,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final PropertiesResolver propertiesResolver;
   private final AdapterService adapterService;
+  private final MetricStore metricStore;
   private MRJobClient mrJobClient;
   private MapReduceMetricsInfo mapReduceMetricsInfo;
 
@@ -190,12 +193,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
                                      MapReduceMetricsInfo mapReduceMetricsInfo,
-                                     PropertiesResolver propertiesResolver, AdapterService adapterService) {
+                                     PropertiesResolver propertiesResolver, AdapterService adapterService,
+                                     MetricStore metricStore) {
     super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
     this.lifecycleService = lifecycleService;
+    this.metricStore = metricStore;
     this.appFabricDir = cConf.get(Constants.AppFabric.OUTPUT_DIR);
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
@@ -965,7 +970,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
-        // TODO: the process.events.pending metric is now off. We need to adjust it somehow [CDAP-2191]
+        FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1091,8 +1096,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       queueAdmin.dropAllInNamespace(namespaceId);
-      // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
-      // TODO: CDAP-1184 Implement metrics deletion once we have v3 APIs for deleting metrics
+      // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
+      FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Error while deleting queues in namespace " + namespaceId, e);
@@ -1547,8 +1552,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private class BatchEndpointInstances extends BatchEndpointArgs {
-    private Integer requested = null;
+
+    @SuppressWarnings("unused") // not used in this class but we need it in the JSON object
     private Integer provisioned = null;
+    private Integer requested = null;
 
     public BatchEndpointInstances(BatchEndpointArgs arg) {
       super(arg);

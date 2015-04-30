@@ -4,7 +4,8 @@
       <div class="wrapper">
         <div class="template">
           <div>
-            <span>{{source.name}}</span>
+            <span tooltip="{{source.name}}" ng-if="source.name.length > 18">{{source.name |  myEllipsis: 18}}</span>
+            <span ng-if="source.name.length <= 18">{{source.name }}</span>
             <span class="fa fa-pencil fa-fw"
                   ng-click="editSourceProperties()"
                   ng-if="!source.placeHolderSource"></span>
@@ -23,7 +24,8 @@
           </div>
           <div ng-repeat="transform in transforms" as-sortable-item>
             <div as-sortable-item-handle>
-              <span>{{transform.name}}</span>
+              <span tooltip="{{transform.name}}" ng-if="transform.name.length > 18">{{transform.name |  myEllipsis: 18}}</span>
+              <span ng-if="transform.name.length <= 18">{{transform.name }}</span>
               <span class="fa fa-pencil fa-fw"
                     ng-click="editTransformProperty(transform)"
                     ng-if="!transform.placeHolderTransform"></span>
@@ -39,7 +41,8 @@
       <div class="wrapper">
         <div class="template">
           <div>
-            <span>{{sink.name}}</span>
+            <span tooltip="{{sink.name}}" ng-if="sink.name.length > 18">{{sink.name |  myEllipsis: 18}}</span>
+            <span ng-if="sink.name.length <= 18">{{sink.name }}</span>
             <span class="fa fa-pencil fa-fw"
                   ng-click="editSinkProperties()"
                   ng-if="!sink.placeHolderSink"></span>

@@ -15,7 +15,11 @@ angular.module(PKG.name + '.feature.adapters')
         .state('adapters.list', {
           url: '',
           templateUrl: '/assets/features/adapters/templates/list.html',
-          controller: 'AdapterListController'
+          controller: 'AdapterListController',
+          ncyBreadcrumb: {
+            label: 'Adapters',
+            parent: 'overview'
+          }
         })
 
         .state('adapters.create', {
@@ -24,7 +28,10 @@ angular.module(PKG.name + '.feature.adapters')
             data: null
           },
           templateUrl: '/assets/features/adapters/templates/create.html',
-          controller: 'AdapterCreateController'
+          controller: 'AdapterCreateController',
+          ncyBreadcrumb: {
+            skip: true
+          }
         })
 
         .state('adapters.detail', {
@@ -53,8 +60,7 @@ angular.module(PKG.name + '.feature.adapters')
           },
           ncyBreadcrumb: {
             parent: 'adapters.list',
-            label: 'Adapters',
-            skip: true
+            label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
           },
           templateUrl: '/assets/features/adapters/templates/detail.html',
           controller: 'AdpaterDetailController'
@@ -64,7 +70,8 @@ angular.module(PKG.name + '.feature.adapters')
             templateUrl: '/assets/features/adapters/templates/tabs/runs.html',
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
-              label: 'Runs'
+              parent: 'adapters.list',
+              label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
             }
           })
             .state('adapters.detail.runs.run', {

@@ -23,6 +23,8 @@ import co.cask.cdap.api.annotation.RoundRobin;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -67,10 +69,12 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Set of static helper methods used by flow system.
@@ -323,6 +327,36 @@ public final class FlowUtils {
         }
       }
     });
+  }
+
+  /**
+   * Delete the "system.queue.pending" metrics for a flow or for all flows in an app or a namespace.
+   *
+   * @param namespace the namespace id; may only be null if the appId and flowId are null
+   * @param appId the application id; may only be null if the flowId is null
+   */
+  public static void deleteFlowPendingMetrics(MetricStore metricStore,
+                                              @Nullable String namespace,
+                                              @Nullable String appId,
+                                              @Nullable String flowId)
+    throws Exception {
+    Preconditions.checkArgument(namespace != null || appId == null, "Namespace may only be null if AppId is null");
+    Preconditions.checkArgument(appId != null || flowId == null, "AppId may only be null if FlowId is null");
+    Collection<String> names = Collections.singleton("system.queue.pending");
+    Map<String, String> tags = Maps.newHashMap();
+    if (namespace != null) {
+      tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
+      if (appId != null) {
+        tags.put(Constants.Metrics.Tag.APP, appId);
+        if (flowId != null) {
+          tags.put(Constants.Metrics.Tag.FLOW, flowId);
+        }
+      }
+    }
+    LOG.info("Deleting 'system.queue.pending' metric for context {}", tags);
+    // we must delete up to the current time - let's round up to the next second.
+    long nextSecond = System.currentTimeMillis() / 1000 + 1;
+    metricStore.delete(new MetricDeleteQuery(0L, nextSecond, names, tags));
   }
 
   /**

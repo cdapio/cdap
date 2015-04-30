@@ -32,7 +32,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
@@ -93,7 +92,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     streamBatchConfig.validate();
     pipelineConfigurer.addStream(new Stream(streamBatchConfig.name));
   }

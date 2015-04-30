@@ -65,6 +65,9 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   public static final String MESSAGE = "message";
 
+  private static final Schema SCHEMA = Schema.recordOf("JMS Message",
+                                                       Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING)));
+
   private final JmsPluginConfig config;
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
@@ -75,7 +78,6 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private transient MessageConsumer consumer;
 
   private int messagesToReceive;
-  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Default constructor
@@ -116,9 +118,6 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
     // Bootstrap the JMS consumer
     initializeJMSConnection(envVars, destinationName);
-
-    Schema.Field msgField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("JMS Message", msgField));
   }
 
   /**
@@ -198,7 +197,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           continue;
         }
 
-        writer.emit(stringMessageToStructuredRecord(text, recordBuilder));
+        writer.emit(stringMessageToStructuredRecord(text));
         count++;
       }
     } while (message != null && count < messagesToReceive);
@@ -207,7 +206,8 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   }
 
   // Helper method to encode JMS String message to StructuredRecord.
-  private static StructuredRecord stringMessageToStructuredRecord(String text, StructuredRecord.Builder recordBuilder) {
+  private static StructuredRecord stringMessageToStructuredRecord(String text) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     recordBuilder.set(MESSAGE, text);
     return recordBuilder.build();
   }
@@ -279,25 +279,24 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    * Config class for {@link JmsSource}.
    */
   public static class JmsPluginConfig extends PluginConfig {
-    private static final Integer DEFAULT_MESSAGE_RECEIVE = 50;
-
     @Name(JMS_DESTINATION_NAME)
     @Description("Name of the destination to get messages")
-    private final String destinationName;
+    private String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
     @Description("Max number messages should be retrieved per poll. The default value is 50.")
     @Nullable
-    private final Integer messagesToReceive;
+    private Integer messagesToReceive;
+
+    public JmsPluginConfig() {
+      messagesToReceive = 50;
+    }
 
     public JmsPluginConfig(String destinationName, Integer messagesToReceive) {
       this.destinationName = destinationName;
-      if (messagesToReceive == null) {
-        this.messagesToReceive = DEFAULT_MESSAGE_RECEIVE;
-      } else {
+      if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
       }
-
     }
   }
 }

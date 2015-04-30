@@ -309,7 +309,7 @@ public class BatchETLDBAdapterTest extends TestBase {
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
     ETLStage source = new ETLStage(TableSource.class.getSimpleName(),
                                    ImmutableMap.of(
-                                     Properties.BatchWritable.NAME, "inputTable",
+                                     Properties.BatchReadableWritable.NAME, "inputTable",
                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
     ETLStage sink = new ETLStage(DBSink.class.getSimpleName(),

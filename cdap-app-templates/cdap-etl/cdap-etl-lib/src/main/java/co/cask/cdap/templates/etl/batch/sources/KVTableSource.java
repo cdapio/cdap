@@ -25,7 +25,10 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.Properties;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * CDAP Key Value Table Dataset Batch Source.
@@ -62,8 +65,11 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
   }
 
   @Override
-  protected String getType(ETLStage stageConfig) {
-    return KeyValueTable.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = Maps.newHashMap(kvTableConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, kvTableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, KeyValueTable.class.getName());
+    return properties;
   }
 
   @Override

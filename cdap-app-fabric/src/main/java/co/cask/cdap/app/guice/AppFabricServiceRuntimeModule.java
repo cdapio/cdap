@@ -64,6 +64,8 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
@@ -167,6 +169,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
+                               bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
 
