@@ -17,11 +17,12 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.DummyWorkerTemplate;
-import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -30,6 +31,7 @@ import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.template.ApplicationTemplateMeta;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.io.Files;
@@ -57,7 +59,9 @@ import java.util.concurrent.TimeUnit;
 public class AdapterClientTest extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
+
   private AdapterClient adapterClient;
+  private ApplicationTemplateClient appTemplateClient;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -76,6 +80,7 @@ public class AdapterClientTest extends ClientTestBase {
     super.setUp();
     clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
     adapterClient = new AdapterClient(clientConfig);
+    appTemplateClient = new ApplicationTemplateClient(clientConfig);
   }
 
   @Test
@@ -126,6 +131,15 @@ public class AdapterClientTest extends ClientTestBase {
 
     List<AdapterDetail> finalList = adapterClient.list();
     Assert.assertEquals(0, finalList.size());
+  }
+
+  @Test
+  public void testApplicationTemplates() throws IOException, UnauthorizedException, NotFoundException {
+    List<ApplicationTemplateMeta> templates = appTemplateClient.list();
+    String templateId = templates.get(0).getName();
+
+    appTemplateClient.get(templateId);
+    appTemplateClient.getPlugins(templateId, "foo");
   }
 
   private static void setupAdapters(File adapterDir) throws IOException {

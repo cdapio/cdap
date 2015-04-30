@@ -40,6 +40,9 @@ public enum ElementType {
   APP(new Noun("app"), new Noun("Application"), null, null,
       ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
+  APP_TEMPLATE(new Noun("app-template"), new Noun("Application Template"), null, null,
+      ArgumentName.APP_TEMPLATE, Capability.LIST),
+
   DATASET(new Noun("dataset"), new Noun("Dataset"), null, null,
           ArgumentName.DATASET, Capability.LIST),
 
