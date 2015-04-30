@@ -21,7 +21,6 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -31,6 +30,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
 /**
@@ -45,14 +45,14 @@ public final class MockResponder extends AbstractHttpResponder {
     return status;
   }
 
-  public <T> T decodeResponseContent(TypeToken<T> type) {
+  public <T> T decodeResponseContent(Type type) {
     return decodeResponseContent(type, GSON);
   }
 
-  public <T> T decodeResponseContent(TypeToken<T> type, Gson gson) {
+  public <T> T decodeResponseContent(Type type, Gson gson) {
     JsonReader jsonReader = new JsonReader(new InputStreamReader
                                              (new ChannelBufferInputStream(content), Charsets.UTF_8));
-    return gson.fromJson(jsonReader, type.getType());
+    return gson.fromJson(jsonReader, type);
   }
 
   @Override

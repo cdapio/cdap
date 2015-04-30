@@ -41,9 +41,10 @@ public class ETLRealtimeTemplate extends ETLTemplate<ETLRealtimeConfig> {
   public void configureAdapter(String adapterName, ETLRealtimeConfig etlConfig, AdapterConfigurer configurer)
     throws Exception {
     super.configureAdapter(adapterName, etlConfig, configurer);
-    Preconditions.checkArgument(etlConfig.getInstances() > 0, "Instances should be greater than 0");
+    int instances = (etlConfig.getInstances() != null) ? etlConfig.getInstances() : 1;
+    Preconditions.checkArgument(instances > 0, "Instances should be greater than 0");
     configurer.addRuntimeArgument(Constants.CONFIG_KEY, GSON.toJson(etlConfig));
-    configurer.setInstances(etlConfig.getInstances());
+    configurer.setInstances(instances);
     // Generate unique id for this adapter creation.
     configurer.addRuntimeArgument(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
   }

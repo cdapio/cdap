@@ -1,0 +1,47 @@
+<div class="text-danger" ng-if="error">
+  {{ error }}
+</div>
+
+<div ng-if="properties.length > 0">
+  <div class="clearfix">
+    <div class="col-xs-4">
+      <strong>Name</strong>
+    </div>
+    <div class="col-xs-4">
+      <strong>Type</strong>
+    </div>
+    <div class="col-xs-2 text-center">
+      <strong>Nullable</strong>
+    </div>
+  </div>
+  <div class="clearfix" ng-repeat="property in properties">
+
+    <div class="col-xs-4">
+      <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
+    </div>
+
+    <div class="col-xs-4">
+      <select ng-model="property.type" class="form-control col-xs-4"
+          ng-options="option as option for option in options"></select>
+    </div>
+
+    <div class="col-xs-2 text-center">
+      <input type="checkbox" ng-model="property.nullable">
+    </div>
+
+    <div class="col-xs-2">
+      <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="col-xs-12 add-property-btn">
+  <a class="btn btn-info btn-transparent" ng-click="addProperties()">
+    <span class="fa fa-fw fa-plus"></span>
+    <span>Add Property</span>
+  </a>
+</div>

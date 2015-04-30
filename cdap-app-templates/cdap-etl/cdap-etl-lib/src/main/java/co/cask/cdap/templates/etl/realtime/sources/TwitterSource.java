@@ -120,8 +120,8 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
       recordBuilder.set(GLAT, tweet.getGeoLocation().getLatitude());
       recordBuilder.set(GLNG, tweet.getGeoLocation().getLongitude());
     } else {
-      recordBuilder.set(GLAT, -1L);
-      recordBuilder.set(GLNG, -1L);
+      recordBuilder.set(GLAT, -1d);
+      recordBuilder.set(GLNG, -1d);
     }
     recordBuilder.set(ISRT, tweet.isRetweet());
     return recordBuilder.build();

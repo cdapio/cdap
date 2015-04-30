@@ -21,9 +21,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
-
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
-import co.cask.cdap.templates.etl.realtime.sources.KafkaSource.KafkaPluginConfig;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -230,7 +229,11 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     Preconditions.checkArgument((partition % getContext().getInstanceCount()) == getContext().getInstanceId(),
                                 "Received unexpected partition " + partition);
 
-    processMessage(decodeKey(message.getKey()), decodePayload(message.getPayload()), emitter);
+    if (message.getKey() == null) {
+      processMessage(decodePayload(message.getPayload()), emitter);
+    } else {
+      processMessage(decodeKey(message.getKey()), decodePayload(message.getPayload()), emitter);
+    }
   }
 
   /**
@@ -304,8 +307,8 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     return offsetStore;
   }
 
-  protected StructuredRecord byteBufferToStructuredRecord(ByteBuffer payload) {
-    return kafkaSource.byteBufferToStructuredRecord(payload);
+  protected StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
+    return kafkaSource.byteBufferToStructuredRecord(key, payload);
   }
 
   /**

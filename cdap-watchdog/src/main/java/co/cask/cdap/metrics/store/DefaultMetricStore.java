@@ -116,6 +116,11 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for flows only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW)));
+    // queue
+    aggs.put("flow.queue", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
+                       Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE)));
     // mapreduce
     aggs.put("mapreduce", new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
@@ -229,8 +234,8 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetricNames(),
-                         toMeasureType(q.getMetricType()), q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
+    return new CubeQuery(null, q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetrics(),
+                         q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
   }
 
   @Override
@@ -298,17 +303,5 @@ public class DefaultMetricStore implements MetricStore {
         return new DimensionValue(input.getName(), input.getValue());
       }
     });
-  }
-
-  private MeasureType toMeasureType(MetricType type) {
-    switch (type) {
-      case COUNTER:
-        return MeasureType.COUNTER;
-      case GAUGE:
-        return MeasureType.GAUGE;
-      default:
-        // should never happen
-        throw new IllegalArgumentException("Unknown MetricType: " + type);
-    }
   }
 }

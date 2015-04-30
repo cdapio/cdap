@@ -32,7 +32,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
 import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
@@ -51,6 +50,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} for {@link Stream} to use {@link Stream} as Source.
  */
+@SuppressWarnings("unused")
 @Plugin(type = "source")
 @Name("Stream")
 @Description("Batch source for a stream. If a format is given, any property prefixed with " +
@@ -86,39 +86,14 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     "by the source will contain an additional field named 'ts' for the timestamp and a field named 'headers' " +
     "for the headers as as the first and second fields of the schema.";
 
-  private final StreamBatchConfig streamBatchConfig;
+  private StreamBatchConfig streamBatchConfig;
 
   // its possible the input records could have different schemas, though that isn't the case today.
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
-  private FormatSpecification formatSpec;
-
-  public StreamBatchSource(StreamBatchConfig streamBatchConfig) {
-    this.streamBatchConfig = streamBatchConfig;
-  }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    if (!Strings.isNullOrEmpty(streamBatchConfig.format)) {
-      // try to parse the schema if there is one
-      Schema schema;
-      try {
-        schema = streamBatchConfig.schema == null ? null : Schema.parseJson(streamBatchConfig.schema);
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Invalid schema: " + e.getMessage());
-      }
-
-      // strip format.settings. from any properties and use them in the format spec
-      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-      for (Map.Entry<String, String> entry : streamBatchConfig.getProperties().getProperties().entrySet()) {
-        if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
-          String key = entry.getKey();
-          builder.put(key.substring(FORMAT_SETTING_PREFIX.length(), key.length()), entry.getValue());
-        }
-      }
-      this.formatSpec = new FormatSpecification(streamBatchConfig.format, schema, builder.build());
-    } else {
-      this.formatSpec = null;
-    }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    streamBatchConfig.validate();
     pipelineConfigurer.addStream(new Stream(streamBatchConfig.name));
   }
 
@@ -130,6 +105,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     long startTime = endTime - duration;
 
     LOG.info("Setting input to Stream : {}", streamBatchConfig.name);
+
+    FormatSpecification formatSpec = streamBatchConfig.getFormatSpec();
 
     StreamBatchReadable stream;
     if (formatSpec == null) {
@@ -143,7 +120,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   @Override
   public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     // if not format spec was given, the value is a StreamEvent
-    if (formatSpec == null) {
+    if (streamBatchConfig.format == null) {
       StreamEvent event = (StreamEvent) input.getValue();
       Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
       StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
@@ -154,6 +131,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
       emitter.emit(output);
     } else {
       // otherwise, it will be a GenericStreamEventData
+      @SuppressWarnings("unchecked")
       GenericStreamEventData<StructuredRecord> event = (GenericStreamEventData<StructuredRecord>) input.getValue();
       StructuredRecord record = event.getBody();
       Schema inputSchema = record.getSchema();
@@ -203,6 +181,46 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
 
     @Description(SCHEMA_DESCRIPTION)
     @Nullable
-    private String schema = DEFAULT_SCHEMA.toString();
+    private String schema;
+
+    private void validate() {
+      // check the schema if there is one
+      if (!Strings.isNullOrEmpty(schema)) {
+        parseSchema();
+      }
+      // check duration and delay
+      ETLUtils.parseDuration(duration);
+      if (!Strings.isNullOrEmpty(delay)) {
+        ETLUtils.parseDuration(delay);
+      }
+    }
+
+    private FormatSpecification getFormatSpec() {
+      FormatSpecification formatSpec = null;
+      if (!Strings.isNullOrEmpty(format)) {
+        // try to parse the schema if there is one
+        Schema schemaObj = parseSchema();
+
+        // strip format.settings. from any properties and use them in the format spec
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        for (Map.Entry<String, String> entry : getProperties().getProperties().entrySet()) {
+          if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
+            String key = entry.getKey();
+            builder.put(key.substring(FORMAT_SETTING_PREFIX.length(), key.length()), entry.getValue());
+          }
+        }
+        formatSpec = new FormatSpecification(format, schemaObj, builder.build());
+      }
+      return formatSpec;
+    }
+
+    private Schema parseSchema() {
+      // try to parse the schema if there is one
+      try {
+        return schema == null ? null : Schema.parseJson(schema);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Invalid schema: " + e.getMessage());
+      }
+    }
   }
 }

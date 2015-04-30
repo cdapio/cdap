@@ -128,7 +128,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-cookies/angular-cookies.min.js',
       './bower_components/c3/c3.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
-      './bower_components/angular-ui-ace/ui-ace.js'
+      './bower_components/angular-ui-ace/ui-ace.js',
+      './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js'
 
 
     ].concat([
@@ -138,6 +139,15 @@ gulp.task('js:lib', function() {
     })))
     .pipe(plug.concat('lib.js'))
     .pipe(gulp.dest('./dist/assets/bundle'));
+});
+
+gulp.task('js:aceworkers', function() {
+  gulp.src([
+    './bower_components/ace-builds/src-min-noconflict/ace.js',
+    './bower_components/ace-builds/src-min-noconflict/mode-javascript.js',
+    './bower_components/ace-builds/src-min-noconflict/worker-javascript.js'
+  ])
+    .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });
 
 gulp.task('js:$modal', function() {
@@ -309,9 +319,9 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('lib', ['js:$modal', 'js:lib', 'css:lib']);
+gulp.task('lib', ['js:$modal', 'js:lib', 'js:aceworkers', 'css:lib']);
 gulp.task('app', ['js:app', 'css:app']);
-gulp.task('js', ['js:$modal', 'js:lib', 'js:app']);
+gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 

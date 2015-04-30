@@ -17,6 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.system.RenderAsCommand;
+import co.cask.cdap.cli.completer.element.AdapterIdCompleter;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
 import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
@@ -26,6 +27,7 @@ import co.cask.cdap.cli.completer.element.NamespaceNameCompleter;
 import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
 import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.proto.ProgramRunStatus;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -47,6 +49,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
   public DefaultCompleters(Injector injector) {
     this.completers = ImmutableMap.<String, Completer>builder()
         .put(ArgumentName.APP.getName(), injector.getInstance(AppIdCompleter.class))
+        .put(ArgumentName.ADAPTER.getName(), injector.getInstance(AdapterIdCompleter.class))
         .put(ArgumentName.DATASET_MODULE.getName(), injector.getInstance(DatasetModuleNameCompleter.class))
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
         .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
@@ -54,8 +57,10 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleter())
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
+        .put(ArgumentName.ADAPTER_SPEC.getName(), new FileNameCompleter())
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
+        .put(ArgumentName.RUN_STATUS.getName(), new EnumCompleter(ProgramRunStatus.class))
         .put(ArgumentName.NAMESPACE_NAME.getName(), injector.getInstance(NamespaceNameCompleter.class))
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))

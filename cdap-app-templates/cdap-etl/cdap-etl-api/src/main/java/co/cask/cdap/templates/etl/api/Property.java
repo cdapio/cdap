@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Properties that are required by a Stage. Specified while configuring a Stage through {@link StageConfigurer}.
+ * Properties that are required by a Stage.
  */
 public class Property {
 

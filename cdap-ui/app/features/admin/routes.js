@@ -184,9 +184,14 @@ angular.module(PKG.name + '.feature.admin')
               controller: 'AdminDatasetsController'
             })
               .state('admin.namespace.detail.data.datasetmetadata', {
-                url: '/:datasetId',
+                url: '/datasets/:datasetId',
                 controller: 'AdminNamespaceDatasetMetadataController',
                 templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
+              })
+              .state('admin.namespace.detail.data.streammetadata', {
+                url: '/streams/:streamId',
+                controller: 'StreamPropertiesController',
+                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
               })
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
@@ -197,23 +202,6 @@ angular.module(PKG.name + '.feature.admin')
                     backdrop: true,
                     keyboard: true,
                     controller: 'StreamsCreateController'
-                  }).result.finally(function() {
-                    $state.go('admin.namespace.detail.data', {}, { reload: true });
-                  });
-                },
-                onExit: function($modalStack) {
-                  $modalStack.dismissAll();
-                }
-              })
-              .state('admin.namespace.detail.data.streamproperties', {
-                url: '/streams/:streamid/properties',
-                onEnter: function($bootstrapModal, $state) {
-                  $bootstrapModal.open({
-                    templateUrl: '/assets/features/admin/templates/namespace/streamproperties.html',
-                    size: 'lg',
-                    backdrop: true,
-                    keyboard: true,
-                    controller: 'StreamPropertiesController'
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });

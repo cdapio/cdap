@@ -80,12 +80,15 @@ body.theme-cdap.state-admin {
     }
     h2:first-child { margin-top: 0; }
     .panel-default { margin-top: 18px; }
-    td > span {
+    // All list templates using circular status icons will rely on this selector
+    td > span[class^="status-"] {
       display: inline-block;
       width: 10px;
       height: 10px;
       margin-right: 5px;
       .border-radius(25px);
+    }
+    td > span {
       &.status-green { background-color: @brand-success; }
       &.status-grey { background-color: @cdap-gray; }
     }
@@ -93,3 +96,25 @@ body.theme-cdap.state-admin {
   }
 
 }
+
+body.state-admin-namespace-detail-data-streammetadata {
+  .form-horizontal {
+
+    padding-left: 15px;
+    padding-right: 15px;
+
+    .form-group {
+      margin-left: 0;
+      margin-right: 0;
+
+      .field-row {
+        margin-bottom: 5px;
+      }
+    }
+
+    .well {
+      margin-left: 15px;
+    }
+  }
+}
+

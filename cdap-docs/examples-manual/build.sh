@@ -22,67 +22,63 @@
 
 source ../_common/common-build.sh
 
-CHECK_INCLUDES=$TRUE
+CHECK_INCLUDES=${TRUE}
 TUTORIAL_WISE="tutorial-wise"
 
 function guide_rewrite_sed() {
-  echo "Re-writing using sed $1 $2"
+  echo "Re-writing using sed ${1} ${2}"
   # Re-writes the links in the RST file to point to a local copy of any image links.
-  local includes_dir=$1
-  local guide=$2
-  local project_version=$PROJECT_SHORT_VERSION
+  local includes_dir=${1}
+  local guide=${2}
+  local project_version=${PROJECT_SHORT_VERSION}
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  if [ "x$GIT_BRANCH_TYPE" == "xdevelop" ] || [ "x$GIT_BRANCH_TYPE" == "xfeature" ] ; then
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop/README.rst"
   else
-    local source2="release/cdap-$project_version-compatible/README.rst"
+    local source2="release/cdap-${project_version}-compatible/README.rst"
   fi
 
   local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
   
-  mkdir $includes_dir/$guide
-  curl --silent $source1/$guide/$source2 --output $includes_dir/$guide/README_SOURCE.rst  
-  sed -e "s|image:: docs/images|image:: $redirect/$guide/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $includes_dir/$guide/README_SOURCE.rst > $includes_dir/$guide/README.rst
+  mkdir ${includes_dir}/${guide}
+  curl --silent ${source1}/${guide}/${source2} --output ${includes_dir}/${guide}/README_SOURCE.rst  
+  sed -e "s|image:: docs/images|image:: ${redirect}/${guide}/docs/images|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/README_SOURCE.rst > ${includes_dir}/${guide}/README.rst
 }
 
 function download_file() {
   # Downloads a file to the includes directory, and checks that it hasn't changed.
   # Uses md5 hashes to monitor if any files have changed.
-  local includes_dir=$1
-  local source_dir=$2
-  local file_name=$3
-  local md5_hash=$4
-  local target=$includes_dir/$file_name
+  local includes_dir=${1}
+  local source_dir=${2}
+  local file_name=${3}
+  local md5_hash=${4}
+  local target=${includes_dir}/${file_name}
   
-  if [ ! -d "$includes_dir" ]; then
-    mkdir $includes_dir
-    echo "Creating Includes Directory: $includes_dir"
+  if [ ! -d "${includes_dir}" ]; then
+    mkdir ${includes_dir}
+    echo "Creating Includes Directory: ${includes_dir}"
   fi
 
-  echo "Downloading using curl $file_name from $source_dir"
-  curl $source_dir/$file_name --output $target --silent
-  local new_md5_hash=`md5 -q $target`
-  if [ "x$md5_hash" != "x$new_md5_hash" ]; then
-    echo -e "$WARNING MD5 Hash for $file_name has changed! Compare files and update hash!"  
-    echo "Old md5_hash: $md5_hash New md5_hash: $new_md5_hash"
-  fi
+  echo "Downloading using curl ${file_name} from ${source_dir}"
+  curl ${source_dir}/${file_name} --output ${target} --silent
+  test_an_include ${md5_hash} ${target}
 }
 
 function download_includes() {
   echo "Downloading source files includes from GitHub..."
   version
-  local includes=$1/$TUTORIAL_WISE
-  local project_version=$PROJECT_SHORT_VERSION
+  local includes=${1}/${TUTORIAL_WISE}
+  local project_version=${PROJECT_SHORT_VERSION}
 
   local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
-  if [ "x$GIT_BRANCH_TYPE" == "xdevelop" ] || [ "x$GIT_BRANCH_TYPE" == "xfeature" ] ; then
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop"
   else
-    local source2="release/cdap-$project_version-compatible"
+    local source2="release/cdap-${project_version}-compatible"
   fi
 
-  local project_source="$source1/$source2/Wise"
+  local project_source="${source1}/${source2}/Wise"
   local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
@@ -115,4 +111,4 @@ function download_includes() {
   guide_rewrite_sed $1 cdap-twitter-ingest-guide
 }
 
-run_command $1
+run_command ${1}

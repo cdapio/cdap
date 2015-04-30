@@ -36,23 +36,17 @@
     <module>cdap-etl-lib</module>
     <module>cdap-etl-realtime</module>
     <module>cdap-etl-test</module>
+    <module>cdap-etl-archetypes</module>
   </modules>
 
   <properties>
     <twitter4j.version>4.0.1</twitter4j.version>
-    <mysql.jdbc.version>5.1.35</mysql.jdbc.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
       <!-- Hadoop Dependencies -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -164,13 +158,6 @@
       </dependency>
 
       <dependency>
-        <groupId>co.cask.cdap</groupId>
-        <artifactId>cdap-unit-test</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
@@ -199,13 +186,6 @@
         <artifactId>hsqldb</artifactId>
         <version>${hsqldb.version}</version>
         <scope>test</scope>
-      </dependency>
-
-      <!-- TODO: Remove when plugin management is added -->
-      <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>${mysql.jdbc.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

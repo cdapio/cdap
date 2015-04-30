@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.api.TransformStage;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
@@ -33,6 +34,7 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultEmitter;
+import co.cask.cdap.templates.etl.common.Destroyables;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
@@ -60,7 +62,6 @@ public class ETLWorker extends AbstractWorker {
   private String adapterName;
   private RealtimeSource source;
   private RealtimeSink sink;
-  private List<TransformStage> transforms;
   private List<Metrics> transformMetrics;
   private TransformExecutor transformExecutor;
   private DefaultEmitter sourceEmitter;
@@ -91,7 +92,6 @@ public class ETLWorker extends AbstractWorker {
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
     stateStoreKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
-    transforms = Lists.newArrayList();
     final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
     // Cleanup the rows in statetable for runs with same adapter name but other runids.
@@ -116,7 +116,7 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context, config.getSource());
-    initializeTransforms(context, config.getTransforms());
+    List<Transform> transforms = initializeTransforms(context, config.getTransforms());
     initializeSink(context, config.getSink());
 
     transformExecutor = new TransformExecutor(transforms, transformMetrics);
@@ -143,9 +143,11 @@ public class ETLWorker extends AbstractWorker {
     sink = new TrackedRealtimeSink(sink, metrics, stage.getName());
   }
 
-  private void initializeTransforms(WorkerContext context, List<ETLStage> stages) {
+  private List<Transform> initializeTransforms(WorkerContext context, List<ETLStage> stages) {
     List<String> transformIds = GSON.fromJson(context.getRuntimeArguments().get(Constants.Transform.PLUGINIDS),
                                               STRING_LIST_TYPE);
+    List<Transform> transforms = Lists.newArrayList();
+
     Preconditions.checkArgument(transformIds != null);
     Preconditions.checkArgument(stages.size() == transformIds.size());
     transformMetrics = Lists.newArrayListWithCapacity(stages.size());
@@ -165,6 +167,7 @@ public class ETLWorker extends AbstractWorker {
         Throwables.propagate(e);
       }
     }
+    return transforms;
   }
 
   @Override
@@ -216,10 +219,12 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void stop() {
     running = false;
-    source.destroy();
-    for (TransformStage transform : transforms) {
-      transform.destroy();
-    }
-    sink.destroy();
+  }
+
+  @Override
+  public void destroy() {
+    Destroyables.destroyQuietly(source);
+    Destroyables.destroyQuietly(transformExecutor);
+    Destroyables.destroyQuietly(sink);
   }
 }

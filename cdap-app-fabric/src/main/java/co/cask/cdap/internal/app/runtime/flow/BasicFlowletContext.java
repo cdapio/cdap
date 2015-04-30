@@ -26,12 +26,14 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -54,8 +56,9 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final Metrics userMetrics;
   private final LoadingCache<String, MetricsCollector> queueMetrics;
+  private final LoadingCache<ImmutablePair<String, String>, MetricsCollector> producerMetrics;
 
-  BasicFlowletContext(Program program, String flowletId,
+  BasicFlowletContext(Program program, final String flowletId,
                       int instanceId, RunId runId,
                       int instanceCount, Set<String> datasets,
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
@@ -74,12 +77,25 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.flowletSpec = flowletSpec;
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  flowletId, runId.getId(), instanceId));
+    // TODO - does this have to cache the metric collectors? Metrics framework itself has a cache [CDAP-2334]
     this.queueMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, MetricsCollector>() {
         @Override
         public MetricsCollector load(String key) throws Exception {
           return getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+        }
+      });
+
+    this.producerMetrics = CacheBuilder.newBuilder()
+      .expireAfterAccess(1, TimeUnit.HOURS)
+      .build(new CacheLoader<ImmutablePair<String, String>, MetricsCollector>() {
+        @Override
+        public MetricsCollector load(ImmutablePair<String, String> key) throws Exception {
+          return getProgramMetrics()
+            .childCollector(ImmutableMap.of(Constants.Metrics.Tag.PRODUCER, key.getFirst(),
+                                            Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond(),
+                                            Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
 
@@ -135,6 +151,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public MetricsCollector getQueueMetrics(String flowletQueueName) {
     return queueMetrics.getUnchecked(flowletQueueName);
+  }
+
+  public MetricsCollector getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
+    return producerMetrics.getUnchecked(producerAndQueue);
   }
 
   public long getGroupId() {

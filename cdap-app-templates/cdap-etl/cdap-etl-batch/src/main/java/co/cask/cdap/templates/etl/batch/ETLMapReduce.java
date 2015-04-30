@@ -30,6 +30,7 @@ import co.cask.cdap.templates.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.common.Constants;
+import co.cask.cdap.templates.etl.common.Destroyables;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import com.google.common.base.Preconditions;
@@ -114,6 +115,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Gson GSON = new Gson();
     private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
+    private List<TransformStage> transforms;
+
     private TransformExecutor<KeyValue, KeyValue> transformExecutor;
     private Metrics mapperMetrics;
 
@@ -131,16 +134,17 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       List<Transform> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
+      transforms = Lists.newArrayListWithCapacity(stageList.size());
 
       BatchSource source = context.newPluginInstance(sourceId);
-      source.initialize(etlConfig.getSource());
+      source.initialize(context.getPluginProperties(sourceId));
       pipeline.add(source);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SOURCE, etlConfig.getSource().getName()));
 
       addTransforms(stageList, pipeline, stageMetrics, transformIds, context);
 
       BatchSink sink = context.newPluginInstance(sinkId);
-      sink.initialize(etlConfig.getSink());
+      sink.initialize(context.getPluginProperties(sinkId));
       pipeline.add(sink);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
 
@@ -160,6 +164,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         transform.initialize(transformContext);
 
         pipeline.add(transform);
+        transforms.add(transform);
         stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, stageConfig.getName()));
       }
     }
@@ -179,7 +184,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      // no-op
+      // Both BatchSource and BatchSink implements Transform, hence are inside the transformExecutor as well
+      Destroyables.destroyQuietly(transformExecutor);
     }
   }
 }

@@ -52,7 +52,7 @@ angular.module(PKG.name+'.feature.home')
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
                 var d = latest || rNsList[0].name;
-                console.warn('invalid namespace, defaulting to ', d);
+                console.warn('invalid namespace, defaulting to', d);
                 $state.go(
                   $state.current,
                   { namespace: d },

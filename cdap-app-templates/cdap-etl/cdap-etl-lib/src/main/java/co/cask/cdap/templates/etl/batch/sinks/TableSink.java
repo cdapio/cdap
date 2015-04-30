@@ -16,52 +16,90 @@
 
 package co.cask.cdap.templates.etl.batch.sinks;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
+import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * CDAP Table Dataset Batch Sink.
  */
+@Plugin(type = "sink")
+@Name("Table")
+@Description("CDAP Table Dataset Batch Sink")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
+  private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +
+    "created.";
+  private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the table as a JSON Object. If the table " +
+    "does not already exist, one will be created with this schema, which will allow the table to be explored " +
+    "through Hive.\"";
+  private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
+    "the row key when writing to the table.";
+
   private RecordPutTransformer recordPutTransformer;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setName("TableSink");
-    configurer.setDescription("CDAP Table Dataset Batch Sink");
-    configurer.addProperty(new Property(
-      NAME, "Name of the table. If the table does not already exist, one will be created.", true));
-    configurer.addProperty(new Property(
-      Table.PROPERTY_SCHEMA,
-      "Optional schema of the table as a JSON Object. If the table does not already exist," +
-        " one will be created with this schema, which will allow the table to be explored through Hive.",
-      false));
-    configurer.addProperty(new Property(
-      Table.PROPERTY_SCHEMA_ROW_FIELD,
-      "The name of the record field that should be used as the row key when writing to the table.",
-      true));
+  /**
+   * Config class for TableSink
+   */
+  public static class TableConfig extends PluginConfig {
+    @Description(NAME_DESC)
+    private String name;
+
+    @Name(Properties.Table.PROPERTY_SCHEMA)
+    @Description(PROPERTY_SCHEMA_DESC)
+    @Nullable
+    String schemaStr;
+
+    @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
+    @Description(PROPERTY_SCHEMA_ROW_FIELD_DESC)
+    String rowField;
+
+    public TableConfig(String name, String schemaStr, String rowField) {
+      this.name = name;
+      this.schemaStr = schemaStr;
+      this.rowField = rowField;
+    }
+  }
+
+  private final TableConfig tableConfig;
+
+  public TableSink(TableConfig tableConfig) {
+    this.tableConfig = tableConfig;
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
-    String rowField = stageConfig.getProperties().get(Table.PROPERTY_SCHEMA_ROW_FIELD);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(rowField), "Row field must be given as a property.");
-    recordPutTransformer = new RecordPutTransformer(rowField);
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField), "Row field must be given as a property.");
   }
 
   @Override
-  protected String getDatasetType(ETLStage config) {
-    return Table.class.getName();
+  public void initialize(PluginProperties properties) throws Exception {
+    super.initialize(properties);
+    recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
+  }
+
+  @Override
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = Maps.newHashMap(tableConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
+    return properties;
   }
 
   @Override

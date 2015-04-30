@@ -25,7 +25,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.common.Properties;
@@ -73,16 +72,26 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     @Name(Properties.Stream.HEADERS_FIELD)
     @Description(HEADERS_FIELD_DESC)
     @Nullable
-    private String headersField = Properties.Stream.DEFAULT_HEADERS_FIELD;
+    private String headersField;
 
     @Name(Properties.Stream.BODY_FIELD)
     @Description(BODY_FIELD_DESC)
     @Nullable
-    private String bodyField = Properties.Stream.DEFAULT_BODY_FIELD;
+    private String bodyField;
+
+    public StreamConfig() {
+      this(null, Properties.Stream.DEFAULT_HEADERS_FIELD, Properties.Stream.DEFAULT_BODY_FIELD);
+    }
+
+    public StreamConfig(String name, String headersField, String bodyField) {
+      this.name = name;
+      this.headersField = headersField;
+      this.bodyField = bodyField;
+    }
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(streamConfig.name),
                                 "Stream name should be non-null, non-empty.");
     pipelineConfigurer.addStream(new Stream(streamConfig.name));

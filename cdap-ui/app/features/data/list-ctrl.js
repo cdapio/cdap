@@ -1,5 +1,6 @@
 angular.module(PKG.name + '.feature.data')
-  .controller('CdapDataListController', function($state, $scope, MyDataSource) {
+  .controller('CdapDataListController', function($state, $scope, MyDataSource, MyOrderings) {
+    $scope.MyOrderings = MyOrderings;
     var dataSrc = new MyDataSource($scope);
     $scope.dataList = [];
     dataSrc.request({
@@ -36,6 +37,7 @@ angular.module(PKG.name + '.feature.data')
           streamId: data.name
         });
       }
+      MyOrderings.dataClicked(data.name);
     };
 
     $scope.goToList = function(data) {

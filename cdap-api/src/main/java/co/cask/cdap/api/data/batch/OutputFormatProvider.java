@@ -24,11 +24,9 @@ import java.util.Map;
 public interface OutputFormatProvider {
 
   /**
-   * @return the class of the output format to use.
-   * @param <T> This should be the OutputFormat class. The type parameter is
-   *           used here to avoid adding a dependency on Hadoop.
+   * @return the class name of the output format to use.
    */
-  <T> Class<? extends T> getOutputFormatClass();
+  String getOutputFormatClassName();
 
   /**
    * @return the configuration properties that the output format expects to

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -309,6 +309,7 @@
                       <targetPath>examples</targetPath>
                       <includes>
                         <include>README*</include>
+                        <include>resources/**</include>
                         <include>**/src/**</include>
                         <include>**/bin/**</include>
                         <include>**/resources/**</include>
@@ -362,8 +363,11 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
+                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
                       </includes>
+                      <excludes>
+                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
+                      </excludes>
                     </resource>
                   </resources>
                 </configuration>
@@ -380,8 +384,11 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
+                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
                       </includes>
+                      <excludes>
+                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
+                      </excludes>
                     </resource>
                   </resources>
                 </configuration>

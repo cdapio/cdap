@@ -15,16 +15,21 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpers, $filter) {
+ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
-  var caskWindowManager = caskWindowManager;
   var c3 = c3;
   var myHelpers = myHelpers;
   var $filter = $filter;
 
+  $scope.$on('$destroy', function() {
+      if ($scope.chart) {
+        $scope.chart = $scope.chart.destroy();
+      }
+  });
+
   $scope.initC3 = function (elem, type, attr, forcedOpts) {
-    if($scope.me) {
+    if($scope.chart) {
       return;
     }
 
@@ -59,9 +64,9 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
           // Save the data for when it gets resized.
           $scope.options.data = myData;
 
-          render()
+          render();
           // WARN: using load() API has funny animation (when inserting new data points to the right)
-//            $scope.me.load(myData);  // Alternative to render()
+//            $scope.chart.load(myData);  // Alternative to render()
         }
       });
     }
@@ -79,7 +84,7 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     chartConfig.size = $scope.options.size;
 
     var xTick = {};
-    xTick.count = $scope.options.xtickcount
+    xTick.count = $scope.options.xtickcount;
     if ($scope.options.formatAsTimestamp) {
       var timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
@@ -95,14 +100,10 @@ ngC3.controller('c3Controller', function ($scope, caskWindowManager, c3, myHelpe
     if($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
-    chartConfig.zoom = { enabled: true};
-    chartConfig.transition = {
-                        duration: 1000
-                    }
-    $scope.me = c3.generate(chartConfig);
+    chartConfig.zoom = { enabled: false };
+    chartConfig.transition = { duration: 1000 };
+    $scope.chart = c3.generate(chartConfig);
   }
-
-  $scope.$on(caskWindowManager.event.resize, render);
 
 });
 

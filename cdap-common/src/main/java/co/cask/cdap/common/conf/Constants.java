@@ -95,6 +95,7 @@ public final class Constants {
     public static final String APP_TEMPLATE_DIR = "app.template.dir";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
+    public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
 
     /**
      * Guice named bindings.
@@ -145,6 +146,11 @@ public final class Constants {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
     public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
+    // TODO: CDAP-2281 remove once unit tests have a better way to handle schedules
+    // lazy start is set in some unit tests so that schedules are suspended right away when created.
+    // including this key with a true value as a schedule property will ignore the suspend behavior and schedules
+    // will be created normally.
+    public static final String IGNORE_LAZY_START = "scheduler.ignore.lazy.start";
   }
 
   /**
@@ -464,6 +470,9 @@ public final class Constants {
       public static final String SCOPE = "scp";
 
       public static final String ADAPTER = "adp";
+
+      public static final String PRODUCER = "pr";
+      public static final String CONSUMER = "co";
     }
 
     /**

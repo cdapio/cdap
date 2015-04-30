@@ -50,7 +50,7 @@ angular.module(PKG.name+'.feature.dashboard')
         url: '/widget/add',
         onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
           var scope = $rootScope.$new();
-          scope.currentDashboard = rDashboardsModel.current();
+          scope.currentBoard = rDashboardsModel.current();
           $bootstrapModal.open({
             templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
             size: 'md',

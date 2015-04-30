@@ -1,0 +1,94 @@
+<div ncy-breadcrumb></div>
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2 class="pull-left"> All Adapters </h2>
+  </div>
+</div>
+
+<br/>
+<div class="row" adapters-list>
+  <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6 text-center"
+        ng-click="$state.go('^.create')"
+        etl-add-app>
+    <div class="well well-lg">
+      <br/>
+      <h1>
+        <span class="fa fa-plus"></span>
+      </h1>
+      <br/>
+    </div>
+  </div>
+  <div ng-model="adapters">
+    <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
+         ng-repeat="app in adapters">
+      <div>
+        <div class="label etlappcontainer" ng-if="app.isdraft">
+          Draft
+        </div>
+        <div class="label etlappcontainer green" ng-if="!app.isdraft">
+          Published
+        </div>
+        <div class="well well-md">
+
+          <a ng-if="!app.isdraft" ui-sref="adapters.detail.runs({adapterId: app.name})" class="content-panel">
+
+            <h3 tooltip="{{::app.name}}">
+              <i class="fa fa-heartbeat"></i>
+              <span>{{::app.name | myEllipsis:6}}</span>
+            </h3>
+
+            <small>
+              Type: {{::app.template}}
+            </small>
+
+            <p class="description" tooltip="{{::app.description}}">
+              {{::app.description | myEllipsis: 50}}
+            </p>
+          </a>
+          <a href ng-if="app.isdraft" ng-click="$state.go('^.create', {data: app.name})"
+              class="content-panel">
+              <h3 tooltip="{{::app.name}}">
+                <i class="fa fa-heartbeat"></i>
+                <span>{{::app.name | myEllipsis:6}}</span>
+              </h3>
+
+              <small>
+                Type: {{::app.template}}
+              </small>
+              <p class="description" tooltip="{{::app.description}}">
+                {{::app.description | myEllipsis: 50}}
+              </p>
+          </a>
+
+          <div class="clearfix action-panel">
+            <div class="pull-left">
+              <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
+                <span class="fa fa-play"></span>
+              </button>
+              <button class="text-danger" ng-if="app.status === 'STARTED'" ng-click="doAction('stop', app.name)" ng-disabled="app.isdraft">
+                <span class="fa fa-stop"></span>
+              </button>
+              <button ng-if="app.status === 'STARTING' || app.status === 'STOPPING'" class="text-default" >
+                <span class="fa fa-refresh fa-spin"></span>
+              </button>
+              <button class="text-danger"
+                      ng-click="caskConfirm()"
+                      cask-confirmable="deleteAdapter(app.name)"
+                      data-confirmable-content="Are you sure you want to delete this adapter?"
+                      ng-if="!app.isdraft">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
+
+
+            <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}" class="pull-right">
+              <i class="fa fa-circle"></i>
+              <span> {{app.status}} </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

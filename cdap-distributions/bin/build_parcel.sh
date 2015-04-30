@@ -47,11 +47,6 @@ echo "REPO_HOME: ${REPO_HOME}"
 
 CDAP_HOME=${CDAP_HOME:-${REPO_HOME}}
 
-# Source additional settings if configured
-if [ -n "${PARCEL_DELIVERY_OPTIONS_FILE}" ]; then
-  source ${PARCEL_DELIVERY_OPTIONS_FILE}
-fi
-
 function die {
   echo "ERROR: ${1}" 1>&2
   exit 1
@@ -146,9 +141,7 @@ function generate_parcel {
 
 # Scp the parcel somewhere, optional
 function scp_parcel {
-  if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_BASE_PATH}" ]; then
-    die "The following vars must be defined to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_BASE_PATH"
-  fi
+  PARCEL_SCP_OPTIONS="-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oLogLevel=ERROR"
   echo "Creating remote directory"
   ssh ${PARCEL_SCP_OPTIONS} ${PARCEL_SCP_USER}@${PARCEL_SCP_HOST} mkdir -p ${PARCEL_SCP_BASE_PATH}/cdap/${VERSION}
   echo "Copying ${TARGET_DIR}/${PARCEL_NAME} to remote host"
@@ -178,7 +171,9 @@ stage_parcel_bits
 
 generate_parcel
 
-# Scp settings must be configured in ${PARCEL_DELIVERY_OPTIONS_FILE}
-if [ -n "${PARCEL_SCP_ENABLED}" ]; then
+# Optional SCP
+if [ -z "${PARCEL_SCP_USER}" ] || [ -z "${PARCEL_SCP_HOST}" ] || [ -z "${PARCEL_SCP_BASE_PATH}" ]; then
+  echo "Skipping SCP.  Set the following env vars to enable parcel SCP: PARCEL_SCP_USER, PARCEL_SCP_HOST, PARCEL_SCP_BASE_PATH"
+else
   scp_parcel
 fi

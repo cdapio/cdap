@@ -67,11 +67,11 @@ import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -209,7 +209,7 @@ public class PluginRepository {
           }
         }
       } finally {
-        pluginInstantiator.close();
+        Closeables.closeQuietly(pluginInstantiator);
       }
     } finally {
       templateClassLoader.close();
@@ -321,16 +321,23 @@ public class PluginRepository {
               }
               currentPackage = packageIterator.next();
 
-              URL packageResource = pluginClassLoader.getResource(currentPackage.replace('.', File.separatorChar));
-              if (packageResource == null) {
-                // Cannot happen since we know the class loader expand the jar into directory, the class loader
-                // should have the package URL pointing to the package directory.
-                continue;
-              }
-
               try {
-                classIterator = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
-              } catch (URISyntaxException e) {
+                // Gets all package resource URL for the given package
+                String resourceName = currentPackage.replace('.', File.separatorChar);
+                Enumeration<URL> resources = pluginClassLoader.getResources(resourceName);
+                while (resources.hasMoreElements()) {
+                  URL packageResource = resources.nextElement();
+
+                  // Only inspect classes in the top level jar file for Plugins.
+                  // The jar manifest may have packages in Export-Package that are loadable from the bundled jar files,
+                  // which is for classloading purpose. Those classes won't be inspected for plugin classes.
+                  // There should be exactly one of resource that match, because it maps to a directory on the FS.
+                  if (packageResource.getProtocol().equals("file")) {
+                    classIterator = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
+                    break;
+                  }
+                }
+              } catch (Exception e) {
                 // Cannot happen
                 throw Throwables.propagate(e);
               }
