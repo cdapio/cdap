@@ -44,7 +44,7 @@ angular.module(PKG.name + '.feature.adapters')
       dataSrc.poll({
         _cdapNsPath: '/adapters/' + app.name + '/status'
       }, function(res) {
-        app.status = res;
+        app.status = res.status;
       });
     }
 
