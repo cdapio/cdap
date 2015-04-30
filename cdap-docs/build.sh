@@ -191,7 +191,7 @@ function build_all() {
   rm -rf ${SCRIPT_PATH}/${BUILD_TEMP}
   echo ""
   echo "========================================================"
-  bell "Completed \"build_all\""
+  bell "Completed \"build_all\"."
   echo "--------------------------------------------------------"
   echo ""
   exit 0
