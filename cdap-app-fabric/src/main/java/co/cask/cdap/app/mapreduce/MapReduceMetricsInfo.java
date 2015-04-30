@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * Retrieves information/reports for a MapReduce run via the Metrics system.
  */
-public class MapReduceMetricsInfo {
+public class MapReduceMetricsInfo implements MRJobInfoFetcher {
 
   private final MetricStore metricStore;
 
