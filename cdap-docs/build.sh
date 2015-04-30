@@ -21,7 +21,7 @@
 # _common directory holds common files and scripts.
 
 # Optional Parameter (passed via Bamboo env variable or exported in shell)
-# BELL (set it to yes, if you want the bell commands to work in their script)
+# BELL (set it to either 'yes' or 'TRUE', if you want the bell function to make a sound when called)
 
 source ./vars
 source _common/common-build.sh
