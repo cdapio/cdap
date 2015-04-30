@@ -171,7 +171,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws IOException if there was an error reading the template jar
    * @throws TimeoutException if there was a timeout examining the template jar
    */
-  public void deployTemplate(Id.Namespace namespace, String templateName)
+  public synchronized void deployTemplate(Id.Namespace namespace, String templateName)
     throws NotFoundException, InterruptedException, ExecutionException, TimeoutException, IOException {
     // make sure we're up to date on template info
     registerTemplates();
@@ -286,7 +286,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws AdapterAlreadyExistsException if an adapter with the same name already exists.
    * @throws IllegalArgumentException if the adapter config is invalid.
    */
-  public void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
+  public synchronized void createAdapter(Id.Namespace namespace, String adapterName, AdapterConfig adapterConfig)
     throws IllegalArgumentException, AdapterAlreadyExistsException {
 
     ApplicationTemplateInfo applicationTemplateInfo = appTemplateInfos.get().get(adapterConfig.getTemplate());
@@ -316,7 +316,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws AdapterNotFoundException if the adapter to be removed is not found.
    * @throws CannotBeDeletedException if the adapter is not stopped.
    */
-  public void removeAdapter(Id.Namespace namespace, String adapterName)
+  public synchronized void removeAdapter(Id.Namespace namespace, String adapterName)
     throws AdapterNotFoundException, CannotBeDeletedException {
 
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
@@ -357,7 +357,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws InvalidAdapterOperationException if the adapter is already stopped
    * @throws SchedulerException if there was some error deleting the schedule for the adapter
    */
-  public void stopAdapter(Id.Namespace namespace, String adapterName)
+  public synchronized void stopAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException, ExecutionException,
     InterruptedException {
 
@@ -393,7 +393,7 @@ public class AdapterService extends AbstractIdleService {
    * @throws SchedulerException if there was some error creating the schedule for the adapter
    * @throws IOException if there was some error starting worker adapter
    */
-  public void startAdapter(Id.Namespace namespace, String adapterName)
+  public synchronized void startAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
