@@ -29,10 +29,11 @@ angular.module(PKG.name + '.feature.flows')
       angular.forEach($scope.flowlets, function(f) {
         f.isOpen = false;
       });
+      var match = filterFilter($scope.flowlets, flowlet);
 
-      flowlet.isOpen = true;
+      match[0].isOpen = true;
 
-      $scope.activeFlowlet = flowlet;
+      $scope.activeFlowlet = match[0];
     };
 
   });
