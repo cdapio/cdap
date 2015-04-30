@@ -9,25 +9,107 @@ ETL Overview
 ============
 
 
-What is ETL?
-============
-ETL is **Extract**, **Transformation** and **Loading** of data, and is a common first-step
-in any data application. CDAP endeavors to make performing ETL possible out-of-box without
-writing code; instead, you just configure an ETL Adapter and then operate it.
+A Quick Intro to ETL
+====================
 
-Typically, ETL is operated as a pipeline. Data comes from a Data Source, is (possibly) sent
-through a series of one or more Transformations, and then is persisted by a Data Sink.
+Most data infrastructures are front ended with an ETL system (Extract-Transform-Load). The
+purpose of the system is to:
 
-This diagram outlines the steps of an ETL Pipeline:
+- Extract data from one or more sources;
+- Transform the data to fit the operational needs; and
+- Load the data into a desired destination.
 
+ETL usually comprises a source, zero or more transformations and a sink, in what is called
+an ETL Pipeline:
 
 .. image:: ../_images/etl-pipeline.png
    :width: 6in
    :align: center
 
 
-What’s an ETL Adapter?
-----------------------
+ETL Templates, Adapters and Plugins 
+-----------------------------------
+
+An Application Template is a blueprint that is used to create an Adapter, an instance of
+a template in CDAP.
+
+CDAP provides two Application Templates |---| the ETL Templates **etlBatch** and
+**etlRealtime** |---| which are used to create Adapters that perform ETL in either batch
+and realtime. The  *etlBatch* and *etlRealtime* templates consist of a variety of sources,
+transformations and sinks that are packaged together.
+
+The batch sources can write to any batch sinks that are available and realtime sources can
+write to any realtime sinks. Transformations work with either sinks or sources.
+
+This matrix depicts the list of available sources, transformations, and sinks:
+
+.. list-table::
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - Template Type
+     - Sources
+     - Transformations
+     - Sinks
+   * - **Batch**
+     - Stream
+     - Filter
+     - Datasets (Table)
+   * - 
+     - Datasets (Table)
+     - Projection
+     - Database
+   * - 
+     - Database
+     - Script (Javascript)
+     - TimePartitionedFileSets
+   * - 
+     - 
+     - 
+     - 
+   * - **Realtime**
+     - Twitter
+     - Filter
+     - Stream
+   * - 
+     - JMS
+     - Projection
+     - Datasets (Table)
+   * - 
+     - Kafka
+     - Script (Javascript)
+     - Cube Dataset
+
+
+ETL Adapters
+............
+An ETL Adapter is an instance of an ETL Template that has been given a specific
+configuration on creation.
+
+Batch adapters can be scheduled to run periodically using a cron expression and can read
+data from batch sources using a Mapreduce job. The batch adapter then performs any
+optional transformations before writing to a batch sink.
+
+Realtime adapters are designed to poll sources periodically to fetch the data, perform any
+optional transformations, and then write to a realtime sink.
+
+ETL Adapters are created by preparing a configuration that specifies the ETL template and
+which source, transformations (transforms), and sinks are used to create the adapter. The
+configuration can either be written as a JSON file or, in the case of the CDAP UI,
+specified in-memory.
+
+ETL Plugins
+...........
+The sources, transformations and sinks are generically called plugins. Plugins provide a
+way to extend the functionality of existing templates. An adapter can be created with
+existing plugins or, if the user wishes, they can write their own source, transform, and
+sink plugins to add their own.
+
+
+
+
+OLD MATERIAL
+------------
 
 An ETL Adapter is a representation of an ETL pipeline. An ETL pipeline contains a
 Source, optional Transforms (zero or more) and a Sink. Only 

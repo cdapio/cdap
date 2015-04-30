@@ -14,8 +14,8 @@ Introduction
 The motivation behind the CDAP Users’ Manual is that the users of CDAP should be able
 to build solutions to their common big data problems without writing a single line of code.
 
-Through the use of *Application Templates* and *Adapters*, a CDAP User can use CDAP's
-out-of-the-box capabilities to perform common tasks such as the ETL (Extraction,
+Through the use of *Application Templates* and the creation of *Adapters*, a CDAP User can
+take CDAP's out-of-the-box capabilities and perform common tasks such as ETL (Extraction,
 Transformation and Loading) of data.
 
 
