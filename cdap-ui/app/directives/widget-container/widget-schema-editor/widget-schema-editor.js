@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
             try {
               obj = JSON.parse($scope.model);
             } catch (e) {
-              $scope.error = "Invalid JSON string";
+              $scope.error = 'Invalid JSON string';
             }
           }
 
@@ -46,6 +46,14 @@ angular.module(PKG.name + '.commons')
               });
             }
           });
+
+          if ($scope.properties.length === 0) {
+            $scope.properties.push({
+              name: '',
+              type: defaultType,
+              nullable: false
+            });
+          }
 
         } // End of initialize
 
@@ -88,7 +96,7 @@ angular.module(PKG.name + '.commons')
 
 
         $scope.addProperties = function() {
-          $scope.properties.unshift({
+          $scope.properties.push({
             name: '',
             type: defaultType,
             nullable: false

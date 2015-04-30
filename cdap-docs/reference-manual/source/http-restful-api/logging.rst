@@ -29,9 +29,9 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``services``, or ``spark``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *Workflow*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 

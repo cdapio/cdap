@@ -60,7 +60,8 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
 
   private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
                                                        Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
-                                                       Schema.Field.of(KEY, Schema.of(Schema.Type.STRING)));
+                                                       Schema.Field.of(KEY, Schema.nullableOf(
+                                                         Schema.of(Schema.Type.STRING))));
 
   private KafkaSimpleApiConsumer kafkaConsumer;
 

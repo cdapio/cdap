@@ -108,8 +108,7 @@ angular
 
   .config(function (caskThemeProvider) {
     caskThemeProvider.setThemes([
-      'cdap',   // customized theme
-      'default' // bootstrap default theme
+      'cdap'  // customized theme
     ]);
   })
 

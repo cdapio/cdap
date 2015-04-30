@@ -35,7 +35,7 @@
           </div>
           <button class="btn btn-success"
                   ng-click="updateWithTimeRange()">
-            Apply!
+            Make Request!
           </button>
         </div>
       </div>
@@ -72,8 +72,11 @@
               <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
             </ul>
           </div>
-          <button class="btn btn-success" ng-click="updateWithFrequency()">
-            Apply!
+          <button ng-if="!liveDashboard" class="btn btn-success" ng-click="updateWithFrequency()">
+            Start Polling!
+          </button>
+          <button ng-if="liveDashboard" class="btn btn-danger" ng-click="stopPolling()">
+            Stop Polling!
           </button>
         </div>
       </div>

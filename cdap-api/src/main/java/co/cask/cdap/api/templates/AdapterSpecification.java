@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.templates;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 
 import java.lang.reflect.Type;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Specification of an adapter.
  */
+@Beta
 public interface AdapterSpecification {
 
   /**

@@ -58,6 +58,7 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
+  APP_TEMPLATE("app-template-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
@@ -66,6 +67,7 @@ public enum ArgumentName {
   SCHEMA("schema"),
   SETTINGS("settings"),
   FREQUENCY("frequency"),
+  PLUGIN_TYPE("plugin-type"),
 
   NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),

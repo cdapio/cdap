@@ -193,7 +193,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
           if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
             // if count down occurred return
-            LOG.info("Returning since callback is cancelled");
+            LOG.debug("Returning since callback is cancelled");
             return;
           }
 
