@@ -3,10 +3,6 @@ angular.module(PKG.name + '.feature.adapters')
     this.plugins = {};
 
     this.fetch = function(scope, templateid, pluginid) {
-
-      if (this.plugins[templateid+pluginid]) {
-        return $q.when(this.plugins[templateid+pluginid]);
-      }
       var dataSrc = new MyDataSource(scope);
       var defer = $q.defer();
 
