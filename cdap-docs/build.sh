@@ -121,6 +121,7 @@ function build_docs_outer_level() {
   
   # Copies placeholder file and renames it
   copy_source introduction        "Introduction"
+  copy_source users-manual        "Users’ Manual"
   copy_source developers-manual   "Developers’ Manual"
   copy_source admin-manual        "Administration Manual"
   copy_source integrations        "Integrations"
