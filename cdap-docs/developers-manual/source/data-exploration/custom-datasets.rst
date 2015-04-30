@@ -305,6 +305,9 @@ When creating your queries, keep these limitations in mind:
   ``dataset_``. For example, if your Dataset is named ``ProductCatalog``, then the
   corresponding table name is ``dataset_productcatalog``. Note that the table name is
   lower-case.
+- If your Dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
+  table name. For example, if your Dataset is named ``my-table.name``, the corresponding Hive table
+  name will be ``dataset_my_table_name``.
 
 For more examples of queries, please refer to the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.

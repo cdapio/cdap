@@ -110,13 +110,15 @@ Formulating Queries
 -------------------
 When creating your queries, keep these limitations in mind:
 
-.. TODO(CDAP-1671): update with namespaces
-
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
 - The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
-- When addressing your datasets in queries, you need to prefix the data set name with the CDAP
+- When addressing your datasets in queries, you need to prefix the Dataset name with the CDAP
   namespace ``dataset_``. For example, if your Dataset is named ``Purchases``, then the corresponding table
   name is ``dataset_purchases``. Note that the table name is lower-case.
+- If your Dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
+  table name. For example, if your Dataset is named ``my-table.name``, the corresponding Hive table
+  name will be ``dataset_my_table_name``.
+
 
 For more examples of queries, please refer to the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML>`__.
