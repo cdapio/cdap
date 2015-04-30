@@ -6,28 +6,31 @@
 .. _http-restful-api-adapter:
 
 ===========================================================
-Adapter HTTP RESTful API
+Application Template and Adapter HTTP RESTful API
 ===========================================================
 
-Use the CDAP Adapter HTTP API to obtain a list of available Application Templates and
-Plugins, and create, delete, and manage the lifecycle of Adapters.
+Use the CDAP Application Template and Adapter HTTP API to obtain a list of available
+Application Templates and Plugins, and create, delete, and manage the lifecycle of
+Adapters.
 
 Note that the ETL Templates are a type of Application Template, specifically designed for
-creating ETL Adapters. See the Developers’ Manual Building Blocks section on ETL Adaptors
-for additional information.
+creating ETL Adapters. See the Developers’ Manual Building Blocks section on ETL Adapters
+for additional information.[link]
 
 
 .. highlight:: console
 
-List of available Application Templates 
----------------------------------------
+Application Templates
+=====================
+
+Available Application Templates 
+-------------------------------
 To retrieve a list of available Application Templates, submit an HTTP GET request::
 
   GET <base-url>/templates/
 
-This will return a JSON String map that lists each Application Template with its name, 
-description and type of program that it creates.
-Example output (pretty-printed)::
+This will return a JSON String map that lists each Application Template with its name,
+description and type of program that it creates. Example output (pretty-printed)::
 
   [
     {
@@ -43,8 +46,8 @@ Example output (pretty-printed)::
   ]
 
 
-Details of an Application Template
-----------------------------------
+Template Details
+-----------------
 To retrieve the details of a particular Application Templates, submit an HTTP GET request::
 
   GET <base-url>/templates/<template-id>
@@ -76,14 +79,14 @@ Example output of the ``etlBatch`` Application Template (pretty-printed)::
     "programType": "Workflow"
   }
 
-``extensions`` is an array of the types of Plugins that are available for usse by the
+``extensions`` is an array of the types of Plugins that are available for use by the
 Application Template.
 
 
-Extensions of an Application Template
--------------------------------------
-To retrieve the extensions of a particular Application Templates, submit an HTTP
-GET request::
+Template Extensions 
+-------------------
+To retrieve a list of all the extensions of a particular type for an Application
+Template, submit an HTTP GET request::
 
   GET <base-url>/templates/<template-id>/extensions/<extension-type>
   
@@ -100,8 +103,9 @@ where
    * - ``<extension-type>``
      - Extension type, such as (for ETL Templates) ``source``, ``sink``, or ``transform``
 
-This will return a JSON String map that lists the extensions of the Application Template,
-including their name, description, and the source files that contain the extension.
+This will return a JSON String map that lists all the extensions of particular type for
+that Application Template, including their name, description, and the source files that
+contain the extension.
 
 Example output for the ``source`` extensions of the ``etlBatch`` Application Template
 (pretty-printed and reformatted to fit)::
@@ -200,10 +204,10 @@ Example output for the ``source`` extensions of the ``etlBatch`` Application Tem
   ]
 
 
-Details of an Extension (Plugin) of an Application Template
------------------------------------------------------------
-To retrieve the details of an extension (plugin) in an Application Templates, submit an HTTP
-GET request::
+Details of an Extension (Plugin)
+--------------------------------
+To retrieve the details of an extension (plugin) used in an Application Template, submit
+an HTTP GET request::
 
   GET <base-url>/templates/<template-id>/extensions/<extension-type>/plugins/<plugin-id>
   
@@ -222,10 +226,11 @@ where
    * - ``<plugin-id>``
      - Plugin name
 
-This will return a JSON String map that lists the details of the Plugin.
+This will return a JSON String map that lists the details of the Plugin. This is the
+information needed to configure the plugin when used in creating an Adapter.
 
-Example output for the ``Database`` plugin of type ``source`` of the ``etlBatch`` Application Template
-(pretty-printed and reformatted to fit)::
+Example output for the ``Database`` plugin of type ``source`` of the ``etlBatch``
+Application Template (pretty-printed and reformatted to fit)::
 
   $ GET <base-url>/templates/etlBatch/extensions/source/plugins/Database
 
@@ -322,3 +327,202 @@ Example output for the ``Database`` plugin of type ``source`` of the ``etlBatch`
       "description": "Batch source for a database."
     }
   ]
+
+Adapters
+=====================
+
+Creating an Adapter 
+-------------------
+To create an Adapter, submit an HTTP PUT request::
+
+  PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
+
+with the path to the Adaptor configuration file [link] as the body of the request::
+
+  <config-path>
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+   * - ``<config-path>``
+     - Path to the configuration file
+
+The format of the configuration file is described in the Developers’ Manual section
+on Adapters. [link]
+
+.. rubric::  Example
+
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``PUT <base-url>/namespaces/default/adapters/streamAdapter -d @config.json``
+   * - Description
+     - Creates an Adaptor *streamAdapter* in the namespace *default* using the configuration
+       file ``config.json``
+
+Listing Existing Adapters
+-------------------------
+To retrieve a list of the existing Adapters, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace-id>/adapters
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+
+List Details of an Adapter
+--------------------------
+To retrieve the details of a particular Adapter, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+
+Status of an Adapter
+--------------------
+To retrieve the status of an Adapter, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/status
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+
+Starting an Adapter
+-------------------
+Starting a Batch Adapter schedules a Workflow to be run periodically based on the cron
+schedule that is configured in the Adapter. Starting a Realtime Adapter starts a CDAP
+Worker.
+
+To start an Adapter, submit an HTTP POST request::
+
+  POST <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/start
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+Stopping an Adapter
+-------------------
+To stop an Adapter, submit an HTTP POST request::
+
+  POST <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/stop
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+Deleting an Adapter
+-------------------
+To delete an Adapter, submit an HTTP DELETE request::
+
+  DELETE <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+Getting Adapter runs
+--------------------
+To retrieve a list of runs of an Adapter, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/runs
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
+
+Getting Adapter logs
+--------------------
+To retrieve the logs of an Adapter, submit an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>/logs
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Name of the Adapter
