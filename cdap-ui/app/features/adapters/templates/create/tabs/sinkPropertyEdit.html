@@ -1,4 +1,5 @@
 <br />
+
 <div class="row">
   <div class="col-xs-12" ng-init="plugin=sink">
     <form class="form-horizontal"
@@ -24,7 +25,6 @@
 
             <div class="well well-lg widget-group-container">
               <h3>{{config.groups[group].display}}</h3>
-
               <div ng-repeat="(field,value) in
                    config.groups[group].fields">
                 <div class="form-group">
@@ -32,6 +32,7 @@
                          ng-if="config.groups[group].fields[field].label">
                     {{config.groups[group].fields[field].label}}
                   </label>
+                  <a href><i class="fa fa-exclamation-circle text-info" tooltip="{{config.groups[group].fields[field].info}}"></i></a>
                   <label class="control-label col-sm-4"
                          ng-if="!config.groups[group].fields[field].label">
                     {{field}}
@@ -42,7 +43,6 @@
                          data-model="sink.properties[field]"
                          data-myconfig="config.groups[group].fields[field]"
                          widget-container>
-
                     </div>
                   </div>
                 </div>
