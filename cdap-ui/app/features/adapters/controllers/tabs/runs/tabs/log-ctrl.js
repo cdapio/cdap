@@ -5,6 +5,9 @@ angular.module(PKG.name + '.feature.adapters')
                    '/runs/' + $scope.runs.selected.runid,
         logPath = '';
 
+    if (!$scope.runs.length) {
+      return;
+    }
    dataSrc.request({
      _cdapPath: '/namespaces/' + $state.params.namespace +
                 '/adapters/' + $state.params.adapterId
