@@ -142,7 +142,7 @@ function build_docs_outer_level() {
 function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
-  echo "Copying lower-level docs..."
+  echo "Copying lower-level documenation..."
   echo "--------------------------------------------------------"
   echo ""
 
@@ -238,7 +238,7 @@ function build_docs_inner_level() {
 function build_specific_doc() {
   echo ""
   echo "========================================================"
-  echo "Building ${1}, target ${2}..."
+  echo "Building \"${1}\", target \"${2}\"..."
   echo "--------------------------------------------------------"
   echo ""
   cd $SCRIPT_PATH/${1}
