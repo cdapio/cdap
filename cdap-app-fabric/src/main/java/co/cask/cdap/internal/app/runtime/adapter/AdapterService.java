@@ -336,6 +336,13 @@ public class AdapterService extends AbstractIdleService {
     }
   }
 
+  public synchronized void removeAdapters(Id.Namespace namespaceId)
+    throws AdapterNotFoundException, CannotBeDeletedException {
+    for (AdapterDefinition adapterDefinition : getAdapters(namespaceId)) {
+      removeAdapter(namespaceId, adapterDefinition.getName());
+    }
+  }
+
   /**
    * Deletes the application (template) if there is no associated adapter using it
    * @param applicationId the {@link Id.Application} of the application (template)
@@ -645,7 +652,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Reads all the jars from the adapter directory and sets up required internal structures.
   @VisibleForTesting
-  void registerTemplates() {
+  public void registerTemplates() {
     try {
       // generate a completely new map in case some templates were removed
       Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();

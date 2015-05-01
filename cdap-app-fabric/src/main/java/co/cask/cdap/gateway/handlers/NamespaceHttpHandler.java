@@ -167,7 +167,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
