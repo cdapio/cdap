@@ -105,6 +105,7 @@ with JSON-formatted name of the dataset type and properties in a body::
      - Creates a Dataset named *mydataset* of the type ``Table`` in the namespace *default*
        with the time-to-live property set to 1 hour
 
+.. _http-restful-api-dataset-updating:
 
 Updating an Existing Dataset
 ----------------------------

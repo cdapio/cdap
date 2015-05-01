@@ -103,6 +103,10 @@ To create a Dataset of type ``UniqueCountTable``, add the following into the App
     }
   }
 
+.. _custom-datasets-properties:
+
+Passing Properties
+------------------
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
 These properties will be used by embedded Datasets during creation and will be available via the
 ``DatasetSpecification`` passed to the Dataset constructor. For example, to create a Dataset with
@@ -117,6 +121,8 @@ You can pass other properties, such as for
 :ref:`conflict detection <transaction-system-conflict-detection>` and for
 :ref:`pre-splitting into multiple regions <table-datasets-pre-splitting>`.
 
+Accessing a Dataset
+-------------------
 Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
   Class MyFlowlet extends AbstractFlowlet {
