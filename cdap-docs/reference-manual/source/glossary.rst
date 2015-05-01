@@ -103,8 +103,9 @@ Glossary
       A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP Console.
       
    CDAP UI
-      The CDAP UI is a web-based application used to deploy CDAP Applications, create ETL Applications, and
-      query and manage the Cask Data Application Platform instance.
+      The CDAP UI is a web-based application used to deploy CDAP Applications, create 
+      :term:`ETL Adapters <ETL Adapter>`, and query and manage the Cask Data Application 
+      Platform instance.
 
    CDAP Console
       See :term:`CDAP UI`.
@@ -151,69 +152,81 @@ Glossary
    .. ETL and Application Templates
 
    Structured Record
-      The format used to exchange events between different ETL :term:`Components <component>`
+      The data format used to exchange events between different ETL :term:`Plugins <plugin>`.
       
    Sink
-      A :term:`Component` that accepts events and persists them.
+      A :term:`Plugin` that accepts events and persists them.
       
    Source
-      A :term:`Component` that produces events.
+      A :term:`Plugin` that produces events.
       
    Transformation
-      A :term:`Component` that accepts events, performs modifications on them, and then transmits them.
+      A :term:`Plugin` that accepts events, performs modifications on them, and then transmits them.
+
+   Transform
+      See :term:`Transformation`.
 
    Filter
       A type of :term:`Transformation` that only passes events that meet a specific criteria.
       
    Projection
       A type of :term:`Transformation` that modifies events that meet a specific criteria.
-      Possible modifications include renaming and dropping of fields.
+      A modification could include renaming and dropping of fields.
 
-   Manifest
-      A JSON Object, either in-memory or in a file, that defines either an :term:`ETL Application`,
-      an :term:`App-Template`, a :term:`Component`, or an :term:`ETL Pipeline`.
+   Adapter Configuration
+      A JSON Object, either in-memory or in a file, that defines an :term:`Adapter`, which
+      is created from the :term:`Application Template` specified in the configuration.
       
-   App-Template
-      A set of :term:`Components <component>` that can combined together to create an
-      :term:`ETL Pipeline`, consisting of one or more :term:`Sources <source>`, one or
-      more :term:`Sinks <sink>`, and one or more :term:`Transformations <transformation>`.
-      Each must be interchangeable, in that any Source can hook to any Transform and any Sink.
-    
+   Application Template
+      A set of :term:`Plugins <Plugin>` that can be combined together to create an
+      :term:`Adapter`. The template describes the set of plugins that can be used, and
+      how they can be combined.
+  
+   Template
+      See :term:`Application Template`.
+
+   App Template
+      See :term:`Application Template`.
+
+   Adapter
+      An Adapter is an instance of an :term:`Application Template` that has been created
+      from a specific configuration, usually an Adapter configuration, either a file or an
+      in-memory object. Adapters combine :term:`Plugins <plugin>` to access CDAP programs
+      and resources.
+   
    Pipeline
-      A linked set of a specific :term:`Source` and :term:`Sink`, with a set of one or more
+      A linked :term:`Source` and :term:`Sink`, with a set of zero or more
       :term:`Transformations <transformation>` in between.
     
    ETL
-      Refers to the Engesting, Transforming and Loading of data. 
+      Refers to the *Extracting*, *Transforming* and *Loading* of data. 
     
    ETL Pipeline
-      See :term:`Pipeline`.
+      A :term:`Pipeline` that performs :term:`ETL`.
 
-   ETL Application
-      A packaged :term:`ETL Pipeline <pipeline>`, either in a JAR file or manifested in the :term:`CDAP UI`.
-    
-   Component
-      One of a :term:`Sink`, :term:`Source` or :term:`Transformation`, packaged in a JAR file format, for use as a
-      :term:`Plugin`.
+   ETL Application Template
+      Also referred to as an ETL Template. A type of :term:`Application Template`,
+      designed to create an :term:`ETL Adapter`. Two ETL Templates are shipped with CDAP:
+      ``etlBatch`` and ``etlRealtime``, for the creation of either batch or realtime
+      :term:`ETL Pipelines <ETL Pipeline>`.
+  
+   ETL Template
+      See :term:`ETL Application Template`.
 
-   ETL Component
-      See :term:`Component`.
+   ETL Adapter
+      An ETL :term:`Adapter` is an Adapter created from an :term:`ETL Template`,
+      specifically for creating :term:`ETL Pipelines <ETL Pipeline>`.
+
+   ETL Plugin
+      A :term:`Sink`, :term:`Source` or :term:`Transformation`, packaged in a JAR file
+      format, for use as a :term:`Plugin` in an ETL Adapter.
 
    Plugin
       Specially-constructed files (JAR Files) that add custom features to CDAP.
-      Current Plugins include an :term:`App-Template` and an :term:`ETL Component` JAR.
+      Current Plugins include :term:`Sources <Source>`,  :term:`Sinks <Sink>` and
+      :term:`Transformations <Transformation>` for creating :term:`ETL Pipelines <ETL
+      Pipeline>`.
       
    Plugins Directory
-      The specific directory on a CDAP installation where a :term:`Plugin` is placed.
-      
-   Realtime
-      A sequence of events characterized as ones that happen outside of the control of the
-      receiving system. The flow of the sequence cannot be initiated, started nor stopped
-      by the receiving system; they must simply be accepted or rejected as they arrive.
-    
-   Batch
-      A sequence of events characterized as ones that happen inside the control of the
-      receiving system. The flow of the sequence is initiated, started or stopped by the
-      receiving system; the number of events that are dealt with in a single interaction
-      can be controlled and set by the receiving system.
+      The specific directory on a CDAP installation where :term:`Plugins <Plugin>` are placed.
       
