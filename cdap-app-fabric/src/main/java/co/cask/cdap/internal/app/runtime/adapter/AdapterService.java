@@ -394,15 +394,30 @@ public class AdapterService extends AbstractIdleService {
    * @throws IOException if there was some error starting worker adapter
    */
   public synchronized void startAdapter(Id.Namespace namespace, String adapterName)
-    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
+    throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException, ExecutionException,
+    InterruptedException {
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
+    ProgramType programType = adapterSpec.getProgram().getType();
+
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
-      throw new InvalidAdapterOperationException("Adapter is already started.");
+      // For Adapter with type of Worker, need to check whether the program is running since Workflow should
+      // already added to scheduler
+      if (programType == ProgramType.WORKER) {
+        Id.Program program = getProgramId(namespace, adapterName);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.findRuntimeInfo(program, programType);
+        // check if it is not running
+        if (runtimeInfo == null) {
+          // not running, lets update the RunRecords
+          stopWorkerAdapter(namespace, adapterSpec);
+        } else {
+          throw new InvalidAdapterOperationException("Adapter is already started.");
+        }
+      } else {
+        throw new InvalidAdapterOperationException("Adapter is already started.");
+      }
     }
 
-    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
-
-    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
