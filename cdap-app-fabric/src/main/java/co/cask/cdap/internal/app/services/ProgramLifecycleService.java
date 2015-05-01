@@ -27,7 +27,10 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -37,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -191,4 +195,48 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
     return null;
   }
+
+  /**
+   * Check against the {@link ProgramRuntimeService} to see if the program is running and update the run record
+   * accordingly.
+   *
+   * @param runRecord The target run record to validate.
+   * @param programId The program id for this run record.
+   * @return validated {@link RunRecord} instance
+   */
+  public RunRecord validateRunRecord(final RunRecord runRecord, Id.Program programId, ProgramType programType)
+    throws ExecutionException, InterruptedException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, programType);
+    // check if it is not running  but the run record says it is update the run record for that program
+    ProgramRunStatus status = runRecord.getStatus();
+    if (status == ProgramRunStatus.RUNNING && runtimeInfo == null) {
+      RunId runId = RunIds.fromString(runRecord.getPid());
+      store.setStop(programId, runId.getId(), System.currentTimeMillis(),
+                    ProgramController.State.KILLED.getRunStatus());
+      return new RunRecord(runRecord.getPid(), runRecord.getStartTs(), runRecord.getStopTs(),
+                           ProgramController.State.KILLED.getRunStatus(), runRecord.getAdapterName(),
+                           runRecord.getTwillRunId(), runRecord.getProperties());
+    } else {
+      return runRecord;
+    }
+  }
+
+  /**
+   * Check against the {@link ProgramRuntimeService} to see if the program is running and update the run record
+   * accordingly.
+   *
+   * @param runRecords The list of run records to validate.
+   * @param programId The program id for this run record.
+   * @return validated list of {@link RunRecord} instance
+   */
+  public List<RunRecord> validateRunRecords(final List<RunRecord> runRecords, Id.Program programId,
+                                            ProgramType programType)
+    throws ExecutionException, InterruptedException {
+    List<RunRecord> validatedRunRecords = Lists.newLinkedList();
+    for (RunRecord rr : runRecords) {
+      validatedRunRecords.add(validateRunRecord(rr, programId, programType));
+    }
+    return validatedRunRecords;
+  }
+
 }
