@@ -799,6 +799,32 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
 
+    // Files used to synchronize between this test and workflow execution
+    File ifForkOneActionFile = new File(tmpFolder.newFolder() + "/iffork_one.file");
+    File ifForkOneActionDoneFile = new File(tmpFolder.newFolder() + "/iffork_one.file.done");
+    runtimeArguments.put("iffork_one.simple.action.file", ifForkOneActionFile.getAbsolutePath());
+    runtimeArguments.put("iffork_one.simple.action.donefile", ifForkOneActionDoneFile.getAbsolutePath());
+
+    File ifForkAnotherActionFile = new File(tmpFolder.newFolder() + "/iffork_another.file");
+    File ifForkAnotherActionDoneFile = new File(tmpFolder.newFolder() + "/iffork_another.file.done");
+    runtimeArguments.put("iffork_another.simple.action.file", ifForkAnotherActionFile.getAbsolutePath());
+    runtimeArguments.put("iffork_another.simple.action.donefile", ifForkAnotherActionDoneFile.getAbsolutePath());
+
+    File elseForkOneActionFile = new File(tmpFolder.newFolder() + "/elsefork_one.file");
+    File elseForkOneActionDoneFile = new File(tmpFolder.newFolder() + "/elsefork_one.file.done");
+    runtimeArguments.put("elsefork_one.simple.action.file", elseForkOneActionFile.getAbsolutePath());
+    runtimeArguments.put("elsefork_one.simple.action.donefile", elseForkOneActionDoneFile.getAbsolutePath());
+
+    File elseForkAnotherActionFile = new File(tmpFolder.newFolder() + "/elsefork_another.file");
+    File elseForkAnotherActionDoneFile = new File(tmpFolder.newFolder() + "/elsefork_another.file.done");
+    runtimeArguments.put("elsefork_another.simple.action.file", elseForkAnotherActionFile.getAbsolutePath());
+    runtimeArguments.put("elsefork_another.simple.action.donefile", elseForkAnotherActionDoneFile.getAbsolutePath());
+
+    File elseForkThirdActionFile = new File(tmpFolder.newFolder() + "/elsefork_third.file");
+    File elseForkThirdActionDoneFile = new File(tmpFolder.newFolder() + "/elsefork_third.file.done");
+    runtimeArguments.put("elsefork_third.simple.action.file", elseForkThirdActionFile.getAbsolutePath());
+    runtimeArguments.put("elsefork_third.simple.action.donefile", elseForkThirdActionDoneFile.getAbsolutePath());
+
     // create input data in which number of good records are lesser than the number of bad records
     runtimeArguments.put("inputPath", createConditionInput("ConditionProgramInput", 2, 12));
     runtimeArguments.put("outputPath", new File(tmpFolder.newFolder(), "ConditionProgramOutput").getAbsolutePath());
@@ -806,6 +832,27 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId, 200);
+
+    // Since the number of good records are lesser than the number of bad records,
+    // 'else' branch of the condition will get executed.
+    // Wait till the execution of the fork on the else branch starts
+    while(!(elseForkOneActionFile.exists() && elseForkAnotherActionFile.exists() && elseForkThirdActionFile.exists())) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Get running program run
+    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
+    Assert.assertTrue(historyRuns.size() == 1);
+    String runId = historyRuns.get(0).getPid();
+
+    // Since the fork on the else branch of condition has 3 parallel branches
+    // there should be 3 programs currently running
+    verifyRunningProgramCount(programId, runId, 3);
+
+    // Signal the Workflow to continue
+    elseForkOneActionDoneFile.createNewFile();
+    elseForkAnotherActionDoneFile.createNewFile();
+    elseForkThirdActionDoneFile.createNewFile();
 
     verifyProgramRuns(programId, "completed");
 
@@ -836,6 +883,26 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId, 200);
+
+    // Since the number of good records are greater than the number of bad records,
+    // 'if' branch of the condition will get executed.
+    // Wait till the execution of the fork on the if branch starts
+    while(!(ifForkOneActionFile.exists() && ifForkAnotherActionFile.exists())) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Get running program run
+    historyRuns = getProgramRuns(programId, "running");
+    Assert.assertTrue(historyRuns.size() == 1);
+    runId = historyRuns.get(0).getPid();
+
+    // Since the fork on the if branch of the condition has 2 parallel branches
+    // there should be 2 programs currently running
+    verifyRunningProgramCount(programId, runId, 2);
+
+    // Signal the Workflow to continue
+    ifForkOneActionDoneFile.createNewFile();
+    ifForkAnotherActionDoneFile.createNewFile();
 
     verifyProgramRuns(programId, "completed", 1);
 

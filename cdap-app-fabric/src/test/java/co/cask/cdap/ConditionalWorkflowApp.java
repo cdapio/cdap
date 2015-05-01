@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import org.apache.hadoop.fs.Path;
@@ -31,9 +32,13 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -59,6 +64,19 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       addMapReduce("RecordVerifier");
       condition(new MyVerificationPredicate())
         .addMapReduce("ClassicWordCount")
+        .fork()
+          .addAction(new SimpleAction("iffork_one"))
+        .also()
+          .addAction(new SimpleAction("iffork_another"))
+        .join()
+      .otherwise()
+        .fork()
+          .addAction(new SimpleAction("elsefork_one"))
+        .also()
+          .addAction(new SimpleAction("elsefork_another"))
+        .also()
+        .addAction(new SimpleAction("elsefork_third"))
+        .join()
       .end();
     }
   }
@@ -68,11 +86,14 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     @Override
     public boolean apply(@Nullable WorkflowContext input) {
       if (input != null) {
-        Map<String, Long> customCounters = input.getToken().getMapReduceCounters().get("MyCustomCounter");
-        // If number of good records are greater than the number of bad records then only
-        // return true to execute the true branch associated with this Condition node
-        if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {
-          return true;
+        Map<String, Map<String, Long>> hadoopCounters = input.getToken().getMapReduceCounters();
+        if (hadoopCounters != null) {
+          Map<String, Long> customCounters = hadoopCounters.get("MyCustomCounter");
+          // If number of good records are greater than the number of bad records then only
+          // return true to execute the true branch associated with this Condition node
+          if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {
+            return true;
+          }
         }
       }
       return false;
@@ -131,6 +152,31 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       // No-op
+    }
+  }
+
+  static final class SimpleAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
+
+    public SimpleAction(String name) {
+      super(name);
+    }
+
+    @Override
+    public void run() {
+      LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
+      try {
+        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                      ".simple.action.file"));
+        file.createNewFile();
+        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                          ".simple.action.donefile"));
+        while (!doneFile.exists()) {
+          TimeUnit.MILLISECONDS.sleep(50);
+        }
+      } catch (Exception e) {
+        // no-op
+      }
     }
   }
 }
