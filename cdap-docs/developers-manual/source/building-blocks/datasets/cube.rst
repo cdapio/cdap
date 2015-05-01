@@ -42,9 +42,12 @@ specific time:
 
 - ``timestamp=1429929000`` *(equivalent to Sat, 25 Apr 2015 02:29:59 GMT)*
 - ``dimensions``
+
   - ``rackId="rack1"``
   - ``serverId="server0002"``
+  
 - ``measurements``
+
   - ``cpu.used(gauge)=60``
   - ``disk.reads(counter)=23244``
 
