@@ -18,7 +18,7 @@
                 <li class="list-group-item clearfix"
                     ng-repeat="source in defaultSources">
                   <div class="pull-left">
-                    <span class="fa fa-{{source.icon}}" ></span>
+                    <span class="fa {{source.icon}}" ></span>
                     <span> {{source.name}} </span>
                   </div>
 
@@ -51,7 +51,7 @@
                 <li class="list-group-item clearfix"
                     ng-repeat="transform in defaultTransforms">
                   <div  class="pull-left">
-                    <span class="fa fa-{{transform.icon}}"></span>
+                    <span class="fa {{transform.icon}}"></span>
                     <span> {{transform.name}} </span>
                   </div>
                   <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
@@ -84,7 +84,7 @@
                 <li class="list-group-item clearfix"
                     ng-repeat="sink in defaultSinks">
                   <div class="pull-left">
-                    <span class="fa fa-{{sink.icon}}"></span>
+                    <span class="fa {{sink.icon}}"></span>
                     <span> {{sink.name}} </span>
                   </div>
                   <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
