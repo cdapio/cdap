@@ -35,6 +35,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.common.utils.DirUtils;
@@ -135,6 +136,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
+  private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
   MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
@@ -177,10 +179,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       job.getCredentials().addAll(credentials);
     }
 
-    ClassLoader classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
-    ClassLoaders.setContextClassLoader(classLoader);
+    // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
+    classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
+    job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+    ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
 
-    job.getConfiguration().setClassLoader(classLoader);
     context.setJob(job);
 
     // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
@@ -209,8 +212,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
                                              context.getPluginInstantiator());
-      ClassLoaders.setContextClassLoader(classLoader);
-      job.getConfiguration().setClassLoader(classLoader);
+      job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+      ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
 
       setOutputClassesIfNeeded(job);
       setMapOutputClassesIfNeeded(job);
@@ -355,9 +358,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       } finally {
         context.close();
         cleanupTask.run();
-        // Need to reset the ClassLoader in the job conf, otherwise the MR framework will be holding a reference
-        // to the ProgramClassLoader, resulting in memory leak.
-        job.getConfiguration().setClassLoader(null);
       }
     }
   }
@@ -743,10 +743,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
-    ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
+    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(jobConf.getConfiguration().getClassLoader());
     appBundler.createBundle(jobJar, classes);
-    Thread.currentThread().setContextClassLoader(oldCLassLoader);
+    ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
     return jobJar;

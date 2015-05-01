@@ -21,19 +21,29 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.io.SchemaGenerator;
+import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.net.URL;
 
 /**
  * Unit test for ClassLoader.
  */
 public class ClassLoaderTest {
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Test
   public void testPackageFilter() throws ClassNotFoundException {
@@ -91,5 +101,26 @@ public class ClassLoaderTest {
     } catch (ClassNotFoundException e) {
       // Expected
     }
+  }
+
+  @Test
+  public void testWeakReferenceClassLoader() throws Exception {
+    // Creates a jar that has Application class in it.
+    Location jar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
+                                                    ClassLoaderTest.class);
+    // Create a class loader that load from that jar.
+    File unpackDir = TMP_FOLDER.newFolder();
+    BundleJarUtil.unpackProgramJar(jar, unpackDir);
+    ClassLoader cl = new DirectoryClassLoader(unpackDir, null, "lib");
+
+    // Wrap it with the WeakReference ClassLoader
+    ClassLoader classLoader = new WeakReferenceDelegatorClassLoader(cl);
+
+    // Load class from the wrapped ClassLoader, should succeed and should be loaded by the delegating ClassLoader.
+    Class<?> cls = classLoader.loadClass(ClassLoaderTest.class.getName());
+    Assert.assertSame(cl, cls.getClassLoader());
+    Assert.assertSame(cl, Delegators.getDelegate(classLoader, ClassLoader.class));
+
+    // There is no good way to test the GC of the weak reference referent since it depends on GC.
   }
 }
