@@ -21,7 +21,7 @@ body.theme-cdap.state-admin {
               border-bottom-left-radius: 8px;
               max-height: 500px;
               overflow-y: auto;
-              
+
               > li:last-of-type ul {
                 border-bottom-right-radius: 8px;
                 border-bottom-left-radius: 8px;
@@ -106,9 +106,22 @@ body.state-admin-namespace-detail-data-streammetadata {
     padding-left: 15px;
     padding-right: 15px;
 
+    .null {
+      line-height: 25px;
+
+      input {
+        vertical-align: middle;
+      }
+    }
+
     .form-group {
       margin-left: 0;
       margin-right: 0;
+
+      .fields {
+        top: -15px;
+        position: relative;
+      }
 
       .field-row {
         margin-bottom: 5px;

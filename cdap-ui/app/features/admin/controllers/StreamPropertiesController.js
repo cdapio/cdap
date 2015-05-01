@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.admin')
                 name: p.name,
                 type: p.type.items,
                 nullable: false
-              })
+              });
             } else {
               $scope.properties.push({
                 name: p.name,
@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.admin')
       };
 
       // do not include properties on the request when schema field is empty
-      if (properties.length !== 0) {
+      if (properties.length !== 0 && $scope.format !== 'clf') {
         obj.schema = {
           type: 'record',
           name: $stateParams.streamid + 'Body',
@@ -118,6 +118,20 @@ angular.module(PKG.name + '.feature.admin')
           $scope.error = err;
         });
     };
+
+    $scope.$watch('format', function() {
+      if ($scope.format !== 'grok') {
+        $scope.disableButtons = false;
+        return;
+      }
+
+      $scope.disableButtons = true;
+
+      $scope.settings = [{
+        key: 'pattern',
+        value: $scope.settings[0] ? $scope.settings[0].value : ''
+      }];
+    });
 
     $scope.addProperties = function() {
       $scope.properties.push({
