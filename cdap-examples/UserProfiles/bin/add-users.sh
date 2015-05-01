@@ -69,14 +69,14 @@ do
       echo Deleting user id: $userid
     fi
     status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X DELETE \
-      http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
+      http://$gateway:10000/v3/namespaces/default/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
     expected=200;
   else
     if [ $verbose == "true" ]; then
       echo Creating user id: $userid
     fi
     status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d "$line" \
-      http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
+      http://$gateway:10000/v3/namespaces/default/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid`
     expected=201;
   fi
   if [ $status -ne $expected ]; then
