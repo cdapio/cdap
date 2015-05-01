@@ -3,7 +3,7 @@ angular.module(PKG.name+'.services')
   /**
     Example Usage:
 
-    MyDataSource // usage in a controler:
+    MyDataSource // usage in a controller:
 
     var dataSrc = new MyDataSource($scope);
 
@@ -168,12 +168,12 @@ angular.module(PKG.name+'.services')
     };
 
     /**
-     * Fetch a template configuration on-demand. Send the action 
-     * 'template-config' to the node backend. 
+     * Fetch a template configuration on-demand. Send the action
+     * 'template-config' to the node backend.
      */
     DataSource.prototype.config = function (resource, cb) {
       var deferred = $q.defer();
-   
+
       var id = generateUUID();
       resource.id = id;
       this.bindings.push({

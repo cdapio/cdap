@@ -19,7 +19,7 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.common.MockEmitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -79,7 +79,7 @@ public class ScriptTransformTest {
   public void testSimple() throws Exception {
     ScriptTransform.Config config = new ScriptTransform.Config(
       "function transform() { input.intField = input.intField * 1024; return input; }", null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
+    Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -131,7 +131,7 @@ public class ScriptTransformTest {
     ScriptTransform.Config config = new ScriptTransform.Config(
       "function transform() { return { 'x':input.intField, 'y':input.longField }; }",
       outputSchema.toString());
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
+    Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -210,7 +210,7 @@ public class ScriptTransformTest {
       "  return ans;\n" +
       "}",
       outputSchema.toString());
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
+    Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();

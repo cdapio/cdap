@@ -26,8 +26,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformStage;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.Transformation;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
@@ -35,6 +34,7 @@ import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.Constants;
 import co.cask.cdap.templates.etl.common.DefaultEmitter;
 import co.cask.cdap.templates.etl.common.Destroyables;
+import co.cask.cdap.templates.etl.common.ETLStage;
 import co.cask.cdap.templates.etl.common.StageMetrics;
 import co.cask.cdap.templates.etl.common.TransformExecutor;
 import co.cask.cdap.templates.etl.realtime.config.ETLRealtimeConfig;
@@ -116,7 +116,7 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context, config.getSource());
-    List<Transform> transforms = initializeTransforms(context, config.getTransforms());
+    List<Transformation> transforms = initializeTransforms(context, config.getTransforms());
     initializeSink(context, config.getSink());
 
     transformExecutor = new TransformExecutor(transforms, transformMetrics);
@@ -143,10 +143,10 @@ public class ETLWorker extends AbstractWorker {
     sink = new TrackedRealtimeSink(sink, metrics, stage.getName());
   }
 
-  private List<Transform> initializeTransforms(WorkerContext context, List<ETLStage> stages) {
+  private List<Transformation> initializeTransforms(WorkerContext context, List<ETLStage> stages) {
     List<String> transformIds = GSON.fromJson(context.getRuntimeArguments().get(Constants.Transform.PLUGINIDS),
                                               STRING_LIST_TYPE);
-    List<Transform> transforms = Lists.newArrayList();
+    List<Transformation> transforms = Lists.newArrayList();
 
     Preconditions.checkArgument(transformIds != null);
     Preconditions.checkArgument(stages.size() == transformIds.size());
@@ -155,8 +155,8 @@ public class ETLWorker extends AbstractWorker {
       ETLStage stage = stages.get(i);
       String transformId = transformIds.get(i);
       try {
-        TransformStage transform = context.newPluginInstance(transformId);
-        RealtimeStageContext transformContext = new RealtimeStageContext(context, metrics, transformId);
+        Transform transform = context.newPluginInstance(transformId);
+        RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
         LOG.info("Transform Stage : {}", stage.getName());
         LOG.info("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);

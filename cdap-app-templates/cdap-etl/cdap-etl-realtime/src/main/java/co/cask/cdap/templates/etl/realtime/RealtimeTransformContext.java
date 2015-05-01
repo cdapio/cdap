@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.batch;
+package co.cask.cdap.templates.etl.realtime;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.templates.etl.api.TransformContext;
 
 /**
  * Context for the Transform Stage.
  */
-public class BatchStageContext implements StageContext {
-  private final MapReduceContext context;
+public class RealtimeTransformContext implements TransformContext {
+  private final WorkerContext context;
   private final Metrics metrics;
 
   protected final String pluginPrefix;
 
-  public BatchStageContext(MapReduceContext context, Metrics metrics, String pluginPrefix) {
+  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
     this.context = context;
     this.metrics = metrics;
     this.pluginPrefix = pluginPrefix;

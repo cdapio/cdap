@@ -25,8 +25,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.KeyValueListParser;
 import com.google.common.base.Splitter;
 import com.google.common.collect.BiMap;
@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 @Plugin(type = "transform")
 @Name("Projection")
 @Description("Projection transform that lets you drop, rename, and cast fields to a different type.")
-public class ProjectionTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+public class ProjectionTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String DROP_DESC = "Comma separated list of fields to drop. For example: " +
     "'field1,field2,field3'.";
   private static final String RENAME_DESC = "List of fields to rename. This is a comma separated list of key-value " +
@@ -101,7 +101,7 @@ public class ProjectionTransform extends TransformStage<StructuredRecord, Struct
 
 
   @Override
-  public void initialize(StageContext context) {
+  public void initialize(TransformContext context) {
     if (projectionTransformConfig.drop != null) {
       for (String dropField : Splitter.on(fieldDelimiter).split(projectionTransformConfig.drop)) {
         fieldsToDrop.add(dropField);

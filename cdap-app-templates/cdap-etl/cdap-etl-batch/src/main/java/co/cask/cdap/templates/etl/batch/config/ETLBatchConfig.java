@@ -17,8 +17,8 @@
 package co.cask.cdap.templates.etl.batch.config;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.ETLConfig;
+import co.cask.cdap.templates.etl.common.ETLStage;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.util.List;

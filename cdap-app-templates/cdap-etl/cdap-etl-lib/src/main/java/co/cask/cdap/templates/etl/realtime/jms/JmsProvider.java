@@ -17,6 +17,7 @@
 package co.cask.cdap.templates.etl.realtime.jms;
 
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
+
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 

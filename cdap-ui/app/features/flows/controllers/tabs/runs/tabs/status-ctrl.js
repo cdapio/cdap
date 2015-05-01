@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
+  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
@@ -27,12 +27,12 @@ angular.module(PKG.name + '.feature.flows')
     }
 
     function pollMetrics() {
-      if (!$scope.runs.length) {
-        return;
-      }
       var nodes = $scope.data.nodes;
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
+        if (node.type !== 'STREAM' && !$scope.runs.length) {
+          return;
+        }
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
           method: 'POST'

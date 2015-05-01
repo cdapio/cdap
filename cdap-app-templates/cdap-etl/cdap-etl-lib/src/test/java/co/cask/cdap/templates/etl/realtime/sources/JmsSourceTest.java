@@ -21,6 +21,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.common.MockRealtimeContext;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
+import co.cask.cdap.templates.etl.realtime.sources.JmsSource.JmsPluginConfig;
 import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
@@ -73,7 +74,8 @@ public class JmsSourceTest {
 
   @Test
   public void testSimpleQueueMessages() throws Exception {
-    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50, "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
+                        "vm://localhost?broker.persistent=false");
 
     jmsProvider = new MockJmsProvider("dynamicQueues/CDAP.QUEUE");
     jmsSource.setJmsProvider(jmsProvider);
@@ -106,7 +108,8 @@ public class JmsSourceTest {
 
   @Test
   public void testSimpleTopicMessages() throws Exception {
-    initializeJmsSource("dynamicTopics/CDAP.TOPIC", 50);
+    initializeJmsSource("dynamicTopics/CDAP.TOPIC", 50, "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
+                        "vm://localhost?broker.persistent=false");
 
     jmsProvider = new MockJmsProvider("dynamicTopics/CDAP.TOPIC");
     jmsSource.setJmsProvider(jmsProvider);
@@ -139,17 +142,12 @@ public class JmsSourceTest {
 
   @Test
   public void testJndiBasedJmsProvider() throws Exception {
-    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50);
-
     // Create ActiveMQ ConnectionFactory for the JNDI based JmsProvider
-    final Map<String, String> contextEnv = new HashMap<String, String>();
-    contextEnv.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
-    contextEnv.put(Context.PROVIDER_URL, "vm://localhost?broker.persistent=false");
-    contextEnv.put(JmsSource.JMS_DESTINATION_NAME, "dynamicQueues/CDAP.QUEUE");
+    initializeJmsSource("dynamicQueues/CDAP.QUEUE", 50, "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
+                        "vm://localhost?broker.persistent=false");
 
     jmsSource.setSessionAcknowledgeMode(sessionAckMode);
-
-    jmsSource.initialize(new MockRealtimeContext(contextEnv));
+    jmsSource.initialize(new MockRealtimeContext());
 
     jmsProvider = jmsSource.getJmsProvider();
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
@@ -204,8 +202,10 @@ public class JmsSourceTest {
     }
   }
 
-  private void initializeJmsSource(String destination, int messageReceive) {
-    jmsSource = new JmsSource(new JmsSource.JmsPluginConfig(destination, messageReceive));
+  private void initializeJmsSource(String destination, int messageReceive, String initialContextFactory,
+                                   String providerUrl) {
+    jmsSource = new JmsSource(new JmsPluginConfig(destination, messageReceive, initialContextFactory, providerUrl,
+                                                  JmsSource.JMS_CONNECTION_FACTORY_NAME));
   }
 
   /**
