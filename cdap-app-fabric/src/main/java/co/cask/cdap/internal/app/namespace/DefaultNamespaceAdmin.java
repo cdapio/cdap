@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
@@ -32,13 +33,18 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
+import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -53,7 +59,6 @@ import java.util.Map;
  */
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
-  private static final String NAMESPACE_ELEMENT_TYPE = "Namespace";
 
   private final Store store;
   private final PreferencesStore preferencesStore;
@@ -64,12 +69,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final StreamAdmin streamAdmin;
   private final MetricStore metricStore;
   private final Scheduler scheduler;
+  private final ApplicationLifecycleService applicationLifecycleService;
+  private final AdapterService adapterService;
 
   @Inject
   public DefaultNamespaceAdmin(Store store, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               MetricStore metricStore, Scheduler scheduler) {
+                               MetricStore metricStore, Scheduler scheduler,
+                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
@@ -79,6 +87,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.runtimeService = runtimeService;
     this.scheduler = scheduler;
     this.metricStore = metricStore;
+    this.applicationLifecycleService = applicationLifecycleService;
+    this.adapterService = adapterService;
   }
 
   /**
@@ -126,7 +136,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
-  public void createNamespace(NamespaceMeta metadata)
+  public synchronized void createNamespace(NamespaceMeta metadata)
     throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
@@ -151,7 +161,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public void deleteNamespace(final Id.Namespace namespaceId)
+  public synchronized void deleteNamespace(final Id.Namespace namespaceId)
     throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!hasNamespace(namespaceId)) {
@@ -161,6 +171,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (areProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
                                                   "Some programs are currently running in namespace " + namespaceId);
+    }
+
+    if (areAdaptersStarted(namespaceId)) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
+                                                  "Some adapters are currently started in namespace " + namespaceId);
     }
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
@@ -177,6 +192,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       streamAdmin.dropAllInNamespace(namespaceId);
       // Delete all the schedules
       scheduler.deleteAllSchedules(namespaceId);
+      // Delete all applications
+      applicationLifecycleService.removeAll(namespaceId);
+      // Delete all adapters
+      adapterService.removeAdapters(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
 
@@ -199,6 +218,23 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
   }
 
+  private boolean areAdaptersStarted(Id.Namespace namespaceId) {
+    for (AdapterDefinition adapterDefinition : adapterService.getAdapters(namespaceId)) {
+      AdapterStatus adapterStatus;
+      try {
+        adapterStatus = adapterService.getAdapterStatus(namespaceId, adapterDefinition.getName());
+      } catch (AdapterNotFoundException e) {
+        // should never happen, since we're querying known adapters and especially since this is executed from
+        // within a synchronized method
+        throw Throwables.propagate(e);
+      }
+      if (AdapterStatus.STARTED.equals(adapterStatus)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void deleteMetrics(Id.Namespace namespaceId) throws Exception {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
@@ -208,7 +244,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public void deleteDatasets(Id.Namespace namespaceId)
+  public synchronized void deleteDatasets(Id.Namespace namespaceId)
     throws NamespaceNotFoundException, NamespaceCannotBeDeletedException {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!hasNamespace(namespaceId)) {
@@ -233,7 +269,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     LOG.info("Deleted data in namespace '{}'.", namespaceId);
   }
 
-  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)
+  public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)
     throws NamespaceNotFoundException {
 
     if (store.getNamespace(namespaceId) == null) {

@@ -25,15 +25,12 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
@@ -41,17 +38,13 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.Iterables;
-import com.google.common.io.Files;
 import com.google.gson.JsonObject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -64,15 +57,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class AdapterServiceTest extends AppFabricTestBase {
   private static final Id.Namespace NAMESPACE = Id.Namespace.from(TEST_NAMESPACE1);
-  private static LocationFactory locationFactory;
-  private static File adapterDir;
   private static AdapterService adapterService;
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration conf = getInjector().getInstance(CConfiguration.class);
-    locationFactory = getInjector().getInstance(LocationFactory.class);
-    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerTemplates();
@@ -279,8 +267,8 @@ public class AdapterServiceTest extends AppFabricTestBase {
     adapterService.stopAdapter(NAMESPACE, adapterName);
     Assert.assertEquals(AdapterStatus.STOPPED, adapterService.getAdapterStatus(NAMESPACE, adapterName));
 
-    // Delete Adapter
-    adapterService.removeAdapter(NAMESPACE, adapterName);
+    // Delete all Adapters
+    adapterService.removeAdapters(NAMESPACE);
     // verify that the adapter is deleted
     try {
       adapterService.getAdapter(NAMESPACE, adapterName);
@@ -330,15 +318,6 @@ public class AdapterServiceTest extends AppFabricTestBase {
     setupAdapter(DataTemplate.class);
     setupAdapter(DummyWorkerTemplate.class);
     setupAdapter(ExtendedBatchTemplate.class);
-  }
-
-  private static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
-    // Create a temp file to be included in the jar so that the jar is different every time even the same
-    // template class is given.
-    File randomFile = tmpFolder.newFile();
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz, randomFile);
-    File destination =  new File(String.format("%s/%s.jar", adapterDir.getAbsolutePath(), clz.getSimpleName()));
-    Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 
   public static class DummyTemplate1 extends DummyBatchTemplate {
