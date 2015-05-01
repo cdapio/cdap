@@ -14,29 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.common;
+package co.cask.cdap;
 
-import java.util.Map;
-import javax.annotation.Nullable;
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * ETL Stage Configuration.
+ * App with anonymous Workflow
  */
-public final class ETLStage {
-  private final String name;
-  private final Map<String, String> properties;
-
-  public ETLStage(String name, Map<String, String> properties) {
-    this.name = name;
-    this.properties = properties;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  @Nullable
-  public Map<String, String> getProperties() {
-    return properties;
+public class AppWithAnonymousWorkflow extends AbstractApplication {
+  @Override
+  public void configure() {
+    setName("AppWithAnonymousWorkflow");
+    setDescription("Application with anonymous Workflow.");
+    addWorkflow(new AbstractWorkflow() {
+      @Override
+      protected void configure() {
+        // no name for the workflow set here. this should fail
+      }
+    });
   }
 }

@@ -50,7 +50,7 @@ import java.util.Properties;
  *
  * @param <T> type of the configuration object
  */
-public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
+public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTemplate<T> {
   private static final Logger LOG = LoggerFactory.getLogger(ETLTemplate.class);
   private static final Gson GSON = new Gson();
 
@@ -60,9 +60,16 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     stage.configurePipeline(pipelineConfigurer);
   }
 
+  private PluginProperties getPluginProperties(ETLStage config) {
+    PluginProperties.Builder builder = PluginProperties.builder();
+    if (config.getProperties() != null) {
+      builder.addAll(config.getProperties());
+    }
+    return builder.build();
+  }
+
   @Override
-  public void configureAdapter(String adapterName, T config, AdapterConfigurer configurer) throws Exception {
-    ETLConfig etlConfig = (ETLConfig) config;
+  public void configureAdapter(String adapterName, T etlConfig, AdapterConfigurer configurer) throws Exception {
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
@@ -73,7 +80,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
     // Instantiate Source, Transforms, Sink stages.
     // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
-    PluginProperties sourceProperties = PluginProperties.builder().addAll(sourceConfig.getProperties()).build();
+    PluginProperties sourceProperties = getPluginProperties(sourceConfig);
     EndPointStage source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(), sourcePluginId,
                                                 sourceProperties);
     if (source == null) {
@@ -81,7 +88,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
                                                        Constants.Source.PLUGINTYPE, sourceConfig.getName()));
     }
 
-    PluginProperties sinkProperties = PluginProperties.builder().addAll(sinkConfig.getProperties()).build();
+    PluginProperties sinkProperties = getPluginProperties(sinkConfig);
     EndPointStage sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
                                               sinkProperties);
     if (sink == null) {
@@ -98,7 +105,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
       // Generate a transformId based on transform name and the array index (since there could
       // multiple transforms - ex, N filter transforms in the same pipeline)
       String transformId = String.format("%s%s%d", transformConfig.getName(), Constants.ID_SEPARATOR, i);
-      PluginProperties transformProperties = PluginProperties.builder().addAll(transformConfig.getProperties()).build();
+      PluginProperties transformProperties = getPluginProperties(transformConfig);
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
                                                          transformId, transformProperties);
       if (transformObj == null) {

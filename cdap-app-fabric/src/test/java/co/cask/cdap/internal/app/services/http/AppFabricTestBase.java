@@ -18,12 +18,14 @@ package co.cask.cdap.internal.app.services.http;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
@@ -32,6 +34,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -46,6 +49,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -67,6 +71,8 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.utils.Dependencies;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.junit.AfterClass;
@@ -136,6 +142,8 @@ public abstract class AppFabricTestBase {
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
   private static UsageHandler usageHandler;
+  private static LocationFactory locationFactory;
+  private static File adapterDir;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -178,6 +186,8 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
+    locationFactory = getInjector().getInstance(LocationFactory.class);
+    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     createNamespaces();
   }
 
@@ -673,5 +683,14 @@ public abstract class AppFabricTestBase {
 
   protected boolean streamExists(Id.Stream streamID) throws Exception {
     return streamAdmin.exists(streamID);
+  }
+
+  protected static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
+    // Create a temp file to be included in the jar so that the jar is different every time even the same
+    // template class is given.
+    File randomFile = tmpFolder.newFile();
+    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz, randomFile);
+    File destination =  new File(String.format("%s/%s.jar", adapterDir.getAbsolutePath(), clz.getSimpleName()));
+    Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 }
