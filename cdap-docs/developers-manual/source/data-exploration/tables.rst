@@ -66,6 +66,7 @@ Setting a Schema on an Existing Table
 -------------------------------------
 
 .. highlight:: console
+
 Since schema is applied at read time, it is possible to set a schema on a Table after it has been created.
 It is also possible to change the schema of a Table. Dataset properties can be set using the RESTful API.
 For example, the same schema set through the example code above can also be set through the RESTful API::
