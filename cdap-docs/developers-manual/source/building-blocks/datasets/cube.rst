@@ -12,10 +12,12 @@ Cube Dataset
 
 Overview
 ========
-A Cube dataset [link to javadoc] is an implementation of an 
-`OLAP Cube <http://en.wikipedia.org/wiki/OLAP_cube>`__ that is pre-packaged with CDAP. Cube datasets
-store multidimensional facts and provide a querying interface for the retrieval of the data.
-Additionally, Cube datasets allows for :term:`exploring` of the data stored in the Cube.
+A `Cube dataset
+</../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/cube/package-summary.html>`__
+is an implementation of an `OLAP Cube <http://en.wikipedia.org/wiki/OLAP_cube>`__ that is
+pre-packaged with CDAP. Cube datasets store multidimensional facts and provide a querying
+interface for the retrieval of the data. Additionally, Cube datasets allows for
+:term:`exploring` of the data stored in the Cube.
 
 Storing Data
 ============
@@ -95,3 +97,147 @@ second is used.
 
 .. highlight:: java
 
+Querying Data
+=============
+Querying data in Cube dataset is the most useful part of its API. One can slice, dice and
+drill down into the data of the Cube. Use these methods of the API to perform queries:
+  
+  public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
+   Collection<TimeSeries> query(CubeQuery query);
+   // ...
+  }
+
+To understand the ``CubeQuery`` interface, let's look at an example:
+
+.. image:: /_images/cube-example.png
+   :width: 908 px
+   :align: center
+
+On the right is an example of how to build a Java ``CubeQuery`` corresponding to the
+SQL-like statement shown on the left.
+
+In this example, we query two measurements: ``cpu.used`` and ``disk.reads`` and use gauge
+and sum functions to perform aggregation if needed. The query is performed on
+``rack+server`` aggregated view at 1 minute resolution. The data is selected for those
+records that have a rack dimension value of ``rack1`` and for the given time range. The data is
+grouped by ``server`` values and each resulting time series is limited to 100 data points.
+
+The result of the query is a collection of ``TimeSeries``. Each timeseries corresponds to
+a specific measurement and a combination of dimension values of those specified in the ``groupBy``
+part::
+
+  public final class TimeSeries {
+    private final String measureName;
+    private final Map<String, String> dimensionValues;
+    private final List<TimeValue> timeValues;
+    // ...
+  }
+
+Exploring Data
+==============
+Many times, in order to construct a useful query, you have to explore and discover what
+data is available in the Cube. For that, Cube provides exploration APIs to search for
+available dimension values and measurements in specific selection of the Cube data::
+
+  public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
+   Collection<DimensionValue> findDimensionValues(CubeExploreQuery query);
+   Collection<String> findMeasureNames(CubeExploreQuery query);
+   // ...
+  }
+
+The ``findDimensionValues`` method finds all dimension values that the data selection
+defined by ``CubeExploreQuery`` has, in addition to those specified in the
+``CubeExploreQuery`` itself. Each returned value can be added to the original
+``CubeExploreQuery`` to further drill down into the Cube data.
+
+The ``findMeasureNames`` method finds all measurements that exist in the data selection specified
+within a ``CubeExploreQuery``.
+
+``CubeExploreQuery`` is performed across all aggregation views and allows you to configure
+time range, resolution, dimension values to filter by, and limit the returned results
+count::
+
+    CubeExploreQuery exploreQuery = CubeExploreQuery.builder()
+      .from()
+        .resolution(1, TimeUnit.MINUTES)
+      .where()
+        .dimension("rack", "rack1")
+        .timeRange(1423370200, 1423398198)
+      .limit(100)
+      .build();
+
+This query defines the data selection as 1 minute resolution aggregations that have rack
+dimension with value ``rack1`` and the specified time range. It limits the number of
+results to 100.
+
+
+AbstractCubeHttpHandler
+=======================
+CDAP comes with an AbstractCubeHttpHandler that can be used to quickly add a Service in
+your application that provides a RESTful API on top of your Cube dataset. It is an abstract
+class with only a single method to be implemented by its subclass that returns the Cube dataset
+to query in:
+
+  protected abstract Cube getCube();
+
+Here’s an example of an Application with a Cube dataset and an HTTP Service that provides
+RESTful access to it:
+
+  public class AppWithCube extends AbstractApplication {
+    static final String CUBE_NAME = "cube";
+    static final String SERVICE_NAME = "service";
+
+    @Override
+    public void configure() {
+      DatasetProperties props = DatasetProperties.builder()
+        .add("dataset.cube.resolutions", "1,60")
+        .add("dataset.cube.aggregation.agg1.dimensions", "user,action")
+        .add("dataset.cube.aggregation.agg1.requiredDimensions", "user,action").build();
+      createDataset(CUBE_NAME, Cube.class, props);
+
+      addService(SERVICE_NAME, new CubeHandler());
+    }
+
+    public static final class CubeHandler extends AbstractCubeHttpHandler {
+      @UseDataSet(CUBE_NAME)
+      private Cube cube;
+
+      @Override
+      protected Cube getCube() {
+        return cube;
+      }
+    }
+  }
+
+.. highlight:: json
+
+Example of the query in JSON format::
+
+  {
+   "select": {
+     "measurements": [
+       {
+         "name": "cpu.used",
+         "aggregationType": "gauge"
+       },
+       {
+         "name": "disk.reads",
+         "aggregationType": "sum"
+       }
+     ]
+   },
+   "from": {
+     "view": "rack+server",
+     "resolution": "60"
+   },
+   "where": {
+     "dimensions": {
+       "rack": "rack1"
+     },
+     "startTs": 1423370200,
+     "endTs": 1423398198
+   },
+   "groupBy": {
+     "dimensions": ["server"]
+   }
+  }
