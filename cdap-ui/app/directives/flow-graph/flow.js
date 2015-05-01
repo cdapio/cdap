@@ -132,7 +132,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             diagramWidth: leafDiagramWidth
           };
           drawLeafShape(parent, leafOptions);
-          
+
           parent.insert('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
@@ -164,14 +164,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           // Elements are positioned with respect to shapeSvg.
           var width = shapeSvg.node().getBBox().width+10;
           var circleXPos = -1 * width/2;
-          
+
           var leafOptions = {
             classNames: ['stream-events'],
             circleRadius: flowletCircleRadius,
             diagramWidth: leafDiagramWidth
           };
           drawLeafShape(parent, leafOptions);
-          
+
           parent.append('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
@@ -238,7 +238,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         var xFactor = leafXFactor;
         var circleRadius = flowletCircleRadius;
         var classNamesStr = 'flow-shapes leaf-shape';
-        
+
         if (properties && Object.prototype.toString.call(properties) === '[object Object]') {
           diagramWidth = properties.diagramWidth || diagramWidth;
           yFactor = properties.yFactor || yFactor;
@@ -268,7 +268,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .attr("d", line(pathinfo))
           .attr('class', classNamesStr)
           .attr("transform", function(d) {
-            return "translate(" 
+            return "translate("
               + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
           });
       }
@@ -416,7 +416,7 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
   }, baseDirective);
 });
 
-function genericRender(scope, $filter) {
+function genericRender(scope) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
 

@@ -34,7 +34,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
   };
 
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
-  $scope.systemStatus = 'red';
+  $scope.systemStatus = '#C9C9D1';
   dataSrc.poll({
     _cdapPath: '/system/services/status',
     interval: 10000
