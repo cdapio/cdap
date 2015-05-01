@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transformation;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -125,7 +125,7 @@ public class ValidationTest {
   }
 
   private static Type getTypeParameter(Class klass, int index) {
-    return TypeToken.of(klass).resolveType(Transform.class.getTypeParameters()[index]).getType();
+    return TypeToken.of(klass).resolveType(Transformation.class.getTypeParameters()[index]).getType();
   }
 
   private static Type getFirstTypeParameter(Class klass) {
@@ -136,11 +136,11 @@ public class ValidationTest {
     return getTypeParameter(klass, 1);
   }
 
-  private abstract static class ParamToListParam<T> extends TransformStage<T, List<T>> {
+  private abstract static class ParamToListParam<T> extends Transform<T, List<T>> {
 
   }
 
-  private abstract static class ArrayToListArray<E> extends TransformStage<E[], List<E[]>> {
+  private abstract static class ArrayToListArray<E> extends Transform<E[], List<E[]>> {
 
   }
 

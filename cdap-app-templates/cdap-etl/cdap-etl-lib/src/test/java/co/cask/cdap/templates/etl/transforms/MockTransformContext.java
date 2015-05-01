@@ -17,26 +17,24 @@
 package co.cask.cdap.templates.etl.transforms;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.templates.etl.api.StageContext;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.NoopMetrics;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Mock context for unit tests
  */
-public class MockStageContext implements StageContext {
+public class MockTransformContext implements TransformContext {
   private final PluginProperties pluginProperties;
 
-  public MockStageContext(Map<String, String> args) {
+  public MockTransformContext(Map<String, String> args) {
     this.pluginProperties = PluginProperties.builder().addAll(args).build();
   }
 
-  public MockStageContext() {
+  public MockTransformContext() {
     this(Maps.<String, String>newHashMap());
   }
 
@@ -48,26 +46,5 @@ public class MockStageContext implements StageContext {
   @Override
   public Metrics getMetrics() {
     return NoopMetrics.INSTANCE;
-  }
-
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return null;
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return null;
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return null;
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return null;
   }
 }

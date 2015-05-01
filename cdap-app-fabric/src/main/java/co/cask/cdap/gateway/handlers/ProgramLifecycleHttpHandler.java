@@ -23,8 +23,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.mapreduce.MRJobClient;
-import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
+import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -119,8 +118,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PropertiesResolver propertiesResolver;
   private final AdapterService adapterService;
   private final MetricStore metricStore;
-  private MRJobClient mrJobClient;
-  private MapReduceMetricsInfo mapReduceMetricsInfo;
+  private final MRJobInfoFetcher mrJobInfoFetcher;
 
   /**
    * Convenience class for representing the necessary components for retrieving status
@@ -191,8 +189,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      ProgramLifecycleService lifecycleService,
                                      QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
-                                     NamespacedLocationFactory namespacedLocationFactory, MRJobClient mrJobClient,
-                                     MapReduceMetricsInfo mapReduceMetricsInfo,
+                                     NamespacedLocationFactory namespacedLocationFactory,
+                                     MRJobInfoFetcher mrJobInfoFetcher,
                                      PropertiesResolver propertiesResolver, AdapterService adapterService,
                                      MetricStore metricStore) {
     super(authenticator);
@@ -205,8 +203,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
-    this.mrJobClient = mrJobClient;
-    this.mapReduceMetricsInfo = mapReduceMetricsInfo;
+    this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.propertiesResolver = propertiesResolver;
     this.adapterService = adapterService;
   }
@@ -236,19 +233,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new NotFoundException(run);
       }
 
-
-      MRJobInfo mrJobInfo;
-      try {
-        mrJobInfo = mrJobClient.getMRJobInfo(run);
-      } catch (IOException ioe) {
-        LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", run, ioe);
-        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
-      } catch (NotFoundException nfe) {
-        // Even if we ran the MapReduce program, there is no guarantee that the JobClient will be able to find it.
-        // For example, if the MapReduce program fails before it successfully submits the job.
-        LOG.debug("Failed to find run history from JobClient for runId: {}. Falling back to Metrics system.", run, nfe);
-        mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(run);
-      }
+      MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
 
       mrJobInfo.setState(runRecord.getStatus().name());
       // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
@@ -258,7 +243,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (stopTs != null) {
         mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
       }
-
 
       responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
     } catch (NotFoundException e) {

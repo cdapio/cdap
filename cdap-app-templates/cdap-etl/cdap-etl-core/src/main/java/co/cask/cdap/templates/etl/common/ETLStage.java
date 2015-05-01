@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.config;
+package co.cask.cdap.templates.etl.common;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * ETL Stage Configuration.
@@ -34,6 +35,7 @@ public final class ETLStage {
     return name;
   }
 
+  @Nullable
   public Map<String, String> getProperties() {
     return properties;
   }

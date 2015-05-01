@@ -22,7 +22,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource.KafkaPluginConfig;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.cache.Cache;
@@ -33,7 +32,6 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -50,7 +48,6 @@ import kafka.javaapi.TopicMetadataResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.message.Message;
 import kafka.message.MessageAndOffset;
-
 import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.TopicPartition;

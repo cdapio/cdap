@@ -17,19 +17,31 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Transforms an input object into zero or more output objects.
+ * Transform Stage.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public interface Transform<IN, OUT> {
+public abstract class Transform<IN, OUT> implements Transformation<IN, OUT>, Destroyable {
+
+  private TransformContext context;
 
   /**
-   * Process input and emit output using {@link Emitter}.
+   * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
+   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
    *
-   * @param input the input to transform
-   * @param emitter {@link Emitter} to emit data to the next stage
-   * @throws Exception
+   * @param context {@link TransformContext}
    */
-  void transform(IN input, Emitter<OUT> emitter) throws Exception;
+  public void initialize(TransformContext context) {
+    this.context = context;
+  }
+
+  @Override
+  public void destroy() {
+    //no-op
+  }
+
+  protected TransformContext getContext() {
+    return context;
+  }
 }

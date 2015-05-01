@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
 import co.cask.cdap.templates.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
 
@@ -31,7 +31,7 @@ import org.apache.avro.generic.GenericRecord;
 @Plugin(type = "transform")
 @Name("StructuredRecordToGenericRecord")
 @Description("Transforms a StructuredRecord into an Avro GenericRecord")
-public class StructuredRecordToGenericRecordTransform extends TransformStage<StructuredRecord, GenericRecord> {
+public class StructuredRecordToGenericRecordTransform extends Transform<StructuredRecord, GenericRecord> {
   private final StructuredToAvroTransformer transformer = new StructuredToAvroTransformer();
 
   @Override

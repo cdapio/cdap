@@ -23,8 +23,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.StructuredRecordSerializer;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -41,7 +41,7 @@ import javax.script.ScriptException;
 @Plugin(type = "transform")
 @Name("ScriptFilter")
 @Description("A transform plugin that filters records using a custom javascript provided in the plugin's config.")
-public class ScriptFilterTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT_DESCRIPTION = "Script that returns true if the input record should be filtered, " +
     "and false if not. The script has access to the input record through a variable named 'input', " +
     "which is a Json object representation of the record. " +
@@ -61,7 +61,7 @@ public class ScriptFilterTransform extends TransformStage<StructuredRecord, Stru
   }
 
   @Override
-  public void initialize(StageContext context) {
+  public void initialize(TransformContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = scriptFilterConfig.script;

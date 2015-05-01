@@ -75,6 +75,13 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
+      'schedule': {
+        element: '<my-schedule></my-schedule>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'select': {
         element: '<select></select>',
         attributes: {

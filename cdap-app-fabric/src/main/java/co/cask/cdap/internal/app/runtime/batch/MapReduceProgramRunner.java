@@ -178,7 +178,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // runner, which is probably the yarn user. This may cause permissions issues if the program
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
-      if (!UserGroupInformation.isSecurityEnabled()) {
+      if (!MapReduceContextProvider.isLocal(hConf) && !UserGroupInformation.isSecurityEnabled()) {
         String runAs = cConf.get(Constants.CFG_HDFS_USER);
         try {
           UserGroupInformation.createRemoteUser(runAs)
@@ -197,7 +197,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
       }
       return controller;
     } catch (Exception e) {
-      Closeables.closeQuietly(pluginInstantiator);
+      if (pluginInstantiator != null) {
+        Closeables.closeQuietly(pluginInstantiator);
+      }
       throw Throwables.propagate(e);
     }
   }
@@ -236,7 +238,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void terminated(Service.State from) {
-        Closeables.closeQuietly(pluginInstantiator);
+        if (pluginInstantiator != null) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -250,7 +254,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        Closeables.closeQuietly(pluginInstantiator);
+        if (pluginInstantiator != null) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }

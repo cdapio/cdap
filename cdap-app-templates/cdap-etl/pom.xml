@@ -43,6 +43,7 @@
     <twitter4j.version>4.0.1</twitter4j.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
+    <snappy.version>1.1.1.7</snappy.version>
   </properties>
 
   <dependencyManagement>
@@ -187,6 +188,12 @@
         <version>${hsqldb.version}</version>
         <scope>test</scope>
       </dependency>
+
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -198,8 +205,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>1.7</source>
+            <target>1.7</target>
           </configuration>
         </plugin>
       </plugins>

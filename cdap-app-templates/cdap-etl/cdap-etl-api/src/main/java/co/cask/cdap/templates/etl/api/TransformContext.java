@@ -17,13 +17,12 @@
 package co.cask.cdap.templates.etl.api;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterContext;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
  * Context passed to ETL stages.
  */
-public interface StageContext extends AdapterContext {
+public interface TransformContext {
 
   /**
    * Gets the {@link PluginProperties} associated with the stage.

@@ -167,9 +167,10 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK)));
 
-    // batch adapters - can only contain mapreduce for now
+    // batch adapters
     aggs.put("adapter", new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER,
+                       Constants.Metrics.Tag.RUN_ID),
       // i.e. for adapter only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER)));
 

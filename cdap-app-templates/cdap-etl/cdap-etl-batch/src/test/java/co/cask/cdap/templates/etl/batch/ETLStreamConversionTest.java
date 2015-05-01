@@ -23,7 +23,6 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.batch.BatchSource;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.BatchCubeSink;
 import co.cask.cdap.templates.etl.batch.sinks.DBSink;
@@ -34,6 +33,7 @@ import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
+import co.cask.cdap.templates.etl.common.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO: re-enable after mapred classloading fix
 @Ignore
-public class ETLStreamConversionTest extends TestBase {
+public class ETLStreamConversionTest extends BaseETLBatchTest {
   private static final Gson GSON = new Gson();
 
   private static final Schema BODY_SCHEMA = Schema.recordOf(
@@ -82,24 +82,6 @@ public class ETLStreamConversionTest extends TestBase {
     Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("num", Schema.of(Schema.Type.INT)),
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
-
-  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
-  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlBatch");
-
-  @BeforeClass
-  public static void setupTemplate() throws IOException {
-    addTemplatePlugins(TEMPLATE_ID, "batch-sources-1.0.0.jar",
-      DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class);
-    addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
-      BatchCubeSink.class, DBSink.class, KVTableSink.class,
-      TableSink.class, TimePartitionedFileSetDatasetAvroSink.class);
-    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
-      ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
-    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
-      EndPointStage.class.getPackage().getName(),
-      ETLStage.class.getPackage().getName(),
-      BatchSource.class.getPackage().getName());
-  }
 
   @Test
   public void testStreamConversion() throws Exception {

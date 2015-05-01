@@ -16,14 +16,15 @@
       <tbody>
         <tr ng-repeat="map in info.mapTasks | orderBy:sortable.predicate:sortable.reverse">
           <td>{{ ::map.taskId }}</td>
-          <td>{{ map.state }}</td>
+          <td ng-if="map.state">{{ map.state }}</td>
+          <td ng-if="!map.state">NA</td>
           <td>{{ map.progress * 100 }}%</td>
           <td>
             <span ng-show="map.finishTime !== 0">{{ (map.finishTime - map.startTime)/1000 | amDurationFormat}}</span>
             <span ng-show="map.finishTime === 0"> &mdash; </span>
           </td>
-          <td>{{ map.counters.MAP_INPUT_RECORDS }}</td>
-          <td>{{ map.counters.MAP_OUTPUT_RECORDS }}</td>
+          <td>{{ map.counters.MAP_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ map.counters.MAP_OUTPUT_RECORDS | myNumber: 0 }}</td>
           <td>{{ map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
         </tr>
         <tr class="text-center" ng-if="!info.mapTasks.length">

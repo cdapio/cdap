@@ -105,6 +105,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/namespaces/{namespace-id}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+    Id.Namespace namespace;
+    try {
+      namespace = Id.Namespace.from(namespaceId);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           "Namespace id can contain only alphanumeric characters or '_'.");
+      return;
+    }
+
     NamespaceMeta metadata;
     try {
       metadata = parseBody(request, NamespaceMeta.class);
@@ -117,12 +126,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    if (!isValid(namespaceId)) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Namespace id can contain only alphanumeric characters, '-' or '_'.");
-      return;
-    }
-
     if (isReserved(namespaceId)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
@@ -130,7 +133,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespaceId);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
 
     // Handle optional params
     if (metadata != null && metadata.getDescription() != null) {
@@ -167,7 +170,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -197,15 +200,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-  }
-
-  private boolean isValid(String namespaceId) {
-    // TODO: Re-use from proto.Id
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(namespaceId);
   }
 
   private boolean isReserved(String namespaceId) {

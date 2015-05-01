@@ -18,22 +18,19 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.common.Constants;
-
-import javax.annotation.Nullable;
+import co.cask.cdap.templates.etl.api.TransformContext;
 
 /**
  * Context for the Transform Stage.
  */
-public class BatchStageContext implements StageContext {
+public class BatchTransformContext implements TransformContext {
   private final MapReduceContext context;
   private final Metrics metrics;
-  private final String pluginPrefix;
 
-  public BatchStageContext(MapReduceContext context, Metrics metrics, String pluginPrefix) {
+  protected final String pluginPrefix;
+
+  public BatchTransformContext(MapReduceContext context, Metrics metrics, String pluginPrefix) {
     this.context = context;
     this.metrics = metrics;
     this.pluginPrefix = pluginPrefix;
@@ -47,30 +44,5 @@ public class BatchStageContext implements StageContext {
   @Override
   public PluginProperties getPluginProperties() {
     return context.getPluginProperties(pluginPrefix);
-  }
-
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return context.getAdapterSpecification();
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return context.getPluginProperties(getPluginId(pluginId));
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return context.loadPluginClass(getPluginId(pluginId));
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return context.newPluginInstance(getPluginId(pluginId));
-  }
-
-  private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }

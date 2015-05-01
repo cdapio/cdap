@@ -18,31 +18,27 @@ package co.cask.cdap.templates.etl.batch;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.templates.etl.batch.sinks.DBSink;
 import co.cask.cdap.templates.etl.batch.sinks.TableSink;
 import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
-import co.cask.cdap.templates.etl.common.MockAdapterConfigurer;
+import co.cask.cdap.templates.etl.common.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
-import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.hsqldb.Server;
 import org.hsqldb.server.ServerAcl;
@@ -71,18 +67,17 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.sql.rowset.serial.SerialBlob;
 
 /**
  * Test for ETL using databases
  */
-public class BatchETLDBAdapterTest extends TestBase {
+@Ignore
+public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   private static final long currentTs = System.currentTimeMillis();
   private static final String clobData = "this is a long string with line separators \n that can be used as \n a clob";
   private static HSQLDBServer hsqlDBServer;
-  private static ApplicationManager templateManager;
   private static Schema schema;
 
   @ClassRule
@@ -103,7 +98,7 @@ public class BatchETLDBAdapterTest extends TestBase {
     // deploy etl batch template
     String path = Resources.getResource("org/hsqldb/jdbcDriver.class").getPath();
     File hsqldbJar = new File(URI.create(path.substring(0, path.indexOf('!'))));
-    templateManager = deployApplication(ETLBatchTemplate.class, hsqldbJar);
+    //templateManager = deployApplication(ETLBatchTemplate.class, hsqldbJar);
 
     Schema nullableString = Schema.nullableOf(Schema.of(Schema.Type.STRING));
     Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
@@ -201,14 +196,10 @@ public class BatchETLDBAdapterTest extends TestBase {
     }
   }
 
-  // TODO: Remove ignore once we figure out end-to-end testing with plugins
-  @Ignore
   @Test
   @Category(SlowTests.class)
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
-    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
-
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
@@ -226,16 +217,14 @@ public class BatchETLDBAdapterTest extends TestBase {
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, Lists.<ETLStage>newArrayList());
-    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
-    // add dataset instances that the source and sink added
-    addDatasetInstances(adapterConfigurer);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "dbSourceTest");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
-    Map<String, String> mapReduceArgs = Maps.newHashMap(adapterConfigurer.getArguments());
-    MapReduceManager mrManager = templateManager.startMapReduce(ETLMapReduce.class.getSimpleName(), mapReduceArgs);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
-    templateManager.stopAll();
+    manager.start();
+    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    manager.stop();
 
     DataSetManager<Table> outputManager = getDataset("outputTable");
     Table outputTable = outputManager.get();
@@ -301,7 +290,6 @@ public class BatchETLDBAdapterTest extends TestBase {
   }
 
   @Test
-  @Ignore
   @Category(SlowTests.class)
   public void testDBSink() throws Exception {
     ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
@@ -319,16 +307,15 @@ public class BatchETLDBAdapterTest extends TestBase {
                                                  Properties.DB.COLUMNS, cols
                                  ));
     List<ETLStage> transforms = Lists.newArrayList();
-    ETLBatchConfig adapterConfig = new ETLBatchConfig("0 0 1 1 *", source, sink, transforms);
-    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
-    // add dataset instances that the source and sink added
-    addDatasetInstances(adapterConfigurer);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "dbSinkTest");
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
     createInputData();
-    Map<String, String> mapReduceArgs = Maps.newHashMap(adapterConfigurer.getArguments());
-    MapReduceManager mrManager = templateManager.startMapReduce(ETLMapReduce.class.getSimpleName(), mapReduceArgs);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
-    templateManager.stopAll();
+    manager.start();
+    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    manager.stop();
   }
 
   private void createInputData() throws Exception {
@@ -358,16 +345,6 @@ public class BatchETLDBAdapterTest extends TestBase {
       put.add("CLOB", clobData);
       inputTable.put(put);
       inputManager.flush();
-    }
-  }
-
-  private void addDatasetInstances(MockAdapterConfigurer configurer) throws Exception {
-    for (Map.Entry<String, KeyValue<String, DatasetProperties>> entry :
-      configurer.getDatasetInstances().entrySet()) {
-      String typeName = entry.getValue().getKey();
-      DatasetProperties properties = entry.getValue().getValue();
-      String instanceName = entry.getKey();
-      addDatasetInstance(typeName, instanceName, properties);
     }
   }
 

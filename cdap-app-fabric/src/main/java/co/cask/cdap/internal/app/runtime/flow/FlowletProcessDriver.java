@@ -397,7 +397,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         } else if (inputQueueName == null) {
           flowletContext.getProgramMetrics().increment("process.events.processed", processedCount);
         } else {
-          queueMetricsCollectors.getUnchecked("input." + inputQueueName.toString())
+          queueMetricsCollectors.getUnchecked(inputQueueName.getSimpleName())
             .increment("process.events.processed", processedCount);
         }
       }

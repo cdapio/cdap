@@ -14,32 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap;
+
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * Properties that are required by a Stage.
+ * App with anonymous Workflow
  */
-public class Property {
-
-  private final String name;
-  private final String description;
-  private final boolean required;
-
-  public Property(String name, String description, boolean required) {
-    this.name = name;
-    this.description = description;
-    this.required = required;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public boolean isRequired() {
-    return required;
-  }
-
-  public String getDescription() {
-    return description;
+public class AppWithAnonymousWorkflow extends AbstractApplication {
+  @Override
+  public void configure() {
+    setName("AppWithAnonymousWorkflow");
+    setDescription("Application with anonymous Workflow.");
+    addWorkflow(new AbstractWorkflow() {
+      @Override
+      protected void configure() {
+        // no name for the workflow set here. this should fail
+      }
+    });
   }
 }

@@ -1,4 +1,0 @@
-gateway
-=======
-
-Gateway related stuff.

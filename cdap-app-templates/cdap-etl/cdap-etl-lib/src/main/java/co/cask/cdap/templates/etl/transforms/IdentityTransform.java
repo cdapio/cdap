@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
 
 /**
  * Simple Identity Transform.
@@ -30,7 +30,7 @@ import co.cask.cdap.templates.etl.api.TransformStage;
 @Plugin(type = "transform")
 @Name("Identity")
 @Description("Transform that just passes data through without any modification")
-public class IdentityTransform<T> extends TransformStage<T, T> {
+public class IdentityTransform<T> extends Transform<T, T> {
 
   @Override
   public void transform(T input, Emitter<T> emitter) {

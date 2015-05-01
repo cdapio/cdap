@@ -41,7 +41,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 
-public class MapReduceMetricsInfoTest {
+public class LocalMRJobInfoFetcherTest {
   private static Injector injector;
   private static MetricStore metricStore;
 
@@ -116,8 +116,8 @@ public class MapReduceMetricsInfoTest {
 
 
 
-    MapReduceMetricsInfo mapReduceMetricsInfo = injector.getInstance(MapReduceMetricsInfo.class);
-    MRJobInfo mrJobInfo = mapReduceMetricsInfo.getMRJobInfo(runId);
+    LocalMRJobInfoFetcher localMRJobInfoFetcher = injector.getInstance(LocalMRJobInfoFetcher.class);
+    MRJobInfo mrJobInfo = localMRJobInfoFetcher.getMRJobInfo(runId);
 
 
     // Incomplete because MapReduceMetricsInfo does not provide task-level state and start/end times.
