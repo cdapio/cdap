@@ -110,7 +110,7 @@ You'll need this software installed:
 
 Java Runtime
 ++++++++++++
-The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
+The latest `JDK or JRE version 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
 for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
