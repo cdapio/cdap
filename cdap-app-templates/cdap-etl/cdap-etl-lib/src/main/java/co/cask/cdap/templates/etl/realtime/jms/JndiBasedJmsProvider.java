@@ -44,13 +44,18 @@ public class JndiBasedJmsProvider implements JmsProvider {
   private final ConnectionFactory connectionFactory;
   private final Destination destination;
 
-  public JndiBasedJmsProvider(Hashtable<String, String> initialContextEnv, String destinationName) {
+  public JndiBasedJmsProvider(Hashtable<String, String> initialContextEnv, final String destinationName,
+                              final String connectionFactoryName) {
     if (initialContextEnv == null) {
       throw new IllegalArgumentException("Cannot pass null initial context.");
     }
 
     if (destinationName == null || destinationName.trim().isEmpty()) {
       throw new IllegalArgumentException("Cannot pass null or empty destination name.");
+    }
+
+    if (connectionFactoryName == null || connectionFactoryName.trim().isEmpty()) {
+      throw new IllegalArgumentException("Cannot pass null or empty connection factory name.");
     }
 
     Context jndiContext = null;
@@ -63,7 +68,7 @@ public class JndiBasedJmsProvider implements JmsProvider {
 
     // Lets get the ConnectionFactory
     try {
-      connectionFactory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
+      connectionFactory = (ConnectionFactory) jndiContext.lookup(connectionFactoryName);
       destination = (Destination) jndiContext.lookup(destinationName);
     } catch (NamingException e) {
       LOG.error("Exception when trying to do JNDI API lookup failed.", e);
