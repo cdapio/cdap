@@ -25,11 +25,11 @@ package co.cask.cdap.templates.etl.api;
 public interface Transformation<IN, OUT> {
 
   /**
-   * Process input and emit output using {@link Emitter}.
+   * Transform the input and emit output using {@link Emitter}.
    *
-   * @param input the input to transform
+   * @param input input data to be transformed
    * @param emitter {@link Emitter} to emit data to the next stage
-   * @throws Exception
+   * @throws Exception if there's an error during this method invocation
    */
   void transform(IN input, Emitter<OUT> emitter) throws Exception;
 }
