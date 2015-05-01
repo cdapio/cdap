@@ -440,7 +440,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
-    getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit, type);
+    getRuns(responder, Id.Program.from(namespaceId, appId, type, programId), status, start, end, resultLimit);
   }
 
   /**
@@ -1412,10 +1412,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getRuns(HttpResponder responder, Id.Program programId, String status,
-                       long start, long end, int limit, final ProgramType programType) {
+  private void getRuns(HttpResponder responder, Id.Program programId, String status, long start, long end, int limit) {
     try {
       try {
+        final ProgramType programType = programId.getType();
         final ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
           ProgramRunStatus.valueOf(status.toUpperCase());
 
