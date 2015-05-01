@@ -20,13 +20,11 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
@@ -47,7 +45,6 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.DatasetServiceStore;
@@ -55,12 +52,10 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -69,12 +64,9 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,9 +80,6 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.quartz.JobKey;
@@ -110,7 +99,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -125,12 +113,10 @@ public class UpgradeTool {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final Injector injector;
-  private final HBaseTableUtil hBaseTableUtil;
   private final NamespacedLocationFactory namespacedLocationFactory;
 
   private Store store;
   QuartzScheduler qs;
-  private FileMetaDataManager fileMetaDataManager;
   private final AdapterService adapterService;
   private final DatasetFramework dsFramework;
   private DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
@@ -143,13 +129,7 @@ public class UpgradeTool {
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
               "  2. System Datasets\n" +
-              "  3. Dataset Type and Instance Metadata\n" +
-              "  4. Application Metadata\n" +
-              "  5. Archives and Files\n" +
-              "  6. Logs Metadata\n" +
-              "  7. Stream state store table\n" +
-              "  8. Queue config table\n" +
-              "  9. Metrics Kafka table\n" +
+              "  3. StreamConversionAdapter\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -170,7 +150,6 @@ public class UpgradeTool {
     this.injector = init();
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
-    this.hBaseTableUtil = injector.getInstance(HBaseTableUtil.class);
     this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.adapterService = injector.getInstance(AdapterService.class);
@@ -232,14 +211,6 @@ public class UpgradeTool {
           return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
-        @Provides
-        @Singleton
-        @Named("logSaverTableUtil")
-        public LogSaverTableUtil getLogSaverTableUtil(DatasetFramework dsFramework,
-                                                      CConfiguration cConf) {
-          return new LogSaverTableUtil(dsFramework, cConf);
-        }
-
         // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
         // expects a dsframework injection named datasetMDS
         @Provides
@@ -249,89 +220,7 @@ public class UpgradeTool {
           return dsFramework;
         }
 
-        @Provides
-        @Singleton
-        @Named("fileMetaDataManager")
-        public FileMetaDataManager getFileMetaDataManager(@Named("logSaverTableUtil") LogSaverTableUtil tableUtil,
-                                                          DatasetFramework dsFramework,
-                                                          TransactionExecutorFactory txExecutorFactory,
-                                                          LocationFactory locationFactory) {
-          return new FileMetaDataManager(tableUtil, txExecutorFactory, locationFactory, namespacedLocationFactory,
-                                         dsFramework, cConf);
-        }
       });
-  }
-
-  private Scheduler createNoopScheduler() {
-    return new Scheduler() {
-      @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
-      }
-
-      @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                           Map<String, String> properties) {
-      }
-
-      @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
-      }
-
-      @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                           Map<String, String> properties) {
-      }
-
-      @Override
-      public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-
-      @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-
-      @Override
-      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-
-      @Override
-      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
-      }
-
-      @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                                 Map<String, String> properties) {
-      }
-
-      @Override
-      public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
-      }
-
-      @Override
-      public void deleteAllSchedules(Id.Namespace namespaceId)
-        throws co.cask.cdap.internal.app.runtime.schedule.SchedulerException {
-      }
-
-      @Override
-      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
-        return ScheduleState.NOT_FOUND;
-      }
-    };
   }
 
   /**
@@ -341,7 +230,6 @@ public class UpgradeTool {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    createNamespaces();
     initializeDSFramework(cConf, dsFramework);
   }
 
@@ -447,39 +335,8 @@ public class UpgradeTool {
 
   private void performUpgrade() throws Exception {
     LOG.info("Upgrading System and User Datasets ...");
-    HBaseAdmin hBaseAdmin = new HBaseAdmin(hConf);
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
-    hBaseTableUtil.dropTable(hBaseAdmin, dsUpgrade.getDatasetInstanceMDSUpgrader().getOldDatasetInstanceTableId());
-    hBaseTableUtil.dropTable(hBaseAdmin, dsUpgrade.getDatasetTypeMDSUpgrader().getOldDatasetTypeTableId());
-
-    LOG.info("Upgrading application metadata ...");
-    MDSUpgrader mdsUpgrader = injector.getInstance(MDSUpgrader.class);
-    mdsUpgrader.upgrade();
-    hBaseTableUtil.dropTable(hBaseAdmin, mdsUpgrader.getOldAppMetaTableId());
-
-    LOG.info("Upgrading archives and files ...");
-    ArchiveUpgrader archiveUpgrader = injector.getInstance(ArchiveUpgrader.class);
-    archiveUpgrader.upgrade();
-
-    LOG.info("Upgrading logs meta data ...");
-    getFileMetaDataManager().upgrade();
-    hBaseTableUtil.dropTable(hBaseAdmin, getFileMetaDataManager().getOldLogMetaTableId());
-
-    LOG.info("Upgrading stream state store table ...");
-    StreamStateStoreUpgrader streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
-    streamStateStoreUpgrader.upgrade();
-
-    LOG.info("Upgrading queue.config table ...");
-    QueueConfigUpgrader queueConfigUpgrader = injector.getInstance(QueueConfigUpgrader.class);
-    queueConfigUpgrader.upgrade();
-
-    LOG.info("Upgrading metrics.kafka.meta table ...");
-    MetricsKafkaUpgrader metricsKafkaUpgrader = injector.getInstance(MetricsKafkaUpgrader.class);
-    if (metricsKafkaUpgrader.tableExists()) {
-      metricsKafkaUpgrader.upgrade();
-      hBaseTableUtil.dropTable(hBaseAdmin, metricsKafkaUpgrader.getOldKafkaMetricsTableId());
-    }
 
     upgradeAdapters();
   }
@@ -497,7 +354,7 @@ public class UpgradeTool {
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       String namespace = namespaceMeta.getName();
       Collection<AdapterDefinition> adapters = adapterService.getAdapters(Id.Namespace
-                                                                               .from(namespace));
+                                                                            .from(namespace));
       Id.Program program = Id.Program.from(namespace, "stream-conversion", ProgramType.WORKFLOW,
                                            "StreamConversionWorkflow");
       for (AdapterDefinition adapter : adapters) {
@@ -505,7 +362,7 @@ public class UpgradeTool {
           program, SchedulableProgramType.WORKFLOW, adapter.getName() + "StreamConversionWorkflow"));
         if (datasetBasedTimeScheduleStore.removeTrigger(triggerKey)) {
           LOG.info("Removed adapter trigger: {}", triggerKey.toString());
-          store.removeAdapter(Id.Namespace.from(namespace), adapter.getName());
+          getStore().removeAdapter(Id.Namespace.from(namespace), adapter.getName());
         }
       }
       //delete the stream-conversion job entry
@@ -545,27 +402,6 @@ public class UpgradeTool {
   }
 
   /**
-   * Creates the {@link Constants#SYSTEM_NAMESPACE} in hbase and {@link Constants#DEFAULT_NAMESPACE} namespace and also
-   * adds it to the store
-   */
-  private void createNamespaces() throws IOException {
-    LOG.info("Creating {} namespace in hbase", Constants.SYSTEM_NAMESPACE_ID);
-    try {
-      HBaseAdmin admin = new HBaseAdmin(hConf);
-      hBaseTableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
-    } catch (MasterNotRunningException e) {
-      Throwables.propagate(e);
-    } catch (ZooKeeperConnectionException e) {
-      Throwables.propagate(e);
-    } catch (IOException e) {
-      Throwables.propagate(e);
-    }
-    LOG.info("Creating and registering {} namespace", Constants.DEFAULT_NAMESPACE);
-    getStore().createNamespace(Constants.DEFAULT_NAMESPACE_META);
-    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
-  }
-
-  /**
    * gets the Store to access the app meta table
    *
    * @return {@link Store}
@@ -575,19 +411,6 @@ public class UpgradeTool {
       store = injector.getInstance(Key.get(Store.class, Names.named("defaultStore")));
     }
     return store;
-  }
-
-  /**
-   * gets the {@link FileMetaDataManager} to update log meta
-   *
-   * @return {@link FileMetaDataManager}
-   */
-  private FileMetaDataManager getFileMetaDataManager() {
-    if (fileMetaDataManager == null) {
-      fileMetaDataManager = injector.getInstance(Key.get(FileMetaDataManager.class,
-                                                         Names.named("fileMetaDataManager")));
-    }
-    return fileMetaDataManager;
   }
 
   /**
