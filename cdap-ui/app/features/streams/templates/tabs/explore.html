@@ -9,8 +9,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==0,
-                     'fa-caret-down': activePanel===0}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(0) === -1,
+                     'fa-caret-down': activePanel.indexOf(0) !== -1}"
           class="fa fa-fw"
         ></span>View Data
       </h3>
@@ -78,8 +78,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==1,
-                     'fa-caret-down': activePanel===1}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(1) === -1,
+                     'fa-caret-down': activePanel.indexOf(1) !== -1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
       </h3>
@@ -96,8 +96,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==2,
-                     'fa-caret-down': activePanel===2}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(2) === -1,
+                     'fa-caret-down': activePanel.indexOf(2) !== -1}"
           class="fa fa-fw"
         ></span>View Queries
       </h3>
