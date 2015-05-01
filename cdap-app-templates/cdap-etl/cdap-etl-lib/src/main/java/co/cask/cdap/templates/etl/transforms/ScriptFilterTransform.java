@@ -42,10 +42,12 @@ import javax.script.ScriptException;
 @Name("ScriptFilter")
 @Description("A transform plugin that filters records using a custom javascript provided in the plugin's config.")
 public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
-  private static final String SCRIPT_DESCRIPTION = "Script that returns true if the input record should be filtered, " +
-    "and false if not. The script has access to the input record through a variable named 'input', " +
+  private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a shouldFilter function that " +
+    "returns true if the input record should be filtered and false if not. " +
+    "The script has access to the input record through a variable named 'input', " +
     "which is a Json object representation of the record. " +
-    "For example, 'return input.count > 100' will filter out any records whose count field is greater than 100.";
+    "For example, 'function shouldFilter() { return input.count > 100'; } " +
+    "will filter out any records whose count field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
@@ -67,9 +69,8 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     String scriptStr = scriptFilterConfig.script;
     Preconditions.checkArgument(!scriptStr.isEmpty(), "Filter script must be specified.");
 
-    String script = "function shouldFilter() { " + scriptStr + " }";
     try {
-      engine.eval(script);
+      engine.eval(scriptStr);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid script.", e);
     }
