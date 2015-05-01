@@ -13,7 +13,7 @@ Cube Dataset
 Overview
 ========
 A `Cube dataset
-</../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/cube/package-summary.html>`__
+<../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/cube/package-summary.html>`__
 is an implementation of an `OLAP Cube <http://en.wikipedia.org/wiki/OLAP_cube>`__ that is
 pre-packaged with CDAP. Cube datasets store multidimensional facts and provide a querying
 interface for the retrieval of the data. Additionally, Cube datasets allows for
@@ -73,7 +73,7 @@ properties using the :ref:`Dataset RESTful API <http-restful-api-dataset-updatin
 Here is an example:
 
 .. image:: /_images/cube-example.png
-   :width: 688 px
+   :width: 642 px
    :align: center
 
 On the bottom are two Cube dataset properties that correspond to a logical view
@@ -109,7 +109,7 @@ drill down into the data of the Cube. Use these methods of the API to perform qu
 
 To understand the ``CubeQuery`` interface, let's look at an example:
 
-.. image:: /_images/cube-example.png
+.. image:: /_images/cube-example2.png
    :width: 908 px
    :align: center
 
@@ -176,12 +176,12 @@ AbstractCubeHttpHandler
 CDAP comes with an AbstractCubeHttpHandler that can be used to quickly add a Service in
 your application that provides a RESTful API on top of your Cube dataset. It is an abstract
 class with only a single method to be implemented by its subclass that returns the Cube dataset
-to query in:
+to query in::
 
   protected abstract Cube getCube();
 
 Here’s an example of an Application with a Cube dataset and an HTTP Service that provides
-RESTful access to it:
+RESTful access to it::
 
   public class AppWithCube extends AbstractApplication {
     static final String CUBE_NAME = "cube";
