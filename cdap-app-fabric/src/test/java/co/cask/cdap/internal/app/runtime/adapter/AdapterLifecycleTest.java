@@ -123,7 +123,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     deleteApplication(1, deleteURL, 403);
 
     response = deleteAdapter(namespaceId, adapterName);
-    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
