@@ -61,7 +61,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     mvn -o ....
 
 ### Change version
-    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples
+    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples,templates
     
 ### Running from IDE (Intellij and Eclipse)
     cd cdap-ui
