@@ -44,9 +44,7 @@ angular.module(PKG.name + '.commons')
             });
         };
 
-        EventPipe.on('explore.newQuery', function() {
-          $scope.getQueries();
-        });
+        EventPipe.on('explore.newQuery', $scope.getQueries);
 
         $scope.getQueries();
 
