@@ -88,7 +88,8 @@ public class ETLWorkerTest extends TestBase {
 
     AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testAdap");
-    createAdapter(adapterId, adapterConfig);
+    AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
+    Assert.assertNotNull(adapterManager);
   }
 
   @Test
