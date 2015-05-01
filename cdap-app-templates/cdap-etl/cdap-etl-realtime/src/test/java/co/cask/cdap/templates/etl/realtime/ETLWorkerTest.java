@@ -86,7 +86,7 @@ public class ETLWorkerTest extends TestBase {
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
 
-    AdapterConfig adapterConfig = new AdapterConfig("empty properties", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testAdap");
     createAdapter(adapterId, adapterConfig);
   }
