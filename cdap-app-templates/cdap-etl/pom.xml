@@ -43,6 +43,7 @@
     <twitter4j.version>4.0.1</twitter4j.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
+    <snappy.version>1.1.1.7</snappy.version>
   </properties>
 
   <dependencyManagement>
@@ -186,6 +187,12 @@
         <artifactId>hsqldb</artifactId>
         <version>${hsqldb.version}</version>
         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
