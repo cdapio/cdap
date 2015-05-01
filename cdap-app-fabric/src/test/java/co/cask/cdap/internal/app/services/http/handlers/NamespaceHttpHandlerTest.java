@@ -20,6 +20,7 @@ import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithStreamSizeSchedule;
+import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -28,7 +29,9 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -261,6 +264,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
     deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
+    // create an adapter
+    AdapterService adapterService = getInjector().getInstance(AdapterService.class);
+    setupAdapter(DummyBatchTemplate.class);
+    adapterService.registerTemplates();
+    String adapterName = "myAdapter";
+    DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somestream", "0 0 1 1 *");
+    AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
+    adapterService.createAdapter(NAME_ID, adapterName, adapterConfig);
+    adapterService.startAdapter(NAME_ID, adapterName);
+
     Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
     Id.Stream myStream = Id.Stream.from(OTHER_NAME, "stream");
 
@@ -277,6 +290,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(403, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
     stopProgram(program);
+    // because adapter is started
+    assertResponseCode(403, deleteNamespace(NAME));
+    Assert.assertTrue(nsLocation.exists());
+    adapterService.stopAdapter(NAME_ID, adapterName);
     // delete should work now
     assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
@@ -284,6 +301,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(streamAdmin.exists(myStream));
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
     Assert.assertFalse(streamAdmin.exists(myStream));
+    Assert.assertEquals(0, adapterService.getAdapters(NAME_ID).size());
 
     // Create the namespace again and deploy the application containing schedules.
     // Application deployment should succeed.
