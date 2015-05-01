@@ -139,8 +139,8 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP from 2.6 to 2.8\n" +
-              "  This will upgrade CDAP from 2.6 to 2.8 version. \n" +
+    UPGRADE("Upgrades CDAP to 3.0\n" +
+              "  This will upgrade CDAP to 3.0 version. \n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
               "  2. System Datasets\n" +
@@ -377,14 +377,19 @@ public class UpgradeTool {
       printHelp(true);
       return;
     }
+    // Set to interactive mode to true by default
+    boolean interactive = true;
+
+    if ((args.length >= 2) && (args[1]).equals("force")) {
+      interactive = false;
+      System.out.println("Starting upgrade in non interactive mode.");
+    }
 
     try {
       switch (action) {
         case UPGRADE:
-          Scanner scan = new Scanner(System.in);
           System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
-          System.out.println("Do you want to continue (y/n)");
-          String response = scan.next();
+          String response = getResponse(interactive);
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
@@ -406,6 +411,15 @@ public class UpgradeTool {
       e.printStackTrace(System.out);
       throw e;
     }
+  }
+
+  private String getResponse(boolean interactive) {
+    if (interactive) {
+      Scanner scan = new Scanner(System.in);
+      System.out.println("Do you want to continue (y/n)");
+      return scan.next();
+    }
+    return "y";
   }
 
   private void printHelp() {
