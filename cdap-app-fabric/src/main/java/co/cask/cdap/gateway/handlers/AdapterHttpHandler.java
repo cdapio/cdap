@@ -30,11 +30,13 @@ import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationExceptio
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
+import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -45,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -197,8 +200,9 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId) {
     try {
-      responder.sendString(HttpResponseStatus.OK,
-                           adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId).toString());
+      AdapterStatus adapterStatus = adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId);
+      Map<String, String> status = ImmutableMap.of("status", adapterStatus.toString());
+      responder.sendJson(HttpResponseStatus.OK, status);
     } catch (AdapterNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     }

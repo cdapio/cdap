@@ -58,21 +58,6 @@ body {
           background-size: 100px auto;
           position: relative;
           top: -5px;
-          &:after {
-            position: absolute;
-            content: 'BETA';
-            width: 76px;
-            text-align: center;
-            background-color: @cdap-bluegray;
-            color: @cdap-white;
-            font-size: 8px;
-            line-height: 12px;
-            .border-radius(2px);
-            bottom: -5px;
-            left: 24px;
-            letter-spacing: 2px;
-            padding: 1px 0;
-          }
           > strong {
             display: inline-block;
             visibility: hidden;
@@ -204,6 +189,8 @@ body {
             .border-radius(0 0 4px 4px);
             left: 0;
             width: 160px;
+            max-height: 500px;
+            overflow-y: auto;
             li:nth-last-child(2) { border-bottom: 0; }
           }
           li.dropdown {
@@ -221,9 +208,13 @@ body {
               a.dropdown-toggle {
                 margin: 7px;
                 padding: 10px;
+                overflow: auto;
                 .border-radius(4px);
                 span {
-                  &:first-child { color: @cdap-darkness; }
+                  &:first-child {
+                    color: @cdap-darkness;
+                    float: left;
+                  }
                   &:last-child {
                     color: lightgray;
                     float: right;

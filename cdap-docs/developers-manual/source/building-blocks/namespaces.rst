@@ -35,7 +35,7 @@ Namespace Components
 A Namespace has a namespace identifier (the namespace 'name') and a description.
 
 Namespace IDs are composed from a limited set of characters; they are restricted to
-letters (a-z, A-Z), digits (0-9), hyphens (-), and underscores (_). There is no size limit
+letters (a-z, A-Z), digits (0-9), and underscores (_). There is no size limit
 on the length of a namespace ID nor on the number of namespaces.
 
 The namespace IDs ``cdap``, ``default``, and ``system`` are reserved. The ``default``

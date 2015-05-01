@@ -16,18 +16,12 @@
   
 # Build script for docs
 
-# Builds:
-#
-# admin-manual
-# developers-manual
-# reference-manual
-# examples-manual
-
+# Builds all manuals
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
 # Optional Parameter (passed via Bamboo env variable or exported in shell)
-# BELL (set it to yes, if you want the bell commands to work in their script)
+# BELL (set it to either 'yes' or 'true', if you want the bell function to make a sound when called)
 
 source ./vars
 source _common/common-build.sh
@@ -72,15 +66,15 @@ function usage() {
 }
 
 function run_command() {
-  case "$1" in
+  case "${1}" in
     all )               build_all; exit 0;;
     clean )             clean_builds; exit 0;;
     doc )               build_docs_outer_level; exit 0;;
     docs )              build_docs; exit 0;;
-    docs-github-part )  build_docs_github $ARG_2 $ARG_3;;
-    docs-github )       build_docs_github $ARG_2 $ARG_3; exit 0;;
-    docs-web-part )     build_docs_web $ARG_2 $ARG_3;;
-    docs-web )          build_docs_web $ARG_2 $ARG_3; exit 0;;
+    docs-github-part )  build_docs_github ${ARG_2} ${ARG_3};;
+    docs-github )       build_docs_github ${ARG_2} ${ARG_3}; exit 0;;
+    docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
+    docs-web )          build_docs_web ${ARG_2} ${ARG_3}; exit 0;;
     javadocs )          build_javadocs; exit 0;;
     licenses )          build_license_depends; exit 0;;
     sdk )               build_sdk; exit 0;;
@@ -89,7 +83,6 @@ function run_command() {
     * )                 usage; exit 0;;
   esac
 }
-################################################## new
 
 function clean() {
   cd ${SCRIPT_PATH}
@@ -120,7 +113,7 @@ function build_docs_outer_level() {
   echo ""
   echo "========================================================"
   echo "Building outer-level docs..."
-  echo "========================================================"
+  echo "--------------------------------------------------------"
   echo ""
   clean
   version
@@ -149,8 +142,8 @@ function build_docs_outer_level() {
 function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
-  echo "Copying lower-level docs..."
-  echo "========================================================"
+  echo "Copying lower-level documentation..."
+  echo "--------------------------------------------------------"
   echo ""
 
   for i in ${MANUALS}; do
@@ -173,24 +166,34 @@ function copy_docs_lower_level() {
 ################################################## current
 
 function build_all() {
-  echo "========================================================================="
+  echo ""
+  echo "========================================================"
   echo "Building GitHub Docs."
-  echo "========================================================================="
-  run_command docs-github-part $ARG_2 $ARG_3
+  echo "--------------------------------------------------------"
+  echo ""
+  run_command docs-github-part ${ARG_2} ${ARG_3}
   echo "Stashing GitHub Docs."
-  cd $SCRIPT_PATH
-  mkdir -p $SCRIPT_PATH/$BUILD_TEMP
-  mv $SCRIPT_PATH/$BUILD/*.zip $SCRIPT_PATH/$BUILD_TEMP
-  echo "========================================================================="
+  cd ${SCRIPT_PATH}
+  mkdir -p ${SCRIPT_PATH}/${BUILD_TEMP}
+  mv ${SCRIPT_PATH}/${BUILD}/*.zip ${SCRIPT_PATH}/${BUILD_TEMP}
+  echo ""
+  echo "========================================================"
   echo "Building Web Docs."
-  echo "========================================================================="
-  run_command docs-web-part $ARG_2 $ARG_3
+  echo "--------------------------------------------------------"
+  echo ""
+  run_command docs-web-part ${ARG_2} ${ARG_3}
+  echo ""
+  echo "========================================================"
   echo "Replacing GitHub Docs."
-  mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
-  rm -rf $SCRIPT_PATH/$BUILD_TEMP
-  if [ "${BELL}" == 'yes' ]; then
-    bell
-  fi
+  echo "--------------------------------------------------------"
+  echo ""
+  mv ${SCRIPT_PATH}/${BUILD_TEMP}/*.zip ${SCRIPT_PATH}/${BUILD}
+  rm -rf ${SCRIPT_PATH}/${BUILD_TEMP}
+  echo ""
+  echo "========================================================"
+  bell "Completed \"build_all\"."
+  echo "--------------------------------------------------------"
+  echo ""
   exit 0
 }
 
@@ -204,25 +207,32 @@ function build_docs_javadocs() {
 }
 
 function build_docs() {
-  _build_docs "docs" $GOOGLE_ANALYTICS_WEB $WEB $TRUE
+  _build_docs "docs" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
 }
 
 function build_docs_github() {
-  _build_docs "build-github" $GOOGLE_ANALYTICS_GITHUB $GITHUB $FALSE
+  _build_docs "build-github" ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
 }
 
 function build_docs_web() {
-  _build_docs "build-web" $GOOGLE_ANALYTICS_WEB $WEB $TRUE
+  _build_docs "build-web" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
 }
 
 function _build_docs() {
-  build_docs_inner_level $1
-  build_docs_outer_level $2
+  echo ""
+  echo "========================================================"
+  echo "Building target \"${1}\"..."
+  echo "--------------------------------------------------------"
+  build_docs_inner_level ${1}
+  build_docs_outer_level ${2}
   copy_docs_lower_level
-  build_zip $3
-  zip_extras $4
+  build_zip ${3}
+  zip_extras ${4}
   display_version
-  bell "Building $1 completed."
+  echo "========================================================"
+  bell "Building target \"${1}\" completed."
+  echo "--------------------------------------------------------"
+  echo ""
 }
 
 function build_docs_inner_level() {
@@ -234,58 +244,62 @@ function build_docs_inner_level() {
 function build_specific_doc() {
   echo ""
   echo "========================================================"
-  echo "Building $1, target $2..."
-  echo "========================================================"
+  echo "Building \"${1}\", target \"${2}\"..."
+  echo "--------------------------------------------------------"
   echo ""
-  cd $SCRIPT_PATH/$1
-  ./build.sh $2 $ARG_2 $ARG_3
+  cd $SCRIPT_PATH/${1}
+  ./build.sh ${2} ${ARG_2} ${ARG_3}
 }
 
 function build_zip() {
   cd $SCRIPT_PATH
   set_project_path
-  make_zip $1
+  make_zip ${1}
 }
 
 function zip_extras() {
-  if [ "x$1" == "x$FALSE" ]; then
+  if [ "x${1}" == "x${FALSE}" ]; then
     return
   fi
   # Add JSON file
-  cd $SCRIPT_PATH/$BUILD/$SOURCE
+  cd ${SCRIPT_PATH}/${BUILD}/${SOURCE}
   JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
-  local json_file_path=$SCRIPT_PATH/$BUILD/$PROJECT_VERSION/$JSON_FILE
-  echo `python -c 'import conf; conf.print_json_versions();'` > $json_file_path
+  local json_file_path=${SCRIPT_PATH}/${BUILD}/${PROJECT_VERSION}/${JSON_FILE}
+  echo `python -c 'import conf; conf.print_json_versions();'` > ${json_file_path}
   # Add .htaccess file (404 file)
-  cd $SCRIPT_PATH
-  rewrite $COMMON_SOURCE/$HTACCESS $BUILD/$PROJECT_VERSION/.$HTACCESS "<version>" "$PROJECT_VERSION"
-  cd $SCRIPT_PATH/$BUILD
-  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/$JSON_FILE $PROJECT_VERSION/.$HTACCESS
+  cd ${SCRIPT_PATH}
+  rewrite ${COMMON_SOURCE}/${HTACCESS} ${BUILD}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+  cd ${SCRIPT_PATH}/${BUILD}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/${JSON_FILE} ${PROJECT_VERSION}/.${HTACCESS}
 }
 
 function build_sdk() {
   cd developers-manual
-  ./build.sh sdk $ARG_2 $ARG_3
+  ./build.sh sdk ${ARG_2} ${ARG_3}
 }
 
 function build_license_depends() {
   cd reference-manual
-  ./build.sh license-pdfs $ARG_2 $ARG_3
+  ./build.sh license-pdfs ${ARG_2} ${ARG_3}
 }
 
 function print_version() {
   cd developers-manual
-  ./build.sh version $ARG_2 $ARG_3
+  ./build.sh version ${ARG_2} ${ARG_3}
 }
 
 function bell() {
-  # Pass a message as $1
-  echo -e "\a$1"
+  # Pass a message as ${1}
+  if [[ "x${BELL}" == "xyes" || "x${BELL}" == "x${TRUE}" ]]; then
+    echo -e "\a${1}"
+  else
+    echo -e "${1}"
+  fi
 }
 
 function test() {
   echo "Test..."
-  build_json
+  bell "A test message"
   echo "Test completed."
 }
 
@@ -306,4 +320,4 @@ function clean_builds() {
 
 set_project_path
 
-run_command  $1
+run_command  ${1}

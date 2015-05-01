@@ -1,3 +1,5 @@
+<div ncy-breadcrumb></div>
+
 <div class="row">
   <div class="col-xs-6">
     <h2 class="pull-left"> All Adapters </h2>
@@ -59,7 +61,7 @@
               </p>
           </a>
 
-          <div class="clearfix action-panel">
+          <div class="clearfix action-panel" ng-class="{'invisible': app.isdraft === true}">
             <div class="pull-left">
               <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
                 <span class="fa fa-play"></span>
@@ -80,7 +82,7 @@
             </div>
 
 
-            <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}" class="pull-right">
+            <div ng-class="{'running': app.status === 'Running', 'stopped': app.status === 'Stopped'}" class="pull-right" >
               <i class="fa fa-circle"></i>
               <span> {{app.status}} </span>
             </div>

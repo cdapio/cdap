@@ -22,7 +22,6 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -30,7 +29,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
-
 import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

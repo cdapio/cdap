@@ -17,14 +17,19 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.templates.AdapterSpecification;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
+import co.cask.cdap.templates.etl.common.Constants;
+
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
  */
-public class WorkerRealtimeContext extends RealtimeStageContext implements RealtimeContext {
+public class WorkerRealtimeContext extends RealtimeTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
@@ -40,5 +45,30 @@ public class WorkerRealtimeContext extends RealtimeStageContext implements Realt
   @Override
   public int getInstanceCount() {
     return context.getInstanceCount();
+  }
+
+  @Nullable
+  @Override
+  public AdapterSpecification getAdapterSpecification() {
+    return context.getAdapterSpecification();
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId) {
+    return context.getPluginProperties(getPluginId(pluginId));
+  }
+
+  @Override
+  public <T> Class<T> loadPluginClass(String pluginId) {
+    return context.loadPluginClass(getPluginId(pluginId));
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return context.newPluginInstance(getPluginId(pluginId));
+  }
+
+  private String getPluginId(String childPluginId) {
+    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }

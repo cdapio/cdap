@@ -287,11 +287,16 @@ body.theme-cdap {
   // --------------------------------------------------
   .modal {
     // Styling for all modals
-    h4 { color: white; }
+    h3, h4 { color: white; }
+    h3 small {
+      color: white;
+      display: block;
+      padding-top: 5px;
+    }
     .modal-header {
       border-bottom: 0;
       .btn, button {
-        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 24px, @padding: 5px 10px);
+        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 18px, @padding: 5px 7px);
         line-height: 1;
         opacity: 1;
       }
@@ -364,8 +369,8 @@ body.theme-cdap {
     .modal-dialog {
       .modal-header {
         .btn {
-          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 10px);
-          font-size: 24px;
+          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
+          font-size: 18px;
           line-height: 1;
         }
       }

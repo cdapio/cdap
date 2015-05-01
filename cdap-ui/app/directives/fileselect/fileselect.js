@@ -11,6 +11,12 @@ angular.module(PKG.name + '.commons')
         scope.buttonClass = attrs.buttonClass || '';
         scope.buttonDisabled = !!attrs.buttonDisabled || false;
 
+        if (attrs.dropdown === undefined) {
+          attrs.dropdown = false;
+        }
+
+        scope.isDropdown = attrs.dropdown;
+
         var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
         element.append(fileElement);
         element.bind('click', function(e) {

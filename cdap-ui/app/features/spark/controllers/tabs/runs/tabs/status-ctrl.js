@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsDetailStatusControler', function($state, $scope, MyDataSource, myHelpers, $timeout, $filter) {
+  .controller('SparkRunsDetailStatusController', function($state, $scope, MyDataSource, myHelpers, $timeout, $filter) {
     var filterFilter = $filter('filter');
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/spark/' + $state.params.programId;

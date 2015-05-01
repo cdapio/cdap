@@ -1,0 +1,50 @@
+{
+  "id": "TwitterSource",
+  "groups" : {
+    "position": [ "group1", "group2" ],
+    "group1": {
+       "display" : "OAuth Access Tokens",
+       "position" : [ "AccessToken", "AccessTokenSecret" ],
+       "fields" : {
+          "AccessToken" : {
+             "widget": "textbox",
+             "label" : "Access Token",
+             "description" : "Access token to be used as oauth_token to sign requests to your twitter account.",
+             "properties": {
+               "width": "medium"
+             }
+          },
+          "AccessTokenSecret": {
+             "widget": "password",
+             "label": "Access Token Secret",
+             "description" : "Access token secret to be used as oauth_token_secret to sign requests to your twitter account.",
+             "properties": {
+               "width": "medium"
+             }
+          }
+        }
+    },
+    "group2": {
+      "display": "OAuth Consumer Settings",
+      "position": ["ConsumerKey", "ConsumerSecret"],
+      "fields": {
+        "ConsumerKey" : {
+           "widget": "textbox",
+           "label": "Consumer Key",
+           "description" : "Consumer key is also known as API Key. Providing this key grants access to make requests on behalf of an application.Learn more here : https://dev.twitter.com/oauth/application-only",
+           "properties": {
+             "width": "medium"
+           }
+        },
+        "ConsumerSecret" : {
+           "widget": "password",
+           "label": "Consumer Secret",
+           "description" : "Consumer secret and key together provide access to make requests on behalf of this application. Learn more here : https://dev.twitter.com/oauth/application-only",
+           "properties": {
+             "width": "medium"
+           }
+        }
+      }
+    }
+  }
+}

@@ -51,6 +51,7 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -429,34 +430,56 @@ public final class FlowletProgramRunner implements ProgramRunner {
       @Override
       public <T> OutputEmitter<T> create(String outputName, TypeToken<T> type) {
         try {
-          Schema schema = schemaGenerator.generate(type.getType());
+          // first iterate over all queue specifications to find the queue name and all consumer flowlet ids
+          QueueName queueName = null;
+          List<String> consumerFlowlets = Lists.newLinkedList();
           Node flowlet = Node.flowlet(flowletName);
-          for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.row(flowlet).values())) {
-            if (queueSpec.getQueueName().getSimpleName().equals(outputName)
+          Schema schema = schemaGenerator.generate(type.getType());
+          for (Map.Entry<String, Set<QueueSpecification>> entry : queueSpecs.row(flowlet).entrySet()) {
+            for (QueueSpecification queueSpec : entry.getValue()) {
+              if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
 
-              final MetricsCollector metrics = flowletContext.getProgramMetrics().childCollector(
-                Constants.Metrics.Tag.FLOWLET_QUEUE, queueSpec.getQueueName().getSimpleName());
-              ProducerSupplier producerSupplier = new ProducerSupplier(queueSpec.getQueueName(),
-                                                                       queueClientFactory, new QueueMetrics() {
-                @Override
-                public void emitEnqueue(int count) {
-                  metrics.increment("process.events.out", count);
-                }
-
-                @Override
-                public void emitEnqueueBytes(int bytes) {
-                  // no-op
-                }
-              });
-              producerBuilder.add(producerSupplier);
-              return new DatumOutputEmitter<T>(producerSupplier, schema, datumWriterFactory.create(type, schema));
+                queueName = queueSpec.getQueueName();
+                consumerFlowlets.add(entry.getKey());
+                break;
+              }
             }
           }
+          if (queueName == null) {
+            throw new IllegalArgumentException(String.format("No queue specification found for %s, %s",
+                                                             flowletName, type));
+          }
 
-          throw new IllegalArgumentException(String.format("No queue specification found for %s, %s",
-                                                           flowletName, type));
+          // create a metric collector for this queue, and also one for each consumer flowlet
+          final MetricsCollector metrics = flowletContext.getProgramMetrics()
+            .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
+          final MetricsCollector producerMetrics = metrics.childCollector(
+            Constants.Metrics.Tag.PRODUCER, flowletContext.getFlowletId());
+          final Iterable<MetricsCollector> consumerMetrics =
+            Iterables.transform(consumerFlowlets, new Function<String, MetricsCollector>() {
+              @Override
+              public MetricsCollector apply(String consumer) {
+                return producerMetrics.childCollector(
+                  Constants.Metrics.Tag.CONSUMER, consumer);
+              }});
 
+          // create a queue metrics emitter that emit to all of the above collectors
+          ProducerSupplier producerSupplier = new ProducerSupplier(queueName, queueClientFactory, new QueueMetrics() {
+            @Override
+            public void emitEnqueue(int count) {
+              metrics.increment("process.events.out", count);
+              for (MetricsCollector collector : consumerMetrics) {
+                collector.increment("queue.pending", count);
+              }
+            }
+            @Override
+            public void emitEnqueueBytes(int bytes) {
+              // no-op
+            }
+          });
+          producerBuilder.add(producerSupplier);
+          return new DatumOutputEmitter<T>(producerSupplier, schema, datumWriterFactory.create(type, schema));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -507,7 +530,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                                             queueName, consumerConfig);
                 queueConsumerSupplierBuilder.add(consumerSupplier);
                 // No decoding is needed, as a process method can only have StreamEvent as type for consuming stream
-                Function<StreamEvent, T> decoder = wrapInputDecoder(flowletContext,
+                Function<StreamEvent, T> decoder = wrapInputDecoder(flowletContext, null,
                                                                     queueName, new Function<StreamEvent, T>() {
                   @Override
                   @SuppressWarnings("unchecked")
@@ -521,7 +544,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
               } else {
                 int numGroups = getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
                 Function<ByteBuffer, T> decoder =
-                  wrapInputDecoder(flowletContext, queueName, createInputDatumDecoder(dataType, schema, schemaCache));
+                  wrapInputDecoder(flowletContext, entry.getKey().getName(), // the producer flowlet,
+                                   queueName, createInputDatumDecoder(dataType, schema, schemaCache));
 
                 ConsumerSupplier<QueueConsumer> consumerSupplier = ConsumerSupplier.create(program.getNamespace(),
                                                                                            flowletContext.getOwners(),
@@ -575,20 +599,25 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private <S, T> Function<S, T> wrapInputDecoder(final BasicFlowletContext context,
+                                                 final String producerName,
                                                  final QueueName queueName,
                                                  final Function<S, T> inputDecoder) {
     final String eventsMetricsName = "process.events.in";
     final String queue = queueName.getSimpleName();
+    final ImmutablePair<String, String> producerAndQueue = producerName == null ? null :
+      new ImmutablePair<String, String>(producerName, queue);
     return new Function<S, T>() {
       @Override
       public T apply(S source) {
         context.getQueueMetrics(queue).increment(eventsMetricsName, 1);
         context.getQueueMetrics(queue).increment("process.tuples.read", 1);
+        if (producerAndQueue != null) {
+          context.getProducerMetrics(producerAndQueue).increment("queue.pending", -1);
+        }
         return inputDecoder.apply(source);
       }
     };
   }
-
 
   private SchemaCache createSchemaCache(Program program) throws Exception {
     ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
@@ -640,11 +669,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new FlowletServiceHook(flowletName, streamCoordinatorClient, streams, controller);
   }
 
-  private static interface ProcessMethodFactory {
+  private interface ProcessMethodFactory {
     <T> ProcessMethod<T> create(Method method, int maxRetries);
   }
 
-  private static interface ProcessSpecificationFactory {
+  private interface ProcessSpecificationFactory {
     /**
      * Returns a {@link ProcessSpecification} for invoking the given process method. {@code null} is returned if
      * no input is available for the given method.

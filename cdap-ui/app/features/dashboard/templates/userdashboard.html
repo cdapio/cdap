@@ -3,65 +3,85 @@
 </div>
 
 <div class="well well-lg" ng-if="currentBoard.isEmpty">
-  <h3 class="text-center"> No widgets on this board! <a ui-sref="dashboard.user.addwdgt"> Add one! </a>  </h3>
+  <h3 class="text-center"> No widgets on this board! <a ng-click="addWidget()"> Add one! </a>  </h3>
 </div>
 
 <div class="row" ng-if="!currentBoard.isEmpty">
-  <div class="col-xs-2"
-       dropdown is-open="dropdown.isopen">
-    <button type="button"
-            class="btn btn-default btn-block dropdown-toggle"
-            dropdown-toggle>
-      {{ tabs[currentTab] }}
-      <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu metric-timeselector" role="menu">
-      <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
-    </ul>
-  </div>
 
-  <div ng-show="currentTab == 0">
-    <div class="col-xs-3">
-      <my-timestamp-picker
-        data-label="From"
-        ng-model="timeOptions.startMs"
-      ></my-timestamp-picker>
-    </div>
+    <div class="form-inline">
 
-    <div class="col-xs-3">
-      <my-timestamp-picker
-        data-label="To"
-        ng-model="timeOptions.endMs"
-      ></my-timestamp-picker>
-    </div>
-    <button class="btn btn-success" ng-click="updateWithTimeRange()">Apply!</button>
-  </div>
+      <div ng-if="currentTab == 0" class="form-group">
+        <my-timestamp-picker
+          data-label="From"
+          ng-model="timeOptions.startMs"
+        ></my-timestamp-picker>
 
-  <div ng-show="currentTab == 1">
-    <div class="col-xs-2">
-      <my-duration-picker
-        ng-model="timeOptions.durationMs">
-      </my-duration-picker>
-    </div>
+        <my-timestamp-picker
+          data-label="To"
+          ng-model="timeOptions.endMs"
+        ></my-timestamp-picker>
 
+        <div class="form-group">
+          <div dropdown is-open="dropdown.isopen">
+            <button type="button"
+                    class="btn btn-default dropdown-toggle"
+                    dropdown-toggle>
+              {{ tabs[currentTab] }}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu metric-timeselector" role="menu">
+              <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
+            </ul>
+          </div>
+          <button class="btn btn-success"
+                  ng-click="updateWithTimeRange()">
+            Make Request!
+          </button>
+        </div>
+      </div>
 
-    <div class="col-xs-2">
-      <div class="input-group">
-      <span class="input-group-addon">
-        <span>Frequency</span>
-      </span>
-      <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
-      ng-model="timeOptions.refreshInterval"
-      bs-options="t.name for t in refreshIntervals"
-      bs-select>
-        <strong ng-bind="timeOptions.refreshInterval.name"></strong>
-        <span class="caret"></span>
-      </button>
+      <div ng-if="currentTab == 1" class="form-group">
+
+        <my-duration-picker
+          ng-model="timeOptions.durationMs">
+        </my-duration-picker>
+
+        <div class="input-group">
+
+          <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+          ng-model="timeOptions.refreshInterval"
+          bs-options="t.name for t in refreshIntervals"
+          bs-select>
+            <strong ng-bind="timeOptions.refreshInterval.name"></strong>
+            <span class="caret"></span>
+          </button>
+          <span class="input-group-addon">
+            <span class="addon-label">Frequency</span>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <div dropdown is-open="dropdown.isopen">
+            <button type="button"
+                    class="btn btn-default dropdown-toggle"
+                    dropdown-toggle>
+              {{ tabs[currentTab] }}
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu metric-timeselector" role="menu">
+              <li ng-repeat="tab in tabs" ng-click="activateTab($index)"><a>{{tab}}</a></li>
+            </ul>
+          </div>
+          <button ng-if="!liveDashboard" class="btn btn-success" ng-click="updateWithFrequency()">
+            Start Polling!
+          </button>
+          <button ng-if="liveDashboard" class="btn btn-danger" ng-click="stopPolling()">
+            Stop Polling!
+          </button>
+        </div>
       </div>
     </div>
-    <button class="btn btn-success" ng-click="updateWithFrequency()">Apply!</button>
-    </div>
-  </div>
+
 </div>
 
 <div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">

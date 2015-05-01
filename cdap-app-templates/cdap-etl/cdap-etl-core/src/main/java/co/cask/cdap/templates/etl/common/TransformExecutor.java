@@ -16,9 +16,12 @@
 
 package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.Destroyable;
+import co.cask.cdap.templates.etl.api.Transformation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -29,11 +32,14 @@ import java.util.List;
  * @param <IN> the type of input object to the first transform
  * @param <OUT> the type of object output by the last transform
  */
-public class TransformExecutor<IN, OUT> {
-  private final List<Transform> transforms;
+public class TransformExecutor<IN, OUT> implements Destroyable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
+
+  private final List<Transformation> transforms;
   private final List<DefaultEmitter> emitters;
 
-  public TransformExecutor(List<Transform> transforms, List<StageMetrics> transformMetrics) {
+  public TransformExecutor(List<Transformation> transforms, List<StageMetrics> transformMetrics) {
     int numTransforms = transforms.size();
     Preconditions.checkArgument(numTransforms == transformMetrics.size());
     this.transforms = Lists.newArrayListWithCapacity(numTransforms);
@@ -50,7 +56,7 @@ public class TransformExecutor<IN, OUT> {
       return Lists.newArrayList((OUT) input);
     }
 
-    Transform transform = transforms.get(0);
+    Transformation transform = transforms.get(0);
     DefaultEmitter currentEmitter = emitters.get(0);
     currentEmitter.reset();
     transform.transform(input, currentEmitter);
@@ -69,5 +75,14 @@ public class TransformExecutor<IN, OUT> {
     }
 
     return previousEmitter;
+  }
+
+  @Override
+  public void destroy() {
+    for (Transformation transform : transforms) {
+      if (transform instanceof Destroyable) {
+        Destroyables.destroyQuietly((Destroyable) transform);
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "builders":[
+  "builders": [
     {
       "type": "virtualbox-iso",
       "guest_os_type": "Ubuntu_64",
@@ -26,10 +26,10 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage_post": [
-        ["modifyvm", "{{.Name}}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
       ],
-      "vm_name": "cdap-standalone-vm",
-      "name": "cdap-standalone-vm-ubuntu"
+      "vm_name": "cdap-sdk-vm",
+      "name": "cdap-sdk-vm"
     }
   ],
   "provisioners": [
@@ -45,7 +45,8 @@
       "type": "shell",
       "inline": [
         "reboot"
-      ]
+      ],
+      "only": ["cdap-sdk-vm"]
     },
     {
       "type": "chef-solo",
@@ -59,14 +60,29 @@
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[nodejs],recipe[maven],recipe[idea],recipe[cdap::sdk]",
+      "run_list": "recipe[maven],recipe[idea]",
       "prevent_sudo": true,
       "skip_install": true,
       "json": {
         "idea": {
           "setup_dir": "/opt"
+        },
+        "java": {
+          "install_flavor": "oracle",
+          "jdk_version": 7,
+          "oracle": {
+            "accept_oracle_download_terms": true
+          }
         }
-      }
+      },
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[cdap::sdk]",
+      "prevent_sudo": true,
+      "skip_install": true
     },
     {
       "type": "shell",
@@ -75,12 +91,24 @@
         "scripts/fluxbox.sh",
         "scripts/slim.sh",
         "scripts/firefox.sh",
-        "scripts/vbox-guest-additions.sh",
+        "scripts/vbox-guest-additions.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "shell",
+      "scripts": [
         "scripts/remove-chef.sh",
-        "scripts/random-root-password.sh",
-        "scripts/apt-cleanup.sh",
-        "scripts/zero-disk.sh"
+        "scripts/apt-cleanup.sh"
       ]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/random-root-password.sh",
+        "scripts/zero-disk.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
     }
   ]
 }

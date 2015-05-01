@@ -25,18 +25,19 @@ import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.templates.etl.api.batch.BatchSink} that writes data to a {@link Cube} dataset.
  * <p/>
  * This {@link BatchCubeSink} takes {@link StructuredRecord} in, maps it to a {@link CubeFact} using mapping
  * configuration provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a
- * {@link Cube} dataset identified by {@link #NAME} property.
+ * {@link Cube} dataset identified by name property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -87,14 +88,17 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
   private StructuredRecordToCubeFact transform;
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
-    transform = new StructuredRecordToCubeFact(stageConfig.getProperties());
+  public void initialize(BatchSinkContext context) throws Exception {
+    super.initialize(context);
+    transform = new StructuredRecordToCubeFact(context.getPluginProperties().getProperties());
   }
 
   @Override
-  protected String getDatasetType(ETLStage config) {
-    return Cube.class.getName();
+  protected Map<String, String> getProperties() {
+    Map<String, String> properties = Maps.newHashMap(batchCubeConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, batchCubeConfig.name);
+    properties.put(Properties.BatchReadableWritable.TYPE, Cube.class.getName());
+    return properties;
   }
 
   @Override

@@ -17,12 +17,11 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.Transformation;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
@@ -34,15 +33,10 @@ import co.cask.cdap.templates.etl.api.config.ETLStage;
  * @param <OUT> the type of output for the source
  */
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
-  implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT> {
+  implements EndPointStage, Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
 
   @Override
-  public void configure(StageConfigurer configurer) {
-    // no-op
-  }
-
-  @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 
@@ -50,21 +44,30 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
    *
    * @param context {@link BatchSourceContext}
+   * @throws Exception if there's an error during this method invocation
    */
-  public abstract void prepareJob(BatchSourceContext context);
+  public abstract void prepareJob(BatchSourceContext context) throws Exception;
 
   /**
    * Initialize the source. This is called once each time the Hadoop Job runs, before any
    * calls to {@link #transform(KeyValue, Emitter)} are made.
    *
-   * @param stageConfig the configuration for the stage.
+   * @param context {@link BatchSourceContext}
    */
-  public void initialize(ETLStage stageConfig) throws Exception {
+  public void initialize(BatchSourceContext context) throws Exception {
     // no-op
   }
 
   @Override
   public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
     emitter.emit((OUT) input.getValue());
+  }
+
+  /**
+   * Destroy the source. This is called at the end of the Hadoop Job run.
+   */
+  @Override
+  public void destroy() {
+    // no-op
   }
 }

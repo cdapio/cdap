@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.kafka.Kafka08SimpleApiConsumer;
 import co.cask.cdap.templates.etl.realtime.kafka.KafkaSimpleApiConsumer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,9 +57,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
 
-  private KafkaSimpleApiConsumer kafkaConsumer;
+  private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
+                                                       Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
+                                                       Schema.Field.of(KEY, Schema.nullableOf(
+                                                         Schema.of(Schema.Type.STRING))));
 
-  private StructuredRecord.Builder recordBuilder;
+  private KafkaSimpleApiConsumer kafkaConsumer;
 
   private KafkaPluginConfig config;
 
@@ -78,10 +80,6 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
 
     kafkaConsumer = new Kafka08SimpleApiConsumer(this);
     kafkaConsumer.initialize(context);
-
-    Schema.Field messageField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES));
-    Schema.Field keyField  = Schema.Field.of(KEY, Schema.of(Schema.Type.STRING));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("Kafka Message", messageField, keyField));
   }
 
   @Nullable
@@ -109,10 +107,11 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
    * @return instance of {@link StructuredRecord} representing the message.
    */
   public StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     if (key != null) {
       recordBuilder.set(KEY, key);
     }
-    recordBuilder.set(MESSAGE, payload.array());
+    recordBuilder.set(MESSAGE, payload);
     return recordBuilder.build();
   }
 

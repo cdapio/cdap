@@ -39,7 +39,7 @@ echo Sending events to %STREAM%...
 FOR /F "delims=" %%i IN (%APP_HOME%\resources\points.txt) DO (
  SET data=%%i
  SET data=!data:"=\"!
- curl -H "Authorization: Bearer %ACCESS_TOKEN%" -sL -X POST --data "!data!" http://localhost:10000/v2/streams/%STREAM%
+ curl -H "Authorization: Bearer %ACCESS_TOKEN%" -sL -X POST --data "!data!" http://localhost:10000/v3/namespaces/default/streams/%STREAM%
 )
 ENDLOCAL
 

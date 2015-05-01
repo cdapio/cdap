@@ -16,8 +16,6 @@
 
 package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-
 /**
  * Class to define property names for sources and sinks
  */
@@ -101,8 +99,9 @@ public final class Properties {
   /**
    * Common properties for BatchWritable source and sinks
    */
-  public static class BatchWritable {
+  public static class BatchReadableWritable {
     public static final String NAME = "name";
+    public static final String TYPE = "type";
   }
 
   private Properties() {

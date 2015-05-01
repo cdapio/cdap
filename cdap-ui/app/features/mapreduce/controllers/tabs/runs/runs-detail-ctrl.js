@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsDetailController', function($scope, MyDataSource, $state) {
+  .controller('MapreduceRunsDetailController', function($scope, MyDataSource, $state, $filter) {
     var dataSrc = new MyDataSource($scope);
+    var myNumber = $filter('myNumber');
 
     $scope.tabs = [{
       title: 'Status',
@@ -35,24 +36,18 @@ angular.module(PKG.name + '.feature.mapreduce')
       }, function (res) {
 
         $scope.info = res;
-        // To Be used when progress is fixed in the backend
-        // $scope.mapProgress = Math.floor(res.mapProgress * 100);
-        // $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+        $scope.mapProgress = Math.floor(res.mapProgress * 100);
+        $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
 
-        $scope.mapperStats = getStats($scope.info.mapTasks);
-        $scope.reducerStats = getStats($scope.info.reduceTasks);
+        $scope.mapperStats = getStats($scope.info.mapTasks, $scope.info.complete);
+        $scope.mapperStats.inputRecords = myNumber($scope.info.counters.MAP_INPUT_RECORDS);
+        $scope.mapperStats.outputRecords = myNumber($scope.info.counters.MAP_OUTPUT_RECORDS);
+
+        $scope.reducerStats = getStats($scope.info.reduceTasks, $scope.info.complete);
+        $scope.reducerStats.inputRecords = myNumber($scope.info.counters.REDUCE_INPUT_RECORDS);
+        $scope.reducerStats.outputRecords = myNumber($scope.info.counters.REDUCE_OUTPUT_RECORDS);
       });
     }
-
-    $scope.getCompletedPercentage = function(tasks) {
-      var aggregate = 0;
-      angular.forEach(tasks, function (task) {
-        if(task.state === 'SUCCEEDED') {
-          aggregate += task.progress;
-        }
-      });
-      return aggregate ? ((aggregate / (tasks.length)) * 100).toFixed(1) : 0;
-    };
 
     $scope.getFailedTasks = function (tasks) {
       var failed = 0;
@@ -65,15 +60,13 @@ angular.module(PKG.name + '.feature.mapreduce')
     };
 
 
-    function getStats(tasks) {
+    function getStats(tasks, completeInfo) {
       var stats = {
         completed: 0,
         running: 0,
         pending: 0,
         killed: 0,
         failed: 0,
-        recordsIn: 0,
-        bytesIn: 0,
         total: 0
       };
 
@@ -99,6 +92,21 @@ angular.module(PKG.name + '.feature.mapreduce')
         stats.total++;
       });
 
+      if (completeInfo === false) {
+        var NA = 'NA';
+        return {
+          completed: NA,
+          running: NA,
+          pending: NA,
+          killed: NA,
+          failed: NA,
+          total: stats.total
+        };
+      }
+
+      angular.forEach(Object.keys(stats), function(key) {
+        stats[key] = myNumber(stats[key]);
+      });
       return stats;
 
     }

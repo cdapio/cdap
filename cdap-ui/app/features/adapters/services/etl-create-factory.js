@@ -52,14 +52,13 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var s = res[0];
           this.scope.source.name = s.name;
+          this.scope.source._backendProperties = s.properties;
           var obj = {};
-          angular.forEach(source.properties, function(property) {
+          angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.source.properties = obj;
-          // this.scope.loadingEtlSourceProps = false;
         }.bind(this));
-      // this.scope.loadingEtlSourceProps = source || false;
     }
 
     AdapterApiFactory.prototype.fetchSinkProperties = function(sink){
@@ -70,20 +69,19 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var s = res[0];
           this.scope.sink.name = s.name;
+          this.scope.sink._backendProperties = s.properties;
           var obj = {};
-          angular.forEach(sink.properties, function(property) {
+          angular.forEach(s.properties, function(property) {
             obj[property.name] = '';
           });
           this.scope.sink.properties = obj;
-          // this.scope.loadingEtlSinkProps = false;
         }.bind(this));
-      // this.scope.loadingEtlSinkProps = sink || false;
     }
 
     AdapterApiFactory.prototype.fetchTransformProperties = function(transform, index) {
       if(!transform) return;
       this.dataSrc.request({
-        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transforms/plugins/' + transform
+        _cdapPath: '/templates/' + this.scope.metadata.type + '/extensions/transform/plugins/' + transform
       })
         .then(function(res) {
           var t = res[0];
@@ -93,6 +91,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           index = (typeof index === 'undefined' ? this.scope.transforms.length - 1: index);
           this.scope.transforms[index].properties = obj;
+          this.scope.transforms[index]._backendProperties = t.properties;
         }.bind(this));
     }
 

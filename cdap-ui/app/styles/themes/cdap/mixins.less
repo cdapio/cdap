@@ -55,3 +55,53 @@
   .border-radius(10px);
   &:before { line-height: @line-height; }
 }
+
+.dropdown-defaults() {
+  + .dropdown-menu {
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    max-height: 500px;
+    overflow-y: auto;
+
+    .border-radius(8px);
+    > li {
+      &:first-child a { .border-radius(8px 0 0 0); }
+      &:last-child a {
+        .border-radius(0 0 8px 8px);
+        &:hover { .border-radius(0 0 8px 8px); }
+      }
+      &:only-child {
+        a { .border-radius(8px 0 8px 8px); }
+        &:hover {
+          a { .border-radius(8px 0 8px 8px); }
+        }
+      }
+      > a {
+        padding: 10px;
+        cursor: pointer;
+      }
+      span.fa {
+        margin-top: 3px;
+        margin-right: 0;
+        text-align: right;
+      }
+    }
+  }
+}
+
+.dropdown-blue() {
+  + .dropdown-menu {
+    > li {
+      > a {
+        background-color: @cdap-header;
+        color: white;
+        &:hover, &:focus {
+          background-color: white;
+          color: @cdap-header;
+        }
+      }
+    }
+  }
+}

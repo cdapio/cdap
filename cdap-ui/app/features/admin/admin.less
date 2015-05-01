@@ -19,6 +19,9 @@ body.theme-cdap.state-admin {
             > ul {
               border-bottom-right-radius: 8px;
               border-bottom-left-radius: 8px;
+              max-height: 500px;
+              overflow-y: auto;
+              
               > li:last-of-type ul {
                 border-bottom-right-radius: 8px;
                 border-bottom-left-radius: 8px;
@@ -95,4 +98,25 @@ body.theme-cdap.state-admin {
     input.pref-key { font-weight: bold; }
   }
 
+}
+
+body.state-admin-namespace-detail-data-streammetadata {
+  .form-horizontal {
+
+    padding-left: 15px;
+    padding-right: 15px;
+
+    .form-group {
+      margin-left: 0;
+      margin-right: 0;
+
+      .field-row {
+        margin-bottom: 5px;
+      }
+    }
+
+    .well {
+      margin-left: 15px;
+    }
+  }
 }

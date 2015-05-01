@@ -23,8 +23,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.StructuredRecordSerializer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -46,7 +46,7 @@ import javax.script.ScriptException;
 @Plugin(type = "transform")
 @Name("Script")
 @Description("Executes user provided Javascript in order to transform one record into another")
-public class ScriptTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+public class ScriptTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
@@ -83,7 +83,7 @@ public class ScriptTransform extends TransformStage<StructuredRecord, Structured
   }
 
   @Override
-  public void initialize(StageContext context) {
+  public void initialize(TransformContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     try {

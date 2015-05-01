@@ -1,0 +1,33 @@
+@import "../../../styles/variables.less";
+my-dsv {
+  .dsv-container {
+    border: 2px solid @cdap-bluegray;
+    border-radius: 4px;
+    padding: 15px 0;
+
+    .empty-container {
+      padding: 5px 15px;
+    }
+  }
+
+  .delimiter {
+    margin-bottom: 5px;
+
+    .delimiter-label {
+      padding-left: 17px;
+      line-height: 30px;
+
+      > strong {
+        vertical-align: middle;
+      }
+    }
+  }
+
+  .property-row {
+    margin-bottom: 2px;
+  }
+
+  input.form-control {
+    width: 100%;
+  }
+}

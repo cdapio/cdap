@@ -31,9 +31,9 @@ angular.module(PKG.name + '.feature.flows')
             var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.app.' + $state.params.appId
                               + '.flow.' + $state.params.programId
-                              + '.run.' + runid
-                              + '.flowlet.' + input.name
-                              + '&metric=system.process.events.out&start=now-60s',
+                              + '.consumer.' + flowletid
+                              + '.producer.' + input.name
+                              + '&metric=system.queue.pending',
                 streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
                               + '.stream.' + input.name
                               + '&metric=system.collect.events&start=now-60s';
@@ -44,28 +44,33 @@ angular.module(PKG.name + '.feature.flows')
             } else {
               path = flowletPath;
             }
+            var aggregate = 0;
+            // Get Aggregate
+            dataSrc.request({
+              _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+              method: 'POST'
+            }).then(function(res) {
+              aggregate = res.series[0] ? res.series[0].data[0].value : 0;
+            }).then(function() {
 
-            // POLLING GRAPH
-            dataSrc
-              .poll({
-                _cdapPath: path + '&count=60',
+              dataSrc.request({
+                _cdapPath: path + '&start=now-60s&end=now',
                 method: 'POST'
-              }, function (res) {
-
-                if(res.series[0]) {
-                  var response = res.series[0].data;
+              }).then(function(initial) {
+                if (initial.series[0]) {
+                  var response = initial.series[0].data;
                   var v = [];
 
-                  angular.forEach(response, function(val) {
-                    v.push({
-                      time: val.time,
-                      y: val.value
+                  response[response.length - 1].value = aggregate - response[response.length - 1].value;
+                  for (var i = response.length - 2; i >= 0; i--) {
+                    response[i].value = response[i+1].value - response[i].value;
+                    v.unshift({
+                      time: response[i].time,
+                      y: response[i].value
                     });
-                  });
-
-                  if (input.history) {
-                    input.stream = v.slice(-1);
                   }
+
+                  input.stream = v.slice(-1);
 
                   input.history = [
                     {
@@ -74,8 +79,8 @@ angular.module(PKG.name + '.feature.flows')
                     }
                   ];
 
-                  input.max = Math.max.apply(Math, v.map(function(o){return o.y;}));
                 } else {
+
                   var val = [];
 
                   for (var i = 60; i > 0; i--) {
@@ -95,8 +100,49 @@ angular.module(PKG.name + '.feature.flows')
                   }];
 
                 }
+              }).then(function() {
+                // start polling aggregate
 
+                dataSrc.poll({
+                  _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+                  method: 'POST',
+                  interval: 1000
+                }, function(streamData) {
+                  var stream = {};
+
+                  if (streamData.series[0]) {
+                    stream = {
+                      time: Math.floor((new Date()).getTime()/1000),
+                      y: streamData.series[0].data[0].value
+                    };
+
+                  } else {
+
+                    stream = {
+                      time: Math.floor((new Date()).getTime()/1000),
+                      y: 0
+                    };
+                  }
+
+                  var array = input.history[0].values;
+                  array.shift();
+                  array.push(stream);
+
+                  input.history = [
+                    {
+                      label: 'output',
+                      values: array
+                    }
+                  ];
+
+                  input.stream = array.slice(-1);
+
+                  input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
+
+                });
               });
+
+            });
 
             // POLLING ARRIVAL RATE
             dataSrc

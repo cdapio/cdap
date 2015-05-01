@@ -17,12 +17,12 @@
           <tr>
             <th>Status</th>
             <th>Started</th>
-            <th>Running</th>
+            <th>Duration</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td ng-if="status" ng-bind="status"></td>
+            <td ng-if="status" ng-bind="status" ng-class="{'txt-failed': status === 'FAILED', 'txt-running': status === 'RUNNING'}"></td>
             <td ng-if="!status"> Not Started</td>
             <td ng-if="startTime" ng-bind="startTime | amDateFormat: 'MMM Do YYYY'"> </td>
             <td ng-if="!startTime"> &mdash; </td>

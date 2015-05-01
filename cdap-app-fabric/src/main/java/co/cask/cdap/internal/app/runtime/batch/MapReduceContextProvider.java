@@ -20,6 +20,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
@@ -103,9 +104,13 @@ public final class MapReduceContextProvider {
     return contextBuilder;
   }
 
-  private boolean isLocal(Configuration hConf) {
+  /**
+   * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
+   * class, but currently there is no better place for it.
+   */
+  static boolean isLocal(Configuration hConf) {
     String mrFramework = hConf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
-    return "local".equals(mrFramework);
+    return MRConfig.LOCAL_FRAMEWORK_NAME.equals(mrFramework);
   }
 
   private Program createProgram(MapReduceContextConfig contextConfig) {
@@ -134,7 +139,7 @@ public final class MapReduceContextProvider {
       return null;
     }
 
-    ClassLoader classLoader = cConf.getClassLoader();
+    ClassLoader classLoader = Delegators.getDelegate(cConf.getClassLoader(), MapReduceClassLoader.class);
     if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
     }
@@ -147,7 +152,7 @@ public final class MapReduceContextProvider {
    * framework in distributed mode.
    */
   static ClassLoader getProgramClassLoader(Configuration hConf) {
-    ClassLoader classLoader = hConf.getClassLoader();
+    ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
     if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
     }

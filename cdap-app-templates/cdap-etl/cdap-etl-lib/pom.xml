@@ -127,11 +127,6 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
     </dependency>
-    <!-- TODO: Remove when plugin management is added -->
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -202,7 +197,8 @@
               <classifier>batch</classifier>
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
-                <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*</Export-Package>
+                <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*;
+                  co.cask.cdap.templates.etl.common;org.apache.avro.mapreduce</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
@@ -218,8 +214,9 @@
             <configuration>
               <classifier>realtime</classifier>
               <instructions>
-                <!-- build bundle jar for realtime. excluding excluding batch-->
-                <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*</Export-Package>
+                <!-- build bundle jar for realtime. excluding batch-->
+                <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*;
+                  co.cask.cdap.templates.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

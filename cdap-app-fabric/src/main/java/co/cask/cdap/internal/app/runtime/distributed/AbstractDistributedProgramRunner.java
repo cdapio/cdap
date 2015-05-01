@@ -113,7 +113,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      if (schedulerQueueName != null) {
+      if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }

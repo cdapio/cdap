@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import com.google.gson.JsonElement;
 
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Represents an adapter returned for /adapters/{adapter-id}.
  */
+@Beta
 public class AdapterDetail {
   private final String name;
   private final String description;

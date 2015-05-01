@@ -16,108 +16,95 @@
 
 package co.cask.cdap.templates.etl.batch.sinks;
 
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
 import co.cask.cdap.templates.etl.api.batch.BatchSink;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.common.DBConfig;
 import co.cask.cdap.templates.etl.common.DBRecord;
 import co.cask.cdap.templates.etl.common.ETLDBOutputFormat;
-import co.cask.cdap.templates.etl.common.Properties;
+import co.cask.cdap.templates.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.Job;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Sink that can be configured to export data to a database table
  */
+@Plugin(type = "sink")
+@Name("Database")
+@Description("Batch sink for a database.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
+  private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
+  private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export to in the specified " +
+    "table.";
+
+  private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
+  private Configuration conf;
 
-  @Override
-  public void configure(StageConfigurer configurer) {
-    configurer.setDescription("Batch sink for database");
-    configurer.addProperty(new Property(Properties.DB.DRIVER_CLASS, "Driver class to connect to the database", true));
-    configurer.addProperty(
-      new Property(Properties.DB.CONNECTION_STRING, "JDBC connection string including database name", true));
-    configurer.addProperty(
-      new Property(Properties.DB.USER,
-                   "User to use to connect to the specified database. " +
-                     "Required for databases that require authentication. " +
-                     "Optional for databases that do not require authentication.",
-                   false));
-    configurer.addProperty(
-      new Property(Properties.DB.PASSWORD,
-                   "Password to use to connect to the specified database. " +
-                     "Required for databases that require authentication. " +
-                     "Optional for databases that do not require authentication.",
-                   false));
-    configurer.addProperty(new Property(Properties.DB.TABLE_NAME, "Table name to import", true));
-    configurer.addProperty(new Property(Properties.DB.COLUMNS, "Comma-separated list of columns to sink to", true));
+  public DBSink(DBSinkConfig dbSinkConfig) {
+    this.dbSinkConfig = dbSinkConfig;
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
-    Map<String, String> properties = stageConfig.getProperties();
-    String dbDriverClass = properties.get(Properties.DB.DRIVER_CLASS);
-    String dbConnectionString = properties.get(Properties.DB.CONNECTION_STRING);
-    String dbUser = properties.get(Properties.DB.USER);
-    String dbPassword = properties.get(Properties.DB.PASSWORD);
-    String dbTableName = properties.get(Properties.DB.TABLE_NAME);
-    String dbColumns = properties.get(Properties.DB.COLUMNS);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dbDriverClass), "dbDriverClass cannot be null");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dbConnectionString), "dbConnectionString cannot be null");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dbTableName), "dbTableName cannot be null");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(dbColumns), "dbColumns cannot be null");
-    Preconditions.checkArgument(!(dbUser == null && dbPassword != null),
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbUser != null && dbPassword == null),
+    Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
+    Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
+                                                                      dbSinkConfig.jdbcPluginName,
+                                                                      String.format("%s.%s.%s", "sink",
+                                                                                    dbSinkConfig.jdbcPluginType,
+                                                                                    dbSinkConfig.jdbcPluginName),
+                                                                      PluginProperties.builder().build());
+    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
   @Override
   public void prepareJob(BatchSinkContext context) {
-    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
-    String dbDriverClass = runtimeArguments.get(Properties.DB.DRIVER_CLASS);
-    String dbConnectionString = runtimeArguments.get(Properties.DB.CONNECTION_STRING);
-    String dbUser = runtimeArguments.get(Properties.DB.USER);
-    String dbPassword = runtimeArguments.get(Properties.DB.PASSWORD);
-    String dbTableName = runtimeArguments.get(Properties.DB.TABLE_NAME);
-    String dbColumns = runtimeArguments.get(Properties.DB.COLUMNS);
+    LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; columns = {}",
+              dbSinkConfig.tableName, dbSinkConfig.driverClass, dbSinkConfig.connectionString, dbSinkConfig.columns);
 
     Job job = context.getHadoopJob();
-    Configuration conf = job.getConfiguration();
-    if (dbUser == null && dbPassword == null) {
-      DBConfiguration.configureDB(conf, dbDriverClass, dbConnectionString);
+    conf = job.getConfiguration();
+    if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
+      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString);
     } else {
-      DBConfiguration.configureDB(conf, dbDriverClass, dbConnectionString, dbUser, dbPassword);
+      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString,
+                                  dbSinkConfig.user, dbSinkConfig.password);
     }
-    List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbColumns));
+    List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbSinkConfig.columns));
     try {
-      ETLDBOutputFormat.setOutput(job, dbTableName, fields.toArray(new String[fields.size()]));
+      ETLDBOutputFormat.setOutput(job, dbSinkConfig.tableName, fields.toArray(new String[fields.size()]));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -125,9 +112,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void initialize(ETLStage stageConfig) throws Exception {
-    super.initialize(stageConfig);
-    setResultSetMetadata(stageConfig.getProperties());
+  public void initialize(BatchSinkContext context) throws Exception {
+    super.initialize(context);
+    setResultSetMetadata();
   }
 
   @Override
@@ -135,24 +122,20 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, resultSetMetadata), null));
   }
 
-  private void setResultSetMetadata(Map<String, String> runtimeArgs) throws SQLException {
-    String connectionString = runtimeArgs.get(Properties.DB.CONNECTION_STRING);
-    String tableName = runtimeArgs.get(Properties.DB.TABLE_NAME);
-    String columns = runtimeArgs.containsKey(Properties.DB.COLUMNS) ? runtimeArgs.get(Properties.DB.COLUMNS) : "*";
-    String userName = runtimeArgs.get(Properties.DB.USER);
-    String password = runtimeArgs.get(Properties.DB.PASSWORD);
-
+  private void setResultSetMetadata() throws Exception {
+    ensureJDBCDriverIsAvailable();
     Connection connection;
-    if (userName == null) {
-      connection = DriverManager.getConnection(connectionString);
+    if (dbSinkConfig.user == null) {
+      connection = DriverManager.getConnection(dbSinkConfig.connectionString);
     } else {
-      connection = DriverManager.getConnection(connectionString, userName, password);
+      connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
     try {
       Statement statement = connection.createStatement();
       try {
         // Using LIMIT in the following query even though its not SQL standard since DBInputFormat already depends on it
-        ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1", columns, tableName));
+        ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
+                                                            dbSinkConfig.columns, dbSinkConfig.tableName));
         try {
           resultSetMetadata = rs.getMetaData();
         } finally {
@@ -164,5 +147,31 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     } finally {
       connection.close();
     }
+  }
+
+  /**
+   * Ensures that the JDBC driver is available for {@link DriverManager}
+   *
+   * @throws Exception if the driver is not available
+   */
+  private void ensureJDBCDriverIsAvailable() throws Exception {
+    try {
+      DriverManager.getDriver(dbSinkConfig.connectionString);
+    } catch (SQLException e) {
+      // Driver not found. We will try to register it with the DriverManager.
+      LOG.debug("Driver {} not found. Registering JDBC driver via shim {} ",
+                dbSinkConfig.driverClass, JDBCDriverShim.class.getName());
+      ClassLoader classLoader = conf.getClassLoader();
+      Class<?> driverClass = classLoader.loadClass(dbSinkConfig.driverClass);
+      DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
+    }
+  }
+
+  /**
+   * {@link PluginConfig} for {@link DBSink}
+   */
+  public static class DBSinkConfig extends DBConfig {
+    @Description(COLUMNS_DESCRIPTION)
+    String columns;
   }
 }

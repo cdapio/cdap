@@ -24,9 +24,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.Property;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
@@ -93,11 +90,12 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   private StructuredRecordToCubeFact transform;
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     String datasetName = realtimeCubeConfig.name;
+    Map<String, String> properties = realtimeCubeConfig.getProperties().getProperties();
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
     pipelineConfigurer.createDataset(datasetName, Cube.class.getName(), DatasetProperties.builder()
-      .addAll(stageConfig.getProperties())
+      .addAll(properties)
       .build());
   }
 
@@ -115,7 +113,7 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
+    Map<String, String> runtimeArguments = realtimeCubeConfig.getProperties().getProperties();
     transform = new StructuredRecordToCubeFact(runtimeArguments);
   }
 }

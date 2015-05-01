@@ -18,7 +18,7 @@
           <th> Duration </th>
         </thead>
         <tbody>
-          <td> {{info.state || 'Not Available'}} </td>
+          <td ng-class="{'txt-failed': info.state === 'FAILED', 'txt-running': info.state === 'RUNNING'}"> {{info.state || 'Not Available'}} </td>
           <td> {{info.startTime || 'Not Available' | date: 'medium' }} </td>
           <td ng-if="info.stopTime"> {{ (info.stopTime - info.startTime) | amDurationFormat}} </td>
           <td ng-if="!info.stopTime"> &mdash; </td>

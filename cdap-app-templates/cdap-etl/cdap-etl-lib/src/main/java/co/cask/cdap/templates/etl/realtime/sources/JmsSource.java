@@ -44,6 +44,7 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.naming.Context;
 
 /**
  * <p>
@@ -60,10 +61,16 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   public static final String JAVA_NAMING_PREFIX = "java.naming";
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
   public static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
+  public static final String JMS_NAMING_FACTORY_INITIAL = "jms.factory.initial";
+  public static final String JMS_PROVIDER_URL = "jms.provider.url";
+  public static final String JMS_CONNECTION_FACTORY_NAME = "ConnectionFactory";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
 
   public static final String MESSAGE = "message";
+
+  private static final Schema SCHEMA = Schema.recordOf("JMS Message",
+                                                       Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING)));
 
   private final JmsPluginConfig config;
 
@@ -75,7 +82,6 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private transient MessageConsumer consumer;
 
   private int messagesToReceive;
-  private StructuredRecord.Builder recordBuilder;
 
   /**
    * Default constructor
@@ -93,13 +99,17 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    */
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = context.getPluginProperties().getProperties();
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    if (config.getProperties() != null) {
+      runtimeArguments.putAll(config.getProperties().getProperties());
+    }
 
     Integer configMessagesToReceive = config.messagesToReceive;
     messagesToReceive = configMessagesToReceive.intValue();
 
-    // Try get the destination name
-    String destinationName = config.destinationName;
+    // Set initial context factory name and provider URL
+    runtimeArguments.put(Context.INITIAL_CONTEXT_FACTORY, config.initialContextFactory);
+    runtimeArguments.put(Context.PROVIDER_URL, config.providerUrl);
 
     // Get environment vars - this would be prefixed with java.naming.*
     final Hashtable<String, String> envVars = new Hashtable<String, String>();
@@ -115,16 +125,14 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     });
 
     // Bootstrap the JMS consumer
-    initializeJMSConnection(envVars, destinationName);
-
-    Schema.Field msgField = Schema.Field.of(MESSAGE, Schema.of(Schema.Type.STRING));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf("JMS Message", msgField));
+    initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName);
   }
 
   /**
    * Helper method to initialize the JMS Connection to start listening messages.
    */
-  private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName) {
+  private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName,
+                                       String connectionFactoryName) {
     if (jmsProvider == null) {
       LOG.trace("JMS provider is not set when trying to initialize JMS connection.");
       if (destinationName == null) {
@@ -132,7 +140,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
                                           "Please set the right JMSProvider");
       } else {
         LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
-        jmsProvider = new JndiBasedJmsProvider(envVars, destinationName);
+        jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
       }
     }
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
@@ -198,7 +206,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           continue;
         }
 
-        writer.emit(stringMessageToStructuredRecord(text, recordBuilder));
+        writer.emit(stringMessageToStructuredRecord(text));
         count++;
       }
     } while (message != null && count < messagesToReceive);
@@ -207,7 +215,8 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   }
 
   // Helper method to encode JMS String message to StructuredRecord.
-  private static StructuredRecord stringMessageToStructuredRecord(String text, StructuredRecord.Builder recordBuilder) {
+  private static StructuredRecord stringMessageToStructuredRecord(String text) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     recordBuilder.set(MESSAGE, text);
     return recordBuilder.build();
   }
@@ -279,25 +288,50 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    * Config class for {@link JmsSource}.
    */
   public static class JmsPluginConfig extends PluginConfig {
-    private static final Integer DEFAULT_MESSAGE_RECEIVE = 50;
-
     @Name(JMS_DESTINATION_NAME)
     @Description("Name of the destination to get messages")
-    private final String destinationName;
+    private String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
     @Description("Max number messages should be retrieved per poll. The default value is 50.")
     @Nullable
-    private final Integer messagesToReceive;
+    private Integer messagesToReceive;
 
-    public JmsPluginConfig(String destinationName, Integer messagesToReceive) {
+    @Name(JMS_NAMING_FACTORY_INITIAL)
+    @Description("The fully qualified class name of the factory class that will create an initial context. " +
+      "This will be passed to JNDI initial context as " + Context.INITIAL_CONTEXT_FACTORY)
+    private String initialContextFactory;
+
+    @Name(JMS_PROVIDER_URL)
+    @Description("This property contains information for the service provider URL to use. " +
+      "This will be passed to JNDI initial context as " + Context.PROVIDER_URL)
+    private String providerUrl;
+
+    @Name(JMS_CONNECTION_FACTORY_NAME)
+    @Description("The name of the connection factory from the JNDI. The default will be ConnectionFactory.")
+    @Nullable
+    private String connectionFactoryName;
+
+    public JmsPluginConfig() {
+      messagesToReceive = 50;
+      connectionFactoryName = "ConnectionFactory";
+    }
+
+    public JmsPluginConfig(String destinationName, @Nullable Integer messagesToReceive, String initialContextFactory,
+                           String providerUrl, @Nullable String connectionFactoryName) {
       this.destinationName = destinationName;
-      if (messagesToReceive == null) {
-        this.messagesToReceive = DEFAULT_MESSAGE_RECEIVE;
-      } else {
+      if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
+      } else {
+        this.messagesToReceive = 50;
       }
-
+      this.initialContextFactory = initialContextFactory;
+      this.providerUrl = providerUrl;
+      if (connectionFactoryName != null) {
+        this.connectionFactoryName = connectionFactoryName;
+      } else {
+        this.connectionFactoryName = JMS_CONNECTION_FACTORY_NAME;
+      }
     }
   }
 }

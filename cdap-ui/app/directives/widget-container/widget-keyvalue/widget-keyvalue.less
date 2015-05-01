@@ -1,0 +1,34 @@
+@import "../../../styles/variables.less";
+
+my-key-value {
+
+  .keyvalue-container {
+    border: 2px solid @cdap-bluegray;
+    border-radius: @border-radius-base;
+    padding: 15px 0;
+
+    .row {
+      margin-bottom: 2px;
+      padding-left: 15px;
+    }
+
+    .empty-container {
+      padding-left: 15px;
+    }
+  }
+
+  .labels {
+    [class*="col-"] {
+      margin-bottom: 10px;
+    }
+  }
+
+  .delimiter-label {
+    line-height: 26px;
+    padding-left: 17px;
+
+    > strong {
+      vertical-align: middle;
+    }
+  }
+}

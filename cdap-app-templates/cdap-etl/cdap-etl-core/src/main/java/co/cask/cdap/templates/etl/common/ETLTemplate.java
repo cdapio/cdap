@@ -23,8 +23,7 @@ import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.Transform;
-import co.cask.cdap.templates.etl.api.TransformStage;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
+import co.cask.cdap.templates.etl.api.Transformation;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.common.guice.TypeResolver;
@@ -55,10 +54,10 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
   private static final Logger LOG = LoggerFactory.getLogger(ETLTemplate.class);
   private static final Gson GSON = new Gson();
 
-  protected void configure(EndPointStage stage, ETLStage stageConfig, AdapterConfigurer configurer, String pluginPrefix)
+  protected void configure(EndPointStage stage, AdapterConfigurer configurer, String pluginPrefix)
     throws Exception {
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer, pluginPrefix);
-    stage.configurePipeline(stageConfig, pipelineConfigurer);
+    stage.configurePipeline(pipelineConfigurer);
   }
 
   @Override
@@ -74,36 +73,36 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
 
     // Instantiate Source, Transforms, Sink stages.
     // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
-    EndPointStage source = configurer.usePlugin(
-      Constants.Source.PLUGINTYPE, sourceConfig.getName(), sourcePluginId,
-      PluginProperties.builder().addAll(sourceConfig.getProperties()).build());
+    PluginProperties sourceProperties = PluginProperties.builder().addAll(sourceConfig.getProperties()).build();
+    EndPointStage source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(), sourcePluginId,
+                                                sourceProperties);
     if (source == null) {
-      throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+      throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                        Constants.Source.PLUGINTYPE, sourceConfig.getName()));
     }
 
-    EndPointStage sink = configurer.usePlugin(
-      Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
-      PluginProperties.builder().addAll(sinkConfig.getProperties()).build());
+    PluginProperties sinkProperties = PluginProperties.builder().addAll(sinkConfig.getProperties()).build();
+    EndPointStage sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
+                                              sinkProperties);
     if (sink == null) {
-      throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+      throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                        Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
     }
 
     // Store transform id list to be serialized and passed to the driver program
     List<String> transformIds = Lists.newArrayListWithCapacity(transformConfigs.size());
-    List<Transform> transforms = Lists.newArrayListWithCapacity(transformConfigs.size());
+    List<Transformation> transforms = Lists.newArrayListWithCapacity(transformConfigs.size());
     for (int i = 0; i < transformConfigs.size(); i++) {
       ETLStage transformConfig = transformConfigs.get(i);
 
       // Generate a transformId based on transform name and the array index (since there could
       // multiple transforms - ex, N filter transforms in the same pipeline)
       String transformId = String.format("%s%s%d", transformConfig.getName(), Constants.ID_SEPARATOR, i);
-      TransformStage transformObj = configurer.usePlugin(
-        Constants.Transform.PLUGINTYPE, transformConfig.getName(), transformId,
-        PluginProperties.builder().addAll(transformConfig.getProperties()).build());
+      PluginProperties transformProperties = PluginProperties.builder().addAll(transformConfig.getProperties()).build();
+      Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
+                                                         transformId, transformProperties);
       if (transformObj == null) {
-        throw new IllegalArgumentException(String.format("No Plugins of type %s named %s was found",
+        throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));
       }
 
@@ -114,8 +113,8 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     // Validate Source -> Transform -> Sink hookup
     validateStages(source, sink, transforms);
 
-    configure(source, sourceConfig, configurer, Constants.Source.PLUGINID);
-    configure(sink, sinkConfig, configurer, Constants.Sink.PLUGINID);
+    configure(source, configurer, Constants.Source.PLUGINID);
+    configure(sink, configurer, Constants.Sink.PLUGINID);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.Source.PLUGINID, sourcePluginId);
@@ -147,10 +146,11 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     }
   }
 
-  private void validateStages(EndPointStage source, EndPointStage sink, List<Transform> transforms) throws Exception {
+  private void validateStages(EndPointStage source, EndPointStage sink, List<Transformation> transforms)
+    throws Exception {
     ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
-    Type inType = Transform.class.getTypeParameters()[0];
-    Type outType = Transform.class.getTypeParameters()[1];
+    Type inType = Transformation.class.getTypeParameters()[0];
+    Type outType = Transformation.class.getTypeParameters()[1];
 
     // Load the classes using the class names provided
     Class<?> sourceClass = source.getClass();
@@ -167,7 +167,7 @@ public abstract class ETLTemplate<T> extends ApplicationTemplate<T> {
     }
 
     // Extract the transforms' input and output type
-    for (Transform transform : transforms) {
+    for (Transformation transform : transforms) {
       Class<?> klass = transform.getClass();
       TypeToken transformToken = TypeToken.of(klass);
       unresTypeList.add(transformToken.resolveType(inType).getType());

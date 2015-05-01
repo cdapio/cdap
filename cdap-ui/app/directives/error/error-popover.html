@@ -1,10 +1,17 @@
 <div class="popover" ng-controller="myErrorController">
   <div class="arrow"></div>
-  <h3 class="popover-title">Errors</h3>
-  <div class="popover-content">
-    <div class="text-right">
-      <button class="btn btn-sm btn-default" ng-click="clear()">Clear All</button>
+  <div class="popover-title">
+    <div class="row">
+      <div class="col-xs-6">
+        <h4>Errors</h4>
+      </div>
+      <div class="col-xs-6">
+        <button class="btn btn-sm btn-default pull-right" ng-click="clear()">Clear All</button>
+      </div>
     </div>
+  </div>
+  <div class="popover-content">
+
     <div class="clearfix">
 
       <div class="row bg-danger" ng-repeat="alert in alerts">

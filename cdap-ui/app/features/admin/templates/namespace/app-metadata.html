@@ -3,16 +3,30 @@
       <div class="col-xs-6">
           <h2 ng-bind="apps.name"></h2>
       </div>
-      <div class="col-xs-6">
-
-          <div class="text-right">
-            <a class="btn btn-default"
-              data-template="/assets/features/admin/templates/partials/app-dd.html"
-              bs-dropdown>
-                Actions
-                <span class="caret"></span>
-            </a>
-          </div>
+      <div class="col-xs-6 text-right">
+        <div class="btn-group" dropdown>
+          <a class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
+              Actions
+              <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li role="presentation">
+              <a role="menuitem" ui-sref="admin.namespace.detail.apps.metadata.preference">
+                <span class="fa fa-fw fa-cog pull-right"></span>
+                <span> Preferences </span>
+              </a>
+            </li>
+            <li role="presentation">
+              <a role="menuitem" href=""
+                ng-click="caskConfirm()"
+                cask-confirmable="deleteApp(apps.id)"
+                data-confirmable-content="Are you sure you want to delete this app?">
+                <span class="fa fa-fw fa-trash pull-right"></span>
+                <span> Delete </span>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
   </div>
 

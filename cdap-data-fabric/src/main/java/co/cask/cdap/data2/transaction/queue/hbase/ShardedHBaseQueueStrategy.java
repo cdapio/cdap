@@ -84,7 +84,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   /**
    * Constructs a new instance with the given number of buckets for distributed scan.
    */
-  ShardedHBaseQueueStrategy(int distributorBuckets) {
+  public ShardedHBaseQueueStrategy(int distributorBuckets) {
     this.distributorBuckets = distributorBuckets;
     this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(distributorBuckets));
@@ -104,6 +104,12 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
                                     HTable hTable, Scan scan, int numRows) throws IOException {
+    ResultScanner scanner = createHBaseScanner(consumerConfig, hTable, scan, numRows);
+    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+  }
+
+  private ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan,
+                                           int numRows) throws IOException {
     // Modify the scan with sharded key prefix
     Scan shardedScan = new Scan(scan);
 
@@ -111,11 +117,16 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     int caching = (int) (1.1 * numRows / distributorBuckets);
     shardedScan.setCaching(caching);
 
-    shardedScan.setStartRow(getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStartRow()));
-    shardedScan.setStopRow(getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStopRow()));
+    if (scan.getStartRow().length > 0) {
+      byte[] rowKey = getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStartRow());
+      shardedScan.setStartRow(rowKey);
+    }
 
-    ResultScanner scanner = DistributedScanner.create(hTable, shardedScan, rowKeyDistributor, scansExecutor);
-    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+    if (scan.getStopRow().length > 0) {
+      byte[] rowKey = getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStopRow());
+      shardedScan.setStopRow(rowKey);
+    }
+    return DistributedScanner.create(hTable, shardedScan, rowKeyDistributor, scansExecutor);
   }
 
   @Override
@@ -159,15 +170,16 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     scansExecutor.shutdownNow();
   }
 
-  private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId, byte[] originalRowKey) {
+  private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId,
+                               byte[] originalRowKey) {
     // Need to subtract the SALT_BYTES as the row key distributor will prefix the key with salted bytes
     byte[] result = new byte[PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES + originalRowKey.length];
     Bytes.putBytes(result, PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES,
                    originalRowKey, 0, originalRowKey.length);
+    Bytes.putLong(result, 0, groupConfig.getGroupId());
 
     // Default for FIFO case.
     int shardId = groupConfig.getDequeueStrategy() == DequeueStrategy.FIFO ? -1 : instanceId;
-    Bytes.putLong(result, 0, groupConfig.getGroupId());
     Bytes.putInt(result, Bytes.SIZEOF_LONG, shardId);
 
     return result;

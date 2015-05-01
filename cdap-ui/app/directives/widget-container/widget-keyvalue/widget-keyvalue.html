@@ -1,0 +1,47 @@
+<div class="keyvalue-container">
+  <div class="labels row">
+
+    <div class="col-xs-1 delimiter-label">
+      <strong>Delimiter</strong>
+    </div>
+    <div class="col-xs-1">
+      <input type="text" class="form-control" ng-model="delimiter">
+    </div>
+
+    <div class="col-xs-2 delimiter-label text-right">
+      <strong>KeyValue Delimiter</strong>
+    </div>
+    <div class="col-xs-1">
+      <input type="text" class="form-control" ng-model="kvdelimiter">
+    </div>
+
+  </div>
+
+  <div ng-repeat="property in properties" class="row">
+    <div class="col-xs-5">
+      <input type="text" class="form-control" ng-model="property.key" placeholder="key"/>
+    </div>
+    <div class="col-xs-5">
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
+
+    </div>
+    <div class="col-xs-1 text-center">
+      <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+    </div>
+    <div class="col-xs-1 text-center">
+      <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if="$last">
+        <span class="fa fa-fw fa-plus"></span>
+      </a>
+    </div>
+  </div>
+
+  <div ng-if="properties.length === 0" class="empty-container">
+    <a class="btn btn-info btn-transparent" ng-click="addProperty()">
+      <span class="fa fa-fw fa-plus"></span>
+      <span>Add Property</span>
+    </a>
+  </div>
+
+</div>

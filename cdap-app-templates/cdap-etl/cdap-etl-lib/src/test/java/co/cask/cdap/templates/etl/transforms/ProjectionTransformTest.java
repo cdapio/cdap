@@ -19,10 +19,9 @@ package co.cask.cdap.templates.etl.transforms;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.TransformContext;
 import co.cask.cdap.templates.etl.common.MockEmitter;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,8 +50,8 @@ public class ProjectionTransformTest {
   public void testSameFieldMultipleConverts() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "x:int,x:long");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
   }
 
@@ -60,8 +59,8 @@ public class ProjectionTransformTest {
   public void testSameFieldMultipleRenames() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, "x:z,x:y", null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
   }
 
@@ -69,8 +68,8 @@ public class ProjectionTransformTest {
   public void testMultipleRenamesToSameField() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, "x:z,y:z", null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
   }
 
@@ -78,8 +77,8 @@ public class ProjectionTransformTest {
   public void testInvalidSyntax() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, "x,y", null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
   }
 
@@ -87,8 +86,8 @@ public class ProjectionTransformTest {
   public void testInvalidConversion() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "x:int");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.Type.LONG)));
@@ -110,8 +109,8 @@ public class ProjectionTransformTest {
       .build();
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig("y, z", null, null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -136,8 +135,8 @@ public class ProjectionTransformTest {
       .build();
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, "x:y,y:z,z:x", null);
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -166,8 +165,8 @@ public class ProjectionTransformTest {
 
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig("x", "y:x", "y:string");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -185,8 +184,8 @@ public class ProjectionTransformTest {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "booleanField:string,intField:string,longField:string,floatField:string," +
       "doubleField:string,bytesField:string,stringField:string");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -224,8 +223,8 @@ public class ProjectionTransformTest {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "booleanField:boolean,intField:int,longField:long,floatField:float," +
       "doubleField:double,bytesField:bytes,stringField:string");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     StructuredRecord input = StructuredRecord.builder(schema)
@@ -257,8 +256,8 @@ public class ProjectionTransformTest {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "booleanField:bytes,intField:bytes,longField:bytes,floatField:bytes," +
       "doubleField:bytes,bytesField:bytes,stringField:bytes");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -306,8 +305,8 @@ public class ProjectionTransformTest {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "booleanField:boolean,intField:int,longField:long,floatField:float," +
       "doubleField:double,bytesField:bytes,stringField:string");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -328,8 +327,8 @@ public class ProjectionTransformTest {
   public void testConvertToLong() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "intField:long");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -359,8 +358,8 @@ public class ProjectionTransformTest {
   public void testConvertToFloat() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "intField:float,longField:float");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
@@ -390,8 +389,8 @@ public class ProjectionTransformTest {
   public void testConvertToDouble() throws Exception {
     ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
       .ProjectionTransformConfig(null, null, "intField:double,longField:double,floatField:double");
-    TransformStage<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
-    StageContext transformContext = new MockStageContext();
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
