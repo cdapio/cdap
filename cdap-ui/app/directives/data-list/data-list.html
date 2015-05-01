@@ -20,7 +20,10 @@
                 {{ ::data.name }}
               </a>
             </td>
-            <td>{{ ::data.type }}</td>
+            <td>
+              <span class="icon-streams" ng-if="data.type === 'Stream'"></span>
+              <span class="icon-datasets" ng-if="data.type === 'Dataset'"></span>
+              <span> {{ ::data.type }}</span></td>
           </tr>
         </tbody>
       </table>
