@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>3.0.0-SNAPSHOT</cdap.version>
+    <cdap.version>3.1.0-SNAPSHOT</cdap.version>
   </properties>
 
   <repositories>
