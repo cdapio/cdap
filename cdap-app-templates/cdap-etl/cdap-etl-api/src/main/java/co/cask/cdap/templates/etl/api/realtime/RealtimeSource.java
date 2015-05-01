@@ -49,10 +49,12 @@ public abstract class RealtimeSource<T> implements EndPointStage, Destroyable {
    *
    * @param writer {@link Emitter}
    * @param currentState {@link SourceState} current state of the source
+   * @throws Exception if there's an error during this method invocation
+   *
    * @return {@link SourceState} state of the source after poll, will be persisted when all data from poll are processed
    */
   @Nullable
-  public abstract SourceState poll(Emitter<T> writer, SourceState currentState);
+  public abstract SourceState poll(Emitter<T> writer, SourceState currentState) throws Exception;
 
   /**
    * Destroy the Source.

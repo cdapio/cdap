@@ -90,7 +90,9 @@ public class ETLWorker extends AbstractWorker {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Realtime.UNIQUE_ID));
 
     adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
-    stateStoreKey = String.format("%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID));
+    // Each worker instance should have its own unique state.
+    stateStoreKey = String.format("%s%s%s%s%s", adapterName, SEPARATOR, runtimeArgs.get(Constants.Realtime.UNIQUE_ID),
+                                  SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
     final ETLRealtimeConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLRealtimeConfig.class);
 
@@ -172,47 +174,82 @@ public class ETLWorker extends AbstractWorker {
 
   @Override
   public void run() {
+    final SourceState currentState = new SourceState();
+    final SourceState nextState = new SourceState();
+    final List<Object> dataToSink = Lists.newArrayList();
     running = true;
-    while (running) {
-      final SourceState sourceState = new SourceState();
 
-      // Fetch SourceState from State Table.
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
-          if (stateBytes != null) {
-            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
-            sourceState.setState(state.getState());
-          }
+    // Fetch SourceState from State Table.
+    // Only required at the beginning since we persist the state if there is a change.
+    getContext().execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
+        byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
+        if (stateBytes != null) {
+          SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+          currentState.setState(state);
         }
-      });
+      }
+    });
 
-      final SourceState nextState = source.poll(sourceEmitter, sourceState);
+    while (running) {
+      // Invoke poll method of the source to fetch data
+      try {
+        SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
+        if (newState != null) {
+          nextState.setState(newState);
+        }
+      } catch (Exception e) {
+        // Continue since the source threw an exception. No point in processing records and state is not changed.
+        LOG.warn("Adapter {} : Exception thrown during polling of Source for data", adapterName, e);
+        sourceEmitter.reset();
+        continue;
+      }
+
+      // For each object emitted by the source, invoke the transformExecutor and collect all the data
+      // to be persisted in the sink.
       for (Object sourceData : sourceEmitter) {
         try {
-          final Iterable<Object> dataToSink = transformExecutor.runOneIteration(sourceData);
-
-          getContext().execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
-              sink.write(dataToSink, defaultDataWriter);
-
-              //Persist sourceState
-              KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
-              if (nextState != null) {
-                stateTable.write(stateStoreKey, GSON.toJson(nextState));
-              }
-            }
-          });
+          for (Object object : transformExecutor.runOneIteration(sourceData)) {
+            dataToSink.add(object);
+          }
         } catch (Exception e) {
-          // Log a warning and continue.
           LOG.warn("Adapter {} : Exception thrown while processing data {}", adapterName, sourceData, e);
         }
       }
       sourceEmitter.reset();
+
+      // Start a Transaction if there is data to persist or if the Source state has changed.
+      try {
+        if ((dataToSink.size() != 0) || (!nextState.equals(currentState))) {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+
+              // Invoke the sink's write method if there is any object to be written.
+              if (dataToSink.size() != 0) {
+                DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
+                sink.write(dataToSink, defaultDataWriter);
+              }
+
+              // Persist nextState if it is different from currentState
+              if (!nextState.equals(currentState)) {
+                KeyValueTable stateTable = context.getDataset(ETLRealtimeTemplate.STATE_TABLE);
+                stateTable.write(stateStoreKey, GSON.toJson(nextState));
+              }
+            }
+          });
+
+          // Update the in-memory copy of the state only if the transaction succeeded.
+          currentState.setState(nextState);
+        }
+      } catch (Exception e) {
+        LOG.warn("Adapter {} : Exception thrown during persisting of data", adapterName, e);
+      } finally {
+        // Clear the persisted sink data (in case transaction failure occurred, we will poll the source with old state)
+        dataToSink.clear();
+      }
     }
   }
 
