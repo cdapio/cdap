@@ -18,12 +18,15 @@ angular.module(PKG.name+'.services')
     }.bind(this));
 
     function typeClicked(arr, id, key) {
-      var idx = arr.indexOf(id);
-      if (idx !== -1) {
-        arr.splice(idx, 1);
-      }
-      arr.unshift(id);
-      myLocalStorage.set(key, arr);
+      // delay by 1000ms so that the order does not change on the same visit to the page.
+      setTimeout(function() {
+        var idx = arr.indexOf(id);
+        if (idx !== -1) {
+          arr.splice(idx, 1);
+        }
+        arr.unshift(id);
+        myLocalStorage.set(key, arr);
+      }, 1000);
     }
 
     this.appClicked = function (appName) {

@@ -197,7 +197,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
       }
       return controller;
     } catch (Exception e) {
-      Closeables.closeQuietly(pluginInstantiator);
+      if (pluginInstantiator != null) {
+        Closeables.closeQuietly(pluginInstantiator);
+      }
       throw Throwables.propagate(e);
     }
   }
@@ -236,7 +238,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void terminated(Service.State from) {
-        Closeables.closeQuietly(pluginInstantiator);
+        if (pluginInstantiator != null) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -250,7 +254,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        Closeables.closeQuietly(pluginInstantiator);
+        if (pluginInstantiator != null) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }

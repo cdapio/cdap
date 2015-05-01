@@ -25,6 +25,7 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Service;
@@ -87,6 +88,10 @@ public class WorkerDriver extends AbstractExecutionThreadService {
       worker.destroy();
     } finally {
       ClassLoaders.setContextClassLoader(classLoader);
+      if (context.getPluginInstantiator() != null) {
+        Closeables.closeQuietly(context.getPluginInstantiator());
+      }
+      context.close();
     }
   }
 
