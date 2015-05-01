@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api.config;
+package co.cask.cdap.templates.etl.common;
 
 import java.util.Map;
 

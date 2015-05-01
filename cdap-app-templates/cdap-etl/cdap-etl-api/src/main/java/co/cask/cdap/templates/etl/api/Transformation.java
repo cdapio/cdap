@@ -17,29 +17,19 @@
 package co.cask.cdap.templates.etl.api;
 
 /**
- * Properties that are required by a Stage.
+ * Transforms an input object into zero or more output objects.
+ *
+ * @param <IN> Type of input object
+ * @param <OUT> Type of output object
  */
-public class Property {
+public interface Transformation<IN, OUT> {
 
-  private final String name;
-  private final String description;
-  private final boolean required;
-
-  public Property(String name, String description, boolean required) {
-    this.name = name;
-    this.description = description;
-    this.required = required;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public boolean isRequired() {
-    return required;
-  }
-
-  public String getDescription() {
-    return description;
-  }
+  /**
+   * Process input and emit output using {@link Emitter}.
+   *
+   * @param input the input to transform
+   * @param emitter {@link Emitter} to emit data to the next stage
+   * @throws Exception
+   */
+  void transform(IN input, Emitter<OUT> emitter) throws Exception;
 }

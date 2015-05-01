@@ -16,8 +16,6 @@
 
 package co.cask.cdap.templates.etl.common;
 
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-
 /**
  * Class to define property names for sources and sinks
  */

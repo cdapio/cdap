@@ -24,10 +24,8 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.templates.etl.common.StructuredRecordToCubeFact;
 import com.google.common.collect.Maps;
@@ -39,7 +37,7 @@ import java.util.Map;
  * <p/>
  * This {@link BatchCubeSink} takes {@link StructuredRecord} in, maps it to a {@link CubeFact} using mapping
  * configuration provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a
- * {@link Cube} dataset identified by {@link #NAME} property.
+ * {@link Cube} dataset identified by name property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at

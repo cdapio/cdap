@@ -17,7 +17,7 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.Transformation;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,7 +31,7 @@ public class TransformExecutorTest {
   @Test
   public void testEmptyTransforms() throws Exception {
     TransformExecutor<String, String> executor =
-      new TransformExecutor<String, String>(Lists.<Transform>newArrayList(), Lists.<StageMetrics>newArrayList());
+      new TransformExecutor<String, String>(Lists.<Transformation>newArrayList(), Lists.<StageMetrics>newArrayList());
     List<String> results = Lists.newArrayList(executor.runOneIteration("foo"));
     Assert.assertEquals(1, results.size());
     Assert.assertEquals("foo", results.get(0));
@@ -40,7 +40,7 @@ public class TransformExecutorTest {
   @Test
   public void testTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
-    List<Transform> transforms = Lists.<Transform>newArrayList(
+    List<Transformation> transforms = Lists.<Transformation>newArrayList(
       new IntToDouble(), new Filter(100d), new DoubleToString());
     List<StageMetrics> stageMetrics = Lists.newArrayList(
       new StageMetrics(mockMetrics, StageMetrics.Type.SOURCE, "first"),
@@ -71,7 +71,7 @@ public class TransformExecutorTest {
     Assert.assertEquals(3, mockMetrics.getCount("sink.third.records.out"));
   }
 
-  private static class IntToDouble implements Transform<Integer, Double> {
+  private static class IntToDouble implements Transformation<Integer, Double> {
     @Override
     public void transform(Integer input, Emitter<Double> emitter) throws Exception {
       emitter.emit(input.doubleValue());
@@ -80,7 +80,7 @@ public class TransformExecutorTest {
     }
   }
 
-  private static class Filter implements Transform<Double, Double> {
+  private static class Filter implements Transformation<Double, Double> {
     private final Double threshold;
 
     public Filter(Double threshold) {
@@ -95,7 +95,7 @@ public class TransformExecutorTest {
     }
   }
 
-  private static class DoubleToString implements Transform<Double, String> {
+  private static class DoubleToString implements Transformation<Double, String> {
     @Override
     public void transform(Double input, Emitter<String> emitter) throws Exception {
       emitter.emit(String.valueOf(input));
