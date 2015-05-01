@@ -54,7 +54,7 @@ export LOCAL_DIR=/var/tmp/cdap
 export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
 
 # Main class to be invoked.
-MAIN_CLASS=
+#MAIN_CLASS=
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""
