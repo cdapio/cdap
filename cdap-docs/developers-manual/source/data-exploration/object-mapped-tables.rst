@@ -117,7 +117,8 @@ When creating your queries, keep these limitations in mind:
   name is ``dataset_purchases``. Note that the table name is lower-case.
 - If your Dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
   table name. For example, if your Dataset is named ``my-table.name``, the corresponding Hive table
-  name will be ``dataset_my_table_name``.
+  name will be ``dataset_my_table_name``. Beware of name collisions. For example, ``my.table`` will
+  use the same Hive table name as ``my_table``.
 
 
 For more examples of queries, please refer to the `Hive language manual

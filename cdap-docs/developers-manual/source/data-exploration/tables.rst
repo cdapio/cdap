@@ -13,29 +13,29 @@ row has the same schema, every row of a Table can have a different set of column
 Though Tables do not require a schema, in practice they are often written with an
 implicit schema. Column names are often strings, with a single data type used
 for all values in the same column. If you are using a Table in this way,
-you can set the schema Table property to enable exploration. The schema will be
+you can set a schema as a Table property to enable exploration. The schema will be
 applied at read time, allowing you to run ad-hoc queries against the Table. 
 
 Requirements
 ------------
 In order to explore a Table, your Table must meet a few requirements.
 
-* Columns names must be strings.
+- Columns names must be strings.
 
-* All column values for a specific column must be of the same type. For example, a value cannot be a string
+- All column values for a specific column must be of the same type. For example, a value cannot be a string
   in one row and an integer in another.
 
-* Column values must be of a primitive type.
+- Column values must be of a primitive type.
   A primitive type is one of boolean, int, long, float, double, bytes, or string. 
 
-* Column names must be valid Hive column names. This means they cannot be reserved keywords like 'drop'.
+- Column names must be valid Hive column names. This means they cannot be reserved keywords such as *drop*.
   Please refer to the `Hive language manual <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`__
   for more information about Hive.
 
 Creating an Explorable Table
 ----------------------------
 
-When creating a ``Table`` in your application, if you set the schema table property, your Table
+When creating a ``Table`` in your application, if you set the table's schema property, your Table
 will be enabled for exploration after it is created::
 
   @Override
@@ -62,14 +62,15 @@ Note that the schema row field property is set along with the schema property. T
 must be set if you want to explore your Table row along with Table columns. In the example above, this property
 will let CDAP know to read the ``id`` field from the Table row instead of from the Table columns. 
 
-Setting Schema on an Existing Table
------------------------------------
+Setting a Schema on an Existing Table
+-------------------------------------
 
-Since schema is applied at read time, it is possible to set schema on a Table after it has been created.
+.. highlight:: console
+Since schema is applied at read time, it is possible to set a schema on a Table after it has been created.
 It is also possible to change the schema of a Table. Dataset properties can be set using the RESTful API.
 For example, the same schema set through the example code above can also be set through the RESTful API::
 
-  curl -X PUT <baseurl>/namespaces/<namespace>/data/datasets/profiles/properties -d '{
+  curl -X PUT <baseurl>/namespaces/<namespace-id>/data/datasets/profiles/properties -d '{
     "typeName": "table",
     "properties": {
       "schema": "{
@@ -101,7 +102,9 @@ When creating your queries, keep these limitations in mind:
   name is ``dataset_purchases``. Note that the table name is lower-case.
 - If your Table name contains a '.' or a '-', those characters will be converted to '_' for the Hive
   table name. For example, if your Table is named ``my-table.name``, the corresponding Hive table
-  name will be ``dataset_my_table_name``.
+  name will be ``dataset_my_table_name``. Beware of name collisions. For example, 
+  ``my.table`` will use the same Hive table name as ``my_table``. Beware of name collisions.
+  For example, ``my.table`` will use the same Hive table name as ``my_table``.
 
 For more examples of queries, please refer to the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML>`__.
