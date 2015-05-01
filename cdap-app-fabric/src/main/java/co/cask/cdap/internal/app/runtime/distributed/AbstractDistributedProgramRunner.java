@@ -144,7 +144,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.enableDebugging();
           }
           // Add scheduler queue name if defined
-          if (schedulerQueueName != null) {
+          if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
             LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
             twillPreparer.setSchedulerQueue(schedulerQueueName);
           }
