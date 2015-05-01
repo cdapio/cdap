@@ -282,6 +282,7 @@ public class UpgradeTool {
             try {
               startUp();
               performUpgrade();
+              LOG.info("Upgrade completed.");
             } finally {
               stop();
             }
@@ -338,6 +339,7 @@ public class UpgradeTool {
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
+    LOG.info("Upgrading StreamConversionAdapters ...");
     upgradeAdapters();
   }
 
