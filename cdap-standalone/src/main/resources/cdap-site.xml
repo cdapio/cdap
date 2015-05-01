@@ -115,7 +115,7 @@
     -->
     <property>
       <name>app.template.dir</name>
-      <value>plugins</value>
+      <value>templates</value>
       <description>Directory where all archives for app templates are stored</description>
     </property>
 

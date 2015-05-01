@@ -65,7 +65,6 @@ import java.util.concurrent.TimeUnit;
  * {@link TimePartitionedFileSet}
  */
 // TODO: re-enable after mapred classloading fix
-@Ignore
 public class ETLStreamConversionTest extends BaseETLBatchTest {
   private static final Gson GSON = new Gson();
 

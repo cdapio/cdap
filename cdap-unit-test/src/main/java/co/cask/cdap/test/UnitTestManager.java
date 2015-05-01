@@ -47,8 +47,11 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -63,6 +66,8 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.Manifest;
 
 /**
@@ -78,7 +83,8 @@ public class UnitTestManager implements TestManager {
   private final NamespaceAdmin namespaceAdmin;
   private final StreamManagerFactory streamManagerFactory;
   private final LocationFactory locationFactory;
-  private final File pluginsDir;
+  private final File templateDir;
+  private final File pluginDir;
 
   @Inject
   public UnitTestManager(AppFabricClient appFabricClient,
@@ -99,7 +105,8 @@ public class UnitTestManager implements TestManager {
     this.streamManagerFactory = streamManagerFactory;
     this.locationFactory = locationFactory;
     // this should have been set to a temp dir during injector setup
-    this.pluginsDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
   }
 
   /**
@@ -143,7 +150,7 @@ public class UnitTestManager implements TestManager {
     }
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, packagesStr.toString());
     Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, templateClz, manifest);
-    File destination =  new File(String.format("%s/%s", pluginsDir.getAbsolutePath(), adapterJar.getName()));
+    File destination =  new File(String.format("%s/%s", templateDir.getAbsolutePath(), adapterJar.getName()));
     Files.copy(Locations.newInputSupplier(adapterJar), destination);
     appFabricClient.deployTemplate(namespace, templateId);
   }
@@ -152,11 +159,16 @@ public class UnitTestManager implements TestManager {
   public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
                                  Class<?> pluginClz, Class<?>... classes) throws IOException {
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, pluginClz.getPackage().getName());
+    Set<String> exportPackages = new HashSet<>();
+    for (Class<?> cls : Iterables.concat(ImmutableList.of(pluginClz), ImmutableList.copyOf(classes))) {
+      exportPackages.add(cls.getPackage().getName());
+    }
+
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     Location pluginJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClz, classes);
-    File templateDir = new File(pluginsDir, templateId.getId());
-    DirUtils.mkdirs(templateDir);
-    File destination = new File(templateDir, jarName);
+    File templatePluginDir = new File(pluginDir, templateId.getId());
+    DirUtils.mkdirs(templatePluginDir);
+    File destination = new File(templatePluginDir, jarName);
     Files.copy(Locations.newInputSupplier(pluginJar), destination);
   }
 

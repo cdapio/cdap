@@ -88,12 +88,9 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     String hsqlDBDir = temporaryFolder.newFolder("hsqldb").getAbsolutePath();
     hsqlDBServer = new HSQLDBServer(hsqlDBDir, "testdb");
     hsqlDBServer.start();
-    Connection conn = hsqlDBServer.getConnection();
-    try {
+    try (Connection conn = hsqlDBServer.getConnection()) {
       createTestTables(conn);
       prepareTestData(conn);
-    } finally {
-      conn.close();
     }
     // deploy etl batch template
     String path = Resources.getResource("org/hsqldb/jdbcDriver.class").getPath();
@@ -129,8 +126,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   }
 
   private static void createTestTables(Connection conn) throws SQLException {
-    Statement stmt = conn.createStatement();
-    try {
+    try (Statement stmt = conn.createStatement()) {
       stmt.execute("CREATE TABLE my_table" +
                      "(" +
                      "ID INT NOT NULL, " +
@@ -155,15 +151,14 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                      ")");
       stmt.execute("CREATE TABLE my_dest_table AS (" +
                      "SELECT * FROM my_table) WITH DATA");
-    } finally {
-      stmt.close();
     }
   }
 
   private static void prepareTestData(Connection conn) throws SQLException {
-    PreparedStatement pStmt =
-      conn.prepareStatement("INSERT INTO my_table VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    try {
+    try (
+      PreparedStatement pStmt =
+        conn.prepareStatement("INSERT INTO my_table VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    ) {
       for (int i = 1; i <= 5; i++) {
         String name = "user" + i;
         pStmt.setInt(1, i);
@@ -191,8 +186,6 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
         pStmt.setClob(19, new InputStreamReader(new ByteArrayInputStream(clobData.getBytes(Charsets.UTF_8))));
         pStmt.executeUpdate();
       }
-    } finally {
-      pStmt.close();
     }
   }
 
@@ -350,16 +343,11 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
 
   @AfterClass
   public static void tearDown() throws SQLException {
-    Connection conn = hsqlDBServer.getConnection();
-    try {
-      Statement stmt = conn.createStatement();
-      try {
-        stmt.execute("DROP TABLE my_table");
-      } finally {
-        stmt.close();
-      }
-    } finally {
-      conn.close();
+    try (
+      Connection conn = hsqlDBServer.getConnection();
+      Statement stmt = conn.createStatement()
+    ) {
+      stmt.execute("DROP TABLE my_table");
     }
 
     hsqlDBServer.stop();

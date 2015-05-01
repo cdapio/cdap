@@ -144,16 +144,7 @@
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
-        <etl.batch.plugin.name>etlBatch</etl.batch.plugin.name>
-        <etl.realtime.plugin.name>etlRealtime</etl.realtime.plugin.name>
       </properties>
-      <dependencies>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-ui</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-      </dependencies>
       <build>
         <plugins>
           <plugin>
@@ -326,69 +317,65 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-plugin</id>
+                <id>copy-templates</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                <outputDirectory>${stage.opt.dir}/plugins</outputDirectory>
-                <resources>
-                  <resource>
-                    <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target</directory>
-                    <includes>
-                      <include>cdap-etl-batch-${project.version}.jar</include>
-                    </includes>
-                  </resource>
-                  <resource>
-                    <directory>
-                      ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
-                    </directory>
-                    <includes>
-                      <include>cdap-etl-realtime-${project.version}.jar</include>
-                    </includes>
-                  </resource>
-                </resources>
+                  <outputDirectory>${stage.opt.dir}/templates</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-batch-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-realtime-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
                 </configuration>
               </execution>
               <execution>
-                <id>copy-realtime-plugin</id>
+                <id>copy-realtime-plugins</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/plugins/${etl.realtime.plugin.name}</outputDirectory>
+                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.realtime.plugin.name}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
                         <include>cdap-etl-lib-${project.version}-realtime.jar</include>
                       </includes>
-                      <excludes>
-                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
-                      </excludes>
                     </resource>
                   </resources>
                 </configuration>
               </execution>
               <execution>
-                <id>copy-batch-plugin</id>
+                <id>copy-batch-plugins</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/plugins/${etl.batch.plugin.name}</outputDirectory>
+                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.batch.plugin.name}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
                       <includes>
                         <include>cdap-etl-lib-${project.version}-batch.jar</include>
                       </includes>
-                      <excludes>
-                        <exclude>cdap-etl-lib-{project.version}.jar</exclude>
-                      </excludes>
                     </resource>
                   </resources>
                 </configuration>

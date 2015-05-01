@@ -67,7 +67,7 @@ public class PluginInstantiator implements Closeable {
   private final ClassLoader pluginParentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, String template, ClassLoader templateClassLoader) {
-    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR), template);
+    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR), template);
     this.instantiatorFactory = new InstantiatorFactory(false);
 
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
