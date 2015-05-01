@@ -22,9 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.templates.etl.api.Property;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
@@ -34,7 +32,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -125,11 +122,6 @@ public class StructuredRecordToCubeFact {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
     return factBuilder.build(record);
-  }
-
-  public static List<Property> getProperties() {
-    return ImmutableList.of(new Property(MAPPING_CONFIG_PROPERTY,
-                                        "the StructuredRecord to CubeFact mapping configuration.", true));
   }
 
   private static final class CubeFactBuilder {

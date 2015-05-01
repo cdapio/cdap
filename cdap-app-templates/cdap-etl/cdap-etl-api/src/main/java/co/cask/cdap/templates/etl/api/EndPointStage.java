@@ -27,5 +27,5 @@ public interface EndPointStage {
    * @param pipelineConfigurer the configurer used to add required datasets and streams
    * @throws IllegalArgumentException if the given config is invalid
    */
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
+  void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
 }

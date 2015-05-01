@@ -22,7 +22,7 @@ import co.cask.cdap.api.templates.plugins.PluginProperties;
 /**
  * Context passed to ETL stages.
  */
-public interface StageContext {
+public interface TransformContext {
 
   /**
    * Gets the {@link PluginProperties} associated with the stage.

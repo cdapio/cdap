@@ -14,32 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.api;
+package co.cask.cdap.templates.etl.common;
+
+import java.util.Map;
 
 /**
- * Properties that are required by a Stage.
+ * ETL Stage Configuration.
  */
-public class Property {
-
+public final class ETLStage {
   private final String name;
-  private final String description;
-  private final boolean required;
+  private final Map<String, String> properties;
 
-  public Property(String name, String description, boolean required) {
+  public ETLStage(String name, Map<String, String> properties) {
     this.name = name;
-    this.description = description;
-    this.required = required;
+    this.properties = properties;
   }
 
   public String getName() {
     return name;
   }
 
-  public boolean isRequired() {
-    return required;
-  }
-
-  public String getDescription() {
-    return description;
+  public Map<String, String> getProperties() {
+    return properties;
   }
 }

@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
  */
-public class WorkerRealtimeContext extends RealtimeStageContext implements RealtimeContext {
+public class WorkerRealtimeContext extends RealtimeTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {

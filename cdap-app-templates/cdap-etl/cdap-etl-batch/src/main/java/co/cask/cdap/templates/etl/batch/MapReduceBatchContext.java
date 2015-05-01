@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public abstract class MapReduceBatchContext extends BatchStageContext implements BatchContext {
+public abstract class MapReduceBatchContext extends BatchTransformContext implements BatchContext {
 
   protected final MapReduceContext mrContext;
 
