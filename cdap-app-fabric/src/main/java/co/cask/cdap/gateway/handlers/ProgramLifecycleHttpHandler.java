@@ -62,7 +62,10 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -232,6 +235,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (runRecord == null) {
         throw new NotFoundException(run);
       }
+
+      // Try to validate the run record with runtime service
+      runRecord = lifecycleService.validateRunRecord(runRecord, programId, ProgramType.MAPREDUCE);
 
       MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
 
@@ -457,6 +463,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
       if (runRecord != null) {
+
+        // Try to validate the run record with runtime service
+        Id.Program program  = Id.Program.from(namespaceId, appId, type, programId);
+        runRecord = lifecycleService.validateRunRecord(runRecord, program, type);
+
         responder.sendJson(HttpResponseStatus.OK, runRecord);
         return;
       }
@@ -1401,13 +1412,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getRuns(HttpResponder responder, Id.Program programId, String status,
-                       long start, long end, int limit) {
+  private void getRuns(HttpResponder responder, Id.Program programId, String status, long start, long end, int limit) {
     try {
       try {
-        ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+        final ProgramType programType = programId.getType();
+        final ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
           ProgramRunStatus.valueOf(status.toUpperCase());
-        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
+
+        // Need to validate whether the run records are reflecting the actual running state of the program.
+        List<RunRecord> runRecords = lifecycleService.validateRunRecords(
+          store.getRuns(programId, runStatus, start, end, limit), programId, programType);
+
+        // Filter all the validated run records based onf run status
+        List<RunRecord> filteredRunRecords = ImmutableList.copyOf(
+          Collections2.filter(runRecords, new Predicate<RunRecord>() {
+            @Override
+            public boolean apply(RunRecord record) {
+              return (record.getStatus() == runStatus);
+            }
+          }));
+
+        responder.sendJson(HttpResponseStatus.OK, filteredRunRecords);
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");
