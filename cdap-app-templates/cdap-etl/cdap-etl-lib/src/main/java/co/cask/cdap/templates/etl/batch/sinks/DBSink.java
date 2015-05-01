@@ -112,8 +112,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void initialize(PluginProperties properties) throws Exception {
-    super.initialize(properties);
+  public void initialize(BatchSinkContext context) throws Exception {
+    super.initialize(context);
     setResultSetMetadata();
   }
 
