@@ -20,6 +20,10 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+  .ui-select-container.ui-select-bootstrap {
+    overflow-x: auto;
+  }
+
   .etlflowcontainer {
     position: relative;
     h4 {
@@ -225,6 +229,7 @@ body.theme-cdap.state-adapters-list {
       .well.well-lg {
         border: 2px dashed;
         margin-bottom: 0;
+        height: 163px;
         h1 { margin-bottom: 13px; }
       }
     }
@@ -246,10 +251,13 @@ body.theme-cdap.state-adapters-list {
         display: block;
         text-decoration: none;
         color: black;
-      }
-      h3 {
-        margin: 10px 0;
-        .fa-heartbeat { color: @cdap-orange; }
+        h4 {
+          margin: 10px 0 0 0;
+          .icon-app { color: @cdap-orange; }
+          span {
+            vertical-align: top;
+          }
+        }
       }
       p { margin: 0; }
     }
