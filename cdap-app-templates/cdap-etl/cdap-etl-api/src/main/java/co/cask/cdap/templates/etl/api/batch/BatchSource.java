@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
@@ -53,9 +52,9 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    * Initialize the source. This is called once each time the Hadoop Job runs, before any
    * calls to {@link #transform(KeyValue, Emitter)} are made.
    *
-   * @param properties plugin properties
+   * @param context {@link BatchSourceContext}
    */
-  public void initialize(PluginProperties properties) throws Exception {
+  public void initialize(BatchSourceContext context) throws Exception {
     // no-op
   }
 

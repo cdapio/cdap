@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.api.batch;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
@@ -53,9 +52,9 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    * Initialize the sink. This is called once each time the Hadoop Job runs, before any
    * calls to {@link #transform(Object, Emitter)} are made.
    *
-   * @param properties plugin properties
+   * @param context {@link BatchSinkContext}
    */
-  public void initialize(PluginProperties properties) throws Exception {
+  public void initialize(BatchSinkContext context) throws Exception {
     // no-op
   }
 

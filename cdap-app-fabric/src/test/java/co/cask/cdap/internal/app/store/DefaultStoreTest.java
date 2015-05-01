@@ -202,6 +202,11 @@ public class DefaultStoreTest {
     store.setStart(programId, run2.getId(), runIdToSecs(run2));
     store.setStop(programId, run2.getId(), nowSecs - 5, ProgramController.State.COMPLETED.getRunStatus());
 
+    // record a suspended flow
+    RunId run21 = RunIds.generate(now - 7500);
+    store.setStart(programId, run21.getId(), runIdToSecs(run21));
+    store.setSuspend(programId, run21.getId());
+
     // record not finished flow
     RunId run3 = RunIds.generate(now);
     store.setStart(programId, run3.getId(), runIdToSecs(run3));
@@ -229,10 +234,16 @@ public class DefaultStoreTest {
     Assert.assertEquals(failureHistory, store.getRuns(programId, ProgramRunStatus.FAILED,
                                                       0, Long.MAX_VALUE, Integer.MAX_VALUE));
 
+    List<RunRecord> suspendedHistory = store.getRuns(programId, ProgramRunStatus.SUSPENDED,
+                                                   nowSecs - 20, nowSecs, Integer.MAX_VALUE);
+
     // only finished + succeeded runs should be returned
     Assert.assertEquals(1, successHistory.size());
     // only finished + failed runs should be returned
     Assert.assertEquals(1, failureHistory.size());
+    // only suspended runs should be returned
+    Assert.assertEquals(1, suspendedHistory.size());
+
     // records should be sorted by start time latest to earliest
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(nowSecs - 10, run.getStartTs());
@@ -244,10 +255,14 @@ public class DefaultStoreTest {
     Assert.assertEquals(Long.valueOf(nowSecs - 10), run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
 
+    run = suspendedHistory.get(0);
+    Assert.assertEquals(run21.getId(), run.getPid());
+    Assert.assertEquals(ProgramController.State.SUSPENDED.getRunStatus(), run.getStatus());
+
     // Assert all history
     List<RunRecord> allHistory = store.getRuns(programId, ProgramRunStatus.ALL,
                                                nowSecs - 20, nowSecs + 1, Integer.MAX_VALUE);
-    Assert.assertEquals(allHistory.toString(), 3, allHistory.size());
+    Assert.assertEquals(allHistory.toString(), 4, allHistory.size());
 
     // Assert running programs
     List<RunRecord> runningHistory = store.getRuns(programId, ProgramRunStatus.RUNNING, nowSecs, nowSecs + 1, 100);
@@ -265,6 +280,12 @@ public class DefaultStoreTest {
     Assert.assertNotNull(expectedCompleted);
     RunRecord actualCompleted = store.getRun(programId, expectedCompleted.getPid());
     Assert.assertEquals(expectedCompleted, actualCompleted);
+
+    // Get a run record for suspended run
+    RunRecord expectedSuspended = suspendedHistory.get(0);
+    Assert.assertNotNull(expectedSuspended);
+    RunRecord actualSuspended = store.getRun(programId, expectedSuspended.getPid());
+    Assert.assertEquals(expectedSuspended, actualSuspended);
 
     // Backwards compatibility test with random UUIDs
     // record finished flow

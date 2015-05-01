@@ -30,7 +30,7 @@ Things to check as possible solutions:
 
     java -version
 
-#. Check if the CDAP user is using a correct version of the JDK::
+#. Check if the CDAP user is using a :ref:`correct version of the JDK <install-java-runtime>`::
 
     sudo su - <cdap-user> 
     java -version

@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class AppMetadataStore extends MetadataStoreDataset {
   public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
+  public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -44,9 +45,29 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
   public RunRecord getRun(Id.Program program, final String runid) {
-    // For querying running records
+    // Query active run record first
+    RunRecord running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
+    // If program is running, this will be non-null
+    if (running != null) {
+      return running;
+    }
+
+    // If program is not running, query completed run records
+    RunRecord complete = getCompletedRun(program, runid);
+    if (complete != null) {
+      return complete;
+    }
+
+    // Else query suspended run records
+    return getUnfinishedRun(program, TYPE_RUN_RECORD_SUSPENDED, runid);
+  }
+
+  /**
+   * @return run records for runs that do not have start time in mds key for the run record.
+   */
+  private RunRecord getUnfinishedRun(Id.Program program, String recordType, String runid) {
     MDSKey runningKey = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
+      .add(recordType)
       .add(program.getNamespaceId())
       .add(program.getApplicationId())
       .add(program.getType().name())
@@ -54,14 +75,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(runid)
       .build();
 
-    // Query running record first
-    RunRecord running = get(runningKey, RunRecord.class);
-    // If program is running, this will be non-null
-    if (running != null) {
-      return running;
-    }
+    return get(runningKey, RunRecord.class);
+  }
 
-    // If program is not running, query completed run records
+  private RunRecord getCompletedRun(Id.Program program, final String runid) {
     MDSKey completedKey = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_COMPLETED)
       .add(program.getNamespaceId())

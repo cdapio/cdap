@@ -47,7 +47,7 @@ import java.util.Map;
  * This class is responsible for the MapReduce RunId->JobId mapping logic as well as to simplify the response
  * from the Job History Server.
  */
-public class MRJobClient {
+public class MRJobClient implements MRJobInfoFetcher {
   private static final Logger LOG = LoggerFactory.getLogger(MRJobClient.class);
   private final Configuration hConf;
 

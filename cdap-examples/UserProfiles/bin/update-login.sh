@@ -78,7 +78,7 @@ while [ $(date "+%s") -lt $endtime ]; do
     echo Updating last login time for user id $userid to $time
   fi
   status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X PUT -d$time \
-    http://$gateway:10000/v2/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid/lastLogin`
+    http://$gateway:10000/v3/namespaces/default/apps/UserProfiles/services/UserProfileService/methods/profiles/$userid/lastLogin`
   if [ $status -ne 200 ]; then
     echo "Failed to send data."
     if [ $status == 401 ]; then

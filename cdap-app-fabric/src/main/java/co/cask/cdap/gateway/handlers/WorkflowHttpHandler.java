@@ -20,8 +20,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.mapreduce.MRJobClient;
-import co.cask.cdap.app.mapreduce.MapReduceMetricsInfo;
+import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -73,13 +72,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public WorkflowHttpHandler(Authenticator authenticator, Store store, WorkflowClient workflowClient,
                              CConfiguration configuration, ProgramRuntimeService runtimeService,
                              QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
-                             NamespacedLocationFactory namespacedLocationFactory,
-                             MRJobClient mrJobClient, MapReduceMetricsInfo mapReduceMetricsInfo,
+                             NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
                              AdapterService adapterService, MetricStore metricStore) {
-    super(authenticator, store, configuration, runtimeService, lifecycleService,
-          queueAdmin, scheduler, preferencesStore, namespacedLocationFactory, mrJobClient,
-          mapReduceMetricsInfo, resolver, adapterService, metricStore);
+    super(authenticator, store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
+          preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, adapterService, metricStore);
     this.workflowClient = workflowClient;
   }
 

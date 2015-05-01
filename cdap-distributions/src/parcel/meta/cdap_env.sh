@@ -23,5 +23,5 @@ export CDAP_MASTER_HOME=${CDAP_HOME}/master
 export CDAP_MASTER_CONF_SCRIPT=${CDAP_MASTER_HOME}/conf/master-env.sh
 export CDAP_ROUTER_HOME=${CDAP_HOME}/gateway
 export CDAP_ROUTER_CONF_SCRIPT=${CDAP_ROUTER_HOME}/conf/router-env.sh
-export CDAP_WEB_APP_HOME=${CDAP_HOME}/web-app
-export CDAP_WEB_APP_CONF_SCRIPT=${CDAP_WEB_APP_HOME}/conf/web-app-env.sh
+export CDAP_UI_HOME=${CDAP_HOME}/ui
+export CDAP_UI_CONF_SCRIPT=${CDAP_UI_HOME}/conf/ui-env.sh
