@@ -33,7 +33,8 @@ public final class Err {
   /**
    * Common Error messages that can be used in different contexts.
    */
-  public static final Errors NOT_AN_ID = new Errors("%s name is not an ID. ID can contain only characters A-Za-z0-9_-");
+  public static final Errors NOT_AN_ID = new Errors("'%s' name is not an ID. ID should be non empty and can contain" +
+                                                      " only characters A-Za-z0-9_-");
 
   /**
    * Defines Schema related error messages.
